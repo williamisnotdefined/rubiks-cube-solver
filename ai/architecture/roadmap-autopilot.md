@@ -5,7 +5,7 @@ The roadmap autopilot converts the human roadmap into an operational queue that 
 ## Source Files
 
 - `roadmap.md`: strategic project roadmap.
-- `ai/roadmap/execution.json`: operational ordered queue of implementation steps.
+- `ai/roadmap/execution.json`: operational stack with `queue`, `history`, and `blocked`.
 - `scripts/roadmap/*.mjs`: validation and status commands for the operational queue.
 - `scripts/autopilot/run-roadmap.mjs`: unattended runner for one or more roadmap steps.
 - `scripts/autopilot/prompts/*.md`: prompts passed to `opencode run`.
@@ -17,15 +17,26 @@ The autopilot runner:
 
 - requires a clean worktree;
 - switches to `autopilot/roadmap` by default;
-- selects the first pending step whose dependencies are done;
+- selects `queue[0]` as the next executable step;
 - calls `opencode run --model openai/gpt-5.5 --variant xhigh`;
 - runs the step's verification commands;
 - retries failures up to `--max-attempts`;
-- marks the step `done` only after verification passes;
-- commits and pushes each completed step.
+- moves the verified step from `queue` to `history`;
+- commits and pushes each completed step;
+- runs a roadmap reconciliation pass;
+- commits and pushes reconciliation changes separately when the queue changes.
 
 ## Safety Boundaries
 
 The implementation agent is instructed not to commit, push, change branches, or edit `ai/roadmap/execution.json`. The runner owns state transitions and git operations.
 
+The reconciliation agent is instructed to edit only `ai/roadmap/execution.json`. It may modify the future `queue`, but it must preserve `history` and `blocked` records and must not mark tasks complete.
+
 The runner should stop on unresolved failures instead of continuing to later phases with a broken base.
+
+## Execution File Semantics
+
+- `queue[0]`: next task to implement.
+- `queue[1..]`: future tasks that the reconciler may refine.
+- `history`: verified tasks already committed by the runner.
+- `blocked`: tasks removed from the queue after persistent automation failure.

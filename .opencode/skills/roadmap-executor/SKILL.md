@@ -42,14 +42,18 @@ Keep the roadmap autopilot safe, resumable, deterministic, and aligned with the 
 
 - Validate `ai/roadmap/execution.json` with `npm run roadmap:check` after any queue edit.
 - Keep autopilot defaults on `openai/gpt-5.5` and variant `xhigh`.
+- Treat `queue[0]` as the next and only current task.
 - Keep unattended implementation scoped to one roadmap step per commit.
+- Keep roadmap reconciliation as a separate pass and commit after each verified implementation step.
 - Keep final git state transitions owned by `scripts/autopilot/run-roadmap.mjs`.
+- Preserve `history` and `blocked` when reconciling the queue.
 - Prefer stopping with logs over trying unsafe recovery.
 - Regenerate AI routes with `npm run ai:sync` after skill or registry changes.
 
 ## Expected Output
 
 - Roadmap automation can be dry-run with `npm run autopilot:roadmap -- --dry-run`.
+- Roadmap reconciliation can update future queue items without touching source code.
 - Generated route files are synchronized from canonical AI knowledge.
 - CI continues to validate Rust, AI routes, and roadmap execution metadata.
 
@@ -77,6 +81,9 @@ Rules for unattended roadmap execution.
 - Keep generated logs under `.autopilot`, which is gitignored.
 - Stop at the first persistent blocker and leave a report instead of hiding failure.
 - Preserve small, reviewable commits with the step's configured commit message.
+- Run the roadmap reconciler after each verified implementation step unless explicitly disabled for debugging.
+- Keep `queue[0]` as the only next executable task.
+- Keep completed work in `history` and unresolved failures in `blocked`.
 
 ## Never
 
@@ -84,6 +91,8 @@ Rules for unattended roadmap execution.
 - Do not bypass failing verification commands.
 - Do not mutate `main` directly by default; use an autopilot branch unless explicitly configured otherwise.
 - Do not let the implementation agent commit, push, or mark roadmap steps done.
+- Do not let the reconciliation agent edit files other than `ai/roadmap/execution.json`.
+- Do not rewrite or delete `history` and `blocked` records during reconciliation.
 - Do not use destructive git commands to recover from failed automation.
 - Do not commit large generated datasets, model checkpoints, or autopilot logs.
 
@@ -93,6 +102,13 @@ Rules for unattended roadmap execution.
 - `npm run roadmap:status` shows progress.
 - `npm run roadmap:next` shows the next runnable step.
 - `npm run autopilot:roadmap -- --dry-run` verifies the selected next step without implementation.
+
+## Queue Reconciliation
+
+- The implementation phase may change code and tests for the current `queue[0]` task.
+- The reconciliation phase may only update the future `queue` in `ai/roadmap/execution.json`.
+- Reconciliation may split, add, remove, or reorder queued tasks based on the current repository state.
+- Reconciliation must not mark tasks complete; only the runner moves verified tasks from `queue` to `history`.
 
 ## Reference: `ai/rules/repository-rules.md`
 
@@ -188,7 +204,7 @@ The roadmap autopilot converts the human roadmap into an operational queue that 
 ## Source Files
 
 - `roadmap.md`: strategic project roadmap.
-- `ai/roadmap/execution.json`: operational ordered queue of implementation steps.
+- `ai/roadmap/execution.json`: operational stack with `queue`, `history`, and `blocked`.
 - `scripts/roadmap/*.mjs`: validation and status commands for the operational queue.
 - `scripts/autopilot/run-roadmap.mjs`: unattended runner for one or more roadmap steps.
 - `scripts/autopilot/prompts/*.md`: prompts passed to `opencode run`.
@@ -200,18 +216,29 @@ The autopilot runner:
 
 - requires a clean worktree;
 - switches to `autopilot/roadmap` by default;
-- selects the first pending step whose dependencies are done;
+- selects `queue[0]` as the next executable step;
 - calls `opencode run --model openai/gpt-5.5 --variant xhigh`;
 - runs the step's verification commands;
 - retries failures up to `--max-attempts`;
-- marks the step `done` only after verification passes;
-- commits and pushes each completed step.
+- moves the verified step from `queue` to `history`;
+- commits and pushes each completed step;
+- runs a roadmap reconciliation pass;
+- commits and pushes reconciliation changes separately when the queue changes.
 
 ## Safety Boundaries
 
 The implementation agent is instructed not to commit, push, change branches, or edit `ai/roadmap/execution.json`. The runner owns state transitions and git operations.
 
+The reconciliation agent is instructed to edit only `ai/roadmap/execution.json`. It may modify the future `queue`, but it must preserve `history` and `blocked` records and must not mark tasks complete.
+
 The runner should stop on unresolved failures instead of continuing to later phases with a broken base.
+
+## Execution File Semantics
+
+- `queue[0]`: next task to implement.
+- `queue[1..]`: future tasks that the reconciler may refine.
+- `history`: verified tasks already committed by the runner.
+- `blocked`: tasks removed from the queue after persistent automation failure.
 
 ## Reference: `ai/architecture/ai-knowledge-system.md`
 

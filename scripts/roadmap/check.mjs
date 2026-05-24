@@ -11,8 +11,9 @@ if (errors.length > 0) {
 }
 
 const summary = summarizeExecution(execution);
+const total = execution.queue.length + execution.history.length + execution.blocked.length;
 console.log(
-  `Roadmap execution file is valid: ${execution.steps.length} steps (${Object.entries(summary)
+  `Roadmap execution file is valid: ${total} records (${Object.entries(summary)
     .map(([status, count]) => `${status}: ${count}`)
     .join(", ")}).`,
 );

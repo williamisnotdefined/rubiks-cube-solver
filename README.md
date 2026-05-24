@@ -28,7 +28,7 @@ cargo test
 
 ## Roadmap Autopilot
 
-The operational roadmap lives in `ai/roadmap/execution.json`.
+The operational roadmap lives in `ai/roadmap/execution.json`. It uses `queue[0]` as the next executable task, `history` for completed verified work, and `blocked` for persistent failures.
 
 Dry-run the next autonomous step:
 
@@ -48,7 +48,7 @@ Run longer unattended sessions with explicit limits:
 npm run autopilot:roadmap -- --max-steps 999 --max-hours 72
 ```
 
-The autopilot uses `opencode run --model openai/gpt-5.5 --variant xhigh` by default, writes runtime logs under `.autopilot/`, verifies each step, commits, and pushes only after checks pass.
+The autopilot uses `opencode run --model openai/gpt-5.5 --variant xhigh`, writes runtime logs under `.autopilot/`, verifies each step, commits, pushes, then runs a reconciliation pass that may update the future queue in a separate commit.
 
 ## External Visualization Library
 

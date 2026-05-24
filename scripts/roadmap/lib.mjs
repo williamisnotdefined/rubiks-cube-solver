@@ -4,7 +4,8 @@ import { fileURLToPath } from "node:url";
 
 export const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 export const executionPath = path.join(rootDir, "ai/roadmap/execution.json");
-export const validStatuses = new Set(["pending", "in_progress", "done", "blocked", "skipped"]);
+export const fixedModel = "openai/gpt-5.5";
+export const fixedVariant = "xhigh";
 
 export async function readExecution() {
   return JSON.parse(await readFile(executionPath, "utf8"));
@@ -18,94 +19,68 @@ export async function writeExecution(execution) {
 export function validateExecution(execution) {
   const errors = [];
 
-  if (execution?.version !== 1) {
-    errors.push("execution.version must be 1.");
+  if (execution?.version !== 2) {
+    errors.push("execution.version must be 2.");
+  }
+
+  if (execution?.model !== fixedModel) {
+    errors.push(`execution.model must be ${fixedModel}.`);
+  }
+
+  if (execution?.variant !== fixedVariant) {
+    errors.push(`execution.variant must be ${fixedVariant}.`);
   }
 
   if (typeof execution?.source !== "string" || execution.source.length === 0) {
     errors.push("execution.source must be a non-empty string.");
   }
 
-  if (!Array.isArray(execution?.steps) || execution.steps.length === 0) {
-    errors.push("execution.steps must be a non-empty array.");
+  for (const collection of ["queue", "history", "blocked"]) {
+    if (!Array.isArray(execution?.[collection])) {
+      errors.push(`execution.${collection} must be an array.`);
+    }
+  }
+
+  if (errors.length > 0) {
     return errors;
   }
 
-  const seenIds = new Set();
-  for (const [index, step] of execution.steps.entries()) {
-    const prefix = `steps[${index}]`;
+  const seenIds = new Map();
+  validateQueue(execution.queue, seenIds, errors);
+  validateRecords(execution.history, "history", seenIds, errors);
+  validateRecords(execution.blocked, "blocked", seenIds, errors);
 
-    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(step?.id ?? "")) {
-      errors.push(`${prefix}.id must be lowercase kebab-case.`);
-    }
-
-    if (seenIds.has(step.id)) {
-      errors.push(`${prefix}.id is duplicated: ${step.id}.`);
-    }
-    seenIds.add(step.id);
-
-    requireString(step.phase, `${prefix}.phase`, errors);
-    requireString(step.title, `${prefix}.title`, errors);
-    requireString(step.prompt, `${prefix}.prompt`, errors);
-    requireString(step.commitMessage, `${prefix}.commitMessage`, errors);
-
-    if (!validStatuses.has(step.status)) {
-      errors.push(`${prefix}.status must be one of ${[...validStatuses].join(", ")}.`);
-    }
-
-    requireStringArray(step.scope, `${prefix}.scope`, errors);
-    requireStringArray(step.acceptance, `${prefix}.acceptance`, errors);
-    requireStringArray(step.verification, `${prefix}.verification`, errors);
-
-    if (step.dependsOn !== undefined) {
-      requireStringArray(step.dependsOn, `${prefix}.dependsOn`, errors);
-    }
+  if (execution.blocked.some((record) => typeof record.blockedReason !== "string" || record.blockedReason.length === 0)) {
+    errors.push("blocked records must include blockedReason.");
   }
 
-  for (const step of execution.steps) {
-    for (const dependency of step.dependsOn ?? []) {
-      if (!seenIds.has(dependency)) {
-        errors.push(`${step.id}.dependsOn references unknown step ${dependency}.`);
-      }
-
-      if (dependency === step.id) {
-        errors.push(`${step.id}.dependsOn must not reference itself.`);
-      }
-    }
+  if (execution.history.some((record) => typeof record.completedAt !== "string" || record.completedAt.length === 0)) {
+    errors.push("history records must include completedAt.");
   }
-
-  errors.push(...detectDependencyCycles(execution.steps));
 
   return errors;
 }
 
 export function summarizeExecution(execution) {
-  const counts = Object.fromEntries([...validStatuses].map((status) => [status, 0]));
-
-  for (const step of execution.steps) {
-    counts[step.status] = (counts[step.status] ?? 0) + 1;
-  }
-
-  return counts;
+  return {
+    queued: execution.queue.length,
+    done: execution.history.length,
+    blocked: execution.blocked.length,
+  };
 }
 
 export function findNextRunnableStep(execution) {
-  const stepsById = new Map(execution.steps.map((step) => [step.id, step]));
-
-  return execution.steps.find((step) => {
-    if (step.status !== "pending") {
-      return false;
-    }
-
-    return (step.dependsOn ?? []).every((dependency) => stepsById.get(dependency)?.status === "done");
-  });
+  return execution.queue[0] ?? null;
 }
 
 export function formatStep(step) {
+  if (!step) {
+    return "No roadmap step.";
+  }
+
   return [
     `${step.id} - ${step.title}`,
     `Phase: ${step.phase}`,
-    `Status: ${step.status}`,
     `Scope: ${step.scope.join(", ")}`,
     `Acceptance: ${step.acceptance.join("; ")}`,
     `Commit: ${step.commitMessage}`,
@@ -113,28 +88,34 @@ export function formatStep(step) {
 }
 
 export function markStepDone(execution, stepId) {
-  const step = execution.steps.find((candidate) => candidate.id === stepId);
-  if (!step) {
-    throw new Error(`Unknown roadmap step: ${stepId}`);
+  const step = execution.queue[0];
+  if (!step || step.id !== stepId) {
+    throw new Error(`Can only mark queue[0] as done. Expected ${step?.id ?? "none"}, got ${stepId}.`);
   }
 
-  step.status = "done";
-  step.completedAt = new Date().toISOString();
-  step.updatedAt = step.completedAt;
-  execution.updatedAt = step.completedAt;
+  const completedAt = new Date().toISOString();
+  const [completed] = execution.queue.splice(0, 1);
+  execution.history.push({
+    ...completed,
+    completedAt,
+  });
+  execution.updatedAt = completedAt;
 }
 
 export function markStepBlocked(execution, stepId, reason) {
-  const step = execution.steps.find((candidate) => candidate.id === stepId);
-  if (!step) {
-    throw new Error(`Unknown roadmap step: ${stepId}`);
+  const step = execution.queue[0];
+  if (!step || step.id !== stepId) {
+    throw new Error(`Can only block queue[0]. Expected ${step?.id ?? "none"}, got ${stepId}.`);
   }
 
-  step.status = "blocked";
-  step.blockedAt = new Date().toISOString();
-  step.blockedReason = reason;
-  step.updatedAt = step.blockedAt;
-  execution.updatedAt = step.blockedAt;
+  const blockedAt = new Date().toISOString();
+  const [blocked] = execution.queue.splice(0, 1);
+  execution.blocked.push({
+    ...blocked,
+    blockedAt,
+    blockedReason: reason,
+  });
+  execution.updatedAt = blockedAt;
 }
 
 export function parseArgs(argv) {
@@ -176,6 +157,63 @@ export async function pathExists(filePath) {
   }
 }
 
+function validateQueue(queue, seenIds, errors) {
+  for (const [index, step] of queue.entries()) {
+    validateStep(step, `queue[${index}]`, seenIds, errors);
+
+    if (step.status !== undefined) {
+      errors.push(`queue[${index}].status is not allowed; queue order is the status.`);
+    }
+
+    if (step.dependsOn !== undefined) {
+      errors.push(`queue[${index}].dependsOn is not allowed; queue order is the dependency model.`);
+    }
+  }
+}
+
+function validateRecords(records, collection, seenIds, errors) {
+  for (const [index, record] of records.entries()) {
+    validateStep(record, `${collection}[${index}]`, seenIds, errors);
+  }
+}
+
+function validateStep(step, prefix, seenIds, errors) {
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(step?.id ?? "")) {
+    errors.push(`${prefix}.id must be lowercase kebab-case.`);
+  }
+
+  if (seenIds.has(step?.id)) {
+    errors.push(`${prefix}.id duplicates ${seenIds.get(step.id)}: ${step.id}.`);
+  } else if (step?.id) {
+    seenIds.set(step.id, prefix);
+  }
+
+  requireString(step?.phase, `${prefix}.phase`, errors);
+  requireString(step?.title, `${prefix}.title`, errors);
+  requireString(step?.prompt, `${prefix}.prompt`, errors);
+  requireString(step?.commitMessage, `${prefix}.commitMessage`, errors);
+  requireStringArray(step?.scope, `${prefix}.scope`, errors);
+  requireStringArray(step?.acceptance, `${prefix}.acceptance`, errors);
+  requireStringArray(step?.verification, `${prefix}.verification`, errors);
+  validateVerification(step?.verification ?? [], `${prefix}.verification`, errors);
+}
+
+function validateVerification(commands, field, errors) {
+  const joined = commands.join("\n");
+
+  if (!joined.includes("cargo test")) {
+    errors.push(`${field} must include cargo test.`);
+  }
+
+  if (!joined.includes("npm run lint")) {
+    errors.push(`${field} must include npm run lint.`);
+  }
+
+  if (!joined.includes("npm run roadmap:check")) {
+    errors.push(`${field} must include npm run roadmap:check.`);
+  }
+}
+
 function requireString(value, field, errors) {
   if (typeof value !== "string" || value.length === 0) {
     errors.push(`${field} must be a non-empty string.`);
@@ -186,37 +224,4 @@ function requireStringArray(value, field, errors) {
   if (!Array.isArray(value) || value.length === 0 || value.some((item) => typeof item !== "string" || item.length === 0)) {
     errors.push(`${field} must be a non-empty string array.`);
   }
-}
-
-function detectDependencyCycles(steps) {
-  const errors = [];
-  const stepsById = new Map(steps.map((step) => [step.id, step]));
-  const visiting = new Set();
-  const visited = new Set();
-
-  function visit(stepId, path) {
-    if (visiting.has(stepId)) {
-      errors.push(`Dependency cycle detected: ${[...path, stepId].join(" -> ")}.`);
-      return;
-    }
-
-    if (visited.has(stepId)) {
-      return;
-    }
-
-    visiting.add(stepId);
-    for (const dependency of stepsById.get(stepId)?.dependsOn ?? []) {
-      if (stepsById.has(dependency)) {
-        visit(dependency, [...path, stepId]);
-      }
-    }
-    visiting.delete(stepId);
-    visited.add(stepId);
-  }
-
-  for (const step of steps) {
-    visit(step.id, []);
-  }
-
-  return errors;
 }

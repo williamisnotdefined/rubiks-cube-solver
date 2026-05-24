@@ -6,6 +6,8 @@ import { spawn } from "node:child_process";
 
 import {
   findNextRunnableStep,
+  fixedModel,
+  fixedVariant,
   formatStep,
   markStepBlocked,
   markStepDone,
@@ -26,8 +28,6 @@ const defaultVerification = [
 ];
 
 const args = parseArgs(process.argv.slice(2));
-const fixedModel = "openai/gpt-5.5";
-const fixedVariant = "xhigh";
 
 if (args.model !== undefined && args.model !== fixedModel) {
   throw new Error(`Roadmap autopilot is fixed to ${fixedModel}; remove --model or use ${fixedModel}.`);
@@ -46,6 +46,7 @@ const options = {
   maxHours: numberOption(args["max-hours"], 72),
   maxSteps: numberOption(args["max-steps"], 1),
   model: fixedModel,
+  noReconcile: Boolean(args["no-reconcile"]),
   noPush: Boolean(args["no-push"]),
   variant: fixedVariant,
 };
@@ -70,6 +71,7 @@ async function main() {
     }
 
     console.log(`Dry run: would use model ${options.model} with variant ${options.variant}.`);
+    console.log(`Dry run: roadmap reconciler is ${options.noReconcile ? "disabled" : "enabled"}.`);
     return;
   }
 
@@ -126,6 +128,9 @@ async function runStep(step, execution) {
     const verification = await runVerification(step, logDir, attempt);
     if (verification.ok) {
       await completeStep(step, execution, logDir);
+      if (!options.noReconcile) {
+        await reconcileRoadmap(step, logDir);
+      }
       return;
     }
 
@@ -141,7 +146,7 @@ async function runStep(step, execution) {
 async function completeStep(step, execution, logDir) {
   markStepDone(execution, step.id);
   await writeExecution(execution);
-  await runShell("npm run roadmap:check", path.join(logDir, "roadmap-check-after-done.log"));
+  await runRequiredShell("npm run roadmap:check", path.join(logDir, "roadmap-check-after-done.log"));
 
   const status = await runGit(["status", "--short"], path.join(logDir, "git-status-before-commit.log"));
   if (status.output.trim() === "") {
@@ -157,6 +162,48 @@ async function completeStep(step, execution, logDir) {
   }
 
   console.log(`Completed roadmap step ${step.id}. Logs: ${path.relative(rootDir, logDir)}`);
+}
+
+async function reconcileRoadmap(completedStep, stepLogDir) {
+  const reconcileLogDir = path.join(stepLogDir, "reconcile");
+  const execution = await loadValidExecution();
+  const promptPath = path.join(reconcileLogDir, "reconcile.prompt.md");
+  const prompt = await renderPrompt("reconcile-roadmap.md", {
+    COMPLETED_STEP_JSON: JSON.stringify(completedStep, null, 2),
+    EXECUTION_JSON: JSON.stringify(execution, null, 2),
+    ROADMAP_STATUS: formatStep(findNextRunnableStep(execution)),
+  });
+
+  await mkdir(reconcileLogDir, { recursive: true });
+  await writeFile(promptPath, prompt);
+
+  const reconcileResult = await runOpencode(prompt, promptPath, path.join(reconcileLogDir, "opencode.log"));
+  if (reconcileResult.code !== 0) {
+    throw new Error(`Roadmap reconciliation failed. See ${path.relative(rootDir, reconcileLogDir)}.`);
+  }
+
+  await runRequiredShell("npm run roadmap:check", path.join(reconcileLogDir, "roadmap-check.log"));
+  await runRequiredShell("npm run lint", path.join(reconcileLogDir, "lint.log"));
+
+  const changedFiles = await changedWorktreeFiles(reconcileLogDir);
+  if (changedFiles.length === 0) {
+    console.log("Roadmap reconciliation produced no queue changes.");
+    return;
+  }
+
+  const allowedFiles = new Set(["ai/roadmap/execution.json"]);
+  const disallowedFiles = changedFiles.filter((file) => !allowedFiles.has(file));
+  if (disallowedFiles.length > 0) {
+    throw new Error(`Roadmap reconciliation may only edit ai/roadmap/execution.json. Unexpected files: ${disallowedFiles.join(", ")}.`);
+  }
+
+  await runGit(["add", "ai/roadmap/execution.json"], path.join(reconcileLogDir, "git-add.log"));
+  await runGit(["diff", "--cached", "--check"], path.join(reconcileLogDir, "git-diff-check.log"));
+  await runGit(["commit", "-m", "Reconcile roadmap execution queue"], path.join(reconcileLogDir, "git-commit.log"));
+
+  if (!options.noPush) {
+    await pushCurrentBranch(reconcileLogDir);
+  }
 }
 
 async function runVerification(step, logDir, attempt) {
@@ -198,8 +245,27 @@ async function runShell(command, logPath) {
   return runCommand(command, [], logPath, {}, true);
 }
 
+async function runRequiredShell(command, logPath) {
+  const result = await runShell(command, logPath);
+  if (result.code !== 0) {
+    throw new Error(`Command failed: ${command}. See ${path.relative(rootDir, logPath)}.`);
+  }
+
+  return result;
+}
+
 async function runGit(gitArgs, logPath) {
   return runCommand("git", gitArgs, logPath);
+}
+
+async function changedWorktreeFiles(logDir) {
+  const tracked = await runGit(["diff", "--name-only"], path.join(logDir, "git-diff-name-only.log"));
+  const untracked = await runGit(["ls-files", "--others", "--exclude-standard"], path.join(logDir, "git-untracked.log"));
+
+  return [...tracked.output.split("\n"), ...untracked.output.split("\n")]
+    .map((file) => file.trim())
+    .filter(Boolean)
+    .toSorted();
 }
 
 async function runCommand(command, commandArgs, logPath, extraEnv = {}, shell = false) {

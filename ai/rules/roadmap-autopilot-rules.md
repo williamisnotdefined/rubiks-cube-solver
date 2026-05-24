@@ -11,6 +11,9 @@ Rules for unattended roadmap execution.
 - Keep generated logs under `.autopilot`, which is gitignored.
 - Stop at the first persistent blocker and leave a report instead of hiding failure.
 - Preserve small, reviewable commits with the step's configured commit message.
+- Run the roadmap reconciler after each verified implementation step unless explicitly disabled for debugging.
+- Keep `queue[0]` as the only next executable task.
+- Keep completed work in `history` and unresolved failures in `blocked`.
 
 ## Never
 
@@ -18,6 +21,8 @@ Rules for unattended roadmap execution.
 - Do not bypass failing verification commands.
 - Do not mutate `main` directly by default; use an autopilot branch unless explicitly configured otherwise.
 - Do not let the implementation agent commit, push, or mark roadmap steps done.
+- Do not let the reconciliation agent edit files other than `ai/roadmap/execution.json`.
+- Do not rewrite or delete `history` and `blocked` records during reconciliation.
 - Do not use destructive git commands to recover from failed automation.
 - Do not commit large generated datasets, model checkpoints, or autopilot logs.
 
@@ -27,3 +32,10 @@ Rules for unattended roadmap execution.
 - `npm run roadmap:status` shows progress.
 - `npm run roadmap:next` shows the next runnable step.
 - `npm run autopilot:roadmap -- --dry-run` verifies the selected next step without implementation.
+
+## Queue Reconciliation
+
+- The implementation phase may change code and tests for the current `queue[0]` task.
+- The reconciliation phase may only update the future `queue` in `ai/roadmap/execution.json`.
+- Reconciliation may split, add, remove, or reorder queued tasks based on the current repository state.
+- Reconciliation must not mark tasks complete; only the runner moves verified tasks from `queue` to `history`.
