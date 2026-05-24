@@ -1,0 +1,246 @@
+---
+applyTo: "**/*"
+---
+
+Generated from `ai/registry.json`. Do not edit manually.
+
+Canonical skill: `../../ai/skills/project-core.md`.
+
+Referenced context:
+- `../../ai/rules/repository-rules.md`
+- `../../ai/rules/testing-rules.md`
+- `../../ai/rules/ai-rules.md`
+- `../../ai/architecture/project-architecture.md`
+- `../../ai/architecture/ai-knowledge-system.md`
+- `../../ai/glossary/cube-terms.md`
+
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai`, then run `npm run ai:sync`.
+
+# Compiled AI Skill: project-core
+
+## Canonical Skill: `ai/skills/project-core.md`
+
+# Project Core
+
+Use this skill as the always-on repository baseline for AI-assisted changes anywhere in the Rubik's Cube solver.
+
+## Goal
+
+Keep every change aligned with the roadmap order, Rust engine boundaries, cube domain language, verification flow, and AI knowledge maintenance rules.
+
+## Read First
+
+- `ai/rules/repository-rules.md`
+- `ai/rules/testing-rules.md`
+- `ai/rules/ai-rules.md`
+- `ai/architecture/project-architecture.md`
+- `ai/architecture/ai-knowledge-system.md`
+- `ai/glossary/cube-terms.md`
+
+## Workflow
+
+- Start from `roadmap.md`, nearby code, tests, and source docs before changing behavior.
+- Apply a narrower skill when the task touches cube engine, solver search, frontend visualization, or AI knowledge.
+- Keep solver logic in Rust and keep AI routes generated.
+- Run targeted verification first, then broader checks when a change crosses boundaries.
+
+## Expected Output
+
+- Code follows the current repository boundary and roadmap phase.
+- Generated AI route files are never edited manually.
+- Final reporting names verification that was run or explains why it was blocked.
+
+## Verification
+
+- Run `npm run ai:check` after AI knowledge changes.
+- Run `cargo test -p cube-engine` after engine changes when Rust is installed.
+
+# Referenced Context
+
+## Reference: `ai/rules/repository-rules.md`
+
+# Repository Rules
+
+Global rules for changes anywhere in this repository.
+
+## Always
+
+- Read `roadmap.md`, nearby code, and current tests before changing behavior.
+- Prefer the smallest correct change with the lowest surface area.
+- Keep the implementation order aligned with the roadmap: cube representation, moves, search, heuristics, pattern databases, ML, then hybrid search.
+- Keep solver logic in Rust engine code, not in frontend or AI tooling.
+- Use cubie representation as the primary engine model.
+- Run targeted verification for the affected area and report any environment blockers.
+- Keep AI route files generated from canonical files under `ai`.
+
+## Never
+
+- Do not start with machine learning, reinforcement learning, or Transformers.
+- Do not use sticker/color arrays as the primary solver representation.
+- Do not mix UI rendering logic with cube engine logic.
+- Do not edit `.opencode/skills`, `.cursor/rules`, or `.github/instructions` AI route files manually.
+- Do not add compatibility layers or future abstractions without a concrete current consumer.
+
+## Verification
+
+- AI knowledge changes: `npm run ai:check`.
+- Rust engine changes: `cargo test` when Rust is installed.
+- Broad repository changes: run all available targeted checks.
+
+## Reference: `ai/rules/testing-rules.md`
+
+# Testing Rules
+
+Testing rules for this repository.
+
+## Always
+
+- Add Rust unit tests next to pure functions when behavior is introduced.
+- Add integration tests under the owning crate when behavior crosses module boundaries.
+- Test observable cube behavior: solved state, inverse moves, notation parsing, scramble inversion, validation, and search output.
+- Keep algorithm tests deterministic.
+- Run the narrowest test first, then the affected crate test command.
+
+## Never
+
+- Do not rely on random tests without a fixed seed.
+- Do not assert implementation details when public cube behavior can be asserted.
+- Do not add ML, frontend, or WASM tests before the corresponding project phase exists.
+
+## Verification
+
+- Cube engine tests: `cargo test -p cube-engine`.
+- Workspace tests: `cargo test`.
+- AI routes: `npm run ai:check`.
+
+## Reference: `ai/rules/ai-rules.md`
+
+# AI Rules
+
+Rules for maintaining the AI knowledge base itself.
+
+## Always
+
+- Treat `ai` as the source of truth for AI guidance.
+- Keep reusable knowledge in `rules`, `architecture`, `glossary`, and `examples`.
+- Keep `skills` task-oriented: each skill should orchestrate references instead of duplicating them.
+- Add every routed skill to `ai/registry.json`.
+- Keep each skill's `## Read First` list identical to its `registry.json` `references` list.
+- Run `npm run ai:sync` after changing canonical skills, registry entries, or referenced knowledge files.
+- Run `npm run ai:check` before finishing AI knowledge changes.
+
+## Never
+
+- Do not edit generated route files manually.
+- Do not place long architecture explanations inside skills when they belong in `architecture`.
+- Do not place reusable coding rules inside skills when they belong in `rules`.
+- Do not teach generic programming knowledge; document how this project works.
+- Do not set Cursor `alwaysApply: true` outside the explicitly global `project-core` skill.
+
+## Route Generation
+
+- Generated route files are compiled from the canonical skill plus its registry references.
+- Manual edits to generated route files are invalid and should be replaced by `npm run ai:sync`.
+
+## Reference: `ai/architecture/project-architecture.md`
+
+# Project Architecture
+
+The final target is a hybrid Rubik's Cube solver with a Rust engine, search algorithms, heuristics, pattern databases, optional ML heuristics, WebAssembly integration, and a modern web visualization.
+
+## Current Bootstrap
+
+- `crates/cube-engine`: Rust crate for cube representation, moves, notation, scramble handling, search, and heuristics.
+- `ai`: canonical AI knowledge base and route generation system.
+- `roadmap.md`: source roadmap and implementation order.
+
+## Future Boundaries
+
+- `crates/wasm`: future wasm-bindgen bridge around the Rust engine.
+- `apps/web`: future TypeScript React visualization and playback UI.
+- `datasets`: future generated training datasets.
+- `ml`: future Python/PyTorch training code.
+
+## Ownership
+
+- Cube state, moves, validation, search, and heuristics belong in Rust.
+- Frontend code should only render, send moves, receive states, and play animations.
+- ML code should consume generated datasets and expose learned heuristics only after deterministic search is correct.
+
+## Reference: `ai/architecture/ai-knowledge-system.md`
+
+# AI Knowledge System Architecture
+
+`ai` is the canonical AI knowledge base for this repository.
+
+## Source Layers
+
+- `rules`: reusable constraints, conventions, and anti-patterns.
+- `architecture`: system boundaries and integration points.
+- `glossary`: cube and solver vocabulary.
+- `examples`: small real project examples that demonstrate conventions.
+- `skills`: task-oriented workflows that reference the other layers.
+
+## Registry
+
+`ai/registry.json` defines routed skills.
+
+`ai/registry.schema.json` documents the registry shape and the sync script enforces the same structural constraints during `npm run ai:check`.
+
+## Generated Routes
+
+`scripts/ai/sync-routes.mjs` compiles each canonical skill and its references into tool routes:
+
+- OpenCode: `.opencode/skills/<skill-name>/SKILL.md`.
+- Cursor: `.cursor/rules/<skill-name>.mdc`.
+- GitHub Copilot: `.github/instructions/<skill-name>.instructions.md`.
+
+Generated routes must not be edited manually.
+
+## Reference: `ai/glossary/cube-terms.md`
+
+# Cube Terms
+
+## Cubie
+
+A physical movable piece of the cube. The core engine tracks cubies rather than face colors as the primary model.
+
+## Corner
+
+A cubie with three stickers. A 3x3 cube has eight corners.
+
+## Edge
+
+A cubie with two stickers. A 3x3 cube has twelve edges.
+
+## Permutation
+
+Which cubie occupies each position.
+
+## Orientation
+
+How a cubie is twisted or flipped in its current position.
+
+## Move
+
+A face turn such as `R`, `U`, `R'`, or `U2`.
+
+## Scramble
+
+A sequence of moves applied from the solved state to produce a valid cube state.
+
+## Heuristic
+
+An estimate of distance from a cube state to the solved state.
+
+## Admissible Heuristic
+
+A heuristic that never overestimates the true distance to the solved state.
+
+## Pattern Database
+
+A precomputed lookup table mapping partial cube states to minimum solution distances.
+
+## Kociemba String
+
+A facelet string format commonly used by two-phase solvers. It can be an adapter format, not the primary engine model.

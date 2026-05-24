@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rubiks-cube-solver.local/ai/registry.schema.json",
+  "title": "Rubik's Cube Solver AI Knowledge Registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "canonicalRoot", "tools", "skills"],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "version": {
+      "const": 2
+    },
+    "canonicalRoot": {
+      "const": "ai/skills"
+    },
+    "tools": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["opencode", "cursor", "github"],
+      "properties": {
+        "opencode": { "$ref": "#/$defs/tool" },
+        "cursor": { "$ref": "#/$defs/tool" },
+        "github": { "$ref": "#/$defs/tool" }
+      }
+    },
+    "skills": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/skill" }
+    }
+  },
+  "$defs": {
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["routePattern"],
+      "properties": {
+        "routePattern": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "skill": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "description", "canonicalPath", "references", "routes", "toolConfig"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "global": {
+          "type": "boolean"
+        },
+        "canonicalPath": {
+          "type": "string",
+          "pattern": "^ai/skills/.+\\.md$"
+        },
+        "references": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^ai/(rules|architecture|glossary|examples)/.+\\.md$"
+          }
+        },
+        "routes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["opencode", "cursor", "github"],
+          "properties": {
+            "opencode": { "type": "string", "minLength": 1 },
+            "cursor": { "type": "string", "minLength": 1 },
+            "github": { "type": "string", "minLength": 1 }
+          }
+        },
+        "toolConfig": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["cursor", "github"],
+          "properties": {
+            "cursor": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["globs", "alwaysApply"],
+              "properties": {
+                "globs": { "type": "string", "minLength": 1 },
+                "alwaysApply": { "type": "boolean" }
+              }
+            },
+            "github": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["applyTo"],
+              "properties": {
+                "applyTo": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

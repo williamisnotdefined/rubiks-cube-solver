@@ -1,0 +1,152 @@
+{
+  "$schema": "./registry.schema.json",
+  "version": 2,
+  "canonicalRoot": "ai/skills",
+  "tools": {
+    "opencode": {
+      "routePattern": ".opencode/skills/{skill}/SKILL.md"
+    },
+    "cursor": {
+      "routePattern": ".cursor/rules/{skill}.mdc"
+    },
+    "github": {
+      "routePattern": ".github/instructions/{skill}.instructions.md"
+    }
+  },
+  "skills": [
+    {
+      "name": "project-core",
+      "description": "Always-on repository baseline for Rubik's Cube solver engineering, roadmap alignment, and AI knowledge maintenance.",
+      "global": true,
+      "canonicalPath": "ai/skills/project-core.md",
+      "references": [
+        "ai/rules/repository-rules.md",
+        "ai/rules/testing-rules.md",
+        "ai/rules/ai-rules.md",
+        "ai/architecture/project-architecture.md",
+        "ai/architecture/ai-knowledge-system.md",
+        "ai/glossary/cube-terms.md"
+      ],
+      "routes": {
+        "opencode": ".opencode/skills/project-core/SKILL.md",
+        "cursor": ".cursor/rules/project-core.mdc",
+        "github": ".github/instructions/project-core.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "**/*",
+          "alwaysApply": true
+        },
+        "github": {
+          "applyTo": "**/*"
+        }
+      }
+    },
+    {
+      "name": "repository-engineering-guidelines",
+      "description": "Use for repository-wide engineering standards, workspace commands, and final verification.",
+      "canonicalPath": "ai/skills/repository-engineering-guidelines.md",
+      "references": [
+        "ai/rules/repository-rules.md",
+        "ai/rules/testing-rules.md",
+        "ai/rules/ai-rules.md",
+        "ai/architecture/project-architecture.md",
+        "ai/architecture/ai-knowledge-system.md",
+        "ai/glossary/cube-terms.md"
+      ],
+      "routes": {
+        "opencode": ".opencode/skills/repository-engineering-guidelines/SKILL.md",
+        "cursor": ".cursor/rules/repository-engineering-guidelines.mdc",
+        "github": ".github/instructions/repository-engineering-guidelines.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "**/*",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "**/*"
+        }
+      }
+    },
+    {
+      "name": "cube-engine",
+      "description": "Use when adding or changing the Rust cube representation, moves, notation, scrambles, or cube validation.",
+      "canonicalPath": "ai/skills/cube-engine.md",
+      "references": [
+        "ai/rules/cube-engine-rules.md",
+        "ai/rules/testing-rules.md",
+        "ai/architecture/project-architecture.md",
+        "ai/architecture/cube-engine.md",
+        "ai/glossary/cube-terms.md"
+      ],
+      "routes": {
+        "opencode": ".opencode/skills/cube-engine/SKILL.md",
+        "cursor": ".cursor/rules/cube-engine.mdc",
+        "github": ".github/instructions/cube-engine.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "crates/cube-engine/**/*.{rs,toml},roadmap.md",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "crates/cube-engine/**/*.{rs,toml},roadmap.md"
+        }
+      }
+    },
+    {
+      "name": "solver-search",
+      "description": "Use when adding or changing BFS, IDDFS, IDA*, heuristics, pruning, or pattern database code.",
+      "canonicalPath": "ai/skills/solver-search.md",
+      "references": [
+        "ai/rules/solver-search-rules.md",
+        "ai/rules/testing-rules.md",
+        "ai/architecture/project-architecture.md",
+        "ai/architecture/solver-search.md",
+        "ai/architecture/cube-engine.md",
+        "ai/glossary/cube-terms.md"
+      ],
+      "routes": {
+        "opencode": ".opencode/skills/solver-search/SKILL.md",
+        "cursor": ".cursor/rules/solver-search.mdc",
+        "github": ".github/instructions/solver-search.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "crates/cube-engine/src/search/**/*.rs,crates/cube-engine/src/cube/**/*.rs,roadmap.md",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "crates/cube-engine/src/search/**/*.rs,crates/cube-engine/src/cube/**/*.rs,roadmap.md"
+        }
+      }
+    },
+    {
+      "name": "frontend-visualization",
+      "description": "Use when adding the future web UI, 3D cube visualization, playback, or frontend-to-WASM boundary.",
+      "canonicalPath": "ai/skills/frontend-visualization.md",
+      "references": [
+        "ai/rules/frontend-rules.md",
+        "ai/architecture/project-architecture.md",
+        "ai/architecture/frontend-visualization.md",
+        "ai/architecture/houstonp-rubiks-cube.md",
+        "ai/glossary/cube-terms.md"
+      ],
+      "routes": {
+        "opencode": ".opencode/skills/frontend-visualization/SKILL.md",
+        "cursor": ".cursor/rules/frontend-visualization.mdc",
+        "github": ".github/instructions/frontend-visualization.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "apps/web/**/*.{ts,tsx,css},crates/wasm/**/*,roadmap.md",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "apps/web/**/*.{ts,tsx,css},crates/wasm/**/*,roadmap.md"
+        }
+      }
+    }
+  ]
+}
