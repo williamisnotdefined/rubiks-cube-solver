@@ -16,6 +16,7 @@ Rules for unattended roadmap execution.
 - Use saved plans as implementation context and keep them in `.autopilot` logs.
 - Run long autopilot sessions from a normal terminal or `tmux`, not from inside OpenCode.
 - Use the autopilot lockfile to prevent concurrent runs.
+- Track only subprocesses created by the autopilot and clean up only those processes.
 - Run the roadmap reconciler after each verified implementation step unless explicitly disabled for debugging.
 - Keep `queue[0]` as the only next executable task.
 - Keep completed work in `history` and unresolved failures in `blocked`.
@@ -27,6 +28,7 @@ Rules for unattended roadmap execution.
 - Do not implement a roadmap step before a plan exists for that step.
 - Do not run nested `opencode -> autopilot -> opencode` unless explicitly debugging with `--allow-nested-opencode`.
 - Do not run multiple autopilot processes in the same worktree.
+- Do not kill arbitrary `opencode` processes; use `npm run autopilot:cleanup` for autopilot-owned children only.
 - Do not mutate `main` directly by default; use an autopilot branch unless explicitly configured otherwise.
 - Do not let the implementation agent commit, push, or mark roadmap steps done.
 - Do not let the reconciliation agent edit files other than `ai/roadmap/execution.json`.
@@ -43,6 +45,7 @@ Rules for unattended roadmap execution.
 - `npm run roadmap:next` shows the next runnable step.
 - `npm run autopilot:roadmap -- --dry-run` verifies the selected next step without implementation.
 - `npm run autopilot:roadmap -- --plan-only` generates a saved plan for the selected next step without implementation.
+- `npm run autopilot:cleanup` cleans up only registered autopilot-owned subprocesses.
 
 ## Planning
 

@@ -23,6 +23,7 @@ Keep the roadmap autopilot safe, resumable, deterministic, and aligned with the 
 - Treat `queue[0]` as the next and only current task.
 - Keep roadmap execution plan-first: generate a plan before implementation and pass it to implementation/fix prompts.
 - Keep long autopilot runs outside OpenCode, preferably in `tmux`, to avoid nested OpenCode sessions.
+- Track and clean up only subprocesses created by the autopilot runner.
 - Keep unattended implementation scoped to one roadmap step per commit.
 - Keep roadmap reconciliation as a separate pass and commit after each verified implementation step.
 - Keep final git state transitions owned by `scripts/autopilot/run-roadmap.mjs`.
@@ -36,6 +37,7 @@ Keep the roadmap autopilot safe, resumable, deterministic, and aligned with the 
 - Roadmap automation can be dry-run with `npm run autopilot:roadmap -- --dry-run`.
 - Roadmap automation can generate only the next plan with `npm run autopilot:roadmap -- --plan-only`.
 - Roadmap automation refuses nested OpenCode by default and uses a lockfile for concurrent-run protection.
+- Roadmap automation can clean up registered child processes with `npm run autopilot:cleanup`.
 - Roadmap reconciliation can update future queue items without touching source code.
 - Roadmap reconciliation keeps the queue aligned with `GOALS.md`.
 - Generated route files are synchronized from canonical AI knowledge.

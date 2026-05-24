@@ -5,6 +5,11 @@ import path from "node:path";
 import { spawn } from "node:child_process";
 
 import {
+  cleanupAutopilotProcesses,
+  registerAutopilotProcess,
+  unregisterAutopilotProcess,
+} from "./processes.mjs";
+import {
   findNextRunnableStep,
   fixedModel,
   fixedVariant,
@@ -69,6 +74,7 @@ process.once("SIGTERM", () => stopWithSignal("SIGTERM", 143));
 try {
   await main();
 } finally {
+  await cleanupAutopilotProcesses();
   if (lockAcquired) {
     await releaseLock();
   }
@@ -196,6 +202,7 @@ async function planStep(step, logDir) {
 
   const planResult = await runOpencode(prompt, promptPath, path.join(logDir, "plan.opencode.log"), {
     agent: options.planAgent,
+    role: "plan",
     skipPermissions: !options.interactivePermissions,
   });
   if (planResult.code !== 0) {
@@ -248,7 +255,9 @@ async function reconcileRoadmap(completedStep, stepLogDir) {
   await mkdir(reconcileLogDir, { recursive: true });
   await writeFile(promptPath, prompt);
 
-  const reconcileResult = await runOpencode(prompt, promptPath, path.join(reconcileLogDir, "opencode.log"));
+  const reconcileResult = await runOpencode(prompt, promptPath, path.join(reconcileLogDir, "opencode.log"), {
+    role: "reconcile",
+  });
   if (reconcileResult.code !== 0) {
     throw new Error(`Roadmap reconciliation failed. See ${path.relative(rootDir, reconcileLogDir)}.`);
   }
@@ -296,6 +305,7 @@ async function runVerification(step, logDir, attempt) {
 
 async function runOpencode(prompt, promptPath, logPath, opencodeOptions = {}) {
   const agent = opencodeOptions.agent ?? options.agent;
+  const role = opencodeOptions.role ?? agent;
   const skipPermissions = opencodeOptions.skipPermissions ?? !options.interactivePermissions;
   const opencodeArgs = ["run", "--model", options.model, "--variant", options.variant, "--agent", agent];
 
@@ -310,6 +320,10 @@ async function runOpencode(prompt, promptPath, logPath, opencodeOptions = {}) {
     AUTOPILOT_PROMPT_FILE: promptPath,
     OPENCODE_MODEL: options.model,
     OPENCODE_VARIANT: options.variant,
+  }, false, {
+    registeredCommand: ["opencode", "run", "--model", options.model, "--variant", options.variant, "--agent", agent, "<prompt>"],
+    detached: true,
+    trackRole: role,
   });
 }
 
@@ -351,28 +365,61 @@ async function ensureProtectedFilesUnchanged(logDir) {
   }
 }
 
-async function runCommand(command, commandArgs, logPath, extraEnv = {}, shell = false) {
+async function runCommand(command, commandArgs, logPath, extraEnv = {}, shell = false, commandOptions = {}) {
   await mkdir(path.dirname(logPath), { recursive: true });
 
-  return new Promise((resolve) => {
-    const child = spawn(command, commandArgs, {
-      cwd: rootDir,
-      env: { ...process.env, ...extraEnv },
-      shell,
-    });
-    let output = "";
+  const child = spawn(command, commandArgs, {
+    cwd: rootDir,
+    detached: commandOptions.detached === true,
+    env: { ...process.env, ...extraEnv },
+    shell,
+  });
 
-    child.stdout.on("data", (chunk) => {
-      const text = chunk.toString();
-      output += text;
-      process.stdout.write(text);
-    });
-    child.stderr.on("data", (chunk) => {
-      const text = chunk.toString();
-      output += text;
-      process.stderr.write(text);
+  let output = "";
+  let registered = false;
+
+  child.stdout.on("data", (chunk) => {
+    const text = chunk.toString();
+    output += text;
+    process.stdout.write(text);
+  });
+  child.stderr.on("data", (chunk) => {
+    const text = chunk.toString();
+    output += text;
+    process.stderr.write(text);
+  });
+
+  if (commandOptions.trackRole && child.pid) {
+    try {
+      await registerAutopilotProcess({
+        command: commandOptions.registeredCommand ?? [command, ...commandArgs],
+        cwd: rootDir,
+        pid: child.pid,
+        role: commandOptions.trackRole,
+      });
+      registered = true;
+    } catch (error) {
+      const message = `Failed to register autopilot subprocess ${child.pid}: ${error.message}\n`;
+      output += message;
+      child.kill("SIGTERM");
+      await writeFile(logPath, output);
+      return { code: 1, output };
+    }
+  }
+
+  return new Promise((resolve) => {
+    child.on("error", async (error) => {
+      output += `${error.message}\n`;
+      if (registered) {
+        await unregisterAutopilotProcess(child.pid);
+      }
+      await writeFile(logPath, output);
+      resolve({ code: 1, output });
     });
     child.on("close", async (code) => {
+      if (registered) {
+        await unregisterAutopilotProcess(child.pid);
+      }
       await writeFile(logPath, output);
       resolve({ code, output });
     });
@@ -529,6 +576,7 @@ async function releaseLock() {
 
 async function stopWithSignal(signal, exitCode) {
   console.error(`Received ${signal}; stopping roadmap autopilot.`);
+  await cleanupAutopilotProcesses();
   if (lockAcquired) {
     await releaseLock();
   }

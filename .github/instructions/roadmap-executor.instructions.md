@@ -45,6 +45,7 @@ Keep the roadmap autopilot safe, resumable, deterministic, and aligned with the 
 - Treat `queue[0]` as the next and only current task.
 - Keep roadmap execution plan-first: generate a plan before implementation and pass it to implementation/fix prompts.
 - Keep long autopilot runs outside OpenCode, preferably in `tmux`, to avoid nested OpenCode sessions.
+- Track and clean up only subprocesses created by the autopilot runner.
 - Keep unattended implementation scoped to one roadmap step per commit.
 - Keep roadmap reconciliation as a separate pass and commit after each verified implementation step.
 - Keep final git state transitions owned by `scripts/autopilot/run-roadmap.mjs`.
@@ -58,6 +59,7 @@ Keep the roadmap autopilot safe, resumable, deterministic, and aligned with the 
 - Roadmap automation can be dry-run with `npm run autopilot:roadmap -- --dry-run`.
 - Roadmap automation can generate only the next plan with `npm run autopilot:roadmap -- --plan-only`.
 - Roadmap automation refuses nested OpenCode by default and uses a lockfile for concurrent-run protection.
+- Roadmap automation can clean up registered child processes with `npm run autopilot:cleanup`.
 - Roadmap reconciliation can update future queue items without touching source code.
 - Roadmap reconciliation keeps the queue aligned with `GOALS.md`.
 - Generated route files are synchronized from canonical AI knowledge.
@@ -92,6 +94,7 @@ Rules for unattended roadmap execution.
 - Use saved plans as implementation context and keep them in `.autopilot` logs.
 - Run long autopilot sessions from a normal terminal or `tmux`, not from inside OpenCode.
 - Use the autopilot lockfile to prevent concurrent runs.
+- Track only subprocesses created by the autopilot and clean up only those processes.
 - Run the roadmap reconciler after each verified implementation step unless explicitly disabled for debugging.
 - Keep `queue[0]` as the only next executable task.
 - Keep completed work in `history` and unresolved failures in `blocked`.
@@ -103,6 +106,7 @@ Rules for unattended roadmap execution.
 - Do not implement a roadmap step before a plan exists for that step.
 - Do not run nested `opencode -> autopilot -> opencode` unless explicitly debugging with `--allow-nested-opencode`.
 - Do not run multiple autopilot processes in the same worktree.
+- Do not kill arbitrary `opencode` processes; use `npm run autopilot:cleanup` for autopilot-owned children only.
 - Do not mutate `main` directly by default; use an autopilot branch unless explicitly configured otherwise.
 - Do not let the implementation agent commit, push, or mark roadmap steps done.
 - Do not let the reconciliation agent edit files other than `ai/roadmap/execution.json`.
@@ -119,6 +123,7 @@ Rules for unattended roadmap execution.
 - `npm run roadmap:next` shows the next runnable step.
 - `npm run autopilot:roadmap -- --dry-run` verifies the selected next step without implementation.
 - `npm run autopilot:roadmap -- --plan-only` generates a saved plan for the selected next step without implementation.
+- `npm run autopilot:cleanup` cleans up only registered autopilot-owned subprocesses.
 
 ## Planning
 
@@ -235,6 +240,8 @@ The roadmap autopilot converts the human roadmap into an operational queue that 
 - `ai/roadmap/execution.json`: operational stack with `queue`, `history`, and `blocked`.
 - `scripts/roadmap/*.mjs`: validation and status commands for the operational queue.
 - `scripts/autopilot/run-roadmap.mjs`: unattended runner for one or more roadmap steps.
+- `scripts/autopilot/processes.mjs`: process registry for autopilot-owned subprocesses.
+- `scripts/autopilot/cleanup.mjs`: safe cleanup for registered autopilot-owned subprocesses.
 - `scripts/autopilot/prompts/*.md`: prompts passed to `opencode run`.
 - `.autopilot/`: gitignored runtime logs and failure output.
 
@@ -245,6 +252,7 @@ The autopilot runner:
 - refuses nested OpenCode execution by default;
 - requires a clean worktree;
 - acquires `.autopilot/roadmap.lock` to prevent concurrent runs;
+- tracks each autopilot-owned `opencode run` subprocess in `.autopilot/processes.json`;
 - switches to `autopilot/roadmap` by default;
 - selects `queue[0]` as the next executable step;
 - generates a saved plan for the selected step;
@@ -261,6 +269,8 @@ The autopilot runner:
 The planning agent is instructed not to edit files or git state. The runner rejects planning if it produces worktree changes.
 
 The runner should be launched from a normal terminal or `tmux`. Running it from inside OpenCode creates nested `opencode run` processes, so the runner rejects that mode unless `--allow-nested-opencode` is passed deliberately.
+
+The runner must never kill arbitrary OpenCode processes. Cleanup is limited to subprocesses registered in `.autopilot/processes.json`, and PID reuse is checked with `/proc/<pid>/stat` start-time ticks before signaling a process group.
 
 The implementation agent is instructed not to commit, push, change branches, or edit `ai/roadmap/execution.json`. The runner owns state transitions and git operations.
 
