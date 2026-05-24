@@ -1,4 +1,4 @@
-use super::cubies::{CubieState, CORNER_COUNT, EDGE_COUNT};
+use super::cubies::{CubeValidationError, CubieState, CORNER_COUNT, EDGE_COUNT};
 use super::moves::{Face, Move, Turn};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -11,6 +11,12 @@ impl Cube {
         Self {
             state: CubieState::solved(),
         }
+    }
+
+    pub fn try_from_state(state: CubieState) -> Result<Self, CubeValidationError> {
+        state.validate()?;
+
+        Ok(Self { state })
     }
 
     pub fn state(&self) -> &CubieState {
@@ -258,6 +264,22 @@ mod tests {
     }
 
     #[test]
+    fn cube_accepts_valid_state() {
+        let cube =
+            Cube::try_from_state(Cube::solved().state().clone()).expect("solved state is valid");
+
+        assert!(cube.is_solved());
+    }
+
+    #[test]
+    fn cube_rejects_invalid_state() {
+        let mut state = Cube::solved().state().clone();
+        state.edge_orientation[0] = 1;
+
+        assert!(Cube::try_from_state(state).is_err());
+    }
+
+    #[test]
     fn every_move_changes_solved_cube_and_inverse_restores_it() {
         for move_ in FACE_MOVES {
             let mut cube = Cube::solved();
@@ -271,6 +293,29 @@ mod tests {
                 "{move_:?} followed by its inverse should solve the cube"
             );
         }
+    }
+
+    #[test]
+    fn every_move_keeps_state_valid() {
+        for move_ in FACE_MOVES {
+            let mut cube = Cube::solved();
+
+            cube.apply_move(move_);
+
+            assert!(
+                cube.state().is_valid(),
+                "{move_:?} should preserve cube-state validity"
+            );
+        }
+    }
+
+    #[test]
+    fn short_algorithm_keeps_state_valid() {
+        let mut cube = Cube::solved();
+
+        cube.apply_moves(&[Move::R, Move::U, Move::RPrime, Move::UPrime]);
+
+        assert!(cube.state().is_valid());
     }
 
     #[test]
