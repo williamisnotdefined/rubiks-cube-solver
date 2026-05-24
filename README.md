@@ -26,43 +26,28 @@ When Rust is installed:
 cargo test
 ```
 
-## Roadmap Autopilot
+## Roadrunner
 
-The operational roadmap lives in `ai/roadmap/queue.json`. It uses `queue[0]` as the next executable task, `history` for completed verified work, and `blocked` for persistent failures. The queue is reconciled against `GOALS.md` after each completed step.
+The operational roadmap lives in `ai/roadmap/queue.json`. It uses `queue[0]` as the next executable task, `history` for completed verified work, and `blocked` for persistent failures. Roadrunner uses `roadrunner.config.json` plus the prompts in `ai/roadmap/prompts` to run and reconcile the queue against `GOALS.md`.
 
-Dry-run the next autonomous step:
-
-```bash
-npm run autopilot:roadmap -- --dry-run
-```
-
-Generate the plan for the next step without executing it:
+The generic runner implementation lives outside this repository. Once `roadrunner` is installed on `PATH`, these aliases delegate to it:
 
 ```bash
-npm run autopilot:roadmap -- --plan-only
+npm run roadmap:check
+npm run roadmap:status
+npm run roadmap:next
+npm run roadmap:plan
+npm run roadmap:run -- --max-steps 1
+npm run roadmap:cleanup
 ```
 
-Run one autonomous step on the default `autopilot/roadmap` branch:
+Run longer unattended sessions with explicit limits from a normal terminal or `tmux`, not from inside an existing OpenCode session:
 
 ```bash
-npm run autopilot:roadmap -- --max-steps 1
+npm run roadmap:run -- --max-steps 999 --max-hours 72
 ```
 
-Run longer unattended sessions with explicit limits:
-
-```bash
-npm run autopilot:roadmap -- --max-steps 999 --max-hours 72
-```
-
-Run unattended autopilot from a normal terminal or `tmux`, not from inside an existing OpenCode session. The runner refuses nested `opencode -> autopilot -> opencode` by default and uses `.autopilot/roadmap.lock` to prevent concurrent runs.
-
-Clean only autopilot-owned subprocesses if a runner is interrupted:
-
-```bash
-npm run autopilot:cleanup
-```
-
-The autopilot uses `opencode run --model openai/gpt-5.5 --variant xhigh`, writes runtime logs under `.autopilot/`, plans each step before execution, verifies each step, commits, pushes, then runs a reconciliation pass that may update the future queue in a separate commit. When the frontend exists, the queue should include Playwright tests that submit cube states, receive solutions, replay moves, and verify the cube is solved.
+Roadrunner uses `opencode run --model openai/gpt-5.5 --variant xhigh`, writes runtime logs under `.autopilot/`, plans each step before execution, verifies each step, commits, pushes, then runs a reconciliation pass that may update the future queue in a separate commit. When the frontend exists, the queue should include Playwright tests that submit cube states, receive solutions, replay moves, and verify the cube is solved.
 
 ## External Visualization Library
 

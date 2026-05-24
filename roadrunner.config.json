@@ -5,7 +5,7 @@
   "paths": {
     "goals": "GOALS.md",
     "queue": "ai/roadmap/queue.json",
-    "prompts": "scripts/autopilot/prompts",
+    "prompts": "ai/roadmap/prompts",
     "logs": ".autopilot/logs",
     "processes": ".autopilot/processes.json",
     "lock": ".autopilot/roadmap.lock"

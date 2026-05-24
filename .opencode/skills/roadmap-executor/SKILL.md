@@ -1,6 +1,6 @@
 ---
 name: "roadmap-executor"
-description: "Use when changing roadmap automation, ai/roadmap/queue.json, scripts/roadmap, scripts/autopilot, or unattended execution behavior."
+description: "Use when changing ai/roadmap/queue.json, ai/roadmap/prompts, roadrunner.config.json, package roadmap aliases, or Roadrunner execution behavior for this project."
 ---
 
 Generated from `ai/registry.json`. Do not edit manually.
@@ -8,11 +8,11 @@ Generated from `ai/registry.json`. Do not edit manually.
 Canonical skill: `../../../ai/skills/roadmap-executor.md`.
 
 Referenced context:
-- `../../../ai/rules/roadmap-autopilot-rules.md`
+- `../../../ai/rules/roadmap-runner-rules.md`
 - `../../../ai/rules/repository-rules.md`
 - `../../../ai/rules/testing-rules.md`
 - `../../../ai/rules/ai-rules.md`
-- `../../../ai/architecture/roadmap-autopilot.md`
+- `../../../ai/architecture/roadmap-runner.md`
 - `../../../ai/architecture/ai-knowledge-system.md`
 
 This file is compiled from canonical AI knowledge files. Edit canonical files under `ai`, then run `npm run ai:sync`.
@@ -23,44 +23,45 @@ This file is compiled from canonical AI knowledge files. Edit canonical files un
 
 # Roadmap Executor
 
-Use this skill when changing roadmap automation, `ai/roadmap/queue.json`, `scripts/roadmap`, `scripts/autopilot`, or unattended execution behavior.
+Use this skill when changing `ai/roadmap/queue.json`, `ai/roadmap/prompts`, `roadrunner.config.json`, package roadmap aliases, or Roadrunner execution behavior for this project.
 
 ## Goal
 
-Keep the roadmap autopilot safe, resumable, deterministic, and aligned with the roadmap queue.
+Keep the Rubik roadmap queue safe, resumable, deterministic, and aligned with the external Roadrunner CLI.
 
 ## Read First
 
-- `ai/rules/roadmap-autopilot-rules.md`
+- `ai/rules/roadmap-runner-rules.md`
 - `ai/rules/repository-rules.md`
 - `ai/rules/testing-rules.md`
 - `ai/rules/ai-rules.md`
-- `ai/architecture/roadmap-autopilot.md`
+- `ai/architecture/roadmap-runner.md`
 - `ai/architecture/ai-knowledge-system.md`
 
 ## Workflow
 
-- Validate `ai/roadmap/queue.json` with `npm run roadmap:check` after any queue edit.
+- Validate `ai/roadmap/queue.json` with `npm run roadmap:check` after any queue edit once Roadrunner is available.
 - Treat `GOALS.md` as read-only and as the product north star.
-- Keep autopilot defaults on `openai/gpt-5.5` and variant `xhigh`.
+- Keep Roadrunner defaults on `openai/gpt-5.5` and variant `xhigh`.
 - Treat `queue[0]` as the next and only current task.
 - Keep roadmap execution plan-first: generate a plan before implementation and pass it to implementation/fix prompts.
-- Keep long autopilot runs outside OpenCode, preferably in `tmux`, to avoid nested OpenCode sessions.
-- Track and clean up only subprocesses created by the autopilot runner.
+- Keep long Roadrunner runs outside OpenCode, preferably in `tmux`, to avoid nested OpenCode sessions.
+- Track and clean up only subprocesses created by Roadrunner.
 - Keep unattended implementation scoped to one roadmap step per commit.
 - Keep roadmap reconciliation as a separate pass and commit after each verified implementation step.
-- Keep final git state transitions owned by `scripts/autopilot/run-roadmap.mjs`.
+- Keep final git state transitions owned by Roadrunner, not by implementation agents.
 - Preserve `history` and `blocked` when reconciling the queue.
+- Do not reintroduce local Roadrunner implementation files under `scripts/roadmap` or `scripts/autopilot`.
 - Prioritize user-state input, verified solutions, WASM, frontend solve UI, and Playwright validation before datasets/ML/research tasks.
 - Prefer stopping with logs over trying unsafe recovery.
 - Regenerate AI routes with `npm run ai:sync` after skill or registry changes.
 
 ## Expected Output
 
-- Roadmap automation can be dry-run with `npm run autopilot:roadmap -- --dry-run`.
-- Roadmap automation can generate only the next plan with `npm run autopilot:roadmap -- --plan-only`.
-- Roadmap automation refuses nested OpenCode by default and uses a lockfile for concurrent-run protection.
-- Roadmap automation can clean up registered child processes with `npm run autopilot:cleanup`.
+- Roadmap commands delegate to the external `roadrunner` CLI.
+- Roadrunner can generate only the next plan with `npm run roadmap:plan` once installed.
+- Roadrunner refuses nested OpenCode by default and uses a lockfile for concurrent-run protection.
+- Roadrunner can clean up registered child processes with `npm run roadmap:cleanup` once installed.
 - Roadmap reconciliation can update future queue items without touching source code.
 - Roadmap reconciliation keeps the queue aligned with `GOALS.md`.
 - Generated route files are synchronized from canonical AI knowledge.
@@ -71,75 +72,55 @@ Keep the roadmap autopilot safe, resumable, deterministic, and aligned with the 
 - `npm run roadmap:check`
 - `npm run ai:check`
 - `npm run lint`
-- `npm run autopilot:roadmap -- --dry-run`
+- `npm run roadmap:next`
 
 # Referenced Context
 
-## Reference: `ai/rules/roadmap-autopilot-rules.md`
+## Reference: `ai/rules/roadmap-runner-rules.md`
 
-# Roadmap Autopilot Rules
+# Roadmap Runner Rules
 
-Rules for unattended roadmap execution.
+Rules for executing the Rubik roadmap through the external Roadrunner CLI.
 
 ## Always
 
-- Run roadmap automation from a clean worktree.
-- Execute one roadmap step at a time and commit only after verification passes.
-- Generate and save an explicit plan before every implementation attempt.
-- Use `openai/gpt-5.5` with variant `xhigh` for autonomous implementation attempts.
-- Keep `ai/roadmap/queue.json` as the operational source of truth.
+- Keep `ai/roadmap/queue.json` as the operational roadmap source of truth.
+- Keep `roadrunner.config.json` aligned with this repository's queue, prompts, logs, process registry, and lock paths.
+- Keep Rubik-specific Roadrunner prompts under `ai/roadmap/prompts`.
+- Use `openai/gpt-5.5` with variant `xhigh` for autonomous Roadrunner work.
 - Treat `GOALS.md` as the immutable product north star.
-- Keep generated logs under `.autopilot`, which is gitignored.
-- Stop at the first persistent blocker and leave a report instead of hiding failure.
-- Preserve small, reviewable commits with the step's configured commit message.
-- Use saved plans as implementation context and keep them in `.autopilot` logs.
-- Run long autopilot sessions from a normal terminal or `tmux`, not from inside OpenCode.
-- Use the autopilot lockfile to prevent concurrent runs.
-- Track only subprocesses created by the autopilot and clean up only those processes.
-- Run the roadmap reconciler after each verified implementation step unless explicitly disabled for debugging.
 - Keep `queue[0]` as the only next executable task.
 - Keep completed work in `history` and unresolved failures in `blocked`.
+- Preserve `history` and `blocked` records during reconciliation.
+- Keep generated logs, locks, and process registry files under `.autopilot`, which is gitignored.
+- Run long Roadrunner sessions from a normal terminal or `tmux`, not from inside OpenCode.
 
 ## Never
 
-- Do not run unattended automation on dirty worktrees.
+- Do not reintroduce local Roadrunner implementation files under `scripts/roadmap` or `scripts/autopilot`.
 - Do not bypass failing verification commands.
 - Do not implement a roadmap step before a plan exists for that step.
-- Do not run nested `opencode -> autopilot -> opencode` unless explicitly debugging with `--allow-nested-opencode`.
-- Do not run multiple autopilot processes in the same worktree.
-- Do not kill arbitrary `opencode` processes; use `npm run autopilot:cleanup` for autopilot-owned children only.
-- Do not mutate `main` directly by default; use an autopilot branch unless explicitly configured otherwise.
-- Do not let the implementation agent commit, push, or mark roadmap steps done.
-- Do not let the reconciliation agent edit files other than `ai/roadmap/queue.json`.
+- Do not let implementation agents commit, push, or mark roadmap steps done.
+- Do not let reconciliation edit files other than `ai/roadmap/queue.json`.
 - Do not let any autonomous step edit `GOALS.md`.
 - Do not rewrite or delete `history` and `blocked` records during reconciliation.
 - Do not use destructive git commands to recover from failed automation.
-- Do not commit large generated datasets, model checkpoints, or autopilot logs.
+- Do not commit large generated datasets, model checkpoints, or Roadrunner logs.
 
 ## Verification
 
-- `npm run roadmap:check` validates operational roadmap shape and dependencies.
-- `npm run roadmap:check` also validates that `GOALS.md` exists and names the final product target.
-- `npm run roadmap:status` shows progress.
-- `npm run roadmap:next` shows the next runnable step.
-- `npm run autopilot:roadmap -- --dry-run` verifies the selected next step without implementation.
-- `npm run autopilot:roadmap -- --plan-only` generates a saved plan for the selected next step without implementation.
-- `npm run autopilot:cleanup` cleans up only registered autopilot-owned subprocesses.
-
-## Planning
-
-- Planning runs before implementation for every step.
-- Planning must not edit files or git state.
-- Planning invokes OpenCode, so unattended `--plan-only` must be run outside an existing OpenCode session unless `--allow-nested-opencode` is intentionally used.
-- The generated plan must explain goal alignment, expected files, approach, tests, verification, risks, and out-of-scope work.
-- Implementation should follow the saved plan unless a minimal safe deviation is required to pass verification.
+- `npm run roadmap:check` validates the queue once Roadrunner is available.
+- `npm run roadmap:status` shows progress once Roadrunner is available.
+- `npm run roadmap:next` shows the next runnable step once Roadrunner is available.
+- `npm run roadmap:plan` generates a saved plan for the selected next step once Roadrunner is available.
+- `npm run roadmap:cleanup` cleans up only Roadrunner-owned subprocesses once Roadrunner is available.
 
 ## Queue Reconciliation
 
 - The implementation phase may change code and tests for the current `queue[0]` task.
 - The reconciliation phase may only update the future `queue` in `ai/roadmap/queue.json`.
 - Reconciliation may split, add, remove, or reorder queued tasks based on the current repository state.
-- Reconciliation must not mark tasks complete; only the runner moves verified tasks from `queue` to `history`.
+- Reconciliation must not mark tasks complete; only Roadrunner moves verified tasks from `queue` to `history`.
 - Reconciliation must compare the queue to `GOALS.md` and keep product-flow tasks ahead of datasets, ML, and research extensions until the web solve flow works.
 - Reconciliation should add Playwright/E2E validation once the frontend exists.
 
@@ -228,73 +209,58 @@ Rules for maintaining the AI knowledge base itself.
 - Generated route files are compiled from the canonical skill plus its registry references.
 - Manual edits to generated route files are invalid and should be replaced by `npm run ai:sync`.
 
-## Reference: `ai/architecture/roadmap-autopilot.md`
+## Reference: `ai/architecture/roadmap-runner.md`
 
-# Roadmap Autopilot Architecture
+# Roadmap Runner Architecture
 
-The roadmap autopilot converts the human roadmap into an operational queue that can be executed unattended in small verified commits.
+Rubik roadmap execution is delegated to the external Roadrunner CLI. This repository owns the product goals, queue, prompts, and configuration; Roadrunner owns the generic runner implementation.
 
 ## Source Files
 
 - `roadmap.md`: strategic project roadmap.
 - `GOALS.md`: read-only product north star for autonomous planning.
 - `ai/roadmap/queue.json`: operational stack with `queue`, `history`, and `blocked`.
-- `scripts/roadmap/*.mjs`: validation and status commands for the operational queue.
-- `scripts/autopilot/run-roadmap.mjs`: unattended runner for one or more roadmap steps.
-- `scripts/autopilot/processes.mjs`: process registry for autopilot-owned subprocesses.
-- `scripts/autopilot/cleanup.mjs`: safe cleanup for registered autopilot-owned subprocesses.
-- `scripts/autopilot/prompts/*.md`: prompts passed to `opencode run`.
-- `.autopilot/`: gitignored runtime logs and failure output.
+- `ai/roadmap/prompts/*.md`: Rubik-specific prompts consumed by Roadrunner.
+- `roadrunner.config.json`: Roadrunner path and provider configuration for this repository.
+- `package.json`: npm aliases that delegate roadmap commands to `roadrunner`.
+- `.autopilot/`: gitignored Roadrunner runtime logs, locks, and process registry files.
+
+## Boundary
+
+Roadrunner implementation code does not live in this repository. Do not add local runner, queue validator, process supervisor, or OpenCode provider implementations under `scripts/roadmap` or `scripts/autopilot`.
+
+This repository may keep project-specific prompts and queue metadata because those are product state, not generic runner code.
 
 ## Runner Flow
 
-The autopilot runner:
+Roadrunner follows:
 
-- refuses nested OpenCode execution by default;
-- requires a clean worktree;
-- acquires `.autopilot/roadmap.lock` to prevent concurrent runs;
-- tracks each autopilot-owned `opencode run` subprocess in `.autopilot/processes.json`;
-- switches to `autopilot/roadmap` by default;
-- selects `queue[0]` as the next executable step;
-- generates a saved plan for the selected step;
-- calls `opencode run --model openai/gpt-5.5 --variant xhigh`;
-- runs the step's verification commands;
-- retries failures up to `--max-attempts`;
-- moves the verified step from `queue` to `history`;
-- commits and pushes each completed step;
-- runs a roadmap reconciliation pass;
-- commits and pushes reconciliation changes separately when the queue changes.
+```txt
+Plan -> Execute -> Verify -> Commit -> Reconcile
+```
+
+Roadrunner selects `queue[0]`, generates a plan, executes the step, runs the step's verification commands, moves verified work to `history`, commits, then reconciles future queue items against `GOALS.md`.
 
 ## Safety Boundaries
 
-The planning agent is instructed not to edit files or git state. The runner rejects planning if it produces worktree changes.
+Planning must not edit files or git state.
 
-The runner should be launched from a normal terminal or `tmux`. Running it from inside OpenCode creates nested `opencode run` processes, so the runner rejects that mode unless `--allow-nested-opencode` is passed deliberately.
+Implementation agents must not commit, push, change branches, edit `GOALS.md`, or edit `ai/roadmap/queue.json`.
 
-The runner must never kill arbitrary OpenCode processes. Cleanup is limited to subprocesses registered in `.autopilot/processes.json`, and PID reuse is checked with `/proc/<pid>/stat` start-time ticks before signaling a process group.
+Reconciliation may edit only `ai/roadmap/queue.json`. It may modify the future `queue`, but it must preserve `history` and `blocked` records and must not mark tasks complete.
 
-The implementation agent is instructed not to commit, push, change branches, or edit `ai/roadmap/queue.json`. The runner owns state transitions and git operations.
-
-The reconciliation agent is instructed to edit only `ai/roadmap/queue.json`. It may modify the future `queue`, but it must preserve `history` and `blocked` records and must not mark tasks complete.
-
-The runner rejects implementation attempts that edit `GOALS.md`.
-
-The runner should stop on unresolved failures instead of continuing to later phases with a broken base.
+Cleanup must be limited to subprocesses registered by Roadrunner itself.
 
 ## Queue File Semantics
 
 - `queue[0]`: next task to implement.
 - `queue[1..]`: future tasks that the reconciler may refine.
-- `history`: verified tasks already committed by the runner.
+- `history`: verified tasks already committed by Roadrunner.
 - `blocked`: tasks removed from the queue after persistent automation failure.
 
 ## Goal-Aware Planning
 
 The reconciler must compare the queue against `GOALS.md` after each completed step. The core product path is user state input, validation, solving, WASM exposure, frontend solve UI, and Playwright verification. Datasets, ML, and hybrid research stay behind that flow unless they directly unblock it.
-
-## Plan-First Execution
-
-Each step follows `Plan -> Execute -> Verify -> Commit -> Reconcile`. Plans are stored under `.autopilot/logs/.../plan.md` and are passed back into implementation/fix prompts as required context.
 
 ## Reference: `ai/architecture/ai-knowledge-system.md`
 

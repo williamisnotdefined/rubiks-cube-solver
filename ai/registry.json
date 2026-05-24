@@ -150,14 +150,14 @@
     },
     {
       "name": "roadmap-executor",
-      "description": "Use when changing roadmap automation, ai/roadmap/queue.json, scripts/roadmap, scripts/autopilot, or unattended execution behavior.",
+      "description": "Use when changing ai/roadmap/queue.json, ai/roadmap/prompts, roadrunner.config.json, package roadmap aliases, or Roadrunner execution behavior for this project.",
       "canonicalPath": "ai/skills/roadmap-executor.md",
       "references": [
-        "ai/rules/roadmap-autopilot-rules.md",
+        "ai/rules/roadmap-runner-rules.md",
         "ai/rules/repository-rules.md",
         "ai/rules/testing-rules.md",
         "ai/rules/ai-rules.md",
-        "ai/architecture/roadmap-autopilot.md",
+        "ai/architecture/roadmap-runner.md",
         "ai/architecture/ai-knowledge-system.md"
       ],
       "routes": {
@@ -167,11 +167,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "ai/roadmap/**/*,scripts/roadmap/**/*.mjs,scripts/autopilot/**/*.mjs,scripts/autopilot/prompts/*.md,ai/skills/roadmap-executor.md,package.json",
+          "globs": "ai/roadmap/**/*,roadrunner.config.json,ai/skills/roadmap-executor.md,ai/rules/roadmap-runner-rules.md,ai/architecture/roadmap-runner.md,package.json",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "ai/roadmap/**/*,scripts/roadmap/**/*.mjs,scripts/autopilot/**/*.mjs,scripts/autopilot/prompts/*.md,ai/skills/roadmap-executor.md,package.json"
+          "applyTo": "ai/roadmap/**/*,roadrunner.config.json,ai/skills/roadmap-executor.md,ai/rules/roadmap-runner-rules.md,ai/architecture/roadmap-runner.md,package.json"
         }
       }
     }

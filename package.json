@@ -5,12 +5,13 @@
   "scripts": {
     "ai:check": "node scripts/ai/sync-routes.mjs --check",
     "ai:sync": "node scripts/ai/sync-routes.mjs",
-    "autopilot:cleanup": "node scripts/autopilot/cleanup.mjs",
-    "autopilot:roadmap": "node scripts/autopilot/run-roadmap.mjs",
     "lint": "npm run ai:check",
     "format": "npm run ai:sync",
-    "roadmap:check": "node scripts/roadmap/check.mjs",
-    "roadmap:next": "node scripts/roadmap/next.mjs",
-    "roadmap:status": "node scripts/roadmap/status.mjs"
+    "roadmap:check": "roadrunner check",
+    "roadmap:cleanup": "roadrunner cleanup",
+    "roadmap:next": "roadrunner next",
+    "roadmap:plan": "roadrunner plan",
+    "roadmap:run": "roadrunner run",
+    "roadmap:status": "roadrunner status"
   }
 }
