@@ -142,6 +142,46 @@ pub enum CubeValidationError {
     },
 }
 
+impl fmt::Display for CubeValidationError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::DuplicateCorner { corner } => write!(formatter, "duplicate corner: {corner:?}"),
+            Self::MissingCorner { corner } => write!(formatter, "missing corner: {corner:?}"),
+            Self::DuplicateEdge { edge } => write!(formatter, "duplicate edge: {edge:?}"),
+            Self::MissingEdge { edge } => write!(formatter, "missing edge: {edge:?}"),
+            Self::InvalidCornerOrientation {
+                position,
+                orientation,
+            } => write!(
+                formatter,
+                "invalid corner orientation at position {position}: {orientation}"
+            ),
+            Self::InvalidEdgeOrientation {
+                position,
+                orientation,
+            } => write!(
+                formatter,
+                "invalid edge orientation at position {position}: {orientation}"
+            ),
+            Self::InvalidCornerOrientationSum { sum } => {
+                write!(formatter, "invalid corner orientation sum: {sum}")
+            }
+            Self::InvalidEdgeOrientationSum { sum } => {
+                write!(formatter, "invalid edge orientation sum: {sum}")
+            }
+            Self::InvalidPermutationParity {
+                corner_parity_odd,
+                edge_parity_odd,
+            } => write!(
+                formatter,
+                "invalid permutation parity: corner odd={corner_parity_odd}, edge odd={edge_parity_odd}"
+            ),
+        }
+    }
+}
+
+impl std::error::Error for CubeValidationError {}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum CubieStateParseError {
     DuplicateSection {
@@ -598,6 +638,17 @@ mod tests {
                 corner_parity_odd: true,
                 edge_parity_odd: false
             })
+        );
+    }
+
+    #[test]
+    fn validation_error_displays_duplicate_corner() {
+        assert_eq!(
+            CubeValidationError::DuplicateCorner {
+                corner: Corner::Urf
+            }
+            .to_string(),
+            "duplicate corner: Urf"
         );
     }
 
