@@ -9,7 +9,9 @@ pub struct NotationError {
 
 impl NotationError {
     pub fn new(token: impl Into<String>) -> Self {
-        Self { token: token.into() }
+        Self {
+            token: token.into(),
+        }
     }
 
     pub fn token(&self) -> &str {

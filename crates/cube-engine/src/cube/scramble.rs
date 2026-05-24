@@ -18,6 +18,10 @@ impl Scramble {
     }
 
     pub fn inverse(&self) -> Vec<Move> {
-        self.moves.iter().rev().map(|move_| move_.inverse()).collect()
+        self.moves
+            .iter()
+            .rev()
+            .map(|move_| move_.inverse())
+            .collect()
     }
 }

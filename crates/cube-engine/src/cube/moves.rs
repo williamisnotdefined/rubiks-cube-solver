@@ -74,9 +74,12 @@ impl Move {
         match self {
             Self::U | Self::D | Self::L | Self::R | Self::F | Self::B => Turn::Clockwise,
             Self::U2 | Self::D2 | Self::L2 | Self::R2 | Self::F2 | Self::B2 => Turn::Half,
-            Self::UPrime | Self::DPrime | Self::LPrime | Self::RPrime | Self::FPrime | Self::BPrime => {
-                Turn::CounterClockwise
-            }
+            Self::UPrime
+            | Self::DPrime
+            | Self::LPrime
+            | Self::RPrime
+            | Self::FPrime
+            | Self::BPrime => Turn::CounterClockwise,
         }
     }
 
