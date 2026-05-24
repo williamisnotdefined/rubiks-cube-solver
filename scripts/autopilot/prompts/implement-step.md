@@ -13,6 +13,7 @@ You are running unattended inside this repository. Implement exactly the roadmap
 - Do not modify generated AI route files manually; edit canonical files under `ai` and run `npm run ai:sync` when needed.
 - Do not use destructive git commands such as `git reset --hard` or `git checkout --`.
 - Keep changes scoped to the step unless a direct compile/test issue requires a minimal adjacent fix.
+- Follow the saved execution plan. If implementation discovers the plan is wrong, make the smallest safe deviation and mention it in the final output.
 
 ## Required Workflow
 
@@ -33,6 +34,12 @@ You are running unattended inside this repository. Implement exactly the roadmap
 
 ```json
 {{STEP_JSON}}
+```
+
+## Saved Execution Plan
+
+```md
+{{PLAN_MD}}
 ```
 
 ## Repository Status

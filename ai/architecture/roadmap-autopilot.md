@@ -19,6 +19,7 @@ The autopilot runner:
 - requires a clean worktree;
 - switches to `autopilot/roadmap` by default;
 - selects `queue[0]` as the next executable step;
+- generates a saved plan for the selected step;
 - calls `opencode run --model openai/gpt-5.5 --variant xhigh`;
 - runs the step's verification commands;
 - retries failures up to `--max-attempts`;
@@ -28,6 +29,8 @@ The autopilot runner:
 - commits and pushes reconciliation changes separately when the queue changes.
 
 ## Safety Boundaries
+
+The planning agent is instructed not to edit files or git state. The runner rejects planning if it produces worktree changes.
 
 The implementation agent is instructed not to commit, push, change branches, or edit `ai/roadmap/execution.json`. The runner owns state transitions and git operations.
 
@@ -47,3 +50,7 @@ The runner should stop on unresolved failures instead of continuing to later pha
 ## Goal-Aware Planning
 
 The reconciler must compare the queue against `GOALS.md` after each completed step. The core product path is user state input, validation, solving, WASM exposure, frontend solve UI, and Playwright verification. Datasets, ML, and hybrid research stay behind that flow unless they directly unblock it.
+
+## Plan-First Execution
+
+Each step follows `Plan -> Execute -> Verify -> Commit -> Reconcile`. Plans are stored under `.autopilot/logs/.../plan.md` and are passed back into implementation/fix prompts as required context.

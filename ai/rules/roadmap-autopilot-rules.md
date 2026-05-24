@@ -6,12 +6,14 @@ Rules for unattended roadmap execution.
 
 - Run roadmap automation from a clean worktree.
 - Execute one roadmap step at a time and commit only after verification passes.
+- Generate and save an explicit plan before every implementation attempt.
 - Use `openai/gpt-5.5` with variant `xhigh` for autonomous implementation attempts.
 - Keep `ai/roadmap/execution.json` as the operational source of truth.
 - Treat `GOALS.md` as the immutable product north star.
 - Keep generated logs under `.autopilot`, which is gitignored.
 - Stop at the first persistent blocker and leave a report instead of hiding failure.
 - Preserve small, reviewable commits with the step's configured commit message.
+- Use saved plans as implementation context and keep them in `.autopilot` logs.
 - Run the roadmap reconciler after each verified implementation step unless explicitly disabled for debugging.
 - Keep `queue[0]` as the only next executable task.
 - Keep completed work in `history` and unresolved failures in `blocked`.
@@ -20,6 +22,7 @@ Rules for unattended roadmap execution.
 
 - Do not run unattended automation on dirty worktrees.
 - Do not bypass failing verification commands.
+- Do not implement a roadmap step before a plan exists for that step.
 - Do not mutate `main` directly by default; use an autopilot branch unless explicitly configured otherwise.
 - Do not let the implementation agent commit, push, or mark roadmap steps done.
 - Do not let the reconciliation agent edit files other than `ai/roadmap/execution.json`.
@@ -35,6 +38,14 @@ Rules for unattended roadmap execution.
 - `npm run roadmap:status` shows progress.
 - `npm run roadmap:next` shows the next runnable step.
 - `npm run autopilot:roadmap -- --dry-run` verifies the selected next step without implementation.
+- `npm run autopilot:roadmap -- --plan-only` generates a saved plan for the selected next step without implementation.
+
+## Planning
+
+- Planning runs before implementation for every step.
+- Planning must not edit files or git state.
+- The generated plan must explain goal alignment, expected files, approach, tests, verification, risks, and out-of-scope work.
+- Implementation should follow the saved plan unless a minimal safe deviation is required to pass verification.
 
 ## Queue Reconciliation
 

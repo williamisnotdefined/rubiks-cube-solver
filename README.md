@@ -36,6 +36,12 @@ Dry-run the next autonomous step:
 npm run autopilot:roadmap -- --dry-run
 ```
 
+Generate the plan for the next step without executing it:
+
+```bash
+npm run autopilot:roadmap -- --plan-only
+```
+
 Run one autonomous step on the default `autopilot/roadmap` branch:
 
 ```bash
@@ -48,7 +54,7 @@ Run longer unattended sessions with explicit limits:
 npm run autopilot:roadmap -- --max-steps 999 --max-hours 72
 ```
 
-The autopilot uses `opencode run --model openai/gpt-5.5 --variant xhigh`, writes runtime logs under `.autopilot/`, verifies each step, commits, pushes, then runs a reconciliation pass that may update the future queue in a separate commit. When the frontend exists, the queue should include Playwright tests that submit cube states, receive solutions, replay moves, and verify the cube is solved.
+The autopilot uses `opencode run --model openai/gpt-5.5 --variant xhigh`, writes runtime logs under `.autopilot/`, plans each step before execution, verifies each step, commits, pushes, then runs a reconciliation pass that may update the future queue in a separate commit. When the frontend exists, the queue should include Playwright tests that submit cube states, receive solutions, replay moves, and verify the cube is solved.
 
 ## External Visualization Library
 

@@ -49,6 +49,8 @@ const options = {
   model: fixedModel,
   noReconcile: Boolean(args["no-reconcile"]),
   noPush: Boolean(args["no-push"]),
+  planAgent: String(args["plan-agent"] ?? "plan"),
+  planOnly: Boolean(args["plan-only"]),
   variant: fixedVariant,
 };
 
@@ -72,7 +74,25 @@ async function main() {
     }
 
     console.log(`Dry run: would use model ${options.model} with variant ${options.variant}.`);
+    console.log(`Dry run: would plan with agent ${options.planAgent} before implementation.`);
     console.log(`Dry run: roadmap reconciler is ${options.noReconcile ? "disabled" : "enabled"}.`);
+    return;
+  }
+
+  if (options.planOnly) {
+    await ensureCleanWorktree();
+
+    const execution = await loadValidExecution();
+    const step = findNextRunnableStep(execution);
+
+    if (!step) {
+      console.log("No runnable pending roadmap step found.");
+      return;
+    }
+
+    const logDir = await createLogDir(`${step.id}-plan`);
+    await planStep(step, logDir);
+    console.log(`Plan-only mode wrote ${path.relative(rootDir, path.join(logDir, "plan.md"))}.`);
     return;
   }
 
@@ -106,6 +126,7 @@ async function main() {
 
 async function runStep(step, execution) {
   const logDir = await createLogDir(step.id);
+  const plan = await planStep(step, logDir);
   let lastFailure = "";
 
   for (let attempt = 1; attempt <= options.maxAttempts; attempt += 1) {
@@ -114,6 +135,7 @@ async function runStep(step, execution) {
       ATTEMPT: `${attempt}`,
       GOALS_MD: await readGoals(),
       LAST_FAILURE: lastFailure.slice(-16_000),
+      PLAN_MD: plan,
       ROADMAP_STATUS: formatStep(step),
       STEP_JSON: JSON.stringify(step, null, 2),
     });
@@ -143,6 +165,34 @@ async function runStep(step, execution) {
   markStepBlocked(execution, step.id, `Autopilot failed after ${options.maxAttempts} attempts. See ${path.relative(rootDir, logDir)}.`);
   await writeExecution(execution);
   throw new Error(`Roadmap step ${step.id} failed after ${options.maxAttempts} attempts. Logs: ${logDir}`);
+}
+
+async function planStep(step, logDir) {
+  const promptPath = path.join(logDir, "plan.prompt.md");
+  const planPath = path.join(logDir, "plan.md");
+  const prompt = await renderPrompt("plan-step.md", {
+    GOALS_MD: await readGoals(),
+    ROADMAP_STATUS: formatStep(step),
+    STEP_JSON: JSON.stringify(step, null, 2),
+  });
+
+  await writeFile(promptPath, prompt);
+
+  const planResult = await runOpencode(prompt, promptPath, path.join(logDir, "plan.opencode.log"), {
+    agent: options.planAgent,
+    skipPermissions: false,
+  });
+  if (planResult.code !== 0) {
+    throw new Error(`Roadmap planning failed. See ${path.relative(rootDir, path.join(logDir, "plan.opencode.log"))}.`);
+  }
+
+  const changedFiles = await changedWorktreeFiles(logDir);
+  if (changedFiles.length > 0) {
+    throw new Error(`Roadmap planning must not modify files. Unexpected changes: ${changedFiles.join(", ")}.`);
+  }
+
+  await writeFile(planPath, planResult.output);
+  return planResult.output;
 }
 
 async function completeStep(step, execution, logDir) {
@@ -228,16 +278,18 @@ async function runVerification(step, logDir, attempt) {
   return { ok: true, output };
 }
 
-async function runOpencode(prompt, promptPath, logPath) {
-  const opencodeArgs = ["run", "--model", options.model, "--variant", options.variant, "--agent", options.agent];
+async function runOpencode(prompt, promptPath, logPath, opencodeOptions = {}) {
+  const agent = opencodeOptions.agent ?? options.agent;
+  const skipPermissions = opencodeOptions.skipPermissions ?? !options.interactivePermissions;
+  const opencodeArgs = ["run", "--model", options.model, "--variant", options.variant, "--agent", agent];
 
-  if (!options.interactivePermissions) {
+  if (skipPermissions) {
     opencodeArgs.push("--dangerously-skip-permissions");
   }
 
   opencodeArgs.push(prompt);
 
-  console.log(`Running opencode for ${path.basename(promptPath)} with ${options.model}/${options.variant}.`);
+  console.log(`Running opencode for ${path.basename(promptPath)} with ${options.model}/${options.variant} using agent ${agent}.`);
   return runCommand("opencode", opencodeArgs, logPath, {
     AUTOPILOT_PROMPT_FILE: promptPath,
     OPENCODE_MODEL: options.model,

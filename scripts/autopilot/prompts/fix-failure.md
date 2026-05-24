@@ -11,6 +11,7 @@ The previous attempt for this roadmap step failed verification. Fix the failure 
 - Do not skip tests or lower quality gates.
 - Do not use destructive git commands such as `git reset --hard` or `git checkout --`.
 - Focus on the failure output. Avoid unrelated refactors.
+- Use the saved execution plan as context, but prioritize fixing the verification failure.
 
 ## Roadmap Step
 
@@ -22,6 +23,12 @@ The previous attempt for this roadmap step failed verification. Fix the failure 
 
 ```md
 {{GOALS_MD}}
+```
+
+## Saved Execution Plan
+
+```md
+{{PLAN_MD}}
 ```
 
 ## Attempt
