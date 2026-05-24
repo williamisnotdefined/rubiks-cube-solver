@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main, autopilot/roadmap]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check roadmap execution metadata
+        run: npm run roadmap:check
+
+      - name: Check AI routes
+        run: npm run ai:check
+
+      - name: Check Rust formatting
+        run: cargo fmt --check
+
+      - name: Run Rust tests
+        run: cargo test
+
+      - name: Run Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings

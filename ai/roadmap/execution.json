@@ -1,0 +1,337 @@
+{
+  "version": 1,
+  "source": "roadmap.md",
+  "updatedAt": null,
+  "steps": [
+    {
+      "id": "phase-2-ida-star-zero",
+      "phase": "Fase 2 - Algoritmos de Busca",
+      "title": "Implement IDA* with ZeroHeuristic",
+      "status": "pending",
+      "scope": [
+        "crates/cube-engine/src/search/ida_star.rs",
+        "crates/cube-engine/src/search/mod.rs",
+        "crates/cube-engine/src/lib.rs"
+      ],
+      "prompt": "Implement IDA* using the existing SearchSolution and Heuristic abstractions. Start with ZeroHeuristic support and keep the implementation bounded by max_depth. Use only FACE_MOVES for search expansion.",
+      "acceptance": [
+        "solved cube returns an empty solution",
+        "1-move and 2-move scrambles solve within depth limit",
+        "insufficient max_depth returns None",
+        "explored_nodes is reported",
+        "the returned solution actually solves the cube"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "commitMessage": "Implement IDA* search with zero heuristic"
+    },
+    {
+      "id": "phase-2-ida-star-heuristics",
+      "phase": "Fase 2 - Algoritmos de Busca",
+      "title": "Wire IDA* to simple heuristics",
+      "status": "pending",
+      "dependsOn": ["phase-2-ida-star-zero"],
+      "scope": [
+        "crates/cube-engine/src/search/ida_star.rs",
+        "crates/cube-engine/src/search/heuristics.rs"
+      ],
+      "prompt": "Use the existing simple heuristics with IDA*. Add tests showing MaxHeuristic can guide IDA* on shallow scrambles without changing correctness. Keep ZeroHeuristic behavior intact.",
+      "acceptance": [
+        "IDA* accepts any Heuristic implementation",
+        "MaxHeuristic solves shallow scrambles",
+        "ZeroHeuristic tests still pass",
+        "all solutions remain valid and use FACE_MOVES"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "commitMessage": "Use heuristics in IDA* search"
+    },
+    {
+      "id": "phase-2-search-metrics",
+      "phase": "Fase 2 - Algoritmos de Busca",
+      "title": "Standardize search metrics and pruning",
+      "status": "pending",
+      "dependsOn": ["phase-2-ida-star-heuristics"],
+      "scope": [
+        "crates/cube-engine/src/search/**/*.rs"
+      ],
+      "prompt": "Standardize metrics and pruning across BFS, IDDFS, and IDA*. Keep APIs simple and avoid broad abstractions unless shared behavior is already duplicated.",
+      "acceptance": [
+        "BFS, IDDFS, and IDA* expose consistent explored_nodes metrics",
+        "same-face pruning is consistently tested",
+        "existing search tests still pass"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "commitMessage": "Standardize search metrics"
+    },
+    {
+      "id": "phase-3-heuristic-tests",
+      "phase": "Fase 3 - Heurísticas",
+      "title": "Strengthen heuristic admissibility tests",
+      "status": "pending",
+      "dependsOn": ["phase-2-search-metrics"],
+      "scope": [
+        "crates/cube-engine/src/search/heuristics.rs",
+        "crates/cube-engine/src/search/ida_star.rs"
+      ],
+      "prompt": "Add stronger tests for heuristic admissibility against known shallow scramble distances from BFS/IDDFS. Do not introduce pattern databases yet.",
+      "acceptance": [
+        "heuristics estimate zero for solved states",
+        "heuristics do not overestimate BFS-known shallow distances",
+        "heuristics do not mutate cube state"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "commitMessage": "Strengthen heuristic tests"
+    },
+    {
+      "id": "phase-4-coordinate-indexing",
+      "phase": "Fase 4 - Pattern Databases",
+      "title": "Add coordinate indexing utilities",
+      "status": "pending",
+      "dependsOn": ["phase-3-heuristic-tests"],
+      "scope": [
+        "crates/cube-engine/src/search/patterns/**/*.rs",
+        "crates/cube-engine/src/search/mod.rs"
+      ],
+      "prompt": "Add compact coordinate indexing utilities for corner orientation and edge orientation. Keep this pure Rust and heavily tested. Do not generate large databases yet.",
+      "acceptance": [
+        "corner orientation can be encoded and decoded",
+        "edge orientation can be encoded and decoded",
+        "round trips preserve coordinates",
+        "invalid coordinates are rejected"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "commitMessage": "Add pattern coordinate indexing"
+    },
+    {
+      "id": "phase-4-edge-orientation-db",
+      "phase": "Fase 4 - Pattern Databases",
+      "title": "Build edge orientation pattern database",
+      "status": "pending",
+      "dependsOn": ["phase-4-coordinate-indexing"],
+      "scope": [
+        "crates/cube-engine/src/search/patterns/**/*.rs",
+        "crates/cube-engine/src/search/heuristics.rs"
+      ],
+      "prompt": "Build a small in-memory edge orientation pattern database using reverse BFS over the edge-orientation coordinate. Expose it as an admissible heuristic without adding large generated artifacts.",
+      "acceptance": [
+        "database builds deterministically",
+        "solved coordinate has distance zero",
+        "lookup returns admissible values for shallow scrambles",
+        "no large binary artifacts are committed"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "commitMessage": "Add edge orientation pattern database"
+    },
+    {
+      "id": "phase-4-corner-orientation-db",
+      "phase": "Fase 4 - Pattern Databases",
+      "title": "Build corner orientation pattern database",
+      "status": "pending",
+      "dependsOn": ["phase-4-edge-orientation-db"],
+      "scope": [
+        "crates/cube-engine/src/search/patterns/**/*.rs",
+        "crates/cube-engine/src/search/heuristics.rs"
+      ],
+      "prompt": "Build a small in-memory corner orientation pattern database and expose it as an admissible heuristic. Keep tests deterministic and avoid generated large artifacts.",
+      "acceptance": [
+        "database builds deterministically",
+        "solved coordinate has distance zero",
+        "lookup is admissible for shallow scrambles",
+        "heuristics can be combined with MaxHeuristic"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "commitMessage": "Add corner orientation pattern database"
+    },
+    {
+      "id": "phase-6-wasm-bootstrap",
+      "phase": "Fase 6 - WebAssembly",
+      "title": "Bootstrap WASM crate",
+      "status": "pending",
+      "dependsOn": ["phase-4-corner-orientation-db"],
+      "scope": [
+        "crates/wasm/**/*",
+        "Cargo.toml",
+        "package.json"
+      ],
+      "prompt": "Create a wasm-bindgen crate that wraps the Rust cube engine with a minimal API for parsing algorithms, generating scrambles, applying moves, and solving shallow states. Keep solver logic in cube-engine.",
+      "acceptance": [
+        "workspace includes a WASM crate",
+        "wasm-bindgen wrappers compile",
+        "frontend-facing API does not duplicate solver logic",
+        "tests cover wrapper behavior where feasible"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "commitMessage": "Bootstrap WASM bindings"
+    },
+    {
+      "id": "phase-7-frontend-bootstrap",
+      "phase": "Fase 7 - Frontend Web",
+      "title": "Bootstrap web frontend",
+      "status": "pending",
+      "dependsOn": ["phase-6-wasm-bootstrap"],
+      "scope": [
+        "apps/web/**/*",
+        "package.json"
+      ],
+      "prompt": "Bootstrap a TypeScript React frontend for cube visualization and solver playback. Preserve the engine boundary: UI sends moves and receives states from Rust/WASM wrappers.",
+      "acceptance": [
+        "apps/web exists and builds",
+        "UI has a minimal cube state panel or placeholder renderer",
+        "no solver logic is implemented in React components",
+        "package scripts include frontend build/check commands"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "commitMessage": "Bootstrap web frontend"
+    },
+    {
+      "id": "phase-7-cube-visualization",
+      "phase": "Fase 7 - Frontend Web",
+      "title": "Implement cube visualization and playback",
+      "status": "pending",
+      "dependsOn": ["phase-7-frontend-bootstrap"],
+      "scope": [
+        "apps/web/**/*"
+      ],
+      "prompt": "Implement interactive cube visualization, scramble input, move application, and solution playback. Use the engine/WASM boundary and keep UI state separate from solver state.",
+      "acceptance": [
+        "scramble input can be applied",
+        "solutions can be played back",
+        "desktop and mobile layouts are usable",
+        "solver logic remains outside React components"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "commitMessage": "Add cube visualization playback"
+    },
+    {
+      "id": "phase-8-dataset-generator",
+      "phase": "Fase 8 - Dataset Generation",
+      "title": "Add dataset generation crate or tool",
+      "status": "pending",
+      "dependsOn": ["phase-7-cube-visualization"],
+      "scope": [
+        "crates/dataset-generator/**/*",
+        "datasets/README.md",
+        "Cargo.toml"
+      ],
+      "prompt": "Add deterministic dataset generation from reversible scrambles. Generate metadata and sample JSONL output without committing large datasets.",
+      "acceptance": [
+        "generator creates deterministic examples for shallow depths",
+        "records include state, distance, and best_move",
+        "large generated datasets are gitignored",
+        "sample output is documented"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "commitMessage": "Add dataset generation tool"
+    },
+    {
+      "id": "phase-9-ml-bootstrap",
+      "phase": "Fase 9 - Machine Learning",
+      "title": "Bootstrap ML training package",
+      "status": "pending",
+      "dependsOn": ["phase-8-dataset-generator"],
+      "scope": [
+        "ml/**/*"
+      ],
+      "prompt": "Bootstrap a Python/PyTorch ML package for a simple value network. Include dataset loading, one-hot encoding, a minimal MLP model, and smoke tests. Do not introduce Transformers.",
+      "acceptance": [
+        "ML package has documented setup",
+        "one-hot encoding is tested",
+        "MLP forward pass is tested",
+        "training entry point supports a tiny sample dataset"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "commitMessage": "Bootstrap ML value network"
+    },
+    {
+      "id": "phase-10-hybrid-search-interface",
+      "phase": "Fase 10 - Hybrid Search",
+      "title": "Add hybrid heuristic interface",
+      "status": "pending",
+      "dependsOn": ["phase-9-ml-bootstrap"],
+      "scope": [
+        "crates/cube-engine/src/search/**/*.rs",
+        "ml/**/*"
+      ],
+      "prompt": "Add interfaces for combining classical heuristics, pattern databases, and optional ML value estimates. Keep ML optional and do not require Python at Rust runtime.",
+      "acceptance": [
+        "Rust search can combine multiple heuristic sources",
+        "ML heuristic is behind an optional boundary or fixture",
+        "IDA* correctness tests still pass",
+        "no runtime dependency on Python is introduced in cube-engine"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "commitMessage": "Add hybrid search heuristic interface"
+    }
+  ]
+}

@@ -15,6 +15,9 @@ The implementation order follows `roadmap.md`: do not start with AI or frontend 
 ```bash
 npm run ai:sync
 npm run ai:check
+npm run roadmap:check
+npm run roadmap:status
+npm run roadmap:next
 ```
 
 When Rust is installed:
@@ -22,6 +25,30 @@ When Rust is installed:
 ```bash
 cargo test
 ```
+
+## Roadmap Autopilot
+
+The operational roadmap lives in `ai/roadmap/execution.json`.
+
+Dry-run the next autonomous step:
+
+```bash
+npm run autopilot:roadmap -- --dry-run
+```
+
+Run one autonomous step on the default `autopilot/roadmap` branch:
+
+```bash
+npm run autopilot:roadmap -- --max-steps 1
+```
+
+Run longer unattended sessions with explicit limits:
+
+```bash
+npm run autopilot:roadmap -- --max-steps 999 --max-hours 72
+```
+
+The autopilot uses `opencode run --model openai/gpt-5.5 --variant xhigh` by default, writes runtime logs under `.autopilot/`, verifies each step, commits, and pushes only after checks pass.
 
 ## External Visualization Library
 
