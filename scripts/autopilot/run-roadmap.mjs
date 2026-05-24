@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { spawn } from "node:child_process";
 
@@ -40,6 +40,7 @@ if (args.variant !== undefined && args.variant !== fixedVariant) {
 
 const options = {
   agent: String(args.agent ?? "build"),
+  allowNestedOpencode: Boolean(args["allow-nested-opencode"]),
   branch: String(args.branch ?? "autopilot/roadmap"),
   dryRun: Boolean(args["dry-run"]),
   interactivePermissions: Boolean(args["interactive-permissions"]),
@@ -54,13 +55,24 @@ const options = {
   variant: fixedVariant,
 };
 
+const lockPath = path.join(rootDir, ".autopilot/roadmap.lock");
 const startTime = Date.now();
+let lockAcquired = false;
 
 if (!(await pathExists(path.join(rootDir, "ai/roadmap/execution.json")))) {
   throw new Error("Missing ai/roadmap/execution.json.");
 }
 
-await main();
+process.once("SIGINT", () => stopWithSignal("SIGINT", 130));
+process.once("SIGTERM", () => stopWithSignal("SIGTERM", 143));
+
+try {
+  await main();
+} finally {
+  if (lockAcquired) {
+    await releaseLock();
+  }
+}
 
 async function main() {
   if (options.dryRun) {
@@ -80,6 +92,8 @@ async function main() {
   }
 
   if (options.planOnly) {
+    await ensureNotNestedOpencode();
+    await acquireLock();
     await ensureCleanWorktree();
 
     const execution = await loadValidExecution();
@@ -96,6 +110,8 @@ async function main() {
     return;
   }
 
+  await ensureNotNestedOpencode();
+  await acquireLock();
   await ensureCleanWorktree();
 
   if (options.branch !== "current") {
@@ -180,7 +196,7 @@ async function planStep(step, logDir) {
 
   const planResult = await runOpencode(prompt, promptPath, path.join(logDir, "plan.opencode.log"), {
     agent: options.planAgent,
-    skipPermissions: false,
+    skipPermissions: !options.interactivePermissions,
   });
   if (planResult.code !== 0) {
     throw new Error(`Roadmap planning failed. See ${path.relative(rootDir, path.join(logDir, "plan.opencode.log"))}.`);
@@ -401,6 +417,122 @@ async function ensureCleanWorktree() {
   if (result.output.trim() !== "") {
     throw new Error("Autopilot requires a clean worktree before starting.");
   }
+}
+
+async function ensureNotNestedOpencode() {
+  if (options.allowNestedOpencode) {
+    return;
+  }
+
+  const ancestor = await findOpencodeAncestor();
+  if (!ancestor) {
+    return;
+  }
+
+  throw new Error(
+    `Refusing to run autopilot from inside an existing opencode process (pid ${ancestor.pid}, ${ancestor.command}). ` +
+      "Run from a normal terminal/tmux session, or pass --allow-nested-opencode if you intentionally want nested opencode.",
+  );
+}
+
+async function findOpencodeAncestor() {
+  let pid = process.ppid;
+
+  while (pid > 1) {
+    const processInfo = await readProcessInfo(pid);
+    if (!processInfo) {
+      return null;
+    }
+
+    if (processInfo.command.includes("opencode")) {
+      return { command: processInfo.command, pid };
+    }
+
+    pid = processInfo.parentPid;
+  }
+
+  return null;
+}
+
+async function readProcessInfo(pid) {
+  try {
+    const status = await readFile(`/proc/${pid}/status`, "utf8");
+    const commandLine = await readFile(`/proc/${pid}/cmdline`, "utf8");
+    const name = /^Name:\s+(.+)$/m.exec(status)?.[1] ?? "";
+    const parentPid = Number(/^PPid:\s+(\d+)$/m.exec(status)?.[1] ?? 0);
+    const command = commandLine.replaceAll("\0", " ").trim() || name;
+
+    if (!Number.isInteger(parentPid) || parentPid < 0) {
+      return null;
+    }
+
+    return { command, parentPid };
+  } catch {
+    return null;
+  }
+}
+
+async function acquireLock() {
+  await mkdir(path.dirname(lockPath), { recursive: true });
+
+  try {
+    await writeFile(
+      lockPath,
+      `${JSON.stringify(
+        {
+          args: process.argv.slice(2),
+          pid: process.pid,
+          startedAt: new Date().toISOString(),
+        },
+        null,
+        2,
+      )}\n`,
+      { flag: "wx" },
+    );
+    lockAcquired = true;
+  } catch (error) {
+    if (error?.code !== "EEXIST") {
+      throw error;
+    }
+
+    const lock = await readExistingLock();
+    if (lock?.pid && isProcessAlive(lock.pid)) {
+      throw new Error(`Autopilot is already running with pid ${lock.pid}. Remove ${path.relative(rootDir, lockPath)} only if that process is gone.`);
+    }
+
+    await rm(lockPath, { force: true });
+    return acquireLock();
+  }
+}
+
+async function readExistingLock() {
+  try {
+    return JSON.parse(await readFile(lockPath, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function isProcessAlive(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function releaseLock() {
+  await rm(lockPath, { force: true });
+  lockAcquired = false;
+}
+
+async function stopWithSignal(signal, exitCode) {
+  console.error(`Received ${signal}; stopping roadmap autopilot.`);
+  if (lockAcquired) {
+    await releaseLock();
+  }
+  process.exit(exitCode);
 }
 
 async function ensureBranch(branchName) {

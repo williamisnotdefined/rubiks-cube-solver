@@ -44,6 +44,7 @@ Keep the roadmap autopilot safe, resumable, deterministic, and aligned with the 
 - Keep autopilot defaults on `openai/gpt-5.5` and variant `xhigh`.
 - Treat `queue[0]` as the next and only current task.
 - Keep roadmap execution plan-first: generate a plan before implementation and pass it to implementation/fix prompts.
+- Keep long autopilot runs outside OpenCode, preferably in `tmux`, to avoid nested OpenCode sessions.
 - Keep unattended implementation scoped to one roadmap step per commit.
 - Keep roadmap reconciliation as a separate pass and commit after each verified implementation step.
 - Keep final git state transitions owned by `scripts/autopilot/run-roadmap.mjs`.
@@ -56,6 +57,7 @@ Keep the roadmap autopilot safe, resumable, deterministic, and aligned with the 
 
 - Roadmap automation can be dry-run with `npm run autopilot:roadmap -- --dry-run`.
 - Roadmap automation can generate only the next plan with `npm run autopilot:roadmap -- --plan-only`.
+- Roadmap automation refuses nested OpenCode by default and uses a lockfile for concurrent-run protection.
 - Roadmap reconciliation can update future queue items without touching source code.
 - Roadmap reconciliation keeps the queue aligned with `GOALS.md`.
 - Generated route files are synchronized from canonical AI knowledge.
@@ -88,6 +90,8 @@ Rules for unattended roadmap execution.
 - Stop at the first persistent blocker and leave a report instead of hiding failure.
 - Preserve small, reviewable commits with the step's configured commit message.
 - Use saved plans as implementation context and keep them in `.autopilot` logs.
+- Run long autopilot sessions from a normal terminal or `tmux`, not from inside OpenCode.
+- Use the autopilot lockfile to prevent concurrent runs.
 - Run the roadmap reconciler after each verified implementation step unless explicitly disabled for debugging.
 - Keep `queue[0]` as the only next executable task.
 - Keep completed work in `history` and unresolved failures in `blocked`.
@@ -97,6 +101,8 @@ Rules for unattended roadmap execution.
 - Do not run unattended automation on dirty worktrees.
 - Do not bypass failing verification commands.
 - Do not implement a roadmap step before a plan exists for that step.
+- Do not run nested `opencode -> autopilot -> opencode` unless explicitly debugging with `--allow-nested-opencode`.
+- Do not run multiple autopilot processes in the same worktree.
 - Do not mutate `main` directly by default; use an autopilot branch unless explicitly configured otherwise.
 - Do not let the implementation agent commit, push, or mark roadmap steps done.
 - Do not let the reconciliation agent edit files other than `ai/roadmap/execution.json`.
@@ -118,6 +124,7 @@ Rules for unattended roadmap execution.
 
 - Planning runs before implementation for every step.
 - Planning must not edit files or git state.
+- Planning invokes OpenCode, so unattended `--plan-only` must be run outside an existing OpenCode session unless `--allow-nested-opencode` is intentionally used.
 - The generated plan must explain goal alignment, expected files, approach, tests, verification, risks, and out-of-scope work.
 - Implementation should follow the saved plan unless a minimal safe deviation is required to pass verification.
 
@@ -235,7 +242,9 @@ The roadmap autopilot converts the human roadmap into an operational queue that 
 
 The autopilot runner:
 
+- refuses nested OpenCode execution by default;
 - requires a clean worktree;
+- acquires `.autopilot/roadmap.lock` to prevent concurrent runs;
 - switches to `autopilot/roadmap` by default;
 - selects `queue[0]` as the next executable step;
 - generates a saved plan for the selected step;
@@ -250,6 +259,8 @@ The autopilot runner:
 ## Safety Boundaries
 
 The planning agent is instructed not to edit files or git state. The runner rejects planning if it produces worktree changes.
+
+The runner should be launched from a normal terminal or `tmux`. Running it from inside OpenCode creates nested `opencode run` processes, so the runner rejects that mode unless `--allow-nested-opencode` is passed deliberately.
 
 The implementation agent is instructed not to commit, push, change branches, or edit `ai/roadmap/execution.json`. The runner owns state transitions and git operations.
 

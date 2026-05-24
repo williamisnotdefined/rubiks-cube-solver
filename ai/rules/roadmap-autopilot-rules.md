@@ -14,6 +14,8 @@ Rules for unattended roadmap execution.
 - Stop at the first persistent blocker and leave a report instead of hiding failure.
 - Preserve small, reviewable commits with the step's configured commit message.
 - Use saved plans as implementation context and keep them in `.autopilot` logs.
+- Run long autopilot sessions from a normal terminal or `tmux`, not from inside OpenCode.
+- Use the autopilot lockfile to prevent concurrent runs.
 - Run the roadmap reconciler after each verified implementation step unless explicitly disabled for debugging.
 - Keep `queue[0]` as the only next executable task.
 - Keep completed work in `history` and unresolved failures in `blocked`.
@@ -23,6 +25,8 @@ Rules for unattended roadmap execution.
 - Do not run unattended automation on dirty worktrees.
 - Do not bypass failing verification commands.
 - Do not implement a roadmap step before a plan exists for that step.
+- Do not run nested `opencode -> autopilot -> opencode` unless explicitly debugging with `--allow-nested-opencode`.
+- Do not run multiple autopilot processes in the same worktree.
 - Do not mutate `main` directly by default; use an autopilot branch unless explicitly configured otherwise.
 - Do not let the implementation agent commit, push, or mark roadmap steps done.
 - Do not let the reconciliation agent edit files other than `ai/roadmap/execution.json`.
@@ -44,6 +48,7 @@ Rules for unattended roadmap execution.
 
 - Planning runs before implementation for every step.
 - Planning must not edit files or git state.
+- Planning invokes OpenCode, so unattended `--plan-only` must be run outside an existing OpenCode session unless `--allow-nested-opencode` is intentionally used.
 - The generated plan must explain goal alignment, expected files, approach, tests, verification, risks, and out-of-scope work.
 - Implementation should follow the saved plan unless a minimal safe deviation is required to pass verification.
 

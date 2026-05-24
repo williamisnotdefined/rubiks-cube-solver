@@ -16,7 +16,9 @@ The roadmap autopilot converts the human roadmap into an operational queue that 
 
 The autopilot runner:
 
+- refuses nested OpenCode execution by default;
 - requires a clean worktree;
+- acquires `.autopilot/roadmap.lock` to prevent concurrent runs;
 - switches to `autopilot/roadmap` by default;
 - selects `queue[0]` as the next executable step;
 - generates a saved plan for the selected step;
@@ -31,6 +33,8 @@ The autopilot runner:
 ## Safety Boundaries
 
 The planning agent is instructed not to edit files or git state. The runner rejects planning if it produces worktree changes.
+
+The runner should be launched from a normal terminal or `tmux`. Running it from inside OpenCode creates nested `opencode run` processes, so the runner rejects that mode unless `--allow-nested-opencode` is passed deliberately.
 
 The implementation agent is instructed not to commit, push, change branches, or edit `ai/roadmap/execution.json`. The runner owns state transitions and git operations.
 

@@ -54,6 +54,8 @@ Run longer unattended sessions with explicit limits:
 npm run autopilot:roadmap -- --max-steps 999 --max-hours 72
 ```
 
+Run unattended autopilot from a normal terminal or `tmux`, not from inside an existing OpenCode session. The runner refuses nested `opencode -> autopilot -> opencode` by default and uses `.autopilot/roadmap.lock` to prevent concurrent runs.
+
 The autopilot uses `opencode run --model openai/gpt-5.5 --variant xhigh`, writes runtime logs under `.autopilot/`, plans each step before execution, verifies each step, commits, pushes, then runs a reconciliation pass that may update the future queue in a separate commit. When the frontend exists, the queue should include Playwright tests that submit cube states, receive solutions, replay moves, and verify the cube is solved.
 
 ## External Visualization Library
