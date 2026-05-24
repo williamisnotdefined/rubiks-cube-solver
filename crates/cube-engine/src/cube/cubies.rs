@@ -4,7 +4,7 @@ use std::str::FromStr;
 pub const CORNER_COUNT: usize = 8;
 pub const EDGE_COUNT: usize = 12;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum Corner {
     Urf,
     Ufl,
@@ -46,7 +46,7 @@ impl Corner {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum Edge {
     Ur,
     Uf,
@@ -100,7 +100,7 @@ impl Edge {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct CubieState {
     pub corner_permutation: [Corner; CORNER_COUNT],
     pub corner_orientation: [u8; CORNER_COUNT],

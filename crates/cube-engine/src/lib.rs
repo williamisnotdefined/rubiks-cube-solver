@@ -4,3 +4,4 @@ pub mod search;
 pub use cube::{
     Algorithm, Cube, CubeValidationError, CubieState, CubieStateParseError, Move, Scramble,
 };
+pub use search::{solve_bfs, SearchSolution};
