@@ -1,34 +1,8 @@
 use std::collections::{HashSet, VecDeque};
 
+use super::solution::SearchSolution;
 use crate::cube::moves::FACE_MOVES;
 use crate::cube::{Cube, CubieState, Move};
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct SearchSolution {
-    pub moves: Vec<Move>,
-}
-
-impl SearchSolution {
-    pub fn new(moves: Vec<Move>) -> Self {
-        Self { moves }
-    }
-
-    pub fn moves(&self) -> &[Move] {
-        &self.moves
-    }
-
-    pub fn len(&self) -> usize {
-        self.moves.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.moves.is_empty()
-    }
-
-    pub fn apply_to(&self, cube: &mut Cube) {
-        cube.apply_moves(&self.moves);
-    }
-}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct SearchNode {
@@ -39,7 +13,7 @@ struct SearchNode {
 
 pub fn solve_bfs(start: &Cube, max_depth: usize) -> Option<SearchSolution> {
     if start.is_solved() {
-        return Some(SearchSolution::new(Vec::new()));
+        return Some(SearchSolution::with_metrics(Vec::new(), 1));
     }
 
     let mut visited = HashSet::<CubieState>::from([start.state().clone()]);
@@ -70,7 +44,7 @@ pub fn solve_bfs(start: &Cube, max_depth: usize) -> Option<SearchSolution> {
             next_moves.push(move_);
 
             if next_cube.is_solved() {
-                return Some(SearchSolution::new(next_moves));
+                return Some(SearchSolution::with_metrics(next_moves, visited.len()));
             }
 
             queue.push_back(SearchNode {
