@@ -1,16 +1,17 @@
 {
   "version": 2,
   "source": "roadmap.md",
+  "goals": "GOALS.md",
   "model": "openai/gpt-5.5",
   "variant": "xhigh",
   "updatedAt": null,
   "queue": [
     {
       "id": "phase-2-ida-star-zero",
-      "phase": "Fase 2 - Algoritmos de Busca",
+      "phase": "Solver Core - Search",
       "title": "Implement IDA* with ZeroHeuristic",
       "scope": ["crates/cube-engine/src/search/ida_star.rs", "crates/cube-engine/src/search/mod.rs", "crates/cube-engine/src/lib.rs"],
-      "prompt": "Implement IDA* using the existing SearchSolution and Heuristic abstractions. Start with ZeroHeuristic support and keep the implementation bounded by max_depth. Use only FACE_MOVES for search expansion.",
+      "prompt": "Implement IDA* using the existing SearchSolution and Heuristic abstractions. Start with ZeroHeuristic support, keep the implementation bounded by max_depth, and use only FACE_MOVES for search expansion.",
       "acceptance": [
         "solved cube returns an empty solution",
         "1-move and 2-move scrambles solve within depth limit",
@@ -29,7 +30,7 @@
     },
     {
       "id": "phase-2-ida-star-heuristics",
-      "phase": "Fase 2 - Algoritmos de Busca",
+      "phase": "Solver Core - Search",
       "title": "Wire IDA* to simple heuristics",
       "scope": ["crates/cube-engine/src/search/ida_star.rs", "crates/cube-engine/src/search/heuristics.rs"],
       "prompt": "Use the existing simple heuristics with IDA*. Add tests showing MaxHeuristic can guide IDA* on shallow scrambles without changing correctness. Keep ZeroHeuristic behavior intact.",
@@ -49,15 +50,17 @@
       "commitMessage": "Use heuristics in IDA* search"
     },
     {
-      "id": "phase-2-search-metrics",
-      "phase": "Fase 2 - Algoritmos de Busca",
-      "title": "Standardize search metrics and pruning",
-      "scope": ["crates/cube-engine/src/search/**/*.rs"],
-      "prompt": "Standardize metrics and pruning across BFS, IDDFS, and IDA*. Keep APIs simple and avoid broad abstractions unless shared behavior is already duplicated.",
+      "id": "phase-input-facelet-parser",
+      "phase": "User State Input",
+      "title": "Parse and validate user facelet states",
+      "scope": ["crates/cube-engine/src/cube/**/*.rs", "crates/cube-engine/src/lib.rs"],
+      "prompt": "Add a user-facing facelet/sticker parser for 3x3 cube states. Support a stable 54-character Kociemba-style facelet string first. Validate length, allowed face symbols, and exact color counts before conversion to cubies.",
       "acceptance": [
-        "BFS, IDDFS, and IDA* expose consistent explored_nodes metrics",
-        "same-face pruning is consistently tested",
-        "existing search tests still pass"
+        "solved facelet string parses successfully",
+        "invalid length is rejected with a useful error",
+        "invalid symbols are rejected with a useful error",
+        "invalid face/color counts are rejected",
+        "the parser does not replace CubieState as the engine representation"
       ],
       "verification": [
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
@@ -66,18 +69,20 @@
         "npm run lint",
         "npm run roadmap:check"
       ],
-      "commitMessage": "Standardize search metrics"
+      "commitMessage": "Parse user facelet cube states"
     },
     {
-      "id": "phase-3-heuristic-tests",
-      "phase": "Fase 3 - Heurísticas",
-      "title": "Strengthen heuristic admissibility tests",
-      "scope": ["crates/cube-engine/src/search/heuristics.rs", "crates/cube-engine/src/search/ida_star.rs"],
-      "prompt": "Add stronger tests for heuristic admissibility against known shallow scramble distances from BFS/IDDFS. Do not introduce pattern databases yet.",
+      "id": "phase-input-facelet-to-cubie",
+      "phase": "User State Input",
+      "title": "Convert facelets to validated CubieState",
+      "scope": ["crates/cube-engine/src/cube/**/*.rs", "crates/cube-engine/src/lib.rs"],
+      "prompt": "Convert parsed 54-facelet cube states into CubieState. Reuse CubieState validation for piece uniqueness, orientation, permutation, and parity. Return clear errors for impossible cube states.",
       "acceptance": [
-        "heuristics estimate zero for solved states",
-        "heuristics do not overestimate BFS-known shallow distances",
-        "heuristics do not mutate cube state"
+        "solved facelets convert to CubieState::solved",
+        "valid generated states round-trip through facelets where supported",
+        "impossible swapped pieces are rejected",
+        "invalid orientation/parity states are rejected",
+        "conversion output can be passed to Cube::try_from_state"
       ],
       "verification": [
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
@@ -86,19 +91,20 @@
         "npm run lint",
         "npm run roadmap:check"
       ],
-      "commitMessage": "Strengthen heuristic tests"
+      "commitMessage": "Convert facelets to cubie state"
     },
     {
-      "id": "phase-4-coordinate-indexing",
-      "phase": "Fase 4 - Pattern Databases",
-      "title": "Add coordinate indexing utilities",
-      "scope": ["crates/cube-engine/src/search/patterns/**/*.rs", "crates/cube-engine/src/search/mod.rs"],
-      "prompt": "Add compact coordinate indexing utilities for corner orientation and edge orientation. Keep this pure Rust and heavily tested. Do not generate large databases yet.",
+      "id": "phase-solver-public-api",
+      "phase": "Solver Product API",
+      "title": "Add public solve API for user states",
+      "scope": ["crates/cube-engine/src/solver/**/*.rs", "crates/cube-engine/src/lib.rs", "crates/cube-engine/src/search/**/*.rs"],
+      "prompt": "Add a public Rust solve API that accepts CubieState or facelet input, validates it, runs the best available solver with configurable max_depth/max_nodes, and returns a verified solution plus metrics. It may use IDA* initially while deeper Kociemba work follows.",
       "acceptance": [
-        "corner orientation can be encoded and decoded",
-        "edge orientation can be encoded and decoded",
-        "round trips preserve coordinates",
-        "invalid coordinates are rejected"
+        "solved state returns an empty solution",
+        "known shallow facelet state returns a solution",
+        "invalid user state returns validation errors instead of panicking",
+        "returned moves are replayed internally to verify the submitted state is solved",
+        "solution metrics include length and explored_nodes"
       ],
       "verification": [
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
@@ -107,19 +113,20 @@
         "npm run lint",
         "npm run roadmap:check"
       ],
-      "commitMessage": "Add pattern coordinate indexing"
+      "commitMessage": "Add public solve API"
     },
     {
-      "id": "phase-4-edge-orientation-db",
-      "phase": "Fase 4 - Pattern Databases",
-      "title": "Build edge orientation pattern database",
-      "scope": ["crates/cube-engine/src/search/patterns/**/*.rs", "crates/cube-engine/src/search/heuristics.rs"],
-      "prompt": "Build a small in-memory edge orientation pattern database using reverse BFS over the edge-orientation coordinate. Expose it as an admissible heuristic without adding large generated artifacts.",
+      "id": "phase-kociemba-coordinates",
+      "phase": "Solver Core - Two Phase",
+      "title": "Add Kociemba coordinate indexing",
+      "scope": ["crates/cube-engine/src/solver/**/*.rs", "crates/cube-engine/src/search/**/*.rs"],
+      "prompt": "Add Kociemba/two-phase coordinate indexing utilities needed for phase 1 and phase 2 search. Start with orientation and slice-related coordinates, keep them pure Rust, deterministic, and heavily tested.",
       "acceptance": [
-        "database builds deterministically",
-        "solved coordinate has distance zero",
-        "lookup returns admissible values for shallow scrambles",
-        "no large binary artifacts are committed"
+        "coordinates encode solved state to zero or documented solved coordinate",
+        "coordinates round-trip where decoding is implemented",
+        "coordinates distinguish relevant phase constraints",
+        "invalid coordinates are rejected",
+        "no large generated artifacts are committed"
       ],
       "verification": [
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
@@ -128,19 +135,20 @@
         "npm run lint",
         "npm run roadmap:check"
       ],
-      "commitMessage": "Add edge orientation pattern database"
+      "commitMessage": "Add Kociemba coordinate indexing"
     },
     {
-      "id": "phase-4-corner-orientation-db",
-      "phase": "Fase 4 - Pattern Databases",
-      "title": "Build corner orientation pattern database",
-      "scope": ["crates/cube-engine/src/search/patterns/**/*.rs", "crates/cube-engine/src/search/heuristics.rs"],
-      "prompt": "Build a small in-memory corner orientation pattern database and expose it as an admissible heuristic. Keep tests deterministic and avoid generated large artifacts.",
+      "id": "phase-kociemba-phase1",
+      "phase": "Solver Core - Two Phase",
+      "title": "Implement Kociemba phase 1 search",
+      "scope": ["crates/cube-engine/src/solver/**/*.rs", "crates/cube-engine/src/search/**/*.rs"],
+      "prompt": "Implement phase 1 of a Kociemba-style two-phase solver. Search should transform valid cube states into the phase 2 subgroup using admissible pruning where available, while reporting metrics and respecting configured limits.",
       "acceptance": [
-        "database builds deterministically",
-        "solved coordinate has distance zero",
-        "lookup is admissible for shallow scrambles",
-        "heuristics can be combined with MaxHeuristic"
+        "solved state has phase 1 length zero",
+        "known shallow scrambles reach phase 2 subgroup",
+        "phase 1 respects max_depth/max_nodes limits",
+        "phase 1 output is replayed and verified",
+        "phase 1 uses allowed move sets documented in code"
       ],
       "verification": [
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
@@ -149,19 +157,86 @@
         "npm run lint",
         "npm run roadmap:check"
       ],
-      "commitMessage": "Add corner orientation pattern database"
+      "commitMessage": "Implement Kociemba phase 1 search"
     },
     {
-      "id": "phase-6-wasm-bootstrap",
-      "phase": "Fase 6 - WebAssembly",
-      "title": "Bootstrap WASM crate",
+      "id": "phase-kociemba-phase2",
+      "phase": "Solver Core - Two Phase",
+      "title": "Implement Kociemba phase 2 search",
+      "scope": ["crates/cube-engine/src/solver/**/*.rs", "crates/cube-engine/src/search/**/*.rs"],
+      "prompt": "Implement phase 2 search for states already in the Kociemba phase 2 subgroup. Combine phase 1 and phase 2 candidates into full verified solutions.",
+      "acceptance": [
+        "phase 2 solves solved and subgroup states",
+        "combined phase 1 + phase 2 solution solves known scrambles",
+        "combined solver reports total length and metrics",
+        "combined solver respects configured limits",
+        "solution replay verification is mandatory"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "commitMessage": "Implement Kociemba phase 2 search"
+    },
+    {
+      "id": "phase-kociemba-pruning-tables",
+      "phase": "Solver Core - Two Phase",
+      "title": "Add two-phase pruning tables",
+      "scope": ["crates/cube-engine/src/solver/**/*.rs", "crates/cube-engine/src/search/**/*.rs"],
+      "prompt": "Add deterministic pruning tables for the two-phase solver. Keep generation reproducible, avoid committing large generated binaries, and expose table-backed admissible lower bounds.",
+      "acceptance": [
+        "pruning tables build deterministically",
+        "solved coordinates have distance zero",
+        "lookups are admissible for shallow known distances",
+        "two-phase solver explores fewer nodes on representative tests",
+        "large generated artifacts are gitignored or generated on demand"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "commitMessage": "Add two-phase pruning tables"
+    },
+    {
+      "id": "phase-solver-depth20-validation",
+      "phase": "Solver Product API",
+      "title": "Validate depth-20 solution target",
+      "scope": ["crates/cube-engine/src/solver/**/*.rs", "crates/cube-engine/src/search/**/*.rs"],
+      "prompt": "Add solver configuration and tests around the product target of solutions in 20 moves when feasible. Verify returned solutions solve the input and report honestly when configured limits do not find a <=20 solution.",
+      "acceptance": [
+        "solver exposes a max_solution_length option",
+        "known shallow and medium generated scrambles return solutions within configured limits",
+        "returned solution length is reported",
+        "not-found-within-limit is represented explicitly",
+        "no claim of optimality is made unless the search mode proves it"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "commitMessage": "Validate depth 20 solver target"
+    },
+    {
+      "id": "phase-wasm-solve-api",
+      "phase": "WebAssembly",
+      "title": "Expose solve API through WASM",
       "scope": ["crates/wasm/**/*", "Cargo.toml", "package.json"],
-      "prompt": "Create a wasm-bindgen crate that wraps the Rust cube engine with a minimal API for parsing algorithms, generating scrambles, applying moves, and solving shallow states. Keep solver logic in cube-engine.",
+      "prompt": "Create a wasm-bindgen crate that exposes user-state validation and solve APIs to JavaScript. Keep solver logic in cube-engine and make returned solutions easy for the frontend to replay.",
       "acceptance": [
         "workspace includes a WASM crate",
-        "wasm-bindgen wrappers compile",
-        "frontend-facing API does not duplicate solver logic",
-        "tests cover wrapper behavior where feasible"
+        "WASM API accepts facelet input",
+        "WASM API returns solution moves, length, and metrics",
+        "invalid states return structured errors",
+        "Rust tests cover wrapper behavior where feasible"
       ],
       "verification": [
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
@@ -170,57 +245,82 @@
         "npm run lint",
         "npm run roadmap:check"
       ],
-      "commitMessage": "Bootstrap WASM bindings"
+      "commitMessage": "Expose solve API through WASM"
     },
     {
-      "id": "phase-7-frontend-bootstrap",
-      "phase": "Fase 7 - Frontend Web",
-      "title": "Bootstrap web frontend",
+      "id": "phase-frontend-state-input-solve",
+      "phase": "Frontend Web",
+      "title": "Build cube state input and solve UI",
       "scope": ["apps/web/**/*", "package.json"],
-      "prompt": "Bootstrap a TypeScript React frontend for cube visualization and solver playback. Preserve the engine boundary: UI sends moves and receives states from Rust/WASM wrappers.",
+      "prompt": "Bootstrap or extend the TypeScript React frontend so a user can enter a cube state, validate it, request a solution through the WASM API, and see notation, length, metrics, and validation errors.",
       "acceptance": [
-        "apps/web exists and builds",
-        "UI has a minimal cube state panel or placeholder renderer",
-        "no solver logic is implemented in React components",
-        "package scripts include frontend build/check commands"
+        "user can enter or paste a 54-facelet cube state",
+        "solve button calls the WASM solver API",
+        "valid solved state returns an empty or no-op solution display",
+        "known scramble state returns a displayed solution",
+        "invalid states show clear validation errors"
       ],
       "verification": [
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
         "npm run lint",
         "npm run roadmap:check"
       ],
-      "commitMessage": "Bootstrap web frontend"
+      "commitMessage": "Add cube state solve UI"
     },
     {
-      "id": "phase-7-cube-visualization",
-      "phase": "Fase 7 - Frontend Web",
-      "title": "Implement cube visualization and playback",
-      "scope": ["apps/web/**/*"],
-      "prompt": "Implement interactive cube visualization, scramble input, move application, and solution playback. Use the engine/WASM boundary and keep UI state separate from solver state.",
+      "id": "phase-playwright-solver-validation",
+      "phase": "Frontend Web - E2E",
+      "title": "Add Playwright solver validation",
+      "scope": ["apps/web/**/*", "package.json", "playwright.config.*"],
+      "prompt": "Add Playwright end-to-end tests where the UI receives known cube states, requests solutions, replays returned moves through the app or engine boundary, and verifies the cube is solved. Include invalid-state UI validation tests.",
       "acceptance": [
-        "scramble input can be applied",
-        "solutions can be played back",
-        "desktop and mobile layouts are usable",
-        "solver logic remains outside React components"
+        "Playwright is configured for the web app",
+        "E2E test submits solved state and verifies empty or no-op solution",
+        "E2E test submits a known scrambled state and verifies returned moves solve it",
+        "E2E test verifies invalid state errors",
+        "npm run test:e2e is available"
       ],
       "verification": [
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "npm run test:e2e",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "commitMessage": "Add Playwright solver validation"
+    },
+    {
+      "id": "phase-frontend-visualization-playback",
+      "phase": "Frontend Web",
+      "title": "Add cube visualization and solution playback",
+      "scope": ["apps/web/**/*"],
+      "prompt": "Add interactive cube visualization and solution playback. Use the engine/WASM boundary for state transitions and keep UI state separate from solver state.",
+      "acceptance": [
+        "solution moves can be played forward and reset",
+        "visual state matches engine state after playback",
+        "desktop and mobile layouts are usable",
+        "solver logic remains outside React components",
+        "Playwright covers at least one playback path"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "npm run test:e2e",
         "npm run lint",
         "npm run roadmap:check"
       ],
       "commitMessage": "Add cube visualization playback"
     },
     {
-      "id": "phase-8-dataset-generator",
-      "phase": "Fase 8 - Dataset Generation",
-      "title": "Add dataset generation crate or tool",
+      "id": "phase-dataset-generator",
+      "phase": "Research Extensions - Dataset Generation",
+      "title": "Add dataset generation after web solve flow",
       "scope": ["crates/dataset-generator/**/*", "datasets/README.md", "Cargo.toml"],
-      "prompt": "Add deterministic dataset generation from reversible scrambles. Generate metadata and sample JSONL output without committing large datasets.",
+      "prompt": "Add deterministic dataset generation from reversible scrambles after the web solve flow exists. Generate metadata and sample JSONL output without committing large datasets.",
       "acceptance": [
         "generator creates deterministic examples for shallow depths",
         "records include state, distance, and best_move",
         "large generated datasets are gitignored",
-        "sample output is documented"
+        "sample output is documented",
+        "dataset work does not regress the web solve flow"
       ],
       "verification": [
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
@@ -232,16 +332,17 @@
       "commitMessage": "Add dataset generation tool"
     },
     {
-      "id": "phase-9-ml-bootstrap",
-      "phase": "Fase 9 - Machine Learning",
-      "title": "Bootstrap ML training package",
+      "id": "phase-ml-value-network",
+      "phase": "Research Extensions - Machine Learning",
+      "title": "Bootstrap ML value network after product flow",
       "scope": ["ml/**/*"],
-      "prompt": "Bootstrap a Python/PyTorch ML package for a simple value network. Include dataset loading, one-hot encoding, a minimal MLP model, and smoke tests. Do not introduce Transformers.",
+      "prompt": "Bootstrap a Python/PyTorch ML package for a simple value network after the working web solve flow exists. Include dataset loading, one-hot encoding, a minimal MLP model, and smoke tests. Do not introduce Transformers.",
       "acceptance": [
         "ML package has documented setup",
         "one-hot encoding is tested",
         "MLP forward pass is tested",
-        "training entry point supports a tiny sample dataset"
+        "training entry point supports a tiny sample dataset",
+        "ML remains optional and does not affect cube-engine runtime"
       ],
       "verification": [
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
@@ -251,16 +352,17 @@
       "commitMessage": "Bootstrap ML value network"
     },
     {
-      "id": "phase-10-hybrid-search-interface",
-      "phase": "Fase 10 - Hybrid Search",
+      "id": "phase-hybrid-search-interface",
+      "phase": "Research Extensions - Hybrid Search",
       "title": "Add hybrid heuristic interface",
       "scope": ["crates/cube-engine/src/search/**/*.rs", "ml/**/*"],
       "prompt": "Add interfaces for combining classical heuristics, pattern databases, and optional ML value estimates. Keep ML optional and do not require Python at Rust runtime.",
       "acceptance": [
         "Rust search can combine multiple heuristic sources",
         "ML heuristic is behind an optional boundary or fixture",
-        "IDA* correctness tests still pass",
-        "no runtime dependency on Python is introduced in cube-engine"
+        "IDA* or two-phase correctness tests still pass",
+        "no runtime dependency on Python is introduced in cube-engine",
+        "web solve flow remains verified"
       ],
       "verification": [
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",

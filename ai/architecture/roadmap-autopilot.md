@@ -5,6 +5,7 @@ The roadmap autopilot converts the human roadmap into an operational queue that 
 ## Source Files
 
 - `roadmap.md`: strategic project roadmap.
+- `GOALS.md`: read-only product north star for autonomous planning.
 - `ai/roadmap/execution.json`: operational stack with `queue`, `history`, and `blocked`.
 - `scripts/roadmap/*.mjs`: validation and status commands for the operational queue.
 - `scripts/autopilot/run-roadmap.mjs`: unattended runner for one or more roadmap steps.
@@ -32,6 +33,8 @@ The implementation agent is instructed not to commit, push, change branches, or 
 
 The reconciliation agent is instructed to edit only `ai/roadmap/execution.json`. It may modify the future `queue`, but it must preserve `history` and `blocked` records and must not mark tasks complete.
 
+The runner rejects implementation attempts that edit `GOALS.md`.
+
 The runner should stop on unresolved failures instead of continuing to later phases with a broken base.
 
 ## Execution File Semantics
@@ -40,3 +43,7 @@ The runner should stop on unresolved failures instead of continuing to later pha
 - `queue[1..]`: future tasks that the reconciler may refine.
 - `history`: verified tasks already committed by the runner.
 - `blocked`: tasks removed from the queue after persistent automation failure.
+
+## Goal-Aware Planning
+
+The reconciler must compare the queue against `GOALS.md` after each completed step. The core product path is user state input, validation, solving, WASM exposure, frontend solve UI, and Playwright verification. Datasets, ML, and hybrid research stay behind that flow unless they directly unblock it.

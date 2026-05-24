@@ -18,12 +18,14 @@ Keep the roadmap autopilot safe, resumable, deterministic, and aligned with the 
 ## Workflow
 
 - Validate `ai/roadmap/execution.json` with `npm run roadmap:check` after any queue edit.
+- Treat `GOALS.md` as read-only and as the product north star.
 - Keep autopilot defaults on `openai/gpt-5.5` and variant `xhigh`.
 - Treat `queue[0]` as the next and only current task.
 - Keep unattended implementation scoped to one roadmap step per commit.
 - Keep roadmap reconciliation as a separate pass and commit after each verified implementation step.
 - Keep final git state transitions owned by `scripts/autopilot/run-roadmap.mjs`.
 - Preserve `history` and `blocked` when reconciling the queue.
+- Prioritize user-state input, verified solutions, WASM, frontend solve UI, and Playwright validation before datasets/ML/research tasks.
 - Prefer stopping with logs over trying unsafe recovery.
 - Regenerate AI routes with `npm run ai:sync` after skill or registry changes.
 
@@ -31,6 +33,7 @@ Keep the roadmap autopilot safe, resumable, deterministic, and aligned with the 
 
 - Roadmap automation can be dry-run with `npm run autopilot:roadmap -- --dry-run`.
 - Roadmap reconciliation can update future queue items without touching source code.
+- Roadmap reconciliation keeps the queue aligned with `GOALS.md`.
 - Generated route files are synchronized from canonical AI knowledge.
 - CI continues to validate Rust, AI routes, and roadmap execution metadata.
 

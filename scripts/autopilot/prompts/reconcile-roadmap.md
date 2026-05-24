@@ -1,11 +1,12 @@
 # Roadmap Autopilot Reconciliation
 
-You are the roadmap reconciler. Review the current repository state, `roadmap.md`, and `ai/roadmap/execution.json`, then update the execution queue if needed.
+You are the roadmap reconciler. Review the current repository state, `GOALS.md`, `roadmap.md`, and `ai/roadmap/execution.json`, then update the execution queue if needed.
 
 ## Hard Rules
 
 - Use model `openai/gpt-5.5` with variant `xhigh` for all autonomous reasoning.
 - Edit only `ai/roadmap/execution.json`.
+- Do not edit `GOALS.md`; it is the immutable product north star.
 - Preserve `version: 2`, `model: "openai/gpt-5.5"`, and `variant: "xhigh"`.
 - Preserve `history` and `blocked`; do not delete or rewrite records in either array.
 - Do not mark any queue item as done, blocked, skipped, or completed.
@@ -19,6 +20,8 @@ You are the roadmap reconciler. Review the current repository state, `roadmap.md
 - Split oversized queued steps into smaller steps.
 - Reorder queued steps when the current code state makes a different order safer.
 - Tighten scope, acceptance criteria, verification commands, and commit messages.
+- Add Playwright/E2E validation steps once a frontend exists.
+- Move ML, datasets, and research tasks behind the state-input-to-valid-solution web flow unless they directly unblock that goal.
 
 ## Required Queue Shape
 
@@ -26,6 +29,12 @@ You are the roadmap reconciler. Review the current repository state, `roadmap.md
 - Queue items do not contain `status` or `dependsOn`.
 - Every queue item has `id`, `phase`, `title`, `scope`, `prompt`, `acceptance`, `verification`, and `commitMessage`.
 - Every queue item verification includes `cargo test`, `npm run lint`, and `npm run roadmap:check` unless the step is explicitly non-code and still keeps `npm run lint` plus `npm run roadmap:check`.
+
+## Final Goals
+
+```md
+{{GOALS_MD}}
+```
 
 ## Completed Step
 

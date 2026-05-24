@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
-import { findNextRunnableStep, formatStep, parseArgs, readExecution, validateExecution } from "./lib.mjs";
+import { findNextRunnableStep, formatStep, parseArgs, readExecution, validateExecution, validateGoalsFile } from "./lib.mjs";
 
 const args = parseArgs(process.argv.slice(2));
 const execution = await readExecution();
-const errors = validateExecution(execution);
+const errors = [...(await validateGoalsFile()), ...validateExecution(execution)];
 
 if (errors.length > 0) {
   console.error(`Roadmap execution file is invalid. Run npm run roadmap:check for details.`);

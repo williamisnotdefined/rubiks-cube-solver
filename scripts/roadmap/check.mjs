@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-import { readExecution, summarizeExecution, validateExecution } from "./lib.mjs";
+import { readExecution, summarizeExecution, validateExecution, validateGoalsFile } from "./lib.mjs";
 
 const execution = await readExecution();
-const errors = validateExecution(execution);
+const errors = [...(await validateGoalsFile()), ...validateExecution(execution)];
 
 if (errors.length > 0) {
   console.error(`Roadmap execution file is invalid:\n${errors.map((error) => `- ${error}`).join("\n")}`);

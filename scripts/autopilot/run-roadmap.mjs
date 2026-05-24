@@ -16,6 +16,7 @@ import {
   readExecution,
   rootDir,
   validateExecution,
+  validateGoalsFile,
   writeExecution,
 } from "../roadmap/lib.mjs";
 
@@ -111,6 +112,7 @@ async function runStep(step, execution) {
     const promptPath = path.join(logDir, `attempt-${attempt}.prompt.md`);
     const prompt = await renderPrompt(attempt === 1 ? "implement-step.md" : "fix-failure.md", {
       ATTEMPT: `${attempt}`,
+      GOALS_MD: await readGoals(),
       LAST_FAILURE: lastFailure.slice(-16_000),
       ROADMAP_STATUS: formatStep(step),
       STEP_JSON: JSON.stringify(step, null, 2),
@@ -153,6 +155,8 @@ async function completeStep(step, execution, logDir) {
     throw new Error(`Step ${step.id} passed verification but produced no commitable changes.`);
   }
 
+  await ensureProtectedFilesUnchanged(logDir);
+
   await runGit(["add", "."], path.join(logDir, "git-add.log"));
   await runGit(["diff", "--cached", "--check"], path.join(logDir, "git-diff-check.log"));
   await runGit(["commit", "-m", step.commitMessage], path.join(logDir, "git-commit.log"));
@@ -171,6 +175,7 @@ async function reconcileRoadmap(completedStep, stepLogDir) {
   const prompt = await renderPrompt("reconcile-roadmap.md", {
     COMPLETED_STEP_JSON: JSON.stringify(completedStep, null, 2),
     EXECUTION_JSON: JSON.stringify(execution, null, 2),
+    GOALS_MD: await readGoals(),
     ROADMAP_STATUS: formatStep(findNextRunnableStep(execution)),
   });
 
@@ -268,6 +273,16 @@ async function changedWorktreeFiles(logDir) {
     .toSorted();
 }
 
+async function ensureProtectedFilesUnchanged(logDir) {
+  const changedFiles = await changedWorktreeFiles(logDir);
+  const protectedFiles = ["GOALS.md"];
+  const changedProtectedFiles = changedFiles.filter((file) => protectedFiles.includes(file));
+
+  if (changedProtectedFiles.length > 0) {
+    throw new Error(`Autopilot must not edit protected files: ${changedProtectedFiles.join(", ")}.`);
+  }
+}
+
 async function runCommand(command, commandArgs, logPath, extraEnv = {}, shell = false) {
   await mkdir(path.dirname(logPath), { recursive: true });
 
@@ -298,12 +313,16 @@ async function runCommand(command, commandArgs, logPath, extraEnv = {}, shell = 
 
 async function loadValidExecution() {
   const execution = await readExecution();
-  const errors = validateExecution(execution);
+  const errors = [...(await validateGoalsFile()), ...validateExecution(execution)];
   if (errors.length > 0) {
     throw new Error(`Roadmap execution is invalid:\n${errors.map((error) => `- ${error}`).join("\n")}`);
   }
 
   return execution;
+}
+
+async function readGoals() {
+  return readFile(path.join(rootDir, "GOALS.md"), "utf8");
 }
 
 async function renderPrompt(templateName, values) {

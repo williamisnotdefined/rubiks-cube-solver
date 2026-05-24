@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 
 export const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 export const executionPath = path.join(rootDir, "ai/roadmap/execution.json");
+export const goalsPath = path.join(rootDir, "GOALS.md");
 export const fixedModel = "openai/gpt-5.5";
 export const fixedVariant = "xhigh";
 
@@ -33,6 +34,10 @@ export function validateExecution(execution) {
 
   if (typeof execution?.source !== "string" || execution.source.length === 0) {
     errors.push("execution.source must be a non-empty string.");
+  }
+
+  if (execution?.goals !== "GOALS.md") {
+    errors.push("execution.goals must be GOALS.md.");
   }
 
   for (const collection of ["queue", "history", "blocked"]) {
@@ -155,6 +160,29 @@ export async function pathExists(filePath) {
   } catch {
     return false;
   }
+}
+
+export async function validateGoalsFile() {
+  const errors = [];
+
+  if (!(await pathExists(goalsPath))) {
+    return ["GOALS.md must exist at repository root."];
+  }
+
+  const content = await readFile(goalsPath, "utf8");
+  for (const requiredText of [
+    "web interface",
+    "valid 3x3 Rubik's Cube state",
+    "valid solution",
+    "20 moves",
+    "Playwright",
+  ]) {
+    if (!content.includes(requiredText)) {
+      errors.push(`GOALS.md must mention ${requiredText}.`);
+    }
+  }
+
+  return errors;
 }
 
 function validateQueue(queue, seenIds, errors) {
