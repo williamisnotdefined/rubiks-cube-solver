@@ -255,7 +255,7 @@ fn rotate_vector(face: Face, vector: Vec3) -> Vec3 {
 #[cfg(test)]
 mod tests {
     use super::{Cube, Move};
-    use crate::cube::cubies::{Corner, Edge};
+    use crate::cube::cubies::{Corner, CubieState, Edge};
     use crate::cube::moves::FACE_MOVES;
 
     #[test]
@@ -316,6 +316,18 @@ mod tests {
         cube.apply_moves(&[Move::R, Move::U, Move::RPrime, Move::UPrime]);
 
         assert!(cube.state().is_valid());
+    }
+
+    #[test]
+    fn scrambled_state_serialization_round_trip_preserves_state() {
+        let mut cube = Cube::solved();
+        cube.apply_moves(&[Move::R, Move::U, Move::RPrime, Move::UPrime]);
+        let serialized = cube.state().serialize();
+
+        let parsed =
+            CubieState::deserialize(&serialized).expect("serialized scrambled state should parse");
+
+        assert_eq!(&parsed, cube.state());
     }
 
     #[test]

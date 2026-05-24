@@ -1,3 +1,12 @@
+use std::fmt;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Axis {
+    X,
+    Y,
+    Z,
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Face {
     U,
@@ -6,6 +15,16 @@ pub enum Face {
     R,
     F,
     B,
+}
+
+impl Face {
+    pub const fn axis(self) -> Axis {
+        match self {
+            Self::L | Self::R => Axis::X,
+            Self::U | Self::D => Axis::Y,
+            Self::F | Self::B => Axis::Z,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -83,6 +102,10 @@ impl Move {
         }
     }
 
+    pub const fn axis(self) -> Axis {
+        self.face().axis()
+    }
+
     pub const fn inverse(self) -> Self {
         match self {
             Self::U => Self::UPrime,
@@ -127,5 +150,11 @@ impl Move {
             Self::B2 => "B2",
             Self::BPrime => "B'",
         }
+    }
+}
+
+impl fmt::Display for Move {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str(self.notation())
     }
 }
