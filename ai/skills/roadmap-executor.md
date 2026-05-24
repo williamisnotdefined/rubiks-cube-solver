@@ -1,10 +1,10 @@
 # Roadmap Executor
 
-Use this skill when changing roadmap automation, `ai/roadmap/execution.json`, `scripts/roadmap`, `scripts/autopilot`, or unattended execution behavior.
+Use this skill when changing roadmap automation, `ai/roadmap/queue.json`, `scripts/roadmap`, `scripts/autopilot`, or unattended execution behavior.
 
 ## Goal
 
-Keep the roadmap autopilot safe, resumable, deterministic, and aligned with the roadmap execution queue.
+Keep the roadmap autopilot safe, resumable, deterministic, and aligned with the roadmap queue.
 
 ## Read First
 
@@ -17,7 +17,7 @@ Keep the roadmap autopilot safe, resumable, deterministic, and aligned with the 
 
 ## Workflow
 
-- Validate `ai/roadmap/execution.json` with `npm run roadmap:check` after any queue edit.
+- Validate `ai/roadmap/queue.json` with `npm run roadmap:check` after any queue edit.
 - Treat `GOALS.md` as read-only and as the product north star.
 - Keep autopilot defaults on `openai/gpt-5.5` and variant `xhigh`.
 - Treat `queue[0]` as the next and only current task.
@@ -41,7 +41,7 @@ Keep the roadmap autopilot safe, resumable, deterministic, and aligned with the 
 - Roadmap reconciliation can update future queue items without touching source code.
 - Roadmap reconciliation keeps the queue aligned with `GOALS.md`.
 - Generated route files are synchronized from canonical AI knowledge.
-- CI continues to validate Rust, AI routes, and roadmap execution metadata.
+- CI continues to validate Rust, AI routes, and roadmap queue metadata.
 
 ## Verification
 

@@ -1,0 +1,13 @@
+{
+  "provider": "opencode",
+  "model": "openai/gpt-5.5",
+  "variant": "xhigh",
+  "paths": {
+    "goals": "GOALS.md",
+    "queue": "ai/roadmap/queue.json",
+    "prompts": "scripts/autopilot/prompts",
+    "logs": ".autopilot/logs",
+    "processes": ".autopilot/processes.json",
+    "lock": ".autopilot/roadmap.lock"
+  }
+}

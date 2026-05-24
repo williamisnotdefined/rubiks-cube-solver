@@ -28,7 +28,7 @@ cargo test
 
 ## Roadmap Autopilot
 
-The operational roadmap lives in `ai/roadmap/execution.json`. It uses `queue[0]` as the next executable task, `history` for completed verified work, and `blocked` for persistent failures. The queue is reconciled against `GOALS.md` after each completed step.
+The operational roadmap lives in `ai/roadmap/queue.json`. It uses `queue[0]` as the next executable task, `history` for completed verified work, and `blocked` for persistent failures. The queue is reconciled against `GOALS.md` after each completed step.
 
 Dry-run the next autonomous step:
 

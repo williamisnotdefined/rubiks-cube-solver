@@ -18,11 +18,11 @@ import {
   markStepDone,
   parseArgs,
   pathExists,
-  readExecution,
+  readQueueFile,
   rootDir,
-  validateExecution,
+  validateQueueFile,
   validateGoalsFile,
-  writeExecution,
+  writeQueueFile,
 } from "../roadmap/lib.mjs";
 
 const defaultVerification = [
@@ -64,8 +64,8 @@ const lockPath = path.join(rootDir, ".autopilot/roadmap.lock");
 const startTime = Date.now();
 let lockAcquired = false;
 
-if (!(await pathExists(path.join(rootDir, "ai/roadmap/execution.json")))) {
-  throw new Error("Missing ai/roadmap/execution.json.");
+if (!(await pathExists(path.join(rootDir, "ai/roadmap/queue.json")))) {
+  throw new Error("Missing ai/roadmap/queue.json.");
 }
 
 process.once("SIGINT", () => stopWithSignal("SIGINT", 130));
@@ -82,8 +82,8 @@ try {
 
 async function main() {
   if (options.dryRun) {
-    const execution = await loadValidExecution();
-    const step = findNextRunnableStep(execution);
+    const queueFile = await loadValidQueueFile();
+    const step = findNextRunnableStep(queueFile);
 
     if (step) {
       console.log(`Next roadmap step:\n${formatStep(step)}`);
@@ -102,8 +102,8 @@ async function main() {
     await acquireLock();
     await ensureCleanWorktree();
 
-    const execution = await loadValidExecution();
-    const step = findNextRunnableStep(execution);
+    const queueFile = await loadValidQueueFile();
+    const step = findNextRunnableStep(queueFile);
 
     if (!step) {
       console.log("No runnable pending roadmap step found.");
@@ -127,8 +127,8 @@ async function main() {
   let completedSteps = 0;
 
   while (completedSteps < options.maxSteps && !timeLimitReached()) {
-    const execution = await loadValidExecution();
-    const step = findNextRunnableStep(execution);
+    const queueFile = await loadValidQueueFile();
+    const step = findNextRunnableStep(queueFile);
 
     if (!step) {
       console.log("No runnable pending roadmap step found.");
@@ -137,7 +137,7 @@ async function main() {
 
     console.log(`Next roadmap step:\n${formatStep(step)}`);
 
-    await runStep(step, execution);
+    await runStep(step, queueFile);
     completedSteps += 1;
   }
 
@@ -146,7 +146,7 @@ async function main() {
   }
 }
 
-async function runStep(step, execution) {
+async function runStep(step, queueFile) {
   const logDir = await createLogDir(step.id);
   const plan = await planStep(step, logDir);
   let lastFailure = "";
@@ -173,7 +173,7 @@ async function runStep(step, execution) {
 
     const verification = await runVerification(step, logDir, attempt);
     if (verification.ok) {
-      await completeStep(step, execution, logDir);
+      await completeStep(step, queueFile, logDir);
       if (!options.noReconcile) {
         await reconcileRoadmap(step, logDir);
       }
@@ -184,8 +184,8 @@ async function runStep(step, execution) {
     await writeFile(path.join(logDir, `attempt-${attempt}.failure.log`), lastFailure);
   }
 
-  markStepBlocked(execution, step.id, `Autopilot failed after ${options.maxAttempts} attempts. See ${path.relative(rootDir, logDir)}.`);
-  await writeExecution(execution);
+  markStepBlocked(queueFile, step.id, `Autopilot failed after ${options.maxAttempts} attempts. See ${path.relative(rootDir, logDir)}.`);
+  await writeQueueFile(queueFile);
   throw new Error(`Roadmap step ${step.id} failed after ${options.maxAttempts} attempts. Logs: ${logDir}`);
 }
 
@@ -218,9 +218,9 @@ async function planStep(step, logDir) {
   return planResult.output;
 }
 
-async function completeStep(step, execution, logDir) {
-  markStepDone(execution, step.id);
-  await writeExecution(execution);
+async function completeStep(step, queueFile, logDir) {
+  markStepDone(queueFile, step.id);
+  await writeQueueFile(queueFile);
   await runRequiredShell("npm run roadmap:check", path.join(logDir, "roadmap-check-after-done.log"));
 
   const status = await runGit(["status", "--short"], path.join(logDir, "git-status-before-commit.log"));
@@ -243,13 +243,13 @@ async function completeStep(step, execution, logDir) {
 
 async function reconcileRoadmap(completedStep, stepLogDir) {
   const reconcileLogDir = path.join(stepLogDir, "reconcile");
-  const execution = await loadValidExecution();
+  const queueFile = await loadValidQueueFile();
   const promptPath = path.join(reconcileLogDir, "reconcile.prompt.md");
   const prompt = await renderPrompt("reconcile-roadmap.md", {
     COMPLETED_STEP_JSON: JSON.stringify(completedStep, null, 2),
-    EXECUTION_JSON: JSON.stringify(execution, null, 2),
+    QUEUE_JSON: JSON.stringify(queueFile, null, 2),
     GOALS_MD: await readGoals(),
-    ROADMAP_STATUS: formatStep(findNextRunnableStep(execution)),
+    ROADMAP_STATUS: formatStep(findNextRunnableStep(queueFile)),
   });
 
   await mkdir(reconcileLogDir, { recursive: true });
@@ -271,15 +271,15 @@ async function reconcileRoadmap(completedStep, stepLogDir) {
     return;
   }
 
-  const allowedFiles = new Set(["ai/roadmap/execution.json"]);
+  const allowedFiles = new Set(["ai/roadmap/queue.json"]);
   const disallowedFiles = changedFiles.filter((file) => !allowedFiles.has(file));
   if (disallowedFiles.length > 0) {
-    throw new Error(`Roadmap reconciliation may only edit ai/roadmap/execution.json. Unexpected files: ${disallowedFiles.join(", ")}.`);
+    throw new Error(`Roadmap reconciliation may only edit ai/roadmap/queue.json. Unexpected files: ${disallowedFiles.join(", ")}.`);
   }
 
-  await runGit(["add", "ai/roadmap/execution.json"], path.join(reconcileLogDir, "git-add.log"));
+  await runGit(["add", "ai/roadmap/queue.json"], path.join(reconcileLogDir, "git-add.log"));
   await runGit(["diff", "--cached", "--check"], path.join(reconcileLogDir, "git-diff-check.log"));
-  await runGit(["commit", "-m", "Reconcile roadmap execution queue"], path.join(reconcileLogDir, "git-commit.log"));
+  await runGit(["commit", "-m", "Reconcile roadmap queue"], path.join(reconcileLogDir, "git-commit.log"));
 
   if (!options.noPush) {
     await pushCurrentBranch(reconcileLogDir);
@@ -426,14 +426,14 @@ async function runCommand(command, commandArgs, logPath, extraEnv = {}, shell = 
   });
 }
 
-async function loadValidExecution() {
-  const execution = await readExecution();
-  const errors = [...(await validateGoalsFile()), ...validateExecution(execution)];
+async function loadValidQueueFile() {
+  const queueFile = await readQueueFile();
+  const errors = [...(await validateGoalsFile()), ...validateQueueFile(queueFile)];
   if (errors.length > 0) {
-    throw new Error(`Roadmap execution is invalid:\n${errors.map((error) => `- ${error}`).join("\n")}`);
+    throw new Error(`Roadmap queue is invalid:\n${errors.map((error) => `- ${error}`).join("\n")}`);
   }
 
-  return execution;
+  return queueFile;
 }
 
 async function readGoals() {

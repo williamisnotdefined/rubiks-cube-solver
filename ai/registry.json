@@ -150,7 +150,7 @@
     },
     {
       "name": "roadmap-executor",
-      "description": "Use when changing roadmap automation, ai/roadmap/execution.json, scripts/roadmap, scripts/autopilot, or unattended execution behavior.",
+      "description": "Use when changing roadmap automation, ai/roadmap/queue.json, scripts/roadmap, scripts/autopilot, or unattended execution behavior.",
       "canonicalPath": "ai/skills/roadmap-executor.md",
       "references": [
         "ai/rules/roadmap-autopilot-rules.md",

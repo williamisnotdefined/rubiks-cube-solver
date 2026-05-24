@@ -6,7 +6,7 @@ The roadmap autopilot converts the human roadmap into an operational queue that 
 
 - `roadmap.md`: strategic project roadmap.
 - `GOALS.md`: read-only product north star for autonomous planning.
-- `ai/roadmap/execution.json`: operational stack with `queue`, `history`, and `blocked`.
+- `ai/roadmap/queue.json`: operational stack with `queue`, `history`, and `blocked`.
 - `scripts/roadmap/*.mjs`: validation and status commands for the operational queue.
 - `scripts/autopilot/run-roadmap.mjs`: unattended runner for one or more roadmap steps.
 - `scripts/autopilot/processes.mjs`: process registry for autopilot-owned subprocesses.
@@ -41,15 +41,15 @@ The runner should be launched from a normal terminal or `tmux`. Running it from 
 
 The runner must never kill arbitrary OpenCode processes. Cleanup is limited to subprocesses registered in `.autopilot/processes.json`, and PID reuse is checked with `/proc/<pid>/stat` start-time ticks before signaling a process group.
 
-The implementation agent is instructed not to commit, push, change branches, or edit `ai/roadmap/execution.json`. The runner owns state transitions and git operations.
+The implementation agent is instructed not to commit, push, change branches, or edit `ai/roadmap/queue.json`. The runner owns state transitions and git operations.
 
-The reconciliation agent is instructed to edit only `ai/roadmap/execution.json`. It may modify the future `queue`, but it must preserve `history` and `blocked` records and must not mark tasks complete.
+The reconciliation agent is instructed to edit only `ai/roadmap/queue.json`. It may modify the future `queue`, but it must preserve `history` and `blocked` records and must not mark tasks complete.
 
 The runner rejects implementation attempts that edit `GOALS.md`.
 
 The runner should stop on unresolved failures instead of continuing to later phases with a broken base.
 
-## Execution File Semantics
+## Queue File Semantics
 
 - `queue[0]`: next task to implement.
 - `queue[1..]`: future tasks that the reconciler may refine.

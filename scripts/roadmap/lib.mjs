@@ -3,46 +3,46 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-export const executionPath = path.join(rootDir, "ai/roadmap/execution.json");
+export const queuePath = path.join(rootDir, "ai/roadmap/queue.json");
 export const goalsPath = path.join(rootDir, "GOALS.md");
 export const fixedModel = "openai/gpt-5.5";
 export const fixedVariant = "xhigh";
 
-export async function readExecution() {
-  return JSON.parse(await readFile(executionPath, "utf8"));
+export async function readQueueFile() {
+  return JSON.parse(await readFile(queuePath, "utf8"));
 }
 
-export async function writeExecution(execution) {
-  await mkdir(path.dirname(executionPath), { recursive: true });
-  await writeFile(executionPath, `${JSON.stringify(execution, null, 2)}\n`);
+export async function writeQueueFile(queueFile) {
+  await mkdir(path.dirname(queuePath), { recursive: true });
+  await writeFile(queuePath, `${JSON.stringify(queueFile, null, 2)}\n`);
 }
 
-export function validateExecution(execution) {
+export function validateQueueFile(queueFile) {
   const errors = [];
 
-  if (execution?.version !== 2) {
-    errors.push("execution.version must be 2.");
+  if (queueFile?.version !== 2) {
+    errors.push("queue.version must be 2.");
   }
 
-  if (execution?.model !== fixedModel) {
-    errors.push(`execution.model must be ${fixedModel}.`);
+  if (queueFile?.model !== fixedModel) {
+    errors.push(`queue.model must be ${fixedModel}.`);
   }
 
-  if (execution?.variant !== fixedVariant) {
-    errors.push(`execution.variant must be ${fixedVariant}.`);
+  if (queueFile?.variant !== fixedVariant) {
+    errors.push(`queue.variant must be ${fixedVariant}.`);
   }
 
-  if (typeof execution?.source !== "string" || execution.source.length === 0) {
-    errors.push("execution.source must be a non-empty string.");
+  if (typeof queueFile?.source !== "string" || queueFile.source.length === 0) {
+    errors.push("queue.source must be a non-empty string.");
   }
 
-  if (execution?.goals !== "GOALS.md") {
-    errors.push("execution.goals must be GOALS.md.");
+  if (queueFile?.goals !== "GOALS.md") {
+    errors.push("queue.goals must be GOALS.md.");
   }
 
   for (const collection of ["queue", "history", "blocked"]) {
-    if (!Array.isArray(execution?.[collection])) {
-      errors.push(`execution.${collection} must be an array.`);
+    if (!Array.isArray(queueFile?.[collection])) {
+      errors.push(`queue.${collection} must be an array.`);
     }
   }
 
@@ -51,31 +51,31 @@ export function validateExecution(execution) {
   }
 
   const seenIds = new Map();
-  validateQueue(execution.queue, seenIds, errors);
-  validateRecords(execution.history, "history", seenIds, errors);
-  validateRecords(execution.blocked, "blocked", seenIds, errors);
+  validateQueue(queueFile.queue, seenIds, errors);
+  validateRecords(queueFile.history, "history", seenIds, errors);
+  validateRecords(queueFile.blocked, "blocked", seenIds, errors);
 
-  if (execution.blocked.some((record) => typeof record.blockedReason !== "string" || record.blockedReason.length === 0)) {
+  if (queueFile.blocked.some((record) => typeof record.blockedReason !== "string" || record.blockedReason.length === 0)) {
     errors.push("blocked records must include blockedReason.");
   }
 
-  if (execution.history.some((record) => typeof record.completedAt !== "string" || record.completedAt.length === 0)) {
+  if (queueFile.history.some((record) => typeof record.completedAt !== "string" || record.completedAt.length === 0)) {
     errors.push("history records must include completedAt.");
   }
 
   return errors;
 }
 
-export function summarizeExecution(execution) {
+export function summarizeQueueFile(queueFile) {
   return {
-    queued: execution.queue.length,
-    done: execution.history.length,
-    blocked: execution.blocked.length,
+    queued: queueFile.queue.length,
+    done: queueFile.history.length,
+    blocked: queueFile.blocked.length,
   };
 }
 
-export function findNextRunnableStep(execution) {
-  return execution.queue[0] ?? null;
+export function findNextRunnableStep(queueFile) {
+  return queueFile.queue[0] ?? null;
 }
 
 export function formatStep(step) {
@@ -92,35 +92,35 @@ export function formatStep(step) {
   ].join("\n");
 }
 
-export function markStepDone(execution, stepId) {
-  const step = execution.queue[0];
+export function markStepDone(queueFile, stepId) {
+  const step = queueFile.queue[0];
   if (!step || step.id !== stepId) {
     throw new Error(`Can only mark queue[0] as done. Expected ${step?.id ?? "none"}, got ${stepId}.`);
   }
 
   const completedAt = new Date().toISOString();
-  const [completed] = execution.queue.splice(0, 1);
-  execution.history.push({
+  const [completed] = queueFile.queue.splice(0, 1);
+  queueFile.history.push({
     ...completed,
     completedAt,
   });
-  execution.updatedAt = completedAt;
+  queueFile.updatedAt = completedAt;
 }
 
-export function markStepBlocked(execution, stepId, reason) {
-  const step = execution.queue[0];
+export function markStepBlocked(queueFile, stepId, reason) {
+  const step = queueFile.queue[0];
   if (!step || step.id !== stepId) {
     throw new Error(`Can only block queue[0]. Expected ${step?.id ?? "none"}, got ${stepId}.`);
   }
 
   const blockedAt = new Date().toISOString();
-  const [blocked] = execution.queue.splice(0, 1);
-  execution.blocked.push({
+  const [blocked] = queueFile.queue.splice(0, 1);
+  queueFile.blocked.push({
     ...blocked,
     blockedAt,
     blockedReason: reason,
   });
-  execution.updatedAt = blockedAt;
+  queueFile.updatedAt = blockedAt;
 }
 
 export function parseArgs(argv) {

@@ -7,7 +7,7 @@ You are planning one unattended roadmap step before any code is changed.
 - Use model `openai/gpt-5.5` with variant `xhigh` for all autonomous reasoning.
 - Do not edit files.
 - Do not run commands that modify files, git state, dependencies, or generated artifacts.
-- Do not commit, push, create branches, or update `ai/roadmap/execution.json`.
+- Do not commit, push, create branches, or update `ai/roadmap/queue.json`.
 - Do not edit `GOALS.md`.
 - Return only a clear Markdown plan.
 

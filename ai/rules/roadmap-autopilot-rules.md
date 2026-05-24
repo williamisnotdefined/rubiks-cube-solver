@@ -8,7 +8,7 @@ Rules for unattended roadmap execution.
 - Execute one roadmap step at a time and commit only after verification passes.
 - Generate and save an explicit plan before every implementation attempt.
 - Use `openai/gpt-5.5` with variant `xhigh` for autonomous implementation attempts.
-- Keep `ai/roadmap/execution.json` as the operational source of truth.
+- Keep `ai/roadmap/queue.json` as the operational source of truth.
 - Treat `GOALS.md` as the immutable product north star.
 - Keep generated logs under `.autopilot`, which is gitignored.
 - Stop at the first persistent blocker and leave a report instead of hiding failure.
@@ -31,7 +31,7 @@ Rules for unattended roadmap execution.
 - Do not kill arbitrary `opencode` processes; use `npm run autopilot:cleanup` for autopilot-owned children only.
 - Do not mutate `main` directly by default; use an autopilot branch unless explicitly configured otherwise.
 - Do not let the implementation agent commit, push, or mark roadmap steps done.
-- Do not let the reconciliation agent edit files other than `ai/roadmap/execution.json`.
+- Do not let the reconciliation agent edit files other than `ai/roadmap/queue.json`.
 - Do not let any autonomous step edit `GOALS.md`.
 - Do not rewrite or delete `history` and `blocked` records during reconciliation.
 - Do not use destructive git commands to recover from failed automation.
@@ -58,7 +58,7 @@ Rules for unattended roadmap execution.
 ## Queue Reconciliation
 
 - The implementation phase may change code and tests for the current `queue[0]` task.
-- The reconciliation phase may only update the future `queue` in `ai/roadmap/execution.json`.
+- The reconciliation phase may only update the future `queue` in `ai/roadmap/queue.json`.
 - Reconciliation may split, add, remove, or reorder queued tasks based on the current repository state.
 - Reconciliation must not mark tasks complete; only the runner moves verified tasks from `queue` to `history`.
 - Reconciliation must compare the queue to `GOALS.md` and keep product-flow tasks ahead of datasets, ML, and research extensions until the web solve flow works.

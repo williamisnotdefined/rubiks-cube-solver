@@ -22,11 +22,11 @@ This file is compiled from canonical AI knowledge files. Edit canonical files un
 
 # Roadmap Executor
 
-Use this skill when changing roadmap automation, `ai/roadmap/execution.json`, `scripts/roadmap`, `scripts/autopilot`, or unattended execution behavior.
+Use this skill when changing roadmap automation, `ai/roadmap/queue.json`, `scripts/roadmap`, `scripts/autopilot`, or unattended execution behavior.
 
 ## Goal
 
-Keep the roadmap autopilot safe, resumable, deterministic, and aligned with the roadmap execution queue.
+Keep the roadmap autopilot safe, resumable, deterministic, and aligned with the roadmap queue.
 
 ## Read First
 
@@ -39,7 +39,7 @@ Keep the roadmap autopilot safe, resumable, deterministic, and aligned with the 
 
 ## Workflow
 
-- Validate `ai/roadmap/execution.json` with `npm run roadmap:check` after any queue edit.
+- Validate `ai/roadmap/queue.json` with `npm run roadmap:check` after any queue edit.
 - Treat `GOALS.md` as read-only and as the product north star.
 - Keep autopilot defaults on `openai/gpt-5.5` and variant `xhigh`.
 - Treat `queue[0]` as the next and only current task.
@@ -63,7 +63,7 @@ Keep the roadmap autopilot safe, resumable, deterministic, and aligned with the 
 - Roadmap reconciliation can update future queue items without touching source code.
 - Roadmap reconciliation keeps the queue aligned with `GOALS.md`.
 - Generated route files are synchronized from canonical AI knowledge.
-- CI continues to validate Rust, AI routes, and roadmap execution metadata.
+- CI continues to validate Rust, AI routes, and roadmap queue metadata.
 
 ## Verification
 
@@ -86,7 +86,7 @@ Rules for unattended roadmap execution.
 - Execute one roadmap step at a time and commit only after verification passes.
 - Generate and save an explicit plan before every implementation attempt.
 - Use `openai/gpt-5.5` with variant `xhigh` for autonomous implementation attempts.
-- Keep `ai/roadmap/execution.json` as the operational source of truth.
+- Keep `ai/roadmap/queue.json` as the operational source of truth.
 - Treat `GOALS.md` as the immutable product north star.
 - Keep generated logs under `.autopilot`, which is gitignored.
 - Stop at the first persistent blocker and leave a report instead of hiding failure.
@@ -109,7 +109,7 @@ Rules for unattended roadmap execution.
 - Do not kill arbitrary `opencode` processes; use `npm run autopilot:cleanup` for autopilot-owned children only.
 - Do not mutate `main` directly by default; use an autopilot branch unless explicitly configured otherwise.
 - Do not let the implementation agent commit, push, or mark roadmap steps done.
-- Do not let the reconciliation agent edit files other than `ai/roadmap/execution.json`.
+- Do not let the reconciliation agent edit files other than `ai/roadmap/queue.json`.
 - Do not let any autonomous step edit `GOALS.md`.
 - Do not rewrite or delete `history` and `blocked` records during reconciliation.
 - Do not use destructive git commands to recover from failed automation.
@@ -136,7 +136,7 @@ Rules for unattended roadmap execution.
 ## Queue Reconciliation
 
 - The implementation phase may change code and tests for the current `queue[0]` task.
-- The reconciliation phase may only update the future `queue` in `ai/roadmap/execution.json`.
+- The reconciliation phase may only update the future `queue` in `ai/roadmap/queue.json`.
 - Reconciliation may split, add, remove, or reorder queued tasks based on the current repository state.
 - Reconciliation must not mark tasks complete; only the runner moves verified tasks from `queue` to `history`.
 - Reconciliation must compare the queue to `GOALS.md` and keep product-flow tasks ahead of datasets, ML, and research extensions until the web solve flow works.
@@ -237,7 +237,7 @@ The roadmap autopilot converts the human roadmap into an operational queue that 
 
 - `roadmap.md`: strategic project roadmap.
 - `GOALS.md`: read-only product north star for autonomous planning.
-- `ai/roadmap/execution.json`: operational stack with `queue`, `history`, and `blocked`.
+- `ai/roadmap/queue.json`: operational stack with `queue`, `history`, and `blocked`.
 - `scripts/roadmap/*.mjs`: validation and status commands for the operational queue.
 - `scripts/autopilot/run-roadmap.mjs`: unattended runner for one or more roadmap steps.
 - `scripts/autopilot/processes.mjs`: process registry for autopilot-owned subprocesses.
@@ -272,15 +272,15 @@ The runner should be launched from a normal terminal or `tmux`. Running it from 
 
 The runner must never kill arbitrary OpenCode processes. Cleanup is limited to subprocesses registered in `.autopilot/processes.json`, and PID reuse is checked with `/proc/<pid>/stat` start-time ticks before signaling a process group.
 
-The implementation agent is instructed not to commit, push, change branches, or edit `ai/roadmap/execution.json`. The runner owns state transitions and git operations.
+The implementation agent is instructed not to commit, push, change branches, or edit `ai/roadmap/queue.json`. The runner owns state transitions and git operations.
 
-The reconciliation agent is instructed to edit only `ai/roadmap/execution.json`. It may modify the future `queue`, but it must preserve `history` and `blocked` records and must not mark tasks complete.
+The reconciliation agent is instructed to edit only `ai/roadmap/queue.json`. It may modify the future `queue`, but it must preserve `history` and `blocked` records and must not mark tasks complete.
 
 The runner rejects implementation attempts that edit `GOALS.md`.
 
 The runner should stop on unresolved failures instead of continuing to later phases with a broken base.
 
-## Execution File Semantics
+## Queue File Semantics
 
 - `queue[0]`: next task to implement.
 - `queue[1..]`: future tasks that the reconciler may refine.

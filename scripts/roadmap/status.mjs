@@ -1,22 +1,22 @@
 #!/usr/bin/env node
 
-import { findNextRunnableStep, formatStep, readExecution, summarizeExecution, validateExecution, validateGoalsFile } from "./lib.mjs";
+import { findNextRunnableStep, formatStep, readQueueFile, summarizeQueueFile, validateGoalsFile, validateQueueFile } from "./lib.mjs";
 
-const execution = await readExecution();
-const errors = [...(await validateGoalsFile()), ...validateExecution(execution)];
+const queueFile = await readQueueFile();
+const errors = [...(await validateGoalsFile()), ...validateQueueFile(queueFile)];
 
 if (errors.length > 0) {
-  console.error(`Roadmap execution file is invalid. Run npm run roadmap:check for details.`);
+  console.error(`Roadmap queue file is invalid. Run npm run roadmap:check for details.`);
   process.exit(1);
 }
 
-const summary = summarizeExecution(execution);
+const summary = summarizeQueueFile(queueFile);
 console.log("Roadmap status:");
 for (const [status, count] of Object.entries(summary)) {
   console.log(`- ${status}: ${count}`);
 }
 
-const nextStep = findNextRunnableStep(execution);
+const nextStep = findNextRunnableStep(queueFile);
 if (nextStep) {
   console.log(`\nNext runnable step:\n${formatStep(nextStep)}`);
 } else {
