@@ -52,6 +52,12 @@ where
             &mut explored_nodes,
         ) {
             ThresholdSearchResult::Found => {
+                let solves_start = solution_solves(start, &path);
+                debug_assert!(solves_start);
+                if !solves_start {
+                    return None;
+                }
+
                 return Some(SearchSolution::with_metrics(path, explored_nodes));
             }
             ThresholdSearchResult::NextThreshold(next_threshold) if next_threshold <= max_depth => {
@@ -138,6 +144,12 @@ fn should_skip_move(last_move: Option<Move>, next_move: Move) -> bool {
     last_move.is_some_and(|last_move| last_move.face() == next_move.face())
 }
 
+fn solution_solves(start: &Cube, moves: &[Move]) -> bool {
+    let mut cube = start.clone();
+    cube.apply_moves(moves);
+    cube.is_solved()
+}
+
 #[cfg(test)]
 mod tests {
     use super::solve_ida_star;
@@ -203,6 +215,14 @@ mod tests {
 
         assert!(cube.state().is_valid());
         assert!(cube.is_solved());
+    }
+
+    #[test]
+    fn root_export_solves_shallow_scramble() {
+        let cube = scrambled(&[Move::R]);
+        let solution = crate::solve_ida_star(&cube, 1).expect("one-move scramble should solve");
+
+        assert_solution_solves(cube, solution.moves());
     }
 
     fn scrambled(moves: &[Move]) -> Cube {
