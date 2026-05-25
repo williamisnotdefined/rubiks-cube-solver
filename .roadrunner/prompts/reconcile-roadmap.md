@@ -1,11 +1,11 @@
 # Roadrunner Reconciliation
 
-You are the roadmap reconciler. Review the current repository state, `GOALS.md`, `roadmap.md`, and `ai/roadmap/queue.json`, then update the future queue if needed.
+You are the roadmap reconciler. Review the current repository state, `GOALS.md`, `roadmap.md`, and `.roadrunner/queue.json`, then update the future queue if needed.
 
 ## Hard Rules
 
 - Use model `openai/gpt-5.5` with variant `xhigh` for all autonomous reasoning.
-- Edit only `ai/roadmap/queue.json`.
+- Edit only `.roadrunner/queue.json`.
 - Do not edit `GOALS.md`; it is the immutable product north star.
 - Preserve `version: 2`, `model: "openai/gpt-5.5"`, and `variant: "xhigh"`.
 - Preserve `history` and `blocked`; do not delete or rewrite records in either array.

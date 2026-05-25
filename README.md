@@ -28,7 +28,7 @@ cargo test
 
 ## Roadrunner
 
-The operational roadmap lives in `ai/roadmap/queue.json`. It uses `queue[0]` as the next executable task, `history` for completed verified work, and `blocked` for persistent failures. Roadrunner uses `roadrunner.config.json` plus the prompts in `ai/roadmap/prompts` to run and reconcile the queue against `GOALS.md`.
+The operational roadmap lives in `.roadrunner/queue.json`. It uses `queue[0]` as the next executable task, `history` for completed verified work, and `blocked` for persistent failures. Roadrunner uses `.roadrunner/config.json` plus the prompts in `.roadrunner/prompts` to run and reconcile the queue against `GOALS.md`.
 
 The generic runner implementation lives outside this repository. Once `roadrunner` is installed on `PATH`, these aliases delegate to it:
 
@@ -50,7 +50,7 @@ Run longer unattended sessions with explicit limits from a normal terminal or `t
 npm run roadmap:run -- --max-steps 999 --max-hours 72
 ```
 
-Roadrunner uses `opencode run --model openai/gpt-5.5 --variant xhigh`, writes runtime logs under `.autopilot/`, plans each step before execution, verifies each step, then runs a reconciliation pass that may update the future queue. This repository keeps commit and push decisions manual after review. When the frontend exists, the queue should include Playwright tests that submit cube states, receive solutions, replay moves, and verify the cube is solved.
+Roadrunner uses `opencode run --model openai/gpt-5.5 --variant xhigh`, writes runtime logs under `.roadrunner/logs/`, plans each step before execution, verifies each step, then runs a reconciliation pass that may update the future queue. This repository keeps commit and push decisions manual after review. When the frontend exists, the queue should include Playwright tests that submit cube states, receive solutions, replay moves, and verify the cube is solved.
 
 ## External Visualization Library
 

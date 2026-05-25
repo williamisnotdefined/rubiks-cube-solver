@@ -6,7 +6,7 @@ You are running unattended inside this repository. Implement exactly the roadmap
 
 - Use model `openai/gpt-5.5` with variant `xhigh` for all autonomous work.
 - Do not ask the user questions.
-- Do not commit, amend, push, create branches, or update `ai/roadmap/queue.json`.
+- Do not commit, amend, push, create branches, or update `.roadrunner/queue.json`.
 - Do not edit `GOALS.md`.
 - Do not run roadmap reconciliation; Roadrunner performs that after implementation verification.
 - Do not skip tests or lower quality gates.

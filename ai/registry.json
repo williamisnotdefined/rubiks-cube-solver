@@ -150,7 +150,7 @@
     },
     {
       "name": "roadmap-executor",
-      "description": "Use when changing ai/roadmap/queue.json, ai/roadmap/prompts, roadrunner.config.json, package roadmap aliases, or Roadrunner execution behavior for this project.",
+      "description": "Use when changing .roadrunner/queue.json, .roadrunner/prompts, .roadrunner/config.json, package roadmap aliases, or Roadrunner execution behavior for this project.",
       "canonicalPath": "ai/skills/roadmap-executor.md",
       "references": [
         "ai/rules/roadmap-runner-rules.md",
@@ -167,11 +167,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "ai/roadmap/**/*,roadrunner.config.json,ai/skills/roadmap-executor.md,ai/rules/roadmap-runner-rules.md,ai/architecture/roadmap-runner.md,package.json",
+          "globs": ".roadrunner/config.json,.roadrunner/queue.json,.roadrunner/prompts/**/*,ai/skills/roadmap-executor.md,ai/rules/roadmap-runner-rules.md,ai/architecture/roadmap-runner.md,package.json",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "ai/roadmap/**/*,roadrunner.config.json,ai/skills/roadmap-executor.md,ai/rules/roadmap-runner-rules.md,ai/architecture/roadmap-runner.md,package.json"
+          "applyTo": ".roadrunner/config.json,.roadrunner/queue.json,.roadrunner/prompts/**/*,ai/skills/roadmap-executor.md,ai/rules/roadmap-runner-rules.md,ai/architecture/roadmap-runner.md,package.json"
         }
       }
     }

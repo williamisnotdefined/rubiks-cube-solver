@@ -1,0 +1,13 @@
+[package]
+name = "rubiks-cube-solver-wasm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+path = "src/lib.rs"
+
+[dependencies]
+cube-engine = { path = "../cube-engine" }
+wasm-bindgen = "0.2"

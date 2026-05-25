@@ -1,6 +1,6 @@
 # Roadmap Executor
 
-Use this skill when changing `ai/roadmap/queue.json`, `ai/roadmap/prompts`, `roadrunner.config.json`, package roadmap aliases, or Roadrunner execution behavior for this project.
+Use this skill when changing `.roadrunner/queue.json`, `.roadrunner/prompts`, `.roadrunner/config.json`, package roadmap aliases, or Roadrunner execution behavior for this project.
 
 ## Goal
 
@@ -17,7 +17,7 @@ Keep the Rubik roadmap queue safe, resumable, deterministic, and aligned with th
 
 ## Workflow
 
-- Validate `ai/roadmap/queue.json` with `npm run roadmap:check` after any queue edit once Roadrunner is available.
+- Validate `.roadrunner/queue.json` with `npm run roadmap:check` after any queue edit once Roadrunner is available.
 - Treat `GOALS.md` as read-only and as the product north star.
 - Keep Roadrunner defaults on `openai/gpt-5.5` and variant `xhigh`.
 - Treat `queue[0]` as the next and only current task.

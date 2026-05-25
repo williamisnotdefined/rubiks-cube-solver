@@ -6,7 +6,7 @@ The previous attempt for this roadmap step failed verification. Fix the failure 
 
 - Use model `openai/gpt-5.5` with variant `xhigh` for all autonomous work.
 - Do not ask the user questions.
-- Do not commit, amend, push, create branches, or update `ai/roadmap/queue.json`.
+- Do not commit, amend, push, create branches, or update `.roadrunner/queue.json`.
 - Do not edit `GOALS.md`.
 - Do not skip tests or lower quality gates.
 - Do not use destructive git commands such as `git reset --hard` or `git checkout --`.
@@ -30,10 +30,6 @@ The previous attempt for this roadmap step failed verification. Fix the failure 
 ```md
 {{PLAN_MD}}
 ```
-
-## Attempt
-
-{{ATTEMPT}}
 
 ## Failure Output
 

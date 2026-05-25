@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{fmt, str::FromStr};
 
 use super::moves::Move;
 
@@ -18,6 +18,14 @@ impl NotationError {
         &self.token
     }
 }
+
+impl fmt::Display for NotationError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(formatter, "invalid move notation token: {:?}", self.token)
+    }
+}
+
+impl std::error::Error for NotationError {}
 
 impl FromStr for Move {
     type Err = NotationError;

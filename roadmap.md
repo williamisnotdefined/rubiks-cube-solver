@@ -1,729 +1,296 @@
-# Rubik's Cube AI Solver Roadmap
+# Rubik's Cube Solver Roadmap
 
-## Execução Operacional Com Roadrunner
+Este roadmap descreve a ordem estratégica do projeto. A execução operacional passo a passo fica em `.roadrunner/queue.json`, que deve ser reconciliada com este arquivo e com `GOALS.md` antes de qualquer execução autônoma longa.
 
-Este arquivo descreve a visão técnica e estratégica do projeto. A fila operacional usada pelo Roadrunner fica em `ai/roadmap/queue.json` e deve ser tratada como a fonte de verdade para execução autônoma passo a passo.
+## Fontes De Verdade
 
-O Roadrunner deve priorizar o fluxo de produto definido em `GOALS.md`: entrada de estado do usuário, validação, conversão para cubies, solução verificada, exposição por WASM, interface web, testes E2E e só então extensões de pesquisa como datasets, Machine Learning e busca híbrida.
-
-Cada item operacional deve ser pequeno, verificável e capaz de passar por `cargo test`, `npm run lint` e `npm run roadmap:check`. Execuções longas devem acontecer fora do OpenCode, preferencialmente em `tmux`, com revisão e commit manual após cada passo verificado.
+- `GOALS.md`: norte do produto. Deve ser tratado como somente leitura pela automação.
+- `roadmap.md`: plano técnico linear e critérios de fase.
+- `.roadrunner/queue.json`: fila operacional do Roadrunner. `queue[0]` é a próxima tarefa executável; `history` e `blocked` devem ser preservados.
+- `crates/cube-engine`: fonte de verdade para estado do cubo, movimentos, validação, busca e solver.
 
 ## Objetivo Final
 
-Construir um sistema híbrido de resolução de cubo mágico focado em:
+Construir uma aplicação web em que o usuário informa um estado válido de cubo 3x3, recebe uma solução válida, consegue visualizar ou reproduzir a solução e tem feedback claro para estados impossíveis.
 
-* soluções ótimas ou quase ótimas
-* busca heurística avançada
-* heurísticas aprendidas por Machine Learning
-* visualização web moderna
-* execução local via WebAssembly
-* aproximação do limite teórico conhecido como God’s Number
+Prioridades do produto:
 
-God’s Number representa o número máximo de movimentos necessários para resolver qualquer estado válido de um cubo mágico 3x3.
+1. Nunca retornar uma solução inválida.
+2. Rejeitar estados impossíveis com erros úteis.
+3. Resolver estados informados pelo usuário, não apenas scrambles gerados internamente.
+4. Melhorar qualidade de solução depois da correção, mirando soluções curtas e sendo honesto quando um limite configurado não for atingido.
+5. Entregar localmente por WASM e UI web.
+6. Só depois expandir para datasets, Machine Learning e busca híbrida.
 
----
+## Regras De Implementação
 
-# Arquitetura Final Recomendada
+- Não começar por Machine Learning, Reinforcement Learning ou Transformers.
+- Não usar arrays de cores como representação principal do solver.
+- Usar representação por cubies no engine Rust.
+- Manter lógica de cubo, validação, busca e verificação no Rust.
+- Manter WASM e frontend como adapters finos.
+- Verificar toda solução retornada por replay antes de expor sucesso.
+- Não prometer otimalidade ou garantia de 20 movimentos sem algoritmo e testes que sustentem isso.
+- Não commitar datasets grandes, pruning tables grandes, checkpoints de modelo ou logs de automação.
 
-```txt
-Frontend (TypeScript + React + React Three Fiber)
-                ↓
-         WebAssembly Bridge
-                ↓
-          Rust Solver Engine
-                ↓
-Iterative Deepening A* (IDA*)
-                ↓
-Pattern Databases + Heuristics
-                ↓
-Machine Learning Heuristics
-```
-
----
-
-# Filosofia do Projeto
-
-## Regra mais importante
-
-Não começar por Inteligência Artificial.
-
-A ordem correta do projeto é:
+## Arquitetura Alvo
 
 ```txt
-1. Representação do cubo
-2. Sistema de movimentos
-3. Algoritmos de busca
-4. Heurísticas
-5. Solver eficiente
-6. Pattern Databases
-7. Machine Learning
-8. Hybrid Search
+Web UI (TypeScript + React)
+        -> WASM boundary
+        -> Rust cube-engine
+        -> validated cubie state
+        -> deterministic solver
+        -> verified move sequence
+        -> playback / solved verification
 ```
 
----
-
-# Stack Recomendada
-
-## Solver Core
-
-* Rust
-
-## Machine Learning
-
-* Python
-* PyTorch
-
-## Frontend
-
-* TypeScript
-* React
-* React Three Fiber
-* Zustand
-* Vite
-
-## Integração
-
-* WebAssembly (WASM)
-
----
-
-# Fase 1 — Cube Engine
-
-## Objetivo
-
-Criar uma engine pura do cubo mágico.
-
-Sem interface gráfica.
-Sem Inteligência Artificial.
-Sem renderização.
-
----
-
-# Estrutura sugerida
+Extensões de pesquisa entram somente depois do fluxo acima funcionar:
 
 ```txt
-cube-engine/
-├── cube/
-│   ├── state.rs
-│   ├── cubies.rs
-│   ├── moves.rs
-│   ├── notation.rs
-│   └── scramble.rs
-│
-├── search/
-│   ├── bfs.rs
-│   ├── ida_star.rs
-│   └── heuristics.rs
-│
-└── main.rs
+Deterministic solver baseline
+        -> coordinates and pruning tables
+        -> solver benchmarks
+        -> generated datasets
+        -> ML value / policy experiments
+        -> hybrid move ordering or guided search
 ```
 
----
+## Estado Atual Do Projeto
 
-# Objetivos técnicos
+O projeto já tem a base do `cube-engine` em Rust, incluindo representação por cubies, movimentos, notação, scrambles, buscas iniciais, heurísticas simples, parsing/renderização de facelets, conversão para cubies, validação de estados impossíveis, APIs de solver e playback no engine, além de bootstrap do crate WASM.
 
-A engine deve:
+A próxima linha de execução deve completar a exposição WASM, criar a aplicação web, validar o fluxo com E2E e só então avançar para qualidade de solver e pesquisa.
 
-* representar qualquer estado válido do cubo
-* aplicar movimentos
-* desfazer movimentos
-* gerar scrambles
-* validar estados
-* detectar cubo resolvido
-* serializar estados
+## Roadmap Linear
 
----
+### Fase 1 - Cube Engine
 
-# Representação recomendada
+Objetivo: manter uma engine pura, determinística e testável para o cubo 3x3.
 
-Não utilizar:
+Entregas:
 
-```rs
-["white", "green", "red"]
-```
+- Estado por cubies: permutação e orientação de corners e edges.
+- Aplicação e inversão de movimentos.
+- Notação, algoritmos e scrambles.
+- Validação de invariantes de cubo: unicidade, orientação, permutação e paridade.
+- Detecção de estado resolvido.
+- Testes determinísticos para comportamento público do cubo.
 
----
+Critério de saída: qualquer estado aceito pelo engine deve ser um estado de cubo válido ou retornar erro estruturado.
 
-# Utilizar Cubie Representation
+### Fase 2 - Entrada De Estado Do Usuário
 
-Representar separadamente:
+Objetivo: aceitar estados reais informados pelo usuário sem trocar a representação interna do solver.
 
-* permutação de corners
-* orientação de corners
-* permutação de edges
-* orientação de edges
+Entregas:
 
----
+- Parser de string facelet 54 caracteres no formato Kociemba (`U`, `R`, `F`, `D`, `L`, `B`).
+- Validação de tamanho, símbolos, contagem de cores e centros fixos.
+- Decodificação de corners e edges a partir dos facelets.
+- Conversão de facelets para `CubieState`.
+- Renderização de `CubieState` para facelets para round-trip e playback.
+- Erros distintos para sintaxe, centros, decoding e validação cubie.
 
-# Conceitos importantes
+Critério de saída: estados válidos vindos de facelets convertem para cubies e estados impossíveis são rejeitados antes do solve.
 
-## Corner
+### Fase 3 - Solver De Produto
 
-Peça de canto.
+Objetivo: fornecer uma API de solver correta antes de otimizar qualidade.
 
-## Edge
+Entregas:
 
-Peça de aresta.
+- IDA* limitado por profundidade e orçamento de nós.
+- Heurísticas simples e admissíveis quando usadas para busca ótima limitada.
+- Tipos públicos para configuração, resultado, métricas e erros.
+- Solução para `CubieState` e facelets usando o mesmo caminho de solver.
+- Verificação por replay antes de retornar sucesso.
+- Erros distintos para entrada inválida e solução não encontrada dentro dos limites.
 
-## Permutation
+Critério de saída: estados resolvidos e scrambles rasos retornam soluções verificadas; limites insuficientes retornam falha honesta com métricas.
 
-Posição da peça.
+### Fase 4 - WebAssembly
 
-## Orientation
+Objetivo: expor o engine Rust para o navegador sem duplicar lógica.
 
-Rotação da peça.
+Entregas:
 
----
+- Crate `crates/wasm` com `wasm-bindgen`.
+- API de validação de facelets.
+- API de solve com limites explícitos ou defaults documentados.
+- API de playback e verificação final resolvida.
+- Resultados JavaScript-friendly com sucesso, erros de validação, erro de notação e limite não atingido.
 
-# Exemplo conceitual
+Critério de saída: chamadas WASM delegam para `cube-engine` e passam em testes ou smoke tests para sucesso e falhas principais.
 
-```txt
-Corners:
-[URF, UFL, ULB...]
+### Fase 5 - Frontend Web
 
-Edges:
-[UR, UF, UL...]
-```
+Objetivo: entregar o fluxo principal do produto no navegador.
 
----
+Entregas:
 
-# Meta principal desta fase
+- Aplicação React/TypeScript buildável em `apps/web`.
+- Boundary de inicialização WASM isolado de componentes React.
+- Input para facelets com validação e mensagens úteis.
+- Botão de solve com limites visíveis.
+- Exibição de movimentos, tamanho da solução e métricas.
+- Playback ou step-through usando estados gerados pelo engine.
+- Layout usável em desktop e mobile.
 
-A engine deve suportar:
+Critério de saída: o usuário consegue submeter estado resolvido, estado raso válido e estado inválido, recebendo resultado correto em cada caso.
 
-```rs
-cube.apply_move(Move::R);
-cube.apply_move(Move::U);
-cube.apply_move(Move::RPrime);
+### Fase 6 - Validação E2E
 
-assert!(!cube.is_solved());
-```
+Objetivo: proteger o fluxo de produto contra regressões.
 
----
+Entregas:
 
-# Fase 2 — Algoritmos de Busca
+- Playwright configurado.
+- Teste para estado resolvido.
+- Teste para scramble raso com solução retornada e verificada.
+- Teste para erro de estado inválido.
+- Teste de playback ou verificação engine-backed chegando ao estado resolvido.
+- Artefatos E2E ignorados no git.
 
-## Objetivo
+Critério de saída: uma alteração que quebre input, validação, solve ou playback falha em E2E.
 
-Implementar algoritmos clássicos de busca.
+### Fase 7 - Qualidade Do Solver Clássico
 
----
+Objetivo: sair do solver raso limitado para uma base mais útil e mensurável, ainda sem ML.
 
-# Algoritmos recomendados
+Entregas:
 
-## BFS (Breadth-First Search)
+- Coordenadas e combinatória para solver two-phase.
+- Indexação com erros checados, sem panics em helpers públicos.
+- Pattern databases ou pruning tables geradas de forma determinística.
+- Fixtures pequenas commitáveis para testes; tabelas grandes devem ser geradas localmente e ignoradas no git.
+- Integração do solver two-phase atrás de `SolverConfig`.
+- Benchmarks com estados conhecidos, profundidades, nós expandidos, tempo e tamanho de solução.
 
-Busca em largura.
+Critério de saída: existe um baseline clássico verificável, com métricas reais e sem promessa falsa de otimalidade.
 
-Explora todos os estados de uma profundidade antes de avançar.
+### Fase 8 - Datasets
 
----
+Objetivo: gerar dados confiáveis para pesquisa sem contaminar o produto ou o repositório com artefatos grandes.
 
-## DFS (Depth-First Search)
+Pré-condições:
 
-Busca em profundidade.
+- Fluxo web validado por E2E.
+- Solver clássico com baseline e métricas.
+- Formato estável de serialização de estado.
 
----
+Entregas:
 
-## IDDFS (Iterative Deepening Depth-First Search)
+- Schema versionado para exemplos de treino.
+- Gerador determinístico com seed configurável.
+- Estados produzidos pelo engine e validados antes de salvar.
+- Labels com semântica explícita:
+  - `scramble_depth`: profundidade gerada conhecida, não necessariamente distância ótima.
+  - `verified_solution_length`: tamanho de solução encontrada por solver configurado.
+  - `best_move`: apenas quando derivado de solução verificada ou de scramble reversível documentado.
+- Deduplicação de estados.
+- Splits treino/validação/teste por seed ou hash para evitar vazamento.
+- Amostras pequenas para testes commitadas; datasets grandes ficam fora do git.
 
-Busca em profundidade iterativa.
+Critério de saída: é possível gerar e validar um dataset pequeno de fixture e documentar como gerar datasets maiores localmente.
 
----
+### Fase 9 - Machine Learning
 
-## A* (A-Star)
+Objetivo: experimentar heurísticas aprendidas sem substituir a correção do solver clássico.
 
-Busca heurística guiada por custo estimado.
+Pré-condições:
 
----
+- Dataset versionado e validado.
+- Baseline clássico medido.
+- Fallback determinístico funcionando.
 
-## IDA* (Iterative Deepening A-Star)
+Primeiro modelo:
 
-Versão do A* com menor consumo de memória.
+- MLP simples em Python/PyTorch.
+- Entrada derivada da representação por cubies, não de arrays de cores como modelo primário do engine.
+- Saída inicial como Value Network: estimativa de distância ou bucket de distância.
+- Treino e avaliação reproduzíveis em fixture pequena.
 
-Este é um dos algoritmos mais importantes para o projeto.
+Métricas mínimas:
 
----
+- Erro médio por profundidade ou bucket.
+- Acurácia por bucket quando aplicável.
+- Tempo de inferência.
+- Comparação com heurísticas clássicas.
+- Impacto em nós expandidos quando usado para ordenar movimentos.
 
-# Conceitos importantes
+Regras de segurança:
 
-## Branching Factor
+- Modelo não valida estados.
+- Modelo não substitui replay da solução.
+- Modelo não deve ser usado como heurística admissível sem prova ou limite seguro.
+- Nenhum checkpoint grande deve ser commitado.
+- Transformers e Reinforcement Learning ficam fora até o MLP/value baseline demonstrar ganho claro.
 
-Quantidade média de movimentos possíveis por estado.
+Critério de saída: existe um baseline ML pequeno, reproduzível e comparado contra o solver clássico, sem alterar o caminho padrão de produto.
 
-## Pruning
+### Fase 10 - Hybrid Search
 
-Remoção de caminhos pouco promissores.
+Objetivo: usar ML para melhorar busca mantendo correção verificável.
 
-## Heuristic
+Ordem segura de integração:
 
-Estimativa de distância até o estado resolvido.
+1. Usar o modelo apenas para ordenar movimentos.
+2. Comparar nós expandidos e tempo contra o baseline clássico.
+3. Manter fallback clássico configurável.
+4. Verificar toda solução por replay.
+5. Só considerar poda guiada por ML após benchmarks e regras claras de segurança.
 
----
+Critério de saída: a busca híbrida melhora métricas em fixtures conhecidas sem degradar correção, mensagens de erro ou comportamento padrão.
 
-# Fase 3 — Heurísticas
+### Fase 11 - Pesquisa Avançada
 
-## Objetivo
+Objetivo: explorar ideias que não bloqueiam o produto principal.
 
-Eliminar dependência de brute force.
+Possíveis linhas:
 
----
+- Busca multi-threaded.
+- Beam search.
+- Monte Carlo Tree Search.
+- Neural-guided search.
+- Solver human-like.
+- Redução por simetria.
 
-# Heurísticas recomendadas
-
-## Corner Orientation Heuristic
-
-Avalia orientação de corners.
-
----
-
-## Edge Orientation Heuristic
-
-Avalia orientação de edges.
-
----
-
-## Misplaced Cubies
-
-Conta peças fora da posição correta.
-
----
-
-# Conceito importante
-
-## Admissible Heuristic
-
-Heurística que nunca superestima a distância real até a solução.
-
-Esse conceito é fundamental para soluções ótimas.
-
----
-
-# Fase 4 — Pattern Databases
-
-## Objetivo
-
-Criar tabelas pré-calculadas para acelerar buscas.
-
----
-
-# O que é Pattern Database
-
-Banco de estados parcialmente resolvidos contendo:
-
-```txt
-estado parcial → distância mínima até solução
-```
-
----
-
-# Exemplos
-
-## Corner Pattern Database
-
-## Edge Orientation Database
-
-## Edge Permutation Database
-
----
-
-# Conceitos importantes
-
-## Hashing
-
-Transformar estados complexos em índices compactos.
-
----
-
-## Bit Packing
-
-Compactação de múltiplos dados em poucos bits.
-
----
-
-## Lookup Table
-
-Tabela de consulta extremamente rápida.
-
----
-
-# Fase 5 — Frontend Web
+Critério de saída: cada experimento deve ter baseline, métrica, fallback e escopo isolado.
 
 ## Stack
 
-* TypeScript
-* React
-* React Three Fiber
-* Zustand
+- Solver core: Rust.
+- WASM: `wasm-bindgen`.
+- Frontend: TypeScript, React, Vite e React Three Fiber quando a visualização 3D for implementada.
+- ML: Python e PyTorch, somente depois do fluxo web e baseline clássico.
 
----
-
-# Objetivo
-
-Visualizar:
-
-* estado do cubo
-* movimentos
-* soluções
-* algoritmos
-* animações
-* busca heurística
-
----
-
-# Funcionalidades recomendadas
-
-## Renderização do cubo
-
-## Aplicação de movimentos
-
-## Scramble Generator
-
-## Playback de soluções
-
-## Controle manual
-
-## Visualização da busca
-
----
-
-# Regra importante
-
-A interface não deve conter lógica do cubo.
-
-A interface apenas:
+## Ordem Operacional Resumida
 
 ```txt
-envia movimentos
-recebe estados
-renderiza
+1. Cube engine Rust
+2. Facelet input and validation
+3. Verified solver API
+4. WASM validation / solve / playback
+5. Web input / solve / playback
+6. Playwright product flow
+7. Two-phase and pruning-table foundations
+8. Solver benchmarks
+9. Dataset generation
+10. ML value baseline
+11. Hybrid search
+12. Advanced research
 ```
 
----
+## Definição De Pronto Do Projeto
 
-# Fase 6 — WebAssembly
+O projeto atinge seu objetivo principal quando:
 
-## Objetivo
+- o usuário consegue informar um estado de cubo 3x3 pela web;
+- estados impossíveis são rejeitados com mensagem útil;
+- estados válidos são resolvidos pelo engine Rust via WASM;
+- a solução retornada é verificada por replay;
+- a UI exibe notação, métricas e playback;
+- testes automatizados cobrem o fluxo completo.
 
-Executar a engine Rust diretamente no navegador.
-
----
-
-# Tecnologias
-
-## WebAssembly (WASM)
-
-Formato binário executável no browser.
-
----
-
-## wasm-bindgen
-
-Ferramenta de integração Rust + JavaScript.
-
----
-
-# Resultado esperado
-
-O frontend poderá chamar:
-
-```ts
-solveCube(state)
-```
-
-com performance próxima de código nativo.
-
----
-
-# Fase 7 — Dataset Generation
-
-## Objetivo
-
-Gerar datasets profissionais para treinamento.
-
----
-
-# Estratégia recomendada
-
-Partir do cubo resolvido.
-
-Aplicar scrambles reversíveis.
-
-Salvar:
-
-```json
-{
-  "state": "...",
-  "distance": 12,
-  "best_move": "R"
-}
-```
-
----
-
-# Conceitos importantes
-
-## Reverse Scramble
-
-Aplicação reversa de movimentos conhecidos.
-
----
-
-## Supervised Learning Dataset
-
-Dataset contendo entradas e respostas corretas.
-
----
-
-# Organização recomendada
-
-```txt
-datasets/
-├── depth_1/
-├── depth_2/
-├── depth_3/
-...
-├── depth_20/
-```
-
----
-
-# Fase 8 — Machine Learning
-
-## Stack
-
-* Python
-* PyTorch
-
----
-
-# Objetivo
-
-Treinar modelos capazes de estimar distância até solução.
-
----
-
-# Modelo inicial recomendado
-
-## Multi-Layer Perceptron (MLP)
-
-Rede neural fully-connected simples.
-
-Não utilizar Transformers inicialmente.
-
----
-
-# Input recomendado
-
-One-hot encoding das peças do cubo.
-
----
-
-# Objetivo do modelo
-
-Receber:
-
-```txt
-estado do cubo
-```
-
-Retornar:
-
-```txt
-distância estimada até solução
-```
-
----
-
-# Conceitos importantes
-
-## Policy Network
-
-Rede neural que prevê melhor movimento.
-
----
-
-## Value Network
-
-Rede neural que prevê distância até solução.
-
----
-
-# Recomendação principal
-
-Começar com Value Networks.
-
----
-
-# Fase 9 — Hybrid Search
-
-## Objetivo
-
-Combinar:
-
-* busca clássica
-* heurísticas clássicas
-* Machine Learning
-
----
-
-# Arquitetura recomendada
-
-```txt
-IDA*
-    +
-Pattern Databases
-    +
-Value Network
-```
-
----
-
-# Objetivo técnico
-
-Utilizar Machine Learning para guiar a busca.
-
----
-
-# Fase 10 — Solver Profissional
-
-## Objetivo Final
-
-Construir um solver:
-
-* extremamente rápido
-* próximo de soluções ótimas
-* visual
-* extensível
-* modular
-* preparado para pesquisa
-
----
-
-# Funcionalidades avançadas
-
-## Multi-threaded Search
-
-Busca paralela utilizando múltiplas threads.
-
----
-
-## Beam Search
-
-Busca limitada aos caminhos mais promissores.
-
----
-
-## Monte Carlo Tree Search (MCTS)
-
-Busca probabilística guiada por simulações.
-
----
-
-## Neural-Guided Search
-
-Busca guiada por redes neurais.
-
----
-
-## Human-Like Solver
-
-Solver focado em soluções parecidas com speedcubers humanos.
-
----
-
-# Conceitos Matemáticos Importantes
-
-## Group Theory
-
-Área da álgebra utilizada para modelar movimentos do cubo.
-
----
-
-## State Space
-
-Quantidade total de estados possíveis.
-
-O cubo 3x3 possui aproximadamente:
-
-4.3 × 10¹⁹ estados possíveis.
-
----
-
-## Symmetry Reduction
-
-Redução de estados equivalentes por simetria.
-
----
-
-# Tecnologias Recomendadas
-
-## Core Solver
-
-* Rust
-
-## Machine Learning
-
-* Python
-* PyTorch
-
-## Interface
-
-* TypeScript
-* React
-* React Three Fiber
-
-## Build e integração
-
-* WebAssembly
-* wasm-bindgen
-
----
-
-# O que evitar
-
-## Não começar pelo frontend
-
-## Não começar por Reinforcement Learning
-
-## Não utilizar Transformers inicialmente
-
-## Não usar arrays de cores como representação principal
-
-## Não misturar UI com lógica da engine
-
-## Não depender de brute force
-
----
-
-# Ordem Recomendada de Implementação
-
-```txt
-1. Cube Engine em Rust
-2. Sistema de movimentos
-3. Algoritmos de busca
-4. Heurísticas
-5. Pattern Databases
-6. WebAssembly
-7. Frontend Web
-8. Dataset Generation
-9. Machine Learning
-10. Hybrid Search
-```
-
----
-
-# Resultado Esperado
-
-Ao final do projeto será possível ter:
-
-* engine profissional de cubo mágico
-* solver eficiente
-* heurísticas avançadas
-* busca híbrida
-* integração Machine Learning + Search
-* execução web em alta performance
-* visualização interativa
-* base para pesquisa avançada
-* projeto altamente diferenciado
-* possibilidade futura de paper acadêmico
+Datasets, Machine Learning e busca híbrida são extensões valiosas, mas não substituem essa definição de pronto.

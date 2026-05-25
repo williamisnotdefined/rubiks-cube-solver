@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/cube-engine"]
+members = ["crates/cube-engine", "crates/wasm"]
 
 [workspace.package]
 version = "0.1.0"

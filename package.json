@@ -2,11 +2,20 @@
   "name": "rubiks-cube-solver",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "apps/web"
+  ],
   "scripts": {
+    "dev": "npm run dev -w @rubiks-cube-solver/web",
+    "build": "npm run build -w @rubiks-cube-solver/web",
     "ai:check": "node scripts/ai/sync-routes.mjs --check",
     "ai:sync": "node scripts/ai/sync-routes.mjs",
-    "lint": "npm run ai:check",
+    "lint": "npm run ai:check && npm run lint -w @rubiks-cube-solver/web",
     "format": "npm run ai:sync",
+    "preview": "npm run preview -w @rubiks-cube-solver/web",
+    "pretest:e2e": "npm run wasm:build && npm run build",
+    "test:e2e": "playwright test",
+    "wasm:build": "wasm-pack build crates/wasm --target web --out-dir pkg",
     "roadmap:check": "roadrunner check",
     "roadmap:cleanup": "roadrunner cleanup",
     "roadmap:next": "roadrunner next",
@@ -14,5 +23,9 @@
     "roadmap:run": "roadrunner run",
     "roadmap:run:long": "ROADRUNNER_PROVIDER_TIMEOUT_MS=3600000 ROADRUNNER_VERIFY_TIMEOUT_MS=1200000 roadrunner run --max-steps 999 --max-hours 72",
     "roadmap:status": "roadrunner status"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "wasm-pack": "^0.13.1"
   }
 }

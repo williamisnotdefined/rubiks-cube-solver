@@ -1,0 +1,770 @@
+{
+  "version": 2,
+  "model": "openai/gpt-5.5",
+  "variant": "xhigh",
+  "queue": [
+    {
+      "id": "two-phase-corner-permutation-coordinate",
+      "phase": "Solver Core - Two Phase",
+      "title": "Add checked corner-permutation coordinate",
+      "scope": [
+        "crates/cube-engine/src/cube/**/*.rs",
+        "crates/cube-engine/tests/**/*.rs",
+        "crates/cube-engine/src/lib.rs"
+      ],
+      "prompt": "After checked orientation and UD-slice coordinate helpers exist and the product E2E flow is green, add only checked corner-permutation ranking and unranking for the eight corner cubies with an explicit 8! range. Return or reconstruct corner permutation arrays rather than claiming an isolated full CubieState is valid. Cover solved-state and shallow-move deterministic fixtures plus duplicate, missing, and invalid-index cases. Do not add edge permutation coordinates, pruning tables, search changes, or solver selection changes.",
+      "acceptance": [
+        "a corner-permutation coordinate helper is added under cube-engine with an explicit 40320-state range",
+        "the solved corner permutation maps to coordinate 0 and round-trips through checked unranking",
+        "at least one shallow moved state has a deterministic non-solved corner-permutation fixture and round-trips",
+        "duplicate or missing corner entries and out-of-range unranking indexes return structured errors instead of panicking in public helpers",
+        "unranking returns corner permutation data only and does not claim full cube validity without paired edge parity",
+        "coordinate code remains confined to cube-engine helpers and independent from frontend, WASM, datasets, and ML code",
+        "existing product solve, WASM, web, and E2E flows remain green",
+        "no generated pruning tables, datasets, or large artifacts are committed"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run wasm:build",
+        "npm run build",
+        "npm run test:e2e",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "two-phase-slice-edge-permutation-coordinate",
+      "phase": "Solver Core - Two Phase",
+      "title": "Add checked slice-edge permutation coordinate",
+      "scope": [
+        "crates/cube-engine/src/cube/**/*.rs",
+        "crates/cube-engine/tests/**/*.rs",
+        "crates/cube-engine/src/lib.rs"
+      ],
+      "prompt": "After checked corner-permutation and UD-slice edge-combination coordinate helpers exist and the product E2E flow is green, add only the checked phase-two slice-edge permutation coordinate for the four slice edge cubies FR, FL, BL, and BR in the slice positions with an explicit 4! range. Reuse or document the same engine slice-edge set as the UD-slice combination helper, return or reconstruct slice-edge order data rather than a standalone full CubieState, and cover solved-state plus a shallow phase-two-preserving move fixture. Do not add full 12-edge permutation ranking, U/D edge permutation ranking, pruning tables, transition tables, search changes, or solver selection changes.",
+      "acceptance": [
+        "a slice-edge permutation coordinate helper is added under cube-engine with an explicit 24-state range",
+        "the helper uses the engine slice-edge set FR, FL, BL, and BR and requires those slice edges to occupy slice positions before ranking",
+        "the solved slice-edge permutation maps to coordinate 0 and round-trips through checked unranking",
+        "at least one shallow phase-two-preserving moved state has a deterministic non-solved slice-edge permutation fixture and round-trips",
+        "duplicate, missing, non-slice, out-of-slice-position, and out-of-range unranking cases return structured errors instead of panicking in public helpers",
+        "unranking returns slice-edge order data only and does not claim full cube validity or full edge permutation validity",
+        "coordinate code remains confined to cube-engine helpers and independent from frontend, WASM, datasets, and ML code",
+        "existing product solve, WASM, web, and E2E flows remain green",
+        "no generated pruning tables, datasets, or large artifacts are committed"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run wasm:build",
+        "npm run build",
+        "npm run test:e2e",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "two-phase-ud-edge-permutation-coordinate",
+      "phase": "Solver Core - Two Phase",
+      "title": "Add checked U/D edge permutation coordinate",
+      "scope": [
+        "crates/cube-engine/src/cube/**/*.rs",
+        "crates/cube-engine/tests/**/*.rs",
+        "crates/cube-engine/src/lib.rs"
+      ],
+      "prompt": "After checked corner-permutation and slice-edge permutation coordinate helpers exist and the product E2E flow is green, add only the checked phase-two U/D edge permutation coordinate for the eight non-slice edge cubies UR, UF, UL, UB, DR, DF, DL, and DB in U/D-layer positions with an explicit 8! range. Return or reconstruct U/D edge order data rather than a standalone full CubieState, and cover solved-state plus a shallow phase-two-preserving move fixture. Do not add full 12-edge permutation ranking, pruning tables, transition tables, search changes, or solver selection changes.",
+      "acceptance": [
+        "a U/D edge permutation coordinate helper is added under cube-engine with an explicit 40320-state range",
+        "the helper documents the U/D edge set as UR, UF, UL, UB, DR, DF, DL, and DB and requires those edges to occupy U/D-layer positions before ranking",
+        "the solved U/D edge permutation maps to coordinate 0 and round-trips through checked unranking",
+        "at least one shallow phase-two-preserving moved state has a deterministic non-solved U/D edge permutation fixture and round-trips",
+        "duplicate, missing, slice-edge-in-U/D-set, out-of-layer-position, and out-of-range unranking cases return structured errors instead of panicking in public helpers",
+        "unranking returns U/D edge order data only and does not claim full cube validity without paired corner and slice-edge parity",
+        "coordinate code remains confined to cube-engine helpers and independent from frontend, WASM, datasets, and ML code",
+        "existing product solve, WASM, web, and E2E flows remain green",
+        "no generated pruning tables, datasets, or large artifacts are committed"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run wasm:build",
+        "npm run build",
+        "npm run test:e2e",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "two-phase-pruning-table-design",
+      "phase": "Solver Core - Pattern Databases",
+      "title": "Define pruning-table storage boundary",
+      "scope": [
+        "crates/cube-engine/src/solver/**/*.rs",
+        "crates/cube-engine/src/search/**/*.rs",
+        "crates/cube-engine/tests/**/*.rs",
+        ".gitignore"
+      ],
+      "prompt": "After checked orientation, UD-slice combination, corner permutation, slice-edge permutation, and U/D edge permutation coordinate helpers exist, define the internal boundary for deterministic two-phase pruning tables before generating real data. Add compact table types, metadata, checked lookup behavior, and storage or gitignore policy for future generated artifacts. Keep the step code-focused and small; do not commit large generated tables or alter product solver defaults.",
+      "acceptance": [
+        "pruning-table metadata records coordinate names, dimensions, generation parameters, phase-one or phase-two role, and version information",
+        "lookup APIs distinguish missing, out-of-range, and available entries without panics",
+        "storage paths for future generated tables are documented or gitignored",
+        "tests cover tiny in-memory tables and checked lookup failures",
+        "product solver APIs and web E2E behavior are unchanged",
+        "no large generated pruning tables are committed"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run wasm:build",
+        "npm run build",
+        "npm run test:e2e",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "two-phase-small-pruning-fixture",
+      "phase": "Solver Core - Pattern Databases",
+      "title": "Generate a small pruning-table fixture",
+      "scope": [
+        "crates/cube-engine/src/solver/**/*.rs",
+        "crates/cube-engine/tests/**/*.rs",
+        "crates/cube-engine/tests/fixtures/**/*",
+        ".gitignore"
+      ],
+      "prompt": "Add the first deterministic tiny pruning-table fixture for tests. Generate only a deliberately small bounded table over documented test dimensions that can be reviewed and committed safely. Verify metadata, checked lookup, solved-state distance, and a shallow moved state. Do not introduce full-size pattern databases or imply production pruning coverage yet.",
+      "acceptance": [
+        "a deterministic generator path can create a tiny pruning-table fixture",
+        "the committed fixture is small, reviewable, and tied to explicit metadata including its deliberately limited dimensions",
+        "tests verify solved-state and shallow-state distances for the fixture",
+        "tests verify corrupted, mismatched, or missing fixture metadata failures",
+        "large generated table locations remain gitignored",
+        "the product solver still does not depend on generated tables by default"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run wasm:build",
+        "npm run build",
+        "npm run test:e2e",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "two-phase-engine-search-baseline",
+      "phase": "Solver Core - Two Phase",
+      "title": "Add deterministic two-phase engine baseline",
+      "scope": [
+        "crates/cube-engine/src/solver/**/*.rs",
+        "crates/cube-engine/src/search/**/*.rs",
+        "crates/cube-engine/tests/**/*.rs",
+        "crates/cube-engine/src/lib.rs"
+      ],
+      "prompt": "Integrate the two-phase coordinate helpers and pruning-table lookup boundary into a deterministic cube-engine solver path behind explicit SolverConfig selection. The baseline may stay deliberately limited to solved and shallow deterministic cases while full generated tables are absent. Keep the existing bounded solver as the default product path, verify returned moves by replay, report limits and explored nodes honestly, and avoid claiming optimality or a 20-move guarantee.",
+      "acceptance": [
+        "two-phase search can be selected explicitly through cube-engine SolverConfig without removing or changing the existing default bounded solver path",
+        "solved and known shallow facelet states return replay-verified solutions through the selected engine path",
+        "selected two-phase behavior is documented as a limited baseline when only tiny pruning fixtures are available",
+        "limit failures remain distinct from invalid input and include configured limits plus explored nodes",
+        "existing validation, solve, WASM, web, and E2E product flows remain green with default behavior unchanged",
+        "public API names, errors, and tests avoid unsupported optimality or 20-move guarantees",
+        "no large generated pruning tables, datasets, or benchmark artifacts are committed"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run wasm:build",
+        "npm run build",
+        "npm run test:e2e",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "two-phase-product-selection-boundary",
+      "phase": "Frontend Web",
+      "title": "Expose two-phase solver selection in product boundaries",
+      "scope": [
+        "crates/wasm/**/*",
+        "crates/cube-engine/src/solver/**/*.rs",
+        "crates/cube-engine/src/search/**/*.rs",
+        "apps/web/**/*",
+        "package.json",
+        "package-lock.json"
+      ],
+      "prompt": "After the engine two-phase baseline exists, expose explicit solver selection or documented solver defaults through the WASM solve API and frontend boundary. The web UI should report solver mode, configured limits, solution metrics, validation errors, and limit failures without duplicating solver logic or claiming optimality.",
+      "acceptance": [
+        "WASM solve can accept an explicit solver strategy or documented default that includes the engine two-phase option",
+        "frontend boundary maps solver selection, configured limits, success metrics, validation errors, and limit failures into UI-friendly types",
+        "web UI exposes or documents solver mode and limits without claiming optimality or a 20-move guarantee",
+        "default product behavior remains deterministic and replay-verified",
+        "E2E product flow covers the selected or default solver behavior and remains green"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run wasm:build",
+        "npm run build",
+        "npm run test:e2e",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "solver-quality-benchmarks",
+      "phase": "Solver Quality",
+      "title": "Add solver quality benchmarks and reporting",
+      "scope": [
+        "crates/cube-engine/src/solver/**/*.rs",
+        "crates/cube-engine/tests/**/*.rs",
+        "crates/cube-engine/benches/**/*",
+        "package.json"
+      ],
+      "prompt": "After the two-phase engine and product boundary baseline exists, add deterministic solver quality fixtures and a lightweight benchmark or reporting path. Measure solved states, shallow scrambles, and selected harder known states by solution length, explored nodes, elapsed time, solver selection, and configured limits. Keep benchmarks honest and reproducible without making unsupported optimality claims.",
+      "acceptance": [
+        "quality fixtures include solved, shallow, and selected harder valid states",
+        "reporting captures solution length, explored nodes, elapsed time, solver selection, and limit outcomes",
+        "benchmark data distinguishes success from not-found-within-limits",
+        "npm run solver:bench runs the lightweight deterministic report",
+        "results are deterministic enough for regression comparison or documented as local benchmark output",
+        "large benchmark artifacts are not committed",
+        "web and E2E product behavior remains green"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run solver:bench",
+        "npm run wasm:build",
+        "npm run build",
+        "npm run test:e2e",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "dataset-schema-and-generator",
+      "phase": "Dataset Generation",
+      "title": "Define dataset schema and generator",
+      "scope": [
+        "datasets/**/*",
+        "crates/cube-engine/src/**/*.rs",
+        "crates/cube-engine/tests/**/*.rs",
+        "package.json",
+        ".gitignore"
+      ],
+      "prompt": "After the Playwright-validated web product flow and solver quality baseline exist, define a versioned dataset schema and a deterministic small dataset generator. Generate states through cube-engine, validate them before writing, include explicit label semantics, deduplicate states, define train/validation/test split rules, and keep large generated data out of git.",
+      "acceptance": [
+        "dataset records include schema version, serialized state, generation seed or source, and validation metadata",
+        "labels distinguish generated scramble_depth from verified_solution_length and avoid calling generated depth optimal unless proven",
+        "best_move is present only when derived from a verified solution or documented reversible scramble path",
+        "generator output is deterministic for a fixed seed and deduplicates states",
+        "small fixture datasets are committed for tests while large dataset paths are gitignored",
+        "dataset generation reuses cube-engine validation and does not duplicate solver logic in scripts",
+        "WASM, web, and E2E product behavior remains green"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run dataset:test",
+        "npm run wasm:build",
+        "npm run build",
+        "npm run test:e2e",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "ml-value-network-baseline",
+      "phase": "Machine Learning",
+      "title": "Train a minimal value-network baseline",
+      "scope": [
+        "ml/**/*",
+        "datasets/**/*",
+        "package.json",
+        "package-lock.json",
+        "requirements*.txt",
+        "pyproject.toml",
+        ".gitignore"
+      ],
+      "prompt": "Add the first ML baseline only after dataset generation exists. Implement a small Python/PyTorch MLP value network that consumes the versioned dataset fixture and predicts distance or distance bucket from cubie-derived features. Keep training reproducible on a tiny fixture and do not integrate the model into the product solver yet.",
+      "acceptance": [
+        "ML code consumes the dataset schema instead of parsing frontend color arrays as the source of truth",
+        "input features are derived from cubie representation or documented serialized engine state",
+        "the baseline model is an MLP value network, not a Transformer or reinforcement-learning agent",
+        "training and evaluation run on a tiny fixture with deterministic seed configuration",
+        "metrics include loss plus distance or bucket accuracy reporting",
+        "no large datasets or model checkpoints are committed",
+        "the product solver default path remains deterministic and unchanged",
+        "WASM, web, and E2E product behavior remains green"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "npm run dataset:test",
+        "npm run ml:test",
+        "npm run wasm:build",
+        "npm run build",
+        "npm run test:e2e",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "ml-value-network-evaluation",
+      "phase": "Machine Learning",
+      "title": "Evaluate value network against solver baseline",
+      "scope": [
+        "ml/**/*",
+        "datasets/**/*",
+        "crates/cube-engine/tests/**/*.rs",
+        "package.json"
+      ],
+      "prompt": "Add evaluation that compares the value-network baseline against classical heuristics and the deterministic solver benchmark fixtures. Report error by depth or bucket, inference time, and whether model-guided move ordering would reduce explored nodes in an offline experiment. Do not use the model for pruning or product defaults yet.",
+      "acceptance": [
+        "evaluation reports error or bucket accuracy by generated depth range",
+        "evaluation reports inference time on the fixture dataset",
+        "offline comparison includes classical heuristic or solver benchmark baselines",
+        "any move-ordering analysis is offline and does not alter product solver behavior",
+        "results clearly state that learned estimates are not admissible unless proven",
+        "no large reports, datasets, or checkpoints are committed",
+        "WASM, web, and E2E product behavior remains green"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "npm run dataset:test",
+        "npm run ml:test",
+        "npm run wasm:build",
+        "npm run build",
+        "npm run test:e2e",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "hybrid-move-ordering-experiment",
+      "phase": "Hybrid Search",
+      "title": "Experiment with ML-guided move ordering",
+      "scope": [
+        "crates/cube-engine/src/solver/**/*.rs",
+        "crates/cube-engine/src/search/**/*.rs",
+        "crates/cube-engine/tests/**/*.rs",
+        "ml/**/*",
+        "datasets/**/*",
+        "package.json"
+      ],
+      "prompt": "Add the first hybrid-search experiment by using learned scores only for move ordering, behind explicit configuration and with deterministic fallback. Preserve validation, limit reporting, and replay verification. Compare explored nodes, time, and solution length against the classical baseline before considering any learned pruning.",
+      "acceptance": [
+        "hybrid mode is opt-in and the classical solver remains the default fallback",
+        "learned scores affect move ordering only and are not used as an admissible pruning bound",
+        "returned solutions are replay-verified before success",
+        "invalid input and not-found-within-limits errors remain distinct",
+        "benchmarks compare explored nodes, elapsed time, and solution length against the classical baseline",
+        "documentation states limitations and avoids optimality or 20-move guarantees",
+        "WASM, web, and E2E product behavior remain green with hybrid mode opt-in"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run solver:bench",
+        "npm run wasm:build",
+        "npm run build",
+        "npm run test:e2e",
+        "npm run dataset:test",
+        "npm run ml:test",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    }
+  ],
+  "history": [
+    {
+      "id": "wasm-validation-api",
+      "phase": "WebAssembly",
+      "title": "Expose validation API through WASM",
+      "scope": [
+        "crates/wasm/**/*",
+        "crates/cube-engine/src/**/*.rs",
+        "Cargo.lock",
+        "package.json"
+      ],
+      "prompt": "Expose user-state validation through wasm-bindgen by wrapping the existing cube-engine facelet parser, facelet-to-cubie conversion, and cubie validation path. JavaScript callers should submit facelet input and receive a stable JavaScript-friendly discriminated result with success or specific validation error kind and message without running the solver, while all validation logic remains in cube-engine.",
+      "acceptance": [
+        "WASM API validates facelet input without running the solver",
+        "solved and known shallow moved facelet inputs validate successfully",
+        "invalid length, symbols, counts, center stickers, decoding failures, and impossible states return structured JavaScript-friendly error kind and message values",
+        "validation wrappers delegate to cube-engine facelet parsing, conversion, and cubie validation instead of duplicating validation logic",
+        "wrapper tests or smoke tests cover validation success and the major validation failure categories"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run wasm:build",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "completedAt": "2026-05-25T20:36:35.738Z"
+    },
+    {
+      "id": "wasm-solve-api",
+      "phase": "WebAssembly",
+      "title": "Expose solve API through WASM",
+      "scope": [
+        "crates/wasm/**/*",
+        "crates/cube-engine/src/**/*.rs",
+        "Cargo.lock",
+        "package.json"
+      ],
+      "prompt": "Expose solving through wasm-bindgen by wrapping cube-engine solve_facelet_string and SolverConfig. JavaScript callers should submit facelet input with explicit solver limits or documented defaults and receive a stable JavaScript-friendly discriminated result containing success, notation moves, metrics, validation errors, or not-found-within-limits errors without duplicating solver or verification logic.",
+      "acceptance": [
+        "WASM API solves solved and shallow facelet inputs through the cube-engine facelet solver",
+        "WASM solve accepts max_depth and optional max_nodes or exposes documented defaults",
+        "returned moves are notation strings derived from engine move notation suitable for UI display",
+        "solution length, configured limits, and explored_nodes metrics are returned in a JavaScript-friendly shape",
+        "invalid states and not-found-within-limits errors, including configured limits and explored_nodes, remain distinct",
+        "wrapper tests or smoke tests cover solved, shallow, invalid-input, and limit-failure paths"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run wasm:build",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "completedAt": "2026-05-25T20:47:25.799Z"
+    },
+    {
+      "id": "web-app-scaffold",
+      "phase": "Frontend Web",
+      "title": "Scaffold web application",
+      "scope": [
+        "apps/web/**/*",
+        "package.json",
+        "package-lock.json"
+      ],
+      "prompt": "Bootstrap a minimal Vite TypeScript React frontend application under apps/web. Keep it buildable on desktop and mobile, add root package scripts that delegate to the web app, and leave a clear boundary for loading the WASM solver package later.",
+      "acceptance": [
+        "apps/web contains a buildable Vite React TypeScript application",
+        "root package scripts build and lint or delegate to the web app without replacing ai route checks",
+        "desktop and mobile layouts render a usable shell",
+        "frontend code does not contain solver logic",
+        "npm run build succeeds"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "npm run build",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "completedAt": "2026-05-25T21:02:39.216Z"
+    },
+    {
+      "id": "web-wasm-validation-boundary",
+      "phase": "Frontend Web",
+      "title": "Load WASM validation in web app",
+      "scope": [
+        "apps/web/**/*",
+        "crates/wasm/**/*",
+        "package.json",
+        "package-lock.json"
+      ],
+      "prompt": "Wire the existing frontend WASM boundary to the generated crates/wasm/pkg package after npm run wasm:build, focused on initialization, solved facelet retrieval, and facelet validation. Keep generated WASM artifacts out of git, expose validation results and loading errors to React, and avoid embedding cube parsing, conversion, or validation logic in components.",
+      "acceptance": [
+        "web app initializes the generated WASM package from the existing frontend boundary after npm run wasm:build",
+        "frontend boundary exposes solved-facelet and facelet validation functions with UI-friendly types",
+        "loading, initialization, and unavailable-generated-package errors are represented for the UI",
+        "React components do not duplicate cube-engine facelet parsing, conversion, or validation logic",
+        "generated crates/wasm/pkg artifacts remain ignored and are not committed",
+        "npm run build succeeds after npm run wasm:build"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "npm run wasm:build",
+        "npm run build",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "completedAt": "2026-05-25T21:14:38.321Z"
+    },
+    {
+      "id": "web-wasm-solve-boundary",
+      "phase": "Frontend Web",
+      "title": "Expose WASM solve calls to the web app",
+      "scope": [
+        "apps/web/**/*",
+        "crates/wasm/**/*",
+        "package.json",
+        "package-lock.json"
+      ],
+      "prompt": "Extend the existing frontend WASM boundary with solve calls after validation input exists. React callers should provide facelet input with explicit solver limits or documented defaults and receive notation moves, configured limits, solution metrics, validation errors, or not-found-within-limits errors without duplicating solver logic in components.",
+      "acceptance": [
+        "frontend boundary exposes a solve function with explicit limit configuration or documented defaults",
+        "solve success returns notation moves plus length, maxDepth, maxNodes, and exploredNodes metrics in UI-friendly types",
+        "validation errors and not-found-within-limits errors remain distinct for React callers",
+        "loading and initialization failures remain represented separately from solve failures",
+        "React components do not import generated WASM directly or duplicate cube-engine solve, notation, or verification logic"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "npm run wasm:build",
+        "npm run build",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "completedAt": "2026-05-25T21:23:11.590Z"
+    },
+    {
+      "id": "web-solve-flow",
+      "phase": "Frontend Web",
+      "title": "Add solve flow to the web UI",
+      "scope": [
+        "apps/web/**/*"
+      ],
+      "prompt": "Add the main solve flow using the existing frontend WASM solve boundary. A user can submit a valid facelet state, see the configured max_depth and max_nodes limits before solving, request a solution, and see notation, solution length, metrics, validation errors, loading or initialization errors, and honest not-found-within-limits messages without importing generated WASM directly in React components.",
+      "acceptance": [
+        "solve button calls the frontend WASM solve boundary rather than importing generated WASM directly",
+        "configured max_depth and max_nodes defaults or controls are visible before solving",
+        "valid solved state returns an empty or no-op solution display",
+        "known shallow scramble returns a displayed solution",
+        "solution length and explored_nodes metrics are displayed",
+        "validation errors, loading or initialization errors, and not-found-within-limits display distinct messages with configured limits and explored_nodes where available",
+        "React components do not duplicate cube-engine validation, solve, notation, or verification logic"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "npm run wasm:build",
+        "npm run build",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "completedAt": "2026-05-25T21:35:17.193Z"
+    },
+    {
+      "id": "wasm-facelet-playback-api",
+      "phase": "WebAssembly",
+      "title": "Expose playback helpers through WASM",
+      "scope": [
+        "crates/wasm/**/*"
+      ],
+      "prompt": "Expose engine-backed playback helpers through wasm-bindgen by wrapping the existing cube-engine playback_facelet_solution export. JavaScript callers should provide a starting facelet state and notation moves, then receive stepwise rendered facelet states, final solved verification, and structured validation or notation errors without moving cube logic into the frontend. Keep existing validation and solve WASM exports source-compatible for the web boundary and avoid changing cube-engine playback behavior in this wrapper step.",
+      "acceptance": [
+        "WASM API applies notation moves to a valid starting facelet state through the cube-engine playback helper",
+        "playback results include the initial and per-move rendered facelet states suitable for UI display",
+        "known shallow solution moves end with final solved verification true",
+        "invalid starting states and invalid move notation return distinct JavaScript-friendly error kind and message values",
+        "existing validation and solve WASM exports remain source-compatible for the frontend boundary",
+        "WASM wrapper delegates playback, rendering, and solved verification to cube-engine",
+        "cube-engine playback behavior and public exports remain unchanged except for any compile-required imports",
+        "wrapper tests or smoke tests cover playback success, invalid facelets, invalid notation, and solved verification paths"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run wasm:build",
+        "npm run build",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "completedAt": "2026-05-25T21:44:39.378Z"
+    },
+    {
+      "id": "web-wasm-playback-boundary",
+      "phase": "Frontend Web",
+      "title": "Expose WASM playback calls to the web app",
+      "scope": [
+        "apps/web/**/*"
+      ],
+      "prompt": "Extend the frontend WASM boundary with the generated playback_facelet_solution export now that the solve flow and WASM playback API exist. React callers should provide a starting facelet state and notation moves, then receive a UI-friendly discriminated playback result containing stepwise facelet states, final solved status, and distinct invalid-input or invalid-notation errors without duplicating move application or verification logic. Keep direct generated-WASM imports inside boundary modules, copy and free generated wasm-bindgen result objects, and preserve the existing validation and solve boundary types.",
+      "acceptance": [
+        "frontend boundary exposes playback for a starting facelet state plus notation moves through the generated playback_facelet_solution export",
+        "playback success returns initial and per-move facelet states plus finalIsSolved in UI-friendly types",
+        "invalid starting states and invalid move notation are represented as distinct statuses, errorKind values, and messages for React callers",
+        "generated playback result values are copied before the wasm-bindgen object is freed",
+        "loading, initialization, and unavailable-generated-package failures remain represented separately from playback failures",
+        "existing validation and solve boundary functions remain source-compatible for React callers",
+        "React components do not import generated WASM directly or duplicate cube-engine move application, rendering, or solved checks"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "npm run wasm:build",
+        "npm run build",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "completedAt": "2026-05-25T21:54:28.015Z"
+    },
+    {
+      "id": "web-solution-playback",
+      "phase": "Frontend Web",
+      "title": "Add step-through playback view and visual verification",
+      "scope": [
+        "apps/web/**/*"
+      ],
+      "prompt": "Build on the existing frontend WASM playback boundary and any current raw playback result rendering by adding product-facing solution playback. After a successful solve, the UI should keep requesting engine-backed playback from the submitted facelet state and returned notation moves, render the selected engine-produced facelet state as a compact 2D net, provide simple manual Previous, Next, Reset, or equivalent step-through controls, and show the engine-backed final solved verification result. Avoid visual polish, 3D scope, or frontend move application beyond indexing engine-produced states for display.",
+      "acceptance": [
+        "successful solve results continue to request playback through the frontend WASM playback boundary using the submitted state and returned notation moves",
+        "returned solution moves can be stepped through manually from the submitted state to the final state without recalculating moves in React",
+        "the selected playback state renders as a compact 2D facelet net usable on desktop and mobile",
+        "playback controls clearly label the initial state, current move step, final step, and disabled boundary states",
+        "known shallow solutions end with a visible engine-backed solved verification result",
+        "playback boundary errors display distinct invalid-input, invalid-notation, or client-failure messages without replacing the solve result",
+        "playback and verification use the existing WASM playback boundary rather than duplicating solver logic in React",
+        "empty solved-state solutions and failed solve attempts are handled without starting invalid playback",
+        "React components do not import generated WASM directly or implement cube move application, rendering, or solved checks"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "npm run wasm:build",
+        "npm run build",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "completedAt": "2026-05-25T22:07:17.337Z"
+    },
+    {
+      "id": "playwright-product-flow",
+      "phase": "Frontend Web - E2E",
+      "title": "Validate the solve flow with Playwright",
+      "scope": [
+        "apps/web/**/*",
+        "tests/e2e/**/*",
+        "package.json",
+        "package-lock.json",
+        "playwright.config.*",
+        ".gitignore"
+      ],
+      "prompt": "Add Playwright coverage for the product flow after the step-through playback UI exists. Tests may live under apps/web or root tests/e2e and should build or require the generated WASM package, load the app through Playwright, submit known cube states, request solutions, exercise the UI playback controls over engine-produced states, verify the app's final solved indicator for returned moves, and verify invalid-state UI errors through the UI rather than test-side cube logic.",
+      "acceptance": [
+        "npm run test:e2e is available",
+        "E2E setup builds or documents the required npm run wasm:build step before app build",
+        "Playwright specs live under apps/web or tests/e2e and use app-visible roles, labels, or narrowly scoped selectors",
+        "E2E test submits solved state and verifies empty or no-op solution without starting invalid playback",
+        "E2E test submits a known shallow scrambled state and verifies returned moves are displayed with playback controls",
+        "E2E test steps through solution playback controls to the final engine-produced state and verifies the visible solved indicator",
+        "E2E test verifies invalid-state errors",
+        "Playwright tests do not implement cube move replay, facelet conversion, or solved checks outside the app",
+        "E2E artifacts are gitignored"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "npm run wasm:build",
+        "npm run build",
+        "npm run test:e2e",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "completedAt": "2026-05-25T22:18:56.225Z"
+    },
+    {
+      "id": "two-phase-corner-orientation-coordinate",
+      "phase": "Solver Core - Two Phase",
+      "title": "Add checked corner-orientation coordinate",
+      "scope": [
+        "crates/cube-engine/src/cube/**/*.rs",
+        "crates/cube-engine/src/solver/**/*.rs",
+        "crates/cube-engine/src/search/**/*.rs",
+        "crates/cube-engine/tests/**/*.rs",
+        "crates/cube-engine/src/lib.rs"
+      ],
+      "prompt": "After the Playwright-validated web solve and playback flow exists, add only the first deterministic two-phase coordinate helper: a checked corner-orientation coordinate for CubieState with an explicit 3^7 range. Cover solved-state and shallow-move fixtures plus invalid index handling. Do not add edge coordinates, permutation coordinates, pruning tables, generators, or change the product solver selection.",
+      "acceptance": [
+        "a corner-orientation coordinate helper is added under cube-engine with an explicit 2187-state range",
+        "the solved state maps to coordinate 0 and round-trips through checked reconstruction",
+        "at least one shallow moved state has a deterministic non-solved coordinate fixture and round-trips",
+        "invalid corner-orientation coordinate indexes return structured errors instead of panicking in public helpers",
+        "existing product solve APIs, WASM build, web build, and E2E flow remain green",
+        "no generated pruning tables, datasets, or large artifacts are committed"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run wasm:build",
+        "npm run build",
+        "npm run test:e2e",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "completedAt": "2026-05-25T22:29:58.861Z"
+    },
+    {
+      "id": "two-phase-edge-orientation-coordinate",
+      "phase": "Solver Core - Two Phase",
+      "title": "Add checked edge-orientation coordinate",
+      "scope": [
+        "crates/cube-engine/src/cube/**/*.rs",
+        "crates/cube-engine/tests/**/*.rs",
+        "crates/cube-engine/src/lib.rs"
+      ],
+      "prompt": "After the checked corner-orientation coordinate exists and the product E2E flow is green, add only the checked edge-orientation coordinate for CubieState with an explicit 2^11 range. Cover solved-state and shallow-move fixtures plus invalid index handling. Keep this as a cube coordinate helper: do not add permutation coordinates, slice coordinates, pruning tables, search changes, or solver selection changes.",
+      "acceptance": [
+        "an edge-orientation coordinate helper is added under cube-engine with an explicit 2048-state range",
+        "the solved state maps to coordinate 0 and round-trips through checked reconstruction",
+        "at least one shallow moved state has a deterministic non-solved coordinate fixture and round-trips",
+        "invalid edge-orientation coordinate indexes return structured errors instead of panicking in public helpers",
+        "coordinate code remains confined to cube-engine helpers and independent from frontend, WASM, datasets, and ML code",
+        "existing product solve, WASM, web, and E2E flows remain green",
+        "no generated pruning tables, datasets, or large artifacts are committed"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run wasm:build",
+        "npm run build",
+        "npm run test:e2e",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "completedAt": "2026-05-25T22:40:56.570Z"
+    },
+    {
+      "id": "two-phase-ud-slice-coordinate",
+      "phase": "Solver Core - Two Phase",
+      "title": "Add checked UD-slice coordinate",
+      "scope": [
+        "crates/cube-engine/src/cube/**/*.rs",
+        "crates/cube-engine/tests/**/*.rs",
+        "crates/cube-engine/src/lib.rs"
+      ],
+      "prompt": "After checked corner- and edge-orientation coordinates exist and the product E2E flow is green, add only the checked UD-slice edge-combination coordinate for CubieState. Use the engine's FR, FL, BL, and BR slice-edge set, expose an explicit 12-choose-4 range, and add checked rank/unrank for slice membership as part of this coordinate. Cover solved-state and shallow-move deterministic fixtures plus invalid indexes. Do not add permutation coordinates, pruning tables, transition tables, search changes, or solver selection changes.",
+      "acceptance": [
+        "a UD-slice edge-combination coordinate helper is added under cube-engine with an explicit 495-state range",
+        "the engine slice-edge set is documented as FR, FL, BL, and BR in the coordinate helper or tests",
+        "the solved state has a documented deterministic coordinate fixture and checked unranking preserves slice-edge membership",
+        "at least one shallow moved state has a deterministic coordinate fixture and round-trips through the checked slice helper",
+        "invalid UD-slice coordinate indexes return structured errors instead of panicking in public helpers",
+        "the slice helper tracks edge-combination membership only and does not claim a full edge permutation or standalone valid CubieState",
+        "coordinate code remains confined to cube-engine helpers and independent from frontend, WASM, datasets, and ML code",
+        "existing product solve, WASM, web, and E2E flows remain green",
+        "no generated pruning tables, datasets, or large artifacts are committed"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run wasm:build",
+        "npm run build",
+        "npm run test:e2e",
+        "npm run lint",
+        "npm run roadmap:check"
+      ],
+      "completedAt": "2026-05-25T22:55:19.296Z"
+    }
+  ],
+  "blocked": []
+}

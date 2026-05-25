@@ -6,11 +6,11 @@ Rubik roadmap execution is delegated to the external Roadrunner CLI. This reposi
 
 - `roadmap.md`: strategic project roadmap.
 - `GOALS.md`: read-only product north star for autonomous planning.
-- `ai/roadmap/queue.json`: operational stack with `queue`, `history`, and `blocked`.
-- `ai/roadmap/prompts/*.md`: Rubik-specific prompts consumed by Roadrunner.
-- `roadrunner.config.json`: Roadrunner path and provider configuration for this repository.
+- `.roadrunner/queue.json`: operational stack with `queue`, `history`, and `blocked`.
+- `.roadrunner/prompts/*.md`: Rubik-specific prompts consumed by Roadrunner.
+- `.roadrunner/config.json`: Roadrunner path and provider configuration for this repository.
 - `package.json`: npm aliases that delegate roadmap commands to `roadrunner`.
-- `.autopilot/`: gitignored Roadrunner runtime logs, locks, and process registry files.
+- `.roadrunner/`: Roadrunner state directory. Queue, config, prompts, and README are project files; logs, locks, and process registry files are gitignored runtime artifacts.
 
 ## Boundary
 
@@ -36,9 +36,9 @@ During an interactive run, `rstask` may be used to restart the current task atte
 
 Planning must not edit files or git state.
 
-Implementation agents must not commit, push, change branches, edit `GOALS.md`, or edit `ai/roadmap/queue.json`.
+Implementation agents must not commit, push, change branches, edit `GOALS.md`, or edit `.roadrunner/queue.json`.
 
-Reconciliation may edit only `ai/roadmap/queue.json`. It may modify the future `queue`, but it must preserve `history` and `blocked` records and must not mark tasks complete.
+Reconciliation may edit only `.roadrunner/queue.json`. It may modify the future `queue`, but it must preserve `history` and `blocked` records and must not mark tasks complete.
 
 Cleanup must be limited to subprocesses registered by Roadrunner itself.
 
