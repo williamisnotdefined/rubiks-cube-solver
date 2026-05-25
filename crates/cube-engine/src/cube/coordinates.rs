@@ -1,10 +1,11 @@
 use std::fmt;
 
-use super::cubies::{CubieState, Edge, CORNER_COUNT, EDGE_COUNT};
+use super::cubies::{Corner, CubieState, Edge, CORNER_COUNT, EDGE_COUNT};
 
 pub const CORNER_ORIENTATION_COORDINATE_COUNT: usize = 2187;
 pub const EDGE_ORIENTATION_COORDINATE_COUNT: usize = 2048;
 pub const UD_SLICE_EDGE_COMBINATION_COORDINATE_COUNT: usize = 495;
+pub const CORNER_PERMUTATION_COORDINATE_COUNT: usize = 40320;
 
 const UD_SLICE_EDGE_COUNT: usize = 4;
 
@@ -128,6 +129,38 @@ impl fmt::Display for UdSliceEdgeCombinationCoordinateError {
 }
 
 impl std::error::Error for UdSliceEdgeCombinationCoordinateError {}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CornerPermutationCoordinateError {
+    IndexOutOfRange {
+        index: usize,
+        coordinate_count: usize,
+    },
+    InvalidCornerPermutation {
+        duplicate: Option<Corner>,
+        missing: Option<Corner>,
+    },
+}
+
+impl fmt::Display for CornerPermutationCoordinateError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::IndexOutOfRange {
+                index,
+                coordinate_count,
+            } => write!(
+                formatter,
+                "corner-permutation coordinate {index} is outside 0..{coordinate_count}"
+            ),
+            Self::InvalidCornerPermutation { duplicate, missing } => write!(
+                formatter,
+                "invalid corner permutation: duplicate {duplicate:?}, missing {missing:?}"
+            ),
+        }
+    }
+}
+
+impl std::error::Error for CornerPermutationCoordinateError {}
 
 pub fn corner_orientation_coordinate(
     state: &CubieState,
@@ -276,6 +309,57 @@ pub fn ud_slice_edge_combination_membership_from_coordinate(
     Ok(membership)
 }
 
+pub fn corner_permutation_coordinate_from_permutation(
+    permutation: &[Corner; CORNER_COUNT],
+) -> Result<usize, CornerPermutationCoordinateError> {
+    validate_corner_permutation(permutation)?;
+
+    let mut available = [true; CORNER_COUNT];
+    let mut index = 0;
+
+    for (position, corner) in permutation.iter().copied().enumerate() {
+        let corner_index = corner.index();
+        let smaller_available_count = available
+            .iter()
+            .take(corner_index)
+            .filter(|available| **available)
+            .count();
+
+        index += smaller_available_count * factorial(CORNER_COUNT - 1 - position);
+        available[corner_index] = false;
+    }
+
+    Ok(index)
+}
+
+pub fn corner_permutation_from_coordinate(
+    index: usize,
+) -> Result<[Corner; CORNER_COUNT], CornerPermutationCoordinateError> {
+    if index >= CORNER_PERMUTATION_COORDINATE_COUNT {
+        return Err(CornerPermutationCoordinateError::IndexOutOfRange {
+            index,
+            coordinate_count: CORNER_PERMUTATION_COORDINATE_COUNT,
+        });
+    }
+
+    let mut remaining = index;
+    let mut available = [true; CORNER_COUNT];
+    let mut permutation = Corner::ALL;
+
+    for (position, slot) in permutation.iter_mut().enumerate() {
+        let factor = factorial(CORNER_COUNT - 1 - position);
+        let selected_index = remaining / factor;
+        remaining %= factor;
+
+        let corner = nth_available_corner(&available, selected_index)
+            .expect("in-range corner-permutation coordinate must unrank");
+        available[corner.index()] = false;
+        *slot = corner;
+    }
+
+    Ok(permutation)
+}
+
 fn validate_corner_orientation(
     orientations: &[u8; CORNER_COUNT],
 ) -> Result<(), CornerOrientationCoordinateError> {
@@ -339,6 +423,52 @@ fn validate_ud_slice_edge_membership(
     Ok(())
 }
 
+fn validate_corner_permutation(
+    permutation: &[Corner; CORNER_COUNT],
+) -> Result<(), CornerPermutationCoordinateError> {
+    let mut counts = [0_u8; CORNER_COUNT];
+
+    for corner in permutation {
+        counts[corner.index()] += 1;
+    }
+
+    let duplicate = Corner::ALL
+        .iter()
+        .copied()
+        .find(|corner| counts[corner.index()] > 1);
+    let missing = Corner::ALL
+        .iter()
+        .copied()
+        .find(|corner| counts[corner.index()] == 0);
+
+    if duplicate.is_some() || missing.is_some() {
+        return Err(CornerPermutationCoordinateError::InvalidCornerPermutation {
+            duplicate,
+            missing,
+        });
+    }
+
+    Ok(())
+}
+
+fn nth_available_corner(available: &[bool; CORNER_COUNT], selected_index: usize) -> Option<Corner> {
+    let mut seen = 0;
+
+    for corner in Corner::ALL {
+        if !available[corner.index()] {
+            continue;
+        }
+
+        if seen == selected_index {
+            return Some(corner);
+        }
+
+        seen += 1;
+    }
+
+    None
+}
+
 fn is_ud_slice_edge(edge: Edge) -> bool {
     UD_SLICE_EDGES.contains(&edge)
 }
@@ -353,6 +483,16 @@ fn binomial(n: usize, k: usize) -> usize {
 
     for divisor in 1..=k {
         result = result * (n - k + divisor) / divisor;
+    }
+
+    result
+}
+
+fn factorial(n: usize) -> usize {
+    let mut result = 1;
+
+    for factor in 2..=n {
+        result *= factor;
     }
 
     result
