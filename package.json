@@ -12,6 +12,7 @@
     "roadmap:next": "roadrunner next",
     "roadmap:plan": "roadrunner plan",
     "roadmap:run": "roadrunner run",
+    "roadmap:run:long": "ROADRUNNER_PROVIDER_TIMEOUT_MS=3600000 ROADRUNNER_VERIFY_TIMEOUT_MS=1200000 roadrunner run --max-steps 999 --max-hours 72",
     "roadmap:status": "roadrunner status"
   }
 }

@@ -14,6 +14,7 @@ Rules for executing the Rubik roadmap through the external Roadrunner CLI.
 - Preserve `history` and `blocked` records during reconciliation.
 - Keep generated logs, locks, and process registry files under `.autopilot`, which is gitignored.
 - Run long Roadrunner sessions from a normal terminal or `tmux`, not from inside OpenCode.
+- Review and commit completed Roadrunner work manually after verification; implementation agents must not own git history.
 
 ## Never
 
@@ -41,5 +42,6 @@ Rules for executing the Rubik roadmap through the external Roadrunner CLI.
 - The reconciliation phase may only update the future `queue` in `ai/roadmap/queue.json`.
 - Reconciliation may split, add, remove, or reorder queued tasks based on the current repository state.
 - Reconciliation must not mark tasks complete; only Roadrunner moves verified tasks from `queue` to `history`.
+- Roadrunner updates queue state after verification, but commit creation remains a manual review step for this repository.
 - Reconciliation must compare the queue to `GOALS.md` and keep product-flow tasks ahead of datasets, ML, and research extensions until the web solve flow works.
 - Reconciliation should add Playwright/E2E validation once the frontend exists.

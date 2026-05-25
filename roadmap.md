@@ -1,5 +1,13 @@
 # Rubik's Cube AI Solver Roadmap
 
+## Execução Operacional Com Roadrunner
+
+Este arquivo descreve a visão técnica e estratégica do projeto. A fila operacional usada pelo Roadrunner fica em `ai/roadmap/queue.json` e deve ser tratada como a fonte de verdade para execução autônoma passo a passo.
+
+O Roadrunner deve priorizar o fluxo de produto definido em `GOALS.md`: entrada de estado do usuário, validação, conversão para cubies, solução verificada, exposição por WASM, interface web, testes E2E e só então extensões de pesquisa como datasets, Machine Learning e busca híbrida.
+
+Cada item operacional deve ser pequeno, verificável e capaz de passar por `cargo test`, `npm run lint` e `npm run roadmap:check`. Execuções longas devem acontecer fora do OpenCode, preferencialmente em `tmux`, com revisão e commit manual após cada passo verificado.
+
 ## Objetivo Final
 
 Construir um sistema híbrido de resolução de cubo mágico focado em:

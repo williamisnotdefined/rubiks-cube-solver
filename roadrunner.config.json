@@ -1,9 +1,12 @@
 {
+  "allowNestedOpenCode": false,
+  "dangerouslySkipPermissions": false,
   "provider": "opencode",
   "model": "openai/gpt-5.5",
   "variant": "xhigh",
   "paths": {
     "goals": "GOALS.md",
+    "roadmap": "roadmap.md",
     "queue": "ai/roadmap/queue.json",
     "prompts": "ai/roadmap/prompts",
     "logs": ".autopilot/logs",

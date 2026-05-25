@@ -1,10 +1,7 @@
 {
   "version": 2,
-  "source": "roadmap.md",
-  "goals": "GOALS.md",
   "model": "openai/gpt-5.5",
   "variant": "xhigh",
-  "updatedAt": null,
   "queue": [
     {
       "id": "phase-2-ida-star-zero",
@@ -25,8 +22,7 @@
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
         "npm run lint",
         "npm run roadmap:check"
-      ],
-      "commitMessage": "Implement IDA* search with zero heuristic"
+      ]
     },
     {
       "id": "phase-2-ida-star-heuristics",
@@ -46,21 +42,20 @@
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
         "npm run lint",
         "npm run roadmap:check"
-      ],
-      "commitMessage": "Use heuristics in IDA* search"
+      ]
     },
     {
-      "id": "phase-input-facelet-parser",
+      "id": "phase-facelet-string-parser",
       "phase": "User State Input",
-      "title": "Parse and validate user facelet states",
+      "title": "Parse Kociemba facelet strings",
       "scope": ["crates/cube-engine/src/cube/**/*.rs", "crates/cube-engine/src/lib.rs"],
-      "prompt": "Add a user-facing facelet/sticker parser for 3x3 cube states. Support a stable 54-character Kociemba-style facelet string first. Validate length, allowed face symbols, and exact color counts before conversion to cubies.",
+      "prompt": "Add a user-facing parser for 54-character Kociemba-style facelet strings using U, R, F, D, L, and B symbols. Validate length, allowed symbols, and exact symbol counts. Do not replace CubieState as the engine representation.",
       "acceptance": [
-        "solved facelet string parses successfully",
+        "the solved Kociemba string parses successfully",
         "invalid length is rejected with a useful error",
         "invalid symbols are rejected with a useful error",
-        "invalid face/color counts are rejected",
-        "the parser does not replace CubieState as the engine representation"
+        "invalid face counts are rejected with a useful error",
+        "parsed facelets remain an adapter type, not the primary cube model"
       ],
       "verification": [
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
@@ -68,21 +63,19 @@
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
         "npm run lint",
         "npm run roadmap:check"
-      ],
-      "commitMessage": "Parse user facelet cube states"
+      ]
     },
     {
-      "id": "phase-input-facelet-to-cubie",
+      "id": "phase-facelet-cubie-renderer",
       "phase": "User State Input",
-      "title": "Convert facelets to validated CubieState",
+      "title": "Render cubie states as facelets",
       "scope": ["crates/cube-engine/src/cube/**/*.rs", "crates/cube-engine/src/lib.rs"],
-      "prompt": "Convert parsed 54-facelet cube states into CubieState. Reuse CubieState validation for piece uniqueness, orientation, permutation, and parity. Return clear errors for impossible cube states.",
+      "prompt": "Add a facelet serializer for Cube or CubieState that renders valid cubie states into the same 54-character Kociemba-style facelet format. Keep this as an adapter for user I/O and tests.",
       "acceptance": [
-        "solved facelets convert to CubieState::solved",
-        "valid generated states round-trip through facelets where supported",
-        "impossible swapped pieces are rejected",
-        "invalid orientation/parity states are rejected",
-        "conversion output can be passed to Cube::try_from_state"
+        "CubieState::solved or Cube::solved renders to the canonical solved facelet string",
+        "states produced by applying moves render without panicking",
+        "rendered strings parse with the facelet parser",
+        "the serializer does not change CubieState validation rules"
       ],
       "verification": [
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
@@ -90,19 +83,99 @@
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
         "npm run lint",
         "npm run roadmap:check"
-      ],
-      "commitMessage": "Convert facelets to cubie state"
+      ]
     },
     {
-      "id": "phase-solver-public-api",
-      "phase": "Solver Product API",
-      "title": "Add public solve API for user states",
-      "scope": ["crates/cube-engine/src/solver/**/*.rs", "crates/cube-engine/src/lib.rs", "crates/cube-engine/src/search/**/*.rs"],
-      "prompt": "Add a public Rust solve API that accepts CubieState or facelet input, validates it, runs the best available solver with configurable max_depth/max_nodes, and returns a verified solution plus metrics. It may use IDA* initially while deeper Kociemba work follows.",
+      "id": "phase-facelet-to-cubie-solved",
+      "phase": "User State Input",
+      "title": "Convert solved facelets to cubies",
+      "scope": ["crates/cube-engine/src/cube/**/*.rs", "crates/cube-engine/src/lib.rs"],
+      "prompt": "Add the first facelet-to-CubieState conversion path for the canonical solved Kociemba string. Establish explicit corner and edge sticker-position mappings that later general conversion can reuse.",
       "acceptance": [
-        "solved state returns an empty solution",
-        "known shallow facelet state returns a solution",
-        "invalid user state returns validation errors instead of panicking",
+        "the solved facelet string converts to CubieState::solved",
+        "the conversion reuses explicit corner and edge mapping tables",
+        "conversion errors are structured and display useful messages",
+        "Cube::try_from_state accepts the converted solved state"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "phase-facelet-to-cubie-validation",
+      "phase": "User State Input",
+      "title": "Convert and validate arbitrary facelets",
+      "scope": ["crates/cube-engine/src/cube/**/*.rs", "crates/cube-engine/src/lib.rs"],
+      "prompt": "Extend facelet conversion to arbitrary valid 3x3 states. Identify corner and edge pieces from stickers, compute orientation and permutation, then reuse CubieState validation for uniqueness, orientation sums, and parity.",
+      "acceptance": [
+        "valid moved states convert to CubieState",
+        "unknown corner sticker combinations are rejected",
+        "unknown edge sticker combinations are rejected",
+        "impossible orientation or parity states are rejected through CubieState validation",
+        "errors identify the failing piece or validation category"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "phase-facelet-roundtrip-fixtures",
+      "phase": "User State Input",
+      "title": "Add facelet round-trip fixtures",
+      "scope": ["crates/cube-engine/src/cube/**/*.rs", "crates/cube-engine/tests/**/*.rs"],
+      "prompt": "Add deterministic fixtures that apply known algorithms, render states to facelets, parse them back, and verify the recovered CubieState matches the original. Include invalid-state fixtures for impossible swaps or malformed stickers.",
+      "acceptance": [
+        "known 1-move, 2-move, and 3-move states round-trip through facelets",
+        "round-trip tests compare cubie states rather than sticker internals",
+        "at least one impossible swapped-piece facelet input is rejected",
+        "at least one invalid orientation or parity fixture is rejected"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "phase-solver-result-types",
+      "phase": "Solver Product API",
+      "title": "Define public solver result types",
+      "scope": ["crates/cube-engine/src/solver/**/*.rs", "crates/cube-engine/src/lib.rs"],
+      "prompt": "Add a solver module with public configuration, result, metrics, and error types. Keep the types independent from any single search algorithm and prepare them for both CubieState and facelet inputs.",
+      "acceptance": [
+        "SolverConfig supports max_depth and max_nodes or documents unsupported limits",
+        "SolveResult reports moves, length, and explored_nodes",
+        "SolveError distinguishes invalid input from not-found-within-limits",
+        "the new types are exported from cube-engine without changing existing APIs"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "phase-solver-cubie-api",
+      "phase": "Solver Product API",
+      "title": "Solve validated cubie states",
+      "scope": ["crates/cube-engine/src/solver/**/*.rs", "crates/cube-engine/src/search/**/*.rs", "crates/cube-engine/src/lib.rs"],
+      "prompt": "Add a public Rust solve API that accepts CubieState or Cube, validates it, runs the best available deterministic solver, and verifies the returned moves by replaying them before returning success.",
+      "acceptance": [
+        "solved CubieState returns an empty solution",
+        "known shallow CubieState scrambles return valid solutions",
+        "invalid CubieState returns validation errors instead of panicking",
         "returned moves are replayed internally to verify the submitted state is solved",
         "solution metrics include length and explored_nodes"
       ],
@@ -112,20 +185,187 @@
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
         "npm run lint",
         "npm run roadmap:check"
-      ],
-      "commitMessage": "Add public solve API"
+      ]
     },
     {
-      "id": "phase-kociemba-coordinates",
-      "phase": "Solver Core - Two Phase",
-      "title": "Add Kociemba coordinate indexing",
-      "scope": ["crates/cube-engine/src/solver/**/*.rs", "crates/cube-engine/src/search/**/*.rs"],
-      "prompt": "Add Kociemba/two-phase coordinate indexing utilities needed for phase 1 and phase 2 search. Start with orientation and slice-related coordinates, keep them pure Rust, deterministic, and heavily tested.",
+      "id": "phase-solver-facelet-api",
+      "phase": "Solver Product API",
+      "title": "Solve user facelet states",
+      "scope": ["crates/cube-engine/src/solver/**/*.rs", "crates/cube-engine/src/cube/**/*.rs", "crates/cube-engine/src/lib.rs"],
+      "prompt": "Add a public solve API that accepts a 54-character facelet string, parses and validates it, converts it to CubieState, solves it through the cubie solver API, and returns structured validation or search errors.",
       "acceptance": [
-        "coordinates encode solved state to zero or documented solved coordinate",
-        "coordinates round-trip where decoding is implemented",
-        "coordinates distinguish relevant phase constraints",
-        "invalid coordinates are rejected",
+        "solved facelet input returns an empty solution",
+        "known shallow facelet input returns a verified solution",
+        "invalid length, symbols, counts, and impossible states return useful errors",
+        "facelet solve reuses the CubieState solve path",
+        "no solver logic is duplicated in the facelet adapter"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "phase-solver-limits-and-errors",
+      "phase": "Solver Product API",
+      "title": "Enforce solver limits and errors",
+      "scope": ["crates/cube-engine/src/solver/**/*.rs", "crates/cube-engine/src/search/**/*.rs"],
+      "prompt": "Make solver limits explicit and observable. Respect configured max_depth and max_nodes where supported, represent not-found-within-limits separately from invalid input, and report honest metrics without claiming optimality.",
+      "acceptance": [
+        "insufficient max_depth returns not-found-within-limits",
+        "max_nodes is enforced or explicitly reported as unsupported by the selected search mode",
+        "invalid input errors are not confused with search failures",
+        "metrics include enough data for UI display and test assertions",
+        "documentation or code comments avoid unsupported optimality claims"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "phase-solver-known-state-fixtures",
+      "phase": "Solver Product API",
+      "title": "Add known-state solver fixtures",
+      "scope": ["crates/cube-engine/tests/**/*.rs", "crates/cube-engine/src/solver/**/*.rs"],
+      "prompt": "Add deterministic solver fixtures for solved states, generated shallow scrambles, facelet inputs, and invalid inputs. These fixtures should become the regression base for WASM and frontend tests.",
+      "acceptance": [
+        "fixtures cover solved, one-move, two-move, and three-move inputs",
+        "fixtures include both CubieState and facelet API paths",
+        "invalid fixtures assert structured errors",
+        "solutions are replayed and verified in tests",
+        "fixture helpers are reusable by future WASM tests"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "phase-kociemba-combinatorics",
+      "phase": "Solver Core - Two Phase",
+      "title": "Add coordinate combinatorics utilities",
+      "scope": ["crates/cube-engine/src/solver/**/*.rs", "crates/cube-engine/src/search/**/*.rs"],
+      "prompt": "Add small deterministic combinatorics utilities needed for Kociemba coordinate indexing, such as factorials, binomial coefficients, permutation ranking, and combination ranking. Keep them pure Rust and heavily tested.",
+      "acceptance": [
+        "factorial and binomial helpers cover required cube coordinate ranges",
+        "permutation rank and unrank round-trip for small fixtures",
+        "combination rank and unrank round-trip for small fixtures",
+        "invalid indexes are rejected instead of panicking in public helpers",
+        "no generated artifacts are committed"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "phase-kociemba-orientation-coordinates",
+      "phase": "Solver Core - Two Phase",
+      "title": "Add orientation coordinates",
+      "scope": ["crates/cube-engine/src/solver/**/*.rs", "crates/cube-engine/src/search/**/*.rs"],
+      "prompt": "Implement Kociemba-style corner-orientation and edge-orientation coordinates. Encode solved state to zero, support decode where practical, and validate coordinate ranges.",
+      "acceptance": [
+        "corner orientation coordinate encodes solved state to zero",
+        "edge orientation coordinate encodes solved state to zero",
+        "orientation coordinates round-trip where decoding is implemented",
+        "invalid coordinate values are rejected",
+        "tests cover states produced by known moves"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "phase-kociemba-slice-coordinate",
+      "phase": "Solver Core - Two Phase",
+      "title": "Add UD-slice coordinate",
+      "scope": ["crates/cube-engine/src/solver/**/*.rs", "crates/cube-engine/src/search/**/*.rs"],
+      "prompt": "Implement the UD-slice edge coordinate needed for Kociemba phase 1. Keep indexing deterministic and document which edge set defines the slice.",
+      "acceptance": [
+        "solved state has the documented solved slice coordinate",
+        "known moved states produce stable slice coordinates",
+        "coordinate range is validated",
+        "tests document the chosen slice edge ordering",
+        "the coordinate code remains independent from frontend or WASM"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "phase-kociemba-move-tables",
+      "phase": "Solver Core - Two Phase",
+      "title": "Build coordinate move tables",
+      "scope": ["crates/cube-engine/src/solver/**/*.rs", "crates/cube-engine/src/search/**/*.rs"],
+      "prompt": "Add deterministic move-table generation or lookup for the Kociemba coordinates currently implemented. Prefer generated-on-demand tables in code/tests over committing large artifacts.",
+      "acceptance": [
+        "move tables include all FACE_MOVES or documented phase-specific moves",
+        "solved coordinate transitions match direct cube move application",
+        "representative coordinates match direct recomputation after moves",
+        "table generation is deterministic",
+        "large generated artifacts are not committed"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "phase-kociemba-phase1-search",
+      "phase": "Solver Core - Two Phase",
+      "title": "Implement phase 1 search",
+      "scope": ["crates/cube-engine/src/solver/**/*.rs", "crates/cube-engine/src/search/**/*.rs"],
+      "prompt": "Implement phase 1 of a Kociemba-style solver. Search should transform valid cube states into the phase 2 subgroup using the current coordinates and admissible lower bounds where available, while respecting configured limits.",
+      "acceptance": [
+        "solved state has phase 1 length zero",
+        "known shallow scrambles reach the phase 2 subgroup",
+        "phase 1 respects max_depth and max_nodes where supported",
+        "phase 1 output is replayed and verified",
+        "allowed phase 1 move set is documented in code"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "phase-kociemba-phase2-coordinates",
+      "phase": "Solver Core - Two Phase",
+      "title": "Add phase 2 coordinates",
+      "scope": ["crates/cube-engine/src/solver/**/*.rs", "crates/cube-engine/src/search/**/*.rs"],
+      "prompt": "Add the coordinates needed for phase 2 search on states already in the phase 2 subgroup, including relevant corner permutation, edge permutation, and slice/permutation state needed by the chosen representation.",
+      "acceptance": [
+        "phase 2 coordinates encode solved state to documented solved values",
+        "subgroup states from phase 1 can be encoded",
+        "invalid non-subgroup states are rejected or clearly documented",
+        "coordinate tests cover known subgroup moves",
         "no large generated artifacts are committed"
       ],
       "verification": [
@@ -134,21 +374,20 @@
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
         "npm run lint",
         "npm run roadmap:check"
-      ],
-      "commitMessage": "Add Kociemba coordinate indexing"
+      ]
     },
     {
-      "id": "phase-kociemba-phase1",
+      "id": "phase-kociemba-phase2-search",
       "phase": "Solver Core - Two Phase",
-      "title": "Implement Kociemba phase 1 search",
+      "title": "Implement phase 2 search",
       "scope": ["crates/cube-engine/src/solver/**/*.rs", "crates/cube-engine/src/search/**/*.rs"],
-      "prompt": "Implement phase 1 of a Kociemba-style two-phase solver. Search should transform valid cube states into the phase 2 subgroup using admissible pruning where available, while reporting metrics and respecting configured limits.",
+      "prompt": "Implement phase 2 search for states already in the Kociemba phase 2 subgroup. Use the phase 2 move set, respect configured limits, and return moves that solve the subgroup state.",
       "acceptance": [
-        "solved state has phase 1 length zero",
-        "known shallow scrambles reach phase 2 subgroup",
-        "phase 1 respects max_depth/max_nodes limits",
-        "phase 1 output is replayed and verified",
-        "phase 1 uses allowed move sets documented in code"
+        "phase 2 solves the solved state with zero moves",
+        "phase 2 solves known shallow subgroup states",
+        "phase 2 respects max_depth and max_nodes where supported",
+        "phase 2 output is replayed and verified",
+        "allowed phase 2 move set is documented in code"
       ],
       "verification": [
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
@@ -156,21 +395,20 @@
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
         "npm run lint",
         "npm run roadmap:check"
-      ],
-      "commitMessage": "Implement Kociemba phase 1 search"
+      ]
     },
     {
-      "id": "phase-kociemba-phase2",
-      "phase": "Solver Core - Two Phase",
-      "title": "Implement Kociemba phase 2 search",
-      "scope": ["crates/cube-engine/src/solver/**/*.rs", "crates/cube-engine/src/search/**/*.rs"],
-      "prompt": "Implement phase 2 search for states already in the Kociemba phase 2 subgroup. Combine phase 1 and phase 2 candidates into full verified solutions.",
+      "id": "phase-two-phase-solver-api",
+      "phase": "Solver Product API",
+      "title": "Wire two-phase solver into public API",
+      "scope": ["crates/cube-engine/src/solver/**/*.rs", "crates/cube-engine/src/search/**/*.rs", "crates/cube-engine/src/lib.rs"],
+      "prompt": "Combine phase 1 and phase 2 search candidates into full verified solutions and make the public solver API choose the two-phase solver when configured or when it is the best available deterministic solver.",
       "acceptance": [
-        "phase 2 solves solved and subgroup states",
-        "combined phase 1 + phase 2 solution solves known scrambles",
+        "combined phase 1 plus phase 2 solution solves known scrambles",
+        "public solve API can select the two-phase mode",
         "combined solver reports total length and metrics",
         "combined solver respects configured limits",
-        "solution replay verification is mandatory"
+        "solution replay verification is mandatory before success"
       ],
       "verification": [
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
@@ -178,15 +416,14 @@
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
         "npm run lint",
         "npm run roadmap:check"
-      ],
-      "commitMessage": "Implement Kociemba phase 2 search"
+      ]
     },
     {
-      "id": "phase-kociemba-pruning-tables",
+      "id": "phase-two-phase-pruning-tables",
       "phase": "Solver Core - Two Phase",
       "title": "Add two-phase pruning tables",
       "scope": ["crates/cube-engine/src/solver/**/*.rs", "crates/cube-engine/src/search/**/*.rs"],
-      "prompt": "Add deterministic pruning tables for the two-phase solver. Keep generation reproducible, avoid committing large generated binaries, and expose table-backed admissible lower bounds.",
+      "prompt": "Add deterministic pruning tables for the implemented two-phase coordinates. Keep generation reproducible, avoid committing large generated binaries, and expose table-backed admissible lower bounds.",
       "acceptance": [
         "pruning tables build deterministically",
         "solved coordinates have distance zero",
@@ -200,8 +437,7 @@
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
         "npm run lint",
         "npm run roadmap:check"
-      ],
-      "commitMessage": "Add two-phase pruning tables"
+      ]
     },
     {
       "id": "phase-solver-depth20-validation",
@@ -210,7 +446,7 @@
       "scope": ["crates/cube-engine/src/solver/**/*.rs", "crates/cube-engine/src/search/**/*.rs"],
       "prompt": "Add solver configuration and tests around the product target of solutions in 20 moves when feasible. Verify returned solutions solve the input and report honestly when configured limits do not find a <=20 solution.",
       "acceptance": [
-        "solver exposes a max_solution_length option",
+        "solver exposes a max_solution_length option or clearly maps it to max_depth",
         "known shallow and medium generated scrambles return solutions within configured limits",
         "returned solution length is reported",
         "not-found-within-limit is represented explicitly",
@@ -222,21 +458,20 @@
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
         "npm run lint",
         "npm run roadmap:check"
-      ],
-      "commitMessage": "Validate depth 20 solver target"
+      ]
     },
     {
-      "id": "phase-wasm-solve-api",
+      "id": "phase-wasm-crate-bootstrap",
       "phase": "WebAssembly",
-      "title": "Expose solve API through WASM",
+      "title": "Bootstrap WASM crate",
       "scope": ["crates/wasm/**/*", "Cargo.toml", "package.json"],
-      "prompt": "Create a wasm-bindgen crate that exposes user-state validation and solve APIs to JavaScript. Keep solver logic in cube-engine and make returned solutions easy for the frontend to replay.",
+      "prompt": "Create a wasm-bindgen crate in the workspace that depends on cube-engine and can be built locally. Keep solver logic in cube-engine and expose only thin adapter functions from the WASM crate.",
       "acceptance": [
-        "workspace includes a WASM crate",
-        "WASM API accepts facelet input",
-        "WASM API returns solution moves, length, and metrics",
-        "invalid states return structured errors",
-        "Rust tests cover wrapper behavior where feasible"
+        "workspace includes a crates/wasm crate",
+        "the WASM crate depends on cube-engine without duplicating solver logic",
+        "a local build script or npm alias exists for the WASM package",
+        "Rust tests cover wrapper behavior where feasible",
+        "generated WASM build output is gitignored"
       ],
       "verification": [
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
@@ -244,56 +479,216 @@
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
         "npm run lint",
         "npm run roadmap:check"
-      ],
-      "commitMessage": "Expose solve API through WASM"
+      ]
     },
     {
-      "id": "phase-frontend-state-input-solve",
-      "phase": "Frontend Web",
-      "title": "Build cube state input and solve UI",
-      "scope": ["apps/web/**/*", "package.json"],
-      "prompt": "Bootstrap or extend the TypeScript React frontend so a user can enter a cube state, validate it, request a solution through the WASM API, and see notation, length, metrics, and validation errors.",
+      "id": "phase-wasm-validation-api",
+      "phase": "WebAssembly",
+      "title": "Expose validation API through WASM",
+      "scope": ["crates/wasm/**/*", "crates/cube-engine/src/**/*.rs", "package.json"],
+      "prompt": "Expose user-state validation through WASM. JavaScript callers should be able to submit facelet input and receive structured success or validation errors without running the solver.",
       "acceptance": [
-        "user can enter or paste a 54-facelet cube state",
-        "solve button calls the WASM solver API",
-        "valid solved state returns an empty or no-op solution display",
-        "known scramble state returns a displayed solution",
-        "invalid states show clear validation errors"
+        "WASM API accepts facelet input for validation",
+        "valid solved input returns structured success",
+        "invalid length, symbol, count, and impossible-state inputs return structured errors",
+        "WASM error payloads are stable enough for frontend display",
+        "Rust or JS smoke tests cover validation"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "phase-wasm-solve-api",
+      "phase": "WebAssembly",
+      "title": "Expose solve API through WASM",
+      "scope": ["crates/wasm/**/*", "crates/cube-engine/src/**/*.rs", "package.json"],
+      "prompt": "Expose the public cube-engine solve API through wasm-bindgen. Return solution moves, length, metrics, and structured errors in a JavaScript-friendly shape that the frontend can replay.",
+      "acceptance": [
+        "WASM API accepts facelet input",
+        "WASM API returns solution moves, length, and metrics",
+        "invalid states return structured errors",
+        "returned moves are notation strings suitable for UI display",
+        "wrapper tests cover solved and shallow scramble inputs where feasible"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "phase-wasm-js-smoke-test",
+      "phase": "WebAssembly",
+      "title": "Add JavaScript WASM smoke tests",
+      "scope": ["crates/wasm/**/*", "scripts/**/*", "package.json"],
+      "prompt": "Add a JavaScript or TypeScript smoke test that builds/imports the generated WASM package and calls validation and solve APIs for solved and shallow facelet inputs.",
+      "acceptance": [
+        "npm run test:wasm or equivalent script exists",
+        "JS smoke test validates a solved facelet string",
+        "JS smoke test solves a shallow facelet state",
+        "JS smoke test asserts structured invalid-state errors",
+        "generated WASM artifacts remain ignored unless intentionally committed"
       ],
       "verification": [
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "npm run test:wasm",
         "npm run lint",
         "npm run roadmap:check"
-      ],
-      "commitMessage": "Add cube state solve UI"
+      ]
     },
     {
-      "id": "phase-playwright-solver-validation",
+      "id": "phase-web-app-scaffold",
+      "phase": "Frontend Web",
+      "title": "Scaffold web application",
+      "scope": ["apps/web/**/*", "package.json"],
+      "prompt": "Bootstrap a TypeScript React frontend application using the project's chosen tooling. Keep it minimal but buildable, with a clear boundary for loading the WASM solver package later.",
+      "acceptance": [
+        "apps/web contains a buildable React application",
+        "root package scripts can build or delegate to the web app",
+        "desktop and mobile layouts render a usable shell",
+        "frontend code does not contain solver logic",
+        "npm run build succeeds"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "npm run build",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "phase-web-wasm-loader",
+      "phase": "Frontend Web",
+      "title": "Load WASM solver in web app",
+      "scope": ["apps/web/**/*", "crates/wasm/**/*", "package.json"],
+      "prompt": "Integrate the generated WASM package into the web app through a small frontend boundary module. The UI should be able to initialize the solver and expose validation/solve calls without embedding solver logic in React components.",
+      "acceptance": [
+        "web app initializes the WASM package",
+        "frontend boundary exposes validate and solve functions",
+        "loading and initialization errors are represented for the UI",
+        "React components do not duplicate cube-engine logic",
+        "npm run build succeeds"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "npm run build",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "phase-web-facelet-input",
+      "phase": "Frontend Web",
+      "title": "Build facelet state input UI",
+      "scope": ["apps/web/**/*"],
+      "prompt": "Add a user-facing input flow for 54-character facelet strings. Show validation status and useful error messages using the WASM validation API.",
+      "acceptance": [
+        "user can paste or type a 54-character facelet string",
+        "valid solved input displays validation success",
+        "invalid length, symbol, and count errors are shown clearly",
+        "the input UI is usable on desktop and mobile",
+        "validation calls go through the WASM boundary"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "npm run build",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "phase-web-solve-flow",
+      "phase": "Frontend Web",
+      "title": "Add solve flow to the web UI",
+      "scope": ["apps/web/**/*"],
+      "prompt": "Add the main solve flow. A user can submit a valid facelet state, request a solution through the WASM solve API, and see notation, solution length, and metrics.",
+      "acceptance": [
+        "solve button calls the WASM solve API",
+        "valid solved state returns an empty or no-op solution display",
+        "known shallow scramble returns a displayed solution",
+        "solution length and explored_nodes metrics are displayed",
+        "solve failures and not-found-within-limits are displayed honestly"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "npm run build",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "phase-web-result-errors",
+      "phase": "Frontend Web",
+      "title": "Harden result and error UX",
+      "scope": ["apps/web/**/*"],
+      "prompt": "Improve the web solve experience around loading, validation, solving, empty solutions, not-found responses, and invalid-state errors. Keep the UI clear without adding visualizer scope yet.",
+      "acceptance": [
+        "loading and solving states are visible",
+        "empty solved-state solution is explained clearly",
+        "invalid-state and not-found errors are distinguishable",
+        "the UI remains usable on narrow mobile screens",
+        "frontend state remains separate from solver state"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "npm run build",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "phase-playwright-setup",
       "phase": "Frontend Web - E2E",
-      "title": "Add Playwright solver validation",
+      "title": "Configure Playwright for web flow",
       "scope": ["apps/web/**/*", "package.json", "playwright.config.*"],
-      "prompt": "Add Playwright end-to-end tests where the UI receives known cube states, requests solutions, replays returned moves through the app or engine boundary, and verifies the cube is solved. Include invalid-state UI validation tests.",
+      "prompt": "Add Playwright configuration and a minimal smoke test that starts the web app, loads the page, and verifies the facelet input flow is available.",
       "acceptance": [
         "Playwright is configured for the web app",
-        "E2E test submits solved state and verifies empty or no-op solution",
-        "E2E test submits a known scrambled state and verifies returned moves solve it",
-        "E2E test verifies invalid state errors",
-        "npm run test:e2e is available"
+        "npm run test:e2e is available",
+        "E2E setup starts the app or documents the required web server",
+        "smoke test verifies the facelet input UI loads",
+        "E2E artifacts are gitignored"
       ],
       "verification": [
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
         "npm run test:e2e",
         "npm run lint",
         "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "phase-playwright-solver-validation",
+      "phase": "Frontend Web - E2E",
+      "title": "Validate solver through Playwright",
+      "scope": ["apps/web/**/*", "package.json", "playwright.config.*"],
+      "prompt": "Add Playwright tests where the UI receives known cube states, requests solutions, replays returned moves through the app or engine boundary, and verifies the cube is solved. Include invalid-state UI validation tests.",
+      "acceptance": [
+        "E2E test submits solved state and verifies empty or no-op solution",
+        "E2E test submits a known scrambled state and verifies returned moves solve it",
+        "E2E test verifies invalid state errors",
+        "E2E test covers at least one not-found or limit response where feasible",
+        "npm run test:e2e remains deterministic"
       ],
-      "commitMessage": "Add Playwright solver validation"
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "npm run test:e2e",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
     },
     {
       "id": "phase-frontend-visualization-playback",
       "phase": "Frontend Web",
       "title": "Add cube visualization and solution playback",
       "scope": ["apps/web/**/*"],
-      "prompt": "Add interactive cube visualization and solution playback. Use the engine/WASM boundary for state transitions and keep UI state separate from solver state.",
+      "prompt": "Add interactive cube visualization and solution playback after the solve flow is validated. Use the engine or WASM boundary for state transitions and keep UI state separate from solver state.",
       "acceptance": [
         "solution moves can be played forward and reset",
         "visual state matches engine state after playback",
@@ -303,11 +698,70 @@
       ],
       "verification": [
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "npm run build",
         "npm run test:e2e",
         "npm run lint",
         "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "phase-ci-product-flow",
+      "phase": "Product Hardening",
+      "title": "Add product-flow CI checks",
+      "scope": [".github/workflows/**/*", "package.json", "Cargo.toml"],
+      "prompt": "Add or update CI so the product flow is continuously checked: Rust formatting/tests/clippy, AI route validation, WASM smoke tests where available, frontend build, and Playwright E2E where available.",
+      "acceptance": [
+        "CI runs Rust formatting, tests, and clippy",
+        "CI runs npm lint and roadmap checks",
+        "CI runs WASM smoke tests if the script exists",
+        "CI runs frontend build and Playwright E2E if the app exists",
+        "CI avoids committing generated artifacts"
       ],
-      "commitMessage": "Add cube visualization playback"
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "phase-docs-local-usage",
+      "phase": "Product Hardening",
+      "title": "Document local usage and Roadrunner flow",
+      "scope": ["README.md", "roadmap.md", "ai/roadmap/**/*.md"],
+      "prompt": "Document how to run the solver locally, validate and solve facelet states, build WASM, start the web UI, run E2E tests, and execute Roadrunner safely from tmux. Do not change GOALS.md except to read it for alignment.",
+      "acceptance": [
+        "README explains local Rust solver checks",
+        "README explains WASM and web app commands",
+        "README explains Playwright tests",
+        "README explains safe Roadrunner execution and manual commit review",
+        "GOALS.md remains unchanged"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
+    },
+    {
+      "id": "phase-performance-baseline",
+      "phase": "Product Hardening",
+      "title": "Add solver performance baseline",
+      "scope": ["crates/cube-engine/**/*", "README.md"],
+      "prompt": "Add a lightweight deterministic performance baseline for representative solver inputs. Keep it suitable for local comparison without making CI flaky, and document how to run it.",
+      "acceptance": [
+        "baseline covers solved, shallow, and representative generated scrambles",
+        "baseline reports solution length, explored_nodes, and elapsed time",
+        "baseline is deterministic and documented",
+        "CI is not made flaky by timing assertions",
+        "performance work does not weaken correctness checks"
+      ],
+      "verification": [
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo fmt --check",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
+        "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
+        "npm run lint",
+        "npm run roadmap:check"
+      ]
     },
     {
       "id": "phase-dataset-generator",
@@ -328,8 +782,7 @@
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
         "npm run lint",
         "npm run roadmap:check"
-      ],
-      "commitMessage": "Add dataset generation tool"
+      ]
     },
     {
       "id": "phase-ml-value-network",
@@ -348,8 +801,7 @@
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo test",
         "npm run lint",
         "npm run roadmap:check"
-      ],
-      "commitMessage": "Bootstrap ML value network"
+      ]
     },
     {
       "id": "phase-hybrid-search-interface",
@@ -370,8 +822,7 @@
         "if [ -f \"$HOME/.cargo/env\" ]; then . \"$HOME/.cargo/env\"; fi; cargo clippy --all-targets --all-features -- -D warnings",
         "npm run lint",
         "npm run roadmap:check"
-      ],
-      "commitMessage": "Add hybrid search heuristic interface"
+      ]
     }
   ],
   "history": [],

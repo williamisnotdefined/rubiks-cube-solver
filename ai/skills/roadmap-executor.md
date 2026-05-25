@@ -24,9 +24,9 @@ Keep the Rubik roadmap queue safe, resumable, deterministic, and aligned with th
 - Keep roadmap execution plan-first: generate a plan before implementation and pass it to implementation/fix prompts.
 - Keep long Roadrunner runs outside OpenCode, preferably in `tmux`, to avoid nested OpenCode sessions.
 - Track and clean up only subprocesses created by Roadrunner.
-- Keep unattended implementation scoped to one roadmap step per commit.
-- Keep roadmap reconciliation as a separate pass and commit after each verified implementation step.
-- Keep final git state transitions owned by Roadrunner, not by implementation agents.
+- Keep unattended implementation scoped to one roadmap step at a time.
+- Keep roadmap reconciliation as a separate pass and manually commit after each verified implementation step.
+- Keep final git state transitions outside implementation agents.
 - Preserve `history` and `blocked` when reconciling the queue.
 - Do not reintroduce local Roadrunner implementation files under `scripts/roadmap` or `scripts/autopilot`.
 - Prioritize user-state input, verified solutions, WASM, frontend solve UI, and Playwright validation before datasets/ML/research tasks.

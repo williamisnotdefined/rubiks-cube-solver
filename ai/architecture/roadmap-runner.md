@@ -23,10 +23,10 @@ This repository may keep project-specific prompts and queue metadata because tho
 Roadrunner follows:
 
 ```txt
-Plan -> Execute -> Verify -> Commit -> Reconcile
+Plan -> Execute -> Verify -> Reconcile -> Update Queue
 ```
 
-Roadrunner selects `queue[0]`, generates a plan, executes the step, runs the step's verification commands, moves verified work to `history`, commits, then reconciles future queue items against `GOALS.md`.
+Roadrunner selects `queue[0]`, generates a plan, executes the step, runs the step's verification commands, reconciles future queue items against `GOALS.md`, then moves verified work to `history`. Commits are reviewed and created manually after a successful Roadrunner step.
 
 ## Safety Boundaries
 
@@ -42,7 +42,7 @@ Cleanup must be limited to subprocesses registered by Roadrunner itself.
 
 - `queue[0]`: next task to implement.
 - `queue[1..]`: future tasks that the reconciler may refine.
-- `history`: verified tasks already committed by Roadrunner.
+- `history`: verified tasks completed by Roadrunner.
 - `blocked`: tasks removed from the queue after persistent automation failure.
 
 ## Goal-Aware Planning

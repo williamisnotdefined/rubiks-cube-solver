@@ -1,6 +1,6 @@
 # Roadrunner Reconciliation
 
-You are the roadmap reconciler. Review the current repository state, `GOALS.md`, `roadmap.md`, and `ai/roadmap/queue.json`, then update the queue if needed.
+You are the roadmap reconciler. Review the current repository state, `GOALS.md`, `roadmap.md`, and `ai/roadmap/queue.json`, then update the future queue if needed.
 
 ## Hard Rules
 
@@ -12,6 +12,7 @@ You are the roadmap reconciler. Review the current repository state, `GOALS.md`,
 - Do not mark any queue item as done, blocked, skipped, or completed.
 - Do not edit source code, generated route files, package scripts, docs, or tests.
 - Do not commit, push, or run destructive git commands.
+- Keep the current verified step at `queue[0]`; Roadrunner will move it to `history` after reconciliation validates.
 
 ## Allowed Queue Changes
 
@@ -22,12 +23,13 @@ You are the roadmap reconciler. Review the current repository state, `GOALS.md`,
 - Tighten scope, acceptance criteria, verification commands, and commit messages.
 - Add Playwright/E2E validation steps once a frontend exists.
 - Move ML, datasets, and research tasks behind the state-input-to-valid-solution web flow unless they directly unblock that goal.
+- Prefer small, independently verifiable steps over broad implementation tasks.
 
 ## Required Queue Shape
 
 - `queue[0]` is always the next executable task.
 - Queue items do not contain `status` or `dependsOn`.
-- Every queue item has `id`, `phase`, `title`, `scope`, `prompt`, `acceptance`, `verification`, and `commitMessage`.
+- Every queue item has `id`, `phase`, `title`, `scope`, `prompt`, `acceptance`, and `verification`.
 - Every queue item verification includes `cargo test`, `npm run lint`, and `npm run roadmap:check` unless the step is explicitly non-code and still keeps `npm run lint` plus `npm run roadmap:check`.
 
 ## Final Goals
@@ -36,18 +38,10 @@ You are the roadmap reconciler. Review the current repository state, `GOALS.md`,
 {{GOALS_MD}}
 ```
 
-## Completed Step
-
-```json
-{{COMPLETED_STEP_JSON}}
-```
-
 ## Current Queue File
 
 ```json
 {{QUEUE_JSON}}
 ```
 
-## Current Next Step
-
-{{ROADMAP_STATUS}}
+The first queue item is the just-verified step. Leave it in place and only refine `queue[1..]`.

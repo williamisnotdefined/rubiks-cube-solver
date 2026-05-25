@@ -22,7 +22,7 @@ You are running unattended inside this repository. Implement exactly the roadmap
 3. Implement the smallest correct change for this step.
 4. Add focused tests for every acceptance criterion that can be tested.
 5. Run relevant local checks if feasible.
-6. Stop after implementation and verification. Roadrunner will run final verification, move the step from `queue` to `history`, commit, push, and reconcile the future queue.
+6. Stop after implementation and verification. Roadrunner will run final verification, reconcile the future queue, and move the verified step from `queue` to `history`. Commits are created outside implementation agents after review.
 
 ## Final Goals
 

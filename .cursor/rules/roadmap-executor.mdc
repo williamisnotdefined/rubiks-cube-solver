@@ -48,9 +48,9 @@ Keep the Rubik roadmap queue safe, resumable, deterministic, and aligned with th
 - Keep roadmap execution plan-first: generate a plan before implementation and pass it to implementation/fix prompts.
 - Keep long Roadrunner runs outside OpenCode, preferably in `tmux`, to avoid nested OpenCode sessions.
 - Track and clean up only subprocesses created by Roadrunner.
-- Keep unattended implementation scoped to one roadmap step per commit.
-- Keep roadmap reconciliation as a separate pass and commit after each verified implementation step.
-- Keep final git state transitions owned by Roadrunner, not by implementation agents.
+- Keep unattended implementation scoped to one roadmap step at a time.
+- Keep roadmap reconciliation as a separate pass and manually commit after each verified implementation step.
+- Keep final git state transitions outside implementation agents.
 - Preserve `history` and `blocked` when reconciling the queue.
 - Do not reintroduce local Roadrunner implementation files under `scripts/roadmap` or `scripts/autopilot`.
 - Prioritize user-state input, verified solutions, WASM, frontend solve UI, and Playwright validation before datasets/ML/research tasks.
@@ -95,6 +95,7 @@ Rules for executing the Rubik roadmap through the external Roadrunner CLI.
 - Preserve `history` and `blocked` records during reconciliation.
 - Keep generated logs, locks, and process registry files under `.autopilot`, which is gitignored.
 - Run long Roadrunner sessions from a normal terminal or `tmux`, not from inside OpenCode.
+- Review and commit completed Roadrunner work manually after verification; implementation agents must not own git history.
 
 ## Never
 
@@ -122,6 +123,7 @@ Rules for executing the Rubik roadmap through the external Roadrunner CLI.
 - The reconciliation phase may only update the future `queue` in `ai/roadmap/queue.json`.
 - Reconciliation may split, add, remove, or reorder queued tasks based on the current repository state.
 - Reconciliation must not mark tasks complete; only Roadrunner moves verified tasks from `queue` to `history`.
+- Roadrunner updates queue state after verification, but commit creation remains a manual review step for this repository.
 - Reconciliation must compare the queue to `GOALS.md` and keep product-flow tasks ahead of datasets, ML, and research extensions until the web solve flow works.
 - Reconciliation should add Playwright/E2E validation once the frontend exists.
 
@@ -237,10 +239,10 @@ This repository may keep project-specific prompts and queue metadata because tho
 Roadrunner follows:
 
 ```txt
-Plan -> Execute -> Verify -> Commit -> Reconcile
+Plan -> Execute -> Verify -> Reconcile -> Update Queue
 ```
 
-Roadrunner selects `queue[0]`, generates a plan, executes the step, runs the step's verification commands, moves verified work to `history`, commits, then reconciles future queue items against `GOALS.md`.
+Roadrunner selects `queue[0]`, generates a plan, executes the step, runs the step's verification commands, reconciles future queue items against `GOALS.md`, then moves verified work to `history`. Commits are reviewed and created manually after a successful Roadrunner step.
 
 ## Safety Boundaries
 
@@ -256,7 +258,7 @@ Cleanup must be limited to subprocesses registered by Roadrunner itself.
 
 - `queue[0]`: next task to implement.
 - `queue[1..]`: future tasks that the reconciler may refine.
-- `history`: verified tasks already committed by Roadrunner.
+- `history`: verified tasks completed by Roadrunner.
 - `blocked`: tasks removed from the queue after persistent automation failure.
 
 ## Goal-Aware Planning
