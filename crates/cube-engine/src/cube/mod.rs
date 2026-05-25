@@ -9,12 +9,14 @@ pub mod state;
 
 pub use algorithm::Algorithm;
 pub use coordinates::{
-    corner_orientation_coordinate, cubie_state_from_corner_orientation_coordinate,
+    corner_orientation_coordinate, corner_permutation_coordinate_from_permutation,
+    corner_permutation_from_coordinate, cubie_state_from_corner_orientation_coordinate,
     cubie_state_from_edge_orientation_coordinate, edge_orientation_coordinate,
     ud_slice_edge_combination_coordinate, ud_slice_edge_combination_coordinate_from_membership,
     ud_slice_edge_combination_membership_from_coordinate, CornerOrientationCoordinateError,
-    EdgeOrientationCoordinateError, UdSliceEdgeCombinationCoordinateError,
-    CORNER_ORIENTATION_COORDINATE_COUNT, EDGE_ORIENTATION_COORDINATE_COUNT,
+    CornerPermutationCoordinateError, EdgeOrientationCoordinateError,
+    UdSliceEdgeCombinationCoordinateError, CORNER_ORIENTATION_COORDINATE_COUNT,
+    CORNER_PERMUTATION_COORDINATE_COUNT, EDGE_ORIENTATION_COORDINATE_COUNT,
     UD_SLICE_EDGE_COMBINATION_COORDINATE_COUNT,
 };
 pub use cubies::{CubeValidationError, CubieState, CubieStateParseError};

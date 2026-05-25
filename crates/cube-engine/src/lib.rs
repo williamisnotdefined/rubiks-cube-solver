@@ -3,15 +3,17 @@ pub mod search;
 pub mod solver;
 
 pub use cube::{
-    corner_orientation_coordinate, cubie_state_from_corner_orientation_coordinate,
+    corner_orientation_coordinate, corner_permutation_coordinate_from_permutation,
+    corner_permutation_from_coordinate, cubie_state_from_corner_orientation_coordinate,
     cubie_state_from_edge_orientation_coordinate, edge_orientation_coordinate,
     ud_slice_edge_combination_coordinate, ud_slice_edge_combination_coordinate_from_membership,
     ud_slice_edge_combination_membership_from_coordinate, Algorithm, CornerFaceletMapping,
-    CornerOrientationCoordinateError, Cube, CubeValidationError, CubieState, CubieStateParseError,
-    EdgeFaceletMapping, EdgeOrientationCoordinateError, Facelet, FaceletConversionError,
-    FaceletParseError, FaceletString, Move, NotationError, Scramble, StickerPosition,
-    UdSliceEdgeCombinationCoordinateError, CENTER_FACELET_POSITIONS, CORNER_FACELET_MAPPINGS,
-    CORNER_ORIENTATION_COORDINATE_COUNT, EDGE_FACELET_MAPPINGS, EDGE_ORIENTATION_COORDINATE_COUNT,
+    CornerOrientationCoordinateError, CornerPermutationCoordinateError, Cube, CubeValidationError,
+    CubieState, CubieStateParseError, EdgeFaceletMapping, EdgeOrientationCoordinateError, Facelet,
+    FaceletConversionError, FaceletParseError, FaceletString, Move, NotationError, Scramble,
+    StickerPosition, UdSliceEdgeCombinationCoordinateError, CENTER_FACELET_POSITIONS,
+    CORNER_FACELET_MAPPINGS, CORNER_ORIENTATION_COORDINATE_COUNT,
+    CORNER_PERMUTATION_COORDINATE_COUNT, EDGE_FACELET_MAPPINGS, EDGE_ORIENTATION_COORDINATE_COUNT,
     UD_SLICE_EDGE_COMBINATION_COORDINATE_COUNT,
 };
 pub use search::{

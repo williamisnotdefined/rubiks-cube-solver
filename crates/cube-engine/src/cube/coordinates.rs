@@ -501,20 +501,27 @@ fn factorial(n: usize) -> usize {
 #[cfg(test)]
 mod tests {
     use super::{
-        corner_orientation_coordinate, cubie_state_from_corner_orientation_coordinate,
+        corner_orientation_coordinate, corner_permutation_coordinate_from_permutation,
+        corner_permutation_from_coordinate, cubie_state_from_corner_orientation_coordinate,
         cubie_state_from_edge_orientation_coordinate, edge_orientation_coordinate,
         ud_slice_edge_combination_coordinate, ud_slice_edge_combination_coordinate_from_membership,
         ud_slice_edge_combination_membership_from_coordinate, CornerOrientationCoordinateError,
-        EdgeOrientationCoordinateError, UdSliceEdgeCombinationCoordinateError,
-        CORNER_ORIENTATION_COORDINATE_COUNT, EDGE_ORIENTATION_COORDINATE_COUNT, UD_SLICE_EDGES,
+        CornerPermutationCoordinateError, EdgeOrientationCoordinateError,
+        UdSliceEdgeCombinationCoordinateError, CORNER_ORIENTATION_COORDINATE_COUNT,
+        CORNER_PERMUTATION_COORDINATE_COUNT, EDGE_ORIENTATION_COORDINATE_COUNT, UD_SLICE_EDGES,
         UD_SLICE_EDGE_COMBINATION_COORDINATE_COUNT,
     };
-    use crate::cube::cubies::{Edge, EDGE_COUNT};
+    use crate::cube::cubies::{Corner, Edge, CORNER_COUNT, EDGE_COUNT};
     use crate::cube::{Cube, CubieState, Move};
 
     #[test]
     fn corner_orientation_coordinate_has_explicit_range() {
         assert_eq!(CORNER_ORIENTATION_COORDINATE_COUNT, 2187);
+    }
+
+    #[test]
+    fn corner_permutation_coordinate_has_explicit_range() {
+        assert_eq!(CORNER_PERMUTATION_COORDINATE_COUNT, 40320);
     }
 
     #[test]
@@ -541,6 +548,15 @@ mod tests {
             cubie_state_from_corner_orientation_coordinate(0),
             Ok(CubieState::solved())
         );
+    }
+
+    #[test]
+    fn solved_corner_permutation_coordinate_round_trips() {
+        assert_eq!(
+            corner_permutation_coordinate_from_permutation(&Corner::ALL),
+            Ok(0)
+        );
+        assert_eq!(corner_permutation_from_coordinate(0), Ok(Corner::ALL));
     }
 
     #[test]
@@ -588,6 +604,39 @@ mod tests {
             cube.state().corner_orientation
         );
         assert!(reconstructed.is_valid());
+    }
+
+    #[test]
+    fn front_turn_corner_permutation_coordinate_round_trips() {
+        let mut cube = Cube::solved();
+        cube.apply_move(Move::F);
+
+        let expected_permutation = [
+            Corner::Ufl,
+            Corner::Dlf,
+            Corner::Ulb,
+            Corner::Ubr,
+            Corner::Urf,
+            Corner::Dfr,
+            Corner::Dbl,
+            Corner::Drb,
+        ];
+        let coordinate =
+            corner_permutation_coordinate_from_permutation(&cube.state().corner_permutation);
+
+        assert_eq!(cube.state().corner_permutation, expected_permutation);
+        assert_eq!(coordinate, Ok(8064));
+
+        let reconstructed: [Corner; CORNER_COUNT] = corner_permutation_from_coordinate(
+            coordinate.expect("front-turn corner-permutation coordinate should be valid"),
+        )
+        .expect("front-turn corner-permutation coordinate should unrank");
+
+        assert_eq!(reconstructed, expected_permutation);
+        assert_eq!(
+            corner_permutation_coordinate_from_permutation(&reconstructed),
+            Ok(8064)
+        );
     }
 
     #[test]
@@ -641,6 +690,17 @@ mod tests {
             Err(CornerOrientationCoordinateError::IndexOutOfRange {
                 index: CORNER_ORIENTATION_COORDINATE_COUNT,
                 coordinate_count: CORNER_ORIENTATION_COORDINATE_COUNT,
+            })
+        );
+    }
+
+    #[test]
+    fn rejects_out_of_range_corner_permutation_coordinate() {
+        assert_eq!(
+            corner_permutation_from_coordinate(CORNER_PERMUTATION_COORDINATE_COUNT),
+            Err(CornerPermutationCoordinateError::IndexOutOfRange {
+                index: CORNER_PERMUTATION_COORDINATE_COUNT,
+                coordinate_count: CORNER_PERMUTATION_COORDINATE_COUNT,
             })
         );
     }
@@ -725,6 +785,20 @@ mod tests {
         assert_eq!(
             edge_orientation_coordinate(&state),
             Err(EdgeOrientationCoordinateError::InvalidEdgeOrientationSum { sum: 1 })
+        );
+    }
+
+    #[test]
+    fn rejects_invalid_corner_permutation_before_indexing() {
+        let mut permutation = Corner::ALL;
+        permutation[0] = Corner::Ufl;
+
+        assert_eq!(
+            corner_permutation_coordinate_from_permutation(&permutation),
+            Err(CornerPermutationCoordinateError::InvalidCornerPermutation {
+                duplicate: Some(Corner::Ufl),
+                missing: Some(Corner::Urf),
+            })
         );
     }
 
