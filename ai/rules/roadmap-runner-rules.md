@@ -15,6 +15,8 @@ Rules for executing the Rubik roadmap through the external Roadrunner CLI.
 - Keep generated logs, locks, and process registry files under `.autopilot`, which is gitignored.
 - Run long Roadrunner sessions from a normal terminal or `tmux`, not from inside OpenCode.
 - Review and commit completed Roadrunner work manually after verification; implementation agents must not own git history.
+- Treat `roadrunner import-roadmap` output as a draft queue that must be reconciled against `GOALS.md` before unattended execution.
+- Use Roadrunner's `rstask` interactive control only to restart the current task attempt from planning.
 
 ## Never
 
@@ -27,6 +29,7 @@ Rules for executing the Rubik roadmap through the external Roadrunner CLI.
 - Do not rewrite or delete `history` and `blocked` records during reconciliation.
 - Do not use destructive git commands to recover from failed automation.
 - Do not commit large generated datasets, model checkpoints, or Roadrunner logs.
+- Do not probe active Roadrunner subcommands with `--help` inside this repository; use plain `roadrunner` for the command list unless the CLI has verified subcommand help behavior.
 
 ## Verification
 
@@ -35,6 +38,7 @@ Rules for executing the Rubik roadmap through the external Roadrunner CLI.
 - `npm run roadmap:next` shows the next runnable step once Roadrunner is available.
 - `npm run roadmap:plan` generates a saved plan for the selected next step once Roadrunner is available.
 - `npm run roadmap:cleanup` cleans up only Roadrunner-owned subprocesses once Roadrunner is available.
+- `roadrunner import-roadmap` can seed a queue from `roadmap.md`, but the result should be reviewed and reconciled before running.
 
 ## Queue Reconciliation
 

@@ -94,6 +94,8 @@ Rules for executing the Rubik roadmap through the external Roadrunner CLI.
 - Keep generated logs, locks, and process registry files under `.autopilot`, which is gitignored.
 - Run long Roadrunner sessions from a normal terminal or `tmux`, not from inside OpenCode.
 - Review and commit completed Roadrunner work manually after verification; implementation agents must not own git history.
+- Treat `roadrunner import-roadmap` output as a draft queue that must be reconciled against `GOALS.md` before unattended execution.
+- Use Roadrunner's `rstask` interactive control only to restart the current task attempt from planning.
 
 ## Never
 
@@ -106,6 +108,7 @@ Rules for executing the Rubik roadmap through the external Roadrunner CLI.
 - Do not rewrite or delete `history` and `blocked` records during reconciliation.
 - Do not use destructive git commands to recover from failed automation.
 - Do not commit large generated datasets, model checkpoints, or Roadrunner logs.
+- Do not probe active Roadrunner subcommands with `--help` inside this repository; use plain `roadrunner` for the command list unless the CLI has verified subcommand help behavior.
 
 ## Verification
 
@@ -114,6 +117,7 @@ Rules for executing the Rubik roadmap through the external Roadrunner CLI.
 - `npm run roadmap:next` shows the next runnable step once Roadrunner is available.
 - `npm run roadmap:plan` generates a saved plan for the selected next step once Roadrunner is available.
 - `npm run roadmap:cleanup` cleans up only Roadrunner-owned subprocesses once Roadrunner is available.
+- `roadrunner import-roadmap` can seed a queue from `roadmap.md`, but the result should be reviewed and reconciled before running.
 
 ## Queue Reconciliation
 
@@ -232,6 +236,8 @@ Roadrunner implementation code does not live in this repository. Do not add loca
 
 This repository may keep project-specific prompts and queue metadata because those are product state, not generic runner code.
 
+Roadrunner can seed queue metadata from `roadmap.md` with `import-roadmap`, but imported queues are drafts. The checked-in queue should remain a small, goal-aligned operational sequence rather than a direct dump of the strategic roadmap.
+
 ## Runner Flow
 
 Roadrunner follows:
@@ -241,6 +247,8 @@ Plan -> Execute -> Verify -> Reconcile -> Update Queue
 ```
 
 Roadrunner selects `queue[0]`, generates a plan, executes the step, runs the step's verification commands, reconciles future queue items against `GOALS.md`, then moves verified work to `history`. Commits are reviewed and created manually after a successful Roadrunner step.
+
+During an interactive run, `rstask` may be used to restart the current task attempt from planning without changing the product goals or bypassing verification.
 
 ## Safety Boundaries
 

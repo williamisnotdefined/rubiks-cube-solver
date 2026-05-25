@@ -9,5 +9,6 @@ pub use heuristics::{
     CornerOrientationHeuristic, EdgeOrientationHeuristic, Heuristic, MaxHeuristic,
     MisplacedCubiesHeuristic, ZeroHeuristic,
 };
+pub use ida_star::solve_ida_star;
 pub use iddfs::{depth_limited_search, solve_iddfs};
 pub use solution::SearchSolution;

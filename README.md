@@ -38,8 +38,11 @@ npm run roadmap:status
 npm run roadmap:next
 npm run roadmap:plan
 npm run roadmap:run -- --max-steps 1
+npm run roadmap:run:long
 npm run roadmap:cleanup
 ```
+
+The current Roadrunner CLI also supports `roadrunner import-roadmap` for seeding a queue from `roadmap.md` and the interactive `rstask` control to restart the current task attempt from planning. Treat imported queues as drafts: reconcile them against `GOALS.md` before unattended execution. Use plain `roadrunner` to inspect available commands; avoid probing active subcommands with `--help` inside this repo because older/local CLI builds may execute the subcommand instead of showing help.
 
 Run longer unattended sessions with explicit limits from a normal terminal or `tmux`, not from inside an existing OpenCode session:
 
@@ -47,7 +50,7 @@ Run longer unattended sessions with explicit limits from a normal terminal or `t
 npm run roadmap:run -- --max-steps 999 --max-hours 72
 ```
 
-Roadrunner uses `opencode run --model openai/gpt-5.5 --variant xhigh`, writes runtime logs under `.autopilot/`, plans each step before execution, verifies each step, commits, pushes, then runs a reconciliation pass that may update the future queue in a separate commit. When the frontend exists, the queue should include Playwright tests that submit cube states, receive solutions, replay moves, and verify the cube is solved.
+Roadrunner uses `opencode run --model openai/gpt-5.5 --variant xhigh`, writes runtime logs under `.autopilot/`, plans each step before execution, verifies each step, then runs a reconciliation pass that may update the future queue. This repository keeps commit and push decisions manual after review. When the frontend exists, the queue should include Playwright tests that submit cube states, receive solutions, replay moves, and verify the cube is solved.
 
 ## External Visualization Library
 

@@ -18,6 +18,8 @@ Roadrunner implementation code does not live in this repository. Do not add loca
 
 This repository may keep project-specific prompts and queue metadata because those are product state, not generic runner code.
 
+Roadrunner can seed queue metadata from `roadmap.md` with `import-roadmap`, but imported queues are drafts. The checked-in queue should remain a small, goal-aligned operational sequence rather than a direct dump of the strategic roadmap.
+
 ## Runner Flow
 
 Roadrunner follows:
@@ -27,6 +29,8 @@ Plan -> Execute -> Verify -> Reconcile -> Update Queue
 ```
 
 Roadrunner selects `queue[0]`, generates a plan, executes the step, runs the step's verification commands, reconciles future queue items against `GOALS.md`, then moves verified work to `history`. Commits are reviewed and created manually after a successful Roadrunner step.
+
+During an interactive run, `rstask` may be used to restart the current task attempt from planning without changing the product goals or bypassing verification.
 
 ## Safety Boundaries
 
