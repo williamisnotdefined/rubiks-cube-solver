@@ -12,6 +12,12 @@ crates/cube-engine/pruning-tables/
 apps/web/public/generated-pruning-tables/
 # Generated datasets are local artifacts; commit only small fixtures.
 datasets/generated/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+ml/outputs/
+ml/runs/
+ml/checkpoints/
 *.log
 .env
 .env.*

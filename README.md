@@ -108,6 +108,48 @@ Generate larger local datasets under the ignored `datasets/generated/` path, for
 cargo run --quiet -p cube-engine --bin generate_dataset -- --seed 42 --count 10000 --output datasets/generated/train.jsonl --max-scramble-depth 20
 ```
 
+## ML Value Baseline
+
+The first ML baseline is isolated under `ml/`. It consumes Rust dataset JSONL records and derives model inputs from the serialized `CubieState` fields `cp`, `co`, `ep`, and `eo`. It does not use frontend sticker or color arrays as the primary model input.
+
+Install Python dependencies with:
+
+```bash
+python -m pip install -r ml/requirements.txt
+```
+
+Run the fixture-based tests with:
+
+```bash
+python -m pytest ml
+```
+
+Train and evaluate the small deterministic PyTorch MLP value model with:
+
+```bash
+python -m ml.train_value_baseline --dataset datasets/fixtures/small.jsonl --epochs 1 --seed 0 --output /tmp/rubiks-cube-solver-ml-smoke
+```
+
+The CLI prints a JSON report and writes `metrics.json` only under the requested `--output` directory. The default output directory is under `/tmp`, and the smoke baseline does not write model checkpoints.
+
+If PyTorch is unavailable, the CLI exits successfully with an explicit dependency-fallback report so smoke verification still records label metrics; install `ml/requirements.txt` to train the PyTorch MLP.
+
+The target label is `verified_solution_length`: the length of the replay-verified inverse scramble stored in the dataset. It is useful for a reproducible value-model smoke baseline, but it is not an optimal-distance label and must not be described as God's Number evidence.
+
+The report includes MAE, RMSE, bucket accuracy, metrics by depth bucket, inference time per state, a reversible-scramble depth baseline, and a pointer to the canonical Rust solver-quality report command. The Rust report remains the product solver-quality baseline:
+
+```bash
+cargo run --quiet -p cube-engine --bin solver_quality_report
+```
+
+Safety rules for ML experiments:
+
+- ML does not validate cube states.
+- ML does not replace replay verification of returned solutions.
+- ML is not an admissible heuristic unless a separate proof or safe bound is added.
+- ML is not a dependency of the default Rust, WASM, or web solve path.
+- Classical deterministic solving remains the fallback for product behavior.
+
 ## External Visualization Library
 
 `@houstonp/rubiks-cube` can be useful later for frontend visualization or sticker-state experiments, but it is not the solver core. This project keeps the solver engine in Rust with cubie representation so search, heuristics, pattern databases, and WASM can evolve without depending on a Three.js/web-component state model.
