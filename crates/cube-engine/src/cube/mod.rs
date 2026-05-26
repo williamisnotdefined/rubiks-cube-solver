@@ -12,11 +12,15 @@ pub use coordinates::{
     corner_orientation_coordinate, corner_permutation_coordinate_from_permutation,
     corner_permutation_from_coordinate, cubie_state_from_corner_orientation_coordinate,
     cubie_state_from_edge_orientation_coordinate, edge_orientation_coordinate,
+    slice_edge_permutation_coordinate_from_permutation, slice_edge_permutation_from_coordinate,
+    ud_edge_permutation_coordinate_from_permutation, ud_edge_permutation_from_coordinate,
     ud_slice_edge_combination_coordinate, ud_slice_edge_combination_coordinate_from_membership,
     ud_slice_edge_combination_membership_from_coordinate, CornerOrientationCoordinateError,
     CornerPermutationCoordinateError, EdgeOrientationCoordinateError,
+    SliceEdgePermutationCoordinateError, UdEdgePermutationCoordinateError,
     UdSliceEdgeCombinationCoordinateError, CORNER_ORIENTATION_COORDINATE_COUNT,
     CORNER_PERMUTATION_COORDINATE_COUNT, EDGE_ORIENTATION_COORDINATE_COUNT,
+    SLICE_EDGE_PERMUTATION_COORDINATE_COUNT, UD_EDGE_PERMUTATION_COORDINATE_COUNT,
     UD_SLICE_EDGE_COMBINATION_COORDINATE_COUNT,
 };
 pub use cubies::{CubeValidationError, CubieState, CubieStateParseError};
