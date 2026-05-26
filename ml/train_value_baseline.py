@@ -134,6 +134,7 @@ def build_report(
         "train_examples": len(train_examples),
         "model": {
             "type": "pytorch_mlp",
+            "pytorch_available": True,
             "input": "normalized CubieState cp/co/ep/eo serialization",
             "feature_dim": 40,
             "hidden_dim": hidden_dim,
