@@ -1,0 +1,18 @@
+{
+  "allowedVerificationCommands": [
+    "npm run ai:check",
+    "cargo fmt --check",
+    "cargo test",
+    "cargo clippy --all-targets --all-features -- -D warnings",
+    "cargo run --quiet -p cube-engine --bin generate_pruning_tables -- --output crates/cube-engine/pruning-tables --max-depth 8",
+    "npm run pruning:web:generate",
+    "npm run wasm:build",
+    "npm run build",
+    "npm run lint -w @rubiks-cube-solver/web",
+    "npm run test:e2e",
+    "python -m pytest ml",
+    "python -m ml.train_value_baseline --dataset datasets/fixtures/small.jsonl --epochs 1 --seed 0 --output ml/outputs/value-baseline --inference-repeats 1",
+    "cargo run --quiet -p cube-engine --bin solver_quality_report",
+    "cargo run --quiet -p cube-engine --bin solver_quality_report -- --hybrid-value-outputs ml/outputs/value-baseline/value_outputs.tsv"
+  ]
+}
