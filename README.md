@@ -17,6 +17,7 @@ npm run ai:sync
 npm run ai:check
 npm run wasm:build
 npm run build
+npm run product:gate
 ```
 
 When Rust is installed:
@@ -24,6 +25,10 @@ When Rust is installed:
 ```bash
 cargo test
 ```
+
+## Product Validation Gate
+
+`PRODUCT_VALIDATION.md` is the durable product gate report for `GOALS.md` and completed roadmap phases. It lists the required Roadrunner verification commands, latest dated outcomes, generated artifact locations, and the product safety limits: every success is replay verified, generated tables are local artifacts, ML is research-only, and the solver does not claim optimality or a 20-move guarantee.
 
 ## Solver Quality Report
 
