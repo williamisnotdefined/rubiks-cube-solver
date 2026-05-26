@@ -58,15 +58,21 @@ pub struct QualityFixture {
 pub enum QualitySolverSelection {
     DefaultBoundedIdaStar,
     ExplicitTwoPhaseBaseline,
+    GeneratedTwoPhase,
 }
 
 impl QualitySolverSelection {
-    pub const ALL: [Self; 2] = [Self::DefaultBoundedIdaStar, Self::ExplicitTwoPhaseBaseline];
+    pub const ALL: [Self; 3] = [
+        Self::DefaultBoundedIdaStar,
+        Self::ExplicitTwoPhaseBaseline,
+        Self::GeneratedTwoPhase,
+    ];
 
     pub const fn label(self) -> &'static str {
         match self {
             Self::DefaultBoundedIdaStar => "default-bounded-ida-star",
             Self::ExplicitTwoPhaseBaseline => "explicit-two-phase-baseline",
+            Self::GeneratedTwoPhase => "generated-two-phase",
         }
     }
 
@@ -74,6 +80,7 @@ impl QualitySolverSelection {
         match self {
             Self::DefaultBoundedIdaStar => SolverStrategy::BoundedIdaStar,
             Self::ExplicitTwoPhaseBaseline => SolverStrategy::TwoPhaseBaseline,
+            Self::GeneratedTwoPhase => SolverStrategy::GeneratedTwoPhase,
         }
     }
 
@@ -83,6 +90,26 @@ impl QualitySolverSelection {
             Self::ExplicitTwoPhaseBaseline => {
                 SolverConfig::with_strategy(max_depth, max_nodes, SolverStrategy::TwoPhaseBaseline)
             }
+            Self::GeneratedTwoPhase => {
+                SolverConfig::with_strategy(max_depth, max_nodes, SolverStrategy::GeneratedTwoPhase)
+            }
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum QualityTableStatus {
+    NotRequired,
+    Available,
+    Unavailable,
+}
+
+impl QualityTableStatus {
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::NotRequired => "not_required",
+            Self::Available => "available",
+            Self::Unavailable => "unavailable",
         }
     }
 }
@@ -90,6 +117,7 @@ impl QualitySolverSelection {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum QualityReportStatus {
     Success,
+    GeneratedTablesUnavailable,
     NotFoundWithinLimits,
 }
 
@@ -97,6 +125,7 @@ impl QualityReportStatus {
     pub const fn label(self) -> &'static str {
         match self {
             Self::Success => "success",
+            Self::GeneratedTablesUnavailable => "generated_tables_unavailable",
             Self::NotFoundWithinLimits => "not_found_within_limits",
         }
     }
@@ -112,6 +141,7 @@ pub struct QualityReportRow {
     pub strategy: SolverStrategy,
     pub max_depth: usize,
     pub max_nodes: Option<usize>,
+    pub table_status: QualityTableStatus,
     pub status: QualityReportStatus,
     pub solution_length: Option<usize>,
     pub explored_nodes: usize,
@@ -137,14 +167,14 @@ impl QualityReport {
     pub fn to_markdown(&self) -> String {
         let mut output = String::from(
             "# Deterministic Solver Quality Report\n\n\
-Fixtures, solver selections, and limits are fixed. Elapsed time is local measurement output; use it as a rough local signal, not as a deterministic value. Compare fixture order, solver selection, configured limits, status, solution length, explored nodes, and replay verification for regressions. This report does not claim optimality or a 20-move guarantee.\n\n\
-| fixture | group | input | scramble | selection | strategy | max_depth | max_nodes | status | solution_len | explored_nodes | elapsed_us | replay_verified | solution |\n\
-| --- | --- | --- | --- | --- | --- | ---: | ---: | --- | ---: | ---: | ---: | --- | --- |\n",
+Fixtures, solver selections, table availability, and limits are fixed. Elapsed time is local measurement output; use it as a rough local signal, not as a deterministic value. Compare fixture order, solver selection, table status, configured limits, status, solution length, explored nodes, and replay verification for regressions. This report does not claim optimality or a 20-move guarantee.\n\n\
+| fixture | group | input | scramble | selection | strategy | max_depth | max_nodes | table_status | status | solution_len | explored_nodes | elapsed_us | replay_verified | solution |\n\
+| --- | --- | --- | --- | --- | --- | ---: | ---: | --- | --- | ---: | ---: | ---: | --- | --- |\n",
         );
 
         for row in &self.rows {
             output.push_str(&format!(
-                "| {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |\n",
+                "| {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |\n",
                 row.fixture_id,
                 row.fixture_category.label(),
                 row.input_kind.label(),
@@ -153,6 +183,7 @@ Fixtures, solver selections, and limits are fixed. Elapsed time is local measure
                 strategy_label(row.strategy),
                 row.max_depth,
                 max_nodes_label(row.max_nodes),
+                row.table_status.label(),
                 row.status.label(),
                 optional_usize_label(row.solution_length),
                 row.explored_nodes,
@@ -447,9 +478,9 @@ fn run_quality_row(
                 .facelets
                 .as_deref()
                 .expect("facelet fixtures must store rendered facelets"),
-            config,
+            config.clone(),
         ),
-        QualityInputKind::Cubie => solve_cubie_state(fixture.state.clone(), config),
+        QualityInputKind::Cubie => solve_cubie_state(fixture.state.clone(), config.clone()),
     };
     let elapsed = started.elapsed();
 
@@ -472,6 +503,7 @@ fn run_quality_row(
                 strategy: config.strategy,
                 max_depth: config.max_depth,
                 max_nodes: config.max_nodes,
+                table_status: table_status_for_success(config.strategy),
                 status: QualityReportStatus::Success,
                 solution_length: Some(result.length()),
                 explored_nodes: result.explored_nodes(),
@@ -489,9 +521,27 @@ fn run_quality_row(
             strategy: config.strategy,
             max_depth: config.max_depth,
             max_nodes: config.max_nodes,
+            table_status: table_status_for_success(config.strategy),
             status: QualityReportStatus::NotFoundWithinLimits,
             solution_length: None,
             explored_nodes,
+            elapsed,
+            replay_verified: None,
+            moves: Vec::new(),
+        }),
+        Err(SolveError::GeneratedTablesUnavailable { .. }) => Ok(QualityReportRow {
+            fixture_id: fixture.id,
+            fixture_category: fixture.category,
+            input_kind: fixture.input_kind,
+            scramble: fixture.scramble,
+            solver_selection,
+            strategy: config.strategy,
+            max_depth: config.max_depth,
+            max_nodes: config.max_nodes,
+            table_status: QualityTableStatus::Unavailable,
+            status: QualityReportStatus::GeneratedTablesUnavailable,
+            solution_length: None,
+            explored_nodes: 0,
             elapsed,
             replay_verified: None,
             moves: Vec::new(),
@@ -541,6 +591,15 @@ fn replay_verifies(
 
 fn strategy_label(strategy: SolverStrategy) -> &'static str {
     strategy.id()
+}
+
+fn table_status_for_success(strategy: SolverStrategy) -> QualityTableStatus {
+    match strategy {
+        SolverStrategy::GeneratedTwoPhase => QualityTableStatus::Available,
+        SolverStrategy::BoundedIdaStar | SolverStrategy::TwoPhaseBaseline => {
+            QualityTableStatus::NotRequired
+        }
+    }
 }
 
 fn scramble_label(scramble: &str) -> &str {

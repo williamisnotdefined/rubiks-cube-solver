@@ -253,7 +253,7 @@ impl FaceletSolveResult {
 
     fn not_found_within_limits(config: SolverConfig, explored_nodes: usize) -> Self {
         let message = SolveError::NotFoundWithinLimits {
-            config,
+            config: config.clone(),
             explored_nodes,
         }
         .to_string();
@@ -332,6 +332,20 @@ impl FaceletSolveResult {
     fn failure(error: SolveError, request_config: SolverConfig) -> Self {
         match error {
             SolveError::InvalidInput { error } => Self::invalid_input(error, request_config),
+            SolveError::GeneratedTablesUnavailable { config, error } => Self {
+                status: "unavailable_strategy".to_owned(),
+                ok: false,
+                moves: Vec::new(),
+                length: 0,
+                max_depth: config.max_depth,
+                max_nodes: config.max_nodes,
+                strategy_id: config.strategy.id().to_owned(),
+                strategy_label: config.strategy.label().to_owned(),
+                solver_mode: config.strategy.solver_mode().to_owned(),
+                explored_nodes: Some(0),
+                error_kind: Some("generated_tables_unavailable".to_owned()),
+                message: Some(error.to_string()),
+            },
             SolveError::NotFoundWithinLimits {
                 config,
                 explored_nodes,
@@ -358,7 +372,7 @@ pub fn solve_facelet_string(
 ) -> FaceletSolveResult {
     let config = SolverConfig::with_limits(max_depth, max_nodes);
 
-    match solve_engine_facelet_string(input, config) {
+    match solve_engine_facelet_string(input, config.clone()) {
         Ok(result) => FaceletSolveResult::success(result, config),
         Err(error) => FaceletSolveResult::failure(error, config),
     }
@@ -389,7 +403,7 @@ pub fn solve_facelet_string_with_strategy(
 
     let config = SolverConfig::with_strategy(max_depth, max_nodes, strategy);
 
-    match solve_engine_facelet_string(input, config) {
+    match solve_engine_facelet_string(input, config.clone()) {
         Ok(result) => FaceletSolveResult::success(result, config),
         Err(error) => FaceletSolveResult::failure(error, config),
     }

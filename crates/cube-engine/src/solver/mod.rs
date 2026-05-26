@@ -1,11 +1,14 @@
 use std::fmt;
+use std::path::{Path, PathBuf};
 
 use crate::cube::{
     Algorithm, Cube, CubeValidationError, CubieState, FaceletConversionError, FaceletParseError,
     FaceletString, Move, NotationError,
 };
+use crate::search::pruning::DEFAULT_PRUNING_TABLE_DIR;
 use crate::search::{
-    solve_ida_star_bounded, solve_two_phase_baseline, SearchBudget, SearchOutcome,
+    solve_generated_two_phase, solve_ida_star_bounded, solve_two_phase_baseline,
+    GeneratedTwoPhaseError, SearchBudget, SearchOutcome,
 };
 
 pub mod quality;
@@ -19,6 +22,11 @@ pub enum SolverStrategy {
     ///
     /// This is not a full generated-table solver and does not claim optimality or a 20-move bound.
     TwoPhaseBaseline,
+    /// Generated classical two-phase path backed by local pruning-table artifacts.
+    ///
+    /// This path is selectable but still reports honest failures when tables or configured limits
+    /// are unavailable. It does not claim optimality or a 20-move guarantee.
+    GeneratedTwoPhase,
 }
 
 impl SolverStrategy {
@@ -26,6 +34,7 @@ impl SolverStrategy {
         match self {
             Self::BoundedIdaStar => "bounded-ida-star",
             Self::TwoPhaseBaseline => "two-phase-baseline",
+            Self::GeneratedTwoPhase => "generated-two-phase",
         }
     }
 
@@ -33,6 +42,7 @@ impl SolverStrategy {
         match self {
             Self::BoundedIdaStar => "Bounded IDA*",
             Self::TwoPhaseBaseline => "Limited two-phase baseline",
+            Self::GeneratedTwoPhase => "Generated two-phase solver",
         }
     }
 
@@ -40,6 +50,7 @@ impl SolverStrategy {
         match self {
             Self::BoundedIdaStar => "bounded_ida_star",
             Self::TwoPhaseBaseline => "limited_two_phase_baseline",
+            Self::GeneratedTwoPhase => "generated_two_phase",
         }
     }
 
@@ -47,13 +58,14 @@ impl SolverStrategy {
         match id {
             "bounded-ida-star" => Some(Self::BoundedIdaStar),
             "two-phase-baseline" => Some(Self::TwoPhaseBaseline),
+            "generated-two-phase" => Some(Self::GeneratedTwoPhase),
             _ => None,
         }
     }
 }
 
 /// Configuration shared by public solver entry points.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SolverConfig {
     /// Maximum solution depth a solver may explore before reporting a limit failure.
     pub max_depth: usize,
@@ -63,6 +75,10 @@ pub struct SolverConfig {
     pub max_nodes: Option<usize>,
     /// Explicit solver path. Constructors default to the bounded product solver.
     pub strategy: SolverStrategy,
+    /// Optional directory containing generated pruning-table artifacts.
+    ///
+    /// When this is `None`, the generated two-phase strategy uses the local ignored default path.
+    pub pruning_table_dir: Option<PathBuf>,
 }
 
 impl SolverConfig {
@@ -71,6 +87,7 @@ impl SolverConfig {
             max_depth,
             max_nodes: None,
             strategy: SolverStrategy::BoundedIdaStar,
+            pruning_table_dir: None,
         }
     }
 
@@ -79,6 +96,7 @@ impl SolverConfig {
             max_depth,
             max_nodes,
             strategy: SolverStrategy::BoundedIdaStar,
+            pruning_table_dir: None,
         }
     }
 
@@ -91,7 +109,20 @@ impl SolverConfig {
             max_depth,
             max_nodes,
             strategy,
+            pruning_table_dir: None,
         }
+    }
+
+    pub fn with_pruning_table_dir(mut self, directory: impl Into<PathBuf>) -> Self {
+        self.pruning_table_dir = Some(directory.into());
+
+        self
+    }
+
+    pub fn pruning_table_dir(&self) -> &Path {
+        self.pruning_table_dir
+            .as_deref()
+            .unwrap_or_else(|| Path::new(DEFAULT_PRUNING_TABLE_DIR))
     }
 }
 
@@ -283,6 +314,10 @@ pub enum SolveError {
     InvalidInput {
         error: SolveInputError,
     },
+    GeneratedTablesUnavailable {
+        config: SolverConfig,
+        error: Box<GeneratedTwoPhaseError>,
+    },
     NotFoundWithinLimits {
         config: SolverConfig,
         explored_nodes: usize,
@@ -293,6 +328,12 @@ impl fmt::Display for SolveError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::InvalidInput { error } => write!(formatter, "invalid solver input: {error}"),
+            Self::GeneratedTablesUnavailable { config, error } => write!(
+                formatter,
+                "generated two-phase pruning tables are unavailable for strategy {} at {}: {error}",
+                config.strategy.id(),
+                config.pruning_table_dir().display()
+            ),
             Self::NotFoundWithinLimits {
                 config,
                 explored_nodes,
@@ -316,6 +357,7 @@ impl std::error::Error for SolveError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::InvalidInput { error } => Some(error),
+            Self::GeneratedTablesUnavailable { error, .. } => Some(error.as_ref()),
             Self::NotFoundWithinLimits { .. } => None,
         }
     }
@@ -387,6 +429,17 @@ pub fn solve_cube(cube: &Cube, config: SolverConfig) -> Result<SolveResult, Solv
     let outcome = match config.strategy {
         SolverStrategy::BoundedIdaStar => solve_ida_star_bounded(cube, budget),
         SolverStrategy::TwoPhaseBaseline => solve_two_phase_baseline(cube, budget),
+        SolverStrategy::GeneratedTwoPhase => {
+            match solve_generated_two_phase(cube, budget, config.pruning_table_dir()) {
+                Ok(outcome) => outcome,
+                Err(error) => {
+                    return Err(SolveError::GeneratedTablesUnavailable {
+                        config,
+                        error: Box::new(error),
+                    });
+                }
+            }
+        }
     };
 
     solve_search_outcome(cube, config, outcome)
@@ -461,6 +514,16 @@ mod tests {
         assert_eq!(two_phase.max_depth, 1);
         assert_eq!(two_phase.max_nodes, Some(2));
         assert_eq!(two_phase.strategy, SolverStrategy::TwoPhaseBaseline);
+        assert_eq!(two_phase.pruning_table_dir, None);
+
+        let generated =
+            SolverConfig::with_strategy(2, Some(100), SolverStrategy::GeneratedTwoPhase)
+                .with_pruning_table_dir("tmp/generated-pruning-tables");
+        assert_eq!(generated.strategy, SolverStrategy::GeneratedTwoPhase);
+        assert_eq!(
+            generated.pruning_table_dir().to_string_lossy(),
+            "tmp/generated-pruning-tables"
+        );
     }
 
     #[test]
@@ -488,6 +551,22 @@ mod tests {
         assert_eq!(
             SolverStrategy::from_id("two-phase-baseline"),
             Some(SolverStrategy::TwoPhaseBaseline)
+        );
+        assert_eq!(
+            SolverStrategy::GeneratedTwoPhase.id(),
+            "generated-two-phase"
+        );
+        assert_eq!(
+            SolverStrategy::GeneratedTwoPhase.label(),
+            "Generated two-phase solver"
+        );
+        assert_eq!(
+            SolverStrategy::GeneratedTwoPhase.solver_mode(),
+            "generated_two_phase"
+        );
+        assert_eq!(
+            SolverStrategy::from_id("generated-two-phase"),
+            Some(SolverStrategy::GeneratedTwoPhase)
         );
         assert_eq!(SolverStrategy::from_id("unknown"), None);
     }
@@ -694,19 +773,19 @@ mod tests {
         let state = scrambled_state(&[Move::F]);
         let config = two_phase_config(1, Some(0));
 
-        let error = solve_cubie_state(state.clone(), config)
+        let error = solve_cubie_state(state.clone(), config.clone())
             .expect_err("zero-node budget should stop selected two-phase baseline");
 
         assert_eq!(
             error,
             SolveError::NotFoundWithinLimits {
-                config,
+                config: config.clone(),
                 explored_nodes: 0,
             }
         );
 
         let config = two_phase_config(0, None);
-        let error = solve_cubie_state(state, config)
+        let error = solve_cubie_state(state, config.clone())
             .expect_err("depth-zero limit should not solve fixture-covered one-move state");
 
         match error {
@@ -717,7 +796,9 @@ mod tests {
                 assert_eq!(actual_config, config);
                 assert!(explored_nodes > 0);
             }
-            SolveError::InvalidInput { .. } => panic!("limit failure should not be invalid input"),
+            SolveError::InvalidInput { .. } | SolveError::GeneratedTablesUnavailable { .. } => {
+                panic!("limit failure should not be invalid input or table unavailable")
+            }
         }
     }
 
@@ -726,7 +807,7 @@ mod tests {
         let state = scrambled_state(&[Move::R]);
         let config = two_phase_config(1, None);
 
-        let error = solve_cubie_state(state.clone(), config)
+        let error = solve_cubie_state(state.clone(), config.clone())
             .expect_err("selected two-phase baseline should stay limited to committed fixture");
 
         match error {
@@ -737,8 +818,8 @@ mod tests {
                 assert_eq!(actual_config, config);
                 assert!(explored_nodes > 0);
             }
-            SolveError::InvalidInput { .. } => {
-                panic!("unsupported fixture state is not invalid input")
+            SolveError::InvalidInput { .. } | SolveError::GeneratedTablesUnavailable { .. } => {
+                panic!("unsupported fixture state is not invalid input or table unavailable")
             }
         }
 
@@ -995,7 +1076,7 @@ mod tests {
         let input = facelet_string_for(&[Move::R, Move::U]);
         let config = SolverConfig::new(1);
 
-        let error = solve_facelet_string(&input, config)
+        let error = solve_facelet_string(&input, config.clone())
             .expect_err("depth-one search should not solve a two-move facelet scramble");
 
         match error {
@@ -1006,7 +1087,9 @@ mod tests {
                 assert_eq!(actual_config, config);
                 assert!(explored_nodes > 0);
             }
-            SolveError::InvalidInput { .. } => panic!("depth limit should not be invalid input"),
+            SolveError::InvalidInput { .. } | SolveError::GeneratedTablesUnavailable { .. } => {
+                panic!("depth limit should not be invalid input or table unavailable")
+            }
         }
     }
 
@@ -1015,25 +1098,25 @@ mod tests {
         let input = facelet_string_for(&[Move::R]);
         let config = SolverConfig::with_limits(1, Some(0));
 
-        let error = solve_facelet_string(&input, config)
+        let error = solve_facelet_string(&input, config.clone())
             .expect_err("zero-node budget should stop bounded facelet search");
 
         assert_eq!(
             error,
             SolveError::NotFoundWithinLimits {
-                config,
+                config: config.clone(),
                 explored_nodes: 0,
             }
         );
 
         let config = SolverConfig::with_limits(1, Some(1));
-        let error = solve_facelet_string(&input, config)
+        let error = solve_facelet_string(&input, config.clone())
             .expect_err("one-node budget should stop bounded facelet search after root");
 
         assert_eq!(
             error,
             SolveError::NotFoundWithinLimits {
-                config,
+                config: config.clone(),
                 explored_nodes: 1,
             }
         );
@@ -1062,7 +1145,7 @@ mod tests {
         let state = scrambled_state(&[Move::R, Move::U]);
         let config = SolverConfig::new(1);
 
-        let error = solve_cubie_state(state, config)
+        let error = solve_cubie_state(state, config.clone())
             .expect_err("depth-one search should not solve a two-move scramble");
 
         match error {
@@ -1073,7 +1156,9 @@ mod tests {
                 assert_eq!(actual_config, config);
                 assert!(explored_nodes > 0);
             }
-            SolveError::InvalidInput { .. } => panic!("depth limit should not be invalid input"),
+            SolveError::InvalidInput { .. } | SolveError::GeneratedTablesUnavailable { .. } => {
+                panic!("depth limit should not be invalid input or table unavailable")
+            }
         }
     }
 
@@ -1082,25 +1167,25 @@ mod tests {
         let state = scrambled_state(&[Move::R]);
         let config = SolverConfig::with_limits(1, Some(0));
 
-        let error = solve_cubie_state(state.clone(), config)
+        let error = solve_cubie_state(state.clone(), config.clone())
             .expect_err("zero-node budget should stop bounded search");
 
         assert_eq!(
             error,
             SolveError::NotFoundWithinLimits {
-                config,
+                config: config.clone(),
                 explored_nodes: 0,
             }
         );
 
         let config = SolverConfig::with_limits(1, Some(1));
-        let error = solve_cubie_state(state, config)
+        let error = solve_cubie_state(state, config.clone())
             .expect_err("one-node budget should stop bounded search after root");
 
         assert_eq!(
             error,
             SolveError::NotFoundWithinLimits {
-                config,
+                config: config.clone(),
                 explored_nodes: 1,
             }
         );
@@ -1119,7 +1204,7 @@ mod tests {
         let config = SolverConfig::new(1);
         let bad_outcome = SearchOutcome::Found(SearchSolution::with_metrics(vec![Move::R], 7));
 
-        let error = solve_search_outcome(&Cube::solved(), config, bad_outcome)
+        let error = solve_search_outcome(&Cube::solved(), config.clone(), bad_outcome)
             .expect_err("non-solving moves must not be returned");
 
         assert_eq!(

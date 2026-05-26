@@ -448,8 +448,12 @@ pub fn corner_permutation_from_coordinate(
         let selected_index = remaining / factor;
         remaining %= factor;
 
-        let corner = nth_available_corner(&available, selected_index)
-            .expect("in-range corner-permutation coordinate must unrank");
+        let Some(corner) = nth_available_corner(&available, selected_index) else {
+            return Err(CornerPermutationCoordinateError::IndexOutOfRange {
+                index,
+                coordinate_count: CORNER_PERMUTATION_COORDINATE_COUNT,
+            });
+        };
         available[corner.index()] = false;
         *slot = corner;
     }
@@ -490,10 +494,12 @@ pub fn slice_edge_permutation_from_coordinate(
         });
     }
 
-    Ok(edge_permutation_unrank(
-        index,
-        &SLICE_EDGE_PERMUTATION_EDGES,
-    ))
+    edge_permutation_unrank(index, &SLICE_EDGE_PERMUTATION_EDGES).ok_or(
+        SliceEdgePermutationCoordinateError::IndexOutOfRange {
+            index,
+            coordinate_count: SLICE_EDGE_PERMUTATION_COORDINATE_COUNT,
+        },
+    )
 }
 
 pub fn ud_edge_permutation_coordinate_from_permutation(
@@ -526,7 +532,12 @@ pub fn ud_edge_permutation_from_coordinate(
         });
     }
 
-    Ok(edge_permutation_unrank(index, &UD_EDGE_PERMUTATION_EDGES))
+    edge_permutation_unrank(index, &UD_EDGE_PERMUTATION_EDGES).ok_or(
+        UdEdgePermutationCoordinateError::IndexOutOfRange {
+            index,
+            coordinate_count: UD_EDGE_PERMUTATION_COORDINATE_COUNT,
+        },
+    )
 }
 
 fn validate_corner_orientation(
@@ -683,8 +694,9 @@ fn edge_permutation_rank<const N: usize>(
     let mut index = 0;
 
     for (position, edge) in permutation.iter().copied().enumerate() {
-        let edge_order = edge_order_in_set(edge, ordered_edges)
-            .expect("validated edge-permutation subset must contain only target edges");
+        let Some(edge_order) = edge_order_in_set(edge, ordered_edges) else {
+            return 0;
+        };
         let smaller_available_count = available
             .iter()
             .take(edge_order)
@@ -698,7 +710,10 @@ fn edge_permutation_rank<const N: usize>(
     index
 }
 
-fn edge_permutation_unrank<const N: usize>(index: usize, ordered_edges: &[Edge; N]) -> [Edge; N] {
+fn edge_permutation_unrank<const N: usize>(
+    index: usize,
+    ordered_edges: &[Edge; N],
+) -> Option<[Edge; N]> {
     let mut remaining = index;
     let mut available = [true; N];
     let mut permutation = *ordered_edges;
@@ -708,13 +723,12 @@ fn edge_permutation_unrank<const N: usize>(index: usize, ordered_edges: &[Edge; 
         let selected_index = remaining / factor;
         remaining %= factor;
 
-        let (edge_order, edge) = nth_available_edge(ordered_edges, &available, selected_index)
-            .expect("in-range edge-permutation coordinate must unrank");
+        let (edge_order, edge) = nth_available_edge(ordered_edges, &available, selected_index)?;
         available[edge_order] = false;
         *slot = edge;
     }
 
-    permutation
+    Some(permutation)
 }
 
 fn edge_order_in_set<const N: usize>(edge: Edge, ordered_edges: &[Edge; N]) -> Option<usize> {

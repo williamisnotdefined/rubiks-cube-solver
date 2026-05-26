@@ -1,6 +1,6 @@
 use cube_engine::solver::quality::{
     quality_fixtures, run_quality_report, QualityFixtureCategory, QualityInputKind,
-    QualityReportStatus, QualitySolverSelection,
+    QualityReportStatus, QualitySolverSelection, QualityTableStatus,
 };
 use cube_engine::{Algorithm, Cube, FaceletString};
 
@@ -74,6 +74,10 @@ fn quality_report_includes_each_solver_selection_for_each_fixture() {
             row.fixture_id == fixture.id
                 && row.solver_selection == QualitySolverSelection::ExplicitTwoPhaseBaseline
         }));
+        assert!(report.rows().iter().any(|row| {
+            row.fixture_id == fixture.id
+                && row.solver_selection == QualitySolverSelection::GeneratedTwoPhase
+        }));
     }
 }
 
@@ -90,6 +94,7 @@ fn successful_quality_rows_are_replay_verified_and_lengths_match() {
 
     for row in successes {
         assert_eq!(row.replay_verified, Some(true), "{}", row.fixture_id);
+        assert_ne!(row.table_status, QualityTableStatus::Unavailable);
         assert_eq!(
             row.solution_length,
             Some(row.moves.len()),
@@ -102,6 +107,26 @@ fn successful_quality_rows_are_replay_verified_and_lengths_match() {
             row.fixture_id
         );
     }
+}
+
+#[test]
+fn quality_report_records_generated_table_availability() {
+    let report = run_quality_report().expect("quality report should run");
+    let unavailable = report
+        .rows()
+        .iter()
+        .filter(|row| row.status == QualityReportStatus::GeneratedTablesUnavailable)
+        .collect::<Vec<_>>();
+
+    assert!(!unavailable.is_empty());
+    assert!(unavailable.iter().all(|row| {
+        row.solver_selection == QualitySolverSelection::GeneratedTwoPhase
+            && row.strategy == cube_engine::SolverStrategy::GeneratedTwoPhase
+            && row.table_status == QualityTableStatus::Unavailable
+            && row.solution_length.is_none()
+            && row.moves.is_empty()
+            && row.replay_verified.is_none()
+    }));
 }
 
 #[test]
@@ -121,6 +146,12 @@ fn quality_report_records_limit_failures_with_metrics() {
 
     for row in limit_failures {
         assert_eq!(row.solution_length, None, "{}", row.fixture_id);
+        assert_eq!(
+            row.table_status,
+            QualityTableStatus::NotRequired,
+            "{}",
+            row.fixture_id
+        );
         assert!(row.moves.is_empty(), "{}", row.fixture_id);
         assert_eq!(row.replay_verified, None, "{}", row.fixture_id);
         assert!(
@@ -139,12 +170,15 @@ fn quality_report_markdown_has_stable_headers_and_local_timing_note() {
     assert!(markdown.contains("# Deterministic Solver Quality Report"));
     assert!(markdown.contains("Elapsed time is local measurement output"));
     assert!(markdown.contains("does not claim optimality or a 20-move guarantee"));
-    assert!(markdown.contains("| fixture | group | input | scramble | selection | strategy | max_depth | max_nodes | status | solution_len | explored_nodes | elapsed_us | replay_verified | solution |"));
+    assert!(markdown.contains("| fixture | group | input | scramble | selection | strategy | max_depth | max_nodes | table_status | status | solution_len | explored_nodes | elapsed_us | replay_verified | solution |"));
     assert!(markdown.contains("solved-facelets"));
     assert!(markdown.contains("default-bounded-ida-star"));
     assert!(markdown.contains("explicit-two-phase-baseline"));
+    assert!(markdown.contains("generated-two-phase"));
     assert!(markdown.contains("bounded-ida-star"));
     assert!(markdown.contains("two-phase-baseline"));
+    assert!(markdown.contains("generated_tables_unavailable"));
+    assert!(markdown.contains("unavailable"));
     assert!(markdown.contains("not_found_within_limits"));
 }
 
@@ -162,6 +196,11 @@ fn report_rows_are_emitted_in_fixture_then_solver_order() {
     assert_eq!(
         rows[1].solver_selection,
         QualitySolverSelection::ExplicitTwoPhaseBaseline
+    );
+    assert_eq!(rows[2].fixture_id, "solved-facelets");
+    assert_eq!(
+        rows[2].solver_selection,
+        QualitySolverSelection::GeneratedTwoPhase
     );
 
     let harder_scramble = rows

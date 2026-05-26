@@ -23,8 +23,9 @@ pub use cube::{
 pub use search::{
     depth_limited_search, solve_bfs, solve_ida_star, solve_ida_star_bounded,
     solve_ida_star_bounded_with_heuristic, solve_ida_star_with_heuristic, solve_iddfs,
-    CornerOrientationHeuristic, EdgeOrientationHeuristic, Heuristic, MaxHeuristic,
-    MisplacedCubiesHeuristic, SearchBudget, SearchOutcome, SearchSolution, ZeroHeuristic,
+    CornerOrientationHeuristic, EdgeOrientationHeuristic, GeneratedTwoPhaseError, Heuristic,
+    MaxHeuristic, MisplacedCubiesHeuristic, SearchBudget, SearchOutcome, SearchSolution,
+    ZeroHeuristic,
 };
 pub use solver::{
     playback_facelet_solution, solve_cube, solve_cubie_state, solve_facelet_string,
