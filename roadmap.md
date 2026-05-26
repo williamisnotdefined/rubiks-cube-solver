@@ -1,12 +1,11 @@
 # Rubik's Cube Solver Roadmap
 
-Este roadmap descreve a ordem estratégica do projeto. A execução operacional passo a passo fica em `.roadrunner/queue.json`, que deve ser reconciliada com este arquivo e com `GOALS.md` antes de qualquer execução autônoma longa.
+Este roadmap descreve a ordem estratégica do projeto.
 
 ## Fontes De Verdade
 
 - `GOALS.md`: norte do produto. Deve ser tratado como somente leitura pela automação.
 - `roadmap.md`: plano técnico linear e critérios de fase.
-- `.roadrunner/queue.json`: fila operacional do Roadrunner. `queue[0]` é a próxima tarefa executável; `history` e `blocked` devem ser preservados.
 - `crates/cube-engine`: fonte de verdade para estado do cubo, movimentos, validação, busca e solver.
 
 ## Objetivo Final

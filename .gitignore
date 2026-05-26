@@ -1,6 +1,7 @@
 target/
 crates/wasm/pkg/
 node_modules/
+.roadrunner/
 dist/
 coverage/
 playwright-report/

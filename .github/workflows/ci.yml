@@ -23,9 +23,6 @@ jobs:
         with:
           node-version: 22
 
-      - name: Check roadmap execution metadata
-        run: npm run roadmap:check
-
       - name: Check AI routes
         run: npm run ai:check
 

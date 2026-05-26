@@ -17,13 +17,13 @@
     "test:e2e": "playwright test",
     "wasm:build": "wasm-pack build crates/wasm --target web --out-dir pkg",
     "solver:bench": "cargo run --quiet -p cube-engine --bin solver_quality_report",
-    "roadmap:check": "roadrunner check",
-    "roadmap:cleanup": "roadrunner cleanup",
-    "roadmap:next": "roadrunner next",
-    "roadmap:plan": "roadrunner plan",
-    "roadmap:run": "roadrunner run",
-    "roadmap:run:long": "ROADRUNNER_PROVIDER_TIMEOUT_MS=3600000 ROADRUNNER_VERIFY_TIMEOUT_MS=1200000 roadrunner run --max-steps 999 --max-hours 72",
-    "roadmap:status": "roadrunner status"
+    "roadmap:check": "roadrunner check --roadmap roadmap.md",
+    "roadmap:cleanup": "roadrunner cleanup --roadmap roadmap.md",
+    "roadmap:next": "roadrunner next --roadmap roadmap.md",
+    "roadmap:plan": "roadrunner plan --roadmap roadmap.md",
+    "roadmap:run": "roadrunner run --roadmap roadmap.md",
+    "roadmap:run:long": "ROADRUNNER_PROVIDER_TIMEOUT_MS=3600000 ROADRUNNER_VERIFY_TIMEOUT_MS=1200000 roadrunner run --roadmap roadmap.md --max-steps 999 --max-hours 72",
+    "roadmap:status": "roadrunner status --roadmap roadmap.md"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",

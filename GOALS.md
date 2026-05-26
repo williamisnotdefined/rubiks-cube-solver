@@ -1,6 +1,6 @@
 # Project Goals
 
-This file is the product north star. Autonomous roadmap execution must treat it as read-only.
+This file is the product north star.
 
 ## Final Product Goal
 

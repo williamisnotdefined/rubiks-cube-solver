@@ -147,33 +147,6 @@
           "applyTo": "apps/web/**/*.{ts,tsx,css},crates/wasm/**/*,roadmap.md"
         }
       }
-    },
-    {
-      "name": "roadmap-executor",
-      "description": "Use when changing .roadrunner/queue.json, .roadrunner/prompts, .roadrunner/config.json, package roadmap aliases, or Roadrunner execution behavior for this project.",
-      "canonicalPath": "ai/skills/roadmap-executor.md",
-      "references": [
-        "ai/rules/roadmap-runner-rules.md",
-        "ai/rules/repository-rules.md",
-        "ai/rules/testing-rules.md",
-        "ai/rules/ai-rules.md",
-        "ai/architecture/roadmap-runner.md",
-        "ai/architecture/ai-knowledge-system.md"
-      ],
-      "routes": {
-        "opencode": ".opencode/skills/roadmap-executor/SKILL.md",
-        "cursor": ".cursor/rules/roadmap-executor.mdc",
-        "github": ".github/instructions/roadmap-executor.instructions.md"
-      },
-      "toolConfig": {
-        "cursor": {
-          "globs": ".roadrunner/config.json,.roadrunner/queue.json,.roadrunner/prompts/**/*,ai/skills/roadmap-executor.md,ai/rules/roadmap-runner-rules.md,ai/architecture/roadmap-runner.md,package.json",
-          "alwaysApply": false
-        },
-        "github": {
-          "applyTo": ".roadrunner/config.json,.roadrunner/queue.json,.roadrunner/prompts/**/*,ai/skills/roadmap-executor.md,ai/rules/roadmap-runner-rules.md,ai/architecture/roadmap-runner.md,package.json"
-        }
-      }
     }
   ]
 }
