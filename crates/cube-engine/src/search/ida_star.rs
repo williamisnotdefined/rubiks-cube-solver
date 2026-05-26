@@ -52,6 +52,19 @@ pub fn solve_ida_star_bounded_with_heuristic<H>(
 where
     H: Heuristic,
 {
+    solve_ida_star_bounded_with_ordered_moves(start, budget, heuristic, |_cube, _moves| {})
+}
+
+pub(crate) fn solve_ida_star_bounded_with_ordered_moves<H, F>(
+    start: &Cube,
+    budget: SearchBudget,
+    heuristic: &H,
+    mut order_moves: F,
+) -> SearchOutcome
+where
+    H: Heuristic,
+    F: FnMut(&Cube, &mut Vec<Move>),
+{
     let mut threshold = heuristic.estimate(start);
     if threshold > budget.max_depth {
         return SearchOutcome::NotFoundWithinLimits { explored_nodes: 0 };
@@ -76,6 +89,7 @@ where
             &mut path_states,
             &mut path,
             &mut explored_nodes,
+            &mut order_moves,
         ) {
             ThresholdSearchResult::Found => {
                 let solves_start = solution_solves(start, &path);
@@ -108,6 +122,7 @@ fn search_threshold<H>(
     path_states: &mut HashSet<CubieState>,
     path: &mut Vec<Move>,
     explored_nodes: &mut usize,
+    order_moves: &mut impl FnMut(&Cube, &mut Vec<Move>),
 ) -> ThresholdSearchResult
 where
     H: Heuristic,
@@ -134,12 +149,10 @@ where
     }
 
     let mut next_threshold: Option<usize> = None;
+    let mut candidate_moves = legal_candidate_moves(last_move);
+    order_moves(cube, &mut candidate_moves);
 
-    for move_ in FACE_MOVES {
-        if should_skip_move(last_move, move_) {
-            continue;
-        }
-
+    for move_ in candidate_moves {
         let mut next_cube = cube.clone();
         next_cube.apply_move(move_);
 
@@ -157,6 +170,7 @@ where
             path_states,
             path,
             explored_nodes,
+            order_moves,
         ) {
             ThresholdSearchResult::Found => return ThresholdSearchResult::Found,
             ThresholdSearchResult::NextThreshold(candidate) => {
@@ -179,6 +193,14 @@ where
         ThresholdSearchResult::Exhausted,
         ThresholdSearchResult::NextThreshold,
     )
+}
+
+fn legal_candidate_moves(last_move: Option<Move>) -> Vec<Move> {
+    FACE_MOVES
+        .iter()
+        .copied()
+        .filter(|move_| !should_skip_move(last_move, *move_))
+        .collect()
 }
 
 fn should_skip_move(last_move: Option<Move>, next_move: Move) -> bool {

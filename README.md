@@ -127,20 +127,24 @@ python -m pytest ml
 Train and evaluate the small deterministic PyTorch MLP value model with:
 
 ```bash
-python -m ml.train_value_baseline --dataset datasets/fixtures/small.jsonl --epochs 1 --seed 0 --output /tmp/rubiks-cube-solver-ml-smoke
+python -m ml.train_value_baseline --dataset datasets/fixtures/small.jsonl --epochs 1 --seed 0 --output /tmp/rubiks-cube-solver-ml-smoke --inference-repeats 1
 ```
 
-The CLI prints a JSON report and writes `metrics.json` only under the requested `--output` directory. The default output directory is under `/tmp`, and the smoke baseline does not write model checkpoints.
+The CLI prints a JSON report and writes `metrics.json` plus `value_outputs.tsv` under the requested `--output` directory. The TSV uses comment metadata followed by `CubieState<TAB>predicted_value` rows for local hybrid-search experiments. The default output directory is under `/tmp`, and the smoke baseline does not write model checkpoints.
 
 If PyTorch is unavailable, the CLI exits successfully with an explicit dependency-fallback report so smoke verification still records label metrics; install `ml/requirements.txt` to train the PyTorch MLP.
 
-The target label is `verified_solution_length`: the length of the replay-verified inverse scramble stored in the dataset. It is useful for a reproducible value-model smoke baseline, but it is not an optimal-distance label and must not be described as God's Number evidence.
+The target label is `verified_solution_length`: the length of the replay-verified inverse scramble stored in the dataset. It is useful for a reproducible value-model smoke baseline, but it is not an optimal-distance label and must not be described as God's Number evidence or a 20-move guarantee. The direct `reversible_scramble_depth` baseline can score perfectly on the small fixture because the fixture labels come from reversible scramble inverses; that is evidence of label consistency, not optimal solving.
 
-The report includes MAE, RMSE, bucket accuracy, metrics by depth bucket, inference time per state, a reversible-scramble depth baseline, and a pointer to the canonical Rust solver-quality report command. The Rust report remains the product solver-quality baseline:
+The report includes MAE, RMSE, bucket accuracy, metrics by depth bucket, and inference time per state for the ML value model or dependency fallback. Its `classical_baseline_comparison` section also includes direct fixture baselines for `reversible_scramble_depth` and `constant_train_mean`, each with MAE, RMSE, bucket accuracy, and depth-bucket metrics derived from `datasets/fixtures/small.jsonl`.
+
+The same comparison section documents the reproducible Rust product solver-quality command and comparable metric names. The Rust report uses the separate `quality_fixtures()` catalog in `crates/cube-engine/src/solver/quality.rs`, so compare it as deterministic classical solver evidence rather than as the same label catalog used by the ML JSONL smoke test:
 
 ```bash
 cargo run --quiet -p cube-engine --bin solver_quality_report
 ```
+
+The Rust report summary includes status counts by solver selection, replay-verified successes, solution-length range, and explored-node totals. Row-level elapsed timing is local and non-deterministic.
 
 Safety rules for ML experiments:
 
@@ -149,6 +153,38 @@ Safety rules for ML experiments:
 - ML is not an admissible heuristic unless a separate proof or safe bound is added.
 - ML is not a dependency of the default Rust, WASM, or web solve path.
 - Classical deterministic solving remains the fallback for product behavior.
+
+## Hybrid Move Ordering Experiment
+
+The first hybrid-search experiment is isolated to the native solver quality report. It loads local value outputs and uses them only to order legal bounded IDA* child moves by predicted value, with lower values tried first. It does not validate states, prune branches, change depth or node limits, claim admissibility, replace Rust replay verification, or change Rust/WASM/web product defaults.
+
+The no-arg quality report looks for local value outputs at:
+
+```bash
+/tmp/rubiks-cube-solver-ml-smoke/value_outputs.tsv
+```
+
+Generate that artifact with the ML smoke command:
+
+```bash
+python -m ml.train_value_baseline --dataset datasets/fixtures/small.jsonl --epochs 1 --seed 0 --output /tmp/rubiks-cube-solver-ml-smoke --inference-repeats 1
+```
+
+Run the report with the default artifact path:
+
+```bash
+cargo run --quiet -p cube-engine --bin solver_quality_report
+```
+
+Run the report with an explicit artifact path:
+
+```bash
+cargo run --quiet -p cube-engine --bin solver_quality_report -- --hybrid-value-outputs /tmp/rubiks-cube-solver-ml-smoke/value_outputs.tsv
+```
+
+The report keeps the deterministic classical rows unchanged and appends `Hybrid Move Ordering Experiment` rows using the same fixture budgets as `default-bounded-ida-star`. Hybrid rows include artifact status, row status, solution length, explored nodes, elapsed time, replay verification, scored value lookups, missing score lookups, and moves.
+
+Missing artifacts report `artifact_unavailable`. PyTorch dependency-fallback artifacts report `artifact_dependency_fallback` instead of being treated as learned guidance. Malformed artifacts report `artifact_malformed`. A hybrid row is reported as `success` only when Rust replay verification proves the returned moves solve the fixture. The experiment does not claim optimality or a 20-move guarantee.
 
 ## External Visualization Library
 

@@ -9,7 +9,14 @@ from pathlib import Path
 from statistics import mean
 from typing import Iterable
 
-from .data import DEPTH_BUCKETS, TrainingExample, depth_bucket, load_jsonl
+from .data import (
+    DEPTH_BUCKETS,
+    FEATURE_DIM,
+    LABEL_SOURCE,
+    TrainingExample,
+    depth_bucket,
+    load_jsonl,
+)
 from .model import inference_us_per_state, is_torch_available, predict, train_value_model
 
 DEFAULT_DATASET = Path("datasets/fixtures/small.jsonl")
@@ -52,7 +59,7 @@ def run_baseline(
             "PyTorch is not installed; install ml/requirements.txt to train the MLP."
         )
         report["training"]["skipped_reason"] = "pytorch_unavailable"
-        return write_report(report, output_path)
+        return write_report(report, output_path, examples, predictions)
 
     value_model, history = train_value_model(
         train_examples,
@@ -78,7 +85,7 @@ def run_baseline(
         inference_time=inference_time,
     )
 
-    return write_report(report, output_path)
+    return write_report(report, output_path, examples, predictions)
 
 
 def dependency_unavailable_predictions(
@@ -96,17 +103,80 @@ def dependency_unavailable_predictions(
     return predictions, elapsed * 1_000_000.0 / (len(examples) * repeats)
 
 
-def write_report(report: dict[str, object], output_path: Path) -> dict[str, object]:
+def write_report(
+    report: dict[str, object],
+    output_path: Path,
+    examples: list[TrainingExample],
+    predictions: list[float],
+) -> dict[str, object]:
     output_path.mkdir(parents=True, exist_ok=True)
     metrics_path = output_path / "metrics.json"
+    value_outputs_path = output_path / "value_outputs.tsv"
     report["output"] = {
         "metrics_json": str(metrics_path),
+        "value_outputs_tsv": str(value_outputs_path),
         "model_checkpoint": None,
-        "note": "No model checkpoint is written by the smoke baseline.",
+        "note": "No model checkpoint is written by the smoke baseline; value outputs are local experiment inputs only.",
     }
+    write_value_outputs(value_outputs_path, report, examples, predictions)
     metrics_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
     return report
+
+
+def write_value_outputs(
+    path: Path,
+    report: dict[str, object],
+    examples: list[TrainingExample],
+    predictions: list[float],
+) -> None:
+    if len(examples) != len(predictions):
+        raise ValueError("examples and predictions must have the same length")
+
+    model = _require_dict(report, "model")
+    training = _require_dict(report, "training")
+    safety = _require_dict(report, "safety")
+
+    metadata: list[tuple[str, object]] = [
+        ("format", "rubiks_cube_solver_value_outputs_v1"),
+        ("model_type", model["type"]),
+        ("pytorch_available", model["pytorch_available"]),
+        ("dataset", report["dataset"]),
+        ("examples", len(examples)),
+        ("label_target", _require_dict(report, "label")["target"]),
+        ("label_source", LABEL_SOURCE),
+        ("prediction", "estimated_verified_solution_length"),
+        ("training_epochs", training.get("epochs")),
+        ("training_seed", training.get("seed")),
+        ("training_skipped_reason", training.get("skipped_reason", "")),
+        ("safety.validates_states", safety["validates_states"]),
+        ("safety.replaces_replay_verification", safety["replaces_replay_verification"]),
+        ("safety.admissible_heuristic", safety["admissible_heuristic"]),
+        ("safety.default_product_solver_dependency", safety["default_product_solver_dependency"]),
+    ]
+
+    lines = [f"# {key}={metadata_value(value)}" for key, value in metadata]
+    for example, prediction in zip(examples, predictions, strict=True):
+        lines.append(f"{example.state}\t{_round(prediction)}")
+
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def _require_dict(report: dict[str, object], key: str) -> dict[str, object]:
+    value = report[key]
+    if not isinstance(value, dict):
+        raise TypeError(f"report field {key!r} must be a dictionary")
+
+    return value
+
+
+def metadata_value(value: object) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if value is None:
+        return ""
+
+    return str(value).replace("\t", " ").replace("\n", " ")
 
 
 def build_report(
@@ -122,11 +192,11 @@ def build_report(
     hidden_dim: int,
     inference_time: float,
 ) -> dict[str, object]:
-    targets = [example.verified_solution_length for example in examples]
     train_targets = [example.verified_solution_length for example in train_examples]
-    metrics = regression_metrics(predictions, targets)
-    metrics["bucket_accuracy"] = _round(bucket_accuracy(predictions, targets))
+    model_evaluation = evaluate_predictions(examples, predictions)
+    metrics = dict(model_evaluation["metrics"])
     metrics["inference_us_per_state"] = _round(inference_time)
+    by_depth_bucket = model_evaluation["by_depth_bucket"]
 
     return {
         "dataset": str(dataset_path),
@@ -136,7 +206,7 @@ def build_report(
             "type": "pytorch_mlp",
             "pytorch_available": True,
             "input": "normalized CubieState cp/co/ep/eo serialization",
-            "feature_dim": 40,
+            "feature_dim": FEATURE_DIM,
             "hidden_dim": hidden_dim,
         },
         "training": {
@@ -151,21 +221,14 @@ def build_report(
             "semantics": "Replay-verified inverse scramble length from the dataset; not an optimal-distance label.",
         },
         "metrics": metrics,
-        "by_depth_bucket": metrics_by_depth_bucket(examples, predictions),
-        "classical_baseline_comparison": {
-            "reversible_scramble_depth_mae": _round(
-                mean_absolute_error(
-                    [float(example.scramble_depth) for example in examples], targets
-                )
-            ),
-            "constant_train_mean_mae": _round(
-                mean_absolute_error([mean(train_targets)] * len(targets), targets)
-            ),
-            "rust_solver_quality_report": {
-                "command": "cargo run --quiet -p cube-engine --bin solver_quality_report",
-                "role": "Canonical deterministic product solver-quality baseline; run separately from Python training.",
-            },
-        },
+        "by_depth_bucket": by_depth_bucket,
+        "classical_baseline_comparison": classical_baseline_comparison(
+            dataset_path=dataset_path,
+            examples=examples,
+            train_targets=train_targets,
+            model_metrics=metrics,
+            model_by_depth_bucket=by_depth_bucket,
+        ),
         "safety": {
             "validates_states": False,
             "replaces_replay_verification": False,
@@ -173,6 +236,121 @@ def build_report(
             "default_product_solver_dependency": False,
             "fallback": "Rust/WASM/web solve path remains deterministic and independent from ML.",
         },
+    }
+
+
+def evaluate_predictions(
+    examples: list[TrainingExample], predictions: list[float]
+) -> dict[str, object]:
+    targets = [example.verified_solution_length for example in examples]
+    metrics = regression_metrics(predictions, targets)
+    metrics["bucket_accuracy"] = _round(bucket_accuracy(predictions, targets))
+
+    return {
+        "metrics": metrics,
+        "by_depth_bucket": metrics_by_depth_bucket(examples, predictions),
+    }
+
+
+def classical_baseline_comparison(
+    *,
+    dataset_path: Path,
+    examples: list[TrainingExample],
+    train_targets: list[int],
+    model_metrics: dict[str, float],
+    model_by_depth_bucket: object,
+) -> dict[str, object]:
+    train_mean = float(mean(train_targets))
+    direct_baselines = {
+        "reversible_scramble_depth": direct_fixture_baseline(
+            examples,
+            [float(example.scramble_depth) for example in examples],
+            prediction_source="dataset.scramble_depth",
+            description=(
+                "Uses the generated reversible scramble depth recorded in the same JSONL "
+                "fixture. These labels are replay verified but are not optimal-distance labels."
+            ),
+        ),
+        "constant_train_mean": direct_fixture_baseline(
+            examples,
+            [train_mean for _example in examples],
+            prediction_source="mean(train.verified_solution_length)",
+            description="Predicts the training split mean verified_solution_length for every fixture row.",
+            extra_fields={"train_mean_verified_solution_length": _round(train_mean)},
+        ),
+    }
+
+    return {
+        "dataset_fixture": str(dataset_path),
+        "label_source": LABEL_SOURCE,
+        "label_semantics": (
+            "verified_solution_length is the replay-verified inverse scramble length in "
+            "the dataset fixture; it is not an optimal-distance label."
+        ),
+        "ml_value_baseline": {
+            "metrics": model_metrics,
+            "by_depth_bucket": model_by_depth_bucket,
+        },
+        "direct_fixture_baselines": direct_baselines,
+        "model_vs_baseline_delta": {
+            name: metric_delta(model_metrics, baseline["metrics"])
+            for name, baseline in direct_baselines.items()
+        },
+        "delta_interpretation": (
+            "For mae and rmse, negative ML-minus-baseline deltas favor ML. "
+            "For bucket_accuracy, positive ML-minus-baseline deltas favor ML."
+        ),
+        "rust_solver_quality_report": {
+            "command": "cargo run --quiet -p cube-engine --bin solver_quality_report",
+            "source": "quality_fixtures() in crates/cube-engine/src/solver/quality.rs",
+            "role": (
+                "Deterministic product solver-quality baseline; run separately from Python "
+                "training because it uses the Rust solver fixture catalog, not the ML JSONL fixture."
+            ),
+            "comparable_metric_names": [
+                "status_counts_by_solver_selection",
+                "replay_verified_successes",
+                "solution_len_range",
+                "explored_nodes_total",
+            ],
+            "timing_note": "Elapsed timing in the Rust report is local and non-deterministic.",
+        },
+    }
+
+
+def direct_fixture_baseline(
+    examples: list[TrainingExample],
+    predictions: list[float],
+    *,
+    prediction_source: str,
+    description: str,
+    extra_fields: dict[str, object] | None = None,
+) -> dict[str, object]:
+    evaluation = evaluate_predictions(examples, predictions)
+    baseline = {
+        "prediction_source": prediction_source,
+        "description": description,
+        "metrics": evaluation["metrics"],
+        "by_depth_bucket": evaluation["by_depth_bucket"],
+    }
+    if extra_fields is not None:
+        baseline.update(extra_fields)
+
+    return baseline
+
+
+def metric_delta(
+    model_metrics: dict[str, float], baseline_metrics: object
+) -> dict[str, float]:
+    if not isinstance(baseline_metrics, dict):
+        raise TypeError("baseline metrics must be a dictionary")
+
+    return {
+        "mae": _round(model_metrics["mae"] - float(baseline_metrics["mae"])),
+        "rmse": _round(model_metrics["rmse"] - float(baseline_metrics["rmse"])),
+        "bucket_accuracy": _round(
+            model_metrics["bucket_accuracy"] - float(baseline_metrics["bucket_accuracy"])
+        ),
     }
 
 

@@ -4,11 +4,13 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use cube_engine::search::pruning::generate_all_pruning_tables;
 use cube_engine::solver::quality::{
-    quality_fixtures, run_quality_report, run_quality_report_for_fixtures_with_pruning_table_dir,
-    QualityExpectation, QualityFixtureCategory, QualityInputKind, QualityReportStatus,
-    QualitySolverSelection, QualityTableStatus,
+    quality_fixtures,
+    run_quality_report_for_fixtures_with_pruning_table_dir_and_hybrid_value_outputs_path,
+    QualityExpectation, QualityFixtureCategory, QualityHybridArtifactStatus,
+    QualityHybridReportStatus, QualityInputKind, QualityReportStatus, QualitySolverSelection,
+    QualityTableStatus,
 };
-use cube_engine::{Algorithm, Cube, FaceletString};
+use cube_engine::{Algorithm, Cube, FaceletString, Move};
 
 #[test]
 fn solver_quality_report_fixtures_cover_valid_shared_catalog_inputs() {
@@ -106,12 +108,21 @@ fn solver_quality_report_fixtures_cover_valid_shared_catalog_inputs() {
 #[test]
 fn solver_quality_report_includes_each_solver_selection_for_each_fixture() {
     let fixtures = quality_fixtures().expect("quality fixtures should build");
-    let report = run_quality_report().expect("quality report should run");
+    let directory = temp_test_dir("selection-missing-hybrid");
+    let hybrid_path = directory.join("missing-value_outputs.tsv");
+    let report =
+        run_quality_report_for_fixtures_with_pruning_table_dir_and_hybrid_value_outputs_path(
+            &fixtures,
+            &directory,
+            &hybrid_path,
+        )
+        .expect("quality report should run");
 
     assert_eq!(
         report.rows().len(),
         fixtures.len() * QualitySolverSelection::ALL.len()
     );
+    assert_eq!(report.hybrid_rows().len(), fixtures.len());
 
     for fixture in &fixtures {
         assert!(report.rows().iter().any(|row| {
@@ -126,12 +137,27 @@ fn solver_quality_report_includes_each_solver_selection_for_each_fixture() {
             row.fixture_id == fixture.id
                 && row.solver_selection == QualitySolverSelection::GeneratedTwoPhase
         }));
+        assert!(report.hybrid_rows().iter().any(|row| {
+            row.fixture_id == fixture.id
+                && row.baseline_selection == QualitySolverSelection::DefaultBoundedIdaStar
+        }));
     }
+
+    let _ = fs::remove_dir_all(directory);
 }
 
 #[test]
 fn solver_quality_report_successful_rows_are_replay_verified_and_lengths_match() {
-    let report = run_quality_report().expect("quality report should run");
+    let fixtures = quality_fixtures().expect("quality fixtures should build");
+    let directory = temp_test_dir("success-missing-hybrid");
+    let hybrid_path = directory.join("missing-value_outputs.tsv");
+    let report =
+        run_quality_report_for_fixtures_with_pruning_table_dir_and_hybrid_value_outputs_path(
+            &fixtures,
+            &directory,
+            &hybrid_path,
+        )
+        .expect("quality report should run");
     let successes = report
         .rows()
         .iter()
@@ -156,6 +182,8 @@ fn solver_quality_report_successful_rows_are_replay_verified_and_lengths_match()
             row.fixture_id
         );
     }
+
+    let _ = fs::remove_dir_all(directory);
 }
 
 #[test]
@@ -164,7 +192,13 @@ fn solver_quality_report_generated_rows_report_success_metrics_when_tables_are_a
     let directory = temp_test_dir("available");
     generate_all_pruning_tables(&directory, 8, 8)
         .expect("depth-eight generated pruning tables should build for quality report test");
-    let report = run_quality_report_for_fixtures_with_pruning_table_dir(&fixtures, &directory)
+    let hybrid_path = directory.join("missing-value_outputs.tsv");
+    let report =
+        run_quality_report_for_fixtures_with_pruning_table_dir_and_hybrid_value_outputs_path(
+            &fixtures,
+            &directory,
+            &hybrid_path,
+        )
         .expect("quality report should run with generated tables");
     let generated_successes = report
         .rows()
@@ -295,8 +329,14 @@ fn solver_quality_report_generated_rows_report_success_metrics_when_tables_are_a
 fn solver_quality_report_records_generated_table_availability() {
     let fixtures = quality_fixtures().expect("quality fixtures should build");
     let directory = temp_test_dir("missing");
-    let report = run_quality_report_for_fixtures_with_pruning_table_dir(&fixtures, &directory)
-        .expect("quality report should run with missing generated tables");
+    let hybrid_path = directory.join("missing-value_outputs.tsv");
+    let report =
+        run_quality_report_for_fixtures_with_pruning_table_dir_and_hybrid_value_outputs_path(
+            &fixtures,
+            &directory,
+            &hybrid_path,
+        )
+        .expect("quality report should run with missing generated tables and hybrid values");
     let unavailable = report
         .rows()
         .iter()
@@ -315,6 +355,169 @@ fn solver_quality_report_records_generated_table_availability() {
 }
 
 #[test]
+fn solver_quality_report_records_missing_hybrid_value_outputs_without_changing_classical_rows() {
+    let fixtures = quality_fixtures().expect("quality fixtures should build");
+    let directory = temp_test_dir("hybrid-missing");
+    let hybrid_path = directory.join("missing-value_outputs.tsv");
+    let report =
+        run_quality_report_for_fixtures_with_pruning_table_dir_and_hybrid_value_outputs_path(
+            &fixtures,
+            &directory,
+            &hybrid_path,
+        )
+        .expect("quality report should run with missing hybrid value outputs");
+
+    assert_eq!(
+        report.rows().len(),
+        fixtures.len() * QualitySolverSelection::ALL.len()
+    );
+    assert_eq!(report.hybrid_rows().len(), fixtures.len());
+    assert!(report.hybrid_rows().iter().all(|row| {
+        row.artifact_path == hybrid_path.display().to_string()
+            && row.artifact_status == QualityHybridArtifactStatus::Missing
+            && row.status == QualityHybridReportStatus::ArtifactUnavailable
+            && row.solution_length.is_none()
+            && row.explored_nodes == 0
+            && row.replay_verified.is_none()
+            && row.scored_move_lookups == 0
+            && row.missing_score_lookups == 0
+            && row.moves.is_empty()
+    }));
+
+    let _ = fs::remove_dir_all(directory);
+}
+
+#[test]
+fn solver_quality_report_records_hybrid_dependency_fallback_metadata() {
+    let fixture = single_quality_fixture("shallow-facelets-f");
+    let directory = temp_test_dir("hybrid-fallback");
+    fs::create_dir_all(&directory).expect("temp directory should be created");
+    let hybrid_path = directory.join("value_outputs.tsv");
+    write_value_outputs_artifact(
+        &hybrid_path,
+        "constant_train_mean_dependency_fallback",
+        false,
+        &[(Cube::solved().state().serialize(), 1.0)],
+    );
+
+    let report =
+        run_quality_report_for_fixtures_with_pruning_table_dir_and_hybrid_value_outputs_path(
+            &[fixture],
+            &directory,
+            &hybrid_path,
+        )
+        .expect("quality report should run with fallback hybrid value outputs");
+    let row = report
+        .hybrid_rows()
+        .first()
+        .expect("hybrid fallback row should exist");
+
+    assert_eq!(
+        row.artifact_status,
+        QualityHybridArtifactStatus::DependencyFallback
+    );
+    assert_eq!(
+        row.status,
+        QualityHybridReportStatus::ArtifactDependencyFallback
+    );
+    assert_eq!(row.explored_nodes, 0);
+    assert!(row.moves.is_empty());
+    let metadata = row
+        .artifact_metadata
+        .as_deref()
+        .expect("fallback metadata should be reported");
+    assert!(metadata.contains("model_type=constant_train_mean_dependency_fallback"));
+    assert!(metadata.contains("pytorch_available=false"));
+
+    let _ = fs::remove_dir_all(directory);
+}
+
+#[test]
+fn solver_quality_report_records_malformed_hybrid_value_outputs() {
+    let fixture = single_quality_fixture("shallow-facelets-f");
+    let directory = temp_test_dir("hybrid-malformed");
+    fs::create_dir_all(&directory).expect("temp directory should be created");
+    let hybrid_path = directory.join("value_outputs.tsv");
+    fs::write(
+        &hybrid_path,
+        "# format=rubiks_cube_solver_value_outputs_v1\n# model_type=pytorch_mlp\n# pytorch_available=true\nnot-a-state\t1.0\n",
+    )
+    .expect("malformed value outputs should be writable");
+
+    let report =
+        run_quality_report_for_fixtures_with_pruning_table_dir_and_hybrid_value_outputs_path(
+            &[fixture],
+            &directory,
+            &hybrid_path,
+        )
+        .expect("quality report should run with malformed hybrid value outputs");
+    let row = report
+        .hybrid_rows()
+        .first()
+        .expect("hybrid malformed row should exist");
+
+    assert_eq!(row.artifact_status, QualityHybridArtifactStatus::Malformed);
+    assert_eq!(row.status, QualityHybridReportStatus::ArtifactMalformed);
+    assert_eq!(row.explored_nodes, 0);
+    assert!(row
+        .artifact_metadata
+        .as_deref()
+        .expect("malformed metadata should include the error")
+        .contains("invalid CubieState"));
+
+    let _ = fs::remove_dir_all(directory);
+}
+
+#[test]
+fn solver_quality_report_uses_available_hybrid_values_for_replay_verified_move_ordering() {
+    let fixture = single_quality_fixture("shallow-facelets-f");
+    let directory = temp_test_dir("hybrid-available");
+    fs::create_dir_all(&directory).expect("temp directory should be created");
+    let hybrid_path = directory.join("value_outputs.tsv");
+    write_value_outputs_artifact(
+        &hybrid_path,
+        "pytorch_mlp",
+        true,
+        &[(Cube::solved().state().serialize(), 0.0)],
+    );
+
+    let report =
+        run_quality_report_for_fixtures_with_pruning_table_dir_and_hybrid_value_outputs_path(
+            &[fixture],
+            &directory,
+            &hybrid_path,
+        )
+        .expect("quality report should run with available hybrid value outputs");
+
+    assert_eq!(report.rows().len(), QualitySolverSelection::ALL.len());
+    assert!(report.rows().iter().any(|row| {
+        row.solver_selection == QualitySolverSelection::DefaultBoundedIdaStar
+            && row.status == QualityReportStatus::Success
+            && row.replay_verified == Some(true)
+    }));
+
+    let row = report
+        .hybrid_rows()
+        .first()
+        .expect("hybrid available row should exist");
+    assert_eq!(row.artifact_status, QualityHybridArtifactStatus::Available);
+    assert_eq!(row.status, QualityHybridReportStatus::Success);
+    assert_eq!(row.replay_verified, Some(true));
+    assert_eq!(row.solution_length, Some(1));
+    assert_eq!(row.moves, vec![Move::FPrime]);
+    assert!(row.explored_nodes > 0);
+    assert!(row.scored_move_lookups > 0);
+    assert!(row.missing_score_lookups > 0);
+    assert!(row
+        .artifact_metadata
+        .as_deref()
+        .expect("available metadata should be reported")
+        .contains("model_type=pytorch_mlp"));
+
+    let _ = fs::remove_dir_all(directory);
+}
+
+#[test]
 fn solver_quality_report_records_generated_table_corrupt_or_incompatible() {
     let fixtures = quality_fixtures().expect("quality fixtures should build");
     let directory = temp_test_dir("corrupt");
@@ -327,7 +530,13 @@ fn solver_quality_report_records_generated_table_corrupt_or_incompatible() {
     bytes[12] ^= 0x01;
     fs::write(first_path, bytes).expect("generated artifact should be corruptible");
 
-    let report = run_quality_report_for_fixtures_with_pruning_table_dir(&fixtures, &directory)
+    let hybrid_path = directory.join("missing-value_outputs.tsv");
+    let report =
+        run_quality_report_for_fixtures_with_pruning_table_dir_and_hybrid_value_outputs_path(
+            &fixtures,
+            &directory,
+            &hybrid_path,
+        )
         .expect("quality report should run with corrupt generated tables");
     let corrupt = report
         .rows()
@@ -352,7 +561,13 @@ fn solver_quality_report_records_generated_table_corrupt_or_incompatible() {
 fn solver_quality_report_records_limit_failures_with_metrics() {
     let fixtures = quality_fixtures().expect("quality fixtures should build");
     let directory = temp_test_dir("missing");
-    let report = run_quality_report_for_fixtures_with_pruning_table_dir(&fixtures, &directory)
+    let hybrid_path = directory.join("missing-value_outputs.tsv");
+    let report =
+        run_quality_report_for_fixtures_with_pruning_table_dir_and_hybrid_value_outputs_path(
+            &fixtures,
+            &directory,
+            &hybrid_path,
+        )
         .expect("quality report should run with missing generated tables");
     let limit_failures = report
         .rows()
@@ -402,7 +617,13 @@ fn solver_quality_report_unexpected_required_success_failures_become_regression_
     fixture.expectation = QualityExpectation::RequiredSuccess;
 
     let directory = temp_test_dir("unexpected-regression");
-    let report = run_quality_report_for_fixtures_with_pruning_table_dir(&[fixture], &directory)
+    let hybrid_path = directory.join("missing-value_outputs.tsv");
+    let report =
+        run_quality_report_for_fixtures_with_pruning_table_dir_and_hybrid_value_outputs_path(
+            &[fixture],
+            &directory,
+            &hybrid_path,
+        )
         .expect("quality report should keep unexpected solver failures row-level");
 
     let default_row = report
@@ -426,14 +647,33 @@ fn solver_quality_report_unexpected_required_success_failures_become_regression_
 fn solver_quality_report_markdown_has_stable_headers_and_local_timing_note() {
     let fixtures = quality_fixtures().expect("quality fixtures should build");
     let directory = temp_test_dir("missing");
-    let report = run_quality_report_for_fixtures_with_pruning_table_dir(&fixtures, &directory)
-        .expect("quality report should run with missing generated tables");
+    let hybrid_path = directory.join("missing-value_outputs.tsv");
+    let report =
+        run_quality_report_for_fixtures_with_pruning_table_dir_and_hybrid_value_outputs_path(
+            &fixtures,
+            &directory,
+            &hybrid_path,
+        )
+        .expect("quality report should run with missing generated tables and hybrid values");
     let markdown = report.to_markdown();
 
     assert!(markdown.contains("# Deterministic Solver Quality Report"));
     assert!(markdown.contains("/tmp/rubiks-cube-solver-pruning-tables"));
     assert!(markdown.contains("Elapsed time is local measurement output"));
     assert!(markdown.contains("does not claim optimality or a 20-move guarantee"));
+    assert!(markdown.contains("## Summary"));
+    assert!(markdown.contains("Status counts are grouped by solver selection"));
+    assert!(markdown.contains("local and non-deterministic"));
+    assert!(markdown.contains("| selection | rows | success | generated_tables_unavailable | generated_tables_corrupt_or_incompatible | expected_not_found_within_limits | unexpected_regression | replay_verified_successes | solution_len_range | explored_nodes_total |"));
+    assert!(markdown.contains("| default-bounded-ida-star |"));
+    assert!(markdown.contains("| explicit-two-phase-baseline |"));
+    assert!(markdown.contains(&format!(
+        "| generated-two-phase | {} | 0 | {} | 0 | 0 | 0 | 0 | - | 0 |",
+        fixtures.len(),
+        fixtures.len()
+    )));
+    assert!(markdown.contains("| all |"));
+    assert!(markdown.contains("## Rows"));
     assert!(markdown.contains("| fixture | group | input | expectation | scramble | selection | strategy | max_depth | max_nodes | table_status | table_depths | table_metadata | status | solution_len | explored_nodes | elapsed_us | replay_verified | solution |"));
     assert!(markdown.contains("solved-facelets"));
     assert!(markdown.contains("mid_depth"));
@@ -447,11 +687,28 @@ fn solver_quality_report_markdown_has_stable_headers_and_local_timing_note() {
     assert!(markdown.contains("generated_tables_unavailable"));
     assert!(markdown.contains("unavailable"));
     assert!(markdown.contains("expected_not_found_within_limits"));
+    assert!(markdown.contains("## Hybrid Move Ordering Experiment"));
+    assert!(markdown.contains("default-bounded-ida-star"));
+    assert!(markdown.contains("value_outputs.tsv"));
+    assert!(markdown.contains("do not validate states, prune branches, change limits"));
+    assert!(markdown.contains("artifact_unavailable"));
+    assert!(markdown.contains("missing-value_outputs.tsv"));
+    assert!(markdown.contains("| fixture | group | input | expectation | scramble | baseline_selection | max_depth | max_nodes | artifact_path | artifact_status | artifact_metadata | status | solution_len | explored_nodes | elapsed_us | replay_verified | scored_move_lookups | missing_score_lookups | solution |"));
+    assert_eq!(report.hybrid_rows().len(), fixtures.len());
 }
 
 #[test]
 fn solver_quality_report_rows_are_emitted_in_fixture_then_solver_order() {
-    let report = run_quality_report().expect("quality report should run");
+    let fixtures = quality_fixtures().expect("quality fixtures should build");
+    let directory = temp_test_dir("order-missing-hybrid");
+    let hybrid_path = directory.join("missing-value_outputs.tsv");
+    let report =
+        run_quality_report_for_fixtures_with_pruning_table_dir_and_hybrid_value_outputs_path(
+            &fixtures,
+            &directory,
+            &hybrid_path,
+        )
+        .expect("quality report should run");
     let rows = report.rows();
 
     assert_eq!(rows[0].fixture_id, "solved-facelets");
@@ -469,6 +726,11 @@ fn solver_quality_report_rows_are_emitted_in_fixture_then_solver_order() {
         rows[2].solver_selection,
         QualitySolverSelection::GeneratedTwoPhase
     );
+    assert_eq!(report.hybrid_rows()[0].fixture_id, "solved-facelets");
+    assert_eq!(
+        report.hybrid_rows()[0].baseline_selection,
+        QualitySolverSelection::DefaultBoundedIdaStar
+    );
 
     let harder_scramble = rows
         .iter()
@@ -478,6 +740,33 @@ fn solver_quality_report_rows_are_emitted_in_fixture_then_solver_order() {
     let algorithm = Algorithm::parse(harder_scramble).expect("reported scramble should parse");
 
     assert_eq!(algorithm.len(), 9);
+
+    let _ = fs::remove_dir_all(directory);
+}
+
+fn single_quality_fixture(id: &str) -> cube_engine::solver::quality::QualityFixture {
+    quality_fixtures()
+        .expect("quality fixtures should build")
+        .into_iter()
+        .find(|fixture| fixture.id == id)
+        .unwrap_or_else(|| panic!("quality fixture {id} should exist"))
+}
+
+fn write_value_outputs_artifact(
+    path: &PathBuf,
+    model_type: &str,
+    pytorch_available: bool,
+    rows: &[(String, f64)],
+) {
+    let mut content = format!(
+        "# format=rubiks_cube_solver_value_outputs_v1\n# model_type={model_type}\n# pytorch_available={}\n# examples={}\n# label_target=verified_solution_length\n# label_source=reversible_scramble_inverse_replay_verified\n",
+        if pytorch_available { "true" } else { "false" },
+        rows.len()
+    );
+    for (state, score) in rows {
+        content.push_str(&format!("{state}\t{score}\n"));
+    }
+    fs::write(path, content).expect("value output artifact should be writable");
 }
 
 fn temp_test_dir(name: &str) -> PathBuf {
