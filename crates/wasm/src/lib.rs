@@ -4,9 +4,14 @@ use cube_engine::{
     validate_facelet_string as validate_engine_facelet_string, Cube, CubeValidationError,
     FaceletConversionError, FaceletParseError, FaceletPlaybackError,
     FaceletPlaybackResult as EngineFaceletPlaybackResult, FaceletString, SolveError,
-    SolveInputError, SolveResult, SolverConfig,
+    SolveInputError, SolveResult, SolverConfig, SolverStrategy,
 };
 use wasm_bindgen::prelude::*;
+
+const UNAVAILABLE_GENERATED_TWO_PHASE_STRATEGY_ID: &str = "generated-two-phase";
+const UNAVAILABLE_GENERATED_TWO_PHASE_LABEL: &str = "Generated two-phase solver";
+const UNAVAILABLE_GENERATED_TWO_PHASE_MODE: &str = "unavailable_generated_two_phase";
+const AVAILABLE_STRATEGY_IDS: &str = "bounded-ida-star, two-phase-baseline";
 
 #[wasm_bindgen]
 pub fn solved_facelet_string() -> String {
@@ -66,6 +71,9 @@ pub struct FaceletSolveResult {
     length: usize,
     max_depth: usize,
     max_nodes: Option<usize>,
+    strategy_id: String,
+    strategy_label: String,
+    solver_mode: String,
     explored_nodes: Option<usize>,
     error_kind: Option<String>,
     message: Option<String>,
@@ -101,6 +109,21 @@ impl FaceletSolveResult {
     #[wasm_bindgen(getter)]
     pub fn max_nodes(&self) -> Option<usize> {
         self.max_nodes
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn strategy_id(&self) -> String {
+        self.strategy_id.clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn strategy_label(&self) -> String {
+        self.strategy_label.clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn solver_mode(&self) -> String {
+        self.solver_mode.clone()
     }
 
     #[wasm_bindgen(getter)]
@@ -202,6 +225,9 @@ impl FaceletSolveResult {
             moves,
             max_depth: config.max_depth,
             max_nodes: config.max_nodes,
+            strategy_id: config.strategy.id().to_owned(),
+            strategy_label: config.strategy.label().to_owned(),
+            solver_mode: config.strategy.solver_mode().to_owned(),
             explored_nodes: Some(result.explored_nodes()),
             error_kind: None,
             message: None,
@@ -216,6 +242,9 @@ impl FaceletSolveResult {
             length: 0,
             max_depth: config.max_depth,
             max_nodes: config.max_nodes,
+            strategy_id: config.strategy.id().to_owned(),
+            strategy_label: config.strategy.label().to_owned(),
+            solver_mode: config.strategy.solver_mode().to_owned(),
             explored_nodes: None,
             error_kind: Some(validation_error_kind(&error).to_owned()),
             message: Some(error.to_string()),
@@ -236,9 +265,67 @@ impl FaceletSolveResult {
             length: 0,
             max_depth: config.max_depth,
             max_nodes: config.max_nodes,
+            strategy_id: config.strategy.id().to_owned(),
+            strategy_label: config.strategy.label().to_owned(),
+            solver_mode: config.strategy.solver_mode().to_owned(),
             explored_nodes: Some(explored_nodes),
             error_kind: None,
             message: Some(message),
+        }
+    }
+
+    fn unsupported_strategy(
+        requested_strategy: &str,
+        max_depth: usize,
+        max_nodes: Option<usize>,
+    ) -> Self {
+        let displayed_strategy = if requested_strategy.is_empty() {
+            "<empty>"
+        } else {
+            requested_strategy
+        };
+
+        Self {
+            status: "unsupported_strategy".to_owned(),
+            ok: false,
+            moves: Vec::new(),
+            length: 0,
+            max_depth,
+            max_nodes,
+            strategy_id: requested_strategy.to_owned(),
+            strategy_label: "Unsupported strategy".to_owned(),
+            solver_mode: "unsupported_strategy".to_owned(),
+            explored_nodes: None,
+            error_kind: Some("unsupported_strategy".to_owned()),
+            message: Some(format!(
+                "Unsupported solver strategy \"{displayed_strategy}\". Supported strategies: {AVAILABLE_STRATEGY_IDS}."
+            )),
+        }
+    }
+
+    fn unavailable_strategy(
+        requested_strategy: &str,
+        strategy_label: &str,
+        solver_mode: &str,
+        max_depth: usize,
+        max_nodes: Option<usize>,
+    ) -> Self {
+        Self {
+            status: "unavailable_strategy".to_owned(),
+            ok: false,
+            moves: Vec::new(),
+            length: 0,
+            max_depth,
+            max_nodes,
+            strategy_id: requested_strategy.to_owned(),
+            strategy_label: strategy_label.to_owned(),
+            solver_mode: solver_mode.to_owned(),
+            explored_nodes: None,
+            error_kind: Some("unavailable_strategy".to_owned()),
+            message: Some(
+                "The generated two-phase solver is unavailable because full generated pruning tables are absent. Use bounded-ida-star by default or the limited two-phase baseline for fixture-covered states."
+                    .to_owned(),
+            ),
         }
     }
 
@@ -270,6 +357,37 @@ pub fn solve_facelet_string(
     max_nodes: Option<usize>,
 ) -> FaceletSolveResult {
     let config = SolverConfig::with_limits(max_depth, max_nodes);
+
+    match solve_engine_facelet_string(input, config) {
+        Ok(result) => FaceletSolveResult::success(result, config),
+        Err(error) => FaceletSolveResult::failure(error, config),
+    }
+}
+
+#[wasm_bindgen]
+pub fn solve_facelet_string_with_strategy(
+    input: &str,
+    max_depth: usize,
+    max_nodes: Option<usize>,
+    strategy_id: &str,
+) -> FaceletSolveResult {
+    let requested_strategy = strategy_id.trim();
+
+    if requested_strategy == UNAVAILABLE_GENERATED_TWO_PHASE_STRATEGY_ID {
+        return FaceletSolveResult::unavailable_strategy(
+            requested_strategy,
+            UNAVAILABLE_GENERATED_TWO_PHASE_LABEL,
+            UNAVAILABLE_GENERATED_TWO_PHASE_MODE,
+            max_depth,
+            max_nodes,
+        );
+    }
+
+    let Some(strategy) = SolverStrategy::from_id(requested_strategy) else {
+        return FaceletSolveResult::unsupported_strategy(requested_strategy, max_depth, max_nodes);
+    };
+
+    let config = SolverConfig::with_strategy(max_depth, max_nodes, strategy);
 
     match solve_engine_facelet_string(input, config) {
         Ok(result) => FaceletSolveResult::success(result, config),
@@ -397,6 +515,7 @@ mod tests {
         assert_eq!(result.length(), 0);
         assert_eq!(result.max_depth(), 0);
         assert_eq!(result.max_nodes(), None);
+        assert_bounded_strategy_metadata(&result);
         assert_eq!(result.explored_nodes(), Some(1));
         assert_eq!(result.error_kind(), None);
         assert_eq!(result.message(), None);
@@ -411,12 +530,125 @@ mod tests {
         assert_eq!(result.status(), "success");
         assert_eq!(result.max_depth(), 2);
         assert_eq!(result.max_nodes(), Some(10_000));
+        assert_bounded_strategy_metadata(&result);
         assert!(result.explored_nodes().is_some_and(|nodes| nodes > 0));
 
         let moves = result.moves();
         assert_eq!(result.length(), moves.len());
         assert!(!moves.is_empty());
         assert_notation_solves_facelets(&input, &moves);
+    }
+
+    #[test]
+    fn strategy_aware_solve_accepts_explicit_bounded_strategy() {
+        let result =
+            solve_facelet_string_with_strategy(SOLVED_FACELETS, 0, None, "bounded-ida-star");
+
+        assert!(result.ok());
+        assert_eq!(result.status(), "success");
+        assert!(result.moves().is_empty());
+        assert_eq!(result.length(), 0);
+        assert_eq!(result.max_depth(), 0);
+        assert_eq!(result.max_nodes(), None);
+        assert_bounded_strategy_metadata(&result);
+        assert_eq!(result.explored_nodes(), Some(1));
+    }
+
+    #[test]
+    fn strategy_aware_solve_accepts_limited_two_phase_baseline() {
+        let input = facelet_string_for(&[Move::F]);
+        let result =
+            solve_facelet_string_with_strategy(&input, 1, Some(10_000), "two-phase-baseline");
+
+        assert!(result.ok());
+        assert_eq!(result.status(), "success");
+        assert_eq!(result.max_depth(), 1);
+        assert_eq!(result.max_nodes(), Some(10_000));
+        assert_eq!(result.strategy_id(), "two-phase-baseline");
+        assert_eq!(result.strategy_label(), "Limited two-phase baseline");
+        assert_eq!(result.solver_mode(), "limited_two_phase_baseline");
+        assert!(result.explored_nodes().is_some_and(|nodes| nodes > 0));
+
+        let moves = result.moves();
+        assert_eq!(result.length(), moves.len());
+        assert_notation_solves_facelets(&input, &moves);
+
+        let playback = playback_facelet_solution(&input, &moves.join(" "));
+        assert!(playback.ok());
+        assert!(playback.final_is_solved());
+        assert_eq!(playback.states().len(), moves.len() + 1);
+    }
+
+    #[test]
+    fn strategy_aware_solve_reports_limited_two_phase_not_found() {
+        let input = facelet_string_for(&[Move::R]);
+        let result = solve_facelet_string_with_strategy(&input, 1, None, "two-phase-baseline");
+
+        assert!(!result.ok());
+        assert_eq!(result.status(), "not_found_within_limits");
+        assert!(result.moves().is_empty());
+        assert_eq!(result.length(), 0);
+        assert_eq!(result.max_depth(), 1);
+        assert_eq!(result.max_nodes(), None);
+        assert_eq!(result.strategy_id(), "two-phase-baseline");
+        assert_eq!(result.strategy_label(), "Limited two-phase baseline");
+        assert_eq!(result.solver_mode(), "limited_two_phase_baseline");
+        assert!(result.explored_nodes().is_some_and(|nodes| nodes > 0));
+        assert_eq!(result.error_kind(), None);
+        assert!(result
+            .message()
+            .is_some_and(|message| message.contains("max_depth=1")));
+    }
+
+    #[test]
+    fn strategy_aware_solve_reports_unsupported_strategy() {
+        let result = solve_facelet_string_with_strategy(SOLVED_FACELETS, 0, None, "made-up");
+
+        assert!(!result.ok());
+        assert_eq!(result.status(), "unsupported_strategy");
+        assert!(result.moves().is_empty());
+        assert_eq!(result.length(), 0);
+        assert_eq!(result.max_depth(), 0);
+        assert_eq!(result.max_nodes(), None);
+        assert_eq!(result.strategy_id(), "made-up");
+        assert_eq!(result.strategy_label(), "Unsupported strategy");
+        assert_eq!(result.solver_mode(), "unsupported_strategy");
+        assert_eq!(result.explored_nodes(), None);
+        assert_eq!(result.error_kind().as_deref(), Some("unsupported_strategy"));
+        assert!(result
+            .message()
+            .is_some_and(|message| message.contains("bounded-ida-star")));
+    }
+
+    #[test]
+    fn strategy_aware_solve_reports_unavailable_generated_two_phase() {
+        let result = solve_facelet_string_with_strategy(
+            SOLVED_FACELETS,
+            0,
+            None,
+            UNAVAILABLE_GENERATED_TWO_PHASE_STRATEGY_ID,
+        );
+
+        assert!(!result.ok());
+        assert_eq!(result.status(), "unavailable_strategy");
+        assert!(result.moves().is_empty());
+        assert_eq!(result.length(), 0);
+        assert_eq!(result.max_depth(), 0);
+        assert_eq!(result.max_nodes(), None);
+        assert_eq!(
+            result.strategy_id(),
+            UNAVAILABLE_GENERATED_TWO_PHASE_STRATEGY_ID
+        );
+        assert_eq!(
+            result.strategy_label(),
+            UNAVAILABLE_GENERATED_TWO_PHASE_LABEL
+        );
+        assert_eq!(result.solver_mode(), UNAVAILABLE_GENERATED_TWO_PHASE_MODE);
+        assert_eq!(result.explored_nodes(), None);
+        assert_eq!(result.error_kind().as_deref(), Some("unavailable_strategy"));
+        assert!(result
+            .message()
+            .is_some_and(|message| message.contains("full generated pruning tables are absent")));
     }
 
     #[test]
@@ -429,6 +661,7 @@ mod tests {
         assert_eq!(result.length(), 0);
         assert_eq!(result.max_depth(), 4);
         assert_eq!(result.max_nodes(), Some(99));
+        assert_bounded_strategy_metadata(&result);
         assert_eq!(result.explored_nodes(), None);
         assert_eq!(result.error_kind().as_deref(), Some("invalid_length"));
         assert!(result.message().is_some_and(|message| !message.is_empty()));
@@ -445,6 +678,7 @@ mod tests {
         assert_eq!(result.length(), 0);
         assert_eq!(result.max_depth(), 1);
         assert_eq!(result.max_nodes(), Some(0));
+        assert_bounded_strategy_metadata(&result);
         assert_eq!(result.explored_nodes(), Some(0));
         assert_eq!(result.error_kind(), None);
 
@@ -614,6 +848,12 @@ mod tests {
         algorithm.apply_to(&mut cube);
 
         assert!(cube.is_solved());
+    }
+
+    fn assert_bounded_strategy_metadata(result: &FaceletSolveResult) {
+        assert_eq!(result.strategy_id(), "bounded-ida-star");
+        assert_eq!(result.strategy_label(), "Bounded IDA*");
+        assert_eq!(result.solver_mode(), "bounded_ida_star");
     }
 
     fn facelets_with_swapped_positions(left: usize, right: usize) -> String {

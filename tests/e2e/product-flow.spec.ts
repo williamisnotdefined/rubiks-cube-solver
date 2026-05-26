@@ -9,6 +9,9 @@ test.describe('product solve flow', () => {
 
     await page.getByRole('button', { name: 'Use solved facelets' }).click()
     await expect(page.getByText('valid facelets').first()).toBeVisible()
+    await expect(page.getByRole('combobox', { name: /solver strategy/i })).toHaveValue(
+      'bounded-ida-star',
+    )
 
     await page.getByRole('button', { name: 'Solve with WASM' }).click()
 
@@ -65,6 +68,35 @@ test.describe('product solve flow', () => {
 
     await expect(page.getByRole('heading', { name: 'Validation error' })).toBeVisible()
     await expect(page.getByText('invalid_length').first()).toBeVisible()
+  })
+
+  test('selects the limited two-phase baseline and shows an honest limit outcome', async ({
+    page,
+  }) => {
+    await openSolver(page)
+
+    await page
+      .getByRole('combobox', { name: /solver strategy/i })
+      .selectOption('two-phase-baseline')
+    await expect(
+      page.getByText('solver_mode=limited_two_phase_baseline').first(),
+    ).toBeVisible()
+
+    await page
+      .getByLabel('54-character facelet string')
+      .fill(shallowScrambledFacelets)
+    await expect(page.getByText('valid facelets').first()).toBeVisible()
+
+    await page.getByRole('button', { name: 'Solve with WASM' }).click()
+
+    await expect(
+      page.getByRole('heading', { name: 'No solution within limits' }),
+    ).toBeVisible()
+    const solvePanel = page.locator('.solve-panel')
+
+    await expect(solvePanel.getByText('Limited two-phase baseline').first()).toBeVisible()
+    await expect(page.getByText('did not find a verified solution')).toBeVisible()
+    await expect(solvePanel.getByText('limited_two_phase_baseline').first()).toBeVisible()
   })
 })
 

@@ -143,6 +143,8 @@ fn quality_report_markdown_has_stable_headers_and_local_timing_note() {
     assert!(markdown.contains("solved-facelets"));
     assert!(markdown.contains("default-bounded-ida-star"));
     assert!(markdown.contains("explicit-two-phase-baseline"));
+    assert!(markdown.contains("bounded-ida-star"));
+    assert!(markdown.contains("two-phase-baseline"));
     assert!(markdown.contains("not_found_within_limits"));
 }
 

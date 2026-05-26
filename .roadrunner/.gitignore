@@ -2,4 +2,5 @@
 logs/
 processes.json
 roadmap.lock
+state/
 # End Roadrunner runtime

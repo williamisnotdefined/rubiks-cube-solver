@@ -2,22 +2,26 @@ import './App.css'
 import { useEffect, useState, type FormEvent } from 'react'
 import {
   loadWasmSolver,
+  solverStrategyOptions,
   wasmSolverBoundary,
   wasmSolverLoadingState,
   type FaceletPlaybackResult,
   type FaceletSolveLimits,
   type FaceletSolveResult,
   type FaceletValidationResult,
+  type SolverStrategyId,
   type WasmSolverLoadState,
 } from './wasm/solverClient'
 
 const defaultMaxDepth = '6'
 const defaultMaxNodes = '100000'
+const defaultSolverStrategyId: SolverStrategyId = 'bounded-ida-star'
 
 const productFlow = [
   'Load the generated WASM package from crates/wasm/pkg.',
   'Read the canonical solved facelet string from Rust.',
   'Validate user-entered facelets through the Rust engine.',
+  'Select a documented solver strategy while keeping bounded IDA* as the default.',
   'Request solve results, then replay returned notation through Rust/WASM playback.',
   'Keep parsing, conversion, cube validity, solving, and verification out of React.',
 ]
@@ -28,6 +32,9 @@ function App() {
   const [faceletInput, setFaceletInput] = useState('')
   const [maxDepthInput, setMaxDepthInput] = useState(defaultMaxDepth)
   const [maxNodesInput, setMaxNodesInput] = useState(defaultMaxNodes)
+  const [solverStrategyId, setSolverStrategyId] = useState<SolverStrategyId>(
+    defaultSolverStrategyId,
+  )
   const [solveState, setSolveState] = useState<SolveState>({ status: 'idle' })
 
   useEffect(() => {
@@ -49,7 +56,11 @@ function App() {
   const solvedFacelets = readyClient?.solvedFacelets()
   const validationResult = readyClient?.validateFacelets(faceletInput)
   const parsedLimits = parseSolveLimits(maxDepthInput, maxNodesInput)
-  const solveLimits = parsedLimits.limits
+  const selectedSolverStrategy = solverStrategyOptionFor(solverStrategyId)
+  const solveLimits =
+    parsedLimits.limits === undefined
+      ? undefined
+      : { ...parsedLimits.limits, strategyId: solverStrategyId }
   const hasLoadError =
     wasmState.status === 'unavailable_generated_package' ||
     wasmState.status === 'initialization_failed'
@@ -70,6 +81,11 @@ function App() {
 
   function updateMaxNodesInput(nextInput: string) {
     setMaxNodesInput(nextInput)
+    setSolveState({ status: 'idle' })
+  }
+
+  function updateSolverStrategyId(nextStrategyId: SolverStrategyId) {
+    setSolverStrategyId(nextStrategyId)
     setSolveState({ status: 'idle' })
   }
 
@@ -188,12 +204,38 @@ function App() {
           />
           <form className="solve-form" onSubmit={handleSolveSubmit}>
             <div>
-              <p className="section-kicker">Solve Limits</p>
+              <p className="section-kicker">Strategy And Limits</p>
               <h2>Request a solution</h2>
               <p>
-                These controls are passed to the Rust solver as max_depth and
-                max_nodes for this request.
+                These controls are passed through WASM to the Rust solver. The
+                limited two-phase path is experimental while full generated
+                tables are absent.
               </p>
+            </div>
+            <div className="strategy-controls" aria-label="Solver strategy selection">
+              <label className="strategy-field" htmlFor="solver-strategy-input">
+                <span>solver strategy</span>
+                <select
+                  id="solver-strategy-input"
+                  name="solverStrategy"
+                  value={solverStrategyId}
+                  onChange={(event) =>
+                    updateSolverStrategyId(event.target.value as SolverStrategyId)
+                  }
+                >
+                  {solverStrategyOptions.map((strategy) => (
+                    <option key={strategy.id} value={strategy.id}>
+                      {strategy.label}
+                    </option>
+                  ))}
+                </select>
+                <small>Bounded IDA* is the default product solver.</small>
+              </label>
+              <div className="strategy-note">
+                <strong>{selectedSolverStrategy.label}</strong>
+                <span>solver_mode={selectedSolverStrategy.mode}</span>
+                <p>{selectedSolverStrategy.description}</p>
+              </div>
             </div>
             <div className="limit-controls" aria-label="Configured solver limits">
               <label className="limit-field" htmlFor="max-depth-input">
@@ -227,7 +269,8 @@ function App() {
             </div>
             {parsedLimits.error === undefined ? (
               <p className="limit-help">
-                Current request limits: max_depth={solveLimits?.maxDepth},
+                Current request: strategy={selectedSolverStrategy.label},
+                solver_mode={selectedSolverStrategy.mode}, max_depth={solveLimits?.maxDepth},
                 max_nodes={formatOptionalNumber(solveLimits?.maxNodes)}.
               </p>
             ) : (
@@ -357,8 +400,8 @@ function SolveResultPanel({
           <span>not requested</span>
         </div>
         <p>
-          Enter facelets, confirm the visible max_depth and max_nodes limits,
-          then submit a solve request through the frontend WASM boundary.
+          Enter facelets, confirm the selected strategy and visible limits, then
+          submit a solve request through the frontend WASM boundary.
         </p>
       </article>
     )
@@ -372,7 +415,8 @@ function SolveResultPanel({
           <span>request running</span>
         </div>
         <p>
-          Rust/WASM is searching with max_depth={state.request.maxDepth} and
+          Rust/WASM is searching with {strategyLabelForRequest(state.request)},
+          max_depth={state.request.maxDepth} and
           max_nodes={formatOptionalNumber(state.request.maxNodes)}.
         </p>
         <RequestMetrics request={state.request} />
@@ -413,7 +457,7 @@ function SolveResultView({ result, playback }: SolveResultViewProps) {
         </div>
         <p>
           {hasMoves
-            ? 'Rust/WASM returned a verified move sequence for the submitted facelets.'
+            ? `Rust/WASM returned a verified move sequence from ${result.strategyLabel} for the submitted facelets.`
             : 'The submitted facelets are already solved; no moves are required.'}
         </p>
         {hasMoves ? (
@@ -447,13 +491,42 @@ function SolveResultView({ result, playback }: SolveResultViewProps) {
     )
   }
 
+  if (result.status === 'unsupported_strategy') {
+    return (
+      <article className="status-panel solve-panel is-error" aria-live="polite">
+        <div className="status-heading">
+          <h2>Unsupported solver strategy</h2>
+          <span>{result.errorKind}</span>
+        </div>
+        <p>{result.message}</p>
+        <SolveMetrics result={result} />
+      </article>
+    )
+  }
+
+  if (result.status === 'unavailable_strategy') {
+    return (
+      <article className="status-panel solve-panel is-warning" aria-live="polite">
+        <div className="status-heading">
+          <h2>Solver strategy unavailable</h2>
+          <span>{result.errorKind}</span>
+        </div>
+        <p>{result.message}</p>
+        <SolveMetrics result={result} />
+      </article>
+    )
+  }
+
   return (
     <article className="status-panel solve-panel is-warning" aria-live="polite">
       <div className="status-heading">
         <h2>No solution within limits</h2>
         <span>limits reached</span>
       </div>
-      <p>{result.message}</p>
+      <p>
+        {result.strategyLabel} did not find a verified solution under the
+        configured limits. {result.message}
+      </p>
       <SolveMetrics result={result} />
     </article>
   )
@@ -741,6 +814,14 @@ function SolveMetrics({ result }: SolveMetricsProps) {
         <dd>{solutionLength}</dd>
       </div>
       <div>
+        <dt>strategy</dt>
+        <dd>{result.strategyLabel}</dd>
+      </div>
+      <div>
+        <dt>solver_mode</dt>
+        <dd>{result.solverMode}</dd>
+      </div>
+      <div>
         <dt>explored_nodes</dt>
         <dd>{formatOptionalMetric(result.exploredNodes)}</dd>
       </div>
@@ -763,6 +844,14 @@ type RequestMetricsProps = {
 function RequestMetrics({ request }: RequestMetricsProps) {
   return (
     <dl className="metrics-grid" aria-label="Requested solver limits">
+      <div>
+        <dt>strategy</dt>
+        <dd>{strategyLabelForRequest(request)}</dd>
+      </div>
+      <div>
+        <dt>solver_mode</dt>
+        <dd>{solverModeForRequest(request)}</dd>
+      </div>
       <div>
         <dt>max_depth</dt>
         <dd>{request.maxDepth}</dd>
@@ -830,6 +919,21 @@ function validationMessage(
   }
 
   return result.message ?? 'The Rust engine accepted this facelet state.'
+}
+
+function solverStrategyOptionFor(strategyId: string | undefined) {
+  return (
+    solverStrategyOptions.find((strategy) => strategy.id === strategyId) ??
+    solverStrategyOptions[0]
+  )
+}
+
+function strategyLabelForRequest(request: SolveRequest): string {
+  return solverStrategyOptionFor(request.strategyId).label
+}
+
+function solverModeForRequest(request: SolveRequest): string {
+  return solverStrategyOptionFor(request.strategyId).mode
 }
 
 function parseSolveLimits(

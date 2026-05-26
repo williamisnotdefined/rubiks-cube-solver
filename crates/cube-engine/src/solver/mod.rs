@@ -21,6 +21,37 @@ pub enum SolverStrategy {
     TwoPhaseBaseline,
 }
 
+impl SolverStrategy {
+    pub const fn id(self) -> &'static str {
+        match self {
+            Self::BoundedIdaStar => "bounded-ida-star",
+            Self::TwoPhaseBaseline => "two-phase-baseline",
+        }
+    }
+
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::BoundedIdaStar => "Bounded IDA*",
+            Self::TwoPhaseBaseline => "Limited two-phase baseline",
+        }
+    }
+
+    pub const fn solver_mode(self) -> &'static str {
+        match self {
+            Self::BoundedIdaStar => "bounded_ida_star",
+            Self::TwoPhaseBaseline => "limited_two_phase_baseline",
+        }
+    }
+
+    pub fn from_id(id: &str) -> Option<Self> {
+        match id {
+            "bounded-ida-star" => Some(Self::BoundedIdaStar),
+            "two-phase-baseline" => Some(Self::TwoPhaseBaseline),
+            _ => None,
+        }
+    }
+}
+
 /// Configuration shared by public solver entry points.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct SolverConfig {
@@ -430,6 +461,35 @@ mod tests {
         assert_eq!(two_phase.max_depth, 1);
         assert_eq!(two_phase.max_nodes, Some(2));
         assert_eq!(two_phase.strategy, SolverStrategy::TwoPhaseBaseline);
+    }
+
+    #[test]
+    fn solver_strategy_exposes_stable_boundary_metadata() {
+        assert_eq!(SolverStrategy::BoundedIdaStar.id(), "bounded-ida-star");
+        assert_eq!(SolverStrategy::BoundedIdaStar.label(), "Bounded IDA*");
+        assert_eq!(
+            SolverStrategy::BoundedIdaStar.solver_mode(),
+            "bounded_ida_star"
+        );
+        assert_eq!(
+            SolverStrategy::from_id("bounded-ida-star"),
+            Some(SolverStrategy::BoundedIdaStar)
+        );
+
+        assert_eq!(SolverStrategy::TwoPhaseBaseline.id(), "two-phase-baseline");
+        assert_eq!(
+            SolverStrategy::TwoPhaseBaseline.label(),
+            "Limited two-phase baseline"
+        );
+        assert_eq!(
+            SolverStrategy::TwoPhaseBaseline.solver_mode(),
+            "limited_two_phase_baseline"
+        );
+        assert_eq!(
+            SolverStrategy::from_id("two-phase-baseline"),
+            Some(SolverStrategy::TwoPhaseBaseline)
+        );
+        assert_eq!(SolverStrategy::from_id("unknown"), None);
     }
 
     #[test]

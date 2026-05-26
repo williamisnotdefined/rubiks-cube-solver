@@ -202,14 +202,22 @@ textarea:focus {
   gap: 16px;
 }
 
-.limit-field {
+.strategy-controls {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.7fr) minmax(0, 1.3fr);
+  gap: 16px;
+}
+
+.limit-field,
+.strategy-field {
   display: grid;
   gap: 8px;
   color: #e2e8f0;
   font-weight: 800;
 }
 
-.limit-field input {
+.limit-field input,
+.strategy-field select {
   box-sizing: border-box;
   width: 100%;
   border: 1px solid rgba(148, 163, 184, 0.34);
@@ -221,20 +229,48 @@ textarea:focus {
   background: rgba(2, 6, 23, 0.55);
 }
 
-.limit-field input:focus {
+.limit-field input:focus,
+.strategy-field select:focus {
   outline: 3px solid rgba(34, 211, 238, 0.22);
   border-color: #22d3ee;
 }
 
 .limit-field small,
+.strategy-field small,
 .limit-help,
 .metrics-grid dt {
   color: #94a3b8;
 }
 
-.limit-field small {
+.limit-field small,
+.strategy-field small {
   font-weight: 600;
   line-height: 1.5;
+}
+
+.strategy-note {
+  display: grid;
+  gap: 8px;
+  border: 1px solid rgba(103, 232, 249, 0.22);
+  border-radius: 16px;
+  padding: 14px;
+  background: rgba(8, 145, 178, 0.1);
+}
+
+.strategy-note strong {
+  color: #e0f2fe;
+}
+
+.strategy-note span {
+  color: #67e8f9;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.strategy-note p {
+  margin-bottom: 0;
+  color: #cbd5e1;
+  line-height: 1.6;
 }
 
 .form-error {
@@ -678,6 +714,7 @@ button:disabled {
   }
 
   .limit-controls,
+  .strategy-controls,
   .metrics-grid,
   .playback-step-metadata {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -715,6 +752,7 @@ button:disabled {
   }
 
   .limit-controls,
+  .strategy-controls,
   .metrics-grid,
   .playback-step-metadata {
     grid-template-columns: 1fr;

@@ -540,10 +540,7 @@ fn replay_verifies(
 }
 
 fn strategy_label(strategy: SolverStrategy) -> &'static str {
-    match strategy {
-        SolverStrategy::BoundedIdaStar => "bounded-ida-star",
-        SolverStrategy::TwoPhaseBaseline => "two-phase-baseline",
-    }
+    strategy.id()
 }
 
 fn scramble_label(scramble: &str) -> &str {
