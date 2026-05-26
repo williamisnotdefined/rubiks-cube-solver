@@ -1,4 +1,5 @@
 pub mod cube;
+pub mod dataset;
 pub mod search;
 pub mod solver;
 
