@@ -39,7 +39,16 @@ pub enum GeneratedTwoPhaseError {
     MissingSpec {
         kind: GeneratedPruningTableKind,
     },
+    TableMissing {
+        table: &'static str,
+        path: PathBuf,
+    },
     TableUnavailable {
+        table: &'static str,
+        path: PathBuf,
+        error: Box<PruningArtifactError>,
+    },
+    TableCorrupt {
         table: &'static str,
         path: PathBuf,
         error: Box<PruningArtifactError>,
@@ -64,9 +73,19 @@ impl fmt::Display for GeneratedTwoPhaseError {
                     "generated two-phase table spec is missing: {kind:?}"
                 )
             }
+            Self::TableMissing { table, path } => write!(
+                formatter,
+                "generated two-phase table {table} is missing at {}",
+                path.display()
+            ),
             Self::TableUnavailable { table, path, error } => write!(
                 formatter,
                 "generated two-phase table {table} is unavailable at {}: {error}",
+                path.display()
+            ),
+            Self::TableCorrupt { table, path, error } => write!(
+                formatter,
+                "generated two-phase table {table} at {} is corrupt: {error}",
                 path.display()
             ),
             Self::TableIncompatible { table, path, error } => write!(
@@ -87,10 +106,41 @@ impl fmt::Display for GeneratedTwoPhaseError {
 impl std::error::Error for GeneratedTwoPhaseError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            Self::TableUnavailable { error, .. } | Self::TableIncompatible { error, .. } => {
-                Some(error.as_ref())
-            }
-            Self::MissingSpec { .. } | Self::Coordinate { .. } => None,
+            Self::TableUnavailable { error, .. }
+            | Self::TableCorrupt { error, .. }
+            | Self::TableIncompatible { error, .. } => Some(error.as_ref()),
+            Self::MissingSpec { .. } | Self::TableMissing { .. } | Self::Coordinate { .. } => None,
+        }
+    }
+}
+
+impl GeneratedTwoPhaseError {
+    pub fn is_corrupt_or_incompatible(&self) -> bool {
+        matches!(
+            self,
+            Self::TableCorrupt { .. } | Self::TableIncompatible { .. }
+        )
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct GeneratedPruningTableArtifact<'a> {
+    pub available: bool,
+    pub bytes: &'a [u8],
+}
+
+impl<'a> GeneratedPruningTableArtifact<'a> {
+    pub const fn available(bytes: &'a [u8]) -> Self {
+        Self {
+            available: true,
+            bytes,
+        }
+    }
+
+    pub const fn unavailable() -> Self {
+        Self {
+            available: false,
+            bytes: &[],
         }
     }
 }
@@ -158,6 +208,25 @@ pub fn solve_generated_two_phase(
     table_dir: &Path,
 ) -> Result<SearchOutcome, GeneratedTwoPhaseError> {
     let tables = GeneratedPruningTables::load_from_dir(table_dir)?;
+
+    solve_generated_two_phase_with_tables(start, budget, tables)
+}
+
+pub fn solve_generated_two_phase_with_artifacts(
+    start: &Cube,
+    budget: SearchBudget,
+    artifacts: &[GeneratedPruningTableArtifact<'_>],
+) -> Result<SearchOutcome, GeneratedTwoPhaseError> {
+    let tables = GeneratedPruningTables::load_from_artifacts(artifacts)?;
+
+    solve_generated_two_phase_with_tables(start, budget, tables)
+}
+
+fn solve_generated_two_phase_with_tables(
+    start: &Cube,
+    budget: SearchBudget,
+    tables: GeneratedPruningTables,
+) -> Result<SearchOutcome, GeneratedTwoPhaseError> {
     let mut context = TwoPhaseSearchContext::new(budget.max_nodes);
     let phase1_minimum = tables.phase1_heuristic(start)?;
 
@@ -211,24 +280,51 @@ struct GeneratedPruningTables {
 impl GeneratedPruningTables {
     fn load_from_dir(directory: &Path) -> Result<Self, GeneratedTwoPhaseError> {
         Ok(Self {
-            phase1_corner_edge_orientation: load_generated_table(
+            phase1_corner_edge_orientation: load_generated_table_from_dir(
                 directory,
                 GeneratedPruningTableKind::Phase1CornerEdgeOrientation,
             )?,
-            phase1_corner_orientation_ud_slice: load_generated_table(
+            phase1_corner_orientation_ud_slice: load_generated_table_from_dir(
                 directory,
                 GeneratedPruningTableKind::Phase1CornerOrientationUdSlice,
             )?,
-            phase1_edge_orientation_ud_slice: load_generated_table(
+            phase1_edge_orientation_ud_slice: load_generated_table_from_dir(
                 directory,
                 GeneratedPruningTableKind::Phase1EdgeOrientationUdSlice,
             )?,
-            phase2_corner_permutation_slice_edge_permutation: load_generated_table(
+            phase2_corner_permutation_slice_edge_permutation: load_generated_table_from_dir(
                 directory,
                 GeneratedPruningTableKind::Phase2CornerPermutationSliceEdgePermutation,
             )?,
-            phase2_ud_edge_permutation_slice_edge_permutation: load_generated_table(
+            phase2_ud_edge_permutation_slice_edge_permutation: load_generated_table_from_dir(
                 directory,
+                GeneratedPruningTableKind::Phase2UdEdgePermutationSliceEdgePermutation,
+            )?,
+        })
+    }
+
+    fn load_from_artifacts(
+        artifacts: &[GeneratedPruningTableArtifact<'_>],
+    ) -> Result<Self, GeneratedTwoPhaseError> {
+        Ok(Self {
+            phase1_corner_edge_orientation: load_generated_table_from_artifacts(
+                artifacts,
+                GeneratedPruningTableKind::Phase1CornerEdgeOrientation,
+            )?,
+            phase1_corner_orientation_ud_slice: load_generated_table_from_artifacts(
+                artifacts,
+                GeneratedPruningTableKind::Phase1CornerOrientationUdSlice,
+            )?,
+            phase1_edge_orientation_ud_slice: load_generated_table_from_artifacts(
+                artifacts,
+                GeneratedPruningTableKind::Phase1EdgeOrientationUdSlice,
+            )?,
+            phase2_corner_permutation_slice_edge_permutation: load_generated_table_from_artifacts(
+                artifacts,
+                GeneratedPruningTableKind::Phase2CornerPermutationSliceEdgePermutation,
+            )?,
+            phase2_ud_edge_permutation_slice_edge_permutation: load_generated_table_from_artifacts(
+                artifacts,
                 GeneratedPruningTableKind::Phase2UdEdgePermutationSliceEdgePermutation,
             )?,
         })
@@ -503,23 +599,72 @@ fn search_phase2(
     Ok(TwoPhaseSearchResult::Exhausted)
 }
 
-fn load_generated_table(
+fn load_generated_table_from_dir(
     directory: &Path,
     kind: GeneratedPruningTableKind,
 ) -> Result<PruningTable, GeneratedTwoPhaseError> {
     let spec = generated_spec(kind)?;
     let path = spec.file_path(directory);
-    let table = PruningTable::load_artifact(&path).map_err(|error| {
-        GeneratedTwoPhaseError::TableUnavailable {
+    let table = match PruningTable::load_artifact(&path) {
+        Ok(table) => table,
+        Err(error) if pruning_artifact_is_unavailable(&error) => {
+            return Err(GeneratedTwoPhaseError::TableUnavailable {
+                table: spec.table_name,
+                path,
+                error: Box::new(error),
+            });
+        }
+        Err(error) => {
+            return Err(GeneratedTwoPhaseError::TableCorrupt {
+                table: spec.table_name,
+                path,
+                error: Box::new(error),
+            });
+        }
+    };
+    validate_generated_table(spec, &path, table)
+}
+
+fn load_generated_table_from_artifacts(
+    artifacts: &[GeneratedPruningTableArtifact<'_>],
+    kind: GeneratedPruningTableKind,
+) -> Result<PruningTable, GeneratedTwoPhaseError> {
+    let (index, spec) = generated_spec_with_index(kind)?;
+    let path = PathBuf::from(spec.file_name);
+    let Some(artifact) = artifacts.get(index) else {
+        return Err(GeneratedTwoPhaseError::TableMissing {
+            table: spec.table_name,
+            path,
+        });
+    };
+
+    if !artifact.available {
+        return Err(GeneratedTwoPhaseError::TableMissing {
+            table: spec.table_name,
+            path,
+        });
+    }
+
+    let table = PruningTable::from_artifact_bytes(&path, artifact.bytes).map_err(|error| {
+        GeneratedTwoPhaseError::TableCorrupt {
             table: spec.table_name,
             path: path.clone(),
             error: Box::new(error),
         }
     })?;
-    spec.validate_table(&table, &path).map_err(|error| {
+
+    validate_generated_table(spec, &path, table)
+}
+
+fn validate_generated_table(
+    spec: &GeneratedPruningTableSpec,
+    path: &Path,
+    table: PruningTable,
+) -> Result<PruningTable, GeneratedTwoPhaseError> {
+    spec.validate_table(&table, path).map_err(|error| {
         GeneratedTwoPhaseError::TableIncompatible {
             table: spec.table_name,
-            path,
+            path: path.to_path_buf(),
             error: Box::new(error),
         }
     })?;
@@ -527,12 +672,23 @@ fn load_generated_table(
     Ok(table)
 }
 
+fn pruning_artifact_is_unavailable(error: &PruningArtifactError) -> bool {
+    matches!(error, PruningArtifactError::Io { .. })
+}
+
 fn generated_spec(
     kind: GeneratedPruningTableKind,
 ) -> Result<&'static GeneratedPruningTableSpec, GeneratedTwoPhaseError> {
+    generated_spec_with_index(kind).map(|(_, spec)| spec)
+}
+
+fn generated_spec_with_index(
+    kind: GeneratedPruningTableKind,
+) -> Result<(usize, &'static GeneratedPruningTableSpec), GeneratedTwoPhaseError> {
     GENERATED_PRUNING_TABLE_SPECS
         .iter()
-        .find(|spec| spec.kind == kind)
+        .enumerate()
+        .find(|(_, spec)| spec.kind == kind)
         .ok_or(GeneratedTwoPhaseError::MissingSpec { kind })
 }
 

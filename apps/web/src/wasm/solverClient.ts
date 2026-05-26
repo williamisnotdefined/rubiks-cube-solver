@@ -1,33 +1,17 @@
 type WasmPackage = typeof import('../../../../crates/wasm/pkg/rubiks_cube_solver_wasm.js')
+type GeneratedSolverStrategyMetadata = ReturnType<WasmPackage['solver_strategy_metadata']>
 type GeneratedFaceletValidationResult = ReturnType<WasmPackage['validate_facelet_string']>
 type GeneratedFaceletSolveResult = ReturnType<WasmPackage['solve_facelet_string']>
 type GeneratedFaceletPlaybackResult = ReturnType<WasmPackage['playback_facelet_solution']>
 
-export type SolverStrategyId = 'bounded-ida-star' | 'two-phase-baseline'
+export type SolverStrategyId = string
 
 export type SolverStrategyOption = {
   id: SolverStrategyId
   label: string
-  mode: string
-  description: string
+  solverMode: string
+  statusText: string
 }
-
-export const solverStrategyOptions = [
-  {
-    id: 'bounded-ida-star',
-    label: 'Bounded IDA*',
-    mode: 'bounded_ida_star',
-    description:
-      'Default product path. Searches within the visible depth and node limits and verifies any returned solution in Rust.',
-  },
-  {
-    id: 'two-phase-baseline',
-    label: 'Limited two-phase baseline',
-    mode: 'limited_two_phase_baseline',
-    description:
-      'Experimental fixture-backed baseline. Full generated tables are absent, so many valid states honestly report no solution within limits.',
-  },
-] satisfies SolverStrategyOption[]
 
 export type SolverStatus =
   | 'unloaded'
@@ -60,12 +44,19 @@ export type FaceletSolveLimits = {
   strategyId?: string
 }
 
+export type GeneratedTableStatus =
+  | 'not_required'
+  | 'available'
+  | 'unavailable'
+  | 'corrupt_or_incompatible'
+
 export type FaceletSolveMetadata = {
   maxDepth: number
   maxNodes: number | undefined
   strategyId: string
   strategyLabel: string
   solverMode: string
+  generatedTableStatus: GeneratedTableStatus
 }
 
 export type FaceletSolveSuccessResult = FaceletSolveMetadata & {
@@ -99,10 +90,18 @@ export type FaceletSolveUnsupportedStrategyResult = FaceletSolveMetadata & {
   exploredNodes: undefined
 }
 
-export type FaceletSolveUnavailableStrategyResult = FaceletSolveMetadata & {
-  status: 'unavailable_strategy'
+export type FaceletSolveGeneratedTablesUnavailableResult = FaceletSolveMetadata & {
+  status: 'generated_tables_unavailable'
   ok: false
-  errorKind: 'unavailable_strategy'
+  errorKind: 'generated_tables_unavailable'
+  message: string
+  exploredNodes: undefined
+}
+
+export type FaceletSolveGeneratedTablesCorruptResult = FaceletSolveMetadata & {
+  status: 'generated_tables_corrupt'
+  ok: false
+  errorKind: 'generated_tables_corrupt'
   message: string
   exploredNodes: undefined
 }
@@ -112,7 +111,8 @@ export type FaceletSolveResult =
   | FaceletSolveInvalidInputResult
   | FaceletSolveNotFoundWithinLimitsResult
   | FaceletSolveUnsupportedStrategyResult
-  | FaceletSolveUnavailableStrategyResult
+  | FaceletSolveGeneratedTablesUnavailableResult
+  | FaceletSolveGeneratedTablesCorruptResult
 
 export type FaceletPlaybackSuccessResult = {
   status: 'success'
@@ -148,14 +148,16 @@ export type FaceletPlaybackResult =
   | FaceletPlaybackInvalidMoveNotationResult
 
 export type WasmSolverClient = {
+  solverStrategies(): SolverStrategyOption[]
   solvedFacelets(): string
   validateFacelets(input: string): FaceletValidationResult
-  solveFacelets(input: string, limits: FaceletSolveLimits): FaceletSolveResult
+  solveFacelets(input: string, limits: FaceletSolveLimits): Promise<FaceletSolveResult>
   playbackFacelets(startFacelets: string, moves: string): FaceletPlaybackResult
 }
 
 export type WasmSolverReadyState = SolverBoundaryInfo & {
   status: 'ready'
+  strategyOptions: SolverStrategyOption[]
   client: WasmSolverClient
 }
 
@@ -170,6 +172,15 @@ export type WasmSolverLoadState =
   | WasmSolverLoadErrorState
 
 type WasmSolverLoadResult = WasmSolverReadyState | WasmSolverLoadErrorState
+
+type GeneratedPruningTableArtifact = {
+  available: boolean
+  bytes: Uint8Array
+}
+
+const generatedTwoPhaseStrategyId = 'generated-two-phase'
+const generatedPruningTableArtifactCount = 5
+const emptyGeneratedPruningTableBytes = new Uint8Array()
 
 export const wasmSolverBoundary = {
   packageName: 'rubiks-cube-solver-wasm',
@@ -217,16 +228,29 @@ async function loadGeneratedWasmSolver(): Promise<WasmSolverLoadResult> {
     }
   }
 
+  const strategyOptions = copySolverStrategyOptions(wasmModule)
+
   return {
     ...wasmSolverBoundary,
     status: 'ready',
+    strategyOptions,
     client: {
+      solverStrategies(): SolverStrategyOption[] {
+        return [...strategyOptions]
+      },
       solvedFacelets: wasmModule.solved_facelet_string,
       validateFacelets(input: string): FaceletValidationResult {
         return copyValidationResult(wasmModule.validate_facelet_string(input))
       },
-      solveFacelets(input: string, limits: FaceletSolveLimits): FaceletSolveResult {
+      async solveFacelets(
+        input: string,
+        limits: FaceletSolveLimits,
+      ): Promise<FaceletSolveResult> {
         const strategyId = limits.strategyId
+
+        if (strategyId === generatedTwoPhaseStrategyId) {
+          return solveGeneratedTwoPhaseWithArtifacts(wasmModule, input, limits)
+        }
 
         return copySolveResult(
           strategyId === undefined
@@ -245,6 +269,108 @@ async function loadGeneratedWasmSolver(): Promise<WasmSolverLoadResult> {
         )
       },
     },
+  }
+}
+
+async function solveGeneratedTwoPhaseWithArtifacts(
+  wasmModule: WasmPackage,
+  input: string,
+  limits: FaceletSolveLimits,
+): Promise<FaceletSolveResult> {
+  const artifacts = await fetchGeneratedPruningTableArtifacts(wasmModule)
+
+  return copySolveResult(
+    wasmModule.solve_facelet_string_with_generated_pruning_tables(
+      input,
+      limits.maxDepth,
+      limits.maxNodes,
+      artifacts[0].available,
+      artifacts[0].bytes,
+      artifacts[1].available,
+      artifacts[1].bytes,
+      artifacts[2].available,
+      artifacts[2].bytes,
+      artifacts[3].available,
+      artifacts[3].bytes,
+      artifacts[4].available,
+      artifacts[4].bytes,
+    ),
+  )
+}
+
+async function fetchGeneratedPruningTableArtifacts(
+  wasmModule: WasmPackage,
+): Promise<GeneratedPruningTableArtifact[]> {
+  const count = wasmModule.generated_pruning_table_artifact_count()
+
+  if (count !== generatedPruningTableArtifactCount) {
+    throw new Error(
+      `WASM reported ${count} generated pruning-table artifacts; the browser boundary expects ${generatedPruningTableArtifactCount}.`,
+    )
+  }
+
+  return Promise.all(
+    Array.from({ length: count }, (_, index) =>
+      fetchGeneratedPruningTableArtifact(wasmModule, index),
+    ),
+  )
+}
+
+async function fetchGeneratedPruningTableArtifact(
+  wasmModule: WasmPackage,
+  index: number,
+): Promise<GeneratedPruningTableArtifact> {
+  const fileName = wasmModule.generated_pruning_table_file_name(index)
+
+  try {
+    const response = await fetch(generatedPruningTableArtifactUrl(fileName))
+
+    if (!response.ok) {
+      return unavailableGeneratedPruningTableArtifact()
+    }
+
+    return {
+      available: true,
+      bytes: new Uint8Array(await response.arrayBuffer()),
+    }
+  } catch {
+    return unavailableGeneratedPruningTableArtifact()
+  }
+}
+
+function generatedPruningTableArtifactUrl(fileName: string): string {
+  const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+    ? import.meta.env.BASE_URL
+    : `${import.meta.env.BASE_URL}/`
+
+  return `${baseUrl}generated-pruning-tables/${fileName}`
+}
+
+function unavailableGeneratedPruningTableArtifact(): GeneratedPruningTableArtifact {
+  return {
+    available: false,
+    bytes: emptyGeneratedPruningTableBytes,
+  }
+}
+
+function copySolverStrategyOptions(wasmModule: WasmPackage): SolverStrategyOption[] {
+  return Array.from({ length: wasmModule.solver_strategy_count() }, (_, index) =>
+    copySolverStrategyMetadata(wasmModule.solver_strategy_metadata(index)),
+  )
+}
+
+function copySolverStrategyMetadata(
+  metadata: GeneratedSolverStrategyMetadata,
+): SolverStrategyOption {
+  try {
+    return {
+      id: metadata.id,
+      label: metadata.label,
+      solverMode: metadata.solver_mode,
+      statusText: metadata.status_text,
+    }
+  } finally {
+    metadata.free()
   }
 }
 
@@ -268,12 +394,14 @@ function copySolveResult(result: GeneratedFaceletSolveResult): FaceletSolveResul
     const maxNodes = result.max_nodes
     const exploredNodes = result.explored_nodes
     const status = result.status
+    const strategyId = result.strategy_id
     const metadata = {
       maxDepth,
       maxNodes,
-      strategyId: result.strategy_id,
+      strategyId,
       strategyLabel: result.strategy_label,
       solverMode: result.solver_mode,
+      generatedTableStatus: generatedTableStatusForResult(status, strategyId),
     } satisfies FaceletSolveMetadata
 
     if (status === 'success') {
@@ -322,14 +450,28 @@ function copySolveResult(result: GeneratedFaceletSolveResult): FaceletSolveResul
       }
     }
 
-    if (status === 'unavailable_strategy') {
+    if (status === 'generated_tables_unavailable') {
       return {
         ...metadata,
         status,
         ok: false,
-        errorKind: 'unavailable_strategy',
+        errorKind: 'generated_tables_unavailable',
         message:
-          result.message ?? 'The requested solver strategy is known but unavailable.',
+          result.message ??
+          'The generated two-phase pruning tables are unavailable in this environment.',
+        exploredNodes: undefined,
+      }
+    }
+
+    if (status === 'generated_tables_corrupt') {
+      return {
+        ...metadata,
+        status,
+        ok: false,
+        errorKind: 'generated_tables_corrupt',
+        message:
+          result.message ??
+          'The generated two-phase pruning tables are corrupt or incompatible.',
         exploredNodes: undefined,
       }
     }
@@ -338,6 +480,27 @@ function copySolveResult(result: GeneratedFaceletSolveResult): FaceletSolveResul
   } finally {
     result.free()
   }
+}
+
+function generatedTableStatusForResult(
+  status: string,
+  strategyId: string,
+): GeneratedTableStatus {
+  if (status === 'generated_tables_unavailable') {
+    return 'unavailable'
+  }
+
+  if (status === 'generated_tables_corrupt') {
+    return 'corrupt_or_incompatible'
+  }
+
+  if (strategyId !== generatedTwoPhaseStrategyId) {
+    return 'not_required'
+  }
+
+  return status === 'success' || status === 'not_found_within_limits'
+    ? 'available'
+    : 'not_required'
 }
 
 function copyPlaybackResult(

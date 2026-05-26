@@ -1,19 +1,25 @@
 use std::fmt;
+use std::path::Path;
 use std::time::{Duration, Instant};
 
 use crate::cube::{
     Algorithm, Cube, CubeValidationError, CubieState, FaceletConversionError, FaceletParseError,
     FaceletString, Move, NotationError,
 };
+use crate::search::pruning::{PruningPhaseRole, PruningTable, GENERATED_PRUNING_TABLE_SPECS};
 use crate::solver::{
     playback_facelet_solution, solve_cubie_state, solve_facelet_string, FaceletPlaybackError,
     SolveError, SolveInputError, SolverConfig, SolverStrategy,
 };
 
+pub const QUALITY_REPORT_PRUNING_TABLE_DIR: &str = "/tmp/rubiks-cube-solver-pruning-tables";
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum QualityFixtureCategory {
     Solved,
     Shallow,
+    Nontrivial,
+    MidDepth,
     Harder,
 }
 
@@ -22,7 +28,24 @@ impl QualityFixtureCategory {
         match self {
             Self::Solved => "solved",
             Self::Shallow => "shallow",
+            Self::Nontrivial => "nontrivial",
+            Self::MidDepth => "mid_depth",
             Self::Harder => "harder",
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum QualityExpectation {
+    RequiredSuccess,
+    ExpectedNotFoundWithinLimits,
+}
+
+impl QualityExpectation {
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::RequiredSuccess => "required_success",
+            Self::ExpectedNotFoundWithinLimits => "expected_not_found_within_limits",
         }
     }
 }
@@ -47,11 +70,13 @@ pub struct QualityFixture {
     pub id: &'static str,
     pub category: QualityFixtureCategory,
     pub input_kind: QualityInputKind,
+    pub expectation: QualityExpectation,
+    pub solver_expectations: QualityFixtureExpectations,
     pub scramble: &'static str,
     pub max_depth: usize,
     pub max_nodes: Option<usize>,
     pub state: CubieState,
-    pub facelets: Option<String>,
+    pub facelets: String,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -84,7 +109,7 @@ impl QualitySolverSelection {
         }
     }
 
-    pub const fn config(self, max_depth: usize, max_nodes: Option<usize>) -> SolverConfig {
+    pub fn config(self, max_depth: usize, max_nodes: Option<usize>) -> SolverConfig {
         match self {
             Self::DefaultBoundedIdaStar => SolverConfig::with_limits(max_depth, max_nodes),
             Self::ExplicitTwoPhaseBaseline => {
@@ -92,9 +117,52 @@ impl QualitySolverSelection {
             }
             Self::GeneratedTwoPhase => {
                 SolverConfig::with_strategy(max_depth, max_nodes, SolverStrategy::GeneratedTwoPhase)
+                    .with_pruning_table_dir(QUALITY_REPORT_PRUNING_TABLE_DIR)
             }
         }
     }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct QualityFixtureExpectations {
+    pub default_bounded_ida_star: QualityExpectation,
+    pub explicit_two_phase_baseline: QualityExpectation,
+    pub generated_two_phase: QualityExpectation,
+}
+
+impl QualityFixtureExpectations {
+    pub const fn new(
+        default_bounded_ida_star: QualityExpectation,
+        explicit_two_phase_baseline: QualityExpectation,
+        generated_two_phase: QualityExpectation,
+    ) -> Self {
+        Self {
+            default_bounded_ida_star,
+            explicit_two_phase_baseline,
+            generated_two_phase,
+        }
+    }
+
+    pub const fn same(expectation: QualityExpectation) -> Self {
+        Self::new(expectation, expectation, expectation)
+    }
+
+    pub const fn for_selection(
+        self,
+        solver_selection: QualitySolverSelection,
+    ) -> QualityExpectation {
+        match solver_selection {
+            QualitySolverSelection::DefaultBoundedIdaStar => self.default_bounded_ida_star,
+            QualitySolverSelection::ExplicitTwoPhaseBaseline => self.explicit_two_phase_baseline,
+            QualitySolverSelection::GeneratedTwoPhase => self.generated_two_phase,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct QualityGeneratedTableSummary {
+    pub depths: String,
+    pub metadata: String,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -102,6 +170,7 @@ pub enum QualityTableStatus {
     NotRequired,
     Available,
     Unavailable,
+    CorruptOrIncompatible,
 }
 
 impl QualityTableStatus {
@@ -110,6 +179,7 @@ impl QualityTableStatus {
             Self::NotRequired => "not_required",
             Self::Available => "available",
             Self::Unavailable => "unavailable",
+            Self::CorruptOrIncompatible => "corrupt_or_incompatible",
         }
     }
 }
@@ -118,7 +188,9 @@ impl QualityTableStatus {
 pub enum QualityReportStatus {
     Success,
     GeneratedTablesUnavailable,
-    NotFoundWithinLimits,
+    GeneratedTablesCorruptOrIncompatible,
+    ExpectedNotFoundWithinLimits,
+    UnexpectedRegression,
 }
 
 impl QualityReportStatus {
@@ -126,7 +198,11 @@ impl QualityReportStatus {
         match self {
             Self::Success => "success",
             Self::GeneratedTablesUnavailable => "generated_tables_unavailable",
-            Self::NotFoundWithinLimits => "not_found_within_limits",
+            Self::GeneratedTablesCorruptOrIncompatible => {
+                "generated_tables_corrupt_or_incompatible"
+            }
+            Self::ExpectedNotFoundWithinLimits => "expected_not_found_within_limits",
+            Self::UnexpectedRegression => "unexpected_regression",
         }
     }
 }
@@ -136,12 +212,15 @@ pub struct QualityReportRow {
     pub fixture_id: &'static str,
     pub fixture_category: QualityFixtureCategory,
     pub input_kind: QualityInputKind,
+    pub expectation: QualityExpectation,
     pub scramble: &'static str,
     pub solver_selection: QualitySolverSelection,
     pub strategy: SolverStrategy,
     pub max_depth: usize,
     pub max_nodes: Option<usize>,
     pub table_status: QualityTableStatus,
+    pub generated_table_depths: Option<String>,
+    pub generated_table_metadata: Option<String>,
     pub status: QualityReportStatus,
     pub solution_length: Option<usize>,
     pub explored_nodes: usize,
@@ -167,23 +246,26 @@ impl QualityReport {
     pub fn to_markdown(&self) -> String {
         let mut output = String::from(
             "# Deterministic Solver Quality Report\n\n\
-Fixtures, solver selections, table availability, and limits are fixed. Elapsed time is local measurement output; use it as a rough local signal, not as a deterministic value. Compare fixture order, solver selection, table status, configured limits, status, solution length, explored nodes, and replay verification for regressions. This report does not claim optimality or a 20-move guarantee.\n\n\
-| fixture | group | input | scramble | selection | strategy | max_depth | max_nodes | table_status | status | solution_len | explored_nodes | elapsed_us | replay_verified | solution |\n\
-| --- | --- | --- | --- | --- | --- | ---: | ---: | --- | --- | ---: | ---: | ---: | --- | --- |\n",
+Fixtures, solver selections, table availability, expectations, generated artifact metadata, and limits are fixed. Generated two-phase rows read local pruning-table artifacts from /tmp/rubiks-cube-solver-pruning-tables by default. Elapsed time is local measurement output; use it as a rough local signal, not as a deterministic value. Compare fixture order, solver selection, expectation, table status, generated artifact depths, compatibility metadata, configured limits, status, solution length, explored nodes, and replay verification for regressions. This report does not claim optimality or a 20-move guarantee.\n\n\
+| fixture | group | input | expectation | scramble | selection | strategy | max_depth | max_nodes | table_status | table_depths | table_metadata | status | solution_len | explored_nodes | elapsed_us | replay_verified | solution |\n\
+| --- | --- | --- | --- | --- | --- | --- | ---: | ---: | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- |\n",
         );
 
         for row in &self.rows {
             output.push_str(&format!(
-                "| {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |\n",
+                "| {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |\n",
                 row.fixture_id,
                 row.fixture_category.label(),
                 row.input_kind.label(),
+                row.expectation.label(),
                 scramble_label(row.scramble),
                 row.solver_selection.label(),
                 strategy_label(row.strategy),
                 row.max_depth,
                 max_nodes_label(row.max_nodes),
                 row.table_status.label(),
+                optional_str_label(row.generated_table_depths.as_deref()),
+                optional_str_label(row.generated_table_metadata.as_deref()),
                 row.status.label(),
                 optional_usize_label(row.solution_length),
                 row.explored_nodes,
@@ -306,6 +388,7 @@ pub fn quality_fixtures() -> Result<Vec<QualityFixture>, QualityReportError> {
             "solved-facelets",
             QualityFixtureCategory::Solved,
             QualityInputKind::Facelet,
+            QualityExpectation::RequiredSuccess,
             "",
             0,
             Some(1_000),
@@ -314,6 +397,7 @@ pub fn quality_fixtures() -> Result<Vec<QualityFixture>, QualityReportError> {
             "solved-cubie",
             QualityFixtureCategory::Solved,
             QualityInputKind::Cubie,
+            QualityExpectation::RequiredSuccess,
             "",
             0,
             Some(1_000),
@@ -322,6 +406,7 @@ pub fn quality_fixtures() -> Result<Vec<QualityFixture>, QualityReportError> {
             "shallow-facelets-f",
             QualityFixtureCategory::Shallow,
             QualityInputKind::Facelet,
+            QualityExpectation::RequiredSuccess,
             "F",
             1,
             Some(10_000),
@@ -330,14 +415,123 @@ pub fn quality_fixtures() -> Result<Vec<QualityFixture>, QualityReportError> {
             "shallow-cubie-r-u",
             QualityFixtureCategory::Shallow,
             QualityInputKind::Cubie,
+            QualityExpectation::RequiredSuccess,
             "R U",
             2,
             Some(10_000),
+        )
+        .with_solver_expectations(QualityFixtureExpectations::new(
+            QualityExpectation::RequiredSuccess,
+            QualityExpectation::ExpectedNotFoundWithinLimits,
+            QualityExpectation::RequiredSuccess,
+        )),
+        QualityFixtureSpec::new(
+            "nontrivial-facelets-r-u-rprime-uprime",
+            QualityFixtureCategory::Nontrivial,
+            QualityInputKind::Facelet,
+            QualityExpectation::RequiredSuccess,
+            "R U R' U'",
+            4,
+            Some(1_000_000),
+        )
+        .with_solver_expectations(QualityFixtureExpectations::new(
+            QualityExpectation::RequiredSuccess,
+            QualityExpectation::ExpectedNotFoundWithinLimits,
+            QualityExpectation::RequiredSuccess,
+        )),
+        QualityFixtureSpec::new(
+            "nontrivial-cubie-r-u-rprime-uprime",
+            QualityFixtureCategory::Nontrivial,
+            QualityInputKind::Cubie,
+            QualityExpectation::RequiredSuccess,
+            "R U R' U'",
+            4,
+            Some(1_000_000),
+        )
+        .with_solver_expectations(QualityFixtureExpectations::new(
+            QualityExpectation::RequiredSuccess,
+            QualityExpectation::ExpectedNotFoundWithinLimits,
+            QualityExpectation::RequiredSuccess,
+        )),
+        QualityFixtureSpec::new(
+            "mid-depth-facelets-five-move",
+            QualityFixtureCategory::MidDepth,
+            QualityInputKind::Facelet,
+            QualityExpectation::ExpectedNotFoundWithinLimits,
+            "R U R' U' F",
+            4,
+            Some(100_000),
         ),
+        QualityFixtureSpec::new(
+            "mid-depth-cubie-five-move",
+            QualityFixtureCategory::MidDepth,
+            QualityInputKind::Cubie,
+            QualityExpectation::ExpectedNotFoundWithinLimits,
+            "F R U R' U'",
+            4,
+            Some(100_000),
+        ),
+        QualityFixtureSpec::new(
+            "generated-mid-depth-facelets-phase2-five-move",
+            QualityFixtureCategory::MidDepth,
+            QualityInputKind::Facelet,
+            QualityExpectation::ExpectedNotFoundWithinLimits,
+            "U R2 F2 D L2",
+            6,
+            Some(1_000_000),
+        )
+        .with_solver_expectations(QualityFixtureExpectations::new(
+            QualityExpectation::ExpectedNotFoundWithinLimits,
+            QualityExpectation::ExpectedNotFoundWithinLimits,
+            QualityExpectation::RequiredSuccess,
+        )),
+        QualityFixtureSpec::new(
+            "generated-mid-depth-cubie-phase2-five-move",
+            QualityFixtureCategory::MidDepth,
+            QualityInputKind::Cubie,
+            QualityExpectation::ExpectedNotFoundWithinLimits,
+            "U R2 F2 D L2",
+            6,
+            Some(1_000_000),
+        )
+        .with_solver_expectations(QualityFixtureExpectations::new(
+            QualityExpectation::ExpectedNotFoundWithinLimits,
+            QualityExpectation::ExpectedNotFoundWithinLimits,
+            QualityExpectation::RequiredSuccess,
+        )),
+        QualityFixtureSpec::new(
+            "generated-harder-facelets-phase2-eight-move",
+            QualityFixtureCategory::Harder,
+            QualityInputKind::Facelet,
+            QualityExpectation::ExpectedNotFoundWithinLimits,
+            "U R2 F2 D L2 B2 U2 R2",
+            8,
+            Some(1_000_000),
+        )
+        .with_solver_expectations(QualityFixtureExpectations::new(
+            QualityExpectation::ExpectedNotFoundWithinLimits,
+            QualityExpectation::ExpectedNotFoundWithinLimits,
+            QualityExpectation::RequiredSuccess,
+        )),
+        QualityFixtureSpec::new(
+            "generated-harder-cubie-phase2-eight-move",
+            QualityFixtureCategory::Harder,
+            QualityInputKind::Cubie,
+            QualityExpectation::ExpectedNotFoundWithinLimits,
+            "U R2 F2 D L2 B2 U2 R2",
+            8,
+            Some(1_000_000),
+        )
+        .with_solver_expectations(QualityFixtureExpectations::new(
+            QualityExpectation::ExpectedNotFoundWithinLimits,
+            QualityExpectation::ExpectedNotFoundWithinLimits,
+            QualityExpectation::RequiredSuccess,
+        )),
         QualityFixtureSpec::new(
             "harder-facelets-six-move",
             QualityFixtureCategory::Harder,
             QualityInputKind::Facelet,
+            QualityExpectation::ExpectedNotFoundWithinLimits,
             "F R U R' U' F'",
             2,
             Some(50_000),
@@ -346,6 +540,7 @@ pub fn quality_fixtures() -> Result<Vec<QualityFixture>, QualityReportError> {
             "harder-cubie-nine-move",
             QualityFixtureCategory::Harder,
             QualityInputKind::Cubie,
+            QualityExpectation::ExpectedNotFoundWithinLimits,
             "R U R' U' F2 D L' B U2",
             2,
             Some(50_000),
@@ -365,15 +560,78 @@ pub fn run_quality_report() -> Result<QualityReport, QualityReportError> {
 pub fn run_quality_report_for_fixtures(
     fixtures: &[QualityFixture],
 ) -> Result<QualityReport, QualityReportError> {
+    run_quality_report_for_fixtures_with_pruning_table_dir(
+        fixtures,
+        Path::new(QUALITY_REPORT_PRUNING_TABLE_DIR),
+    )
+}
+
+pub fn run_quality_report_for_fixtures_with_pruning_table_dir(
+    fixtures: &[QualityFixture],
+    generated_pruning_table_dir: impl AsRef<Path>,
+) -> Result<QualityReport, QualityReportError> {
+    let generated_pruning_table_dir = generated_pruning_table_dir.as_ref();
+    let generated_table_summary = generated_table_summary(generated_pruning_table_dir).ok();
     let mut rows = Vec::with_capacity(fixtures.len() * QualitySolverSelection::ALL.len());
 
     for fixture in fixtures {
+        validate_quality_fixture(fixture)?;
+
         for solver_selection in QualitySolverSelection::ALL {
-            rows.push(run_quality_row(fixture, solver_selection)?);
+            rows.push(run_quality_row(
+                fixture,
+                solver_selection,
+                generated_pruning_table_dir,
+                generated_table_summary.as_ref(),
+            )?);
         }
     }
 
     Ok(QualityReport::new(rows))
+}
+
+fn validate_quality_fixture(fixture: &QualityFixture) -> Result<(), QualityReportError> {
+    fixture
+        .state
+        .validate()
+        .map_err(|error| QualityReportError::FixtureCubieValidation {
+            fixture_id: fixture.id,
+            error,
+        })?;
+
+    let parsed = FaceletString::parse(&fixture.facelets).map_err(|error| {
+        QualityReportError::FixtureFaceletParse {
+            fixture_id: fixture.id,
+            error,
+        }
+    })?;
+    let recovered =
+        parsed
+            .to_cubie_state()
+            .map_err(|error| QualityReportError::FixtureFaceletConversion {
+                fixture_id: fixture.id,
+                error: Box::new(error),
+            })?;
+
+    if recovered != fixture.state {
+        return Err(QualityReportError::FixtureRoundTripMismatch {
+            fixture_id: fixture.id,
+        });
+    }
+
+    let cube = Cube::try_from_state(fixture.state.clone()).map_err(|error| {
+        QualityReportError::FixtureCubieValidation {
+            fixture_id: fixture.id,
+            error,
+        }
+    })?;
+    if FaceletString::from_cube(&cube).to_string() != fixture.facelets {
+        return Err(QualityReportError::FixtureRoundTripMismatch {
+            fixture_id: fixture.id,
+        });
+    }
+
+    Ok(())
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -381,6 +639,8 @@ struct QualityFixtureSpec {
     id: &'static str,
     category: QualityFixtureCategory,
     input_kind: QualityInputKind,
+    expectation: QualityExpectation,
+    solver_expectations: QualityFixtureExpectations,
     scramble: &'static str,
     max_depth: usize,
     max_nodes: Option<usize>,
@@ -391,6 +651,7 @@ impl QualityFixtureSpec {
         id: &'static str,
         category: QualityFixtureCategory,
         input_kind: QualityInputKind,
+        expectation: QualityExpectation,
         scramble: &'static str,
         max_depth: usize,
         max_nodes: Option<usize>,
@@ -399,10 +660,21 @@ impl QualityFixtureSpec {
             id,
             category,
             input_kind,
+            expectation,
+            solver_expectations: QualityFixtureExpectations::same(expectation),
             scramble,
             max_depth,
             max_nodes,
         }
+    }
+
+    const fn with_solver_expectations(
+        mut self,
+        solver_expectations: QualityFixtureExpectations,
+    ) -> Self {
+        self.solver_expectations = solver_expectations;
+
+        self
     }
 
     fn build(self) -> Result<QualityFixture, QualityReportError> {
@@ -425,15 +697,14 @@ impl QualityFixtureSpec {
                 error,
             })?;
 
-        let facelets = match self.input_kind {
-            QualityInputKind::Facelet => Some(validated_facelets(self.id, &cube, &state)?),
-            QualityInputKind::Cubie => None,
-        };
+        let facelets = validated_facelets(self.id, &cube, &state)?;
 
         Ok(QualityFixture {
             id: self.id,
             category: self.category,
             input_kind: self.input_kind,
+            expectation: self.expectation,
+            solver_expectations: self.solver_expectations,
             scramble: self.scramble,
             max_depth: self.max_depth,
             max_nodes: self.max_nodes,
@@ -466,125 +737,249 @@ fn validated_facelets(
     Ok(rendered)
 }
 
+fn generated_table_summary(directory: &Path) -> Result<QualityGeneratedTableSummary, ()> {
+    let mut phase1_depths = Vec::new();
+    let mut phase2_depths = Vec::new();
+    let mut format_versions = Vec::new();
+    let mut table_versions = Vec::new();
+    let mut move_sets = Vec::new();
+    let mut sources = Vec::new();
+    let mut coordinate_profiles = Vec::new();
+
+    for spec in GENERATED_PRUNING_TABLE_SPECS {
+        let path = spec.file_path(directory);
+        let table = PruningTable::load_artifact(&path).map_err(|_| ())?;
+        spec.validate_table(&table, &path).map_err(|_| ())?;
+        let metadata = table.metadata();
+
+        match metadata.phase_role {
+            PruningPhaseRole::Phase1 => phase1_depths.push(metadata.generation.max_depth),
+            PruningPhaseRole::Phase2 => phase2_depths.push(metadata.generation.max_depth),
+        }
+        if !format_versions.contains(&metadata.format_version) {
+            format_versions.push(metadata.format_version);
+        }
+        table_versions.push(metadata.table_version.clone());
+        if !move_sets.contains(&metadata.generation.move_set) {
+            move_sets.push(metadata.generation.move_set.clone());
+        }
+        if !sources.contains(&metadata.generation.source) {
+            sources.push(metadata.generation.source.clone());
+        }
+        coordinate_profiles.push(format!(
+            "{}[{}]",
+            metadata.table_version,
+            coordinate_profile_label(metadata)
+        ));
+    }
+
+    Ok(QualityGeneratedTableSummary {
+        depths: format!(
+            "phase1={};phase2={}",
+            u8_list_label(&phase1_depths),
+            u8_list_label(&phase2_depths)
+        ),
+        metadata: format!(
+            "format={};tables={};versions={};move_sets={};sources={};coordinates={}",
+            u16_list_label(&format_versions),
+            GENERATED_PRUNING_TABLE_SPECS.len(),
+            table_versions.join(","),
+            move_sets.join(","),
+            sources.join(","),
+            coordinate_profiles.join(",")
+        ),
+    })
+}
+
+fn coordinate_profile_label(metadata: &crate::search::pruning::PruningTableMetadata) -> String {
+    metadata
+        .coordinates
+        .iter()
+        .map(|coordinate| format!("{}:{}", coordinate.name, coordinate.dimension))
+        .collect::<Vec<_>>()
+        .join("+")
+}
+
 fn run_quality_row(
     fixture: &QualityFixture,
     solver_selection: QualitySolverSelection,
+    generated_pruning_table_dir: &Path,
+    generated_table_summary: Option<&QualityGeneratedTableSummary>,
 ) -> Result<QualityReportRow, QualityReportError> {
-    let config = solver_selection.config(fixture.max_depth, fixture.max_nodes);
+    let expectation = expectation_for(fixture, solver_selection);
+    let mut config = solver_selection.config(fixture.max_depth, fixture.max_nodes);
+    if config.strategy == SolverStrategy::GeneratedTwoPhase {
+        config = config.with_pruning_table_dir(generated_pruning_table_dir.to_path_buf());
+    }
     let started = Instant::now();
     let result = match fixture.input_kind {
-        QualityInputKind::Facelet => solve_facelet_string(
-            fixture
-                .facelets
-                .as_deref()
-                .expect("facelet fixtures must store rendered facelets"),
-            config.clone(),
-        ),
+        QualityInputKind::Facelet => solve_facelet_string(&fixture.facelets, config.clone()),
         QualityInputKind::Cubie => solve_cubie_state(fixture.state.clone(), config.clone()),
     };
     let elapsed = started.elapsed();
 
     match result {
         Ok(result) => {
-            let replay_verified = replay_verifies(fixture, solver_selection, result.moves())?;
-            if !replay_verified {
-                return Err(QualityReportError::UnverifiedSuccess {
-                    fixture_id: fixture.id,
-                    solver_selection,
-                });
-            }
+            let replay_verified = replay_verifies(fixture, result.moves());
+            let status = if replay_verified {
+                QualityReportStatus::Success
+            } else {
+                QualityReportStatus::UnexpectedRegression
+            };
 
-            Ok(QualityReportRow {
-                fixture_id: fixture.id,
-                fixture_category: fixture.category,
-                input_kind: fixture.input_kind,
-                scramble: fixture.scramble,
+            Ok(report_row(
+                fixture,
                 solver_selection,
-                strategy: config.strategy,
-                max_depth: config.max_depth,
-                max_nodes: config.max_nodes,
-                table_status: table_status_for_success(config.strategy),
-                status: QualityReportStatus::Success,
-                solution_length: Some(result.length()),
-                explored_nodes: result.explored_nodes(),
+                expectation,
+                &config,
+                table_status_for_success(config.strategy),
+                generated_table_summary,
+                status,
+                Some(result.length()),
+                result.explored_nodes(),
                 elapsed,
-                replay_verified: Some(true),
-                moves: result.moves,
-            })
+                Some(replay_verified),
+                result.moves,
+            ))
         }
-        Err(SolveError::NotFoundWithinLimits { explored_nodes, .. }) => Ok(QualityReportRow {
-            fixture_id: fixture.id,
-            fixture_category: fixture.category,
-            input_kind: fixture.input_kind,
-            scramble: fixture.scramble,
-            solver_selection,
-            strategy: config.strategy,
-            max_depth: config.max_depth,
-            max_nodes: config.max_nodes,
-            table_status: table_status_for_success(config.strategy),
-            status: QualityReportStatus::NotFoundWithinLimits,
-            solution_length: None,
-            explored_nodes,
-            elapsed,
-            replay_verified: None,
-            moves: Vec::new(),
-        }),
-        Err(SolveError::GeneratedTablesUnavailable { .. }) => Ok(QualityReportRow {
-            fixture_id: fixture.id,
-            fixture_category: fixture.category,
-            input_kind: fixture.input_kind,
-            scramble: fixture.scramble,
-            solver_selection,
-            strategy: config.strategy,
-            max_depth: config.max_depth,
-            max_nodes: config.max_nodes,
-            table_status: QualityTableStatus::Unavailable,
-            status: QualityReportStatus::GeneratedTablesUnavailable,
-            solution_length: None,
-            explored_nodes: 0,
-            elapsed,
-            replay_verified: None,
-            moves: Vec::new(),
-        }),
-        Err(SolveError::InvalidInput { error }) => {
-            Err(QualityReportError::UnexpectedInvalidInput {
-                fixture_id: fixture.id,
+        Err(SolveError::NotFoundWithinLimits { explored_nodes, .. }) => {
+            let status = match expectation {
+                QualityExpectation::RequiredSuccess => QualityReportStatus::UnexpectedRegression,
+                QualityExpectation::ExpectedNotFoundWithinLimits => {
+                    QualityReportStatus::ExpectedNotFoundWithinLimits
+                }
+            };
+
+            Ok(report_row(
+                fixture,
                 solver_selection,
-                error: Box::new(error),
-            })
+                expectation,
+                &config,
+                table_status_for_success(config.strategy),
+                generated_table_summary,
+                status,
+                None,
+                explored_nodes,
+                elapsed,
+                None,
+                Vec::new(),
+            ))
         }
+        Err(SolveError::GeneratedTablesUnavailable { .. }) => Ok(report_row(
+            fixture,
+            solver_selection,
+            expectation,
+            &config,
+            QualityTableStatus::Unavailable,
+            generated_table_summary,
+            QualityReportStatus::GeneratedTablesUnavailable,
+            None,
+            0,
+            elapsed,
+            None,
+            Vec::new(),
+        )),
+        Err(SolveError::GeneratedTablesCorrupt { .. }) => Ok(report_row(
+            fixture,
+            solver_selection,
+            expectation,
+            &config,
+            QualityTableStatus::CorruptOrIncompatible,
+            generated_table_summary,
+            QualityReportStatus::GeneratedTablesCorruptOrIncompatible,
+            None,
+            0,
+            elapsed,
+            None,
+            Vec::new(),
+        )),
+        Err(SolveError::InvalidInput { .. }) => Ok(report_row(
+            fixture,
+            solver_selection,
+            expectation,
+            &config,
+            table_status_for_success(config.strategy),
+            generated_table_summary,
+            QualityReportStatus::UnexpectedRegression,
+            None,
+            0,
+            elapsed,
+            None,
+            Vec::new(),
+        )),
     }
 }
 
-fn replay_verifies(
+#[allow(clippy::too_many_arguments)]
+fn report_row(
     fixture: &QualityFixture,
     solver_selection: QualitySolverSelection,
-    moves: &[Move],
-) -> Result<bool, QualityReportError> {
+    expectation: QualityExpectation,
+    config: &SolverConfig,
+    table_status: QualityTableStatus,
+    generated_table_summary: Option<&QualityGeneratedTableSummary>,
+    status: QualityReportStatus,
+    solution_length: Option<usize>,
+    explored_nodes: usize,
+    elapsed: Duration,
+    replay_verified: Option<bool>,
+    moves: Vec<Move>,
+) -> QualityReportRow {
+    let (generated_table_depths, generated_table_metadata) = if config.strategy
+        == SolverStrategy::GeneratedTwoPhase
+        && table_status == QualityTableStatus::Available
+    {
+        generated_table_summary
+            .map(|summary| (Some(summary.depths.clone()), Some(summary.metadata.clone())))
+            .unwrap_or((None, None))
+    } else {
+        (None, None)
+    };
+
+    QualityReportRow {
+        fixture_id: fixture.id,
+        fixture_category: fixture.category,
+        input_kind: fixture.input_kind,
+        expectation,
+        scramble: fixture.scramble,
+        solver_selection,
+        strategy: config.strategy,
+        max_depth: config.max_depth,
+        max_nodes: config.max_nodes,
+        table_status,
+        generated_table_depths,
+        generated_table_metadata,
+        status,
+        solution_length,
+        explored_nodes,
+        elapsed,
+        replay_verified,
+        moves,
+    }
+}
+
+fn expectation_for(
+    fixture: &QualityFixture,
+    solver_selection: QualitySolverSelection,
+) -> QualityExpectation {
+    fixture.solver_expectations.for_selection(solver_selection)
+}
+
+fn replay_verifies(fixture: &QualityFixture, moves: &[Move]) -> bool {
     match fixture.input_kind {
-        QualityInputKind::Facelet => Ok(playback_facelet_solution(
-            fixture
-                .facelets
-                .as_deref()
-                .expect("facelet fixtures must store rendered facelets"),
+        QualityInputKind::Facelet => playback_facelet_solution(
+            &fixture.facelets,
             &Algorithm::new(moves.to_vec()).to_string(),
         )
-        .map_err(|error| QualityReportError::ReplayFailure {
-            fixture_id: fixture.id,
-            solver_selection,
-            error: Box::new(error),
-        })?
-        .final_is_solved()),
+        .map(|result| result.final_is_solved())
+        .unwrap_or(false),
         QualityInputKind::Cubie => {
-            let mut cube = Cube::try_from_state(fixture.state.clone()).map_err(|error| {
-                QualityReportError::FixtureCubieValidation {
-                    fixture_id: fixture.id,
-                    error,
-                }
-            })?;
+            let Ok(mut cube) = Cube::try_from_state(fixture.state.clone()) else {
+                return false;
+            };
             cube.apply_moves(moves);
 
-            Ok(cube.is_solved())
+            cube.is_solved()
         }
     }
 }
@@ -614,14 +1009,34 @@ fn max_nodes_label(max_nodes: Option<usize>) -> String {
     max_nodes.map_or_else(|| "unlimited".to_owned(), |max_nodes| max_nodes.to_string())
 }
 
+fn optional_str_label(value: Option<&str>) -> &str {
+    value.unwrap_or("-")
+}
+
 fn optional_usize_label(value: Option<usize>) -> String {
     value.map_or_else(|| "-".to_owned(), |value| value.to_string())
 }
 
+fn u8_list_label(values: &[u8]) -> String {
+    values
+        .iter()
+        .map(u8::to_string)
+        .collect::<Vec<_>>()
+        .join("/")
+}
+
+fn u16_list_label(values: &[u16]) -> String {
+    values
+        .iter()
+        .map(u16::to_string)
+        .collect::<Vec<_>>()
+        .join("/")
+}
+
 fn replay_verified_label(value: Option<bool>) -> &'static str {
     match value {
-        Some(true) => "yes",
-        Some(false) => "no",
+        Some(true) => "true",
+        Some(false) => "false",
         None => "-",
     }
 }

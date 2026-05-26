@@ -16,6 +16,7 @@
     "pretest:e2e": "npm run wasm:build && npm run build",
     "test:e2e": "playwright test",
     "wasm:build": "wasm-pack build crates/wasm --target web --out-dir pkg",
+    "pruning:web:generate": "cargo run --quiet -p cube-engine --bin generate_pruning_tables -- --output apps/web/public/generated-pruning-tables --max-depth 6",
     "solver:bench": "cargo run --quiet -p cube-engine --bin solver_quality_report",
     "roadmap:check": "roadrunner check --roadmap roadmap.md",
     "roadmap:cleanup": "roadrunner cleanup --roadmap roadmap.md",

@@ -24,12 +24,14 @@ pub use cube::{
 pub use search::{
     depth_limited_search, solve_bfs, solve_ida_star, solve_ida_star_bounded,
     solve_ida_star_bounded_with_heuristic, solve_ida_star_with_heuristic, solve_iddfs,
-    CornerOrientationHeuristic, EdgeOrientationHeuristic, GeneratedTwoPhaseError, Heuristic,
-    MaxHeuristic, MisplacedCubiesHeuristic, SearchBudget, SearchOutcome, SearchSolution,
-    ZeroHeuristic,
+    CornerOrientationHeuristic, EdgeOrientationHeuristic, GeneratedPruningTableArtifact,
+    GeneratedTwoPhaseError, Heuristic, MaxHeuristic, MisplacedCubiesHeuristic, SearchBudget,
+    SearchOutcome, SearchSolution, ZeroHeuristic,
 };
 pub use solver::{
-    playback_facelet_solution, solve_cube, solve_cubie_state, solve_facelet_string,
-    validate_facelet_string, FaceletPlaybackError, FaceletPlaybackResult, SolveError,
-    SolveInputError, SolveMetrics, SolveResult, SolverConfig, SolverStrategy,
+    playback_facelet_solution, solve_cube, solve_cube_with_generated_pruning_tables,
+    solve_cubie_state, solve_cubie_state_with_generated_pruning_tables, solve_facelet_string,
+    solve_facelet_string_with_generated_pruning_tables, validate_facelet_string,
+    FaceletPlaybackError, FaceletPlaybackResult, SolveError, SolveInputError, SolveMetrics,
+    SolveResult, SolverConfig, SolverStrategy,
 };

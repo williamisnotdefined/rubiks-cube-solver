@@ -1,21 +1,88 @@
+use cube_engine::search::pruning::GENERATED_PRUNING_TABLE_SPECS;
+use cube_engine::solver::SolverStrategyMetadata as EngineSolverStrategyMetadata;
 use cube_engine::{
     playback_facelet_solution as playback_engine_facelet_solution,
     solve_facelet_string as solve_engine_facelet_string,
+    solve_facelet_string_with_generated_pruning_tables as solve_engine_facelet_string_with_generated_pruning_tables,
     validate_facelet_string as validate_engine_facelet_string, Cube, CubeValidationError,
     FaceletConversionError, FaceletParseError, FaceletPlaybackError,
-    FaceletPlaybackResult as EngineFaceletPlaybackResult, FaceletString, SolveError,
-    SolveInputError, SolveResult, SolverConfig, SolverStrategy,
+    FaceletPlaybackResult as EngineFaceletPlaybackResult, FaceletString,
+    GeneratedPruningTableArtifact, SolveError, SolveInputError, SolveResult, SolverConfig,
+    SolverStrategy,
 };
 use wasm_bindgen::prelude::*;
-
-const UNAVAILABLE_GENERATED_TWO_PHASE_STRATEGY_ID: &str = "generated-two-phase";
-const UNAVAILABLE_GENERATED_TWO_PHASE_LABEL: &str = "Generated two-phase solver";
-const UNAVAILABLE_GENERATED_TWO_PHASE_MODE: &str = "unavailable_generated_two_phase";
-const AVAILABLE_STRATEGY_IDS: &str = "bounded-ida-star, two-phase-baseline";
 
 #[wasm_bindgen]
 pub fn solved_facelet_string() -> String {
     FaceletString::from_cube(&Cube::solved()).to_string()
+}
+
+#[wasm_bindgen]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SolverStrategyMetadata {
+    id: String,
+    label: String,
+    solver_mode: String,
+    status_text: String,
+}
+
+#[wasm_bindgen]
+impl SolverStrategyMetadata {
+    #[wasm_bindgen(getter)]
+    pub fn id(&self) -> String {
+        self.id.clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn label(&self) -> String {
+        self.label.clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn solver_mode(&self) -> String {
+        self.solver_mode.clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn status_text(&self) -> String {
+        self.status_text.clone()
+    }
+}
+
+impl SolverStrategyMetadata {
+    fn from_engine(metadata: EngineSolverStrategyMetadata) -> Self {
+        Self {
+            id: metadata.id.to_owned(),
+            label: metadata.label.to_owned(),
+            solver_mode: metadata.solver_mode.to_owned(),
+            status_text: metadata.status_text.to_owned(),
+        }
+    }
+}
+
+#[wasm_bindgen]
+pub fn solver_strategy_count() -> usize {
+    SolverStrategy::ALL.len()
+}
+
+#[wasm_bindgen]
+pub fn solver_strategy_metadata(index: usize) -> SolverStrategyMetadata {
+    SolverStrategyMetadata::from_engine(SolverStrategy::ALL[index].metadata())
+}
+
+#[wasm_bindgen]
+pub fn supported_solver_strategy_ids() -> String {
+    SolverStrategy::supported_strategy_ids()
+}
+
+#[wasm_bindgen]
+pub fn generated_pruning_table_artifact_count() -> usize {
+    GENERATED_PRUNING_TABLE_SPECS.len()
+}
+
+#[wasm_bindgen]
+pub fn generated_pruning_table_file_name(index: usize) -> String {
+    GENERATED_PRUNING_TABLE_SPECS[index].file_name.to_owned()
 }
 
 #[wasm_bindgen]
@@ -297,55 +364,59 @@ impl FaceletSolveResult {
             solver_mode: "unsupported_strategy".to_owned(),
             explored_nodes: None,
             error_kind: Some("unsupported_strategy".to_owned()),
-            message: Some(format!(
-                "Unsupported solver strategy \"{displayed_strategy}\". Supported strategies: {AVAILABLE_STRATEGY_IDS}."
+            message: Some(SolverStrategy::unsupported_strategy_message(
+                displayed_strategy,
             )),
-        }
-    }
-
-    fn unavailable_strategy(
-        requested_strategy: &str,
-        strategy_label: &str,
-        solver_mode: &str,
-        max_depth: usize,
-        max_nodes: Option<usize>,
-    ) -> Self {
-        Self {
-            status: "unavailable_strategy".to_owned(),
-            ok: false,
-            moves: Vec::new(),
-            length: 0,
-            max_depth,
-            max_nodes,
-            strategy_id: requested_strategy.to_owned(),
-            strategy_label: strategy_label.to_owned(),
-            solver_mode: solver_mode.to_owned(),
-            explored_nodes: None,
-            error_kind: Some("unavailable_strategy".to_owned()),
-            message: Some(
-                "The generated two-phase solver is unavailable because full generated pruning tables are absent. Use bounded-ida-star by default or the limited two-phase baseline for fixture-covered states."
-                    .to_owned(),
-            ),
         }
     }
 
     fn failure(error: SolveError, request_config: SolverConfig) -> Self {
         match error {
             SolveError::InvalidInput { error } => Self::invalid_input(error, request_config),
-            SolveError::GeneratedTablesUnavailable { config, error } => Self {
-                status: "unavailable_strategy".to_owned(),
-                ok: false,
-                moves: Vec::new(),
-                length: 0,
-                max_depth: config.max_depth,
-                max_nodes: config.max_nodes,
-                strategy_id: config.strategy.id().to_owned(),
-                strategy_label: config.strategy.label().to_owned(),
-                solver_mode: config.strategy.solver_mode().to_owned(),
-                explored_nodes: Some(0),
-                error_kind: Some("generated_tables_unavailable".to_owned()),
-                message: Some(error.to_string()),
-            },
+            SolveError::GeneratedTablesUnavailable { config, error } => {
+                let message = SolveError::GeneratedTablesUnavailable {
+                    config: config.clone(),
+                    error,
+                }
+                .to_string();
+
+                Self {
+                    status: "generated_tables_unavailable".to_owned(),
+                    ok: false,
+                    moves: Vec::new(),
+                    length: 0,
+                    max_depth: config.max_depth,
+                    max_nodes: config.max_nodes,
+                    strategy_id: config.strategy.id().to_owned(),
+                    strategy_label: config.strategy.label().to_owned(),
+                    solver_mode: config.strategy.solver_mode().to_owned(),
+                    explored_nodes: None,
+                    error_kind: Some("generated_tables_unavailable".to_owned()),
+                    message: Some(message),
+                }
+            }
+            SolveError::GeneratedTablesCorrupt { config, error } => {
+                let message = SolveError::GeneratedTablesCorrupt {
+                    config: config.clone(),
+                    error,
+                }
+                .to_string();
+
+                Self {
+                    status: "generated_tables_corrupt".to_owned(),
+                    ok: false,
+                    moves: Vec::new(),
+                    length: 0,
+                    max_depth: config.max_depth,
+                    max_nodes: config.max_nodes,
+                    strategy_id: config.strategy.id().to_owned(),
+                    strategy_label: config.strategy.label().to_owned(),
+                    solver_mode: config.strategy.solver_mode().to_owned(),
+                    explored_nodes: None,
+                    error_kind: Some("generated_tables_corrupt".to_owned()),
+                    message: Some(message),
+                }
+            }
             SolveError::NotFoundWithinLimits {
                 config,
                 explored_nodes,
@@ -372,10 +443,7 @@ pub fn solve_facelet_string(
 ) -> FaceletSolveResult {
     let config = SolverConfig::with_limits(max_depth, max_nodes);
 
-    match solve_engine_facelet_string(input, config.clone()) {
-        Ok(result) => FaceletSolveResult::success(result, config),
-        Err(error) => FaceletSolveResult::failure(error, config),
-    }
+    solve_facelets_with_config(input, config)
 }
 
 #[wasm_bindgen]
@@ -387,25 +455,61 @@ pub fn solve_facelet_string_with_strategy(
 ) -> FaceletSolveResult {
     let requested_strategy = strategy_id.trim();
 
-    if requested_strategy == UNAVAILABLE_GENERATED_TWO_PHASE_STRATEGY_ID {
-        return FaceletSolveResult::unavailable_strategy(
-            requested_strategy,
-            UNAVAILABLE_GENERATED_TWO_PHASE_LABEL,
-            UNAVAILABLE_GENERATED_TWO_PHASE_MODE,
-            max_depth,
-            max_nodes,
-        );
-    }
-
     let Some(strategy) = SolverStrategy::from_id(requested_strategy) else {
         return FaceletSolveResult::unsupported_strategy(requested_strategy, max_depth, max_nodes);
     };
 
     let config = SolverConfig::with_strategy(max_depth, max_nodes, strategy);
 
+    solve_facelets_with_config(input, config)
+}
+
+#[wasm_bindgen]
+pub fn solve_facelet_string_with_generated_pruning_tables(
+    input: &str,
+    max_depth: usize,
+    max_nodes: Option<usize>,
+    table0_available: bool,
+    table0_bytes: &[u8],
+    table1_available: bool,
+    table1_bytes: &[u8],
+    table2_available: bool,
+    table2_bytes: &[u8],
+    table3_available: bool,
+    table3_bytes: &[u8],
+    table4_available: bool,
+    table4_bytes: &[u8],
+) -> FaceletSolveResult {
+    let artifacts = [
+        generated_artifact(table0_available, table0_bytes),
+        generated_artifact(table1_available, table1_bytes),
+        generated_artifact(table2_available, table2_bytes),
+        generated_artifact(table3_available, table3_bytes),
+        generated_artifact(table4_available, table4_bytes),
+    ];
+    let config =
+        SolverConfig::with_strategy(max_depth, max_nodes, SolverStrategy::GeneratedTwoPhase);
+
+    match solve_engine_facelet_string_with_generated_pruning_tables(
+        input, max_depth, max_nodes, &artifacts,
+    ) {
+        Ok(result) => FaceletSolveResult::success(result, config),
+        Err(error) => FaceletSolveResult::failure(error, config),
+    }
+}
+
+fn solve_facelets_with_config(input: &str, config: SolverConfig) -> FaceletSolveResult {
     match solve_engine_facelet_string(input, config.clone()) {
         Ok(result) => FaceletSolveResult::success(result, config),
         Err(error) => FaceletSolveResult::failure(error, config),
+    }
+}
+
+fn generated_artifact<'a>(available: bool, bytes: &'a [u8]) -> GeneratedPruningTableArtifact<'a> {
+    if available {
+        GeneratedPruningTableArtifact::available(bytes)
+    } else {
+        GeneratedPruningTableArtifact::unavailable()
     }
 }
 
@@ -480,7 +584,16 @@ fn cubie_validation_error_kind(error: &CubeValidationError) -> &'static str {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use cube_engine::search::pruning::{
+        generate_all_pruning_tables, GENERATED_PRUNING_TABLE_SPECS,
+    };
+    use cube_engine::solver::quality::{
+        quality_fixtures, QualityExpectation, QualitySolverSelection,
+    };
     use cube_engine::{Algorithm, Move};
+    use std::fs;
+    use std::path::{Path, PathBuf};
+    use std::sync::OnceLock;
 
     const SOLVED_FACELETS: &str = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB";
 
@@ -517,6 +630,39 @@ mod tests {
         assert!(result.ok());
         assert_eq!(result.kind(), None);
         assert_eq!(result.message(), None);
+    }
+
+    #[test]
+    fn solver_strategy_metadata_exposes_engine_owned_options() {
+        assert_eq!(solver_strategy_count(), 3);
+        assert_eq!(
+            supported_solver_strategy_ids(),
+            "bounded-ida-star, two-phase-baseline, generated-two-phase"
+        );
+
+        let bounded = solver_strategy_metadata(0);
+        assert_eq!(bounded.id(), "bounded-ida-star");
+        assert_eq!(bounded.label(), "Bounded IDA*");
+        assert_eq!(bounded.solver_mode(), "bounded_ida_star");
+        assert!(bounded.status_text().contains("Default product fallback"));
+
+        let generated = solver_strategy_metadata(2);
+        assert_eq!(generated.id(), "generated-two-phase");
+        assert_eq!(generated.label(), "Generated two-phase solver");
+        assert_eq!(generated.solver_mode(), "generated_two_phase");
+        assert!(generated.status_text().contains("Generated-table solver"));
+    }
+
+    #[test]
+    fn generated_pruning_table_artifact_metadata_is_exported() {
+        assert_eq!(
+            generated_pruning_table_artifact_count(),
+            GENERATED_PRUNING_TABLE_SPECS.len()
+        );
+
+        for (index, spec) in GENERATED_PRUNING_TABLE_SPECS.iter().enumerate() {
+            assert_eq!(generated_pruning_table_file_name(index), spec.file_name);
+        }
     }
 
     #[test]
@@ -632,37 +778,194 @@ mod tests {
         assert!(result
             .message()
             .is_some_and(|message| message.contains("bounded-ida-star")));
+        assert!(result
+            .message()
+            .is_some_and(|message| message.contains("two-phase-baseline")));
+        assert!(result
+            .message()
+            .is_some_and(|message| message.contains("generated-two-phase")));
     }
 
     #[test]
-    fn strategy_aware_solve_reports_unavailable_generated_two_phase() {
-        let result = solve_facelet_string_with_strategy(
-            SOLVED_FACELETS,
-            0,
-            None,
-            UNAVAILABLE_GENERATED_TWO_PHASE_STRATEGY_ID,
-        );
+    fn strategy_aware_solve_delegates_generated_two_phase() {
+        let result =
+            solve_facelet_string_with_strategy(SOLVED_FACELETS, 0, None, "generated-two-phase");
+
+        assert_eq!(result.strategy_id(), "generated-two-phase");
+        assert_eq!(result.strategy_label(), "Generated two-phase solver");
+        assert_eq!(result.solver_mode(), "generated_two_phase");
+        assert!(matches!(
+            result.status().as_str(),
+            "success" | "generated_tables_unavailable" | "generated_tables_corrupt"
+        ));
+    }
+
+    #[test]
+    fn generated_two_phase_missing_tables_maps_to_stable_status() {
+        let config = SolverConfig::with_strategy(0, None, SolverStrategy::GeneratedTwoPhase)
+            .with_pruning_table_dir(missing_pruning_table_dir());
+        let result = solve_facelets_with_config(SOLVED_FACELETS, config);
 
         assert!(!result.ok());
-        assert_eq!(result.status(), "unavailable_strategy");
+        assert_eq!(result.status(), "generated_tables_unavailable");
         assert!(result.moves().is_empty());
         assert_eq!(result.length(), 0);
         assert_eq!(result.max_depth(), 0);
         assert_eq!(result.max_nodes(), None);
-        assert_eq!(
-            result.strategy_id(),
-            UNAVAILABLE_GENERATED_TWO_PHASE_STRATEGY_ID
-        );
-        assert_eq!(
-            result.strategy_label(),
-            UNAVAILABLE_GENERATED_TWO_PHASE_LABEL
-        );
-        assert_eq!(result.solver_mode(), UNAVAILABLE_GENERATED_TWO_PHASE_MODE);
+        assert_eq!(result.strategy_id(), "generated-two-phase");
+        assert_eq!(result.strategy_label(), "Generated two-phase solver");
+        assert_eq!(result.solver_mode(), "generated_two_phase");
         assert_eq!(result.explored_nodes(), None);
-        assert_eq!(result.error_kind().as_deref(), Some("unavailable_strategy"));
-        assert!(result
-            .message()
-            .is_some_and(|message| message.contains("full generated pruning tables are absent")));
+        assert_eq!(
+            result.error_kind().as_deref(),
+            Some("generated_tables_unavailable")
+        );
+        assert!(result.message().is_some_and(
+            |message| message.contains("generated two-phase pruning tables are unavailable")
+        ));
+    }
+
+    #[test]
+    fn generated_two_phase_missing_artifact_bytes_maps_to_stable_status() {
+        let result = solve_facelet_string_with_generated_pruning_tables(
+            SOLVED_FACELETS,
+            0,
+            None,
+            false,
+            &[],
+            false,
+            &[],
+            false,
+            &[],
+            false,
+            &[],
+            false,
+            &[],
+        );
+
+        assert_generated_table_error_shape(
+            &result,
+            "generated_tables_unavailable",
+            "generated_tables_unavailable",
+            0,
+            None,
+        );
+        assert_default_bounded_solver_still_succeeds();
+    }
+
+    #[test]
+    fn generated_two_phase_incomplete_artifact_bytes_maps_to_stable_status() {
+        let bytes = depth_six_generated_artifact_bytes();
+        let mut artifacts = available_artifacts_from_bytes(bytes);
+        artifacts[2] = (false, Vec::new());
+        let result = solve_with_generated_artifacts(SOLVED_FACELETS, 0, None, &artifacts);
+
+        assert_generated_table_error_shape(
+            &result,
+            "generated_tables_unavailable",
+            "generated_tables_unavailable",
+            0,
+            None,
+        );
+        assert_default_bounded_solver_still_succeeds();
+    }
+
+    #[test]
+    fn generated_two_phase_corrupt_artifact_bytes_maps_to_stable_status() {
+        let corrupt_bytes = b"not a pruning-table artifact";
+        let result = solve_facelet_string_with_generated_pruning_tables(
+            SOLVED_FACELETS,
+            0,
+            None,
+            true,
+            corrupt_bytes,
+            false,
+            &[],
+            false,
+            &[],
+            false,
+            &[],
+            false,
+            &[],
+        );
+
+        assert_generated_table_error_shape(
+            &result,
+            "generated_tables_corrupt",
+            "generated_tables_corrupt",
+            0,
+            None,
+        );
+        assert_default_bounded_solver_still_succeeds();
+    }
+
+    #[test]
+    fn generated_two_phase_incompatible_artifact_bytes_maps_to_stable_status() {
+        let bytes = depth_six_generated_artifact_bytes();
+        let mut incompatible = bytes.to_vec();
+        incompatible.swap(0, 1);
+        let result = solve_with_generated_artifact_bytes(SOLVED_FACELETS, 0, None, &incompatible);
+
+        assert_generated_table_error_shape(
+            &result,
+            "generated_tables_corrupt",
+            "generated_tables_corrupt",
+            0,
+            None,
+        );
+        assert_default_bounded_solver_still_succeeds();
+    }
+
+    #[test]
+    fn generated_two_phase_artifact_bytes_solve_and_playback_verify() {
+        let bytes = depth_six_generated_artifact_bytes();
+        let required_fixtures = quality_fixtures()
+            .expect("shared quality fixture catalog should build")
+            .into_iter()
+            .filter(|fixture| {
+                fixture
+                    .solver_expectations
+                    .for_selection(QualitySolverSelection::GeneratedTwoPhase)
+                    == QualityExpectation::RequiredSuccess
+            })
+            .collect::<Vec<_>>();
+        let required_fixture_ids = required_fixtures
+            .iter()
+            .map(|fixture| fixture.id)
+            .collect::<Vec<_>>();
+        let expected_required_fixture_ids = [
+            "solved-facelets",
+            "solved-cubie",
+            "shallow-facelets-f",
+            "shallow-cubie-r-u",
+            "nontrivial-facelets-r-u-rprime-uprime",
+            "nontrivial-cubie-r-u-rprime-uprime",
+            "generated-mid-depth-facelets-phase2-five-move",
+            "generated-mid-depth-cubie-phase2-five-move",
+        ];
+
+        for expected_id in expected_required_fixture_ids {
+            assert!(
+                required_fixture_ids.contains(&expected_id),
+                "shared generated two-phase required fixture set should include {expected_id}"
+            );
+        }
+
+        for fixture in required_fixtures {
+            let result = solve_with_generated_artifact_bytes(
+                &fixture.facelets,
+                fixture.max_depth,
+                fixture.max_nodes,
+                bytes,
+            );
+
+            assert_successful_generated_solve_shape(
+                &fixture.facelets,
+                &result,
+                fixture.max_depth,
+                fixture.max_nodes,
+            );
+        }
     }
 
     #[test]
@@ -870,6 +1173,73 @@ mod tests {
         assert_eq!(result.solver_mode(), "bounded_ida_star");
     }
 
+    fn assert_generated_strategy_metadata(result: &FaceletSolveResult) {
+        assert_eq!(result.strategy_id(), "generated-two-phase");
+        assert_eq!(result.strategy_label(), "Generated two-phase solver");
+        assert_eq!(result.solver_mode(), "generated_two_phase");
+    }
+
+    fn assert_generated_table_error_shape(
+        result: &FaceletSolveResult,
+        expected_status: &str,
+        expected_error_kind: &str,
+        expected_max_depth: usize,
+        expected_max_nodes: Option<usize>,
+    ) {
+        assert!(!result.ok());
+        assert_eq!(result.status(), expected_status);
+        assert!(result.moves().is_empty());
+        assert_eq!(result.length(), 0);
+        assert_eq!(result.max_depth(), expected_max_depth);
+        assert_eq!(result.max_nodes(), expected_max_nodes);
+        assert_generated_strategy_metadata(result);
+        assert_eq!(result.explored_nodes(), None);
+        assert_eq!(result.error_kind().as_deref(), Some(expected_error_kind));
+        assert!(result.message().is_some_and(|message| !message.is_empty()));
+    }
+
+    fn assert_successful_generated_solve_shape(
+        input: &str,
+        result: &FaceletSolveResult,
+        expected_max_depth: usize,
+        expected_max_nodes: Option<usize>,
+    ) {
+        assert!(
+            result.ok(),
+            "generated solve failed: {:?}",
+            result.message()
+        );
+        assert_eq!(result.status(), "success");
+        assert_eq!(result.max_depth(), expected_max_depth);
+        assert_eq!(result.max_nodes(), expected_max_nodes);
+        assert_generated_strategy_metadata(result);
+        assert!(result.explored_nodes().is_some_and(|nodes| nodes > 0));
+        assert_eq!(result.error_kind(), None);
+        assert_eq!(result.message(), None);
+
+        let moves = result.moves();
+        assert_eq!(result.length(), moves.len());
+        assert_notation_solves_facelets(input, &moves);
+
+        let playback = playback_facelet_solution(input, &moves.join(" "));
+        assert!(playback.ok());
+        assert!(playback.final_is_solved());
+        assert_eq!(playback.states().len(), moves.len() + 1);
+    }
+
+    fn assert_default_bounded_solver_still_succeeds() {
+        let input = facelet_string_for(&[Move::R, Move::U]);
+        let result = solve_facelet_string(&input, 2, Some(10_000));
+
+        assert!(result.ok());
+        assert_eq!(result.status(), "success");
+        assert_eq!(result.max_depth(), 2);
+        assert_eq!(result.max_nodes(), Some(10_000));
+        assert_bounded_strategy_metadata(&result);
+        assert!(result.explored_nodes().is_some_and(|nodes| nodes > 0));
+        assert_notation_solves_facelets(&input, &result.moves());
+    }
+
     fn facelets_with_swapped_positions(left: usize, right: usize) -> String {
         let mut facelets = solved_facelet_symbols();
         facelets.swap(left, right);
@@ -913,5 +1283,87 @@ mod tests {
 
     fn collect_facelets(facelets: Vec<char>) -> String {
         facelets.into_iter().collect()
+    }
+
+    fn solve_with_generated_artifact_bytes(
+        input: &str,
+        max_depth: usize,
+        max_nodes: Option<usize>,
+        bytes: &[Vec<u8>],
+    ) -> FaceletSolveResult {
+        solve_facelet_string_with_generated_pruning_tables(
+            input, max_depth, max_nodes, true, &bytes[0], true, &bytes[1], true, &bytes[2], true,
+            &bytes[3], true, &bytes[4],
+        )
+    }
+
+    fn solve_with_generated_artifacts(
+        input: &str,
+        max_depth: usize,
+        max_nodes: Option<usize>,
+        artifacts: &[(bool, Vec<u8>)],
+    ) -> FaceletSolveResult {
+        assert_eq!(artifacts.len(), GENERATED_PRUNING_TABLE_SPECS.len());
+
+        solve_facelet_string_with_generated_pruning_tables(
+            input,
+            max_depth,
+            max_nodes,
+            artifacts[0].0,
+            &artifacts[0].1,
+            artifacts[1].0,
+            &artifacts[1].1,
+            artifacts[2].0,
+            &artifacts[2].1,
+            artifacts[3].0,
+            &artifacts[3].1,
+            artifacts[4].0,
+            &artifacts[4].1,
+        )
+    }
+
+    fn available_artifacts_from_bytes(bytes: &[Vec<u8>]) -> Vec<(bool, Vec<u8>)> {
+        bytes.iter().cloned().map(|bytes| (true, bytes)).collect()
+    }
+
+    fn depth_six_generated_artifact_bytes() -> &'static [Vec<u8>] {
+        static GENERATED_ARTIFACT_BYTES: OnceLock<Vec<Vec<u8>>> = OnceLock::new();
+
+        GENERATED_ARTIFACT_BYTES.get_or_init(|| {
+            let directory = temp_pruning_table_dir("depth-six-generated-artifacts");
+            generate_all_pruning_tables(&directory, 6, 6)
+                .expect("depth-six generated pruning tables should build for WASM test");
+            let bytes = generated_artifact_bytes(&directory);
+            let _ = fs::remove_dir_all(directory);
+
+            bytes
+        })
+    }
+
+    fn generated_artifact_bytes(directory: &Path) -> Vec<Vec<u8>> {
+        GENERATED_PRUNING_TABLE_SPECS
+            .iter()
+            .map(|spec| {
+                fs::read(spec.file_path(directory)).unwrap_or_else(|error| {
+                    panic!("{} should be readable: {error}", spec.file_name)
+                })
+            })
+            .collect()
+    }
+
+    fn missing_pruning_table_dir() -> PathBuf {
+        temp_pruning_table_dir("missing-pruning-tables")
+    }
+
+    fn temp_pruning_table_dir(name: &str) -> PathBuf {
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("system time should be after UNIX epoch")
+            .as_nanos();
+
+        std::env::temp_dir().join(format!(
+            "rubiks-cube-solver-wasm-{name}-{}-{nonce}",
+            std::process::id()
+        ))
     }
 }

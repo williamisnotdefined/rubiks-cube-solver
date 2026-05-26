@@ -7,11 +7,21 @@ use crate::cube::{
 };
 use crate::search::pruning::DEFAULT_PRUNING_TABLE_DIR;
 use crate::search::{
-    solve_generated_two_phase, solve_ida_star_bounded, solve_two_phase_baseline,
-    GeneratedTwoPhaseError, SearchBudget, SearchOutcome,
+    solve_generated_two_phase, solve_generated_two_phase_with_artifacts, solve_ida_star_bounded,
+    solve_two_phase_baseline, GeneratedPruningTableArtifact, GeneratedTwoPhaseError, SearchBudget,
+    SearchOutcome,
 };
 
 pub mod quality;
+
+/// Stable metadata for solver strategies exposed across the Rust/WASM boundary.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct SolverStrategyMetadata {
+    pub id: &'static str,
+    pub label: &'static str,
+    pub solver_mode: &'static str,
+    pub status_text: &'static str,
+}
 
 /// Explicit solver selection for public solver entry points.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -30,6 +40,21 @@ pub enum SolverStrategy {
 }
 
 impl SolverStrategy {
+    pub const ALL: [Self; 3] = [
+        Self::BoundedIdaStar,
+        Self::TwoPhaseBaseline,
+        Self::GeneratedTwoPhase,
+    ];
+
+    pub const fn metadata(self) -> SolverStrategyMetadata {
+        SolverStrategyMetadata {
+            id: self.id(),
+            label: self.label(),
+            solver_mode: self.solver_mode(),
+            status_text: self.status_text(),
+        }
+    }
+
     pub const fn id(self) -> &'static str {
         match self {
             Self::BoundedIdaStar => "bounded-ida-star",
@@ -54,6 +79,20 @@ impl SolverStrategy {
         }
     }
 
+    pub const fn status_text(self) -> &'static str {
+        match self {
+            Self::BoundedIdaStar => {
+                "Default product fallback. Searches within the visible limits and verifies any returned solution in Rust."
+            }
+            Self::TwoPhaseBaseline => {
+                "Fixture-backed baseline. It covers tiny committed fixtures, so unsupported states report honest limit failures."
+            }
+            Self::GeneratedTwoPhase => {
+                "Generated-table solver. Selectable when local pruning tables exist; otherwise reports generated tables unavailable or corrupt."
+            }
+        }
+    }
+
     pub fn from_id(id: &str) -> Option<Self> {
         match id {
             "bounded-ida-star" => Some(Self::BoundedIdaStar),
@@ -61,6 +100,27 @@ impl SolverStrategy {
             "generated-two-phase" => Some(Self::GeneratedTwoPhase),
             _ => None,
         }
+    }
+
+    pub fn supported_strategy_ids() -> String {
+        Self::ALL
+            .iter()
+            .map(|strategy| strategy.id())
+            .collect::<Vec<_>>()
+            .join(", ")
+    }
+
+    pub fn unsupported_strategy_message(requested_strategy: &str) -> String {
+        let displayed_strategy = if requested_strategy.is_empty() {
+            "<empty>"
+        } else {
+            requested_strategy
+        };
+
+        format!(
+            "Unsupported solver strategy \"{displayed_strategy}\". Supported strategies: {}.",
+            Self::supported_strategy_ids()
+        )
     }
 }
 
@@ -318,6 +378,10 @@ pub enum SolveError {
         config: SolverConfig,
         error: Box<GeneratedTwoPhaseError>,
     },
+    GeneratedTablesCorrupt {
+        config: SolverConfig,
+        error: Box<GeneratedTwoPhaseError>,
+    },
     NotFoundWithinLimits {
         config: SolverConfig,
         explored_nodes: usize,
@@ -330,9 +394,13 @@ impl fmt::Display for SolveError {
             Self::InvalidInput { error } => write!(formatter, "invalid solver input: {error}"),
             Self::GeneratedTablesUnavailable { config, error } => write!(
                 formatter,
-                "generated two-phase pruning tables are unavailable for strategy {} at {}: {error}",
-                config.strategy.id(),
-                config.pruning_table_dir().display()
+                "generated two-phase pruning tables are unavailable for strategy {}: {error}",
+                config.strategy.id()
+            ),
+            Self::GeneratedTablesCorrupt { config, error } => write!(
+                formatter,
+                "generated two-phase pruning tables are corrupt or incompatible for strategy {}: {error}",
+                config.strategy.id()
             ),
             Self::NotFoundWithinLimits {
                 config,
@@ -357,7 +425,8 @@ impl std::error::Error for SolveError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::InvalidInput { error } => Some(error),
-            Self::GeneratedTablesUnavailable { error, .. } => Some(error.as_ref()),
+            Self::GeneratedTablesUnavailable { error, .. }
+            | Self::GeneratedTablesCorrupt { error, .. } => Some(error.as_ref()),
             Self::NotFoundWithinLimits { .. } => None,
         }
     }
@@ -392,6 +461,31 @@ pub fn solve_facelet_string(input: &str, config: SolverConfig) -> Result<SolveRe
     let state = validated_facelet_state(input)?;
 
     solve_cubie_state(state, config)
+}
+
+/// Solve a user-facing facelet string with browser-provided generated pruning artifacts.
+pub fn solve_facelet_string_with_generated_pruning_tables(
+    input: &str,
+    max_depth: usize,
+    max_nodes: Option<usize>,
+    artifacts: &[GeneratedPruningTableArtifact<'_>],
+) -> Result<SolveResult, SolveError> {
+    let state = validated_facelet_state(input)?;
+
+    solve_cubie_state_with_generated_pruning_tables(state, max_depth, max_nodes, artifacts)
+}
+
+/// Solve a validated cubie state with browser-provided generated pruning artifacts.
+pub fn solve_cubie_state_with_generated_pruning_tables(
+    state: CubieState,
+    max_depth: usize,
+    max_nodes: Option<usize>,
+    artifacts: &[GeneratedPruningTableArtifact<'_>],
+) -> Result<SolveResult, SolveError> {
+    state.validate().map_err(SolveInputError::from)?;
+
+    let cube = Cube::try_from_state(state).map_err(SolveInputError::from)?;
+    solve_cube_with_generated_pruning_tables(&cube, max_depth, max_nodes, artifacts)
 }
 
 fn validated_facelet_state(input: &str) -> Result<CubieState, SolveInputError> {
@@ -433,16 +527,47 @@ pub fn solve_cube(cube: &Cube, config: SolverConfig) -> Result<SolveResult, Solv
             match solve_generated_two_phase(cube, budget, config.pruning_table_dir()) {
                 Ok(outcome) => outcome,
                 Err(error) => {
-                    return Err(SolveError::GeneratedTablesUnavailable {
-                        config,
-                        error: Box::new(error),
-                    });
+                    return Err(generated_tables_error(config, error));
                 }
             }
         }
     };
 
     solve_search_outcome(cube, config, outcome)
+}
+
+/// Solve a cube with generated pruning artifacts supplied directly by the caller.
+pub fn solve_cube_with_generated_pruning_tables(
+    cube: &Cube,
+    max_depth: usize,
+    max_nodes: Option<usize>,
+    artifacts: &[GeneratedPruningTableArtifact<'_>],
+) -> Result<SolveResult, SolveError> {
+    cube.state().validate().map_err(SolveInputError::from)?;
+
+    let config =
+        SolverConfig::with_strategy(max_depth, max_nodes, SolverStrategy::GeneratedTwoPhase);
+    let budget = SearchBudget::with_limits(max_depth, max_nodes);
+    let outcome = match solve_generated_two_phase_with_artifacts(cube, budget, artifacts) {
+        Ok(outcome) => outcome,
+        Err(error) => return Err(generated_tables_error(config, error)),
+    };
+
+    solve_search_outcome(cube, config, outcome)
+}
+
+fn generated_tables_error(config: SolverConfig, error: GeneratedTwoPhaseError) -> SolveError {
+    if error.is_corrupt_or_incompatible() {
+        SolveError::GeneratedTablesCorrupt {
+            config,
+            error: Box::new(error),
+        }
+    } else {
+        SolveError::GeneratedTablesUnavailable {
+            config,
+            error: Box::new(error),
+        }
+    }
 }
 
 fn solve_search_outcome(
@@ -528,12 +653,24 @@ mod tests {
 
     #[test]
     fn solver_strategy_exposes_stable_boundary_metadata() {
+        assert_eq!(
+            SolverStrategy::ALL,
+            [
+                SolverStrategy::BoundedIdaStar,
+                SolverStrategy::TwoPhaseBaseline,
+                SolverStrategy::GeneratedTwoPhase,
+            ]
+        );
+
         assert_eq!(SolverStrategy::BoundedIdaStar.id(), "bounded-ida-star");
         assert_eq!(SolverStrategy::BoundedIdaStar.label(), "Bounded IDA*");
         assert_eq!(
             SolverStrategy::BoundedIdaStar.solver_mode(),
             "bounded_ida_star"
         );
+        assert!(SolverStrategy::BoundedIdaStar
+            .status_text()
+            .contains("Default product fallback"));
         assert_eq!(
             SolverStrategy::from_id("bounded-ida-star"),
             Some(SolverStrategy::BoundedIdaStar)
@@ -548,6 +685,9 @@ mod tests {
             SolverStrategy::TwoPhaseBaseline.solver_mode(),
             "limited_two_phase_baseline"
         );
+        assert!(SolverStrategy::TwoPhaseBaseline
+            .status_text()
+            .contains("Fixture-backed baseline"));
         assert_eq!(
             SolverStrategy::from_id("two-phase-baseline"),
             Some(SolverStrategy::TwoPhaseBaseline)
@@ -564,11 +704,39 @@ mod tests {
             SolverStrategy::GeneratedTwoPhase.solver_mode(),
             "generated_two_phase"
         );
+        assert!(SolverStrategy::GeneratedTwoPhase
+            .status_text()
+            .contains("Generated-table solver"));
         assert_eq!(
             SolverStrategy::from_id("generated-two-phase"),
             Some(SolverStrategy::GeneratedTwoPhase)
         );
         assert_eq!(SolverStrategy::from_id("unknown"), None);
+
+        let metadata = SolverStrategy::GeneratedTwoPhase.metadata();
+        assert_eq!(metadata.id, "generated-two-phase");
+        assert_eq!(metadata.label, "Generated two-phase solver");
+        assert_eq!(metadata.solver_mode, "generated_two_phase");
+        assert_eq!(
+            metadata.status_text,
+            SolverStrategy::GeneratedTwoPhase.status_text()
+        );
+    }
+
+    #[test]
+    fn solver_strategy_supported_message_lists_all_strategy_ids() {
+        assert_eq!(
+            SolverStrategy::supported_strategy_ids(),
+            "bounded-ida-star, two-phase-baseline, generated-two-phase"
+        );
+
+        let message = SolverStrategy::unsupported_strategy_message("made-up");
+        assert!(message.contains("made-up"));
+        assert!(message.contains("bounded-ida-star"));
+        assert!(message.contains("two-phase-baseline"));
+        assert!(message.contains("generated-two-phase"));
+
+        assert!(SolverStrategy::unsupported_strategy_message("").contains("<empty>"));
     }
 
     #[test]
@@ -796,7 +964,9 @@ mod tests {
                 assert_eq!(actual_config, config);
                 assert!(explored_nodes > 0);
             }
-            SolveError::InvalidInput { .. } | SolveError::GeneratedTablesUnavailable { .. } => {
+            SolveError::InvalidInput { .. }
+            | SolveError::GeneratedTablesUnavailable { .. }
+            | SolveError::GeneratedTablesCorrupt { .. } => {
                 panic!("limit failure should not be invalid input or table unavailable")
             }
         }
@@ -818,7 +988,9 @@ mod tests {
                 assert_eq!(actual_config, config);
                 assert!(explored_nodes > 0);
             }
-            SolveError::InvalidInput { .. } | SolveError::GeneratedTablesUnavailable { .. } => {
+            SolveError::InvalidInput { .. }
+            | SolveError::GeneratedTablesUnavailable { .. }
+            | SolveError::GeneratedTablesCorrupt { .. } => {
                 panic!("unsupported fixture state is not invalid input or table unavailable")
             }
         }
@@ -1087,7 +1259,9 @@ mod tests {
                 assert_eq!(actual_config, config);
                 assert!(explored_nodes > 0);
             }
-            SolveError::InvalidInput { .. } | SolveError::GeneratedTablesUnavailable { .. } => {
+            SolveError::InvalidInput { .. }
+            | SolveError::GeneratedTablesUnavailable { .. }
+            | SolveError::GeneratedTablesCorrupt { .. } => {
                 panic!("depth limit should not be invalid input or table unavailable")
             }
         }
@@ -1156,7 +1330,9 @@ mod tests {
                 assert_eq!(actual_config, config);
                 assert!(explored_nodes > 0);
             }
-            SolveError::InvalidInput { .. } | SolveError::GeneratedTablesUnavailable { .. } => {
+            SolveError::InvalidInput { .. }
+            | SolveError::GeneratedTablesUnavailable { .. }
+            | SolveError::GeneratedTablesCorrupt { .. } => {
                 panic!("depth limit should not be invalid input or table unavailable")
             }
         }

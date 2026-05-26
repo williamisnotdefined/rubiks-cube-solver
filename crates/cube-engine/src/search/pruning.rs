@@ -18,7 +18,7 @@ use crate::cube::cubies::{Corner, CubieState, Edge, EDGE_COUNT};
 use crate::cube::moves::{Move, FACE_MOVES};
 use crate::cube::{Cube, CubeValidationError};
 
-pub const PRUNING_TABLE_FORMAT_VERSION: u16 = 1;
+pub const PRUNING_TABLE_FORMAT_VERSION: u16 = 2;
 pub const DEFAULT_PRUNING_TABLE_DIR: &str = "crates/cube-engine/pruning-tables";
 
 const ARTIFACT_MAGIC: [u8; 8] = *b"RCPRTB1\0";
@@ -291,10 +291,7 @@ impl fmt::Display for PruningLookupError {
                 "pruning-table index {index} is outside 0..{table_size}"
             ),
             Self::MissingEntry { index } => {
-                write!(
-                    formatter,
-                    "pruning-table fixture has no entry for index {index}"
-                )
+                write!(formatter, "pruning table has no entry for index {index}")
             }
             Self::InvalidMetadata { error } => {
                 write!(formatter, "invalid pruning metadata: {error}")
@@ -464,6 +461,85 @@ impl std::error::Error for PruningDenseTableError {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub enum PruningCompactEntryError {
+    InvalidMetadata {
+        error: PruningMetadataError,
+    },
+    MaxDepthUsesSentinel,
+    EntryCountExceedsTableSize {
+        entry_count: u64,
+        table_size: usize,
+    },
+    EntryIndexOutOfRange {
+        index: u64,
+        table_size: usize,
+    },
+    DuplicateEntry {
+        index: usize,
+    },
+    EntriesOutOfOrder {
+        previous: usize,
+        index: usize,
+    },
+    DistanceExceedsMaxDepth {
+        index: usize,
+        distance: u8,
+        max_depth: u8,
+    },
+}
+
+impl fmt::Display for PruningCompactEntryError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidMetadata { error } => write!(formatter, "invalid pruning metadata: {error}"),
+            Self::MaxDepthUsesSentinel => formatter.write_str(
+                "compact pruning table max depth must be below 255 because 255 marks unreachable entries",
+            ),
+            Self::EntryCountExceedsTableSize {
+                entry_count,
+                table_size,
+            } => write!(
+                formatter,
+                "compact pruning table has {entry_count} entries, exceeding table size {table_size}"
+            ),
+            Self::EntryIndexOutOfRange { index, table_size } => write!(
+                formatter,
+                "compact pruning table entry index {index} is outside 0..{table_size}"
+            ),
+            Self::DuplicateEntry { index } => {
+                write!(formatter, "compact pruning table duplicates entry index {index}")
+            }
+            Self::EntriesOutOfOrder { previous, index } => write!(
+                formatter,
+                "compact pruning table entry index {index} appears after {previous}; entries must be sorted"
+            ),
+            Self::DistanceExceedsMaxDepth {
+                index,
+                distance,
+                max_depth,
+            } => write!(
+                formatter,
+                "compact pruning table entry {index} has distance {distance}, exceeding max depth {max_depth}"
+            ),
+        }
+    }
+}
+
+impl std::error::Error for PruningCompactEntryError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::InvalidMetadata { error } => Some(error),
+            Self::MaxDepthUsesSentinel
+            | Self::EntryCountExceedsTableSize { .. }
+            | Self::EntryIndexOutOfRange { .. }
+            | Self::DuplicateEntry { .. }
+            | Self::EntriesOutOfOrder { .. }
+            | Self::DistanceExceedsMaxDepth { .. } => None,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum PruningArtifactError {
     Io {
         path: PathBuf,
@@ -508,6 +584,10 @@ pub enum PruningArtifactError {
     DenseTable {
         path: PathBuf,
         error: PruningDenseTableError,
+    },
+    CompactEntries {
+        path: PathBuf,
+        error: PruningCompactEntryError,
     },
     SpecMismatch {
         path: PathBuf,
@@ -586,6 +666,11 @@ impl fmt::Display for PruningArtifactError {
                 "pruning-table artifact {} is invalid: {error}",
                 path.display()
             ),
+            Self::CompactEntries { path, error } => write!(
+                formatter,
+                "pruning-table artifact {} has invalid compact entries: {error}",
+                path.display()
+            ),
             Self::SpecMismatch {
                 path,
                 table,
@@ -605,6 +690,7 @@ impl std::error::Error for PruningArtifactError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::DenseTable { error, .. } => Some(error),
+            Self::CompactEntries { error, .. } => Some(error),
             _ => None,
         }
     }
@@ -945,21 +1031,8 @@ impl PruningTable {
         path: impl AsRef<Path>,
     ) -> Result<Vec<u8>, PruningArtifactError> {
         let path = path.as_ref();
-        let dense_entries = match &self.entries {
-            PruningEntries::Dense(entries) => entries,
-            PruningEntries::Sparse(_) => {
-                return Err(PruningArtifactError::DenseTable {
-                    path: path.to_path_buf(),
-                    error: PruningDenseTableError::EntryCountMismatch {
-                        expected: self.metadata.table_size().unwrap_or(0),
-                        actual: self.entry_count(),
-                    },
-                });
-            }
-        };
-
-        validate_dense_entries(&self.metadata, dense_entries).map_err(|error| {
-            PruningArtifactError::DenseTable {
+        let compact_entries = compact_entries_from_table(self).map_err(|error| {
+            PruningArtifactError::CompactEntries {
                 path: path.to_path_buf(),
                 error,
             }
@@ -980,8 +1053,11 @@ impl PruningTable {
             push_u64(&mut bytes, coordinate.dimension as u64);
         }
 
-        push_u64(&mut bytes, dense_entries.len() as u64);
-        bytes.extend_from_slice(dense_entries);
+        push_u64(&mut bytes, compact_entries.len() as u64);
+        for (index, distance) in compact_entries {
+            push_u64(&mut bytes, index as u64);
+            push_u8(&mut bytes, distance);
+        }
         let checksum = pruning_checksum(&bytes);
         push_u64(&mut bytes, checksum);
 
@@ -1048,31 +1124,14 @@ impl PruningTable {
             let name = cursor.read_string("coordinate.name")?;
             let dimension =
                 usize::try_from(cursor.read_u64("coordinate.dimension")?).map_err(|_| {
-                    PruningArtifactError::DenseTable {
+                    PruningArtifactError::CompactEntries {
                         path: path.to_path_buf(),
-                        error: PruningDenseTableError::InvalidMetadata {
+                        error: PruningCompactEntryError::InvalidMetadata {
                             error: PruningMetadataError::TableSizeOverflow,
                         },
                     }
                 })?;
             coordinates.push(PruningCoordinate::new(name, dimension));
-        }
-
-        let entry_count = usize::try_from(cursor.read_u64("entry_count")?).map_err(|_| {
-            PruningArtifactError::DenseTable {
-                path: path.to_path_buf(),
-                error: PruningDenseTableError::InvalidMetadata {
-                    error: PruningMetadataError::TableSizeOverflow,
-                },
-            }
-        })?;
-        let entries = cursor.read_bytes(entry_count, "entries")?.to_vec();
-        let trailing = cursor.remaining_len();
-        if trailing != 0 {
-            return Err(PruningArtifactError::TrailingBytes {
-                path: path.to_path_buf(),
-                trailing,
-            });
         }
 
         let metadata = PruningTableMetadata::new(
@@ -1082,12 +1141,19 @@ impl PruningTable {
             coordinates,
             PruningGenerationParameters::new(max_depth, move_set, source),
         );
-
-        Self::from_dense_entries(metadata, entries).map_err(|error| {
-            PruningArtifactError::DenseTable {
+        let entry_count = cursor.read_u64("entry_count")?;
+        let entries = read_compact_entries(path, &metadata, entry_count, &mut cursor)?;
+        let trailing = cursor.remaining_len();
+        if trailing != 0 {
+            return Err(PruningArtifactError::TrailingBytes {
                 path: path.to_path_buf(),
-                error,
-            }
+                trailing,
+            });
+        }
+
+        Ok(Self {
+            metadata,
+            entries: PruningEntries::Sparse(entries.into_iter().collect()),
         })
     }
 
@@ -1222,6 +1288,154 @@ fn validate_dense_entries(
     }
 
     Ok(())
+}
+
+fn compact_entries_from_table(
+    table: &PruningTable,
+) -> Result<Vec<(usize, u8)>, PruningCompactEntryError> {
+    let entries = match &table.entries {
+        PruningEntries::Sparse(entries) => entries
+            .iter()
+            .map(|(index, distance)| (*index, *distance))
+            .collect::<Vec<_>>(),
+        PruningEntries::Dense(entries) => entries
+            .iter()
+            .copied()
+            .enumerate()
+            .filter_map(|(index, distance)| {
+                (distance != UNREACHED_DISTANCE).then_some((index, distance))
+            })
+            .collect::<Vec<_>>(),
+    };
+
+    validate_compact_entries(&table.metadata, &entries)?;
+
+    Ok(entries)
+}
+
+fn read_compact_entries(
+    path: &Path,
+    metadata: &PruningTableMetadata,
+    entry_count: u64,
+    cursor: &mut ArtifactCursor<'_>,
+) -> Result<Vec<(usize, u8)>, PruningArtifactError> {
+    let table_size = metadata.table_size().map_err(|error| {
+        compact_entries_artifact_error(path, PruningCompactEntryError::InvalidMetadata { error })
+    })?;
+    let table_size_u64 = u64::try_from(table_size).map_err(|_| {
+        compact_entries_artifact_error(
+            path,
+            PruningCompactEntryError::InvalidMetadata {
+                error: PruningMetadataError::TableSizeOverflow,
+            },
+        )
+    })?;
+
+    if entry_count > table_size_u64 {
+        return Err(compact_entries_artifact_error(
+            path,
+            PruningCompactEntryError::EntryCountExceedsTableSize {
+                entry_count,
+                table_size,
+            },
+        ));
+    }
+
+    let mut entries = Vec::with_capacity(usize::try_from(entry_count).map_err(|_| {
+        compact_entries_artifact_error(
+            path,
+            PruningCompactEntryError::EntryCountExceedsTableSize {
+                entry_count,
+                table_size,
+            },
+        )
+    })?);
+
+    for _ in 0..entry_count {
+        let raw_index = cursor.read_u64("entry.index")?;
+        let index = usize::try_from(raw_index).map_err(|_| {
+            compact_entries_artifact_error(
+                path,
+                PruningCompactEntryError::EntryIndexOutOfRange {
+                    index: raw_index,
+                    table_size,
+                },
+            )
+        })?;
+        let distance = cursor.read_u8("entry.distance")?;
+        entries.push((index, distance));
+    }
+
+    validate_compact_entries(metadata, &entries)
+        .map_err(|error| compact_entries_artifact_error(path, error))?;
+
+    Ok(entries)
+}
+
+fn validate_compact_entries(
+    metadata: &PruningTableMetadata,
+    entries: &[(usize, u8)],
+) -> Result<(), PruningCompactEntryError> {
+    if metadata.generation.max_depth == UNREACHED_DISTANCE {
+        return Err(PruningCompactEntryError::MaxDepthUsesSentinel);
+    }
+
+    let table_size = metadata
+        .table_size()
+        .map_err(|error| PruningCompactEntryError::InvalidMetadata { error })?;
+    let entry_count = u64::try_from(entries.len()).unwrap_or(u64::MAX);
+
+    if entries.len() > table_size {
+        return Err(PruningCompactEntryError::EntryCountExceedsTableSize {
+            entry_count,
+            table_size,
+        });
+    }
+
+    let mut previous = None;
+    for &(index, distance) in entries {
+        if index >= table_size {
+            return Err(PruningCompactEntryError::EntryIndexOutOfRange {
+                index: index as u64,
+                table_size,
+            });
+        }
+
+        if let Some(previous_index) = previous {
+            if index == previous_index {
+                return Err(PruningCompactEntryError::DuplicateEntry { index });
+            }
+
+            if index < previous_index {
+                return Err(PruningCompactEntryError::EntriesOutOfOrder {
+                    previous: previous_index,
+                    index,
+                });
+            }
+        }
+
+        if distance > metadata.generation.max_depth {
+            return Err(PruningCompactEntryError::DistanceExceedsMaxDepth {
+                index,
+                distance,
+                max_depth: metadata.generation.max_depth,
+            });
+        }
+
+        previous = Some(index);
+    }
+
+    Ok(())
+}
+
+fn compact_entries_artifact_error(
+    path: &Path,
+    error: PruningCompactEntryError,
+) -> PruningArtifactError {
+    PruningArtifactError::CompactEntries {
+        path: path.to_path_buf(),
+        error,
+    }
 }
 
 struct ArtifactCursor<'a> {
@@ -1427,7 +1641,7 @@ pub const GENERATED_PRUNING_TABLE_SPECS: [GeneratedPruningTableSpec; 5] = [
         kind: GeneratedPruningTableKind::Phase1CornerEdgeOrientation,
         table_name: "phase1-corner-edge-orientation",
         file_name: "phase1-corner-edge-orientation.rpt",
-        table_version: "generated-phase1-corner-edge-orientation-v1",
+        table_version: "generated-phase1-corner-edge-orientation-v2",
         phase_role: PruningPhaseRole::Phase1,
         move_set: PHASE1_MOVE_SET,
     },
@@ -1435,7 +1649,7 @@ pub const GENERATED_PRUNING_TABLE_SPECS: [GeneratedPruningTableSpec; 5] = [
         kind: GeneratedPruningTableKind::Phase1CornerOrientationUdSlice,
         table_name: "phase1-corner-orientation-ud-slice",
         file_name: "phase1-corner-orientation-ud-slice.rpt",
-        table_version: "generated-phase1-corner-orientation-ud-slice-v1",
+        table_version: "generated-phase1-corner-orientation-ud-slice-v2",
         phase_role: PruningPhaseRole::Phase1,
         move_set: PHASE1_MOVE_SET,
     },
@@ -1443,7 +1657,7 @@ pub const GENERATED_PRUNING_TABLE_SPECS: [GeneratedPruningTableSpec; 5] = [
         kind: GeneratedPruningTableKind::Phase1EdgeOrientationUdSlice,
         table_name: "phase1-edge-orientation-ud-slice",
         file_name: "phase1-edge-orientation-ud-slice.rpt",
-        table_version: "generated-phase1-edge-orientation-ud-slice-v1",
+        table_version: "generated-phase1-edge-orientation-ud-slice-v2",
         phase_role: PruningPhaseRole::Phase1,
         move_set: PHASE1_MOVE_SET,
     },
@@ -1451,7 +1665,7 @@ pub const GENERATED_PRUNING_TABLE_SPECS: [GeneratedPruningTableSpec; 5] = [
         kind: GeneratedPruningTableKind::Phase2CornerPermutationSliceEdgePermutation,
         table_name: "phase2-corner-permutation-slice-edge-permutation",
         file_name: "phase2-corner-permutation-slice-edge-permutation.rpt",
-        table_version: "generated-phase2-corner-permutation-slice-edge-permutation-v1",
+        table_version: "generated-phase2-corner-permutation-slice-edge-permutation-v2",
         phase_role: PruningPhaseRole::Phase2,
         move_set: PHASE2_MOVE_SET,
     },
@@ -1459,7 +1673,7 @@ pub const GENERATED_PRUNING_TABLE_SPECS: [GeneratedPruningTableSpec; 5] = [
         kind: GeneratedPruningTableKind::Phase2UdEdgePermutationSliceEdgePermutation,
         table_name: "phase2-ud-edge-permutation-slice-edge-permutation",
         file_name: "phase2-ud-edge-permutation-slice-edge-permutation.rpt",
-        table_version: "generated-phase2-ud-edge-permutation-slice-edge-permutation-v1",
+        table_version: "generated-phase2-ud-edge-permutation-slice-edge-permutation-v2",
         phase_role: PruningPhaseRole::Phase2,
         move_set: PHASE2_MOVE_SET,
     },
@@ -1616,15 +1830,21 @@ impl GeneratedPruningTableSpec {
                 metadata.generation.move_set.clone(),
             ));
         }
-        if !table.is_dense() {
-            return Err(PruningArtifactError::DenseTable {
-                path: path.to_path_buf(),
-                error: PruningDenseTableError::EntryCountMismatch {
-                    expected: metadata.table_size().unwrap_or(0),
-                    actual: table.entry_count(),
-                },
-            });
+        if metadata.generation.source != ARTIFACT_GENERATION_SOURCE {
+            return Err(spec_mismatch(
+                path,
+                self,
+                "source",
+                ARTIFACT_GENERATION_SOURCE.to_owned(),
+                metadata.generation.source.clone(),
+            ));
         }
+        compact_entries_from_table(table).map_err(|error| {
+            PruningArtifactError::CompactEntries {
+                path: path.to_path_buf(),
+                error,
+            }
+        })?;
 
         Ok(())
     }
@@ -1990,10 +2210,11 @@ fn cube_from_state_adjusting_ud_edge_parity(
 #[cfg(test)]
 mod tests {
     use super::{
-        pruning_checksum, GeneratedPruningTableKind, PruningArtifactError, PruningCoordinate,
-        PruningDenseTableError, PruningFixtureError, PruningGenerationParameters,
-        PruningLookupError, PruningMetadataError, PruningPhaseRole, PruningTable,
-        PruningTableMetadata, GENERATED_PRUNING_TABLE_SPECS, PRUNING_TABLE_FORMAT_VERSION,
+        pruning_checksum, GeneratedPruningTableKind, PruningArtifactError,
+        PruningCompactEntryError, PruningCoordinate, PruningDenseTableError, PruningFixtureError,
+        PruningGenerationParameters, PruningLookupError, PruningMetadataError, PruningPhaseRole,
+        PruningTable, PruningTableMetadata, GENERATED_PRUNING_TABLE_SPECS,
+        PRUNING_TABLE_FORMAT_VERSION,
     };
     use crate::cube::coordinates::{
         corner_orientation_coordinate, edge_orientation_coordinate,
@@ -2186,6 +2407,78 @@ mod tests {
     }
 
     #[test]
+    fn public_coordinate_decomposition_reports_checked_errors() {
+        let metadata = PruningTableMetadata::new(
+            PRUNING_TABLE_FORMAT_VERSION,
+            "checked-coordinate-test-v1",
+            PruningPhaseRole::Phase1,
+            vec![
+                PruningCoordinate::new("first", 2),
+                PruningCoordinate::new("second", 3),
+            ],
+            PruningGenerationParameters::new(1, "test-moves", "unit test"),
+        );
+
+        assert_eq!(metadata.coordinates_from_index(5), Ok(vec![1, 2]));
+        assert_eq!(
+            metadata.coordinates_from_index(6),
+            Err(PruningLookupError::IndexOutOfRange {
+                index: 6,
+                table_size: 6,
+            })
+        );
+
+        let invalid_metadata = PruningTableMetadata::new(
+            PRUNING_TABLE_FORMAT_VERSION,
+            "invalid-coordinate-test-v1",
+            PruningPhaseRole::Phase1,
+            Vec::new(),
+            PruningGenerationParameters::new(1, "test-moves", "unit test"),
+        );
+
+        assert_eq!(
+            invalid_metadata.coordinates_from_index(0),
+            Err(PruningLookupError::InvalidMetadata {
+                error: PruningMetadataError::NoCoordinates,
+            })
+        );
+    }
+
+    #[test]
+    fn public_lookup_helpers_report_checked_errors() {
+        let metadata = PruningTableMetadata::new(
+            PRUNING_TABLE_FORMAT_VERSION,
+            "checked-lookup-test-v1",
+            PruningPhaseRole::Phase1,
+            vec![PruningCoordinate::new("coordinate", 2)],
+            PruningGenerationParameters::new(1, "test-moves", "unit test"),
+        );
+        let table = PruningTable::from_dense_entries(metadata, vec![0, u8::MAX])
+            .expect("dense checked-lookup table should build");
+
+        assert_eq!(table.checked_lookup_coordinates(&[0]), Ok(0));
+        assert_eq!(
+            table.checked_lookup_coordinates(&[1]),
+            Err(PruningLookupError::MissingEntry { index: 1 })
+        );
+        assert_eq!(
+            table.checked_lookup_coordinates(&[2]),
+            Err(PruningLookupError::CoordinateOutOfRange {
+                coordinate: "coordinate".to_owned(),
+                index: 2,
+                dimension: 2,
+            })
+        );
+        assert_eq!(
+            table.lookup_index(2),
+            Err(PruningLookupError::IndexOutOfRange {
+                index: 2,
+                table_size: 2,
+            })
+        );
+    }
+
+    #[test]
     fn corrupted_fixture_line_is_rejected() {
         assert_eq!(
             PruningTable::from_fixture_str("format_version=1\nnot valid\nentries:\n0=0\n"),
@@ -2260,11 +2553,11 @@ mod tests {
     }
 
     #[test]
-    fn dense_artifact_round_trips_with_metadata_and_lookup() {
+    fn compact_artifact_round_trips_with_metadata_and_lookup() {
         let path = PathBuf::from("test-table.rpt");
         let metadata = PruningTableMetadata::new(
             PRUNING_TABLE_FORMAT_VERSION,
-            "dense-test-v1",
+            "compact-test-v1",
             PruningPhaseRole::Phase1,
             vec![PruningCoordinate::new("test", 3)],
             PruningGenerationParameters::new(2, "test-moves", "unit test"),
@@ -2274,11 +2567,11 @@ mod tests {
         let bytes = table
             .to_artifact_bytes(&path)
             .expect("dense test table should serialize");
-        let loaded =
-            PruningTable::from_artifact_bytes(&path, &bytes).expect("dense test table should load");
+        let loaded = PruningTable::from_artifact_bytes(&path, &bytes)
+            .expect("compact test table should load");
 
         assert_eq!(loaded.metadata(), &metadata);
-        assert!(loaded.is_dense());
+        assert!(!loaded.is_dense());
         assert!(!loaded.is_complete());
         assert_eq!(loaded.entry_count(), 2);
         assert_eq!(loaded.lookup_index(0), Ok(0));
@@ -2286,6 +2579,42 @@ mod tests {
         assert_eq!(
             loaded.lookup_index(2),
             Err(PruningLookupError::MissingEntry { index: 2 })
+        );
+    }
+
+    #[test]
+    fn compact_artifact_is_smaller_than_sparse_coordinate_space() {
+        let path = PathBuf::from("compact-large-coordinate-space.rpt");
+        let table = PruningTable::from_fixture_str(
+            "format_version=2\n\
+             table_version=compact-large-test-v1\n\
+             phase_role=phase1\n\
+             max_depth=1\n\
+             move_set=test-moves\n\
+             source=unit test\n\
+             coordinate=large_coordinate:1000000\n\
+             entries:\n\
+             0=0\n\
+             999999=1\n",
+        )
+        .expect("compact sparse fixture should parse");
+        let bytes = table
+            .to_artifact_bytes(&path)
+            .expect("compact sparse fixture should serialize");
+
+        assert!(
+            bytes.len()
+                < table
+                    .metadata()
+                    .table_size()
+                    .expect("metadata should be valid"),
+            "compact artifact should be smaller than a dense coordinate-space payload"
+        );
+        assert_eq!(
+            PruningTable::from_artifact_bytes(&path, &bytes)
+                .expect("compact artifact should load")
+                .entry_count(),
+            2
         );
     }
 
@@ -2382,6 +2711,125 @@ mod tests {
     }
 
     #[test]
+    fn generated_artifact_rejects_unsupported_format_version_after_checksum_update() {
+        let path = PathBuf::from("corrupt-version.rpt");
+        let metadata = PruningTableMetadata::new(
+            PRUNING_TABLE_FORMAT_VERSION,
+            "compact-test-v1",
+            PruningPhaseRole::Phase1,
+            vec![PruningCoordinate::new("test", 2)],
+            PruningGenerationParameters::new(1, "test-moves", "unit test"),
+        );
+        let table = PruningTable::from_dense_entries(metadata, vec![0, 1])
+            .expect("dense test table should build");
+        let mut bytes = table
+            .to_artifact_bytes(&path)
+            .expect("compact test table should serialize");
+        bytes[8..10].copy_from_slice(&1_u16.to_le_bytes());
+        update_checksum(&mut bytes);
+
+        assert!(matches!(
+            PruningTable::from_artifact_bytes(&path, &bytes),
+            Err(PruningArtifactError::UnsupportedFormatVersion { version: 1, .. })
+        ));
+    }
+
+    #[test]
+    fn generated_artifact_rejects_out_of_range_compact_entry() {
+        let path = PathBuf::from("entry-out-of-range.rpt");
+        let metadata = compact_test_metadata(2, 1);
+        let bytes = compact_artifact_bytes(&metadata, &[(2, 1)]);
+
+        assert_eq!(
+            PruningTable::from_artifact_bytes(&path, &bytes),
+            Err(PruningArtifactError::CompactEntries {
+                path,
+                error: PruningCompactEntryError::EntryIndexOutOfRange {
+                    index: 2,
+                    table_size: 2,
+                },
+            })
+        );
+    }
+
+    #[test]
+    fn generated_artifact_rejects_duplicate_compact_entry() {
+        let path = PathBuf::from("duplicate-entry.rpt");
+        let metadata = compact_test_metadata(3, 1);
+        let bytes = compact_artifact_bytes(&metadata, &[(0, 0), (0, 1)]);
+
+        assert_eq!(
+            PruningTable::from_artifact_bytes(&path, &bytes),
+            Err(PruningArtifactError::CompactEntries {
+                path,
+                error: PruningCompactEntryError::DuplicateEntry { index: 0 },
+            })
+        );
+    }
+
+    #[test]
+    fn generated_artifact_rejects_unsorted_compact_entries() {
+        let path = PathBuf::from("unsorted-entry.rpt");
+        let metadata = compact_test_metadata(3, 1);
+        let bytes = compact_artifact_bytes(&metadata, &[(2, 1), (1, 1)]);
+
+        assert_eq!(
+            PruningTable::from_artifact_bytes(&path, &bytes),
+            Err(PruningArtifactError::CompactEntries {
+                path,
+                error: PruningCompactEntryError::EntriesOutOfOrder {
+                    previous: 2,
+                    index: 1,
+                },
+            })
+        );
+    }
+
+    #[test]
+    fn generated_artifact_rejects_compact_distance_above_max_depth() {
+        let path = PathBuf::from("distance-above-depth.rpt");
+        let metadata = compact_test_metadata(2, 1);
+        let bytes = compact_artifact_bytes(&metadata, &[(1, 2)]);
+
+        assert_eq!(
+            PruningTable::from_artifact_bytes(&path, &bytes),
+            Err(PruningArtifactError::CompactEntries {
+                path,
+                error: PruningCompactEntryError::DistanceExceedsMaxDepth {
+                    index: 1,
+                    distance: 2,
+                    max_depth: 1,
+                },
+            })
+        );
+    }
+
+    #[test]
+    fn generated_table_validation_rejects_metadata_mismatch() {
+        let spec = generated_spec_for_test(
+            GeneratedPruningTableKind::Phase2CornerPermutationSliceEdgePermutation,
+        );
+        let path = PathBuf::from(spec.file_name);
+        let mut metadata = spec.metadata(0);
+        metadata.generation.source = "wrong source".to_owned();
+        let table_size = metadata
+            .table_size()
+            .expect("spec metadata should be valid");
+        let mut entries = vec![u8::MAX; table_size];
+        entries[0] = 0;
+        let table = PruningTable::from_dense_entries(metadata, entries)
+            .expect("metadata mismatch table should build");
+
+        assert!(matches!(
+            spec.validate_table(&table, &path),
+            Err(PruningArtifactError::SpecMismatch {
+                field: "source",
+                ..
+            })
+        ));
+    }
+
+    #[test]
     fn missing_artifact_load_is_structured_io_error() {
         let directory = temp_test_dir("missing-artifact");
         fs::create_dir_all(&directory).expect("temp test directory should be created");
@@ -2407,6 +2855,44 @@ mod tests {
             .iter()
             .find(|spec| spec.kind == kind)
             .expect("test generated table spec should exist")
+    }
+
+    fn compact_test_metadata(dimension: usize, max_depth: u8) -> PruningTableMetadata {
+        PruningTableMetadata::new(
+            PRUNING_TABLE_FORMAT_VERSION,
+            "compact-test-v1",
+            PruningPhaseRole::Phase1,
+            vec![PruningCoordinate::new("test", dimension)],
+            PruningGenerationParameters::new(max_depth, "test-moves", "unit test"),
+        )
+    }
+
+    fn compact_artifact_bytes(metadata: &PruningTableMetadata, entries: &[(u64, u8)]) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        bytes.extend_from_slice(&super::ARTIFACT_MAGIC);
+        super::push_u16(&mut bytes, metadata.format_version);
+        super::push_u8(&mut bytes, metadata.phase_role.artifact_value());
+        super::push_u8(&mut bytes, metadata.coordinates.len() as u8);
+        super::push_u8(&mut bytes, metadata.generation.max_depth);
+        super::push_string(&mut bytes, &metadata.table_version);
+        super::push_string(&mut bytes, &metadata.generation.move_set);
+        super::push_string(&mut bytes, &metadata.generation.source);
+
+        for coordinate in &metadata.coordinates {
+            super::push_string(&mut bytes, &coordinate.name);
+            super::push_u64(&mut bytes, coordinate.dimension as u64);
+        }
+
+        super::push_u64(&mut bytes, entries.len() as u64);
+        for (index, distance) in entries {
+            super::push_u64(&mut bytes, *index);
+            super::push_u8(&mut bytes, *distance);
+        }
+
+        let checksum = pruning_checksum(&bytes);
+        super::push_u64(&mut bytes, checksum);
+
+        bytes
     }
 
     fn update_checksum(bytes: &mut [u8]) {

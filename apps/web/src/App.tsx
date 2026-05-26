@@ -2,7 +2,6 @@ import './App.css'
 import { useEffect, useState, type FormEvent } from 'react'
 import {
   loadWasmSolver,
-  solverStrategyOptions,
   wasmSolverBoundary,
   wasmSolverLoadingState,
   type FaceletPlaybackResult,
@@ -10,18 +9,32 @@ import {
   type FaceletSolveResult,
   type FaceletValidationResult,
   type SolverStrategyId,
+  type SolverStrategyOption,
   type WasmSolverLoadState,
 } from './wasm/solverClient'
 
 const defaultMaxDepth = '6'
 const defaultMaxNodes = '100000'
 const defaultSolverStrategyId: SolverStrategyId = 'bounded-ida-star'
+const faceletSymbols = ['U', 'R', 'F', 'D', 'L', 'B'] as const
+
+type FaceletSymbol = (typeof faceletSymbols)[number]
+
+const faceletSymbolLabels = {
+  U: 'Up',
+  R: 'Right',
+  F: 'Front',
+  D: 'Down',
+  L: 'Left',
+  B: 'Back',
+} satisfies Record<FaceletSymbol, string>
 
 const productFlow = [
   'Load the generated WASM package from crates/wasm/pkg.',
   'Read the canonical solved facelet string from Rust.',
   'Validate user-entered facelets through the Rust engine.',
   'Select a documented solver strategy while keeping bounded IDA* as the default.',
+  'Fetch local generated pruning-table artifacts only when the generated two-phase strategy is selected.',
   'Request solve results, then replay returned notation through Rust/WASM playback.',
   'Keep parsing, conversion, cube validity, solving, and verification out of React.',
 ]
@@ -30,6 +43,8 @@ function App() {
   const [wasmState, setWasmState] =
     useState<WasmSolverLoadState>(wasmSolverBoundary)
   const [faceletInput, setFaceletInput] = useState('')
+  const [selectedFaceletSymbol, setSelectedFaceletSymbol] =
+    useState<FaceletSymbol>('U')
   const [maxDepthInput, setMaxDepthInput] = useState(defaultMaxDepth)
   const [maxNodesInput, setMaxNodesInput] = useState(defaultMaxNodes)
   const [solverStrategyId, setSolverStrategyId] = useState<SolverStrategyId>(
@@ -53,10 +68,18 @@ function App() {
   }, [])
 
   const readyClient = wasmState.status === 'ready' ? wasmState.client : undefined
+  const strategyOptions = wasmState.status === 'ready' ? wasmState.strategyOptions : []
   const solvedFacelets = readyClient?.solvedFacelets()
+  const stickerEditorState = faceletStickerEditorState(
+    faceletInput,
+    solvedFacelets,
+  )
   const validationResult = readyClient?.validateFacelets(faceletInput)
   const parsedLimits = parseSolveLimits(maxDepthInput, maxNodesInput)
-  const selectedSolverStrategy = solverStrategyOptionFor(solverStrategyId)
+  const selectedSolverStrategy = solverStrategyOptionFor(
+    solverStrategyId,
+    strategyOptions,
+  )
   const solveLimits =
     parsedLimits.limits === undefined
       ? undefined
@@ -74,6 +97,16 @@ function App() {
     setSolveState({ status: 'idle' })
   }
 
+  function updateStickerFacelet(faceletIndex: number) {
+    if (stickerEditorState.status !== 'ready' || isCenterFacelet(faceletIndex)) {
+      return
+    }
+
+    const nextFacelets = Array.from(stickerEditorState.facelets)
+    nextFacelets[faceletIndex] = selectedFaceletSymbol
+    updateFaceletInput(nextFacelets.join(''))
+  }
+
   function updateMaxDepthInput(nextInput: string) {
     setMaxDepthInput(nextInput)
     setSolveState({ status: 'idle' })
@@ -89,7 +122,7 @@ function App() {
     setSolveState({ status: 'idle' })
   }
 
-  function handleSolveSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSolveSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
     if (readyClient === undefined) {
@@ -105,7 +138,7 @@ function App() {
     setSolveState({ status: 'solving', request })
 
     try {
-      const result = readyClient.solveFacelets(faceletInput, solveLimits)
+      const result = await readyClient.solveFacelets(faceletInput, solveLimits)
       let playback: PlaybackState = { status: 'not_requested' }
 
       if (result.status === 'success') {
@@ -176,6 +209,12 @@ function App() {
               keeps this as user input and delegates validation to WASM.
             </p>
           </div>
+          <StickerNetEditor
+            editorState={stickerEditorState}
+            selectedSymbol={selectedFaceletSymbol}
+            onSelectSymbol={setSelectedFaceletSymbol}
+            onStickerSelect={updateStickerFacelet}
+          />
           <label className="facelet-label" htmlFor="facelet-input">
             54-character facelet string
           </label>
@@ -208,8 +247,9 @@ function App() {
               <h2>Request a solution</h2>
               <p>
                 These controls are passed through WASM to the Rust solver. The
-                limited two-phase path is experimental while full generated
-                tables are absent.
+                generated two-phase path is selectable and reports table
+                availability or corruption honestly when local pruning tables are absent
+                or incompatible.
               </p>
             </div>
             <div className="strategy-controls" aria-label="Solver strategy selection">
@@ -218,23 +258,28 @@ function App() {
                 <select
                   id="solver-strategy-input"
                   name="solverStrategy"
+                  disabled={strategyOptions.length === 0}
                   value={solverStrategyId}
                   onChange={(event) =>
                     updateSolverStrategyId(event.target.value as SolverStrategyId)
                   }
                 >
-                  {solverStrategyOptions.map((strategy) => (
-                    <option key={strategy.id} value={strategy.id}>
-                      {strategy.label}
-                    </option>
-                  ))}
+                  {strategyOptions.length === 0 ? (
+                    <option value={solverStrategyId}>Strategy metadata loading</option>
+                  ) : (
+                    strategyOptions.map((strategy) => (
+                      <option key={strategy.id} value={strategy.id}>
+                        {strategy.label}
+                      </option>
+                    ))
+                  )}
                 </select>
                 <small>Bounded IDA* is the default product solver.</small>
               </label>
               <div className="strategy-note">
                 <strong>{selectedSolverStrategy.label}</strong>
-                <span>solver_mode={selectedSolverStrategy.mode}</span>
-                <p>{selectedSolverStrategy.description}</p>
+                <span>solver_mode={selectedSolverStrategy.solverMode}</span>
+                <p>{selectedSolverStrategy.statusText}</p>
               </div>
             </div>
             <div className="limit-controls" aria-label="Configured solver limits">
@@ -270,7 +315,7 @@ function App() {
             {parsedLimits.error === undefined ? (
               <p className="limit-help">
                 Current request: strategy={selectedSolverStrategy.label},
-                solver_mode={selectedSolverStrategy.mode}, max_depth={solveLimits?.maxDepth},
+                solver_mode={selectedSolverStrategy.solverMode}, max_depth={solveLimits?.maxDepth},
                 max_nodes={formatOptionalNumber(solveLimits?.maxNodes)}.
               </p>
             ) : (
@@ -299,6 +344,7 @@ function App() {
         <SolveResultPanel
           limitError={parsedLimits.error}
           state={solveState}
+          strategyOptions={strategyOptions}
           wasmState={wasmState}
         />
         <article className="status-panel">
@@ -360,12 +406,14 @@ type ParsedSolveLimits =
 type SolveResultPanelProps = {
   limitError: string | undefined
   state: SolveState
+  strategyOptions: SolverStrategyOption[]
   wasmState: WasmSolverLoadState
 }
 
 function SolveResultPanel({
   limitError,
   state,
+  strategyOptions,
   wasmState,
 }: SolveResultPanelProps) {
   if (wasmState.status !== 'ready') {
@@ -415,11 +463,11 @@ function SolveResultPanel({
           <span>request running</span>
         </div>
         <p>
-          Rust/WASM is searching with {strategyLabelForRequest(state.request)},
+          Rust/WASM is searching with {strategyLabelForRequest(state.request, strategyOptions)},
           max_depth={state.request.maxDepth} and
           max_nodes={formatOptionalNumber(state.request.maxNodes)}.
         </p>
-        <RequestMetrics request={state.request} />
+        <RequestMetrics request={state.request} strategyOptions={strategyOptions} />
       </article>
     )
   }
@@ -432,7 +480,7 @@ function SolveResultPanel({
           <span>client error</span>
         </div>
         <p>{state.message}</p>
-        <RequestMetrics request={state.request} />
+        <RequestMetrics request={state.request} strategyOptions={strategyOptions} />
       </article>
     )
   }
@@ -504,11 +552,24 @@ function SolveResultView({ result, playback }: SolveResultViewProps) {
     )
   }
 
-  if (result.status === 'unavailable_strategy') {
+  if (result.status === 'generated_tables_unavailable') {
     return (
       <article className="status-panel solve-panel is-warning" aria-live="polite">
         <div className="status-heading">
-          <h2>Solver strategy unavailable</h2>
+          <h2>Generated tables unavailable</h2>
+          <span>{result.errorKind}</span>
+        </div>
+        <p>{result.message}</p>
+        <SolveMetrics result={result} />
+      </article>
+    )
+  }
+
+  if (result.status === 'generated_tables_corrupt') {
+    return (
+      <article className="status-panel solve-panel is-error" aria-live="polite">
+        <div className="status-heading">
+          <h2>Generated tables corrupt</h2>
           <span>{result.errorKind}</span>
         </div>
         <p>{result.message}</p>
@@ -697,6 +758,148 @@ function PlaybackRejectedView({ result }: PlaybackRejectedViewProps) {
   )
 }
 
+type FaceletStickerEditorState = {
+  status: 'ready' | 'blocked' | 'unavailable'
+  facelets: string
+  title: string
+  summary: string
+  help: string
+}
+
+type StickerNetEditorProps = {
+  editorState: FaceletStickerEditorState
+  selectedSymbol: FaceletSymbol
+  onSelectSymbol: (symbol: FaceletSymbol) => void
+  onStickerSelect: (faceletIndex: number) => void
+}
+
+function StickerNetEditor({
+  editorState,
+  selectedSymbol,
+  onSelectSymbol,
+  onStickerSelect,
+}: StickerNetEditorProps) {
+  const canEdit = editorState.status === 'ready'
+
+  return (
+    <section
+      className="sticker-editor"
+      aria-labelledby="sticker-editor-title"
+      aria-describedby="sticker-editor-help"
+    >
+      <div className="sticker-editor-heading">
+        <div>
+          <p className="section-kicker">Sticker Net</p>
+          <h3 id="sticker-editor-title">Edit stickers visually</h3>
+          <p>
+            Facelet order is still the Rust engine order: U, R, F, D, L, B.
+            The net only paints symbols into the 54-character string.
+          </p>
+        </div>
+        <div className={`sticker-editor-state is-${editorState.status}`} role="status">
+          <strong>{editorState.title}</strong>
+          <span>{editorState.summary}</span>
+        </div>
+      </div>
+      <div className="sticker-palette" role="group" aria-label="Sticker palette">
+        {faceletSymbols.map((symbol) => {
+          const selected = selectedSymbol === symbol
+
+          return (
+            <button
+              key={symbol}
+              type="button"
+              className={`sticker-palette-button ${selected ? 'is-selected' : ''}`}
+              aria-pressed={selected}
+              aria-label={`Select ${symbol} sticker (${faceletSymbolLabels[symbol]})`}
+              onClick={() => onSelectSymbol(symbol)}
+            >
+              <span
+                className="facelet-sticker palette-swatch"
+                data-sticker={symbol}
+                aria-hidden="true"
+              >
+                {symbol}
+              </span>
+              <span>{faceletSymbolLabels[symbol]}</span>
+            </button>
+          )
+        })}
+      </div>
+      <EditableFaceletNet
+        disabled={!canEdit}
+        facelets={editorState.facelets}
+        selectedSymbol={selectedSymbol}
+        onStickerSelect={onStickerSelect}
+      />
+      <p id="sticker-editor-help" className="sticker-editor-help">
+        {editorState.help}
+      </p>
+    </section>
+  )
+}
+
+type EditableFaceletNetProps = {
+  disabled: boolean
+  facelets: string
+  selectedSymbol: FaceletSymbol
+  onStickerSelect: (faceletIndex: number) => void
+}
+
+function EditableFaceletNet({
+  disabled,
+  facelets,
+  selectedSymbol,
+  onStickerSelect,
+}: EditableFaceletNetProps) {
+  return (
+    <div
+      className={`facelet-net sticker-edit-net ${disabled ? 'is-disabled' : ''}`}
+      aria-label="Editable sticker facelet net"
+    >
+      {faceletFaceSpecs.map((face) => (
+        <div
+          key={face.name}
+          className={`facelet-face facelet-face-${face.name.toLowerCase()}`}
+          aria-label={`${face.label} face editor`}
+        >
+          <span className="facelet-face-label">{face.name}</span>
+          <div className="facelet-stickers">
+            {Array.from({ length: 9 }, (_, stickerIndex) => {
+              const faceletIndex = face.start + stickerIndex
+              const sticker = facelets[faceletIndex] ?? '?'
+              const center = isCenterFacelet(faceletIndex)
+              const buttonDisabled = disabled || center
+
+              return (
+                <button
+                  key={`${face.name}-${stickerIndex}`}
+                  type="button"
+                  className={`facelet-sticker sticker-editor-button ${center ? 'is-center' : ''}`}
+                  data-sticker={sticker}
+                  disabled={buttonDisabled}
+                  aria-label={editableStickerLabel(
+                    face.name,
+                    stickerIndex,
+                    sticker,
+                    selectedSymbol,
+                    center,
+                    disabled,
+                  )}
+                  title={center ? 'Center stickers are fixed.' : undefined}
+                  onClick={() => onStickerSelect(faceletIndex)}
+                >
+                  {sticker}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 const faceletFaceSpecs = [
   { name: 'U', label: 'Up', start: 0 },
   { name: 'L', label: 'Left', start: 36 },
@@ -740,6 +943,97 @@ function FaceletNet({ facelets }: FaceletNetProps) {
       ))}
     </div>
   )
+}
+
+function faceletStickerEditorState(
+  input: string,
+  solvedFacelets: string | undefined,
+): FaceletStickerEditorState {
+  if (input.length === 54) {
+    if (isUiEditableFaceletString(input)) {
+      return {
+        status: 'ready',
+        facelets: input,
+        title: 'Raw string mirrored',
+        summary: '54 allowed symbols',
+        help:
+          'Sticker edits will replace one symbol in the raw facelet string. Rust/WASM validation below decides whether this is a possible cube.',
+      }
+    }
+
+    return {
+      status: 'blocked',
+      facelets: input,
+      title: 'Sticker editing paused',
+      summary: 'invalid UI symbols',
+      help:
+        'The net is read-only until the raw string uses only U, R, F, D, L, and B. The Rust validation boundary still reports the authoritative error.',
+    }
+  }
+
+  if (input.length > 0) {
+    return {
+      status: 'blocked',
+      facelets: input,
+      title: 'Sticker editing paused',
+      summary: `${input.length}/54 characters`,
+      help:
+        'Finish or clear the raw string before painting stickers. This avoids overwriting partial pasted input.',
+    }
+  }
+
+  if (solvedFacelets === undefined) {
+    return {
+      status: 'unavailable',
+      facelets: '',
+      title: 'Waiting for solved state',
+      summary: 'WASM not ready',
+      help:
+        'Sticker editing starts after WASM provides the canonical solved facelets, or after a complete 54-symbol raw string is pasted.',
+    }
+  }
+
+  return {
+    status: 'ready',
+    facelets: solvedFacelets,
+    title: 'Editing solved base',
+    summary: 'empty raw string',
+    help:
+      'Click a non-center sticker to serialize the solved-base net into the raw facelet string. Center stickers are fixed.',
+  }
+}
+
+function isUiEditableFaceletString(input: string): boolean {
+  return input.length === 54 && Array.from(input).every(isFaceletSymbol)
+}
+
+function isFaceletSymbol(symbol: string): symbol is FaceletSymbol {
+  return (faceletSymbols as readonly string[]).includes(symbol)
+}
+
+function isCenterFacelet(faceletIndex: number): boolean {
+  return faceletIndex % 9 === 4
+}
+
+function editableStickerLabel(
+  faceName: string,
+  stickerIndex: number,
+  sticker: string,
+  selectedSymbol: FaceletSymbol,
+  center: boolean,
+  disabled: boolean,
+): string {
+  const stickerName = `${faceName}${stickerIndex + 1} sticker`
+
+  if (center) {
+    return `${stickerName}, fixed center, currently ${sticker}`
+  }
+
+  if (disabled) {
+    return `${stickerName}, currently ${sticker}; editing paused`
+  }
+
+  return `${stickerName}, currently ${sticker}; paints ${selectedSymbol}`
 }
 
 function playbackStepTitle(
@@ -822,6 +1116,10 @@ function SolveMetrics({ result }: SolveMetricsProps) {
         <dd>{result.solverMode}</dd>
       </div>
       <div>
+        <dt>generated_table_status</dt>
+        <dd>{result.generatedTableStatus}</dd>
+      </div>
+      <div>
         <dt>explored_nodes</dt>
         <dd>{formatOptionalMetric(result.exploredNodes)}</dd>
       </div>
@@ -839,18 +1137,19 @@ function SolveMetrics({ result }: SolveMetricsProps) {
 
 type RequestMetricsProps = {
   request: SolveRequest
+  strategyOptions: SolverStrategyOption[]
 }
 
-function RequestMetrics({ request }: RequestMetricsProps) {
+function RequestMetrics({ request, strategyOptions }: RequestMetricsProps) {
   return (
     <dl className="metrics-grid" aria-label="Requested solver limits">
       <div>
         <dt>strategy</dt>
-        <dd>{strategyLabelForRequest(request)}</dd>
+        <dd>{strategyLabelForRequest(request, strategyOptions)}</dd>
       </div>
       <div>
         <dt>solver_mode</dt>
-        <dd>{solverModeForRequest(request)}</dd>
+        <dd>{solverModeForRequest(request, strategyOptions)}</dd>
       </div>
       <div>
         <dt>max_depth</dt>
@@ -921,19 +1220,34 @@ function validationMessage(
   return result.message ?? 'The Rust engine accepted this facelet state.'
 }
 
-function solverStrategyOptionFor(strategyId: string | undefined) {
+function solverStrategyOptionFor(
+  strategyId: string | undefined,
+  strategyOptions: SolverStrategyOption[],
+): SolverStrategyOption {
+  const fallbackStrategyId = strategyId ?? defaultSolverStrategyId
+
   return (
-    solverStrategyOptions.find((strategy) => strategy.id === strategyId) ??
-    solverStrategyOptions[0]
+    strategyOptions.find((strategy) => strategy.id === fallbackStrategyId) ?? {
+      id: fallbackStrategyId,
+      label: fallbackStrategyId,
+      solverMode: 'metadata_unavailable',
+      statusText: 'Strategy metadata is available after the WASM package initializes.',
+    }
   )
 }
 
-function strategyLabelForRequest(request: SolveRequest): string {
-  return solverStrategyOptionFor(request.strategyId).label
+function strategyLabelForRequest(
+  request: SolveRequest,
+  strategyOptions: SolverStrategyOption[],
+): string {
+  return solverStrategyOptionFor(request.strategyId, strategyOptions).label
 }
 
-function solverModeForRequest(request: SolveRequest): string {
-  return solverStrategyOptionFor(request.strategyId).mode
+function solverModeForRequest(
+  request: SolveRequest,
+  strategyOptions: SolverStrategyOption[],
+): string {
+  return solverStrategyOptionFor(request.strategyId, strategyOptions).solverMode
 }
 
 function parseSolveLimits(

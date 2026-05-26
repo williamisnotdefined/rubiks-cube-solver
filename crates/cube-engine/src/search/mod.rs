@@ -17,5 +17,7 @@ pub use ida_star::{
 };
 pub use iddfs::{depth_limited_search, solve_iddfs};
 pub use solution::{SearchBudget, SearchOutcome, SearchSolution};
-pub use two_phase::GeneratedTwoPhaseError;
-pub(crate) use two_phase::{solve_generated_two_phase, solve_two_phase_baseline};
+pub(crate) use two_phase::{
+    solve_generated_two_phase, solve_generated_two_phase_with_artifacts, solve_two_phase_baseline,
+};
+pub use two_phase::{GeneratedPruningTableArtifact, GeneratedTwoPhaseError};
