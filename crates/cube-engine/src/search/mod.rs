@@ -2,7 +2,9 @@ pub mod bfs;
 pub mod heuristics;
 pub mod ida_star;
 pub mod iddfs;
+pub mod pruning;
 pub mod solution;
+pub(crate) mod two_phase;
 
 pub use bfs::solve_bfs;
 pub use heuristics::{
@@ -15,3 +17,4 @@ pub use ida_star::{
 };
 pub use iddfs::{depth_limited_search, solve_iddfs};
 pub use solution::{SearchBudget, SearchOutcome, SearchSolution};
+pub(crate) use two_phase::solve_two_phase_baseline;

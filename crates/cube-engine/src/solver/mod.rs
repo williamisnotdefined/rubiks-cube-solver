@@ -4,7 +4,22 @@ use crate::cube::{
     Algorithm, Cube, CubeValidationError, CubieState, FaceletConversionError, FaceletParseError,
     FaceletString, Move, NotationError,
 };
-use crate::search::{solve_ida_star_bounded, SearchBudget, SearchOutcome};
+use crate::search::{
+    solve_ida_star_bounded, solve_two_phase_baseline, SearchBudget, SearchOutcome,
+};
+
+pub mod quality;
+
+/// Explicit solver selection for public solver entry points.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SolverStrategy {
+    /// Existing bounded deterministic IDA* path used by product defaults.
+    BoundedIdaStar,
+    /// Limited two-phase baseline backed only by tiny committed fixtures.
+    ///
+    /// This is not a full generated-table solver and does not claim optimality or a 20-move bound.
+    TwoPhaseBaseline,
+}
 
 /// Configuration shared by public solver entry points.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -15,6 +30,8 @@ pub struct SolverConfig {
     ///
     /// Public solver entry points pass this through to the bounded search budget.
     pub max_nodes: Option<usize>,
+    /// Explicit solver path. Constructors default to the bounded product solver.
+    pub strategy: SolverStrategy,
 }
 
 impl SolverConfig {
@@ -22,6 +39,7 @@ impl SolverConfig {
         Self {
             max_depth,
             max_nodes: None,
+            strategy: SolverStrategy::BoundedIdaStar,
         }
     }
 
@@ -29,6 +47,19 @@ impl SolverConfig {
         Self {
             max_depth,
             max_nodes,
+            strategy: SolverStrategy::BoundedIdaStar,
+        }
+    }
+
+    pub const fn with_strategy(
+        max_depth: usize,
+        max_nodes: Option<usize>,
+        strategy: SolverStrategy,
+    ) -> Self {
+        Self {
+            max_depth,
+            max_nodes,
+            strategy,
         }
     }
 }
@@ -265,7 +296,7 @@ impl From<SolveInputError> for SolveError {
     }
 }
 
-/// Solve a validated cubie state through the bounded deterministic search path.
+/// Solve a validated cubie state through the configured deterministic search path.
 pub fn solve_cubie_state(
     state: CubieState,
     config: SolverConfig,
@@ -317,12 +348,15 @@ pub fn playback_facelet_solution(
     Ok(FaceletPlaybackResult::new(states, cube.is_solved()))
 }
 
-/// Solve a cube through the bounded deterministic search path.
+/// Solve a cube through the configured deterministic search path.
 pub fn solve_cube(cube: &Cube, config: SolverConfig) -> Result<SolveResult, SolveError> {
     cube.state().validate().map_err(SolveInputError::from)?;
 
     let budget = SearchBudget::with_limits(config.max_depth, config.max_nodes);
-    let outcome = solve_ida_star_bounded(cube, budget);
+    let outcome = match config.strategy {
+        SolverStrategy::BoundedIdaStar => solve_ida_star_bounded(cube, budget),
+        SolverStrategy::TwoPhaseBaseline => solve_two_phase_baseline(cube, budget),
+    };
 
     solve_search_outcome(cube, config, outcome)
 }
@@ -367,7 +401,7 @@ mod tests {
     use super::{
         playback_facelet_solution, solve_cube, solve_cubie_state, solve_facelet_string,
         solve_search_outcome, validate_facelet_string, FaceletPlaybackError, SolveError,
-        SolveInputError, SolveMetrics, SolveResult, SolverConfig,
+        SolveInputError, SolveMetrics, SolveResult, SolverConfig, SolverStrategy,
     };
     use crate::cube::cubies::{Corner, Edge};
     use crate::cube::facelets::FACELET_COUNT;
@@ -385,10 +419,17 @@ mod tests {
 
         assert_eq!(config.max_depth, 20);
         assert_eq!(config.max_nodes, Some(1_000));
+        assert_eq!(config.strategy, SolverStrategy::BoundedIdaStar);
 
         let unlimited_nodes = SolverConfig::new(20);
         assert_eq!(unlimited_nodes.max_depth, 20);
         assert_eq!(unlimited_nodes.max_nodes, None);
+        assert_eq!(unlimited_nodes.strategy, SolverStrategy::BoundedIdaStar);
+
+        let two_phase = SolverConfig::with_strategy(1, Some(2), SolverStrategy::TwoPhaseBaseline);
+        assert_eq!(two_phase.max_depth, 1);
+        assert_eq!(two_phase.max_nodes, Some(2));
+        assert_eq!(two_phase.strategy, SolverStrategy::TwoPhaseBaseline);
     }
 
     #[test]
@@ -433,6 +474,11 @@ mod tests {
     #[test]
     fn root_exports_construct_solver_types() {
         let config = crate::SolverConfig::with_limits(3, Some(100));
+        let selected_config = crate::SolverConfig::with_strategy(
+            3,
+            Some(100),
+            crate::SolverStrategy::TwoPhaseBaseline,
+        );
         let metrics = crate::SolveMetrics::new(2);
         let result = crate::SolveResult::with_metrics(vec![crate::Move::R], metrics);
         let not_found = crate::SolveError::NotFoundWithinLimits {
@@ -455,6 +501,10 @@ mod tests {
 
         assert_eq!(result.moves(), &[crate::Move::R]);
         assert_eq!(result.length(), 1);
+        assert_eq!(
+            selected_config.strategy,
+            crate::SolverStrategy::TwoPhaseBaseline
+        );
         assert!(playback.final_is_solved());
         assert!(matches!(
             not_found,
@@ -508,6 +558,133 @@ mod tests {
         assert_solution_solves_cube(cube, result.moves());
         assert_eq!(result.length(), result.moves().len());
         assert!(result.explored_nodes() > 0);
+    }
+
+    #[test]
+    fn two_phase_baseline_solved_cubie_state_returns_empty_solution() {
+        let result = solve_cubie_state(CubieState::solved(), two_phase_config(0, None))
+            .expect("selected two-phase baseline should solve solved cubie state");
+
+        assert!(result.is_empty());
+        assert_eq!(result.length(), 0);
+        assert_eq!(result.explored_nodes(), 1);
+    }
+
+    #[test]
+    fn two_phase_baseline_known_shallow_cubie_state_returns_verified_solution() {
+        let state = scrambled_state(&[Move::F]);
+        let result = solve_cubie_state(state.clone(), two_phase_config(1, None))
+            .expect("selected two-phase baseline should solve fixture-covered cubie state");
+
+        assert_solution_solves_state(state, result.moves());
+        assert_eq!(result.length(), 1);
+        assert!(result.explored_nodes() > 0);
+    }
+
+    #[test]
+    fn two_phase_baseline_known_shallow_facelet_state_returns_verified_solution() {
+        let cube = scrambled(&[Move::F]);
+        let input = FaceletString::from_cube(&cube).to_string();
+        let result = solve_facelet_string(&input, two_phase_config(1, None))
+            .expect("selected two-phase baseline should solve fixture-covered facelet state");
+
+        assert_solution_solves_cube(cube, result.moves());
+        assert_eq!(result.length(), 1);
+        assert!(result.explored_nodes() > 0);
+    }
+
+    #[test]
+    fn two_phase_baseline_invalid_cubie_state_returns_invalid_input() {
+        let mut state = CubieState::solved();
+        state.edge_orientation[0] = 1;
+
+        let error = solve_cubie_state(state, two_phase_config(1, None))
+            .expect_err("invalid cubie state should not reach selected two-phase search");
+
+        assert_eq!(
+            error,
+            SolveError::InvalidInput {
+                error: SolveInputError::CubieValidation {
+                    error: CubeValidationError::InvalidEdgeOrientationSum { sum: 1 },
+                },
+            }
+        );
+    }
+
+    #[test]
+    fn two_phase_baseline_invalid_facelets_return_invalid_input() {
+        let error = solve_facelet_string("U", two_phase_config(0, None))
+            .expect_err("invalid facelet syntax should not reach selected two-phase search");
+
+        assert_eq!(
+            error,
+            SolveError::InvalidInput {
+                error: SolveInputError::FaceletParse {
+                    error: FaceletParseError::InvalidLength {
+                        expected: FACELET_COUNT,
+                        actual: 1,
+                    },
+                },
+            }
+        );
+    }
+
+    #[test]
+    fn two_phase_baseline_reports_configured_limits_with_metrics() {
+        let state = scrambled_state(&[Move::F]);
+        let config = two_phase_config(1, Some(0));
+
+        let error = solve_cubie_state(state.clone(), config)
+            .expect_err("zero-node budget should stop selected two-phase baseline");
+
+        assert_eq!(
+            error,
+            SolveError::NotFoundWithinLimits {
+                config,
+                explored_nodes: 0,
+            }
+        );
+
+        let config = two_phase_config(0, None);
+        let error = solve_cubie_state(state, config)
+            .expect_err("depth-zero limit should not solve fixture-covered one-move state");
+
+        match error {
+            SolveError::NotFoundWithinLimits {
+                config: actual_config,
+                explored_nodes,
+            } => {
+                assert_eq!(actual_config, config);
+                assert!(explored_nodes > 0);
+            }
+            SolveError::InvalidInput { .. } => panic!("limit failure should not be invalid input"),
+        }
+    }
+
+    #[test]
+    fn two_phase_baseline_reports_not_found_for_shallow_state_outside_tiny_fixture() {
+        let state = scrambled_state(&[Move::R]);
+        let config = two_phase_config(1, None);
+
+        let error = solve_cubie_state(state.clone(), config)
+            .expect_err("selected two-phase baseline should stay limited to committed fixture");
+
+        match error {
+            SolveError::NotFoundWithinLimits {
+                config: actual_config,
+                explored_nodes,
+            } => {
+                assert_eq!(actual_config, config);
+                assert!(explored_nodes > 0);
+            }
+            SolveError::InvalidInput { .. } => {
+                panic!("unsupported fixture state is not invalid input")
+            }
+        }
+
+        let default_result = solve_cubie_state(state.clone(), SolverConfig::new(1))
+            .expect("default bounded solver should remain unchanged");
+        assert_solution_solves_state(state, default_result.moves());
     }
 
     #[test]
@@ -917,6 +1094,10 @@ mod tests {
 
         assert_solution_solves_state(state, result.moves());
         assert_eq!(result.length(), 1);
+    }
+
+    fn two_phase_config(max_depth: usize, max_nodes: Option<usize>) -> SolverConfig {
+        SolverConfig::with_strategy(max_depth, max_nodes, SolverStrategy::TwoPhaseBaseline)
     }
 
     fn scrambled(moves: &[Move]) -> Cube {

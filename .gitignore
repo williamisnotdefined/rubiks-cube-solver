@@ -6,6 +6,8 @@ coverage/
 playwright-report/
 test-results/
 blob-report/
+# Generated pruning tables are local artifacts; commit only tiny fixtures.
+crates/cube-engine/pruning-tables/
 *.log
 .env
 .env.*

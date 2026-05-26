@@ -1,0 +1,14 @@
+# Tiny sparse phase-1 pruning-table fixture for unit tests.
+# Full generated pruning tables belong in crates/cube-engine/pruning-tables/ and stay untracked.
+format_version=1
+table_version=tiny-phase1-depth1-v1
+phase_role=phase1
+max_depth=1
+move_set=face-turn-metric-depth1
+source=committed deterministic test fixture
+coordinate=corner_orientation:2187
+coordinate=edge_orientation:2048
+coordinate=ud_slice_edge_combination:495
+entries:
+0=0
+1253279840=1

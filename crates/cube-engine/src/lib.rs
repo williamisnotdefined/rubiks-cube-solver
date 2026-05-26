@@ -29,5 +29,5 @@ pub use search::{
 pub use solver::{
     playback_facelet_solution, solve_cube, solve_cubie_state, solve_facelet_string,
     validate_facelet_string, FaceletPlaybackError, FaceletPlaybackResult, SolveError,
-    SolveInputError, SolveMetrics, SolveResult, SolverConfig,
+    SolveInputError, SolveMetrics, SolveResult, SolverConfig, SolverStrategy,
 };
