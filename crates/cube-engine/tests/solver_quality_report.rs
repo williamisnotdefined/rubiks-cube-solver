@@ -658,7 +658,7 @@ fn solver_quality_report_markdown_has_stable_headers_and_local_timing_note() {
     let markdown = report.to_markdown();
 
     assert!(markdown.contains("# Deterministic Solver Quality Report"));
-    assert!(markdown.contains("/tmp/rubiks-cube-solver-pruning-tables"));
+    assert!(markdown.contains("crates/cube-engine/pruning-tables"));
     assert!(markdown.contains("Elapsed time is local measurement output"));
     assert!(markdown.contains("does not claim optimality or a 20-move guarantee"));
     assert!(markdown.contains("## Summary"));

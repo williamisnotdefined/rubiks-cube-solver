@@ -121,7 +121,7 @@ fn parse_depth(flag: &str, value: impl AsRef<str>) -> Result<u8, String> {
 }
 
 fn help_text() -> String {
-    "usage: generate_pruning_tables [--output DIR] [--max-depth N] [--phase1-max-depth N] [--phase2-max-depth N]\n\nDefault output is crates/cube-engine/pruning-tables. Use --output apps/web/public/generated-pruning-tables --max-depth 6 for browser-served local artifacts. Use --output /tmp/rubiks-cube-solver-pruning-tables --max-depth 8 for native solver quality reports. Artifacts are compact depth-limited files that store only reached pruning entries plus deterministic generation metadata; regenerate old local artifacts after format changes or depth changes. Defaults generate depth-2 deterministic artifacts for fast local smoke checks; raise depths explicitly for deeper local tables."
+    "usage: generate_pruning_tables [--output DIR] [--max-depth N] [--phase1-max-depth N] [--phase2-max-depth N]\n\nDefault output is crates/cube-engine/pruning-tables. Use --output apps/web/public/generated-pruning-tables --max-depth 6 for browser-served local artifacts. Use --output crates/cube-engine/pruning-tables --max-depth 8 for native solver quality reports. Artifacts are compact depth-limited files that store only reached pruning entries plus deterministic generation metadata; regenerate old local artifacts after format changes or depth changes. Defaults generate depth-2 deterministic artifacts for fast local smoke checks; raise depths explicitly for deeper local tables."
         .to_owned()
 }
 

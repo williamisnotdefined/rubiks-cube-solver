@@ -43,12 +43,12 @@ cargo run --quiet -p cube-engine --bin solver_quality_report
 
 Rows are ordered by fixture and solver selection. Compare fixture IDs, categories, input paths, expectations, solver selection, strategy, configured limits, generated-table status, row status, solution length, explored nodes, replay verification, and moves for regressions. `elapsed_us` is local timing output and is not deterministic.
 
-Generated two-phase rows read local pruning-table artifacts from `/tmp/rubiks-cube-solver-pruning-tables` by default. Missing artifacts report `generated_tables_unavailable`; corrupt or incompatible artifacts report `generated_tables_corrupt_or_incompatible`. These artifacts are local generated files and should not be committed.
+Generated two-phase rows read local pruning-table artifacts from `crates/cube-engine/pruning-tables` by default. Missing artifacts report `generated_tables_unavailable`; corrupt or incompatible artifacts report `generated_tables_corrupt_or_incompatible`. These artifacts are local generated files and should not be committed.
 
 Generate the native depth-8 compact artifacts used by generated two-phase quality rows with:
 
 ```bash
-cargo run --quiet -p cube-engine --bin generate_pruning_tables -- --output /tmp/rubiks-cube-solver-pruning-tables --max-depth 8
+cargo run --quiet -p cube-engine --bin generate_pruning_tables -- --output crates/cube-engine/pruning-tables --max-depth 8
 ```
 
 The generated harder quality fixtures use the documented phase-2/G1 scramble `U R2 F2 D L2 B2 U2 R2` and require matching local depth-8 artifacts. The report includes generated artifact depth, table versions, move sets, generation source, and coordinate profile metadata in `table_depths` and `table_metadata` columns when those local artifacts are available.
@@ -127,10 +127,10 @@ python -m pytest ml
 Train and evaluate the small deterministic PyTorch MLP value model with:
 
 ```bash
-python -m ml.train_value_baseline --dataset datasets/fixtures/small.jsonl --epochs 1 --seed 0 --output /tmp/rubiks-cube-solver-ml-smoke --inference-repeats 1
+python -m ml.train_value_baseline --dataset datasets/fixtures/small.jsonl --epochs 1 --seed 0 --output ml/outputs/value-baseline --inference-repeats 1
 ```
 
-The CLI prints a JSON report and writes `metrics.json` plus `value_outputs.tsv` under the requested `--output` directory. The TSV uses comment metadata followed by `CubieState<TAB>predicted_value` rows for local hybrid-search experiments. The default output directory is under `/tmp`, and the smoke baseline does not write model checkpoints.
+The CLI prints a JSON report and writes `metrics.json` plus `value_outputs.tsv` under the requested `--output` directory. The TSV uses comment metadata followed by `CubieState<TAB>predicted_value` rows for local hybrid-search experiments. The default output directory is the ignored workspace-local `ml/outputs/value-baseline`, and the smoke baseline does not write model checkpoints.
 
 If PyTorch is unavailable, the CLI exits successfully with an explicit dependency-fallback report so smoke verification still records label metrics; install `ml/requirements.txt` to train the PyTorch MLP.
 
@@ -161,13 +161,13 @@ The first hybrid-search experiment is isolated to the native solver quality repo
 The no-arg quality report looks for local value outputs at:
 
 ```bash
-/tmp/rubiks-cube-solver-ml-smoke/value_outputs.tsv
+ml/outputs/value-baseline/value_outputs.tsv
 ```
 
 Generate that artifact with the ML smoke command:
 
 ```bash
-python -m ml.train_value_baseline --dataset datasets/fixtures/small.jsonl --epochs 1 --seed 0 --output /tmp/rubiks-cube-solver-ml-smoke --inference-repeats 1
+python -m ml.train_value_baseline --dataset datasets/fixtures/small.jsonl --epochs 1 --seed 0 --output ml/outputs/value-baseline --inference-repeats 1
 ```
 
 Run the report with the default artifact path:
@@ -179,7 +179,7 @@ cargo run --quiet -p cube-engine --bin solver_quality_report
 Run the report with an explicit artifact path:
 
 ```bash
-cargo run --quiet -p cube-engine --bin solver_quality_report -- --hybrid-value-outputs /tmp/rubiks-cube-solver-ml-smoke/value_outputs.tsv
+cargo run --quiet -p cube-engine --bin solver_quality_report -- --hybrid-value-outputs ml/outputs/value-baseline/value_outputs.tsv
 ```
 
 The report keeps the deterministic classical rows unchanged and appends `Hybrid Move Ordering Experiment` rows using the same fixture budgets as `default-bounded-ida-star`. Hybrid rows include artifact status, row status, solution length, explored nodes, elapsed time, replay verification, scored value lookups, missing score lookups, and moves.

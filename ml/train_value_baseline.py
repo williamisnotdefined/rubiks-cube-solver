@@ -20,7 +20,7 @@ from .data import (
 from .model import inference_us_per_state, is_torch_available, predict, train_value_model
 
 DEFAULT_DATASET = Path("datasets/fixtures/small.jsonl")
-DEFAULT_OUTPUT = Path("/tmp/rubiks-cube-solver-ml-value-baseline")
+DEFAULT_OUTPUT = Path("ml/outputs/value-baseline")
 
 
 def run_baseline(
@@ -434,7 +434,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--output",
         default=str(DEFAULT_OUTPUT),
-        help="directory for metrics output; defaults to /tmp",
+        help="directory for metrics output; defaults to ml/outputs/value-baseline",
     )
     parser.add_argument("--learning-rate", default=0.01, type=float)
     parser.add_argument("--hidden-dim", default=64, type=int)

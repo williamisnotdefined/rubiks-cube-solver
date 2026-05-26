@@ -17,7 +17,7 @@ use crate::solver::{
     SolveError, SolveInputError, SolverConfig, SolverStrategy,
 };
 
-pub const QUALITY_REPORT_PRUNING_TABLE_DIR: &str = "/tmp/rubiks-cube-solver-pruning-tables";
+pub const QUALITY_REPORT_PRUNING_TABLE_DIR: &str = "crates/cube-engine/pruning-tables";
 pub const QUALITY_REPORT_HYBRID_VALUE_OUTPUT_PATH: &str = DEFAULT_HYBRID_VALUE_OUTPUT_PATH;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -332,7 +332,7 @@ impl QualityReport {
     pub fn to_markdown(&self) -> String {
         let mut output = String::from(
             "# Deterministic Solver Quality Report\n\n\
-Fixtures, solver selections, table availability, expectations, generated artifact metadata, and limits are fixed. Generated two-phase rows read local pruning-table artifacts from /tmp/rubiks-cube-solver-pruning-tables by default. Elapsed time is local measurement output; use it as a rough local signal, not as a deterministic value. Compare fixture order, solver selection, expectation, table status, generated artifact depths, compatibility metadata, configured limits, status, solution length, explored nodes, and replay verification for regressions. This report does not claim optimality or a 20-move guarantee.\n\n",
+Fixtures, solver selections, table availability, expectations, generated artifact metadata, and limits are fixed. Generated two-phase rows read local pruning-table artifacts from crates/cube-engine/pruning-tables by default. Elapsed time is local measurement output; use it as a rough local signal, not as a deterministic value. Compare fixture order, solver selection, expectation, table status, generated artifact depths, compatibility metadata, configured limits, status, solution length, explored nodes, and replay verification for regressions. This report does not claim optimality or a 20-move guarantee.\n\n",
         );
 
         output.push_str(
@@ -383,7 +383,7 @@ Status counts are grouped by solver selection. Elapsed timing stays in the row t
 
         output.push_str(
             "\n## Hybrid Move Ordering Experiment\n\n\
-Hybrid rows compare the isolated learned-value move-ordering experiment against the `default-bounded-ida-star` fixture budgets. Value outputs are local artifacts at /tmp/rubiks-cube-solver-ml-smoke/value_outputs.tsv by default. The learned values only order legal child moves; they do not validate states, prune branches, change limits, claim admissibility, or replace Rust replay verification. Missing, fallback, or malformed artifacts are reported as experiment statuses without changing product solver defaults.\n\n\
+Hybrid rows compare the isolated learned-value move-ordering experiment against the `default-bounded-ida-star` fixture budgets. Value outputs are local artifacts at ml/outputs/value-baseline/value_outputs.tsv by default. The learned values only order legal child moves; they do not validate states, prune branches, change limits, claim admissibility, or replace Rust replay verification. Missing, fallback, or malformed artifacts are reported as experiment statuses without changing product solver defaults.\n\n\
 | fixture | group | input | expectation | scramble | baseline_selection | max_depth | max_nodes | artifact_path | artifact_status | artifact_metadata | status | solution_len | explored_nodes | elapsed_us | replay_verified | scored_move_lookups | missing_score_lookups | solution |\n\
 | --- | --- | --- | --- | --- | --- | ---: | ---: | --- | --- | --- | --- | ---: | ---: | ---: | --- | ---: | ---: | --- |\n",
         );

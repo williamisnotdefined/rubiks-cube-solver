@@ -134,6 +134,12 @@ def test_cli_writes_json_report(capsys: pytest.CaptureFixture[str], tmp_path: Pa
     assert Path(report["output"]["metrics_json"]).is_file()
 
 
+def test_cli_default_output_stays_workspace_local() -> None:
+    args = baseline.parse_args([])
+
+    assert Path(args.output) == Path("ml/outputs/value-baseline")
+
+
 def read_value_outputs(path: Path) -> tuple[dict[str, str], list[tuple[str, float]]]:
     metadata: dict[str, str] = {}
     rows: list[tuple[str, float]] = []

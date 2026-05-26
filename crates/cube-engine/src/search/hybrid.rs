@@ -10,7 +10,7 @@ use super::solution::{SearchBudget, SearchOutcome};
 use crate::cube::{Cube, CubieState, Move};
 
 pub(crate) const DEFAULT_HYBRID_VALUE_OUTPUT_PATH: &str =
-    "/tmp/rubiks-cube-solver-ml-smoke/value_outputs.tsv";
+    "ml/outputs/value-baseline/value_outputs.tsv";
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum HybridValueArtifactStatus {
