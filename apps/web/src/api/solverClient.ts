@@ -61,8 +61,11 @@ export type FaceletSolveFailureResult = FaceletSolveMetadata & {
     | 'invalid_notation'
     | 'not_found_within_limits'
     | 'unsupported_strategy'
+    | 'invalid_limits'
+    | 'request_too_large'
     | 'generated_tables_unavailable'
     | 'generated_tables_corrupt'
+    | 'unverified_solution'
     | 'api_error'
   ok: false
   errorKind?: string
@@ -279,7 +282,7 @@ function normalizeSolveResponse(payload: ApiSolveResponse, httpOk: boolean): Fac
     inputFacelets: payload.inputFacelets,
   }
 
-  if (httpOk && payload.ok && payload.status === 'success') {
+  if (httpOk && payload.ok && payload.status === 'success' && payload.replayVerified === true) {
     return {
       ...metadata,
       status: 'success',
@@ -287,7 +290,18 @@ function normalizeSolveResponse(payload: ApiSolveResponse, httpOk: boolean): Fac
       moves: payload.moves,
       length: payload.length ?? payload.moves.length,
       exploredNodes: payload.exploredNodes ?? 0,
-      replayVerified: payload.replayVerified ?? false,
+      replayVerified: true,
+    }
+  }
+
+  if (httpOk && payload.ok && payload.status === 'success') {
+    return {
+      ...metadata,
+      status: 'unverified_solution',
+      ok: false,
+      errorKind: payload.errorKind ?? 'unverified_solution',
+      message: payload.message ?? 'API solve result was not replay verified.',
+      exploredNodes: payload.exploredNodes,
     }
   }
 
@@ -336,8 +350,11 @@ function solveFailureStatus(status: string): FaceletSolveFailureResult['status']
     status === 'invalid_notation' ||
     status === 'not_found_within_limits' ||
     status === 'unsupported_strategy' ||
+    status === 'invalid_limits' ||
+    status === 'request_too_large' ||
     status === 'generated_tables_unavailable' ||
-    status === 'generated_tables_corrupt'
+    status === 'generated_tables_corrupt' ||
+    status === 'unverified_solution'
   ) {
     return status
   }

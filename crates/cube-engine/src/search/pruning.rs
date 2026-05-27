@@ -40,6 +40,7 @@ const PHASE2_MOVES: [Move; 10] = [
     Move::F2,
     Move::B2,
 ];
+const COMPACT_ENTRY_BYTES: u64 = 9;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PruningPhaseRole {
@@ -470,6 +471,9 @@ pub enum PruningCompactEntryError {
         entry_count: u64,
         table_size: usize,
     },
+    EntryAllocationFailed {
+        entry_count: u64,
+    },
     EntryIndexOutOfRange {
         index: u64,
         table_size: usize,
@@ -502,6 +506,10 @@ impl fmt::Display for PruningCompactEntryError {
                 formatter,
                 "compact pruning table has {entry_count} entries, exceeding table size {table_size}"
             ),
+            Self::EntryAllocationFailed { entry_count } => write!(
+                formatter,
+                "compact pruning table could not reserve {entry_count} entries"
+            ),
             Self::EntryIndexOutOfRange { index, table_size } => write!(
                 formatter,
                 "compact pruning table entry index {index} is outside 0..{table_size}"
@@ -531,6 +539,7 @@ impl std::error::Error for PruningCompactEntryError {
             Self::InvalidMetadata { error } => Some(error),
             Self::MaxDepthUsesSentinel
             | Self::EntryCountExceedsTableSize { .. }
+            | Self::EntryAllocationFailed { .. }
             | Self::EntryIndexOutOfRange { .. }
             | Self::DuplicateEntry { .. }
             | Self::EntriesOutOfOrder { .. }
@@ -1366,7 +1375,20 @@ fn read_compact_entries(
         ));
     }
 
-    let mut entries = Vec::with_capacity(usize::try_from(entry_count).map_err(|_| {
+    let required_payload_bytes = entry_count
+        .checked_mul(COMPACT_ENTRY_BYTES)
+        .ok_or_else(|| PruningArtifactError::UnexpectedEnd {
+            path: path.to_path_buf(),
+            field: "compact_entries",
+        })?;
+    if required_payload_bytes > cursor.remaining_len() as u64 {
+        return Err(PruningArtifactError::UnexpectedEnd {
+            path: path.to_path_buf(),
+            field: "compact_entries",
+        });
+    }
+
+    let entry_capacity = usize::try_from(entry_count).map_err(|_| {
         compact_entries_artifact_error(
             path,
             PruningCompactEntryError::EntryCountExceedsTableSize {
@@ -1374,7 +1396,14 @@ fn read_compact_entries(
                 table_size,
             },
         )
-    })?);
+    })?;
+    let mut entries = Vec::new();
+    entries.try_reserve(entry_capacity).map_err(|_| {
+        compact_entries_artifact_error(
+            path,
+            PruningCompactEntryError::EntryAllocationFailed { entry_count },
+        )
+    })?;
 
     for _ in 0..entry_count {
         let raw_index = cursor.read_u64("entry.index")?;
@@ -2789,6 +2818,46 @@ mod tests {
     }
 
     #[test]
+    fn generated_artifact_rejects_entry_count_larger_than_payload_before_allocation() {
+        let path = PathBuf::from("entry-count-payload-mismatch.rpt");
+        let metadata = compact_test_metadata(1_000_000, 1);
+        let bytes = compact_artifact_bytes_with_entry_count(&metadata, 1_000_000, &[]);
+
+        assert_eq!(
+            PruningTable::from_artifact_bytes(&path, &bytes),
+            Err(PruningArtifactError::UnexpectedEnd {
+                path,
+                field: "compact_entries",
+            })
+        );
+    }
+
+    #[test]
+    fn generated_artifact_rejects_entry_payload_size_overflow_before_allocation() {
+        let path = PathBuf::from("entry-count-overflow.rpt");
+        let metadata = PruningTableMetadata::new(
+            PRUNING_TABLE_FORMAT_VERSION,
+            "compact-test-v1",
+            PruningPhaseRole::Phase1,
+            vec![PruningCoordinate::new("test", usize::MAX)],
+            PruningGenerationParameters::new(1, "test-moves", "unit test"),
+        );
+        let bytes = compact_artifact_bytes_with_entry_count(
+            &metadata,
+            u64::try_from(usize::MAX).expect("usize should fit in u64"),
+            &[],
+        );
+
+        assert_eq!(
+            PruningTable::from_artifact_bytes(&path, &bytes),
+            Err(PruningArtifactError::UnexpectedEnd {
+                path,
+                field: "compact_entries",
+            })
+        );
+    }
+
+    #[test]
     fn generated_artifact_rejects_out_of_range_compact_entry() {
         let path = PathBuf::from("entry-out-of-range.rpt");
         let metadata = compact_test_metadata(2, 1);
@@ -2922,6 +2991,14 @@ mod tests {
     }
 
     fn compact_artifact_bytes(metadata: &PruningTableMetadata, entries: &[(u64, u8)]) -> Vec<u8> {
+        compact_artifact_bytes_with_entry_count(metadata, entries.len() as u64, entries)
+    }
+
+    fn compact_artifact_bytes_with_entry_count(
+        metadata: &PruningTableMetadata,
+        entry_count: u64,
+        entries: &[(u64, u8)],
+    ) -> Vec<u8> {
         let mut bytes = Vec::new();
         bytes.extend_from_slice(&super::ARTIFACT_MAGIC);
         super::push_u16(&mut bytes, metadata.format_version);
@@ -2937,7 +3014,7 @@ mod tests {
             super::push_u64(&mut bytes, coordinate.dimension as u64);
         }
 
-        super::push_u64(&mut bytes, entries.len() as u64);
+        super::push_u64(&mut bytes, entry_count);
         for (index, distance) in entries {
             super::push_u64(&mut bytes, *index);
             super::push_u8(&mut bytes, *distance);

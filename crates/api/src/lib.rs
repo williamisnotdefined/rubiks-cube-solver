@@ -1,8 +1,8 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use axum::extract::State;
-use axum::http::StatusCode;
+use axum::extract::{DefaultBodyLimit, State};
+use axum::http::{header::CONTENT_TYPE, HeaderValue, Method, StatusCode};
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use cube_engine::{
@@ -12,10 +12,15 @@ use cube_engine::{
     SolverConfig, SolverStrategy,
 };
 use serde::{Deserialize, Serialize};
-use tower_http::cors::CorsLayer;
+use tower_http::cors::{AllowOrigin, CorsLayer};
 
 pub const DEFAULT_API_ADDR: &str = "127.0.0.1:8787";
 pub const DEFAULT_PRUNING_TABLE_DIR: &str = "crates/cube-engine/pruning-tables";
+pub const MAX_API_DEPTH: usize = 30;
+pub const MAX_API_NODES: usize = 10_000_000;
+pub const MAX_FACELET_BYTES: usize = 54;
+pub const MAX_NOTATION_BYTES: usize = 4096;
+pub const MAX_JSON_BODY_BYTES: usize = 8192;
 
 #[derive(Clone)]
 pub struct ApiState {
@@ -71,8 +76,28 @@ pub fn api_router(state: ApiState) -> Router {
         .route("/solve", post(solve))
         .route("/solve-notation", post(solve_notation))
         .route("/playback", post(playback))
-        .layer(CorsLayer::permissive())
+        .layer(DefaultBodyLimit::max(MAX_JSON_BODY_BYTES))
+        .layer(cors_layer())
         .with_state(state)
+}
+
+fn cors_layer() -> CorsLayer {
+    CorsLayer::new()
+        .allow_methods([Method::GET, Method::POST])
+        .allow_headers([CONTENT_TYPE])
+        .allow_origin(AllowOrigin::predicate(|origin, _request_head| {
+            allowed_web_origin(origin)
+        }))
+}
+
+fn allowed_web_origin(origin: &HeaderValue) -> bool {
+    matches!(
+        origin.to_str(),
+        Ok("http://127.0.0.1:5173")
+            | Ok("http://localhost:5173")
+            | Ok("http://127.0.0.1:4173")
+            | Ok("http://localhost:4173")
+    )
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
@@ -215,6 +240,11 @@ async fn solve_notation(
 }
 
 pub fn solve_request(state: &ApiState, request: SolveRequest) -> (StatusCode, Json<SolveResponse>) {
+    let request = match validate_solve_request_limits(request) {
+        Ok(request) => request,
+        Err(response) => return (StatusCode::BAD_REQUEST, Json(*response)),
+    };
+
     let Some(strategy) = SolverStrategy::from_id(&request.strategy_id) else {
         return (
             StatusCode::BAD_REQUEST,
@@ -242,6 +272,11 @@ pub fn solve_notation_request(
     state: &ApiState,
     request: SolveNotationRequest,
 ) -> (StatusCode, Json<SolveResponse>) {
+    let request = match validate_solve_notation_request_limits(request) {
+        Ok(request) => request,
+        Err(response) => return (StatusCode::BAD_REQUEST, Json(*response)),
+    };
+
     let Some(strategy) = SolverStrategy::from_id(&request.strategy_id) else {
         return (
             StatusCode::BAD_REQUEST,
@@ -298,6 +333,120 @@ pub fn solve_notation_request(
     }
 }
 
+fn validate_solve_request_limits(
+    mut request: SolveRequest,
+) -> Result<SolveRequest, Box<SolveResponse>> {
+    if request.max_depth > MAX_API_DEPTH {
+        return Err(Box::new(error_response(
+            &request,
+            None,
+            "invalid_limits",
+            "max_depth_exceeds_limit",
+            format!(
+                "maxDepth {} exceeds API limit {}",
+                request.max_depth, MAX_API_DEPTH
+            ),
+        )));
+    }
+
+    if request.facelets.len() > MAX_FACELET_BYTES {
+        return Err(Box::new(error_response(
+            &request,
+            None,
+            "request_too_large",
+            "facelets_too_large",
+            format!(
+                "facelets payload is {} bytes; API limit is {} bytes",
+                request.facelets.len(),
+                MAX_FACELET_BYTES
+            ),
+        )));
+    }
+
+    match normalize_api_max_nodes(request.max_nodes) {
+        Ok(max_nodes) => request.max_nodes = Some(max_nodes),
+        Err((error_kind, message)) => {
+            return Err(Box::new(error_response(
+                &request,
+                None,
+                "invalid_limits",
+                error_kind,
+                message,
+            )));
+        }
+    }
+
+    Ok(request)
+}
+
+fn validate_solve_notation_request_limits(
+    mut request: SolveNotationRequest,
+) -> Result<SolveNotationRequest, Box<SolveResponse>> {
+    if request.max_depth > MAX_API_DEPTH {
+        return Err(Box::new(error_response_from_parts(
+            &request.strategy_id,
+            request.max_depth,
+            request.max_nodes,
+            None,
+            "invalid_limits",
+            "max_depth_exceeds_limit",
+            format!(
+                "maxDepth {} exceeds API limit {}",
+                request.max_depth, MAX_API_DEPTH
+            ),
+            None,
+        )));
+    }
+
+    if request.moves.len() > MAX_NOTATION_BYTES {
+        return Err(Box::new(error_response_from_parts(
+            &request.strategy_id,
+            request.max_depth,
+            request.max_nodes,
+            None,
+            "request_too_large",
+            "notation_too_large",
+            format!(
+                "move notation payload is {} bytes; API limit is {} bytes",
+                request.moves.len(),
+                MAX_NOTATION_BYTES
+            ),
+            None,
+        )));
+    }
+
+    match normalize_api_max_nodes(request.max_nodes) {
+        Ok(max_nodes) => request.max_nodes = Some(max_nodes),
+        Err((error_kind, message)) => {
+            return Err(Box::new(error_response_from_parts(
+                &request.strategy_id,
+                request.max_depth,
+                request.max_nodes,
+                None,
+                "invalid_limits",
+                error_kind,
+                message,
+                None,
+            )));
+        }
+    }
+
+    Ok(request)
+}
+
+fn normalize_api_max_nodes(max_nodes: Option<usize>) -> Result<usize, (&'static str, String)> {
+    let max_nodes = max_nodes.unwrap_or(MAX_API_NODES);
+
+    if max_nodes > MAX_API_NODES {
+        return Err((
+            "max_nodes_exceeds_limit",
+            format!("maxNodes {max_nodes} exceeds API limit {MAX_API_NODES}"),
+        ));
+    }
+
+    Ok(max_nodes)
+}
+
 fn solve_generated_request(
     state: &ApiState,
     request: SolveRequest,
@@ -336,6 +485,17 @@ fn solve_generated_request(
         Ok(result) => match result.outcome {
             SearchOutcome::Found(solution) => {
                 let replay_verified = solution_solves(&cube, solution.moves());
+                if !replay_verified {
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(unverified_solution_response(
+                            &request,
+                            strategy,
+                            Some(FaceletString::from_cube(&cube).to_string()),
+                        )),
+                    );
+                }
+
                 (
                     StatusCode::OK,
                     Json(success_response(
@@ -344,7 +504,7 @@ fn solve_generated_request(
                         solution.moves(),
                         solution.len(),
                         solution.explored_nodes(),
-                        replay_verified,
+                        true,
                         Some(FaceletString::from_cube(&cube).to_string()),
                     )),
                 )
@@ -452,6 +612,18 @@ fn solve_generated_cube(
         Ok(result) => match result.outcome {
             SearchOutcome::Found(solution) => {
                 let replay_verified = solution_solves(&cube, solution.moves());
+                if !replay_verified {
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(unverified_solution_response_from_parts(
+                            max_depth,
+                            max_nodes,
+                            strategy,
+                            Some(input_facelets),
+                        )),
+                    );
+                }
+
                 (
                     StatusCode::OK,
                     Json(success_response_from_parts(
@@ -461,7 +633,7 @@ fn solve_generated_cube(
                         solution.moves(),
                         solution.len(),
                         solution.explored_nodes(),
-                        replay_verified,
+                        true,
                         Some(input_facelets),
                     )),
                 )
@@ -714,6 +886,37 @@ fn not_found_response_from_parts(
     }
 }
 
+fn unverified_solution_response(
+    request: &SolveRequest,
+    strategy: SolverStrategy,
+    input_facelets: Option<String>,
+) -> SolveResponse {
+    unverified_solution_response_from_parts(
+        request.max_depth,
+        request.max_nodes,
+        strategy,
+        input_facelets,
+    )
+}
+
+fn unverified_solution_response_from_parts(
+    max_depth: usize,
+    max_nodes: Option<usize>,
+    strategy: SolverStrategy,
+    input_facelets: Option<String>,
+) -> SolveResponse {
+    error_response_from_parts(
+        strategy.id(),
+        max_depth,
+        max_nodes,
+        Some(strategy),
+        "unverified_solution",
+        "unverified_solution",
+        "solver returned a solution that failed replay verification".to_owned(),
+        input_facelets,
+    )
+}
+
 fn error_response(
     request: &SolveRequest,
     strategy: Option<SolverStrategy>,
@@ -873,10 +1076,16 @@ fn cubie_validation_error_kind(error: &CubeValidationError) -> &'static str {
 #[cfg(test)]
 mod tests {
     use super::{
-        solve_notation_request, solve_request, ApiState, SolveNotationRequest, SolveRequest,
+        api_router, solve_notation_request, solve_request, unverified_solution_response_from_parts,
+        ApiState, SolveNotationRequest, SolveRequest, MAX_API_DEPTH, MAX_API_NODES,
+        MAX_FACELET_BYTES, MAX_NOTATION_BYTES,
     };
-    use axum::http::StatusCode;
-    use cube_engine::{Cube, FaceletString, Move};
+    use axum::{
+        body::Body,
+        http::{Method, Request, StatusCode},
+    };
+    use cube_engine::{Cube, FaceletString, Move, SolverStrategy};
+    use tower::ServiceExt;
 
     #[test]
     fn bounded_strategy_solves_shallow_facelets_without_generated_tables() {
@@ -954,6 +1163,153 @@ mod tests {
             response.error_kind.as_deref(),
             Some("invalid_move_notation")
         );
+    }
+
+    #[test]
+    fn solve_request_defaults_missing_max_nodes_to_api_cap() {
+        let request = SolveRequest {
+            facelets: FaceletString::from_cube(&Cube::solved()).to_string(),
+            max_depth: 0,
+            max_nodes: None,
+            strategy_id: "bounded-ida-star".to_owned(),
+        };
+
+        let (status, response) = solve_request(&ApiState::without_generated_solver(), request);
+
+        assert_eq!(status, StatusCode::OK);
+        assert!(response.ok);
+        assert_eq!(response.max_nodes, Some(MAX_API_NODES));
+    }
+
+    #[test]
+    fn solve_request_rejects_excessive_depth() {
+        let request = SolveRequest {
+            facelets: FaceletString::from_cube(&Cube::solved()).to_string(),
+            max_depth: MAX_API_DEPTH + 1,
+            max_nodes: Some(1_000),
+            strategy_id: "bounded-ida-star".to_owned(),
+        };
+
+        let (status, response) = solve_request(&ApiState::without_generated_solver(), request);
+
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert!(!response.ok);
+        assert_eq!(response.status, "invalid_limits");
+        assert_eq!(
+            response.error_kind.as_deref(),
+            Some("max_depth_exceeds_limit")
+        );
+    }
+
+    #[test]
+    fn solve_request_rejects_excessive_nodes() {
+        let request = SolveRequest {
+            facelets: FaceletString::from_cube(&Cube::solved()).to_string(),
+            max_depth: 0,
+            max_nodes: Some(MAX_API_NODES + 1),
+            strategy_id: "bounded-ida-star".to_owned(),
+        };
+
+        let (status, response) = solve_request(&ApiState::without_generated_solver(), request);
+
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert!(!response.ok);
+        assert_eq!(response.status, "invalid_limits");
+        assert_eq!(
+            response.error_kind.as_deref(),
+            Some("max_nodes_exceeds_limit")
+        );
+    }
+
+    #[test]
+    fn solve_request_rejects_large_facelet_payload() {
+        let request = SolveRequest {
+            facelets: "U".repeat(MAX_FACELET_BYTES + 1),
+            max_depth: 0,
+            max_nodes: Some(1_000),
+            strategy_id: "bounded-ida-star".to_owned(),
+        };
+
+        let (status, response) = solve_request(&ApiState::without_generated_solver(), request);
+
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert!(!response.ok);
+        assert_eq!(response.status, "request_too_large");
+        assert_eq!(response.error_kind.as_deref(), Some("facelets_too_large"));
+    }
+
+    #[test]
+    fn notation_request_rejects_large_payload_before_parse() {
+        let request = SolveNotationRequest {
+            moves: "R".repeat(MAX_NOTATION_BYTES + 1),
+            max_depth: 0,
+            max_nodes: Some(1_000),
+            strategy_id: "bounded-ida-star".to_owned(),
+        };
+
+        let (status, response) =
+            solve_notation_request(&ApiState::without_generated_solver(), request);
+
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert!(!response.ok);
+        assert_eq!(response.status, "request_too_large");
+        assert_eq!(response.error_kind.as_deref(), Some("notation_too_large"));
+    }
+
+    #[test]
+    fn unverified_solution_response_is_not_successful() {
+        let response = unverified_solution_response_from_parts(
+            30,
+            Some(1_000),
+            SolverStrategy::GeneratedTwoPhase,
+            Some(FaceletString::from_cube(&Cube::solved()).to_string()),
+        );
+
+        assert!(!response.ok);
+        assert_eq!(response.status, "unverified_solution");
+        assert_eq!(response.replay_verified, None);
+        assert!(response.moves.is_empty());
+    }
+
+    #[tokio::test]
+    async fn cors_allows_local_web_origins_only() {
+        let app = api_router(ApiState::without_generated_solver());
+        let allowed = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method(Method::OPTIONS)
+                    .uri("/health")
+                    .header("origin", "http://127.0.0.1:5173")
+                    .header("access-control-request-method", "GET")
+                    .body(Body::empty())
+                    .expect("preflight request should build"),
+            )
+            .await
+            .expect("preflight request should complete");
+
+        assert_eq!(
+            allowed.headers().get("access-control-allow-origin"),
+            Some(&"http://127.0.0.1:5173".parse().expect("origin header"))
+        );
+
+        let blocked = app
+            .oneshot(
+                Request::builder()
+                    .method(Method::OPTIONS)
+                    .uri("/health")
+                    .header("origin", "https://example.com")
+                    .header("access-control-request-method", "GET")
+                    .body(Body::empty())
+                    .expect("preflight request should build"),
+            )
+            .await
+            .expect("preflight request should complete");
+
+        assert!(blocked
+            .headers()
+            .get("access-control-allow-origin")
+            .is_none());
     }
 
     #[test]

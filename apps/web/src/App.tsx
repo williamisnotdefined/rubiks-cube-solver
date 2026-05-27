@@ -14,6 +14,8 @@ const defaultMaxDepth = 30
 const defaultMaxNodes = 10_000_000
 const defaultStrategyId = 'generated-two-phase'
 
+type InputMode = 'facelets' | 'notation'
+
 if (!customElements.get('rubiks-cube')) {
   RubiksCubeElement.register()
 }
@@ -36,6 +38,8 @@ function App() {
   const cubeRef = useRef<RubiksCubeElement | null>(null)
   const [solverState, setSolverState] =
     useState<ApiSolverLoadState>(apiSolverBoundary)
+  const [inputMode, setInputMode] = useState<InputMode>('facelets')
+  const [faceletsInput, setFaceletsInput] = useState('')
   const [notation, setNotation] = useState(defaultNotation)
   const [maxDepthInput, setMaxDepthInput] = useState(String(defaultMaxDepth))
   const [maxNodesInput, setMaxNodesInput] = useState(String(defaultMaxNodes))
@@ -54,7 +58,9 @@ function App() {
       setSolverState(state)
 
       if (state.status === 'ready') {
-        setCubeFacelets(state.client.solvedFacelets())
+        const solvedFacelets = state.client.solvedFacelets()
+        setCubeFacelets(solvedFacelets)
+        setFaceletsInput(solvedFacelets)
       }
     })
 
@@ -90,10 +96,11 @@ function App() {
     maxDepthInput.trim().length > 0 && Number.isInteger(maxDepth) && maxDepth >= 0
   const maxNodesIsValid =
     maxNodesInput.trim().length > 0 && Number.isInteger(maxNodes) && maxNodes >= 0
+  const primaryInputValue = inputMode === 'facelets' ? faceletsInput : notation
   const disabled =
     solverClient === undefined ||
     solving ||
-    notation.trim().length === 0 ||
+    primaryInputValue.trim().length === 0 ||
     selectedStrategy === undefined ||
     !maxDepthIsValid ||
     !maxNodesIsValid
@@ -109,11 +116,15 @@ function App() {
     await waitForPaint()
 
     try {
-      const result = await solverClient.solveNotation(notation.trim(), {
+      const limits = {
         maxDepth,
         maxNodes,
         strategyId: defaultStrategyId,
-      })
+      }
+      const result =
+        inputMode === 'facelets'
+          ? await solverClient.solveFacelets(faceletsInput.trim(), limits)
+          : await solverClient.solveNotation(notation.trim(), limits)
 
       if (result.status === 'success') {
         if (result.inputFacelets !== undefined) {
@@ -139,6 +150,16 @@ function App() {
     } catch {
       setSolveState({ status: 'error', message: 'Error' })
     }
+  }
+
+  function handleInputModeChange(nextInputMode: InputMode) {
+    setInputMode(nextInputMode)
+    setSolveState({ status: 'idle' })
+  }
+
+  function handleFaceletsChange(nextFacelets: string) {
+    setFaceletsInput(nextFacelets)
+    setSolveState({ status: 'idle' })
   }
 
   function handleNotationChange(nextNotation: string) {
@@ -172,14 +193,41 @@ function App() {
       </section>
 
       <form className="solve-form" onSubmit={handleSubmit}>
-        <label className="field field-notation">
-          <span className="field-label">Move notation</span>
+        <fieldset className="input-mode" aria-label="Input type">
+          <legend className="field-label">Input</legend>
+          <label className="mode-option">
+            <input
+              checked={inputMode === 'facelets'}
+              name="input-mode"
+              type="radio"
+              onChange={() => handleInputModeChange('facelets')}
+            />
+            Facelets
+          </label>
+          <label className="mode-option">
+            <input
+              checked={inputMode === 'notation'}
+              name="input-mode"
+              type="radio"
+              onChange={() => handleInputModeChange('notation')}
+            />
+            Moves
+          </label>
+        </fieldset>
+        <label className="field field-primary">
+          <span className="field-label">
+            {inputMode === 'facelets' ? 'Cube state facelets' : 'Move notation'}
+          </span>
           <input
             autoComplete="off"
-            className="notation-input"
+            className="primary-input"
             spellCheck={false}
-            value={notation}
-            onChange={(event) => handleNotationChange(event.target.value)}
+            value={inputMode === 'facelets' ? faceletsInput : notation}
+            onChange={(event) =>
+              inputMode === 'facelets'
+                ? handleFaceletsChange(event.target.value)
+                : handleNotationChange(event.target.value)
+            }
           />
         </label>
         <div className="api-status" aria-live="polite">
@@ -219,6 +267,9 @@ function App() {
         </button>
         <p className="strategy-description">
           {selectedStrategy?.statusText ?? 'Run npm run dev to start the API and web app together.'}
+          {inputMode === 'facelets'
+            ? ' Paste a 54-character Kociemba state using U, R, F, D, L, and B.'
+            : ' Move notation is converted to a Rust cube state before solving.'}
         </p>
       </form>
 
@@ -265,11 +316,23 @@ function solveErrorMessage(result: Exclude<FaceletSolveResult, { ok: true }>): s
   }
 
   if (result.status === 'invalid_input') {
-    return 'Invalid cube state produced by notation'
+    return 'Invalid cube state'
   }
 
   if (result.status === 'not_found_within_limits') {
     return 'No solution within the configured limits'
+  }
+
+  if (result.status === 'invalid_limits') {
+    return 'Solver limits exceed API safety caps'
+  }
+
+  if (result.status === 'request_too_large') {
+    return 'Solve request is too large'
+  }
+
+  if (result.status === 'unverified_solution') {
+    return 'Solver solution failed replay verification'
   }
 
   if (result.status === 'generated_tables_unavailable') {
@@ -292,6 +355,18 @@ function solveErrorDetail(result: Exclude<FaceletSolveResult, { ok: true }>): st
     return `${result.strategyLabel} explored ${formatNumber(
       result.exploredNodes ?? 0,
     )} nodes at max depth ${result.maxDepth}.`
+  }
+
+  if (result.status === 'invalid_limits') {
+    return result.message
+  }
+
+  if (result.status === 'request_too_large') {
+    return result.message
+  }
+
+  if (result.status === 'unverified_solution') {
+    return result.message
   }
 
   if (result.status === 'generated_tables_unavailable') {
