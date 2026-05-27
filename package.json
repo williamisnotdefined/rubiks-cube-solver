@@ -24,7 +24,7 @@
     "roadmap:next": "roadrunner next --roadmap roadmap.md",
     "roadmap:plan": "roadrunner plan --roadmap roadmap.md",
     "roadmap:run": "roadrunner run --roadmap roadmap.md",
-    "roadmap:run:long": "ROADRUNNER_PROVIDER_TIMEOUT_MS=3600000 ROADRUNNER_AUTO_RESTART_IDLE_MS=0 ROADRUNNER_VERIFY_TIMEOUT_MS=1200000 roadrunner run --roadmap roadmap.md --max-steps 999 --max-hours 72",
+    "roadmap:run:long": "ROADRUNNER_PROVIDER_TIMEOUT_MS=0 ROADRUNNER_VERIFY_TIMEOUT_MS=0 ROADRUNNER_AUTO_RESTART_IDLE_MS=0 ROADRUNNER_MAX_AUTO_RESTARTS_PER_STEP=0 roadrunner run --roadmap roadmap.md --max-steps 999",
     "roadmap:status": "roadrunner status --roadmap roadmap.md"
   },
   "devDependencies": {
