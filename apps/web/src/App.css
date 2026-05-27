@@ -26,18 +26,22 @@ rubiks-cube {
 
 .solve-form {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) 96px 154px auto;
   gap: 10px;
 }
 
 .scramble-input,
+.depth-input,
+.nodes-input,
 button {
   min-height: 54px;
   border-radius: 999px;
   font: inherit;
 }
 
-.scramble-input {
+.scramble-input,
+.depth-input,
+.nodes-input {
   box-sizing: border-box;
   width: 100%;
   border: 1px solid #2b2b2b;
@@ -46,7 +50,15 @@ button {
   background: #151515;
 }
 
-.scramble-input:focus {
+.depth-input,
+.nodes-input {
+  padding: 0 12px;
+  text-align: center;
+}
+
+.scramble-input:focus,
+.depth-input:focus,
+.nodes-input:focus {
   border-color: #f7f7f7;
   outline: none;
 }
@@ -127,10 +139,15 @@ button:disabled {
   }
 
   .solve-form {
-    grid-template-columns: 1fr;
+    grid-template-columns: 94px minmax(0, 1fr);
+  }
+
+  .scramble-input {
+    grid-column: 1 / -1;
   }
 
   button {
+    grid-column: 1 / -1;
     width: 100%;
   }
 }

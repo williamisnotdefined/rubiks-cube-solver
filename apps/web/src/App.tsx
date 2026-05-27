@@ -9,8 +9,8 @@ import {
 } from './wasm/solverClient'
 
 const defaultScramble = "R2 D2 F2 D L2 F2 U' R2 D B2 L2 U' B' R' B' R2 B2 L B U'"
-const maxDepth = 20
-const maxNodes = 1_000_000
+const defaultMaxDepth = 20
+const defaultMaxNodes = 10_000_000
 
 if (!customElements.get('rubiks-cube')) {
   RubiksCubeElement.register()
@@ -27,6 +27,8 @@ function App() {
   const [solverState, setSolverState] =
     useState<WasmSolverLoadState>(wasmSolverBoundary)
   const [scramble, setScramble] = useState(defaultScramble)
+  const [maxDepthInput, setMaxDepthInput] = useState(String(defaultMaxDepth))
+  const [maxNodesInput, setMaxNodesInput] = useState(String(defaultMaxNodes))
   const [facelets, setFacelets] = useState('')
   const [solveState, setSolveState] = useState<SolveState>({ status: 'idle' })
 
@@ -70,12 +72,23 @@ function App() {
   const solverClient = solverState.status === 'ready' ? solverState.client : undefined
   const solving = solveState.status === 'solving'
   const loading = solverState.status === 'loading' || solverState.status === 'unloaded'
-  const disabled = solverClient === undefined || solving || scramble.trim().length === 0
+  const maxDepth = Number(maxDepthInput)
+  const maxNodes = Number(maxNodesInput)
+  const maxDepthIsValid =
+    maxDepthInput.trim().length > 0 && Number.isInteger(maxDepth) && maxDepth >= 0
+  const maxNodesIsValid =
+    maxNodesInput.trim().length > 0 && Number.isInteger(maxNodes) && maxNodes >= 0
+  const disabled =
+    solverClient === undefined ||
+    solving ||
+    scramble.trim().length === 0 ||
+    !maxDepthIsValid ||
+    !maxNodesIsValid
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    if (solverClient === undefined) {
+    if (solverClient === undefined || !maxDepthIsValid || !maxNodesIsValid) {
       return
     }
 
@@ -117,6 +130,16 @@ function App() {
     setSolveState({ status: 'idle' })
   }
 
+  function handleMaxDepthChange(nextMaxDepth: string) {
+    setMaxDepthInput(nextMaxDepth)
+    setSolveState({ status: 'idle' })
+  }
+
+  function handleMaxNodesChange(nextMaxNodes: string) {
+    setMaxNodesInput(nextMaxNodes)
+    setSolveState({ status: 'idle' })
+  }
+
   return (
     <main className="app-shell">
       <section className="cube-stage" aria-label="Cube state">
@@ -140,6 +163,26 @@ function App() {
           spellCheck={false}
           value={scramble}
           onChange={(event) => handleScrambleChange(event.target.value)}
+        />
+        <input
+          aria-label="Max solution moves"
+          className="depth-input"
+          inputMode="numeric"
+          min="0"
+          step="1"
+          type="number"
+          value={maxDepthInput}
+          onChange={(event) => handleMaxDepthChange(event.target.value)}
+        />
+        <input
+          aria-label="Max nodes"
+          className="nodes-input"
+          inputMode="numeric"
+          min="0"
+          step="1"
+          type="number"
+          value={maxNodesInput}
+          onChange={(event) => handleMaxNodesChange(event.target.value)}
         />
         <button type="submit" disabled={disabled}>
           {solving ? <span className="button-loader" aria-hidden="true" /> : 'Solve'}
