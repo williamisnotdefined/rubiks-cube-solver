@@ -86,13 +86,13 @@ where
             max_nodes: budget.max_nodes,
             threshold,
         };
-
         let threshold_result = {
             let mut context = ThresholdSearchContext {
                 path_states: &mut path_states,
                 path: &mut path,
                 explored_nodes: &mut explored_nodes,
             };
+
             search_threshold(
                 start,
                 limits,
@@ -132,23 +132,21 @@ fn search_threshold<H>(
     limits: SearchLimits,
     last_move: Option<Move>,
     heuristic: &H,
-    path_states: &mut HashSet<CubieState>,
-    path: &mut Vec<Move>,
-    explored_nodes: &mut usize,
+    context: &mut ThresholdSearchContext<'_>,
     order_moves: &mut impl FnMut(&Cube, &mut Vec<Move>),
 ) -> ThresholdSearchResult
 where
     H: Heuristic,
 {
     if let Some(max_nodes) = limits.max_nodes {
-        if *explored_nodes >= max_nodes {
+        if *context.explored_nodes >= max_nodes {
             return ThresholdSearchResult::NodeLimitReached;
         }
     }
 
-    *explored_nodes += 1;
+    *context.explored_nodes += 1;
 
-    let estimated_cost = path.len() + heuristic.estimate(cube);
+    let estimated_cost = context.path.len() + heuristic.estimate(cube);
     if estimated_cost > limits.threshold {
         return ThresholdSearchResult::NextThreshold(estimated_cost);
     }
@@ -157,7 +155,7 @@ where
         return ThresholdSearchResult::Found;
     }
 
-    if path.len() == limits.max_depth {
+    if context.path.len() == limits.max_depth {
         return ThresholdSearchResult::Exhausted;
     }
 
@@ -169,20 +167,18 @@ where
         let mut next_cube = cube.clone();
         next_cube.apply_move(move_);
 
-        if !path_states.insert(next_cube.state().clone()) {
+        if !context.path_states.insert(next_cube.state().clone()) {
             continue;
         }
 
-        path.push(move_);
+        context.path.push(move_);
 
         match search_threshold(
             &next_cube,
             limits,
             Some(move_),
             heuristic,
-            path_states,
-            path,
-            explored_nodes,
+            context,
             order_moves,
         ) {
             ThresholdSearchResult::Found => return ThresholdSearchResult::Found,
@@ -192,14 +188,14 @@ where
             }
             ThresholdSearchResult::Exhausted => {}
             ThresholdSearchResult::NodeLimitReached => {
-                path.pop();
-                path_states.remove(next_cube.state());
+                context.path.pop();
+                context.path_states.remove(next_cube.state());
                 return ThresholdSearchResult::NodeLimitReached;
             }
         }
 
-        path.pop();
-        path_states.remove(next_cube.state());
+        context.path.pop();
+        context.path_states.remove(next_cube.state());
     }
 
     next_threshold.map_or(

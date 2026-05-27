@@ -13,6 +13,7 @@
     "python -m pytest ml",
     "python -m ml.train_value_baseline --dataset datasets/fixtures/small.jsonl --epochs 1 --seed 0 --output ml/outputs/value-baseline --inference-repeats 1",
     "cargo run --quiet -p cube-engine --bin solver_quality_report",
-    "cargo run --quiet -p cube-engine --bin solver_quality_report -- --hybrid-value-outputs ml/outputs/value-baseline/value_outputs.tsv"
+    "cargo run --quiet -p cube-engine --bin solver_quality_report -- --hybrid-value-outputs ml/outputs/value-baseline/value_outputs.tsv",
+    "npm run product:gate"
   ]
 }

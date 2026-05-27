@@ -465,6 +465,7 @@ pub fn solve_facelet_string_with_strategy(
 }
 
 #[wasm_bindgen]
+#[allow(clippy::too_many_arguments)]
 pub fn solve_facelet_string_with_generated_pruning_tables(
     input: &str,
     max_depth: usize,
