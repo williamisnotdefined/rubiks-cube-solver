@@ -20,6 +20,12 @@ struct SearchLimits {
     threshold: usize,
 }
 
+struct ThresholdSearchContext<'a> {
+    path_states: &'a mut HashSet<CubieState>,
+    path: &'a mut Vec<Move>,
+    explored_nodes: &'a mut usize,
+}
+
 pub fn solve_ida_star(start: &Cube, max_depth: usize) -> Option<SearchSolution> {
     let heuristic = ZeroHeuristic;
     solve_ida_star_with_heuristic(start, max_depth, &heuristic)
@@ -81,16 +87,23 @@ where
             threshold,
         };
 
-        match search_threshold(
-            start,
-            limits,
-            None,
-            heuristic,
-            &mut path_states,
-            &mut path,
-            &mut explored_nodes,
-            &mut order_moves,
-        ) {
+        let threshold_result = {
+            let mut context = ThresholdSearchContext {
+                path_states: &mut path_states,
+                path: &mut path,
+                explored_nodes: &mut explored_nodes,
+            };
+            search_threshold(
+                start,
+                limits,
+                None,
+                heuristic,
+                &mut context,
+                &mut order_moves,
+            )
+        };
+
+        match threshold_result {
             ThresholdSearchResult::Found => {
                 let solves_start = solution_solves(start, &path);
                 debug_assert!(solves_start);

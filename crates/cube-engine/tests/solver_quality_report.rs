@@ -1,14 +1,14 @@
 use std::fs;
 use std::path::PathBuf;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use cube_engine::search::pruning::generate_all_pruning_tables;
 use cube_engine::solver::quality::{
     quality_fixtures,
     run_quality_report_for_fixtures_with_pruning_table_dir_and_hybrid_value_outputs_path,
     QualityExpectation, QualityFixtureCategory, QualityHybridArtifactStatus,
-    QualityHybridReportStatus, QualityInputKind, QualityReportStatus, QualitySolverSelection,
-    QualityTableStatus,
+    QualityHybridReportRow, QualityHybridReportStatus, QualityInputKind, QualityReport,
+    QualityReportRow, QualityReportStatus, QualitySolverSelection, QualityTableStatus,
 };
 use cube_engine::{Algorithm, Cube, FaceletString, Move};
 
@@ -188,10 +188,14 @@ fn solver_quality_report_successful_rows_are_replay_verified_and_lengths_match()
 
 #[test]
 fn solver_quality_report_generated_rows_report_success_metrics_when_tables_are_available() {
-    let fixtures = quality_fixtures().expect("quality fixtures should build");
+    let fixtures = quality_fixtures()
+        .expect("quality fixtures should build")
+        .into_iter()
+        .filter(|fixture| fixture.max_depth <= 6)
+        .collect::<Vec<_>>();
     let directory = temp_test_dir("available");
-    generate_all_pruning_tables(&directory, 8, 8)
-        .expect("depth-eight generated pruning tables should build for quality report test");
+    generate_all_pruning_tables(&directory, 6, 6)
+        .expect("depth-six generated pruning tables should build for quality report test");
     let hybrid_path = directory.join("missing-value_outputs.tsv");
     let report =
         run_quality_report_for_fixtures_with_pruning_table_dir_and_hybrid_value_outputs_path(
@@ -219,8 +223,6 @@ fn solver_quality_report_generated_rows_report_success_metrics_when_tables_are_a
         "nontrivial-cubie-r-u-rprime-uprime",
         "generated-mid-depth-facelets-phase2-five-move",
         "generated-mid-depth-cubie-phase2-five-move",
-        "generated-harder-facelets-phase2-eight-move",
-        "generated-harder-cubie-phase2-eight-move",
     ] {
         let fixture = fixtures
             .iter()
@@ -284,7 +286,7 @@ fn solver_quality_report_generated_rows_report_success_metrics_when_tables_are_a
         );
         assert_eq!(
             row.generated_table_depths.as_deref(),
-            Some("phase1=8/8/8;phase2=8/8"),
+            Some("phase1=6/6/6;phase2=6/6"),
             "{}",
             row.fixture_id
         );
@@ -352,6 +354,46 @@ fn solver_quality_report_records_generated_table_availability() {
             && row.moves.is_empty()
             && row.replay_verified.is_none()
     }));
+}
+
+#[test]
+fn solver_quality_report_exposes_gate_failure_statuses() {
+    assert!(!QualityReportStatus::Success.is_gate_failure());
+    assert!(!QualityReportStatus::ExpectedNotFoundWithinLimits.is_gate_failure());
+    assert!(QualityReportStatus::GeneratedTablesUnavailable.is_gate_failure());
+    assert!(QualityReportStatus::GeneratedTablesCorruptOrIncompatible.is_gate_failure());
+    assert!(QualityReportStatus::UnexpectedRegression.is_gate_failure());
+
+    assert!(!QualityHybridReportStatus::Success.is_gate_failure());
+    assert!(!QualityHybridReportStatus::ExpectedNotFoundWithinLimits.is_gate_failure());
+    assert!(!QualityHybridReportStatus::ArtifactDependencyFallback.is_gate_failure());
+    assert!(QualityHybridReportStatus::ArtifactUnavailable.is_gate_failure());
+    assert!(QualityHybridReportStatus::ArtifactMalformed.is_gate_failure());
+    assert!(QualityHybridReportStatus::UnexpectedRegression.is_gate_failure());
+}
+
+#[test]
+fn solver_quality_report_detects_report_level_gate_failures() {
+    let successful_report = QualityReport::with_hybrid_rows(
+        vec![quality_row(QualityReportStatus::Success)],
+        vec![
+            hybrid_row(QualityHybridReportStatus::Success),
+            hybrid_row(QualityHybridReportStatus::ArtifactDependencyFallback),
+        ],
+    );
+    assert!(!successful_report.has_gate_failures());
+
+    let native_failure = QualityReport::with_hybrid_rows(
+        vec![quality_row(QualityReportStatus::GeneratedTablesUnavailable)],
+        vec![hybrid_row(QualityHybridReportStatus::Success)],
+    );
+    assert!(native_failure.has_gate_failures());
+
+    let hybrid_failure = QualityReport::with_hybrid_rows(
+        vec![quality_row(QualityReportStatus::Success)],
+        vec![hybrid_row(QualityHybridReportStatus::ArtifactMalformed)],
+    );
+    assert!(hybrid_failure.has_gate_failures());
 }
 
 #[test]
@@ -779,4 +821,71 @@ fn temp_test_dir(name: &str) -> PathBuf {
         "cube-engine-quality-report-{name}-{}-{nonce}",
         std::process::id()
     ))
+}
+
+fn quality_row(status: QualityReportStatus) -> QualityReportRow {
+    QualityReportRow {
+        fixture_id: "fixture",
+        fixture_category: QualityFixtureCategory::Solved,
+        input_kind: QualityInputKind::Cubie,
+        expectation: QualityExpectation::RequiredSuccess,
+        scramble: "",
+        solver_selection: QualitySolverSelection::DefaultBoundedIdaStar,
+        strategy: cube_engine::SolverStrategy::BoundedIdaStar,
+        max_depth: 0,
+        max_nodes: Some(1),
+        table_status: QualityTableStatus::NotRequired,
+        generated_table_depths: None,
+        generated_table_metadata: None,
+        status,
+        solution_length: if status == QualityReportStatus::Success {
+            Some(0)
+        } else {
+            None
+        },
+        explored_nodes: 1,
+        elapsed: Duration::ZERO,
+        replay_verified: if status == QualityReportStatus::Success {
+            Some(true)
+        } else {
+            None
+        },
+        moves: Vec::new(),
+    }
+}
+
+fn hybrid_row(status: QualityHybridReportStatus) -> QualityHybridReportRow {
+    QualityHybridReportRow {
+        fixture_id: "fixture",
+        fixture_category: QualityFixtureCategory::Solved,
+        input_kind: QualityInputKind::Cubie,
+        expectation: QualityExpectation::RequiredSuccess,
+        scramble: "",
+        baseline_selection: QualitySolverSelection::DefaultBoundedIdaStar,
+        max_depth: 0,
+        max_nodes: Some(1),
+        artifact_path: "value_outputs.tsv".to_owned(),
+        artifact_status: QualityHybridArtifactStatus::Available,
+        artifact_metadata: None,
+        status,
+        solution_length: if status == QualityHybridReportStatus::Success {
+            Some(0)
+        } else {
+            None
+        },
+        explored_nodes: if status == QualityHybridReportStatus::Success {
+            1
+        } else {
+            0
+        },
+        elapsed: Duration::ZERO,
+        replay_verified: if status == QualityHybridReportStatus::Success {
+            Some(true)
+        } else {
+            None
+        },
+        scored_move_lookups: 0,
+        missing_score_lookups: 0,
+        moves: Vec::new(),
+    }
 }

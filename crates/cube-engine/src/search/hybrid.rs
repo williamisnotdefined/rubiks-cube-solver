@@ -158,8 +158,8 @@ fn parse_hybrid_value_outputs(content: &str) -> HybridValueArtifact {
 
     for (line_index, line) in content.lines().enumerate() {
         let line_number = line_index + 1;
-        if line.starts_with("# ") {
-            let Some((key, value)) = line[2..].split_once('=') else {
+        if let Some(metadata_line) = line.strip_prefix("# ") {
+            let Some((key, value)) = metadata_line.split_once('=') else {
                 return HybridValueArtifact::Malformed {
                     message: format!("line {line_number}: metadata comment is missing '='"),
                     metadata: None,

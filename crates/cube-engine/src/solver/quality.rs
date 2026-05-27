@@ -211,6 +211,15 @@ impl QualityReportStatus {
             Self::UnexpectedRegression => "unexpected_regression",
         }
     }
+
+    pub const fn is_gate_failure(self) -> bool {
+        matches!(
+            self,
+            Self::GeneratedTablesUnavailable
+                | Self::GeneratedTablesCorruptOrIncompatible
+                | Self::UnexpectedRegression
+        )
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -252,6 +261,13 @@ impl QualityHybridReportStatus {
             Self::ExpectedNotFoundWithinLimits => "expected_not_found_within_limits",
             Self::UnexpectedRegression => "unexpected_regression",
         }
+    }
+
+    pub const fn is_gate_failure(self) -> bool {
+        matches!(
+            self,
+            Self::ArtifactUnavailable | Self::ArtifactMalformed | Self::UnexpectedRegression
+        )
     }
 }
 
@@ -327,6 +343,14 @@ impl QualityReport {
 
     pub fn hybrid_rows(&self) -> &[QualityHybridReportRow] {
         &self.hybrid_rows
+    }
+
+    pub fn has_gate_failures(&self) -> bool {
+        self.rows.iter().any(|row| row.status.is_gate_failure())
+            || self
+                .hybrid_rows
+                .iter()
+                .any(|row| row.status.is_gate_failure())
     }
 
     pub fn to_markdown(&self) -> String {

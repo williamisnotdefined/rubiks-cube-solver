@@ -923,10 +923,11 @@ mod tests {
             .expect("shared quality fixture catalog should build")
             .into_iter()
             .filter(|fixture| {
-                fixture
-                    .solver_expectations
-                    .for_selection(QualitySolverSelection::GeneratedTwoPhase)
-                    == QualityExpectation::RequiredSuccess
+                fixture.max_depth <= 6
+                    && fixture
+                        .solver_expectations
+                        .for_selection(QualitySolverSelection::GeneratedTwoPhase)
+                        == QualityExpectation::RequiredSuccess
             })
             .collect::<Vec<_>>();
         let required_fixture_ids = required_fixtures

@@ -18,7 +18,14 @@ fn main() -> ExitCode {
     match report {
         Ok(report) => {
             print!("{}", report.to_markdown());
-            ExitCode::SUCCESS
+            if report.has_gate_failures() {
+                eprintln!(
+                    "solver quality report gate failed: report contains gate-failure statuses"
+                );
+                ExitCode::FAILURE
+            } else {
+                ExitCode::SUCCESS
+            }
         }
         Err(error) => {
             eprintln!("solver quality report failed: {error}");

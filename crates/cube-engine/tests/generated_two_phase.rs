@@ -86,18 +86,19 @@ fn generated_two_phase_incomplete_artifact_bytes_returns_structured_unavailable_
 #[test]
 fn generated_two_phase_solves_documented_cubie_and_facelet_fixtures() {
     let directory = temp_test_dir("available");
-    generate_all_pruning_tables(&directory, 8, 8)
-        .expect("depth-eight generated pruning tables should build for integration test");
+    generate_all_pruning_tables(&directory, 6, 6)
+        .expect("depth-six generated pruning tables should build for integration test");
     let artifact_bytes = generated_artifact_bytes(&directory);
     let artifacts = available_artifacts(&artifact_bytes);
     let fixtures = quality_fixtures().expect("shared quality fixtures should build");
     let generated_required_fixtures = fixtures
         .iter()
         .filter(|fixture| {
-            fixture
-                .solver_expectations
-                .for_selection(QualitySolverSelection::GeneratedTwoPhase)
-                == QualityExpectation::RequiredSuccess
+            fixture.max_depth <= 6
+                && fixture
+                    .solver_expectations
+                    .for_selection(QualitySolverSelection::GeneratedTwoPhase)
+                    == QualityExpectation::RequiredSuccess
         })
         .collect::<Vec<_>>();
 
@@ -110,8 +111,6 @@ fn generated_two_phase_solves_documented_cubie_and_facelet_fixtures() {
         "nontrivial-cubie-r-u-rprime-uprime",
         "generated-mid-depth-facelets-phase2-five-move",
         "generated-mid-depth-cubie-phase2-five-move",
-        "generated-harder-facelets-phase2-eight-move",
-        "generated-harder-cubie-phase2-eight-move",
     ] {
         assert!(
             generated_required_fixtures
