@@ -1,6 +1,6 @@
 # Cube Engine Architecture
 
-The cube engine is the first phase of the roadmap and must stay independent from UI, ML, and WASM concerns.
+The cube engine is the first phase of the roadmap and must stay independent from UI, ML, and HTTP transport concerns.
 
 ## Modules
 

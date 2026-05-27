@@ -7,6 +7,8 @@ from typing import Any, Iterable
 
 SCHEMA_VERSION = 1
 LABEL_SOURCE = "reversible_scramble_inverse_replay_verified"
+SOLVER_LABEL_SOURCE = "generated_two_phase_solver_replay_verified"
+SUPPORTED_LABEL_SOURCES = {LABEL_SOURCE, SOLVER_LABEL_SOURCE}
 FEATURE_DIM = 40
 
 REQUIRED_FIELDS = {
@@ -132,9 +134,9 @@ def parse_training_example(
         raise DatasetError(f"{context}: scramble_depth must be non-negative")
     if verified_solution_length < 0:
         raise DatasetError(f"{context}: verified_solution_length must be non-negative")
-    if label_source != LABEL_SOURCE:
+    if label_source not in SUPPORTED_LABEL_SOURCES:
         raise DatasetError(
-            f"{context}: unsupported label_source {label_source!r}; expected {LABEL_SOURCE!r}"
+            f"{context}: unsupported label_source {label_source!r}; expected one of {sorted(SUPPORTED_LABEL_SOURCES)!r}"
         )
     if split not in SPLITS:
         raise DatasetError(f"{context}: split must be one of {sorted(SPLITS)}")

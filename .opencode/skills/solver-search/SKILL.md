@@ -104,7 +104,7 @@ Testing rules for this repository.
 
 - Do not rely on random tests without a fixed seed.
 - Do not assert implementation details when public cube behavior can be asserted.
-- Do not add ML, frontend, or WASM tests before the corresponding project phase exists.
+- Do not add ML, frontend, or API tests before the corresponding project phase exists.
 
 ## Verification
 
@@ -116,7 +116,7 @@ Testing rules for this repository.
 
 # Project Architecture
 
-The final target is a hybrid Rubik's Cube solver with a Rust engine, search algorithms, heuristics, pattern databases, optional ML heuristics, WebAssembly integration, and a modern web visualization.
+The final target is a hybrid Rubik's Cube solver with a Rust engine, search algorithms, heuristics, pattern databases, optional ML heuristics, a native HTTP API, and a modern web visualization.
 
 ## Current Bootstrap
 
@@ -126,7 +126,7 @@ The final target is a hybrid Rubik's Cube solver with a Rust engine, search algo
 
 ## Future Boundaries
 
-- `crates/wasm`: future wasm-bindgen bridge around the Rust engine.
+- `crates/api`: HTTP API around the Rust engine and generated pruning-table artifacts.
 - `apps/web`: future TypeScript React visualization and playback UI.
 - `datasets`: future generated training datasets.
 - `ml`: future Python/PyTorch training code.
@@ -162,7 +162,7 @@ Search builds on top of a correct cube engine.
 
 # Cube Engine Architecture
 
-The cube engine is the first phase of the roadmap and must stay independent from UI, ML, and WASM concerns.
+The cube engine is the first phase of the roadmap and must stay independent from UI, ML, and HTTP transport concerns.
 
 ## Modules
 

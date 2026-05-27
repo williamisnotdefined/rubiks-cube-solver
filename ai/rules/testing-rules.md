@@ -14,7 +14,7 @@ Testing rules for this repository.
 
 - Do not rely on random tests without a fixed seed.
 - Do not assert implementation details when public cube behavior can be asserted.
-- Do not add ML, frontend, or WASM tests before the corresponding project phase exists.
+- Do not add ML, frontend, or API tests before the corresponding project phase exists.
 
 ## Verification
 

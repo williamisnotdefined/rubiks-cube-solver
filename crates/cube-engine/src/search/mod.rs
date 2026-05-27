@@ -9,8 +9,9 @@ pub(crate) mod two_phase;
 
 pub use bfs::solve_bfs;
 pub use heuristics::{
-    CornerOrientationHeuristic, EdgeOrientationHeuristic, Heuristic, MaxHeuristic,
-    MisplacedCubiesHeuristic, ZeroHeuristic,
+    CornerOrientationHeuristic, CornerOrientationPatternDatabaseHeuristic,
+    EdgeOrientationHeuristic, EdgeOrientationPatternDatabaseHeuristic, Heuristic, MaxHeuristic,
+    MisplacedCubiesHeuristic, OrientationPatternDatabaseHeuristic, ZeroHeuristic,
 };
 pub(crate) use hybrid::{
     load_hybrid_value_outputs, solve_hybrid_move_ordering, HybridMoveOrderingMetrics,
@@ -24,5 +25,8 @@ pub use iddfs::{depth_limited_search, solve_iddfs};
 pub use solution::{SearchBudget, SearchOutcome, SearchSolution};
 pub(crate) use two_phase::{
     solve_generated_two_phase, solve_generated_two_phase_with_artifacts, solve_two_phase_baseline,
+    GeneratedTwoPhaseMetrics,
 };
-pub use two_phase::{GeneratedPruningTableArtifact, GeneratedTwoPhaseError};
+pub use two_phase::{
+    GeneratedPruningTableArtifact, GeneratedTwoPhaseError, GeneratedTwoPhaseSolver,
+};

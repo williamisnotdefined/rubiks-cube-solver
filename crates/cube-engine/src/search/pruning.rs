@@ -1187,6 +1187,31 @@ impl PruningTable {
         }
     }
 
+    pub fn into_dense(self) -> Result<Self, PruningDenseTableError> {
+        let Self { metadata, entries } = self;
+
+        match entries {
+            PruningEntries::Dense(entries) => Ok(Self {
+                metadata,
+                entries: PruningEntries::Dense(entries),
+            }),
+            PruningEntries::Sparse(entries) => {
+                let table_size = metadata
+                    .table_size()
+                    .map_err(|error| PruningDenseTableError::InvalidMetadata { error })?;
+                let mut dense_entries = vec![UNREACHED_DISTANCE; table_size];
+
+                for (index, distance) in entries {
+                    if let Some(entry) = dense_entries.get_mut(index) {
+                        *entry = distance;
+                    }
+                }
+
+                Self::from_dense_entries(metadata, dense_entries)
+            }
+        }
+    }
+
     pub fn checked_lookup_coordinates(
         &self,
         coordinates: &[usize],
@@ -2053,6 +2078,11 @@ pub fn generate_all_pruning_tables(
             PruningPhaseRole::Phase2 => phase2_max_depth,
         };
         let path = spec.file_path(output_dir);
+        if existing_generated_table_matches(spec, &path, max_depth) {
+            paths.push(path);
+            continue;
+        }
+
         let table =
             spec.generate(max_depth)
                 .map_err(|error| PruningTableCommandError::Generate {
@@ -2080,6 +2110,18 @@ pub fn generate_all_pruning_tables(
     }
 
     Ok(paths)
+}
+
+fn existing_generated_table_matches(
+    spec: GeneratedPruningTableSpec,
+    path: &Path,
+    max_depth: u8,
+) -> bool {
+    let Ok(table) = PruningTable::load_artifact(path) else {
+        return false;
+    };
+
+    spec.validate_table(&table, path).is_ok() && table.metadata().generation.max_depth == max_depth
 }
 
 fn spec_mismatch(
@@ -2578,6 +2620,18 @@ mod tests {
         assert_eq!(loaded.lookup_index(1), Ok(1));
         assert_eq!(
             loaded.lookup_index(2),
+            Err(PruningLookupError::MissingEntry { index: 2 })
+        );
+
+        let dense = loaded
+            .into_dense()
+            .expect("loaded compact table should expand to dense entries");
+        assert!(dense.is_dense());
+        assert_eq!(dense.entry_count(), 2);
+        assert_eq!(dense.lookup_index(0), Ok(0));
+        assert_eq!(dense.lookup_index(1), Ok(1));
+        assert_eq!(
+            dense.lookup_index(2),
             Err(PruningLookupError::MissingEntry { index: 2 })
         );
     }

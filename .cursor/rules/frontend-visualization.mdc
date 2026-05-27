@@ -1,6 +1,6 @@
 ---
-description: "Use when adding the future web UI, 3D cube visualization, playback, or frontend-to-WASM boundary."
-globs: "apps/web/**/*.{ts,tsx,css},crates/wasm/**/*,roadmap.md"
+description: "Use when adding the web UI, 3D cube visualization, playback, or frontend-to-API boundary."
+globs: "apps/web/**/*.{ts,tsx,css},crates/api/**/*,roadmap.md"
 alwaysApply: false
 ---
 
@@ -23,7 +23,7 @@ This file is compiled from canonical AI knowledge files. Edit canonical files un
 
 # Frontend Visualization
 
-Use this skill when adding the future web UI, 3D cube visualization, playback, or frontend-to-WASM boundary.
+Use this skill when adding the web UI, 3D cube visualization, playback, or frontend-to-API boundary.
 
 ## Goal
 
@@ -40,7 +40,7 @@ Build a visualization layer that renders cube state and controls playback withou
 ## Workflow
 
 - Confirm the task belongs to the frontend phase before adding frontend dependencies.
-- Keep solver behavior behind Rust/WASM APIs.
+- Keep solver behavior behind the Rust HTTP API.
 - Evaluate visualization libraries as adapters, not engine replacements.
 - If using `@houstonp/rubiks-cube`, verify headless move-option behavior before relying on it.
 - Ensure desktop and mobile rendering are considered when UI exists.
@@ -54,7 +54,7 @@ Build a visualization layer that renders cube state and controls playback withou
 ## Verification
 
 - Run frontend tests/build commands once an `apps/web` workspace exists.
-- Run engine tests for any Rust/WASM behavior touched by UI work.
+- Run engine/API tests for any Rust solver behavior touched by UI work.
 
 # Referenced Context
 
@@ -68,7 +68,7 @@ Rules for the future web visualization phase.
 
 - Keep cube logic out of React components.
 - Treat the frontend as a renderer and controller that sends moves and receives states.
-- Use the Rust/WASM boundary as the source of truth for solver behavior once available.
+- Use the Rust HTTP API as the source of truth for solver behavior.
 - Keep playback and visualization state separate from solver state.
 - Evaluate visualization-only libraries by whether they preserve this boundary.
 
@@ -86,7 +86,7 @@ Rules for the future web visualization phase.
 
 # Project Architecture
 
-The final target is a hybrid Rubik's Cube solver with a Rust engine, search algorithms, heuristics, pattern databases, optional ML heuristics, WebAssembly integration, and a modern web visualization.
+The final target is a hybrid Rubik's Cube solver with a Rust engine, search algorithms, heuristics, pattern databases, optional ML heuristics, a native HTTP API, and a modern web visualization.
 
 ## Current Bootstrap
 
@@ -96,7 +96,7 @@ The final target is a hybrid Rubik's Cube solver with a Rust engine, search algo
 
 ## Future Boundaries
 
-- `crates/wasm`: future wasm-bindgen bridge around the Rust engine.
+- `crates/api`: HTTP API around the Rust engine and generated pruning-table artifacts.
 - `apps/web`: future TypeScript React visualization and playback UI.
 - `datasets`: future generated training datasets.
 - `ml`: future Python/PyTorch training code.
@@ -123,7 +123,7 @@ The frontend is a later phase. It should not become the source of truth for cube
 
 ## Boundary
 
-The frontend sends moves and receives states from the Rust/WASM engine. Rendering, playback, camera controls, and interaction state can live in the frontend. Cube validation, solver behavior, search, and heuristics stay in Rust.
+The frontend sends moves and receives states from the Rust HTTP API. Rendering, playback, camera controls, and interaction state can live in the frontend. Cube validation, solver behavior, search, and heuristics stay in Rust.
 
 ## Visualization Libraries
 
@@ -151,7 +151,7 @@ Visualization-only libraries can be used if they do not own the solver state. Th
 
 ## Integration Decision
 
-Defer installation until the frontend phase. If used, treat it as a visualization adapter or comparison tool around Rust/WASM state, not as the canonical engine.
+Treat it as a visualization adapter or comparison tool around Rust API state, not as the canonical engine.
 
 ## Observed Risk
 

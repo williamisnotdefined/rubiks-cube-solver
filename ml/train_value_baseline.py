@@ -12,7 +12,6 @@ from typing import Iterable
 from .data import (
     DEPTH_BUCKETS,
     FEATURE_DIM,
-    LABEL_SOURCE,
     TrainingExample,
     depth_bucket,
     load_jsonl,
@@ -144,7 +143,7 @@ def write_value_outputs(
         ("dataset", report["dataset"]),
         ("examples", len(examples)),
         ("label_target", _require_dict(report, "label")["target"]),
-        ("label_source", LABEL_SOURCE),
+        ("label_source", dataset_label_source(examples)),
         ("prediction", "estimated_verified_solution_length"),
         ("training_epochs", training.get("epochs")),
         ("training_seed", training.get("seed")),
@@ -168,6 +167,34 @@ def _require_dict(report: dict[str, object], key: str) -> dict[str, object]:
         raise TypeError(f"report field {key!r} must be a dictionary")
 
     return value
+
+
+def dataset_label_source(examples: list[TrainingExample]) -> str:
+    label_sources = sorted({example.label_source for example in examples})
+    if len(label_sources) == 1:
+        return label_sources[0]
+
+    return ",".join(label_sources)
+
+
+def label_semantics(examples: list[TrainingExample]) -> str:
+    source = dataset_label_source(examples)
+    if source == "generated_two_phase_solver_replay_verified":
+        return (
+            "verified_solution_length is produced by the generated two-phase solver from cubie "
+            "states and replay verified; it is not an optimal-distance label."
+        )
+
+    if source == "reversible_scramble_inverse_replay_verified":
+        return (
+            "verified_solution_length is the replay-verified inverse scramble length in the "
+            "dataset fixture; it is not an optimal-distance label."
+        )
+
+    return (
+        "verified_solution_length is replay verified by the dataset producer; mixed label sources "
+        "are not optimal-distance labels."
+    )
 
 
 def metadata_value(value: object) -> str:
@@ -218,7 +245,7 @@ def build_report(
         },
         "label": {
             "target": "verified_solution_length",
-            "semantics": "Replay-verified inverse scramble length from the dataset; not an optimal-distance label.",
+            "semantics": label_semantics(examples),
         },
         "metrics": metrics,
         "by_depth_bucket": by_depth_bucket,
@@ -267,8 +294,8 @@ def classical_baseline_comparison(
             [float(example.scramble_depth) for example in examples],
             prediction_source="dataset.scramble_depth",
             description=(
-                "Uses the generated reversible scramble depth recorded in the same JSONL "
-                "fixture. These labels are replay verified but are not optimal-distance labels."
+                "Uses the source scramble depth recorded in the same JSONL fixture. "
+                "This is a comparison baseline, not a solver output and not optimal-distance."
             ),
         ),
         "constant_train_mean": direct_fixture_baseline(
@@ -282,11 +309,8 @@ def classical_baseline_comparison(
 
     return {
         "dataset_fixture": str(dataset_path),
-        "label_source": LABEL_SOURCE,
-        "label_semantics": (
-            "verified_solution_length is the replay-verified inverse scramble length in "
-            "the dataset fixture; it is not an optimal-distance label."
-        ),
+        "label_source": dataset_label_source(examples),
+        "label_semantics": label_semantics(examples),
         "ml_value_baseline": {
             "metrics": model_metrics,
             "by_depth_bucket": model_by_depth_bucket,

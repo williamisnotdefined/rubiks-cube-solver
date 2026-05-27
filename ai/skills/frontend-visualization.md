@@ -1,6 +1,6 @@
 # Frontend Visualization
 
-Use this skill when adding the future web UI, 3D cube visualization, playback, or frontend-to-WASM boundary.
+Use this skill when adding the web UI, 3D cube visualization, playback, or frontend-to-API boundary.
 
 ## Goal
 
@@ -17,7 +17,7 @@ Build a visualization layer that renders cube state and controls playback withou
 ## Workflow
 
 - Confirm the task belongs to the frontend phase before adding frontend dependencies.
-- Keep solver behavior behind Rust/WASM APIs.
+- Keep solver behavior behind the Rust HTTP API.
 - Evaluate visualization libraries as adapters, not engine replacements.
 - If using `@houstonp/rubiks-cube`, verify headless move-option behavior before relying on it.
 - Ensure desktop and mobile rendering are considered when UI exists.
@@ -31,4 +31,4 @@ Build a visualization layer that renders cube state and controls playback withou
 ## Verification
 
 - Run frontend tests/build commands once an `apps/web` workspace exists.
-- Run engine tests for any Rust/WASM behavior touched by UI work.
+- Run engine/API tests for any Rust solver behavior touched by UI work.

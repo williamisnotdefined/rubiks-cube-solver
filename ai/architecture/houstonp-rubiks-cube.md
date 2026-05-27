@@ -18,7 +18,7 @@
 
 ## Integration Decision
 
-Defer installation until the frontend phase. If used, treat it as a visualization adapter or comparison tool around Rust/WASM state, not as the canonical engine.
+Treat it as a visualization adapter or comparison tool around Rust API state, not as the canonical engine.
 
 ## Observed Risk
 

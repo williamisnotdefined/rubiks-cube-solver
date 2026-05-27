@@ -124,7 +124,7 @@
     },
     {
       "name": "frontend-visualization",
-      "description": "Use when adding the future web UI, 3D cube visualization, playback, or frontend-to-WASM boundary.",
+      "description": "Use when adding the web UI, 3D cube visualization, playback, or frontend-to-API boundary.",
       "canonicalPath": "ai/skills/frontend-visualization.md",
       "references": [
         "ai/rules/frontend-rules.md",
@@ -140,11 +140,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "apps/web/**/*.{ts,tsx,css},crates/wasm/**/*,roadmap.md",
+          "globs": "apps/web/**/*.{ts,tsx,css},crates/api/**/*,roadmap.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "apps/web/**/*.{ts,tsx,css},crates/wasm/**/*,roadmap.md"
+          "applyTo": "apps/web/**/*.{ts,tsx,css},crates/api/**/*,roadmap.md"
         }
       }
     }

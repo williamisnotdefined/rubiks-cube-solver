@@ -1437,9 +1437,9 @@ fn strategy_label(strategy: SolverStrategy) -> &'static str {
 fn table_status_for_success(strategy: SolverStrategy) -> QualityTableStatus {
     match strategy {
         SolverStrategy::GeneratedTwoPhase => QualityTableStatus::Available,
-        SolverStrategy::BoundedIdaStar | SolverStrategy::TwoPhaseBaseline => {
-            QualityTableStatus::NotRequired
-        }
+        SolverStrategy::BoundedIdaStar
+        | SolverStrategy::TwoPhaseBaseline
+        | SolverStrategy::OptimalIdaStarOrientationPdb => QualityTableStatus::NotRequired,
     }
 }
 

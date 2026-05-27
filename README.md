@@ -1,6 +1,6 @@
 # Rubik's Cube Solver
 
-Bootstrap repository for a Rubik's Cube solver focused on a Rust engine first, then user-state validation, short-solution search, WebAssembly, and a web interface.
+Bootstrap repository for a Rubik's Cube solver focused on a Rust engine first, then user-state validation, short-solution search, a native HTTP API, and a web interface.
 
 The product goal is defined in `GOALS.md`: a web interface where a user can input a valid 3x3 cube state and receive a verified solution, preferably within 20 moves when feasible.
 
@@ -15,7 +15,9 @@ The product goal is defined in `GOALS.md`: a web interface where a user can inpu
 ```bash
 npm run ai:sync
 npm run ai:check
-npm run wasm:build
+npm run dev
+npm run web:dev
+npm run api:dev
 npm run build
 npm run product:gate
 ```
@@ -50,41 +52,94 @@ Rows are ordered by fixture and solver selection. Compare fixture IDs, categorie
 
 Generated two-phase rows read local pruning-table artifacts from `crates/cube-engine/pruning-tables` by default. Missing artifacts report `generated_tables_unavailable`; corrupt or incompatible artifacts report `generated_tables_corrupt_or_incompatible`. The CLI prints the Markdown report and exits nonzero for native `unexpected_regression`, unavailable or corrupt generated-table rows, and hybrid missing, malformed, or unexpected-regression rows; a PyTorch dependency-fallback hybrid artifact remains a successful smoke outcome. These artifacts are local generated files and should not be committed.
 
-Generate the native depth-8 compact artifacts used by generated two-phase quality rows with:
+Generate the native compact artifacts used by generated two-phase rows with:
 
 ```bash
-cargo run --quiet -p cube-engine --bin generate_pruning_tables -- --output crates/cube-engine/pruning-tables --max-depth 8
+npm run pruning:native
 ```
 
 The generated harder quality fixtures use the documented phase-2/G1 scramble `U R2 F2 D L2 B2 U2 R2` and require matching local depth-8 artifacts. The report includes generated artifact depth, table versions, move sets, generation source, and coordinate profile metadata in `table_depths` and `table_metadata` columns when those local artifacts are available.
 
 The quality report verifies every success by replay, but it does not claim optimality or a 20-move guarantee.
 
-## Browser Generated Pruning Tables
+## Real Scramble Benchmark
 
-Bounded IDA* remains the default web solver. The generated two-phase strategy can use local pruning-table artifacts when they are generated into Vite's public assets:
+Use the real scramble benchmark to track hard user-provided scrambles without giving the solver the inverse scramble. Each fixture is converted to a cubie state first; only that state is submitted to the configured solver, and every success is replay verified:
 
 ```bash
-npm run pruning:web:generate
+npm run solver:real-scrambles
 ```
 
-This writes ignored local depth-6 artifacts under `apps/web/public/generated-pruning-tables/`. Generated artifacts are compact depth-limited pruning tables: Rust generation may use dense visited memory internally, but the `.rpt` payload stores only reached `(coordinate_index, distance)` records plus Rust-owned metadata and checksum.
+The npm script uses `generated-two-phase` with `max_depth=30` and a small smoke budget of `max_nodes=1000`. Raise `--max-nodes` when running `cargo run --quiet -p cube-engine --bin solver_real_scramble_report -- ...` for deeper local experiments. The report loads the generated two-phase solver once, separates setup time from per-scramble search time, and includes phase/node/pruning metrics. It is an honest progress report, not a passing product gate: current failures identify the next deterministic solver work.
 
-The web app fetches those files from `/generated-pruning-tables/` only when `generated-two-phase` is selected, then passes the bytes through WASM so Rust still owns artifact parsing, checksum validation, metadata validation, compatibility checks, solving, and replay verification.
-
-If the files are absent, corrupt, or incompatible, the UI reports a structured generated-table unavailable or corrupt result. These generated tables are local artifacts and are not committed; regenerate old local `.rpt` files after artifact format changes. The generated two-phase path does not claim optimality or a 20-move guarantee.
-
-To run the browser product gate with generated two-phase success coverage, generate the ignored depth-6 browser artifacts before E2E:
+Run the real-scramble gate after generating native pruning tables with Phase 2 depth 10:
 
 ```bash
-npm run pruning:web:generate
-npm run wasm:build
+cargo run --quiet -p cube-engine --bin generate_pruning_tables -- --output crates/cube-engine/pruning-tables --phase1-max-depth 8 --phase2-max-depth 10
+npm run solver:real-scrambles:gate
+```
+
+Inspect pruning-table coverage before raising budgets or regenerating artifacts:
+
+```bash
+npm run pruning:report
+```
+
+Generate ML training rows labeled by the generated two-phase solver instead of inverse scrambles:
+
+```bash
+npm run dataset:solver
+```
+
+## Native HTTP API
+
+The API is the preferred path for heavy generated two-phase solving because it keeps native pruning-table artifacts on the server instead of shipping large solver assets to the browser.
+
+Generate native tables, then start the API:
+
+```bash
+npm run pruning:native
+npm run api:dev
+```
+
+Defaults:
+
+- `RUBIKS_API_ADDR=127.0.0.1:8787`
+- `RUBIKS_PRUNING_TABLE_DIR=crates/cube-engine/pruning-tables`
+
+Endpoints:
+
+- `GET /health`
+- `GET /strategies`
+- `POST /validate` with `{ "facelets": "..." }`
+- `POST /solve` with `{ "facelets": "...", "strategyId": "generated-two-phase", "maxDepth": 30, "maxNodes": 10000000 }`
+- `POST /solve-notation` with `{ "moves": "R2 D2 F'", "strategyId": "generated-two-phase", "maxDepth": 30, "maxNodes": 10000000 }`
+- `POST /playback` with `{ "facelets": "...", "moves": "R U R'" }`
+
+Every successful API solve includes `replayVerified=true`. `/solve-notation` uses move notation only to build the submitted cube state inside Rust; it does not use the inverse notation as a solution path.
+
+## API-Backed Web App
+
+The web app talks to the native HTTP API so generated two-phase pruning tables stay on the server and Rust owns artifact loading, solving, playback, and replay verification.
+
+Start the full development environment with one command:
+
+```bash
+npm run dev
+```
+
+This generates native pruning tables when needed, starts the API on `127.0.0.1:8787`, and starts the Vite dev server. Use `npm run web:dev` only when you intentionally want to run the frontend without starting the API.
+
+Run the browser product flow with native API coverage:
+
+```bash
+npm run pruning:native
 npm run build
 npm run lint -w @rubiks-cube-solver/web
 npm run test:e2e
 ```
 
-The generated two-phase success test skips only when the local `.rpt` artifacts are absent. When those artifacts exist, Playwright covers solved, shallow, nontrivial, and generated mid-depth fixtures through raw facelet and sticker-net entry, with Rust/WASM still owning artifact parsing, validation, solving, playback, and final solved verification.
+Playwright starts both the API and the Vite preview server. The UI accepts move notation such as `R2 D2 F'`, defaults to `generated-two-phase`, and displays `replay verified` only for API-confirmed solving results.
 
 ## Dataset Generation
 
@@ -156,12 +211,12 @@ Safety rules for ML experiments:
 - ML does not validate cube states.
 - ML does not replace replay verification of returned solutions.
 - ML is not an admissible heuristic unless a separate proof or safe bound is added.
-- ML is not a dependency of the default Rust, WASM, or web solve path.
+- ML is not a dependency of the default Rust API or web solve path.
 - Classical deterministic solving remains the fallback for product behavior.
 
 ## Hybrid Move Ordering Experiment
 
-The first hybrid-search experiment is isolated to the native solver quality report. It loads local value outputs and uses them only to order legal bounded IDA* child moves by predicted value, with lower values tried first. It does not validate states, prune branches, change depth or node limits, claim admissibility, replace Rust replay verification, or change Rust/WASM/web product defaults.
+The first hybrid-search experiment is isolated to the native solver quality report. It loads local value outputs and uses them only to order legal bounded IDA* child moves by predicted value, with lower values tried first. It does not validate states, prune branches, change depth or node limits, claim admissibility, replace Rust replay verification, or change Rust API/web product defaults.
 
 The no-arg quality report looks for local value outputs at:
 
@@ -193,4 +248,4 @@ Missing artifacts report `artifact_unavailable`. PyTorch dependency-fallback art
 
 ## External Visualization Library
 
-`@houstonp/rubiks-cube` can be useful later for frontend visualization or sticker-state experiments, but it is not the solver core. This project keeps the solver engine in Rust with cubie representation so search, heuristics, pattern databases, and WASM can evolve without depending on a Three.js/web-component state model.
+`@houstonp/rubiks-cube` is used for frontend visualization, but it is not the solver core. This project keeps the solver engine in Rust with cubie representation so search, heuristics, pattern databases, and the HTTP API can evolve without depending on a Three.js/web-component state model.

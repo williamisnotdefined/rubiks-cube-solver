@@ -2,15 +2,17 @@ import './App.css'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { RubiksCubeElement } from '@houstonp/rubiks-cube/view'
 import {
-  loadWasmSolver,
-  wasmSolverBoundary,
-  wasmSolverLoadingState,
-  type WasmSolverLoadState,
-} from './wasm/solverClient'
+  apiSolverBoundary,
+  apiSolverLoadingState,
+  loadApiSolver,
+  type FaceletSolveResult,
+  type ApiSolverLoadState,
+} from './api/solverClient'
 
-const defaultScramble = "R2 D2 F2 D L2 F2 U' R2 D B2 L2 U' B' R' B' R2 B2 L B U'"
-const defaultMaxDepth = 20
+const defaultNotation = "R2 D2 F2 D L2 F2 U' R2 D B2 L2 U' B' R' B' R2 B2 L B U'"
+const defaultMaxDepth = 30
 const defaultMaxNodes = 10_000_000
+const defaultStrategyId = 'generated-two-phase'
 
 if (!customElements.get('rubiks-cube')) {
   RubiksCubeElement.register()
@@ -19,24 +21,32 @@ if (!customElements.get('rubiks-cube')) {
 type SolveState =
   | { status: 'idle' }
   | { status: 'solving' }
-  | { status: 'done'; moves: string[] }
-  | { status: 'error'; message: string }
+  | {
+      status: 'done'
+      moves: string[]
+      strategyLabel: string
+      exploredNodes: number
+      solutionLength: number
+      generatedTableStatus: string
+      replayVerified: boolean
+    }
+  | { status: 'error'; message: string; detail?: string }
 
 function App() {
   const cubeRef = useRef<RubiksCubeElement | null>(null)
   const [solverState, setSolverState] =
-    useState<WasmSolverLoadState>(wasmSolverBoundary)
-  const [scramble, setScramble] = useState(defaultScramble)
+    useState<ApiSolverLoadState>(apiSolverBoundary)
+  const [notation, setNotation] = useState(defaultNotation)
   const [maxDepthInput, setMaxDepthInput] = useState(String(defaultMaxDepth))
   const [maxNodesInput, setMaxNodesInput] = useState(String(defaultMaxNodes))
-  const [facelets, setFacelets] = useState('')
+  const [cubeFacelets, setCubeFacelets] = useState('')
   const [solveState, setSolveState] = useState<SolveState>({ status: 'idle' })
 
   useEffect(() => {
     let active = true
 
-    setSolverState(wasmSolverLoadingState)
-    loadWasmSolver().then((state) => {
+    setSolverState(apiSolverLoadingState)
+    loadApiSolver().then((state) => {
       if (!active) {
         return
       }
@@ -44,7 +54,7 @@ function App() {
       setSolverState(state)
 
       if (state.status === 'ready') {
-        setFacelets(state.client.solvedFacelets())
+        setCubeFacelets(state.client.solvedFacelets())
       }
     })
 
@@ -54,22 +64,24 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (facelets.length === 0) {
+    if (cubeFacelets.length === 0) {
       return
     }
 
     const timeout = window.setTimeout(() => {
       try {
-        cubeRef.current?.setState(facelets)
+        cubeRef.current?.setState(cubeFacelets)
       } catch {
         // The custom element may still be finishing its first connection pass.
       }
     }, 0)
 
     return () => window.clearTimeout(timeout)
-  }, [facelets])
+  }, [cubeFacelets])
 
   const solverClient = solverState.status === 'ready' ? solverState.client : undefined
+  const strategyOptions = solverState.status === 'ready' ? solverState.strategyOptions : []
+  const selectedStrategy = strategyOptions.find((strategy) => strategy.id === defaultStrategyId)
   const solving = solveState.status === 'solving'
   const loading = solverState.status === 'loading' || solverState.status === 'unloaded'
   const maxDepth = Number(maxDepthInput)
@@ -81,7 +93,8 @@ function App() {
   const disabled =
     solverClient === undefined ||
     solving ||
-    scramble.trim().length === 0 ||
+    notation.trim().length === 0 ||
+    selectedStrategy === undefined ||
     !maxDepthIsValid ||
     !maxNodesIsValid
 
@@ -96,37 +109,40 @@ function App() {
     await waitForPaint()
 
     try {
-      const playback = solverClient.playbackFacelets(
-        solverClient.solvedFacelets(),
-        scramble.trim(),
-      )
-
-      if (!playback.ok) {
-        setSolveState({ status: 'error', message: 'Invalid scramble' })
-        return
-      }
-
-      setFacelets(playback.finalFacelets)
-      await waitForPaint()
-
-      const result = await solverClient.solveFacelets(playback.finalFacelets, {
+      const result = await solverClient.solveNotation(notation.trim(), {
         maxDepth,
         maxNodes,
+        strategyId: defaultStrategyId,
       })
 
       if (result.status === 'success') {
-        setSolveState({ status: 'done', moves: result.moves })
+        if (result.inputFacelets !== undefined) {
+          setCubeFacelets(result.inputFacelets)
+        }
+        setSolveState({
+          status: 'done',
+          moves: result.moves,
+          strategyLabel: result.strategyLabel,
+          exploredNodes: result.exploredNodes,
+          solutionLength: result.length,
+          generatedTableStatus: result.generatedTableStatus,
+          replayVerified: result.replayVerified,
+        })
         return
       }
 
-      setSolveState({ status: 'error', message: 'No solution' })
+      setSolveState({
+        status: 'error',
+        message: solveErrorMessage(result),
+        detail: solveErrorDetail(result),
+      })
     } catch {
       setSolveState({ status: 'error', message: 'Error' })
     }
   }
 
-  function handleScrambleChange(nextScramble: string) {
-    setScramble(nextScramble)
+  function handleNotationChange(nextNotation: string) {
+    setNotation(nextNotation)
     setSolveState({ status: 'idle' })
   }
 
@@ -142,7 +158,7 @@ function App() {
 
   return (
     <main className="app-shell">
-      <section className="cube-stage" aria-label="Cube state">
+      <section className="cube-stage" aria-label="Cube visualization">
         <rubiks-cube
           ref={cubeRef}
           animation-speed-ms="180"
@@ -156,52 +172,141 @@ function App() {
       </section>
 
       <form className="solve-form" onSubmit={handleSubmit}>
-        <input
-          aria-label="Scramble"
-          autoComplete="off"
-          className="scramble-input"
-          spellCheck={false}
-          value={scramble}
-          onChange={(event) => handleScrambleChange(event.target.value)}
-        />
-        <input
-          aria-label="Max solution moves"
-          className="depth-input"
-          inputMode="numeric"
-          min="0"
-          step="1"
-          type="number"
-          value={maxDepthInput}
-          onChange={(event) => handleMaxDepthChange(event.target.value)}
-        />
-        <input
-          aria-label="Max nodes"
-          className="nodes-input"
-          inputMode="numeric"
-          min="0"
-          step="1"
-          type="number"
-          value={maxNodesInput}
-          onChange={(event) => handleMaxNodesChange(event.target.value)}
-        />
+        <label className="field field-notation">
+          <span className="field-label">Move notation</span>
+          <input
+            autoComplete="off"
+            className="notation-input"
+            spellCheck={false}
+            value={notation}
+            onChange={(event) => handleNotationChange(event.target.value)}
+          />
+        </label>
+        <div className="api-status" aria-live="polite">
+          <span className={solverState.status === 'ready' ? 'status-ok' : 'status-bad'}>
+            {solverState.status === 'ready' ? 'API connected' : 'API unavailable'}
+          </span>
+          <span className="status-detail">
+            {selectedStrategy?.label ?? 'Generated two-phase solver'}
+          </span>
+        </div>
+        <label className="field field-depth">
+          <span className="field-label">Max solution moves</span>
+          <input
+            className="depth-input"
+            inputMode="numeric"
+            min="0"
+            step="1"
+            type="number"
+            value={maxDepthInput}
+            onChange={(event) => handleMaxDepthChange(event.target.value)}
+          />
+        </label>
+        <label className="field field-nodes">
+          <span className="field-label">Max nodes</span>
+          <input
+            className="nodes-input"
+            inputMode="numeric"
+            min="0"
+            step="1"
+            type="number"
+            value={maxNodesInput}
+            onChange={(event) => handleMaxNodesChange(event.target.value)}
+          />
+        </label>
         <button type="submit" disabled={disabled}>
           {solving ? <span className="button-loader" aria-hidden="true" /> : 'Solve'}
         </button>
+        <p className="strategy-description">
+          {selectedStrategy?.statusText ?? 'Run npm run dev to start the API and web app together.'}
+        </p>
       </form>
 
       <output className="result" aria-live="polite">
         {loading || solving ? <span className="loader" aria-label="Loading" /> : null}
         {solveState.status === 'done' ? (
-          <code>{solveState.moves.length === 0 ? 'Solved' : solveState.moves.join(' ')}</code>
+          <>
+            <code>
+              {solveState.moves.length === 0 ? 'Solved' : solveState.moves.join(' ')}
+            </code>
+            <span className="result-meta">
+              {solveState.strategyLabel} - {solveState.solutionLength} moves -{' '}
+              {formatNumber(solveState.exploredNodes)} nodes
+              {solveState.generatedTableStatus === 'not_required'
+                ? ''
+                : ` - tables ${solveState.generatedTableStatus}`}
+              {solveState.replayVerified ? ' - replay verified' : ''}
+            </span>
+          </>
         ) : null}
-        {solverState.status === 'unavailable_generated_package' ||
+        {solverState.status === 'api_unavailable' ||
         solverState.status === 'initialization_failed' ? (
-          <span>WASM unavailable</span>
+          <>
+            <span>API unavailable</span>
+            <span className="result-meta">{solverState.message} Run npm run dev.</span>
+          </>
         ) : null}
-        {solveState.status === 'error' ? <span>{solveState.message}</span> : null}
+        {solveState.status === 'error' ? (
+          <>
+            <span>{solveState.message}</span>
+            {solveState.detail === undefined ? null : (
+              <span className="result-meta">{solveState.detail}</span>
+            )}
+          </>
+        ) : null}
       </output>
     </main>
   )
+}
+
+function solveErrorMessage(result: Exclude<FaceletSolveResult, { ok: true }>): string {
+  if (result.status === 'invalid_notation') {
+    return 'Invalid move notation'
+  }
+
+  if (result.status === 'invalid_input') {
+    return 'Invalid cube state produced by notation'
+  }
+
+  if (result.status === 'not_found_within_limits') {
+    return 'No solution within the configured limits'
+  }
+
+  if (result.status === 'generated_tables_unavailable') {
+    return 'Generated two-phase tables unavailable on the API'
+  }
+
+  if (result.status === 'generated_tables_corrupt') {
+    return 'Generated two-phase API tables corrupt or incompatible'
+  }
+
+  if (result.status === 'api_error') {
+    return 'API solve request failed'
+  }
+
+  return result.message
+}
+
+function solveErrorDetail(result: Exclude<FaceletSolveResult, { ok: true }>): string | undefined {
+  if (result.status === 'not_found_within_limits') {
+    return `${result.strategyLabel} explored ${formatNumber(
+      result.exploredNodes ?? 0,
+    )} nodes at max depth ${result.maxDepth}.`
+  }
+
+  if (result.status === 'generated_tables_unavailable') {
+    return 'Generate native pruning tables and start npm run api:dev before solving.'
+  }
+
+  if (result.status === 'generated_tables_corrupt') {
+    return 'Regenerate native pruning tables; the current API artifacts do not match the Rust engine.'
+  }
+
+  return result.message
+}
+
+function formatNumber(value: number): string {
+  return new Intl.NumberFormat('en-US').format(value)
 }
 
 function waitForPaint(): Promise<void> {

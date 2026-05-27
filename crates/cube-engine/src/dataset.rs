@@ -9,6 +9,7 @@ use crate::cube::{Algorithm, Cube, CubeValidationError, CubieState, Move, Scramb
 pub const DATASET_SCHEMA_VERSION: u32 = 1;
 pub const DEFAULT_MAX_SCRAMBLE_DEPTH: usize = 12;
 pub const REVERSIBLE_SCRAMBLE_LABEL_SOURCE: &str = "reversible_scramble_inverse_replay_verified";
+pub const SOLVER_VERIFIED_LABEL_SOURCE: &str = "generated_two_phase_solver_replay_verified";
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct DatasetGenerationConfig {

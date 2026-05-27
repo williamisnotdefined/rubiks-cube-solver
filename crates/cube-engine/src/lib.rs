@@ -24,9 +24,16 @@ pub use cube::{
 pub use search::{
     depth_limited_search, solve_bfs, solve_ida_star, solve_ida_star_bounded,
     solve_ida_star_bounded_with_heuristic, solve_ida_star_with_heuristic, solve_iddfs,
-    CornerOrientationHeuristic, EdgeOrientationHeuristic, GeneratedPruningTableArtifact,
-    GeneratedTwoPhaseError, Heuristic, MaxHeuristic, MisplacedCubiesHeuristic, SearchBudget,
+    CornerOrientationHeuristic, CornerOrientationPatternDatabaseHeuristic,
+    EdgeOrientationHeuristic, EdgeOrientationPatternDatabaseHeuristic,
+    GeneratedPruningTableArtifact, GeneratedTwoPhaseError, GeneratedTwoPhaseSolver, Heuristic,
+    MaxHeuristic, MisplacedCubiesHeuristic, OrientationPatternDatabaseHeuristic, SearchBudget,
     SearchOutcome, SearchSolution, ZeroHeuristic,
+};
+pub use solver::benchmark::{
+    real_scramble_fixtures, run_real_scramble_benchmark, RealScrambleBenchmarkError,
+    RealScrambleBenchmarkReport, RealScrambleBenchmarkRow, RealScrambleBenchmarkStatus,
+    RealScrambleFixture, RealScrambleSpec, REAL_SCRAMBLE_SPECS,
 };
 pub use solver::{
     playback_facelet_solution, solve_cube, solve_cube_with_generated_pruning_tables,

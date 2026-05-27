@@ -11,7 +11,7 @@ Build a web interface where a user can input a valid 3x3 Rubik's Cube state and 
 - Accept a user-provided 3x3 cube state through a web UI.
 - Validate color counts, piece validity, orientation, permutation, and parity before solving.
 - Convert user-facing facelets or stickers into the Rust cubie representation.
-- Solve valid states with Rust solver logic exposed through WebAssembly.
+- Solve valid states with Rust solver logic exposed through the native HTTP API.
 - Return a move sequence that is verified to solve the submitted state.
 - Prefer short solutions in God's Number territory, targeting 20 moves when practical and reporting honestly when a configured limit is not met.
 - Display the solution as notation and support playback/visual verification in the UI.
@@ -23,7 +23,7 @@ Build a web interface where a user can input a valid 3x3 Rubik's Cube state and 
 2. Validity: reject impossible cube states with useful errors.
 3. Solver usefulness: support real user-provided states, not only generated scrambles.
 4. Solution quality: optimize toward 20 moves or better after correctness is established.
-5. Web delivery: expose the solver locally through WASM and a usable frontend.
+5. Web delivery: expose the solver locally through the native HTTP API and a usable frontend.
 6. Research extensions: datasets, ML, and hybrid search come after the web solve flow works.
 
 ## Non-Goals Until The Core Flow Works

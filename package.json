@@ -6,19 +6,26 @@
     "apps/web"
   ],
   "scripts": {
-    "dev": "npm run dev -w @rubiks-cube-solver/web",
+    "dev": "npm run pruning:native && concurrently -k -n api,web -c blue,green \"npm run api:dev\" \"npm run web:dev\"",
+    "web:dev": "npm run dev -w @rubiks-cube-solver/web",
+    "api:dev": "cargo run -p rubiks-cube-solver-api",
+    "api:test": "cargo test -p rubiks-cube-solver-api",
     "build": "npm run build -w @rubiks-cube-solver/web",
     "ai:check": "node scripts/ai/sync-routes.mjs --check",
     "ai:sync": "node scripts/ai/sync-routes.mjs",
     "lint": "npm run ai:check && npm run lint -w @rubiks-cube-solver/web",
     "format": "npm run ai:sync",
     "preview": "npm run preview -w @rubiks-cube-solver/web",
-    "pretest:e2e": "npm run wasm:build && npm run build",
+    "pretest:e2e": "cargo run --quiet -p cube-engine --bin generate_pruning_tables -- --output crates/cube-engine/pruning-tables --phase1-max-depth 8 --phase2-max-depth 10 && npm run build",
     "test:e2e": "playwright test",
-    "wasm:build": "wasm-pack build crates/wasm --target web --out-dir pkg",
-    "pruning:web:generate": "cargo run --quiet -p cube-engine --bin generate_pruning_tables -- --output apps/web/public/generated-pruning-tables --max-depth 6",
-    "product:gate": "npm run ai:check && cargo fmt --check && cargo test && cargo clippy --all-targets --all-features -- -D warnings && cargo run --quiet -p cube-engine --bin generate_pruning_tables -- --output crates/cube-engine/pruning-tables --max-depth 8 && npm run pruning:web:generate && npm run wasm:build && npm run build && npm run lint -w @rubiks-cube-solver/web && npm run test:e2e && python -m pytest ml && python -m ml.train_value_baseline --dataset datasets/fixtures/small.jsonl --epochs 1 --seed 0 --output ml/outputs/value-baseline --inference-repeats 1 && cargo run --quiet -p cube-engine --bin solver_quality_report && cargo run --quiet -p cube-engine --bin solver_quality_report -- --hybrid-value-outputs ml/outputs/value-baseline/value_outputs.tsv",
+    "pruning:native": "cargo run --quiet -p cube-engine --bin generate_pruning_tables -- --output crates/cube-engine/pruning-tables --phase1-max-depth 8 --phase2-max-depth 10",
+    "pruning:report": "cargo run --quiet -p cube-engine --bin pruning_table_report",
+    "dataset:solver": "cargo run --quiet -p cube-engine --bin generate_solver_dataset -- --count 64 --max-scramble-depth 12 --solver-max-depth 30 --solver-max-nodes 1000000",
+    "ml:solver-smoke": "npm run dataset:solver && python -m ml.train_value_baseline --dataset datasets/generated/solver-training.jsonl --epochs 1 --seed 0 --output ml/outputs/solver-value-baseline --inference-repeats 1",
+    "product:gate": "npm run ai:check && cargo fmt --check && cargo test && cargo clippy --all-targets --all-features -- -D warnings && cargo run --quiet -p cube-engine --bin generate_pruning_tables -- --output crates/cube-engine/pruning-tables --phase1-max-depth 8 --phase2-max-depth 10 && npm run build && npm run lint -w @rubiks-cube-solver/web && npm run test:e2e && python -m pytest ml && python -m ml.train_value_baseline --dataset datasets/fixtures/small.jsonl --epochs 1 --seed 0 --output ml/outputs/value-baseline --inference-repeats 1 && cargo run --quiet -p cube-engine --bin solver_quality_report && cargo run --quiet -p cube-engine --bin solver_quality_report -- --hybrid-value-outputs ml/outputs/value-baseline/value_outputs.tsv && npm run solver:real-scrambles:gate",
     "solver:bench": "cargo run --quiet -p cube-engine --bin solver_quality_report",
+    "solver:real-scrambles": "cargo run --quiet -p cube-engine --bin solver_real_scramble_report -- --strategy generated-two-phase --max-depth 30 --max-nodes 1000",
+    "solver:real-scrambles:gate": "cargo run --quiet -p cube-engine --bin solver_real_scramble_report -- --strategy generated-two-phase --max-depth 30 --max-nodes 10000000 --require-success",
     "roadmap:check": "roadrunner check --roadmap roadmap.md",
     "roadmap:cleanup": "roadrunner cleanup --roadmap roadmap.md",
     "roadmap:next": "roadrunner next --roadmap roadmap.md",
@@ -29,6 +36,6 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
-    "wasm-pack": "^0.13.1"
+    "concurrently": "^9.2.1"
   }
 }

@@ -8,10 +8,11 @@ use crate::cube::{
 use crate::search::pruning::DEFAULT_PRUNING_TABLE_DIR;
 use crate::search::{
     solve_generated_two_phase, solve_generated_two_phase_with_artifacts, solve_ida_star_bounded,
-    solve_two_phase_baseline, GeneratedPruningTableArtifact, GeneratedTwoPhaseError, SearchBudget,
-    SearchOutcome,
+    solve_ida_star_bounded_with_heuristic, solve_two_phase_baseline, GeneratedPruningTableArtifact,
+    GeneratedTwoPhaseError, OrientationPatternDatabaseHeuristic, SearchBudget, SearchOutcome,
 };
 
+pub mod benchmark;
 pub mod quality;
 
 /// Stable metadata for solver strategies exposed across the Rust/WASM boundary.
@@ -37,13 +38,19 @@ pub enum SolverStrategy {
     /// This path is selectable but still reports honest failures when tables or configured limits
     /// are unavailable. It does not claim optimality or a 20-move guarantee.
     GeneratedTwoPhase,
+    /// Optimal IDA* path using an admissible orientation pattern database heuristic.
+    ///
+    /// This is a correctness-oriented baseline. It can prove optimality within a configured search
+    /// budget, but it is not expected to solve arbitrary hard states quickly yet.
+    OptimalIdaStarOrientationPdb,
 }
 
 impl SolverStrategy {
-    pub const ALL: [Self; 3] = [
+    pub const ALL: [Self; 4] = [
         Self::BoundedIdaStar,
         Self::TwoPhaseBaseline,
         Self::GeneratedTwoPhase,
+        Self::OptimalIdaStarOrientationPdb,
     ];
 
     pub const fn metadata(self) -> SolverStrategyMetadata {
@@ -60,6 +67,7 @@ impl SolverStrategy {
             Self::BoundedIdaStar => "bounded-ida-star",
             Self::TwoPhaseBaseline => "two-phase-baseline",
             Self::GeneratedTwoPhase => "generated-two-phase",
+            Self::OptimalIdaStarOrientationPdb => "optimal-ida-star-orientation-pdb",
         }
     }
 
@@ -68,6 +76,7 @@ impl SolverStrategy {
             Self::BoundedIdaStar => "Bounded IDA*",
             Self::TwoPhaseBaseline => "Limited two-phase baseline",
             Self::GeneratedTwoPhase => "Generated two-phase solver",
+            Self::OptimalIdaStarOrientationPdb => "Optimal IDA* orientation PDB",
         }
     }
 
@@ -76,6 +85,7 @@ impl SolverStrategy {
             Self::BoundedIdaStar => "bounded_ida_star",
             Self::TwoPhaseBaseline => "limited_two_phase_baseline",
             Self::GeneratedTwoPhase => "generated_two_phase",
+            Self::OptimalIdaStarOrientationPdb => "optimal_ida_star_orientation_pdb",
         }
     }
 
@@ -90,6 +100,9 @@ impl SolverStrategy {
             Self::GeneratedTwoPhase => {
                 "Generated-table solver. Selectable when local pruning tables exist; otherwise reports generated tables unavailable or corrupt."
             }
+            Self::OptimalIdaStarOrientationPdb => {
+                "Optimal IDA* baseline with admissible orientation pattern databases. Useful for proof-oriented shallow searches; hard states still need larger PDBs."
+            }
         }
     }
 
@@ -98,6 +111,7 @@ impl SolverStrategy {
             "bounded-ida-star" => Some(Self::BoundedIdaStar),
             "two-phase-baseline" => Some(Self::TwoPhaseBaseline),
             "generated-two-phase" => Some(Self::GeneratedTwoPhase),
+            "optimal-ida-star-orientation-pdb" => Some(Self::OptimalIdaStarOrientationPdb),
             _ => None,
         }
     }
@@ -522,6 +536,11 @@ pub fn solve_cube(cube: &Cube, config: SolverConfig) -> Result<SolveResult, Solv
     let budget = SearchBudget::with_limits(config.max_depth, config.max_nodes);
     let outcome = match config.strategy {
         SolverStrategy::BoundedIdaStar => solve_ida_star_bounded(cube, budget),
+        SolverStrategy::OptimalIdaStarOrientationPdb => solve_ida_star_bounded_with_heuristic(
+            cube,
+            budget,
+            &OrientationPatternDatabaseHeuristic,
+        ),
         SolverStrategy::TwoPhaseBaseline => solve_two_phase_baseline(cube, budget),
         SolverStrategy::GeneratedTwoPhase => {
             match solve_generated_two_phase(cube, budget, config.pruning_table_dir()) {
@@ -659,6 +678,7 @@ mod tests {
                 SolverStrategy::BoundedIdaStar,
                 SolverStrategy::TwoPhaseBaseline,
                 SolverStrategy::GeneratedTwoPhase,
+                SolverStrategy::OptimalIdaStarOrientationPdb,
             ]
         );
 
@@ -711,6 +731,25 @@ mod tests {
             SolverStrategy::from_id("generated-two-phase"),
             Some(SolverStrategy::GeneratedTwoPhase)
         );
+        assert_eq!(
+            SolverStrategy::OptimalIdaStarOrientationPdb.id(),
+            "optimal-ida-star-orientation-pdb"
+        );
+        assert_eq!(
+            SolverStrategy::OptimalIdaStarOrientationPdb.label(),
+            "Optimal IDA* orientation PDB"
+        );
+        assert_eq!(
+            SolverStrategy::OptimalIdaStarOrientationPdb.solver_mode(),
+            "optimal_ida_star_orientation_pdb"
+        );
+        assert!(SolverStrategy::OptimalIdaStarOrientationPdb
+            .status_text()
+            .contains("admissible orientation pattern databases"));
+        assert_eq!(
+            SolverStrategy::from_id("optimal-ida-star-orientation-pdb"),
+            Some(SolverStrategy::OptimalIdaStarOrientationPdb)
+        );
         assert_eq!(SolverStrategy::from_id("unknown"), None);
 
         let metadata = SolverStrategy::GeneratedTwoPhase.metadata();
@@ -727,7 +766,7 @@ mod tests {
     fn solver_strategy_supported_message_lists_all_strategy_ids() {
         assert_eq!(
             SolverStrategy::supported_strategy_ids(),
-            "bounded-ida-star, two-phase-baseline, generated-two-phase"
+            "bounded-ida-star, two-phase-baseline, generated-two-phase, optimal-ida-star-orientation-pdb"
         );
 
         let message = SolverStrategy::unsupported_strategy_message("made-up");
@@ -735,6 +774,7 @@ mod tests {
         assert!(message.contains("bounded-ida-star"));
         assert!(message.contains("two-phase-baseline"));
         assert!(message.contains("generated-two-phase"));
+        assert!(message.contains("optimal-ida-star-orientation-pdb"));
 
         assert!(SolverStrategy::unsupported_strategy_message("").contains("<empty>"));
     }

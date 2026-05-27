@@ -1,6 +1,6 @@
 # Project Architecture
 
-The final target is a hybrid Rubik's Cube solver with a Rust engine, search algorithms, heuristics, pattern databases, optional ML heuristics, WebAssembly integration, and a modern web visualization.
+The final target is a hybrid Rubik's Cube solver with a Rust engine, search algorithms, heuristics, pattern databases, optional ML heuristics, a native HTTP API, and a modern web visualization.
 
 ## Current Bootstrap
 
@@ -10,7 +10,7 @@ The final target is a hybrid Rubik's Cube solver with a Rust engine, search algo
 
 ## Future Boundaries
 
-- `crates/wasm`: future wasm-bindgen bridge around the Rust engine.
+- `crates/api`: HTTP API around the Rust engine and generated pruning-table artifacts.
 - `apps/web`: future TypeScript React visualization and playback UI.
 - `datasets`: future generated training datasets.
 - `ml`: future Python/PyTorch training code.

@@ -235,24 +235,11 @@ fn generated_two_phase_respects_max_depth_with_metrics() {
         .expect("generated harder cubie fixture should exist");
     let config = generated_config(&directory, harder_fixture.max_depth);
 
-    let error = solve_cubie_state(harder_fixture.state.clone(), config.clone()).expect_err(
-        "depth-six generated artifacts should be insufficient for the depth-eight harder fixture",
-    );
-
-    match error {
-        SolveError::NotFoundWithinLimits {
-            config: actual_config,
-            explored_nodes,
-        } => {
-            assert_eq!(actual_config, config);
-            assert!(explored_nodes > 0);
-        }
-        SolveError::InvalidInput { .. }
-        | SolveError::GeneratedTablesUnavailable { .. }
-        | SolveError::GeneratedTablesCorrupt { .. } => {
-            panic!("insufficient generated artifacts should report a search limit failure")
-        }
-    }
+    let result = solve_cubie_state(harder_fixture.state.clone(), config)
+        .expect("depth-six generated artifacts should solve the documented depth-eight fixture");
+    assert_solution_solves_state(harder_fixture.state.clone(), result.moves());
+    assert!(result.length() <= harder_fixture.max_depth);
+    assert!(result.explored_nodes() > 0);
 
     let _ = fs::remove_dir_all(directory);
 }

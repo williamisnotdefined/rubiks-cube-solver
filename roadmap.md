@@ -18,7 +18,7 @@ Prioridades do produto:
 2. Rejeitar estados impossíveis com erros úteis.
 3. Resolver estados informados pelo usuário, não apenas scrambles gerados internamente.
 4. Melhorar qualidade de solução depois da correção, mirando soluções curtas e sendo honesto quando um limite configurado não for atingido.
-5. Entregar localmente por WASM e UI web.
+5. Entregar localmente por API HTTP nativa e UI web.
 6. Só depois expandir para datasets, Machine Learning e busca híbrida.
 
 ## Regras De Implementação
@@ -27,7 +27,7 @@ Prioridades do produto:
 - Não usar arrays de cores como representação principal do solver.
 - Usar representação por cubies no engine Rust.
 - Manter lógica de cubo, validação, busca e verificação no Rust.
-- Manter WASM e frontend como adapters finos.
+- Manter API HTTP e frontend como adapters finos.
 - Verificar toda solução retornada por replay antes de expor sucesso.
 - Não prometer otimalidade ou garantia de 20 movimentos sem algoritmo e testes que sustentem isso.
 - Não commitar datasets grandes, pruning tables grandes, checkpoints de modelo ou logs de automação.
@@ -36,7 +36,7 @@ Prioridades do produto:
 
 ```txt
 Web UI (TypeScript + React)
-        -> WASM boundary
+        -> Rust HTTP API
         -> Rust cube-engine
         -> validated cubie state
         -> deterministic solver
@@ -57,9 +57,9 @@ Deterministic solver baseline
 
 ## Estado Atual Do Projeto
 
-O projeto já tem a base do `cube-engine` em Rust, incluindo representação por cubies, movimentos, notação, scrambles, buscas iniciais, heurísticas simples, parsing/renderização de facelets, conversão para cubies, validação de estados impossíveis, APIs de solver e playback no engine, além de bootstrap do crate WASM.
+O projeto já tem a base do `cube-engine` em Rust, incluindo representação por cubies, movimentos, notação, scrambles, buscas, heurísticas, parsing/renderização de facelets, conversão para cubies, validação de estados impossíveis, APIs de solver/playback no engine e uma API HTTP nativa.
 
-A próxima linha de execução deve completar a exposição WASM, criar a aplicação web, validar o fluxo com E2E e só então avançar para qualidade de solver e pesquisa.
+A linha de execução atual usa API HTTP nativa como fronteira de produto, valida o fluxo com E2E e mantém qualidade de solver/pesquisa atrás de replay verification.
 
 ## Roadmap Linear
 
@@ -108,19 +108,19 @@ Entregas:
 
 Critério de saída: estados resolvidos e scrambles rasos retornam soluções verificadas; limites insuficientes retornam falha honesta com métricas.
 
-### Fase 4 - WebAssembly
+### Fase 4 - API HTTP Nativa
 
-Objetivo: expor o engine Rust para o navegador sem duplicar lógica.
+Objetivo: expor o engine Rust para o navegador sem duplicar lógica e sem enviar pruning tables ao browser.
 
 Entregas:
 
-- Crate `crates/wasm` com `wasm-bindgen`.
-- API de validação de facelets.
-- API de solve com limites explícitos ou defaults documentados.
-- API de playback e verificação final resolvida.
-- Resultados JavaScript-friendly com sucesso, erros de validação, erro de notação e limite não atingido.
+- Crate `crates/api` com servidor HTTP.
+- Endpoint de validação de facelets.
+- Endpoint de solve com limites explícitos ou defaults documentados.
+- Endpoint de playback e verificação final resolvida.
+- Resultados JSON com sucesso, erros de validação, erro de notação e limite não atingido.
 
-Critério de saída: chamadas WASM delegam para `cube-engine` e passam em testes ou smoke tests para sucesso e falhas principais.
+Critério de saída: chamadas HTTP delegam para `cube-engine` e passam em testes ou smoke tests para sucesso e falhas principais.
 
 ### Fase 5 - Frontend Web
 
@@ -129,7 +129,7 @@ Objetivo: entregar o fluxo principal do produto no navegador.
 Entregas:
 
 - Aplicação React/TypeScript buildável em `apps/web`.
-- Boundary de inicialização WASM isolado de componentes React.
+- Cliente HTTP API isolado de componentes React.
 - Input para facelets com validação e mensagens úteis.
 - Botão de solve com limites visíveis.
 - Exibição de movimentos, tamanho da solução e métricas.
@@ -260,7 +260,7 @@ Critério de saída: cada experimento deve ter baseline, métrica, fallback e es
 ## Stack
 
 - Solver core: Rust.
-- WASM: `wasm-bindgen`.
+- API: Rust HTTP server em `crates/api`.
 - Frontend: TypeScript, React, Vite e React Three Fiber quando a visualização 3D for implementada.
 - ML: Python e PyTorch, somente depois do fluxo web e baseline clássico.
 
@@ -270,7 +270,7 @@ Critério de saída: cada experimento deve ter baseline, métrica, fallback e es
 1. Cube engine Rust
 2. Facelet input and validation
 3. Verified solver API
-4. WASM validation / solve / playback
+4. HTTP API validation / solve / playback
 5. Web input / solve / playback
 6. Playwright product flow
 7. Two-phase and pruning-table foundations
@@ -287,7 +287,7 @@ O projeto atinge seu objetivo principal quando:
 
 - o usuário consegue informar um estado de cubo 3x3 pela web;
 - estados impossíveis são rejeitados com mensagem útil;
-- estados válidos são resolvidos pelo engine Rust via WASM;
+- estados válidos são resolvidos pelo engine Rust via API HTTP;
 - a solução retornada é verificada por replay;
 - a UI exibe notação, métricas e playback;
 - testes automatizados cobrem o fluxo completo.
