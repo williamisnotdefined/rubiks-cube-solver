@@ -6,28 +6,34 @@ The gate does not claim optimality, God's Number coverage, or a 20-move guarante
 
 ## Latest Result
 
-- Date: 2026-05-26
+- Date: 2026-05-27
 - Runner: Roadrunner implementation environment
-- Status: Pending final local gate run in this step
+- Status: Passed
 - Aggregate convenience command: `npm run product:gate`
 - Required Roadrunner commands: the individual commands below remain the source of acceptance and are listed unchanged in `roadrunner.config.json`.
 
 | Command | Latest outcome | Evidence and notes |
 | --- | --- | --- |
-| `npm run ai:check` | Pending | Confirms generated AI route files match canonical files under `ai/`. |
-| `cargo fmt --check` | Pending | Checks Rust formatting across the workspace. |
-| `cargo test` | Pending | Covers cube invariants, moves, notation, facelets, validation, solver APIs, pruning, dataset generation helpers, WASM wrapper tests, and quality-report tests. |
-| `cargo clippy --all-targets --all-features -- -D warnings` | Pending | Enforces Rust lint cleanliness for all targets and features. |
-| `cargo run --quiet -p cube-engine --bin generate_pruning_tables -- --output crates/cube-engine/pruning-tables --max-depth 8` | Pending | Generates ignored native depth-8 pruning-table artifacts used by solver quality rows. |
-| `npm run pruning:web:generate` | Pending | Generates ignored browser depth-6 pruning-table artifacts under `apps/web/public/generated-pruning-tables/`. |
-| `npm run wasm:build` | Pending | Builds the Rust/WASM adapter package under ignored `crates/wasm/pkg/`. |
-| `npm run build` | Pending | Builds the web app against the generated WASM package. |
-| `npm run lint -w @rubiks-cube-solver/web` | Pending | Runs the web workspace ESLint gate. |
-| `npm run test:e2e` | Pending | Runs Playwright product-flow coverage after the package pretest rebuilds WASM and web assets. |
-| `python -m pytest ml` | Pending | Runs ML fixture/data/model tests without making ML a product dependency. |
-| `python -m ml.train_value_baseline --dataset datasets/fixtures/small.jsonl --epochs 1 --seed 0 --output ml/outputs/value-baseline --inference-repeats 1` | Pending | Produces ignored local `metrics.json` and `value_outputs.tsv`; labels are replay-verified inverse scramble lengths, not optimal distances. |
-| `cargo run --quiet -p cube-engine --bin solver_quality_report` | Pending | Emits native solver quality rows, including generated-table status and replay verification. |
-| `cargo run --quiet -p cube-engine --bin solver_quality_report -- --hybrid-value-outputs ml/outputs/value-baseline/value_outputs.tsv` | Pending | Emits the same classical quality gate plus isolated hybrid move-ordering rows from local value outputs. |
+| `npm run ai:check` | Passed | Checked 5 compiled skills, 3 tools, and 13 reference files against canonical AI files under `ai/`. |
+| `cargo fmt --check` | Passed | Rust formatting checked across the workspace. |
+| `cargo test` | Passed | Workspace Rust tests passed, including cube invariants, moves, notation, facelets, validation, solver APIs, pruning, dataset helpers, generated two-phase coverage, WASM wrapper tests, and quality-report tests. |
+| `cargo clippy --all-targets --all-features -- -D warnings` | Passed | Workspace Rust clippy completed with warnings denied. |
+| `cargo run --quiet -p cube-engine --bin generate_pruning_tables -- --output crates/cube-engine/pruning-tables --max-depth 8` | Passed | Generated ignored native depth-8 pruning-table artifacts for solver quality rows. |
+| `npm run pruning:web:generate` | Passed | Generated ignored browser depth-6 pruning-table artifacts under `apps/web/public/generated-pruning-tables/` before Playwright. |
+| `npm run wasm:build` | Passed | Built the Rust/WASM adapter package under ignored `crates/wasm/pkg/`. |
+| `npm run build` | Passed | Built the web app against the generated WASM package. |
+| `npm run lint -w @rubiks-cube-solver/web` | Passed | Web workspace ESLint completed with `--max-warnings 0`. |
+| `npm run test:e2e` | Passed | Playwright ran 10 product-flow tests, including generated two-phase success with local browser artifacts. |
+| `python -m pytest ml` | Passed | ML fixture tests passed with 7 passed and 1 skipped. |
+| `python -m ml.train_value_baseline --dataset datasets/fixtures/small.jsonl --epochs 1 --seed 0 --output ml/outputs/value-baseline --inference-repeats 1` | Passed | Produced ignored local `metrics.json` and `value_outputs.tsv`; PyTorch was unavailable, so the documented constant-train-mean dependency fallback ran without writing a checkpoint. |
+| `cargo run --quiet -p cube-engine --bin solver_quality_report` | Passed | Native solver quality report loaded generated tables as available, replay verified successes, retained expected limit failures, and reported no unexpected regressions, unavailable generated tables, or corrupt generated tables. |
+| `cargo run --quiet -p cube-engine --bin solver_quality_report -- --hybrid-value-outputs ml/outputs/value-baseline/value_outputs.tsv` | Passed | Re-ran the classical quality gate and appended isolated hybrid move-ordering rows from local value outputs; dependency-fallback hybrid rows were reported without changing product solver defaults. |
+
+Environment notes for this run:
+
+- Rust/Cargo, Node/npm, `wasm-pack`, Playwright, Python, and pytest were available locally.
+- PyTorch was not installed; the ML smoke command completed through the documented `constant_train_mean_dependency_fallback` path with `pytorch_available=false`.
+- The gate intentionally generated ignored local artifacts for native pruning tables, browser pruning tables, WASM package output, frontend build output, Playwright output, and ML outputs. No generated datasets, model checkpoints, or large generated artifacts are part of the durable report.
 
 ## GOALS.md Coverage
 
