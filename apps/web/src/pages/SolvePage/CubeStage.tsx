@@ -1,27 +1,56 @@
-import type { RefObject } from 'react'
-import { RubiksCubeElement } from '@houstonp/rubiks-cube/view'
+import { useEffect, useState, type RefObject } from 'react'
+import type { RubiksCubeElement } from '@houstonp/rubiks-cube/view'
 
-if (!customElements.get('rubiks-cube')) {
-  RubiksCubeElement.register()
-}
+const cubeElementName = 'rubiks-cube'
 
 type CubeStageProps = {
   cubeRef: RefObject<RubiksCubeElement | null>
+  onReady: () => void
 }
 
-export function CubeStage({ cubeRef }: CubeStageProps) {
+export function CubeStage({ cubeRef, onReady }: CubeStageProps) {
+  const [registered, setRegistered] = useState(
+    () => customElements.get(cubeElementName) !== undefined,
+  )
+
+  useEffect(() => {
+    let active = true
+
+    async function registerCubeElement() {
+      if (!customElements.get(cubeElementName)) {
+        const { RubiksCubeElement } = await import('@houstonp/rubiks-cube/view')
+        if (!customElements.get(cubeElementName)) {
+          RubiksCubeElement.register()
+        }
+      }
+
+      if (active) {
+        setRegistered(true)
+        onReady()
+      }
+    }
+
+    void registerCubeElement()
+
+    return () => {
+      active = false
+    }
+  }, [onReady])
+
   return (
     <section className="cube-stage" aria-label="Cube visualization">
-      <rubiks-cube
-        ref={cubeRef}
-        animation-speed-ms="180"
-        animation-style="exponential"
-        camera-peek-angle-horizontal="0.62"
-        camera-peek-angle-vertical="0.55"
-        camera-radius="5.8"
-        cube-type="Three"
-        piece-gap="1.045"
-      />
+      {registered ? (
+        <rubiks-cube
+          ref={cubeRef}
+          animation-speed-ms="180"
+          animation-style="exponential"
+          camera-peek-angle-horizontal="0.62"
+          camera-peek-angle-vertical="0.55"
+          camera-radius="5.8"
+          cube-type="Three"
+          piece-gap="1.045"
+        />
+      ) : null}
     </section>
   )
 }

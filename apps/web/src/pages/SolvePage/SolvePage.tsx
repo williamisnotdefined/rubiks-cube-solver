@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from 'react'
+import { useReducer, useRef, useState, type FormEvent } from 'react'
 import type { RubiksCubeElement } from '@houstonp/rubiks-cube/view'
 import { useGetHealth, useGetStrategies, useSolveNotation } from '@api/solver'
 import { CubeStage } from './CubeStage'
@@ -25,13 +25,17 @@ export function SolvePage() {
   const healthQuery = useGetHealth()
   const strategiesQuery = useGetStrategies({ enabled: healthQuery.data?.ok === true })
   const solveMutation = useSolveNotation()
+  const [cubeReadyRevision, markCubeReady] = useReducer(
+    (revision: number) => revision + 1,
+    0,
+  )
   const [notation, setNotation] = useState(defaultNotation)
   const [maxMovesInput, setMaxMovesInput] = useState(String(defaultMaxMoves))
   const [maxNodesMillionInput, setMaxNodesMillionInput] = useState(
     String(defaultMaxNodesMillion),
   )
 
-  useCubeVisualization(cubeRef, notation)
+  useCubeVisualization(cubeRef, notation, cubeReadyRevision)
 
   const strategyOptions = strategiesQuery.data ?? []
   const apiReady = healthQuery.data?.ok === true && strategiesQuery.isSuccess
@@ -98,7 +102,7 @@ export function SolvePage() {
 
   return (
     <main className="app-shell">
-      <CubeStage cubeRef={cubeRef} />
+      <CubeStage cubeRef={cubeRef} onReady={markCubeReady} />
       <SolveForm
         notation={notation}
         maxMovesInput={maxMovesInput}

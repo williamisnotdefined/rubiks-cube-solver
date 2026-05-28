@@ -31,6 +31,7 @@ type VisualizationNotationParseResult =
 export function useCubeVisualization(
   cubeRef: RefObject<RubiksCubeElement | null>,
   notation: string,
+  readyRevision: number,
 ) {
   const visualMovesRef = useRef<Movement[]>([])
   const visualSyncIdRef = useRef(0)
@@ -59,7 +60,7 @@ export function useCubeVisualization(
     }, 0)
 
     return () => window.clearTimeout(timeout)
-  }, [cubeRef, notation])
+  }, [cubeRef, notation, readyRevision])
 }
 
 function parseVisualizationNotation(input: string): VisualizationNotationParseResult {
