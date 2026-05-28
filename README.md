@@ -108,6 +108,16 @@ Generate ML training rows labeled by the generated two-phase solver instead of i
 
 ```bash
 npm run dataset:solver
+npm run dataset:solver:1k
+npm run ml:solver:1k
+```
+
+The solver dataset generator supports `--solver-label-mode generated-two-phase`, `generated-two-phase-quality`, and `generated-two-phase-multiprobe`. The npm dataset scripts use `generated-two-phase-quality` labels by default, replay-verify every emitted solution, and keep generated JSONL files under `datasets/generated/` for local experiments.
+
+When PyTorch is available, `ml.train_value_baseline` writes both diagnostic `value_outputs.tsv` rows and a portable `model.json` MLP artifact. The Rust quality report can score unseen child states from that artifact with:
+
+```bash
+npm run solver:bench:hybrid-model
 ```
 
 ## Native HTTP API

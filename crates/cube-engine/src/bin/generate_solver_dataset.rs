@@ -4,6 +4,7 @@ use std::path::PathBuf;
 
 use cube_engine::dataset::{
     write_training_examples_jsonl, DatasetSplit, TrainingExample, DATASET_SCHEMA_VERSION,
+    SOLVER_MULTIPROBE_VERIFIED_LABEL_SOURCE, SOLVER_QUALITY_VERIFIED_LABEL_SOURCE,
     SOLVER_VERIFIED_LABEL_SOURCE,
 };
 use cube_engine::search::{GeneratedTwoPhaseSolver, SearchBudget, SearchOutcome};
@@ -18,6 +19,7 @@ struct GenerateSolverDatasetConfig {
     solver_max_depth: usize,
     solver_max_nodes: Option<usize>,
     pruning_table_dir: PathBuf,
+    solver_label_mode: SolverLabelMode,
 }
 
 impl Default for GenerateSolverDatasetConfig {
@@ -30,7 +32,50 @@ impl Default for GenerateSolverDatasetConfig {
             solver_max_depth: 30,
             solver_max_nodes: Some(1_000_000),
             pruning_table_dir: PathBuf::from("crates/cube-engine/pruning-tables"),
+            solver_label_mode: SolverLabelMode::Standard,
         }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum SolverLabelMode {
+    Standard,
+    Quality,
+    Multiprobe,
+}
+
+impl SolverLabelMode {
+    const fn id(self) -> &'static str {
+        match self {
+            Self::Standard => "generated-two-phase",
+            Self::Quality => "generated-two-phase-quality",
+            Self::Multiprobe => "generated-two-phase-multiprobe",
+        }
+    }
+
+    const fn label_source(self) -> &'static str {
+        match self {
+            Self::Standard => SOLVER_VERIFIED_LABEL_SOURCE,
+            Self::Quality => SOLVER_QUALITY_VERIFIED_LABEL_SOURCE,
+            Self::Multiprobe => SOLVER_MULTIPROBE_VERIFIED_LABEL_SOURCE,
+        }
+    }
+
+    fn solve(
+        self,
+        solver: &GeneratedTwoPhaseSolver,
+        cube: &Cube,
+        budget: SearchBudget,
+    ) -> Result<SearchOutcome, String> {
+        let result = match self {
+            Self::Standard => solver.solve(cube, budget),
+            Self::Quality => solver.solve_quality(cube, budget),
+            Self::Multiprobe => solver.solve_multiprobe(cube, budget),
+        };
+
+        result
+            .map(|result| result.outcome)
+            .map_err(|error| error.to_string())
     }
 }
 
@@ -49,13 +94,14 @@ fn run() -> Result<(), String> {
     write_training_examples_jsonl(&config.output, &examples).map_err(|error| error.to_string())?;
 
     println!(
-        "generated {} solver-labeled dataset examples to {} (seed={}, max_scramble_depth={}, solver_max_depth={}, solver_max_nodes={})",
+        "generated {} solver-labeled dataset examples to {} (seed={}, max_scramble_depth={}, solver_max_depth={}, solver_max_nodes={}, solver_label_mode={})",
         examples.len(),
         config.output.display(),
         config.seed,
         config.max_scramble_depth,
         config.solver_max_depth,
         max_nodes_label(config.solver_max_nodes),
+        config.solver_label_mode.id(),
     );
 
     Ok(())
@@ -82,7 +128,9 @@ fn generate_examples(
             .wrapping_add(config.seed)
             .wrapping_add((attempt as u64).wrapping_mul(0x517c_c1b7_2722_0a95));
         let scramble = Scramble::generate(depth, scramble_seed);
-        let Some(example) = solver_example_from_scramble(scramble, solver, budget)? else {
+        let Some(example) =
+            solver_example_from_scramble(scramble, solver, budget, config.solver_label_mode)?
+        else {
             continue;
         };
 
@@ -103,15 +151,14 @@ fn solver_example_from_scramble(
     scramble: Scramble,
     solver: &GeneratedTwoPhaseSolver,
     budget: SearchBudget,
+    solver_label_mode: SolverLabelMode,
 ) -> Result<Option<TrainingExample>, String> {
     let mut cube = Cube::solved();
     scramble.apply_to(&mut cube);
     let state = cube.state().clone();
     let serialized_state = state.serialize();
-    let result = solver
-        .solve(&cube, budget)
-        .map_err(|error| error.to_string())?;
-    let solution = match result.outcome {
+    let outcome = solver_label_mode.solve(solver, &cube, budget)?;
+    let solution = match outcome {
         SearchOutcome::Found(solution) => solution,
         SearchOutcome::NotFoundWithinLimits { .. } => return Ok(None),
     };
@@ -134,7 +181,7 @@ fn solver_example_from_scramble(
         verified_solution: solution_algorithm.to_string(),
         verified_solution_length: solution_algorithm.len(),
         best_move: solution_algorithm.moves().first().copied(),
-        label_source: SOLVER_VERIFIED_LABEL_SOURCE,
+        label_source: solver_label_mode.label_source(),
         split: DatasetSplit::for_state(&serialized_state),
     }))
 }
@@ -173,6 +220,10 @@ fn parse_args(
                 )?);
             }
             "--unlimited-solver-nodes" => config.solver_max_nodes = None,
+            "--solver-label-mode" => {
+                config.solver_label_mode =
+                    parse_solver_label_mode(required_value("--solver-label-mode", args.next())?)?;
+            }
             "--pruning-table-dir" => {
                 config.pruning_table_dir =
                     PathBuf::from(required_value("--pruning-table-dir", args.next())?);
@@ -202,6 +253,10 @@ fn parse_args(
                     &arg["--solver-max-nodes=".len()..],
                 )?);
             }
+            _ if arg.starts_with("--solver-label-mode=") => {
+                config.solver_label_mode =
+                    parse_solver_label_mode(&arg["--solver-label-mode=".len()..])?;
+            }
             _ if arg.starts_with("--pruning-table-dir=") => {
                 config.pruning_table_dir = PathBuf::from(&arg["--pruning-table-dir=".len()..]);
             }
@@ -210,6 +265,17 @@ fn parse_args(
     }
 
     Ok(config)
+}
+
+fn parse_solver_label_mode(value: impl AsRef<str>) -> Result<SolverLabelMode, String> {
+    match value.as_ref() {
+        "generated-two-phase" => Ok(SolverLabelMode::Standard),
+        "generated-two-phase-quality" => Ok(SolverLabelMode::Quality),
+        "generated-two-phase-multiprobe" => Ok(SolverLabelMode::Multiprobe),
+        value => Err(format!(
+            "--solver-label-mode must be one of generated-two-phase, generated-two-phase-quality, generated-two-phase-multiprobe; got {value}"
+        )),
+    }
 }
 
 fn required_value(flag: &str, value: Option<String>) -> Result<String, String> {
@@ -258,7 +324,7 @@ fn max_nodes_label(max_nodes: Option<usize>) -> String {
 }
 
 fn help_text() -> String {
-    "usage: generate_solver_dataset [--seed N] [--count N] [--output FILE] [--max-scramble-depth N] [--solver-max-depth N] [--solver-max-nodes N|--unlimited-solver-nodes] [--pruning-table-dir DIR]\n\nGenerates deterministic JSONL training examples labeled by the generated two-phase solver. The solver receives only cubie states; every emitted solution is replay verified."
+    "usage: generate_solver_dataset [--seed N] [--count N] [--output FILE] [--max-scramble-depth N] [--solver-max-depth N] [--solver-max-nodes N|--unlimited-solver-nodes] [--solver-label-mode ID] [--pruning-table-dir DIR]\n\nGenerates deterministic JSONL training examples labeled by a generated two-phase solver mode. Supported label modes: generated-two-phase, generated-two-phase-quality, generated-two-phase-multiprobe. The solver receives only cubie states; every emitted solution is replay verified."
         .to_owned()
 }
 
@@ -292,7 +358,7 @@ impl SolverDatasetRng {
 
 #[cfg(test)]
 mod tests {
-    use super::{parse_args, GenerateSolverDatasetConfig};
+    use super::{parse_args, GenerateSolverDatasetConfig, SolverLabelMode};
     use std::path::PathBuf;
 
     #[test]
@@ -312,6 +378,7 @@ mod tests {
             "--max-scramble-depth=18".to_owned(),
             "--solver-max-depth=31".to_owned(),
             "--solver-max-nodes=2000".to_owned(),
+            "--solver-label-mode=generated-two-phase-quality".to_owned(),
             "--pruning-table-dir=tmp/tables".to_owned(),
         ])
         .expect("options should parse");
@@ -322,6 +389,7 @@ mod tests {
         assert_eq!(config.max_scramble_depth, 18);
         assert_eq!(config.solver_max_depth, 31);
         assert_eq!(config.solver_max_nodes, Some(2000));
+        assert_eq!(config.solver_label_mode, SolverLabelMode::Quality);
         assert_eq!(config.pruning_table_dir, PathBuf::from("tmp/tables"));
     }
 
@@ -331,5 +399,25 @@ mod tests {
             .expect("unlimited nodes should parse");
 
         assert_eq!(config.solver_max_nodes, None);
+    }
+
+    #[test]
+    fn parse_args_accepts_separate_solver_label_mode() {
+        let config = parse_args([
+            "--solver-label-mode".to_owned(),
+            "generated-two-phase-multiprobe".to_owned(),
+        ])
+        .expect("separate solver label mode should parse");
+
+        assert_eq!(config.solver_label_mode, SolverLabelMode::Multiprobe);
+    }
+
+    #[test]
+    fn parse_args_rejects_unknown_solver_label_mode() {
+        let error = parse_args(["--solver-label-mode=made-up".to_owned()])
+            .expect_err("unknown solver label mode should fail");
+
+        assert!(error.contains("--solver-label-mode must be one of"));
+        assert!(error.contains("made-up"));
     }
 }

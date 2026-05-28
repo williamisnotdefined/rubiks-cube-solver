@@ -84,7 +84,7 @@ def run_baseline(
         inference_time=inference_time,
     )
 
-    return write_report(report, output_path, examples, predictions)
+    return write_report(report, output_path, examples, predictions, value_model=value_model)
 
 
 def dependency_unavailable_predictions(
@@ -107,20 +107,91 @@ def write_report(
     output_path: Path,
     examples: list[TrainingExample],
     predictions: list[float],
+    value_model: object | None = None,
 ) -> dict[str, object]:
     output_path.mkdir(parents=True, exist_ok=True)
     metrics_path = output_path / "metrics.json"
     value_outputs_path = output_path / "value_outputs.tsv"
+    model_path = output_path / "model.json"
+    model_checkpoint: str | None = None
+    if value_model is not None:
+        write_model_artifact(model_path, report, examples, value_model)
+        model_checkpoint = str(model_path)
     report["output"] = {
         "metrics_json": str(metrics_path),
         "value_outputs_tsv": str(value_outputs_path),
-        "model_checkpoint": None,
-        "note": "No model checkpoint is written by the smoke baseline; value outputs are local experiment inputs only.",
+        "model_checkpoint": model_checkpoint,
+        "note": "model.json is a local experiment artifact when PyTorch training runs; value outputs are diagnostic inputs only.",
     }
     write_value_outputs(value_outputs_path, report, examples, predictions)
     metrics_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
     return report
+
+
+def write_model_artifact(
+    path: Path,
+    report: dict[str, object],
+    examples: list[TrainingExample],
+    value_model: object,
+) -> None:
+    model = _require_dict(report, "model")
+    training = _require_dict(report, "training")
+    label = _require_dict(report, "label")
+    safety = _require_dict(report, "safety")
+
+    layers = exported_layers(value_model)
+    artifact = {
+        "format": "rubiks_cube_solver_value_model_v1",
+        "model_type": model["type"],
+        "pytorch_available": model["pytorch_available"],
+        "dataset": report["dataset"],
+        "examples": len(examples),
+        "label_target": label["target"],
+        "label_source": dataset_label_source(examples),
+        "prediction": "estimated_verified_solution_length",
+        "feature_dim": model["feature_dim"],
+        "hidden_dim": model["hidden_dim"],
+        "training_epochs": training.get("epochs"),
+        "training_seed": training.get("seed"),
+        "training_learning_rate": training.get("learning_rate"),
+        "safety": {
+            "validates_states": safety["validates_states"],
+            "replaces_replay_verification": safety["replaces_replay_verification"],
+            "admissible_heuristic": safety["admissible_heuristic"],
+            "default_product_solver_dependency": safety["default_product_solver_dependency"],
+        },
+        "input": {
+            "encoding": "normalized CubieState cp/co/ep/eo serialization",
+            "feature_order": ["cp/7", "co/2", "ep/11", "eo"],
+        },
+        "layers": layers,
+    }
+
+    path.write_text(json.dumps(artifact, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def exported_layers(value_model: object) -> list[dict[str, object]]:
+    network = getattr(value_model, "network", None)
+    if network is None:
+        raise TypeError("value model must expose a network for JSON export")
+
+    layers: list[dict[str, object]] = []
+    for layer in network:
+        if layer.__class__.__name__ == "Linear":
+            layers.append(
+                {
+                    "type": "linear",
+                    "weight": layer.weight.detach().cpu().tolist(),
+                    "bias": layer.bias.detach().cpu().tolist(),
+                }
+            )
+        elif layer.__class__.__name__ == "ReLU":
+            layers.append({"type": "relu"})
+        else:
+            raise TypeError(f"unsupported model layer for JSON export: {layer.__class__.__name__}")
+
+    return layers
 
 
 def write_value_outputs(
@@ -179,9 +250,13 @@ def dataset_label_source(examples: list[TrainingExample]) -> str:
 
 def label_semantics(examples: list[TrainingExample]) -> str:
     source = dataset_label_source(examples)
-    if source == "generated_two_phase_solver_replay_verified":
+    if source in {
+        "generated_two_phase_solver_replay_verified",
+        "generated_two_phase_quality_solver_replay_verified",
+        "generated_two_phase_multiprobe_solver_replay_verified",
+    }:
         return (
-            "verified_solution_length is produced by the generated two-phase solver from cubie "
+            "verified_solution_length is produced by a generated two-phase solver from cubie "
             "states and replay verified; it is not an optimal-distance label."
         )
 

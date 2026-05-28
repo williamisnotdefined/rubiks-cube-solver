@@ -20,8 +20,9 @@ pub use heuristics::{
     MisplacedCubiesHeuristic, OrientationPatternDatabaseHeuristic, ZeroHeuristic,
 };
 pub(crate) use hybrid::{
-    load_hybrid_value_outputs, solve_hybrid_move_ordering, HybridMoveOrderingMetrics,
-    HybridValueArtifact, HybridValueArtifactStatus, DEFAULT_HYBRID_VALUE_OUTPUT_PATH,
+    load_hybrid_value_model, load_hybrid_value_outputs, solve_hybrid_move_ordering,
+    HybridMoveOrderingMetrics, HybridValueArtifact, HybridValueArtifactStatus,
+    DEFAULT_HYBRID_VALUE_OUTPUT_PATH,
 };
 pub use ida_star::{
     solve_ida_star, solve_ida_star_bounded, solve_ida_star_bounded_with_heuristic,

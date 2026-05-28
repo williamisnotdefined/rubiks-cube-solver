@@ -83,6 +83,36 @@ def test_loads_solver_labeled_jsonl_from_temp_file(tmp_path: Path) -> None:
     assert examples[0].label_source == "generated_two_phase_solver_replay_verified"
 
 
+@pytest.mark.parametrize(
+    "label_source",
+    [
+        "generated_two_phase_quality_solver_replay_verified",
+        "generated_two_phase_multiprobe_solver_replay_verified",
+    ],
+)
+def test_loads_quality_solver_labeled_jsonl_from_temp_file(
+    tmp_path: Path, label_source: str
+) -> None:
+    record = {
+        "schema_version": 1,
+        "state": SOLVED_STATE,
+        "scramble": "",
+        "scramble_depth": 0,
+        "verified_solution": "",
+        "verified_solution_length": 0,
+        "best_move": None,
+        "label_source": label_source,
+        "split": "train",
+    }
+    dataset = tmp_path / "quality-solver-generated.jsonl"
+    dataset.write_text(json.dumps(record) + "\n", encoding="utf-8")
+
+    examples = load_jsonl(dataset)
+
+    assert len(examples) == 1
+    assert examples[0].label_source == label_source
+
+
 def test_parse_cubie_state_rejects_invalid_orientation_sum() -> None:
     invalid_state = SOLVED_STATE.replace(
         "co=0,0,0,0,0,0,0,0", "co=1,0,0,0,0,0,0,0"

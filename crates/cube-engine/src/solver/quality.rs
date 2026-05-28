@@ -8,9 +8,9 @@ use crate::cube::{
 };
 use crate::search::pruning::{PruningPhaseRole, PruningTable, GENERATED_PRUNING_TABLE_SPECS};
 use crate::search::{
-    load_hybrid_value_outputs, solve_hybrid_move_ordering, HybridMoveOrderingMetrics,
-    HybridValueArtifact, HybridValueArtifactStatus, SearchBudget, SearchOutcome,
-    DEFAULT_HYBRID_VALUE_OUTPUT_PATH,
+    load_hybrid_value_model, load_hybrid_value_outputs, solve_hybrid_move_ordering,
+    HybridMoveOrderingMetrics, HybridValueArtifact, HybridValueArtifactStatus, SearchBudget,
+    SearchOutcome, DEFAULT_HYBRID_VALUE_OUTPUT_PATH,
 };
 use crate::solver::{
     playback_facelet_solution, solve_cubie_state, solve_facelet_string, FaceletPlaybackError,
@@ -19,6 +19,8 @@ use crate::solver::{
 
 pub const QUALITY_REPORT_PRUNING_TABLE_DIR: &str = "crates/cube-engine/pruning-tables";
 pub const QUALITY_REPORT_HYBRID_VALUE_OUTPUT_PATH: &str = DEFAULT_HYBRID_VALUE_OUTPUT_PATH;
+const QUALITY_REPORT_HYBRID_VALUE_MODEL_NODE_CAP: usize = 100_000;
+const QUALITY_REPORT_HYBRID_VALUE_MODEL_EXPECTED_NOT_FOUND_NODE_CAP: usize = 10_000;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum QualityFixtureCategory {
@@ -313,6 +315,7 @@ pub struct QualityHybridReportRow {
     pub replay_verified: Option<bool>,
     pub scored_move_lookups: usize,
     pub missing_score_lookups: usize,
+    pub model_score_evals: usize,
     pub moves: Vec<Move>,
 }
 
@@ -407,14 +410,14 @@ Status counts are grouped by solver selection. Elapsed timing stays in the row t
 
         output.push_str(
             "\n## Hybrid Move Ordering Experiment\n\n\
-Hybrid rows compare the isolated learned-value move-ordering experiment against the `default-bounded-ida-star` fixture budgets. Value outputs are local artifacts at ml/outputs/value-baseline/value_outputs.tsv by default. The learned values only order legal child moves; they do not validate states, prune branches, change limits, claim admissibility, or replace Rust replay verification. Missing, fallback, or malformed artifacts are reported as experiment statuses without changing product solver defaults.\n\n\
-| fixture | group | input | expectation | scramble | baseline_selection | max_depth | max_nodes | artifact_path | artifact_status | artifact_metadata | status | solution_len | explored_nodes | elapsed_us | replay_verified | scored_move_lookups | missing_score_lookups | solution |\n\
-| --- | --- | --- | --- | --- | --- | ---: | ---: | --- | --- | --- | --- | ---: | ---: | ---: | --- | ---: | ---: | --- |\n",
+Hybrid rows compare the isolated learned-value move-ordering experiment against the `default-bounded-ida-star` fixture budgets. Value outputs are local diagnostic artifacts, while value models can score unseen child states. Model artifacts use a capped per-fixture node budget in this report to keep the experiment bounded. The learned values only order legal child moves; they do not validate states, prune branches, change limits, claim admissibility, or replace Rust replay verification. Missing, fallback, or malformed artifacts are reported as experiment statuses without changing product solver defaults.\n\n\
+| fixture | group | input | expectation | scramble | baseline_selection | max_depth | max_nodes | artifact_path | artifact_status | artifact_metadata | status | solution_len | explored_nodes | elapsed_us | replay_verified | scored_move_lookups | missing_score_lookups | model_score_evals | solution |\n\
+| --- | --- | --- | --- | --- | --- | ---: | ---: | --- | --- | --- | --- | ---: | ---: | ---: | --- | ---: | ---: | ---: | --- |\n",
         );
 
         for row in &self.hybrid_rows {
             output.push_str(&format!(
-                "| {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |\n",
+                "| {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |\n",
                 row.fixture_id,
                 row.fixture_category.label(),
                 row.input_kind.label(),
@@ -433,6 +436,7 @@ Hybrid rows compare the isolated learned-value move-ordering experiment against 
                 replay_verified_label(row.replay_verified),
                 row.scored_move_lookups,
                 row.missing_score_lookups,
+                row.model_score_evals,
                 moves_label(&row.moves),
             ));
         }
@@ -827,6 +831,18 @@ pub fn run_quality_report_with_hybrid_value_outputs_path(
     )
 }
 
+pub fn run_quality_report_with_hybrid_value_model_path(
+    hybrid_value_model_path: impl AsRef<Path>,
+) -> Result<QualityReport, QualityReportError> {
+    let fixtures = quality_fixtures()?;
+
+    run_quality_report_for_fixtures_with_pruning_table_dir_and_hybrid_value_model_path(
+        &fixtures,
+        Path::new(QUALITY_REPORT_PRUNING_TABLE_DIR),
+        hybrid_value_model_path,
+    )
+}
+
 pub fn run_quality_report_for_fixtures(
     fixtures: &[QualityFixture],
 ) -> Result<QualityReport, QualityReportError> {
@@ -854,8 +870,40 @@ pub fn run_quality_report_for_fixtures_with_pruning_table_dir_and_hybrid_value_o
 ) -> Result<QualityReport, QualityReportError> {
     let generated_pruning_table_dir = generated_pruning_table_dir.as_ref();
     let hybrid_value_outputs_path = hybrid_value_outputs_path.as_ref();
-    let generated_table_summary = generated_table_summary(generated_pruning_table_dir).ok();
     let hybrid_artifact = load_hybrid_value_outputs(hybrid_value_outputs_path);
+
+    run_quality_report_for_fixtures_with_pruning_table_dir_and_hybrid_artifact(
+        fixtures,
+        generated_pruning_table_dir,
+        hybrid_value_outputs_path,
+        hybrid_artifact,
+    )
+}
+
+pub fn run_quality_report_for_fixtures_with_pruning_table_dir_and_hybrid_value_model_path(
+    fixtures: &[QualityFixture],
+    generated_pruning_table_dir: impl AsRef<Path>,
+    hybrid_value_model_path: impl AsRef<Path>,
+) -> Result<QualityReport, QualityReportError> {
+    let generated_pruning_table_dir = generated_pruning_table_dir.as_ref();
+    let hybrid_value_model_path = hybrid_value_model_path.as_ref();
+    let hybrid_artifact = load_hybrid_value_model(hybrid_value_model_path);
+
+    run_quality_report_for_fixtures_with_pruning_table_dir_and_hybrid_artifact(
+        fixtures,
+        generated_pruning_table_dir,
+        hybrid_value_model_path,
+        hybrid_artifact,
+    )
+}
+
+fn run_quality_report_for_fixtures_with_pruning_table_dir_and_hybrid_artifact(
+    fixtures: &[QualityFixture],
+    generated_pruning_table_dir: &Path,
+    hybrid_artifact_path: &Path,
+    hybrid_artifact: HybridValueArtifact,
+) -> Result<QualityReport, QualityReportError> {
+    let generated_table_summary = generated_table_summary(generated_pruning_table_dir).ok();
     let mut rows = Vec::with_capacity(fixtures.len() * QualitySolverSelection::ALL.len());
     let mut hybrid_rows = Vec::with_capacity(fixtures.len());
 
@@ -872,7 +920,7 @@ pub fn run_quality_report_for_fixtures_with_pruning_table_dir_and_hybrid_value_o
         }
         hybrid_rows.push(run_hybrid_quality_row(
             fixture,
-            hybrid_value_outputs_path,
+            hybrid_artifact_path,
             &hybrid_artifact,
         )?);
     }
@@ -1214,11 +1262,13 @@ fn run_hybrid_quality_row(
     let expectation = expectation_for(fixture, QualitySolverSelection::DefaultBoundedIdaStar);
     let artifact_status = quality_hybrid_artifact_status(artifact.status());
     let artifact_metadata = artifact.metadata_label();
+    let hybrid_max_nodes = hybrid_max_nodes_for_artifact(fixture.max_nodes, expectation, artifact);
 
-    let HybridValueArtifact::Available(value_table) = artifact else {
+    let HybridValueArtifact::Available(value_source) = artifact else {
         return Ok(hybrid_report_row(
             fixture,
             expectation,
+            fixture.max_nodes,
             hybrid_value_outputs_path,
             artifact_status,
             artifact_metadata,
@@ -1241,8 +1291,8 @@ fn run_hybrid_quality_row(
     let started = Instant::now();
     let result = solve_hybrid_move_ordering(
         &cube,
-        SearchBudget::with_limits(fixture.max_depth, fixture.max_nodes),
-        value_table,
+        SearchBudget::with_limits(fixture.max_depth, hybrid_max_nodes),
+        value_source,
     );
     let elapsed = started.elapsed();
 
@@ -1258,6 +1308,7 @@ fn run_hybrid_quality_row(
             Ok(hybrid_report_row(
                 fixture,
                 expectation,
+                hybrid_max_nodes,
                 hybrid_value_outputs_path,
                 artifact_status,
                 artifact_metadata,
@@ -1283,6 +1334,7 @@ fn run_hybrid_quality_row(
             Ok(hybrid_report_row(
                 fixture,
                 expectation,
+                hybrid_max_nodes,
                 hybrid_value_outputs_path,
                 artifact_status,
                 artifact_metadata,
@@ -1302,6 +1354,7 @@ fn run_hybrid_quality_row(
 fn hybrid_report_row(
     fixture: &QualityFixture,
     expectation: QualityExpectation,
+    max_nodes: Option<usize>,
     hybrid_value_outputs_path: &Path,
     artifact_status: QualityHybridArtifactStatus,
     artifact_metadata: Option<String>,
@@ -1321,7 +1374,7 @@ fn hybrid_report_row(
         scramble: fixture.scramble,
         baseline_selection: QualitySolverSelection::DefaultBoundedIdaStar,
         max_depth: fixture.max_depth,
-        max_nodes: fixture.max_nodes,
+        max_nodes,
         artifact_path: hybrid_value_outputs_path.display().to_string(),
         artifact_status,
         artifact_metadata,
@@ -1332,7 +1385,26 @@ fn hybrid_report_row(
         replay_verified,
         scored_move_lookups: metrics.scored_move_lookups,
         missing_score_lookups: metrics.missing_score_lookups,
+        model_score_evals: metrics.model_score_evals,
         moves,
+    }
+}
+
+fn hybrid_max_nodes_for_artifact(
+    fixture_max_nodes: Option<usize>,
+    expectation: QualityExpectation,
+    artifact: &HybridValueArtifact,
+) -> Option<usize> {
+    if artifact.is_model() {
+        let cap = match expectation {
+            QualityExpectation::RequiredSuccess => QUALITY_REPORT_HYBRID_VALUE_MODEL_NODE_CAP,
+            QualityExpectation::ExpectedNotFoundWithinLimits => {
+                QUALITY_REPORT_HYBRID_VALUE_MODEL_EXPECTED_NOT_FOUND_NODE_CAP
+            }
+        };
+        Some(fixture_max_nodes.unwrap_or(cap).min(cap))
+    } else {
+        fixture_max_nodes
     }
 }
 

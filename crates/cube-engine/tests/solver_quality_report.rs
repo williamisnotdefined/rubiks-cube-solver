@@ -5,6 +5,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use cube_engine::search::pruning::generate_all_pruning_tables;
 use cube_engine::solver::quality::{
     quality_fixtures,
+    run_quality_report_for_fixtures_with_pruning_table_dir_and_hybrid_value_model_path,
     run_quality_report_for_fixtures_with_pruning_table_dir_and_hybrid_value_outputs_path,
     QualityExpectation, QualityFixtureCategory, QualityHybridArtifactStatus,
     QualityHybridReportRow, QualityHybridReportStatus, QualityInputKind, QualityReport,
@@ -423,6 +424,7 @@ fn solver_quality_report_records_missing_hybrid_value_outputs_without_changing_c
             && row.replay_verified.is_none()
             && row.scored_move_lookups == 0
             && row.missing_score_lookups == 0
+            && row.model_score_evals == 0
             && row.moves.is_empty()
     }));
 
@@ -550,11 +552,49 @@ fn solver_quality_report_uses_available_hybrid_values_for_replay_verified_move_o
     assert!(row.explored_nodes > 0);
     assert!(row.scored_move_lookups > 0);
     assert!(row.missing_score_lookups > 0);
+    assert_eq!(row.model_score_evals, 0);
     assert!(row
         .artifact_metadata
         .as_deref()
         .expect("available metadata should be reported")
         .contains("model_type=pytorch_mlp"));
+
+    let _ = fs::remove_dir_all(directory);
+}
+
+#[test]
+fn solver_quality_report_uses_hybrid_value_model_for_unseen_move_scores() {
+    let fixture = single_quality_fixture("shallow-facelets-f");
+    let directory = temp_test_dir("hybrid-model");
+    fs::create_dir_all(&directory).expect("temp directory should be created");
+    let hybrid_path = directory.join("model.json");
+    write_constant_model_artifact(&hybrid_path);
+
+    let report =
+        run_quality_report_for_fixtures_with_pruning_table_dir_and_hybrid_value_model_path(
+            &[fixture],
+            &directory,
+            &hybrid_path,
+        )
+        .expect("quality report should run with available hybrid value model");
+
+    let row = report
+        .hybrid_rows()
+        .first()
+        .expect("hybrid model row should exist");
+    assert_eq!(row.artifact_status, QualityHybridArtifactStatus::Available);
+    assert_eq!(row.status, QualityHybridReportStatus::Success);
+    assert_eq!(row.replay_verified, Some(true));
+    assert_eq!(row.solution_length, Some(1));
+    assert_eq!(row.moves, vec![Move::FPrime]);
+    assert!(row.scored_move_lookups > 0);
+    assert_eq!(row.missing_score_lookups, 0);
+    assert_eq!(row.model_score_evals, row.scored_move_lookups);
+    assert!(row
+        .artifact_metadata
+        .as_deref()
+        .expect("model metadata should be reported")
+        .contains("format=rubiks_cube_solver_value_model_v1"));
 
     let _ = fs::remove_dir_all(directory);
 }
@@ -735,7 +775,7 @@ fn solver_quality_report_markdown_has_stable_headers_and_local_timing_note() {
     assert!(markdown.contains("do not validate states, prune branches, change limits"));
     assert!(markdown.contains("artifact_unavailable"));
     assert!(markdown.contains("missing-value_outputs.tsv"));
-    assert!(markdown.contains("| fixture | group | input | expectation | scramble | baseline_selection | max_depth | max_nodes | artifact_path | artifact_status | artifact_metadata | status | solution_len | explored_nodes | elapsed_us | replay_verified | scored_move_lookups | missing_score_lookups | solution |"));
+    assert!(markdown.contains("| fixture | group | input | expectation | scramble | baseline_selection | max_depth | max_nodes | artifact_path | artifact_status | artifact_metadata | status | solution_len | explored_nodes | elapsed_us | replay_verified | scored_move_lookups | missing_score_lookups | model_score_evals | solution |"));
     assert_eq!(report.hybrid_rows().len(), fixtures.len());
 }
 
@@ -809,6 +849,25 @@ fn write_value_outputs_artifact(
         content.push_str(&format!("{state}\t{score}\n"));
     }
     fs::write(path, content).expect("value output artifact should be writable");
+}
+
+fn write_constant_model_artifact(path: &PathBuf) {
+    let weight = vec!["0.0"; 40].join(",");
+    let content = format!(
+        r#"{{
+            "format":"rubiks_cube_solver_value_model_v1",
+            "model_type":"pytorch_mlp",
+            "pytorch_available":true,
+            "examples":1,
+            "label_target":"verified_solution_length",
+            "label_source":"reversible_scramble_inverse_replay_verified",
+            "feature_dim":40,
+            "hidden_dim":1,
+            "layers":[{{"type":"linear","weight":[[{weight}]],"bias":[1.0]}}]
+        }}
+        "#
+    );
+    fs::write(path, content).expect("model artifact should be writable");
 }
 
 fn temp_test_dir(name: &str) -> PathBuf {
@@ -886,6 +945,7 @@ fn hybrid_row(status: QualityHybridReportStatus) -> QualityHybridReportRow {
         },
         scored_move_lookups: 0,
         missing_score_lookups: 0,
+        model_score_evals: 0,
         moves: Vec::new(),
     }
 }

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from ml.data import DEPTH_BUCKETS, FEATURE_DIM
+from ml.data import DEPTH_BUCKETS, FEATURE_DIM, load_jsonl
 from ml import train_value_baseline as baseline
 
 
@@ -50,6 +50,9 @@ def test_one_epoch_training_is_deterministic_and_reports_required_metrics(
     assert first["by_depth_bucket"] == second["by_depth_bucket"]
     assert_required_report_fields(first)
     assert (tmp_path / "first/metrics.json").is_file()
+    model_artifact = tmp_path / "first/model.json"
+    assert model_artifact.is_file()
+    assert Path(first["output"]["model_checkpoint"]) == model_artifact
     value_outputs = tmp_path / "first/value_outputs.tsv"
     assert value_outputs.is_file()
     assert Path(first["output"]["value_outputs_tsv"]) == value_outputs
@@ -63,8 +66,25 @@ def test_one_epoch_training_is_deterministic_and_reports_required_metrics(
     assert value_metadata["safety.admissible_heuristic"] == "false"
     assert value_metadata["safety.default_product_solver_dependency"] == "false"
     assert len(value_rows) == first["examples"]
+    exported_model = json.loads(model_artifact.read_text(encoding="utf-8"))
+    assert exported_model["format"] == "rubiks_cube_solver_value_model_v1"
+    assert exported_model["model_type"] == "pytorch_mlp"
+    assert exported_model["pytorch_available"] is True
+    assert exported_model["feature_dim"] == FEATURE_DIM
+    assert [layer["type"] for layer in exported_model["layers"]] == [
+        "linear",
+        "relu",
+        "linear",
+        "relu",
+        "linear",
+    ]
+    first_example = load_jsonl(FIXTURE)[0]
+    assert exported_prediction(exported_model, first_example.cubie_state.feature_vector()) == pytest.approx(
+        value_rows[0][1], abs=1e-5
+    )
     assert sorted(path.name for path in (tmp_path / "first").iterdir()) == [
         "metrics.json",
+        "model.json",
         "value_outputs.tsv",
     ]
 
@@ -128,8 +148,13 @@ def test_cli_writes_json_report(capsys: pytest.CaptureFixture[str], tmp_path: Pa
 
     assert exit_code == 0
     assert report["examples"] == 12
-    assert report["output"]["model_checkpoint"] is None
     assert Path(report["output"]["value_outputs_tsv"]).is_file()
+    model_checkpoint = report["output"]["model_checkpoint"]
+    if report["model"]["pytorch_available"]:
+        assert isinstance(model_checkpoint, str)
+        assert Path(model_checkpoint).is_file()
+    else:
+        assert model_checkpoint is None
     assert "direct_fixture_baselines" in report["classical_baseline_comparison"]
     assert Path(report["output"]["metrics_json"]).is_file()
 
@@ -153,6 +178,30 @@ def read_value_outputs(path: Path) -> tuple[dict[str, str], list[tuple[str, floa
         rows.append((state, float(prediction)))
 
     return metadata, rows
+
+
+def exported_prediction(model: dict[str, object], features: list[float]) -> float:
+    activations = features
+    for layer in model["layers"]:
+        assert isinstance(layer, dict)
+        layer_type = layer["type"]
+        if layer_type == "relu":
+            activations = [max(0.0, value) for value in activations]
+        elif layer_type == "linear":
+            weight = layer["weight"]
+            bias = layer["bias"]
+            assert isinstance(weight, list)
+            assert isinstance(bias, list)
+            activations = [
+                sum(float(input_weight) * value for input_weight, value in zip(row, activations, strict=True))
+                + float(layer_bias)
+                for row, layer_bias in zip(weight, bias, strict=True)
+            ]
+        else:
+            raise AssertionError(f"unsupported layer type {layer_type}")
+
+    assert len(activations) == 1
+    return activations[0]
 
 
 def assert_required_report_fields(report: dict[str, object]) -> None:

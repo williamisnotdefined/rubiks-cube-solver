@@ -8,7 +8,14 @@ from typing import Any, Iterable
 SCHEMA_VERSION = 1
 LABEL_SOURCE = "reversible_scramble_inverse_replay_verified"
 SOLVER_LABEL_SOURCE = "generated_two_phase_solver_replay_verified"
-SUPPORTED_LABEL_SOURCES = {LABEL_SOURCE, SOLVER_LABEL_SOURCE}
+SOLVER_QUALITY_LABEL_SOURCE = "generated_two_phase_quality_solver_replay_verified"
+SOLVER_MULTIPROBE_LABEL_SOURCE = "generated_two_phase_multiprobe_solver_replay_verified"
+SUPPORTED_LABEL_SOURCES = {
+    LABEL_SOURCE,
+    SOLVER_LABEL_SOURCE,
+    SOLVER_QUALITY_LABEL_SOURCE,
+    SOLVER_MULTIPROBE_LABEL_SOURCE,
+}
 FEATURE_DIM = 40
 
 REQUIRED_FIELDS = {
