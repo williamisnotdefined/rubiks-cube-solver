@@ -245,6 +245,35 @@ fn generated_two_phase_respects_max_depth_with_metrics() {
 }
 
 #[test]
+fn generated_two_phase_quality_solves_short_scramble_with_replay() {
+    let directory = temp_test_dir("quality-short");
+    generate_all_pruning_tables(&directory, 6, 6)
+        .expect("depth-six generated pruning tables should build for quality strategy test");
+    let state = scrambled(&[Move::R, Move::U]).state().clone();
+    let config = quality_generated_config(&directory, 4);
+
+    let result = solve_cubie_state(state.clone(), config)
+        .expect("quality generated two-phase should solve a shallow scramble");
+
+    assert_solution_solves_state(state.clone(), result.moves());
+    assert!(
+        result.length() <= 2,
+        "quality search should find the known shallow inverse length, got {}",
+        result.length()
+    );
+    assert!(result.explored_nodes() > 0);
+
+    let corner_result = solve_cubie_state(state.clone(), corner_pdb_config(&directory, 4))
+        .expect("corner PDB strategy should fall back to generated quality when PDB is absent");
+
+    assert_solution_solves_state(state, corner_result.moves());
+    assert!(corner_result.length() <= 2);
+    assert!(corner_result.explored_nodes() > 0);
+
+    let _ = fs::remove_dir_all(directory);
+}
+
+#[test]
 fn generated_two_phase_respects_max_nodes_with_metrics() {
     let directory = temp_test_dir("max-nodes");
     generate_all_pruning_tables(&directory, 6, 6)
@@ -321,6 +350,24 @@ fn generated_config_with_nodes(
 ) -> SolverConfig {
     SolverConfig::with_strategy(max_depth, max_nodes, SolverStrategy::GeneratedTwoPhase)
         .with_pruning_table_dir(directory.to_path_buf())
+}
+
+fn quality_generated_config(directory: &Path, max_depth: usize) -> SolverConfig {
+    SolverConfig::with_strategy(
+        max_depth,
+        Some(1_000_000),
+        SolverStrategy::GeneratedTwoPhaseQuality,
+    )
+    .with_pruning_table_dir(directory.to_path_buf())
+}
+
+fn corner_pdb_config(directory: &Path, max_depth: usize) -> SolverConfig {
+    SolverConfig::with_strategy(
+        max_depth,
+        Some(1_000_000),
+        SolverStrategy::OptimalBoundedCornerPdb,
+    )
+    .with_pruning_table_dir(directory.to_path_buf())
 }
 
 fn scrambled(moves: &[Move]) -> Cube {

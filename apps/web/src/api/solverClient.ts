@@ -261,9 +261,9 @@ function apiSolveError(message: string): SolveFailureResult {
     ok: false,
     maxDepth: 0,
     maxNodes: undefined,
-    strategyId: 'generated-two-phase',
-    strategyLabel: 'Generated two-phase solver',
-    solverMode: 'generated_two_phase',
+    strategyId: 'generated-two-phase-quality',
+    strategyLabel: 'Generated two-phase quality solver',
+    solverMode: 'generated_two_phase_quality',
     generatedTableStatus: 'unavailable',
     message,
   }

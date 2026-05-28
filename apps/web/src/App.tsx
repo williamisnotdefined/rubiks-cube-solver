@@ -15,7 +15,8 @@ const defaultMaxMoves = maxMovesLimit
 const maxNodesMillionLimit = 10
 const defaultMaxNodesMillion = maxNodesMillionLimit
 const nodesPerMillion = 1_000_000
-const defaultStrategyId = 'generated-two-phase'
+const fallbackStrategyId = 'generated-two-phase'
+const preferredQualityStrategyId = 'generated-two-phase-quality'
 
 if (!customElements.get('rubiks-cube')) {
   RubiksCubeElement.register()
@@ -84,6 +85,7 @@ function App() {
   const apiReady = solverClient !== undefined
   const solving = solveState.status === 'solving'
   const buttonLoading = !apiReady || solving
+  const strategyId = preferredStrategyId(solverState)
   const maxMoves = Number(maxMovesInput)
   const maxNodesMillion = Number(maxNodesMillionInput)
   const maxNodes = maxNodesMillion * nodesPerMillion
@@ -118,7 +120,7 @@ function App() {
       const limits = {
         maxDepth: maxMoves,
         maxNodes,
-        strategyId: defaultStrategyId,
+        strategyId,
       }
       const result = await solverClient.solveNotation(notation.trim(), limits)
 
@@ -255,6 +257,19 @@ function App() {
       </output>
     </main>
   )
+}
+
+function preferredStrategyId(solverState: ApiSolverLoadState): string {
+  if (
+    solverState.status === 'ready' &&
+    solverState.strategyOptions.some(
+      (option) => option.id === preferredQualityStrategyId,
+    )
+  ) {
+    return preferredQualityStrategyId
+  }
+
+  return fallbackStrategyId
 }
 
 function solveErrorMessage(result: Exclude<SolveResult, { ok: true }>): string {

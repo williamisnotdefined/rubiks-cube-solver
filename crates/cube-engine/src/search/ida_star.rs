@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use super::heuristics::{Heuristic, ZeroHeuristic};
 use super::solution::{SearchBudget, SearchOutcome, SearchSolution};
-use crate::cube::moves::FACE_MOVES;
+use crate::cube::moves::{Face, FACE_MOVES};
 use crate::cube::{Cube, CubieState, Move};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -213,7 +213,26 @@ fn legal_candidate_moves(last_move: Option<Move>) -> Vec<Move> {
 }
 
 fn should_skip_move(last_move: Option<Move>, next_move: Move) -> bool {
-    last_move.is_some_and(|last_move| last_move.face() == next_move.face())
+    let Some(last_move) = last_move else {
+        return false;
+    };
+
+    let last_face = last_move.face();
+    let next_face = next_move.face();
+
+    last_face == next_face
+        || (last_face.axis() == next_face.axis() && face_order(last_face) > face_order(next_face))
+}
+
+const fn face_order(face: Face) -> u8 {
+    match face {
+        Face::U => 0,
+        Face::D => 1,
+        Face::L => 0,
+        Face::R => 1,
+        Face::F => 0,
+        Face::B => 1,
+    }
 }
 
 fn solution_solves(start: &Cube, moves: &[Move]) -> bool {
@@ -224,7 +243,9 @@ fn solution_solves(start: &Cube, moves: &[Move]) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{solve_ida_star, solve_ida_star_bounded, solve_ida_star_with_heuristic};
+    use super::{
+        should_skip_move, solve_ida_star, solve_ida_star_bounded, solve_ida_star_with_heuristic,
+    };
     use crate::cube::moves::FACE_MOVES;
     use crate::cube::{Cube, Move};
     use crate::search::{
@@ -314,6 +335,18 @@ mod tests {
             solve_ida_star_bounded(&cube, SearchBudget::with_limits(1, Some(1))),
             SearchOutcome::NotFoundWithinLimits { explored_nodes: 1 }
         );
+    }
+
+    #[test]
+    fn move_pruning_canonicalizes_same_axis_branches() {
+        assert!(should_skip_move(Some(Move::U), Move::U2));
+        assert!(!should_skip_move(Some(Move::U), Move::D));
+        assert!(should_skip_move(Some(Move::D), Move::U));
+        assert!(!should_skip_move(Some(Move::L), Move::R));
+        assert!(should_skip_move(Some(Move::R), Move::L));
+        assert!(!should_skip_move(Some(Move::F), Move::B));
+        assert!(should_skip_move(Some(Move::B), Move::F));
+        assert!(!should_skip_move(Some(Move::U), Move::R));
     }
 
     #[test]

@@ -7,9 +7,11 @@ use crate::cube::{
 };
 use crate::search::pruning::DEFAULT_PRUNING_TABLE_DIR;
 use crate::search::{
-    solve_generated_two_phase, solve_generated_two_phase_with_artifacts, solve_ida_star_bounded,
-    solve_ida_star_bounded_with_heuristic, solve_two_phase_baseline, GeneratedPruningTableArtifact,
-    GeneratedTwoPhaseError, OrientationPatternDatabaseHeuristic, SearchBudget, SearchOutcome,
+    solve_generated_two_phase, solve_generated_two_phase_quality,
+    solve_generated_two_phase_with_artifacts, solve_ida_star_bounded,
+    solve_ida_star_bounded_with_heuristic, solve_optimal_bounded_corner_pdb_quality,
+    solve_two_phase_baseline, GeneratedPruningTableArtifact, GeneratedTwoPhaseError,
+    OrientationPatternDatabaseHeuristic, SearchBudget, SearchOutcome,
 };
 
 pub mod benchmark;
@@ -38,19 +40,31 @@ pub enum SolverStrategy {
     /// This path is selectable but still reports honest failures when tables or configured limits
     /// are unavailable. It does not claim optimality or a 20-move guarantee.
     GeneratedTwoPhase,
+    /// Generated two-phase path that searches shorter total solution depths first.
+    ///
+    /// This is quality-oriented and can be slower than the standard generated strategy. It still
+    /// reports honest failures when tables or configured limits are unavailable.
+    GeneratedTwoPhaseQuality,
     /// Optimal IDA* path using an admissible orientation pattern database heuristic.
     ///
     /// This is a correctness-oriented baseline. It can prove optimality within a configured search
     /// budget, but it is not expected to solve arbitrary hard states quickly yet.
     OptimalIdaStarOrientationPdb,
+    /// IDA* bounded by an admissible corner pattern database before falling back to quality two-phase.
+    ///
+    /// The PDB artifact is server-side and optional. When it is missing, this strategy preserves the
+    /// generated two-phase quality fallback instead of reporting false short-solution guarantees.
+    OptimalBoundedCornerPdb,
 }
 
 impl SolverStrategy {
-    pub const ALL: [Self; 4] = [
+    pub const ALL: [Self; 6] = [
         Self::BoundedIdaStar,
         Self::TwoPhaseBaseline,
         Self::GeneratedTwoPhase,
+        Self::GeneratedTwoPhaseQuality,
         Self::OptimalIdaStarOrientationPdb,
+        Self::OptimalBoundedCornerPdb,
     ];
 
     pub const fn metadata(self) -> SolverStrategyMetadata {
@@ -67,7 +81,9 @@ impl SolverStrategy {
             Self::BoundedIdaStar => "bounded-ida-star",
             Self::TwoPhaseBaseline => "two-phase-baseline",
             Self::GeneratedTwoPhase => "generated-two-phase",
+            Self::GeneratedTwoPhaseQuality => "generated-two-phase-quality",
             Self::OptimalIdaStarOrientationPdb => "optimal-ida-star-orientation-pdb",
+            Self::OptimalBoundedCornerPdb => "optimal-bounded-corner-pdb",
         }
     }
 
@@ -76,7 +92,9 @@ impl SolverStrategy {
             Self::BoundedIdaStar => "Bounded IDA*",
             Self::TwoPhaseBaseline => "Limited two-phase baseline",
             Self::GeneratedTwoPhase => "Generated two-phase solver",
+            Self::GeneratedTwoPhaseQuality => "Generated two-phase quality solver",
             Self::OptimalIdaStarOrientationPdb => "Optimal IDA* orientation PDB",
+            Self::OptimalBoundedCornerPdb => "Optimal bounded corner PDB",
         }
     }
 
@@ -85,7 +103,9 @@ impl SolverStrategy {
             Self::BoundedIdaStar => "bounded_ida_star",
             Self::TwoPhaseBaseline => "limited_two_phase_baseline",
             Self::GeneratedTwoPhase => "generated_two_phase",
+            Self::GeneratedTwoPhaseQuality => "generated_two_phase_quality",
             Self::OptimalIdaStarOrientationPdb => "optimal_ida_star_orientation_pdb",
+            Self::OptimalBoundedCornerPdb => "optimal_bounded_corner_pdb",
         }
     }
 
@@ -100,8 +120,14 @@ impl SolverStrategy {
             Self::GeneratedTwoPhase => {
                 "Generated-table solver. Selectable when local pruning tables exist; otherwise reports generated tables unavailable or corrupt."
             }
+            Self::GeneratedTwoPhaseQuality => {
+                "Quality generated-table solver. Searches shorter total depths first before falling back to the configured max depth; requires local pruning tables."
+            }
             Self::OptimalIdaStarOrientationPdb => {
                 "Optimal IDA* baseline with admissible orientation pattern databases. Useful for proof-oriented shallow searches; hard states still need larger PDBs."
+            }
+            Self::OptimalBoundedCornerPdb => {
+                "Quality path that tries admissible corner-PDB IDA* at short limits, then falls back to generated two-phase quality when the PDB is missing or the short proof budget is exhausted."
             }
         }
     }
@@ -111,7 +137,9 @@ impl SolverStrategy {
             "bounded-ida-star" => Some(Self::BoundedIdaStar),
             "two-phase-baseline" => Some(Self::TwoPhaseBaseline),
             "generated-two-phase" => Some(Self::GeneratedTwoPhase),
+            "generated-two-phase-quality" => Some(Self::GeneratedTwoPhaseQuality),
             "optimal-ida-star-orientation-pdb" => Some(Self::OptimalIdaStarOrientationPdb),
+            "optimal-bounded-corner-pdb" => Some(Self::OptimalBoundedCornerPdb),
             _ => None,
         }
     }
@@ -550,6 +578,23 @@ pub fn solve_cube(cube: &Cube, config: SolverConfig) -> Result<SolveResult, Solv
                 }
             }
         }
+        SolverStrategy::GeneratedTwoPhaseQuality => {
+            match solve_generated_two_phase_quality(cube, budget, config.pruning_table_dir()) {
+                Ok(outcome) => outcome,
+                Err(error) => {
+                    return Err(generated_tables_error(config, error));
+                }
+            }
+        }
+        SolverStrategy::OptimalBoundedCornerPdb => {
+            match solve_optimal_bounded_corner_pdb_quality(cube, budget, config.pruning_table_dir())
+            {
+                Ok(outcome) => outcome,
+                Err(error) => {
+                    return Err(generated_tables_error(config, error));
+                }
+            }
+        }
     };
 
     solve_search_outcome(cube, config, outcome)
@@ -668,6 +713,30 @@ mod tests {
             generated.pruning_table_dir().to_string_lossy(),
             "tmp/generated-pruning-tables"
         );
+
+        let quality = SolverConfig::with_strategy(
+            20,
+            Some(1_000_000),
+            SolverStrategy::GeneratedTwoPhaseQuality,
+        )
+        .with_pruning_table_dir("tmp/generated-pruning-tables");
+        assert_eq!(quality.strategy, SolverStrategy::GeneratedTwoPhaseQuality);
+        assert_eq!(
+            quality.pruning_table_dir().to_string_lossy(),
+            "tmp/generated-pruning-tables"
+        );
+
+        let corner_pdb = SolverConfig::with_strategy(
+            20,
+            Some(1_000_000),
+            SolverStrategy::OptimalBoundedCornerPdb,
+        )
+        .with_pruning_table_dir("tmp/generated-pruning-tables");
+        assert_eq!(corner_pdb.strategy, SolverStrategy::OptimalBoundedCornerPdb);
+        assert_eq!(
+            corner_pdb.pruning_table_dir().to_string_lossy(),
+            "tmp/generated-pruning-tables"
+        );
     }
 
     #[test]
@@ -678,7 +747,9 @@ mod tests {
                 SolverStrategy::BoundedIdaStar,
                 SolverStrategy::TwoPhaseBaseline,
                 SolverStrategy::GeneratedTwoPhase,
+                SolverStrategy::GeneratedTwoPhaseQuality,
                 SolverStrategy::OptimalIdaStarOrientationPdb,
+                SolverStrategy::OptimalBoundedCornerPdb,
             ]
         );
 
@@ -732,6 +803,25 @@ mod tests {
             Some(SolverStrategy::GeneratedTwoPhase)
         );
         assert_eq!(
+            SolverStrategy::GeneratedTwoPhaseQuality.id(),
+            "generated-two-phase-quality"
+        );
+        assert_eq!(
+            SolverStrategy::GeneratedTwoPhaseQuality.label(),
+            "Generated two-phase quality solver"
+        );
+        assert_eq!(
+            SolverStrategy::GeneratedTwoPhaseQuality.solver_mode(),
+            "generated_two_phase_quality"
+        );
+        assert!(SolverStrategy::GeneratedTwoPhaseQuality
+            .status_text()
+            .contains("shorter total depths"));
+        assert_eq!(
+            SolverStrategy::from_id("generated-two-phase-quality"),
+            Some(SolverStrategy::GeneratedTwoPhaseQuality)
+        );
+        assert_eq!(
             SolverStrategy::OptimalIdaStarOrientationPdb.id(),
             "optimal-ida-star-orientation-pdb"
         );
@@ -750,6 +840,25 @@ mod tests {
             SolverStrategy::from_id("optimal-ida-star-orientation-pdb"),
             Some(SolverStrategy::OptimalIdaStarOrientationPdb)
         );
+        assert_eq!(
+            SolverStrategy::OptimalBoundedCornerPdb.id(),
+            "optimal-bounded-corner-pdb"
+        );
+        assert_eq!(
+            SolverStrategy::OptimalBoundedCornerPdb.label(),
+            "Optimal bounded corner PDB"
+        );
+        assert_eq!(
+            SolverStrategy::OptimalBoundedCornerPdb.solver_mode(),
+            "optimal_bounded_corner_pdb"
+        );
+        assert!(SolverStrategy::OptimalBoundedCornerPdb
+            .status_text()
+            .contains("corner-PDB IDA*"));
+        assert_eq!(
+            SolverStrategy::from_id("optimal-bounded-corner-pdb"),
+            Some(SolverStrategy::OptimalBoundedCornerPdb)
+        );
         assert_eq!(SolverStrategy::from_id("unknown"), None);
 
         let metadata = SolverStrategy::GeneratedTwoPhase.metadata();
@@ -766,7 +875,7 @@ mod tests {
     fn solver_strategy_supported_message_lists_all_strategy_ids() {
         assert_eq!(
             SolverStrategy::supported_strategy_ids(),
-            "bounded-ida-star, two-phase-baseline, generated-two-phase, optimal-ida-star-orientation-pdb"
+            "bounded-ida-star, two-phase-baseline, generated-two-phase, generated-two-phase-quality, optimal-ida-star-orientation-pdb, optimal-bounded-corner-pdb"
         );
 
         let message = SolverStrategy::unsupported_strategy_message("made-up");
@@ -774,7 +883,9 @@ mod tests {
         assert!(message.contains("bounded-ida-star"));
         assert!(message.contains("two-phase-baseline"));
         assert!(message.contains("generated-two-phase"));
+        assert!(message.contains("generated-two-phase-quality"));
         assert!(message.contains("optimal-ida-star-orientation-pdb"));
+        assert!(message.contains("optimal-bounded-corner-pdb"));
 
         assert!(SolverStrategy::unsupported_strategy_message("").contains("<empty>"));
     }

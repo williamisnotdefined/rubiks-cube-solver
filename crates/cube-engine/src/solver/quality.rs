@@ -1098,7 +1098,12 @@ fn run_quality_row(
 ) -> Result<QualityReportRow, QualityReportError> {
     let expectation = expectation_for(fixture, solver_selection);
     let mut config = solver_selection.config(fixture.max_depth, fixture.max_nodes);
-    if config.strategy == SolverStrategy::GeneratedTwoPhase {
+    if matches!(
+        config.strategy,
+        SolverStrategy::GeneratedTwoPhase
+            | SolverStrategy::GeneratedTwoPhaseQuality
+            | SolverStrategy::OptimalBoundedCornerPdb
+    ) {
         config = config.with_pruning_table_dir(generated_pruning_table_dir.to_path_buf());
     }
     let started = Instant::now();
@@ -1371,9 +1376,13 @@ fn report_row(
     replay_verified: Option<bool>,
     moves: Vec<Move>,
 ) -> QualityReportRow {
-    let (generated_table_depths, generated_table_metadata) = if config.strategy
-        == SolverStrategy::GeneratedTwoPhase
-        && table_status == QualityTableStatus::Available
+    let (generated_table_depths, generated_table_metadata) = if matches!(
+        config.strategy,
+        SolverStrategy::GeneratedTwoPhase
+            | SolverStrategy::GeneratedTwoPhaseQuality
+            | SolverStrategy::OptimalBoundedCornerPdb
+    ) && table_status
+        == QualityTableStatus::Available
     {
         generated_table_summary
             .map(|summary| (Some(summary.depths.clone()), Some(summary.metadata.clone())))
@@ -1436,7 +1445,9 @@ fn strategy_label(strategy: SolverStrategy) -> &'static str {
 
 fn table_status_for_success(strategy: SolverStrategy) -> QualityTableStatus {
     match strategy {
-        SolverStrategy::GeneratedTwoPhase => QualityTableStatus::Available,
+        SolverStrategy::GeneratedTwoPhase
+        | SolverStrategy::GeneratedTwoPhaseQuality
+        | SolverStrategy::OptimalBoundedCornerPdb => QualityTableStatus::Available,
         SolverStrategy::BoundedIdaStar
         | SolverStrategy::TwoPhaseBaseline
         | SolverStrategy::OptimalIdaStarOrientationPdb => QualityTableStatus::NotRequired,

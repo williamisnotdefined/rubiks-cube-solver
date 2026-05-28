@@ -22,18 +22,20 @@ pub use cube::{
     UD_SLICE_EDGE_COMBINATION_COORDINATE_COUNT,
 };
 pub use search::{
-    depth_limited_search, solve_bfs, solve_ida_star, solve_ida_star_bounded,
-    solve_ida_star_bounded_with_heuristic, solve_ida_star_with_heuristic, solve_iddfs,
-    CornerOrientationHeuristic, CornerOrientationPatternDatabaseHeuristic,
-    EdgeOrientationHeuristic, EdgeOrientationPatternDatabaseHeuristic,
-    GeneratedPruningTableArtifact, GeneratedTwoPhaseError, GeneratedTwoPhaseSolver, Heuristic,
-    MaxHeuristic, MisplacedCubiesHeuristic, OrientationPatternDatabaseHeuristic, SearchBudget,
-    SearchOutcome, SearchSolution, ZeroHeuristic,
+    corner_pattern_coordinate, corner_pattern_database_path, depth_limited_search, solve_bfs,
+    solve_ida_star, solve_ida_star_bounded, solve_ida_star_bounded_with_heuristic,
+    solve_ida_star_with_heuristic, solve_iddfs, CornerOrientationHeuristic,
+    CornerOrientationPatternDatabaseHeuristic, CornerPatternDatabase, CornerPatternDatabaseError,
+    CornerPatternDatabaseHeuristic, EdgeOrientationHeuristic,
+    EdgeOrientationPatternDatabaseHeuristic, GeneratedPruningTableArtifact, GeneratedTwoPhaseError,
+    GeneratedTwoPhaseSolver, Heuristic, MaxHeuristic, MisplacedCubiesHeuristic,
+    OrientationPatternDatabaseHeuristic, SearchBudget, SearchOutcome, SearchSolution,
+    ZeroHeuristic,
 };
 pub use solver::benchmark::{
     real_scramble_fixtures, run_real_scramble_benchmark, RealScrambleBenchmarkError,
     RealScrambleBenchmarkReport, RealScrambleBenchmarkRow, RealScrambleBenchmarkStatus,
-    RealScrambleFixture, RealScrambleSpec, REAL_SCRAMBLE_SPECS,
+    RealScrambleBenchmarkSummary, RealScrambleFixture, RealScrambleSpec, REAL_SCRAMBLE_SPECS,
 };
 pub use solver::{
     playback_facelet_solution, solve_cube, solve_cube_with_generated_pruning_tables,

@@ -52,7 +52,9 @@ test.describe('product solve flow', () => {
     await expect(page.locator('.result code')).toHaveText("U' R'", {
       timeout: 30_000,
     })
-    await expect(page.locator('.result')).toContainText('Generated two-phase solver')
+    await expect(page.locator('.result')).toContainText(
+      /Generated two-phase (quality )?solver/,
+    )
     await expect(page.locator('.result')).toContainText('replay verified')
   })
 
@@ -68,7 +70,9 @@ test.describe('product solve flow', () => {
     await page.getByRole('button', { name: 'Solve' }).click()
 
     await expect(page.locator('.result code')).toHaveText(/\S/, { timeout: 60_000 })
-    await expect(page.locator('.result')).toContainText('Generated two-phase solver')
+    await expect(page.locator('.result')).toContainText(
+      /Generated two-phase (quality )?solver/,
+    )
     await expect(page.locator('.result')).toContainText('replay verified')
   })
 

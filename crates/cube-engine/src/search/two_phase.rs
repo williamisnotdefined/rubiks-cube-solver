@@ -41,6 +41,11 @@ const PHASE2_MOVES: [Move; 10] = [
 ];
 const PHASE1_MOVE_COUNT: usize = FACE_MOVES.len();
 const PHASE2_MOVE_COUNT: usize = PHASE2_MOVES.len();
+const QUALITY_PROBE_MAX_DEPTH: usize = 16;
+const QUALITY_PROBE_NODE_CAP: usize = 1_000_000;
+const QUALITY_DEPTH_16_NODE_CAP: usize = 500_000;
+const QUALITY_DEPTH_18_NODE_CAP: usize = 1_000_000;
+const QUALITY_DEPTH_20_NODE_CAP: usize = 3_000_000;
 const UD_SLICE_EDGES: [Edge; 4] = [Edge::Fr, Edge::Fl, Edge::Bl, Edge::Br];
 const UD_NON_SLICE_EDGES: [Edge; 8] = [
     Edge::Ur,
@@ -231,6 +236,18 @@ pub fn solve_generated_two_phase(
     solver.solve(start, budget).map(|result| result.outcome)
 }
 
+pub fn solve_generated_two_phase_quality(
+    start: &Cube,
+    budget: SearchBudget,
+    table_dir: &Path,
+) -> Result<SearchOutcome, GeneratedTwoPhaseError> {
+    let solver = GeneratedTwoPhaseSolver::load_from_dir(table_dir)?;
+
+    solver
+        .solve_quality(start, budget)
+        .map(|result| result.outcome)
+}
+
 pub fn solve_generated_two_phase_with_artifacts(
     start: &Cube,
     budget: SearchBudget,
@@ -247,6 +264,8 @@ pub struct GeneratedTwoPhaseMetrics {
     pub phase2_nodes: usize,
     pub phase1_depth_attempts: usize,
     pub max_phase1_depth_attempted: Option<usize>,
+    pub total_depth_attempts: usize,
+    pub max_total_depth_attempted: Option<usize>,
     pub phase1_ordered_candidates: usize,
     pub phase1_ordering_heuristic_evals: usize,
     pub phase2_ordered_candidates: usize,
@@ -255,11 +274,98 @@ pub struct GeneratedTwoPhaseMetrics {
     pub heuristic_prunes: usize,
     pub node_limit_hits: usize,
     pub table_missing_entries: usize,
+    pub solutions_found: usize,
+    pub best_solution_length: Option<usize>,
+    pub best_phase1_length: Option<usize>,
+    pub best_phase2_length: Option<usize>,
 }
 
 impl GeneratedTwoPhaseMetrics {
     pub const fn explored_nodes(self) -> usize {
         self.phase1_nodes + self.phase2_nodes
+    }
+
+    fn saturating_add(self, other: Self) -> Self {
+        Self {
+            phase1_nodes: self.phase1_nodes.saturating_add(other.phase1_nodes),
+            phase2_nodes: self.phase2_nodes.saturating_add(other.phase2_nodes),
+            phase1_depth_attempts: self
+                .phase1_depth_attempts
+                .saturating_add(other.phase1_depth_attempts),
+            max_phase1_depth_attempted: max_option(
+                self.max_phase1_depth_attempted,
+                other.max_phase1_depth_attempted,
+            ),
+            total_depth_attempts: self
+                .total_depth_attempts
+                .saturating_add(other.total_depth_attempts),
+            max_total_depth_attempted: max_option(
+                self.max_total_depth_attempted,
+                other.max_total_depth_attempted,
+            ),
+            phase1_ordered_candidates: self
+                .phase1_ordered_candidates
+                .saturating_add(other.phase1_ordered_candidates),
+            phase1_ordering_heuristic_evals: self
+                .phase1_ordering_heuristic_evals
+                .saturating_add(other.phase1_ordering_heuristic_evals),
+            phase2_ordered_candidates: self
+                .phase2_ordered_candidates
+                .saturating_add(other.phase2_ordered_candidates),
+            phase2_ordering_heuristic_evals: self
+                .phase2_ordering_heuristic_evals
+                .saturating_add(other.phase2_ordering_heuristic_evals),
+            phase2_calls: self.phase2_calls.saturating_add(other.phase2_calls),
+            heuristic_prunes: self.heuristic_prunes.saturating_add(other.heuristic_prunes),
+            node_limit_hits: self.node_limit_hits.saturating_add(other.node_limit_hits),
+            table_missing_entries: self
+                .table_missing_entries
+                .saturating_add(other.table_missing_entries),
+            solutions_found: self.solutions_found.saturating_add(other.solutions_found),
+            best_solution_length: min_option(self.best_solution_length, other.best_solution_length),
+            best_phase1_length: best_phase_length(
+                self.best_solution_length,
+                self.best_phase1_length,
+                other.best_solution_length,
+                other.best_phase1_length,
+            ),
+            best_phase2_length: best_phase_length(
+                self.best_solution_length,
+                self.best_phase2_length,
+                other.best_solution_length,
+                other.best_phase2_length,
+            ),
+        }
+    }
+}
+
+fn max_option(left: Option<usize>, right: Option<usize>) -> Option<usize> {
+    match (left, right) {
+        (Some(left), Some(right)) => Some(left.max(right)),
+        (Some(value), None) | (None, Some(value)) => Some(value),
+        (None, None) => None,
+    }
+}
+
+fn min_option(left: Option<usize>, right: Option<usize>) -> Option<usize> {
+    match (left, right) {
+        (Some(left), Some(right)) => Some(left.min(right)),
+        (Some(value), None) | (None, Some(value)) => Some(value),
+        (None, None) => None,
+    }
+}
+
+fn best_phase_length(
+    left_solution_length: Option<usize>,
+    left_phase_length: Option<usize>,
+    right_solution_length: Option<usize>,
+    right_phase_length: Option<usize>,
+) -> Option<usize> {
+    match (left_solution_length, right_solution_length) {
+        (Some(left), Some(right)) if right < left => right_phase_length,
+        (Some(_), Some(_)) | (Some(_), None) => left_phase_length,
+        (None, Some(_)) => right_phase_length,
+        (None, None) => None,
     }
 }
 
@@ -296,6 +402,138 @@ impl GeneratedTwoPhaseSolver {
     ) -> Result<GeneratedTwoPhaseSearchResult, GeneratedTwoPhaseError> {
         solve_generated_two_phase_with_tables(start, budget, &self.tables)
     }
+
+    pub fn solve_quality(
+        &self,
+        start: &Cube,
+        budget: SearchBudget,
+    ) -> Result<GeneratedTwoPhaseSearchResult, GeneratedTwoPhaseError> {
+        solve_generated_two_phase_quality_schedule_with_tables(start, budget, &self.tables)
+    }
+}
+
+fn solve_generated_two_phase_quality_schedule_with_tables(
+    start: &Cube,
+    budget: SearchBudget,
+    tables: &GeneratedPruningTables,
+) -> Result<GeneratedTwoPhaseSearchResult, GeneratedTwoPhaseError> {
+    let mut metrics = GeneratedTwoPhaseMetrics::default();
+    let mut explored_nodes = 0_usize;
+    let probe =
+        solve_generated_two_phase_quality_with_tables(start, quality_probe_budget(budget), tables)?;
+
+    if let Some(solution) = record_quality_attempt(probe, &mut metrics, &mut explored_nodes) {
+        return Ok(GeneratedTwoPhaseSearchResult {
+            outcome: SearchOutcome::Found(solution),
+            metrics,
+        });
+    }
+
+    for depth_limit in quality_depth_schedule(budget.max_depth) {
+        let remaining_nodes = remaining_node_budget(budget.max_nodes, explored_nodes);
+        if remaining_nodes == Some(0) {
+            break;
+        }
+        let attempt_nodes = if depth_limit == budget.max_depth {
+            remaining_nodes
+        } else {
+            quality_depth_node_budget(budget.max_nodes, remaining_nodes, depth_limit)
+        };
+
+        let attempt = solve_generated_two_phase_with_tables(
+            start,
+            SearchBudget::with_limits(depth_limit, attempt_nodes),
+            tables,
+        )?;
+        if let Some(solution) = record_quality_attempt(attempt, &mut metrics, &mut explored_nodes) {
+            return Ok(GeneratedTwoPhaseSearchResult {
+                outcome: SearchOutcome::Found(solution),
+                metrics,
+            });
+        }
+    }
+
+    Ok(GeneratedTwoPhaseSearchResult {
+        outcome: SearchOutcome::NotFoundWithinLimits { explored_nodes },
+        metrics,
+    })
+}
+
+fn record_quality_attempt(
+    attempt: GeneratedTwoPhaseSearchResult,
+    metrics: &mut GeneratedTwoPhaseMetrics,
+    explored_nodes: &mut usize,
+) -> Option<SearchSolution> {
+    let attempt_nodes = attempt.metrics.explored_nodes();
+    *metrics = metrics.saturating_add(attempt.metrics);
+    *explored_nodes = explored_nodes.saturating_add(attempt_nodes);
+
+    match attempt.outcome {
+        SearchOutcome::Found(solution) => Some(SearchSolution::with_metrics(
+            solution.moves,
+            *explored_nodes,
+        )),
+        SearchOutcome::NotFoundWithinLimits { .. } => None,
+    }
+}
+
+fn quality_depth_schedule(max_depth: usize) -> Vec<usize> {
+    let mut depths = Vec::new();
+
+    for depth in [16, 18, 20, max_depth] {
+        let depth = depth.min(max_depth);
+        if depths.last() != Some(&depth) {
+            depths.push(depth);
+        }
+    }
+
+    depths
+}
+
+fn quality_probe_budget(budget: SearchBudget) -> SearchBudget {
+    SearchBudget::with_limits(
+        budget.max_depth.min(QUALITY_PROBE_MAX_DEPTH),
+        quality_probe_node_budget(budget.max_nodes),
+    )
+}
+
+fn quality_probe_node_budget(max_nodes: Option<usize>) -> Option<usize> {
+    match max_nodes {
+        Some(0) => Some(0),
+        Some(max_nodes) => {
+            let proportional = (max_nodes / 10).max(1_000);
+            Some(proportional.min(QUALITY_PROBE_NODE_CAP).min(max_nodes))
+        }
+        None => Some(QUALITY_PROBE_NODE_CAP),
+    }
+}
+
+fn quality_depth_node_budget(
+    max_nodes: Option<usize>,
+    remaining_nodes: Option<usize>,
+    depth_limit: usize,
+) -> Option<usize> {
+    let candidate = match max_nodes {
+        Some(0) => 0,
+        Some(max_nodes) if depth_limit <= 16 => (max_nodes / 20)
+            .clamp(1_000, QUALITY_DEPTH_16_NODE_CAP)
+            .min(max_nodes),
+        Some(max_nodes) if depth_limit <= 18 => (max_nodes / 10)
+            .clamp(1_000, QUALITY_DEPTH_18_NODE_CAP)
+            .min(max_nodes),
+        Some(max_nodes) => (max_nodes.saturating_mul(3) / 10)
+            .clamp(1_000, QUALITY_DEPTH_20_NODE_CAP)
+            .min(max_nodes),
+        None if depth_limit <= 16 => QUALITY_DEPTH_16_NODE_CAP,
+        None if depth_limit <= 18 => QUALITY_DEPTH_18_NODE_CAP,
+        None => QUALITY_DEPTH_20_NODE_CAP,
+    };
+
+    Some(remaining_nodes.map_or(candidate, |remaining| candidate.min(remaining)))
+}
+
+fn remaining_node_budget(max_nodes: Option<usize>, spent_nodes: usize) -> Option<usize> {
+    max_nodes.map(|max_nodes| max_nodes.saturating_sub(spent_nodes))
 }
 
 fn solve_generated_two_phase_with_tables(
@@ -320,6 +558,58 @@ fn solve_generated_two_phase_with_tables(
         let mut phase1_search = Phase1Search {
             budget,
             phase1_limit,
+            start,
+            tables,
+            context: &mut context,
+        };
+
+        match search_phase1(start_coordinates, None, &mut phase1_search, &mut path)? {
+            TwoPhaseSearchResult::Found(moves) => {
+                return Ok(
+                    context.finish(SearchOutcome::Found(SearchSolution::with_metrics(
+                        moves,
+                        context.explored_nodes(),
+                    ))),
+                );
+            }
+            TwoPhaseSearchResult::Exhausted => {}
+            TwoPhaseSearchResult::NodeLimitReached => {
+                return Ok(context.finish(SearchOutcome::NotFoundWithinLimits {
+                    explored_nodes: context.explored_nodes(),
+                }));
+            }
+        }
+    }
+
+    Ok(context.finish(SearchOutcome::NotFoundWithinLimits {
+        explored_nodes: context.explored_nodes(),
+    }))
+}
+
+fn solve_generated_two_phase_quality_with_tables(
+    start: &Cube,
+    budget: SearchBudget,
+    tables: &GeneratedPruningTables,
+) -> Result<GeneratedTwoPhaseSearchResult, GeneratedTwoPhaseError> {
+    let mut context = TwoPhaseSearchContext::new(budget.max_nodes);
+    let start_coordinates = Phase1Coordinates::try_from_cube(start)?;
+    let phase1_minimum = tables.phase1_heuristic_coordinates(start_coordinates, &mut context)?;
+
+    if phase1_minimum > budget.max_depth {
+        return Ok(context.finish(SearchOutcome::NotFoundWithinLimits {
+            explored_nodes: context.explored_nodes(),
+        }));
+    }
+
+    for total_limit in phase1_minimum..=budget.max_depth {
+        context.record_total_depth_attempt(total_limit);
+        context.record_phase1_depth_attempt(total_limit);
+        let total_budget = SearchBudget::with_limits(total_limit, budget.max_nodes);
+        let mut path = Vec::new();
+
+        let mut phase1_search = Phase1Search {
+            budget: total_budget,
+            phase1_limit: total_limit,
             start,
             tables,
             context: &mut context,
@@ -638,6 +928,8 @@ impl TwoPhaseSearchContext {
                 phase2_nodes: 0,
                 phase1_depth_attempts: 0,
                 max_phase1_depth_attempted: None,
+                total_depth_attempts: 0,
+                max_total_depth_attempted: None,
                 phase1_ordered_candidates: 0,
                 phase1_ordering_heuristic_evals: 0,
                 phase2_ordered_candidates: 0,
@@ -646,6 +938,10 @@ impl TwoPhaseSearchContext {
                 heuristic_prunes: 0,
                 node_limit_hits: 0,
                 table_missing_entries: 0,
+                solutions_found: 0,
+                best_solution_length: None,
+                best_phase1_length: None,
+                best_phase2_length: None,
             },
         }
     }
@@ -686,6 +982,26 @@ impl TwoPhaseSearchContext {
     fn record_phase1_depth_attempt(&mut self, depth: usize) {
         self.metrics.phase1_depth_attempts += 1;
         self.metrics.max_phase1_depth_attempted = Some(depth);
+    }
+
+    fn record_total_depth_attempt(&mut self, depth: usize) {
+        self.metrics.total_depth_attempts += 1;
+        self.metrics.max_total_depth_attempted = Some(depth);
+    }
+
+    fn record_solution_candidate(&mut self, phase1_length: usize, phase2_length: usize) {
+        let solution_length = phase1_length + phase2_length;
+        self.metrics.solutions_found += 1;
+
+        if self
+            .metrics
+            .best_solution_length
+            .is_none_or(|current| solution_length < current)
+        {
+            self.metrics.best_solution_length = Some(solution_length);
+            self.metrics.best_phase1_length = Some(phase1_length);
+            self.metrics.best_phase2_length = Some(phase2_length);
+        }
     }
 
     fn record_phase2_call(&mut self) {
@@ -781,6 +1097,9 @@ fn search_phase1(
             search.context,
         )? {
             TwoPhaseSearchResult::Found(phase2_moves) => {
+                search
+                    .context
+                    .record_solution_candidate(path.len(), phase2_moves.len());
                 let mut solution = path.clone();
                 solution.extend(phase2_moves);
 
@@ -1486,9 +1805,11 @@ fn expected_tiny_phase1_metadata() -> PruningTableMetadata {
 #[cfg(test)]
 mod tests {
     use super::{
-        phase1_candidate_moves, phase2_candidate_moves, should_skip_move, sort_phase1_candidates,
-        sort_phase2_candidates, table_distance_index, Phase1Candidate, Phase1Coordinates,
-        Phase1MoveTables, Phase2Candidate, Phase2Coordinates, Phase2MoveTables,
+        phase1_candidate_moves, phase2_candidate_moves, quality_depth_node_budget,
+        quality_depth_schedule, quality_probe_budget, record_quality_attempt, should_skip_move,
+        sort_phase1_candidates, sort_phase2_candidates, table_distance_index,
+        GeneratedTwoPhaseMetrics, GeneratedTwoPhaseSearchResult, Phase1Candidate,
+        Phase1Coordinates, Phase1MoveTables, Phase2Candidate, Phase2Coordinates, Phase2MoveTables,
         TwoPhaseSearchContext, FACE_MOVES, PHASE2_MOVES,
     };
     use crate::cube::{Cube, Move};
@@ -1496,6 +1817,7 @@ mod tests {
         PruningCoordinate, PruningGenerationParameters, PruningPhaseRole, PruningTable,
         PruningTableMetadata,
     };
+    use crate::search::{SearchBudget, SearchOutcome, SearchSolution};
 
     #[test]
     fn missing_depth_limited_table_entry_is_lower_bound_above_generated_depth() {
@@ -1515,6 +1837,102 @@ mod tests {
             Ok(7)
         );
         assert_eq!(context.metrics.table_missing_entries, 1);
+    }
+
+    #[test]
+    fn search_context_records_quality_depths_and_best_solution_candidate() {
+        let mut context = TwoPhaseSearchContext::new(None);
+
+        context.record_total_depth_attempt(16);
+        context.record_total_depth_attempt(18);
+        context.record_solution_candidate(5, 7);
+        context.record_solution_candidate(4, 6);
+
+        assert_eq!(context.metrics.total_depth_attempts, 2);
+        assert_eq!(context.metrics.max_total_depth_attempted, Some(18));
+        assert_eq!(context.metrics.solutions_found, 2);
+        assert_eq!(context.metrics.best_solution_length, Some(10));
+        assert_eq!(context.metrics.best_phase1_length, Some(4));
+        assert_eq!(context.metrics.best_phase2_length, Some(6));
+    }
+
+    #[test]
+    fn quality_probe_budget_uses_short_depth_and_small_node_slice() {
+        assert_eq!(
+            quality_probe_budget(SearchBudget::with_limits(30, Some(10_000_000))),
+            SearchBudget::with_limits(16, Some(1_000_000))
+        );
+        assert_eq!(
+            quality_probe_budget(SearchBudget::with_limits(12, Some(500))),
+            SearchBudget::with_limits(12, Some(500))
+        );
+        assert_eq!(
+            quality_probe_budget(SearchBudget::with_limits(30, None)),
+            SearchBudget::with_limits(16, Some(1_000_000))
+        );
+    }
+
+    #[test]
+    fn quality_depth_schedule_targets_gods_number_buckets_before_full_depth() {
+        assert_eq!(quality_depth_schedule(0), vec![0]);
+        assert_eq!(quality_depth_schedule(17), vec![16, 17]);
+        assert_eq!(quality_depth_schedule(20), vec![16, 18, 20]);
+        assert_eq!(quality_depth_schedule(30), vec![16, 18, 20, 30]);
+    }
+
+    #[test]
+    fn quality_depth_node_budget_slices_short_depth_attempts() {
+        assert_eq!(
+            quality_depth_node_budget(Some(10_000_000), Some(9_000_000), 16),
+            Some(500_000)
+        );
+        assert_eq!(
+            quality_depth_node_budget(Some(10_000_000), Some(9_000_000), 18),
+            Some(1_000_000)
+        );
+        assert_eq!(
+            quality_depth_node_budget(Some(10_000_000), Some(9_000_000), 20),
+            Some(3_000_000)
+        );
+        assert_eq!(
+            quality_depth_node_budget(Some(10_000_000), Some(250), 20),
+            Some(250)
+        );
+    }
+
+    #[test]
+    fn record_quality_attempt_combines_explored_nodes_and_metrics() {
+        let mut metrics = GeneratedTwoPhaseMetrics {
+            phase1_nodes: 7,
+            phase2_nodes: 3,
+            total_depth_attempts: 1,
+            max_total_depth_attempted: Some(16),
+            ..GeneratedTwoPhaseMetrics::default()
+        };
+        let mut explored_nodes = metrics.explored_nodes();
+        let attempt = GeneratedTwoPhaseSearchResult {
+            outcome: SearchOutcome::Found(SearchSolution::with_metrics(vec![Move::U], 4)),
+            metrics: GeneratedTwoPhaseMetrics {
+                phase1_nodes: 3,
+                phase2_nodes: 1,
+                solutions_found: 1,
+                best_solution_length: Some(1),
+                best_phase1_length: Some(0),
+                best_phase2_length: Some(1),
+                ..GeneratedTwoPhaseMetrics::default()
+            },
+        };
+
+        let solution = record_quality_attempt(attempt, &mut metrics, &mut explored_nodes)
+            .expect("found attempt should return a cumulative solution");
+
+        assert_eq!(metrics.explored_nodes(), 14);
+        assert_eq!(metrics.total_depth_attempts, 1);
+        assert_eq!(metrics.max_total_depth_attempted, Some(16));
+        assert_eq!(metrics.solutions_found, 1);
+        assert_eq!(metrics.best_solution_length, Some(1));
+        assert_eq!(explored_nodes, 14);
+        assert_eq!(solution.explored_nodes(), 14);
     }
 
     #[test]

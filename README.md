@@ -7,7 +7,7 @@ The product goal is defined in `GOALS.md`: a web interface where a user can inpu
 ## Current Status
 
 - Rust workspace scaffolded.
-- `cube-engine` contains cubie state, moves, notation parsing, scrambles, validation, BFS, IDDFS, and simple heuristics.
+- `cube-engine` contains cubie state, moves, notation parsing, scrambles, validation, BFS, IDDFS, generated two-phase search, and quality reporting.
 - AI knowledge routing is managed from canonical files under `ai/`.
 
 ## Commands
@@ -70,7 +70,9 @@ Use the real scramble benchmark to track hard user-provided scrambles without gi
 npm run solver:real-scrambles
 ```
 
-The npm script uses `generated-two-phase` with `max_depth=30` and a small smoke budget of `max_nodes=1000`. Raise `--max-nodes` when running `cargo run --quiet -p cube-engine --bin solver_real_scramble_report -- ...` for deeper local experiments. The report loads the generated two-phase solver once, separates setup time from per-scramble search time, and includes phase/node/pruning metrics. It is an honest progress report, not a passing product gate: current failures identify the next deterministic solver work.
+The npm script uses `generated-two-phase-quality` with `max_depth=30` and a small smoke budget of `max_nodes=1000`. Raise `--max-nodes` when running `cargo run --quiet -p cube-engine --bin solver_real_scramble_report -- ...` for deeper local experiments. The report loads the generated two-phase solver once, separates setup time from per-scramble search time, and includes a summary with exclusive replay-verified solution buckets: `len_0_to_16`, `len_17_to_18`, `len_19_to_20`, and `len_gt_20`. It is an honest progress report, not an optimality proof: current failures or long buckets identify the next deterministic solver work.
+
+The CLI also supports a quality gate such as `--require-max-solution-len 20`; combine it with `--require-success` only when the current generated tables and budgets support that threshold locally.
 
 Run the real-scramble gate after generating native pruning tables with Phase 2 depth 10:
 
@@ -84,6 +86,15 @@ Inspect pruning-table coverage before raising budgets or regenerating artifacts:
 ```bash
 npm run pruning:report
 ```
+
+Optional server-side corner pattern databases can be generated for the experimental `optimal-bounded-corner-pdb` strategy:
+
+```bash
+npm run pdb:corner
+npm run pdb:corner:deep
+```
+
+`pdb:corner` creates a depth-8 smoke artifact. `pdb:corner:deep` creates a full corner permutation+orientation artifact at `crates/cube-engine/pruning-tables/corner-pattern-database.rpdb`; it is about 88 MB locally and should not be committed. The strategy uses the corner PDB only for a bounded `<=16` proof attempt, then falls back to `generated-two-phase-quality`, so it is diagnostic/experimental rather than the product default.
 
 Generate ML training rows labeled by the generated two-phase solver instead of inverse scrambles:
 
@@ -111,7 +122,8 @@ Endpoints:
 
 - `GET /health`
 - `GET /strategies`
-- `POST /solve-notation` with `{ "moves": "R2 D2 F'", "strategyId": "generated-two-phase", "maxDepth": 30, "maxNodes": 10000000 }`
+- `POST /solve-notation` with `{ "moves": "R2 D2 F'", "strategyId": "generated-two-phase-quality", "maxDepth": 30, "maxNodes": 10000000 }`
+- Experimental: `strategyId="optimal-bounded-corner-pdb"` tries the local corner PDB first, then falls back to generated two-phase quality.
 
 Every successful API solve includes `replayVerified=true`. The client-facing API accepts move notation only; facelet/Kociemba strings are not client request payloads.
 
@@ -136,7 +148,7 @@ npm run lint -w @rubiks-cube-solver/web
 npm run test:e2e
 ```
 
-Playwright starts both the API and the Vite preview server. The UI accepts a `Scramble` field as the only product input, defaults to `generated-two-phase`, never asks the browser client to submit facelets, and displays `replay verified` only for API-confirmed solving results.
+Playwright starts both the API and the Vite preview server. The UI accepts a `Scramble` field as the only product input, prefers `generated-two-phase-quality` when the API advertises it, falls back to `generated-two-phase`, never asks the browser client to submit facelets, and displays `replay verified` only for API-confirmed solving results.
 
 ## Dataset Generation
 

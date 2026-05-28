@@ -11,6 +11,7 @@ struct BenchmarkConfig {
     max_nodes: Option<usize>,
     pruning_table_dir: Option<PathBuf>,
     require_success: bool,
+    require_max_solution_len: Option<usize>,
 }
 
 impl Default for BenchmarkConfig {
@@ -21,6 +22,7 @@ impl Default for BenchmarkConfig {
             max_nodes: Some(1_000),
             pruning_table_dir: None,
             require_success: false,
+            require_max_solution_len: None,
         }
     }
 }
@@ -34,6 +36,7 @@ fn main() -> ExitCode {
         }
     };
     let require_success = config.require_success;
+    let require_max_solution_len = config.require_max_solution_len;
     let solver_config = solver_config(config);
 
     match run_real_scramble_benchmark(solver_config) {
@@ -46,6 +49,15 @@ fn main() -> ExitCode {
                     report.rows().len()
                 );
                 return ExitCode::FAILURE;
+            }
+            if let Some(max_solution_len) = require_max_solution_len {
+                let over_limit = over_max_solution_len_count(&report, max_solution_len);
+                if over_limit > 0 {
+                    eprintln!(
+                        "real scramble gate failed: {over_limit} replay-verified successes exceeded {max_solution_len} moves"
+                    );
+                    return ExitCode::FAILURE;
+                }
             }
 
             ExitCode::SUCCESS
@@ -94,6 +106,12 @@ fn parse_args(args: impl IntoIterator<Item = String>) -> Result<BenchmarkConfig,
             "--require-success" => {
                 config.require_success = true;
             }
+            "--require-max-solution-len" => {
+                config.require_max_solution_len = Some(parse_usize(
+                    "--require-max-solution-len",
+                    required_value("--require-max-solution-len", args.next())?,
+                )?);
+            }
             "--pruning-table-dir" => {
                 config.pruning_table_dir = Some(PathBuf::from(required_value(
                     "--pruning-table-dir",
@@ -108,6 +126,12 @@ fn parse_args(args: impl IntoIterator<Item = String>) -> Result<BenchmarkConfig,
             }
             _ if arg.starts_with("--max-nodes=") => {
                 config.max_nodes = Some(parse_usize("--max-nodes", &arg["--max-nodes=".len()..])?);
+            }
+            _ if arg.starts_with("--require-max-solution-len=") => {
+                config.require_max_solution_len = Some(parse_usize(
+                    "--require-max-solution-len",
+                    &arg["--require-max-solution-len=".len()..],
+                )?);
             }
             _ if arg.starts_with("--pruning-table-dir=") => {
                 config.pruning_table_dir =
@@ -124,6 +148,23 @@ fn all_rows_succeeded(report: &cube_engine::RealScrambleBenchmarkReport) -> bool
     report.rows().iter().all(|row| {
         row.status == RealScrambleBenchmarkStatus::Success && row.replay_verified == Some(true)
     })
+}
+
+fn over_max_solution_len_count(
+    report: &cube_engine::RealScrambleBenchmarkReport,
+    max_solution_len: usize,
+) -> usize {
+    report
+        .rows()
+        .iter()
+        .filter(|row| {
+            row.status == RealScrambleBenchmarkStatus::Success
+                && row.replay_verified == Some(true)
+                && row
+                    .solution_length
+                    .is_none_or(|solution_length| solution_length > max_solution_len)
+        })
+        .count()
 }
 
 fn required_value(flag: &str, value: Option<String>) -> Result<String, String> {
@@ -146,7 +187,7 @@ fn parse_usize(flag: &str, value: impl AsRef<str>) -> Result<usize, String> {
 }
 
 fn help_text() -> String {
-    "usage: solver_real_scramble_report [--strategy ID] [--max-depth N] [--max-nodes N|--unlimited-nodes] [--pruning-table-dir DIR] [--require-success]\n\nDefaults: --strategy generated-two-phase --max-depth 30 --max-nodes 1000. Raise --max-nodes for deeper local runs. The report converts committed real scramble cases into cubie states and gives only those states to the selected solver; it never passes inverse scrambles as solutions. Use --require-success to fail the process unless every row succeeds with replay verification."
+    "usage: solver_real_scramble_report [--strategy ID] [--max-depth N] [--max-nodes N|--unlimited-nodes] [--pruning-table-dir DIR] [--require-success] [--require-max-solution-len N]\n\nDefaults: --strategy generated-two-phase --max-depth 30 --max-nodes 1000. Raise --max-nodes for deeper local runs. The report converts committed real scramble cases into cubie states and gives only those states to the selected solver; it never passes inverse scrambles as solutions. Use --require-success to fail the process unless every row succeeds with replay verification. Use --require-max-solution-len to fail when any replay-verified success is longer than N moves."
         .to_owned()
 }
 
@@ -197,5 +238,18 @@ mod tests {
             parse_args(["--require-success".to_owned()]).expect("require success should parse");
 
         assert!(config.require_success);
+    }
+
+    #[test]
+    fn parse_args_accepts_max_solution_length_gate() {
+        let config = parse_args(["--require-max-solution-len=20".to_owned()])
+            .expect("max solution length gate should parse");
+
+        assert_eq!(config.require_max_solution_len, Some(20));
+
+        let config = parse_args(["--require-max-solution-len".to_owned(), "16".to_owned()])
+            .expect("separate max solution length gate should parse");
+
+        assert_eq!(config.require_max_solution_len, Some(16));
     }
 }

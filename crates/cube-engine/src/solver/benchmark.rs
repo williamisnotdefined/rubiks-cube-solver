@@ -146,16 +146,51 @@ impl RealScrambleBenchmarkReport {
             .count()
     }
 
+    pub fn summary(&self) -> RealScrambleBenchmarkSummary {
+        let mut summary = RealScrambleBenchmarkSummary::default();
+        for row in &self.rows {
+            summary.record(row);
+        }
+
+        summary
+    }
+
+    pub fn replay_verified_success_count(&self) -> usize {
+        self.summary().replay_verified_successes
+    }
+
+    pub fn failure_count(&self) -> usize {
+        self.summary().failures
+    }
+
     pub fn to_markdown(&self) -> String {
+        let summary = self.summary();
         let mut output = String::from(
             "# Real Scramble Solver Benchmark\n\n\
 This benchmark converts each scramble into a cubie state and gives only that state to the configured solver. It does not pass the inverse scramble to the solver. Every reported success is replay verified from the benchmark state. Setup time is separated from per-scramble search time.\n\n",
         );
         output.push_str(&format!(
             "Setup elapsed: {} us\n\n\
+## Summary\n\n\
+Only replay-verified successes are counted in solution-length buckets. The buckets are exclusive, so their total equals `replay_verified_successes`.\n\n\
+| rows | success | failures | replay_verified_successes | unverified_successes | len_0_to_16 | len_17_to_18 | len_19_to_20 | len_gt_20 | explored_nodes_total | elapsed_us_total |\n\
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |\n\
+| {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |\n\n\
+## Rows\n\n\
 | fixture | scramble_len | strategy | max_depth | max_nodes | status | solution_len | explored_nodes | elapsed_us | phase1_nodes | phase2_nodes | phase1_depth_attempts | max_phase1_depth | phase1_ordered_candidates | phase1_ordering_heuristic_evals | phase2_ordered_candidates | phase2_ordering_heuristic_evals | phase2_calls | heuristic_prunes | node_limit_hits | table_missing_entries | replay_verified | solution | message |\n\
 | --- | ---: | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- | --- |\n",
-            self.setup_elapsed.as_micros()
+            self.setup_elapsed.as_micros(),
+            summary.rows,
+            summary.success,
+            summary.failures,
+            summary.replay_verified_successes,
+            summary.unverified_successes,
+            summary.solution_len_0_to_16,
+            summary.solution_len_17_to_18,
+            summary.solution_len_19_to_20,
+            summary.solution_len_gt_20,
+            summary.explored_nodes_total,
+            summary.elapsed.as_micros(),
         ));
 
         for row in &self.rows {
@@ -189,6 +224,56 @@ This benchmark converts each scramble into a cubie state and gives only that sta
         }
 
         output
+    }
+}
+
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub struct RealScrambleBenchmarkSummary {
+    pub rows: usize,
+    pub success: usize,
+    pub failures: usize,
+    pub replay_verified_successes: usize,
+    pub unverified_successes: usize,
+    pub solution_len_0_to_16: usize,
+    pub solution_len_17_to_18: usize,
+    pub solution_len_19_to_20: usize,
+    pub solution_len_gt_20: usize,
+    pub explored_nodes_total: usize,
+    pub elapsed: Duration,
+}
+
+impl RealScrambleBenchmarkSummary {
+    fn record(&mut self, row: &RealScrambleBenchmarkRow) {
+        self.rows += 1;
+        self.explored_nodes_total += row.explored_nodes.unwrap_or(0);
+        self.elapsed = self.elapsed.saturating_add(row.elapsed);
+
+        if row.status == RealScrambleBenchmarkStatus::Success {
+            self.success += 1;
+        }
+        if row.status == RealScrambleBenchmarkStatus::UnverifiedSuccess
+            || (row.status == RealScrambleBenchmarkStatus::Success
+                && row.replay_verified != Some(true))
+        {
+            self.unverified_successes += 1;
+        }
+        if row.status != RealScrambleBenchmarkStatus::Success || row.replay_verified != Some(true) {
+            self.failures += 1;
+            return;
+        }
+
+        let Some(solution_length) = row.solution_length else {
+            self.failures += 1;
+            return;
+        };
+
+        self.replay_verified_successes += 1;
+        match solution_length {
+            0..=16 => self.solution_len_0_to_16 += 1,
+            17..=18 => self.solution_len_17_to_18 += 1,
+            19..=20 => self.solution_len_19_to_20 += 1,
+            21.. => self.solution_len_gt_20 += 1,
+        }
     }
 }
 
@@ -242,7 +327,10 @@ pub fn run_real_scramble_benchmark(
 ) -> Result<RealScrambleBenchmarkReport, RealScrambleBenchmarkError> {
     let fixtures = real_scramble_fixtures()?;
 
-    if config.strategy == SolverStrategy::GeneratedTwoPhase {
+    if matches!(
+        config.strategy,
+        SolverStrategy::GeneratedTwoPhase | SolverStrategy::GeneratedTwoPhaseQuality
+    ) {
         let setup_started = Instant::now();
         let solver = GeneratedTwoPhaseSolver::load_from_dir(config.pruning_table_dir());
         let setup_elapsed = setup_started.elapsed();
@@ -384,7 +472,16 @@ fn run_generated_real_scramble_row(
     };
     let budget = SearchBudget::with_limits(config.max_depth, config.max_nodes);
     let started = Instant::now();
-    let result = solver.solve(&cube, budget);
+    let result = match config.strategy {
+        SolverStrategy::GeneratedTwoPhase => solver.solve(&cube, budget),
+        SolverStrategy::GeneratedTwoPhaseQuality => solver.solve_quality(&cube, budget),
+        SolverStrategy::BoundedIdaStar
+        | SolverStrategy::TwoPhaseBaseline
+        | SolverStrategy::OptimalIdaStarOrientationPdb
+        | SolverStrategy::OptimalBoundedCornerPdb => unreachable!(
+            "non-generated strategies should use the generic real scramble benchmark path"
+        ),
+    };
     let elapsed = started.elapsed();
 
     match result {
@@ -615,10 +712,13 @@ fn optional_bool_label(value: Option<bool>) -> &'static str {
 
 #[cfg(test)]
 mod tests {
+    use std::time::Duration;
+
     use super::{
-        real_scramble_fixtures, run_real_scramble_benchmark, RealScrambleBenchmarkStatus,
-        REAL_SCRAMBLE_SPECS,
+        real_scramble_fixtures, run_real_scramble_benchmark, RealScrambleBenchmarkReport,
+        RealScrambleBenchmarkRow, RealScrambleBenchmarkStatus, REAL_SCRAMBLE_SPECS,
     };
+    use crate::cube::Move;
     use crate::solver::{SolverConfig, SolverStrategy};
 
     #[test]
@@ -669,5 +769,113 @@ mod tests {
         assert!(markdown.contains("Setup elapsed:"));
         assert!(markdown.contains("phase1_nodes"));
         assert!(markdown.contains("table_missing_entries"));
+    }
+
+    #[test]
+    fn real_scramble_benchmark_summary_counts_quality_buckets() {
+        let report = RealScrambleBenchmarkReport::new(
+            Duration::from_micros(7),
+            vec![
+                benchmark_row(
+                    RealScrambleBenchmarkStatus::Success,
+                    Some(16),
+                    Some(10),
+                    Some(true),
+                    3,
+                ),
+                benchmark_row(
+                    RealScrambleBenchmarkStatus::Success,
+                    Some(18),
+                    Some(20),
+                    Some(true),
+                    4,
+                ),
+                benchmark_row(
+                    RealScrambleBenchmarkStatus::Success,
+                    Some(20),
+                    Some(30),
+                    Some(true),
+                    5,
+                ),
+                benchmark_row(
+                    RealScrambleBenchmarkStatus::Success,
+                    Some(21),
+                    Some(40),
+                    Some(true),
+                    6,
+                ),
+                benchmark_row(
+                    RealScrambleBenchmarkStatus::UnverifiedSuccess,
+                    Some(12),
+                    Some(50),
+                    Some(false),
+                    7,
+                ),
+                benchmark_row(
+                    RealScrambleBenchmarkStatus::NotFoundWithinLimits,
+                    None,
+                    Some(60),
+                    None,
+                    8,
+                ),
+            ],
+        );
+        let summary = report.summary();
+
+        assert_eq!(summary.rows, 6);
+        assert_eq!(summary.success, 4);
+        assert_eq!(summary.failures, 2);
+        assert_eq!(summary.replay_verified_successes, 4);
+        assert_eq!(summary.unverified_successes, 1);
+        assert_eq!(summary.solution_len_0_to_16, 1);
+        assert_eq!(summary.solution_len_17_to_18, 1);
+        assert_eq!(summary.solution_len_19_to_20, 1);
+        assert_eq!(summary.solution_len_gt_20, 1);
+        assert_eq!(summary.explored_nodes_total, 210);
+        assert_eq!(summary.elapsed.as_micros(), 33);
+        assert_eq!(report.failure_count(), 2);
+        assert_eq!(report.replay_verified_success_count(), 4);
+
+        let markdown = report.to_markdown();
+        assert!(markdown.contains("## Summary"));
+        assert!(markdown.contains("len_0_to_16"));
+        assert!(markdown.contains("replay_verified_successes"));
+        assert!(markdown.contains("## Rows"));
+    }
+
+    fn benchmark_row(
+        status: RealScrambleBenchmarkStatus,
+        solution_length: Option<usize>,
+        explored_nodes: Option<usize>,
+        replay_verified: Option<bool>,
+        elapsed_us: u64,
+    ) -> RealScrambleBenchmarkRow {
+        RealScrambleBenchmarkRow {
+            fixture_id: "test",
+            scramble: "R U",
+            scramble_len: 2,
+            strategy: SolverStrategy::GeneratedTwoPhase,
+            max_depth: 30,
+            max_nodes: Some(1_000),
+            status,
+            solution_length,
+            explored_nodes,
+            elapsed: Duration::from_micros(elapsed_us),
+            phase1_nodes: None,
+            phase2_nodes: None,
+            phase1_depth_attempts: None,
+            max_phase1_depth_attempted: None,
+            phase1_ordered_candidates: None,
+            phase1_ordering_heuristic_evals: None,
+            phase2_ordered_candidates: None,
+            phase2_ordering_heuristic_evals: None,
+            phase2_calls: None,
+            heuristic_prunes: None,
+            node_limit_hits: None,
+            table_missing_entries: None,
+            replay_verified,
+            moves: solution_length.map_or_else(Vec::new, |_| vec![Move::U]),
+            message: None,
+        }
     }
 }

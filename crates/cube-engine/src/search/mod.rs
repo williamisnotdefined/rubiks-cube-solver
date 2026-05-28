@@ -1,4 +1,5 @@
 pub mod bfs;
+pub mod corner_pdb;
 pub mod heuristics;
 pub(crate) mod hybrid;
 pub mod ida_star;
@@ -8,6 +9,11 @@ pub mod solution;
 pub(crate) mod two_phase;
 
 pub use bfs::solve_bfs;
+pub(crate) use corner_pdb::solve_optimal_bounded_corner_pdb_quality;
+pub use corner_pdb::{
+    corner_pattern_coordinate, corner_pattern_database_path, CornerPatternDatabase,
+    CornerPatternDatabaseError, CornerPatternDatabaseHeuristic,
+};
 pub use heuristics::{
     CornerOrientationHeuristic, CornerOrientationPatternDatabaseHeuristic,
     EdgeOrientationHeuristic, EdgeOrientationPatternDatabaseHeuristic, Heuristic, MaxHeuristic,
@@ -24,8 +30,8 @@ pub use ida_star::{
 pub use iddfs::{depth_limited_search, solve_iddfs};
 pub use solution::{SearchBudget, SearchOutcome, SearchSolution};
 pub(crate) use two_phase::{
-    solve_generated_two_phase, solve_generated_two_phase_with_artifacts, solve_two_phase_baseline,
-    GeneratedTwoPhaseMetrics,
+    solve_generated_two_phase, solve_generated_two_phase_quality,
+    solve_generated_two_phase_with_artifacts, solve_two_phase_baseline, GeneratedTwoPhaseMetrics,
 };
 pub use two_phase::{
     GeneratedPruningTableArtifact, GeneratedTwoPhaseError, GeneratedTwoPhaseSolver,

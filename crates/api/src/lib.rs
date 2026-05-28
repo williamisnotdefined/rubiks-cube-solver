@@ -228,17 +228,20 @@ pub fn solve_notation_request(
     let visual_state = FaceletString::from_cube(&cube).to_string();
 
     match strategy {
-        SolverStrategy::GeneratedTwoPhase => solve_generated_cube(
-            state,
-            request.max_depth,
-            request.max_nodes,
-            strategy,
-            cube,
-            visual_state,
-        ),
+        SolverStrategy::GeneratedTwoPhase | SolverStrategy::GeneratedTwoPhaseQuality => {
+            solve_generated_cube(
+                state,
+                request.max_depth,
+                request.max_nodes,
+                strategy,
+                cube,
+                visual_state,
+            )
+        }
         SolverStrategy::BoundedIdaStar
         | SolverStrategy::TwoPhaseBaseline
-        | SolverStrategy::OptimalIdaStarOrientationPdb => solve_configured_cube(
+        | SolverStrategy::OptimalIdaStarOrientationPdb
+        | SolverStrategy::OptimalBoundedCornerPdb => solve_configured_cube(
             request.max_depth,
             request.max_nodes,
             strategy,
@@ -341,7 +344,18 @@ fn solve_generated_cube(
     };
     let budget = SearchBudget::with_limits(max_depth, max_nodes);
 
-    match solver.solve(&cube, budget) {
+    let result = match strategy {
+        SolverStrategy::GeneratedTwoPhase => solver.solve(&cube, budget),
+        SolverStrategy::GeneratedTwoPhaseQuality => solver.solve_quality(&cube, budget),
+        SolverStrategy::BoundedIdaStar
+        | SolverStrategy::TwoPhaseBaseline
+        | SolverStrategy::OptimalIdaStarOrientationPdb
+        | SolverStrategy::OptimalBoundedCornerPdb => {
+            unreachable!("non-generated strategies should use the configured API solver path")
+        }
+    };
+
+    match result {
         Ok(result) => match result.outcome {
             SearchOutcome::Found(solution) => {
                 let replay_verified = solution_solves(&cube, solution.moves());
@@ -606,7 +620,9 @@ fn solution_solves(start: &Cube, moves: &[cube_engine::Move]) -> bool {
 
 fn generated_table_status(strategy: SolverStrategy) -> &'static str {
     match strategy {
-        SolverStrategy::GeneratedTwoPhase => "available",
+        SolverStrategy::GeneratedTwoPhase
+        | SolverStrategy::GeneratedTwoPhaseQuality
+        | SolverStrategy::OptimalBoundedCornerPdb => "available",
         SolverStrategy::BoundedIdaStar
         | SolverStrategy::TwoPhaseBaseline
         | SolverStrategy::OptimalIdaStarOrientationPdb => "not_required",
@@ -715,6 +731,42 @@ mod tests {
         assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
         assert!(!response.ok);
         assert_eq!(response.status, "generated_tables_unavailable");
+    }
+
+    #[test]
+    fn generated_quality_strategy_reports_unavailable_when_solver_not_loaded() {
+        let request = SolveNotationRequest {
+            moves: String::new(),
+            max_depth: 30,
+            max_nodes: Some(1_000),
+            strategy_id: "generated-two-phase-quality".to_owned(),
+        };
+
+        let (status, response) =
+            solve_notation_request(&ApiState::without_generated_solver(), request);
+
+        assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+        assert!(!response.ok);
+        assert_eq!(response.status, "generated_tables_unavailable");
+        assert_eq!(response.strategy_id, "generated-two-phase-quality");
+        assert_eq!(response.solver_mode, "generated_two_phase_quality");
+    }
+
+    #[test]
+    fn strategy_metadata_includes_quality_solver() {
+        let metadata = SolverStrategy::GeneratedTwoPhaseQuality.metadata();
+        let corner_metadata = SolverStrategy::OptimalBoundedCornerPdb.metadata();
+
+        assert!(SolverStrategy::ALL
+            .into_iter()
+            .any(|strategy| strategy == SolverStrategy::GeneratedTwoPhaseQuality));
+        assert!(SolverStrategy::ALL
+            .into_iter()
+            .any(|strategy| strategy == SolverStrategy::OptimalBoundedCornerPdb));
+        assert_eq!(metadata.id, "generated-two-phase-quality");
+        assert_eq!(metadata.solver_mode, "generated_two_phase_quality");
+        assert_eq!(corner_metadata.id, "optimal-bounded-corner-pdb");
+        assert_eq!(corner_metadata.solver_mode, "optimal_bounded_corner_pdb");
     }
 
     #[test]
