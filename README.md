@@ -136,7 +136,7 @@ npm run lint -w @rubiks-cube-solver/web
 npm run test:e2e
 ```
 
-Playwright starts both the API and the Vite preview server. The UI accepts move notation as the only product input, defaults to `generated-two-phase`, never asks the browser client to submit facelets, and displays `replay verified` only for API-confirmed solving results.
+Playwright starts both the API and the Vite preview server. The UI accepts a `Scramble` field as the only product input, defaults to `generated-two-phase`, never asks the browser client to submit facelets, and displays `replay verified` only for API-confirmed solving results.
 
 ## Dataset Generation
 

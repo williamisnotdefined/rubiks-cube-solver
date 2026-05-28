@@ -14,24 +14,36 @@ test.describe('product solve flow', () => {
     expect(cubeBox?.width ?? 0).toBeLessThanOrEqual(350)
     expect(cubeBox?.height ?? 0).toBeLessThanOrEqual(350)
 
-    const input = page.getByLabel('Move notation')
+    const input = page.getByLabel('Scramble')
     await expect(input).toBeEnabled({ timeout: 15_000 })
     await expect(input).toHaveValue(defaultNotation)
-    const maxMoves = page.getByLabel('Max solution moves')
+    const maxMoves = page.getByLabel('Max moves')
     await expect(maxMoves).toHaveValue('30')
-    const maxNodes = page.getByLabel('Max nodes')
-    await expect(maxNodes).toHaveValue('10000000')
-    await expect(page.locator('.api-status')).toContainText('API connected')
-    await expect(page.locator('.api-status')).toContainText('Generated two-phase solver')
+    const maxNodes = page.getByLabel('Max nodes (M)')
+    await expect(maxNodes).toHaveValue('10')
+    await expect(page.getByText('API connected')).toHaveCount(0)
+    await expect(page.getByText(/Generated-table solver/i)).toHaveCount(0)
   })
 
-  test('solves shallow move notation', async ({ page }) => {
+  test('keeps solve button loading while the API is not ready', async ({ page }) => {
+    await page.route('http://127.0.0.1:8787/health', (route) => route.abort())
+
     await page.goto('/')
 
-    const input = page.getByLabel('Move notation')
+    await expect(page.getByRole('button', { name: 'Loading' })).toBeDisabled({
+      timeout: 15_000,
+    })
+    await expect(page.getByText('API unavailable')).toHaveCount(0)
+    await expect(page.getByText(/Run npm run dev/i)).toHaveCount(0)
+  })
+
+  test('solves shallow scramble', async ({ page }) => {
+    await page.goto('/')
+
+    const input = page.getByLabel('Scramble')
     await expect(input).toBeEnabled({ timeout: 15_000 })
     await expect(input).toHaveValue(defaultNotation)
-    const maxMoves = page.getByLabel('Max solution moves')
+    const maxMoves = page.getByLabel('Max moves')
 
     await input.fill('R U')
     await maxMoves.fill('2')
@@ -44,15 +56,15 @@ test.describe('product solve flow', () => {
     await expect(page.locator('.result')).toContainText('replay verified')
   })
 
-  test('solves real notation through the API', async ({ page }) => {
+  test('solves real scramble through the API', async ({ page }) => {
     await page.goto('/')
 
-    const input = page.getByLabel('Move notation')
+    const input = page.getByLabel('Scramble')
     await expect(input).toBeEnabled({ timeout: 15_000 })
 
     await input.fill(realNotation)
-    await page.getByLabel('Max solution moves').fill('30')
-    await page.getByLabel('Max nodes').fill('10000000')
+    await page.getByLabel('Max moves').fill('30')
+    await page.getByLabel('Max nodes (M)').fill('10')
     await page.getByRole('button', { name: 'Solve' }).click()
 
     await expect(page.locator('.result code')).toHaveText(/\S/, { timeout: 60_000 })
@@ -60,15 +72,40 @@ test.describe('product solve flow', () => {
     await expect(page.locator('.result')).toContainText('replay verified')
   })
 
-  test('shows a short invalid notation error', async ({ page }) => {
+  test('shows a short invalid scramble error', async ({ page }) => {
     await page.goto('/')
 
-    const input = page.getByLabel('Move notation')
+    const input = page.getByLabel('Scramble')
     await expect(input).toBeEnabled({ timeout: 15_000 })
 
     await input.fill('R Q')
     await page.getByRole('button', { name: 'Solve' }).click()
 
-    await expect(page.locator('.result')).toContainText('Invalid move notation')
+    await expect(page.locator('.result')).toContainText('Invalid scramble')
+  })
+
+  test('validates solver limits locally before API requests', async ({ page }) => {
+    let solveRequests = 0
+    page.on('request', (request) => {
+      if (request.url().endsWith('/solve-notation')) {
+        solveRequests += 1
+      }
+    })
+
+    await page.goto('/')
+
+    await expect(page.getByLabel('Scramble')).toBeEnabled({ timeout: 15_000 })
+    await page.getByLabel('Max moves').fill('46')
+
+    await expect(page.getByRole('button', { name: 'Solve' })).toBeDisabled()
+    await expect(page.locator('.result')).toContainText('Max moves must be 30 or less')
+    expect(solveRequests).toBe(0)
+
+    await page.getByLabel('Max moves').fill('30')
+    await page.getByLabel('Max nodes (M)').fill('11')
+
+    await expect(page.getByRole('button', { name: 'Solve' })).toBeDisabled()
+    await expect(page.locator('.result')).toContainText('Max nodes (M) must be 10 or less')
+    expect(solveRequests).toBe(0)
   })
 })

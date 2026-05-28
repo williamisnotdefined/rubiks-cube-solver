@@ -10,8 +10,11 @@ import {
 } from './api/solverClient'
 
 const defaultNotation = "R2 D2 F2 D L2 F2 U' R2 D B2 L2 U' B' R' B' R2 B2 L B U'"
-const defaultMaxDepth = 30
-const defaultMaxNodes = 10_000_000
+const maxMovesLimit = 30
+const defaultMaxMoves = maxMovesLimit
+const maxNodesMillionLimit = 10
+const defaultMaxNodesMillion = maxNodesMillionLimit
+const nodesPerMillion = 1_000_000
 const defaultStrategyId = 'generated-two-phase'
 
 if (!customElements.get('rubiks-cube')) {
@@ -37,8 +40,10 @@ function App() {
   const [solverState, setSolverState] =
     useState<ApiSolverLoadState>(apiSolverBoundary)
   const [notation, setNotation] = useState(defaultNotation)
-  const [maxDepthInput, setMaxDepthInput] = useState(String(defaultMaxDepth))
-  const [maxNodesInput, setMaxNodesInput] = useState(String(defaultMaxNodes))
+  const [maxMovesInput, setMaxMovesInput] = useState(String(defaultMaxMoves))
+  const [maxNodesMillionInput, setMaxNodesMillionInput] = useState(
+    String(defaultMaxNodesMillion),
+  )
   const [cubeVisualState, setCubeVisualState] = useState('')
   const [solveState, setSolveState] = useState<SolveState>({ status: 'idle' })
 
@@ -76,28 +81,33 @@ function App() {
   }, [cubeVisualState])
 
   const solverClient = solverState.status === 'ready' ? solverState.client : undefined
-  const strategyOptions = solverState.status === 'ready' ? solverState.strategyOptions : []
-  const selectedStrategy = strategyOptions.find((strategy) => strategy.id === defaultStrategyId)
+  const apiReady = solverClient !== undefined
   const solving = solveState.status === 'solving'
-  const loading = solverState.status === 'loading' || solverState.status === 'unloaded'
-  const maxDepth = Number(maxDepthInput)
-  const maxNodes = Number(maxNodesInput)
-  const maxDepthIsValid =
-    maxDepthInput.trim().length > 0 && Number.isInteger(maxDepth) && maxDepth >= 0
-  const maxNodesIsValid =
-    maxNodesInput.trim().length > 0 && Number.isInteger(maxNodes) && maxNodes >= 0
+  const buttonLoading = !apiReady || solving
+  const maxMoves = Number(maxMovesInput)
+  const maxNodesMillion = Number(maxNodesMillionInput)
+  const maxNodes = maxNodesMillion * nodesPerMillion
+  const maxMovesValidation = validateWholeNumberLimit(
+    maxMovesInput,
+    'Max moves',
+    maxMovesLimit,
+  )
+  const maxNodesValidation = validateWholeNumberLimit(
+    maxNodesMillionInput,
+    'Max nodes (M)',
+    maxNodesMillionLimit,
+  )
+  const localValidationMessage = maxMovesValidation ?? maxNodesValidation
   const disabled =
-    solverClient === undefined ||
+    !apiReady ||
     solving ||
     notation.trim().length === 0 ||
-    selectedStrategy === undefined ||
-    !maxDepthIsValid ||
-    !maxNodesIsValid
+    localValidationMessage !== undefined
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    if (solverClient === undefined || !maxDepthIsValid || !maxNodesIsValid) {
+    if (solverClient === undefined || localValidationMessage !== undefined) {
       return
     }
 
@@ -106,7 +116,7 @@ function App() {
 
     try {
       const limits = {
-        maxDepth,
+        maxDepth: maxMoves,
         maxNodes,
         strategyId: defaultStrategyId,
       }
@@ -143,13 +153,13 @@ function App() {
     setSolveState({ status: 'idle' })
   }
 
-  function handleMaxDepthChange(nextMaxDepth: string) {
-    setMaxDepthInput(nextMaxDepth)
+  function handleMaxMovesChange(nextMaxMoves: string) {
+    setMaxMovesInput(nextMaxMoves)
     setSolveState({ status: 'idle' })
   }
 
-  function handleMaxNodesChange(nextMaxNodes: string) {
-    setMaxNodesInput(nextMaxNodes)
+  function handleMaxNodesMillionChange(nextMaxNodesMillion: string) {
+    setMaxNodesMillionInput(nextMaxNodesMillion)
     setSolveState({ status: 'idle' })
   }
 
@@ -170,7 +180,7 @@ function App() {
 
       <form className="solve-form" onSubmit={handleSubmit}>
         <label className="field field-primary">
-          <span className="field-label">Move notation</span>
+          <span className="field-label">Scramble</span>
           <input
             autoComplete="off"
             className="primary-input"
@@ -179,49 +189,43 @@ function App() {
             onChange={(event) => handleNotationChange(event.target.value)}
           />
         </label>
-        <div className="api-status" aria-live="polite">
-          <span className={solverState.status === 'ready' ? 'status-ok' : 'status-bad'}>
-            {solverState.status === 'ready' ? 'API connected' : 'API unavailable'}
-          </span>
-          <span className="status-detail">
-            {selectedStrategy?.label ?? 'Generated two-phase solver'}
-          </span>
-        </div>
         <label className="field field-depth">
-          <span className="field-label">Max solution moves</span>
+          <span className="field-label">Max moves</span>
           <input
             className="depth-input"
             inputMode="numeric"
+            max={maxMovesLimit}
             min="0"
             step="1"
             type="number"
-            value={maxDepthInput}
-            onChange={(event) => handleMaxDepthChange(event.target.value)}
+            value={maxMovesInput}
+            onChange={(event) => handleMaxMovesChange(event.target.value)}
           />
         </label>
         <label className="field field-nodes">
-          <span className="field-label">Max nodes</span>
+          <span className="field-label">Max nodes (M)</span>
           <input
             className="nodes-input"
             inputMode="numeric"
+            max={maxNodesMillionLimit}
             min="0"
             step="1"
             type="number"
-            value={maxNodesInput}
-            onChange={(event) => handleMaxNodesChange(event.target.value)}
+            value={maxNodesMillionInput}
+            onChange={(event) => handleMaxNodesMillionChange(event.target.value)}
           />
         </label>
-        <button type="submit" disabled={disabled}>
-          {solving ? <span className="button-loader" aria-hidden="true" /> : 'Solve'}
+        <button
+          aria-label={buttonLoading ? 'Loading' : undefined}
+          type="submit"
+          disabled={disabled}
+        >
+          {buttonLoading ? <span className="button-loader" aria-hidden="true" /> : 'Solve'}
         </button>
-        <p className="strategy-description">
-          {selectedStrategy?.statusText ?? 'Run npm run dev to start the API and web app together.'}
-          {' Move notation is converted to a Rust cube state before solving.'}
-        </p>
       </form>
 
       <output className="result" aria-live="polite">
-        {loading || solving ? <span className="loader" aria-label="Loading" /> : null}
+        {solving ? <span className="loader" aria-label="Loading" /> : null}
         {solveState.status === 'done' ? (
           <>
             <code>
@@ -237,12 +241,8 @@ function App() {
             </span>
           </>
         ) : null}
-        {solverState.status === 'api_unavailable' ||
-        solverState.status === 'initialization_failed' ? (
-          <>
-            <span>API unavailable</span>
-            <span className="result-meta">{solverState.message} Run npm run dev.</span>
-          </>
+        {solveState.status === 'idle' && localValidationMessage !== undefined ? (
+          <span>{localValidationMessage}</span>
         ) : null}
         {solveState.status === 'error' ? (
           <>
@@ -259,7 +259,7 @@ function App() {
 
 function solveErrorMessage(result: Exclude<SolveResult, { ok: true }>): string {
   if (result.status === 'invalid_notation') {
-    return 'Invalid move notation'
+    return 'Invalid scramble'
   }
 
   if (result.status === 'invalid_input') {
@@ -297,11 +297,34 @@ function solveErrorMessage(result: Exclude<SolveResult, { ok: true }>): string {
   return result.message
 }
 
+function validateWholeNumberLimit(
+  input: string,
+  label: string,
+  limit: number,
+): string | undefined {
+  const trimmed = input.trim()
+  const value = Number(trimmed)
+
+  if (trimmed.length === 0) {
+    return `${label} is required`
+  }
+
+  if (!Number.isInteger(value) || value < 0) {
+    return `${label} must be a whole number`
+  }
+
+  if (value > limit) {
+    return `${label} must be ${limit} or less`
+  }
+
+  return undefined
+}
+
 function solveErrorDetail(result: Exclude<SolveResult, { ok: true }>): string | undefined {
   if (result.status === 'not_found_within_limits') {
     return `${result.strategyLabel} explored ${formatNumber(
       result.exploredNodes ?? 0,
-    )} nodes at max depth ${result.maxDepth}.`
+    )} nodes at max moves ${result.maxDepth}.`
   }
 
   if (result.status === 'invalid_limits') {

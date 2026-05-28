@@ -187,7 +187,7 @@ function createApiSolverClient(strategyOptions: SolverStrategyOption[]): ApiSolv
 
         return normalizeSolveResponse(payload, response.ok)
       } catch (error) {
-        return apiSolveError(errorMessage(error, 'API notation solve request failed.'))
+        return apiSolveError(errorMessage(error, 'API scramble solve request failed.'))
       }
     },
   }

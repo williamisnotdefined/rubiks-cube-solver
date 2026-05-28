@@ -41,6 +41,9 @@ Build a visualization layer that renders cube state and controls playback withou
 - Confirm the task belongs to the frontend phase before adding frontend dependencies.
 - Keep solver behavior behind the Rust HTTP API.
 - Keep client-facing solve flows notation-only; do not add facelet or Kociemba UI inputs.
+- Keep API request/response code in `apps/web/src/api` and React components focused on interaction and rendering.
+- Keep API load state, solve result state, form input state, and visualization playback state separately owned.
+- Extract React components only when reuse, naming clarity, or state boundaries justify the new file.
 - Evaluate visualization libraries as adapters, not engine replacements.
 - If using `@houstonp/rubiks-cube`, verify headless move-option behavior before relying on it.
 - Ensure desktop and mobile rendering are considered when UI exists, with the cube no larger than 350px by 350px.
@@ -50,11 +53,14 @@ Build a visualization layer that renders cube state and controls playback withou
 - UI sends moves and receives states.
 - Browser clients never submit facelets to the API.
 - Solver logic remains in Rust.
+- Request details stay behind the frontend API-client boundary.
+- UI state has a clear nearest owner and is not copied into broad mutable stores without need.
 - External visualization code does not define canonical cube state.
 
 ## Verification
 
-- Run frontend tests/build commands once an `apps/web` workspace exists.
+- Run `npm run build` after TypeScript, React, or API-client changes.
+- Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
 - Run engine/API tests for any Rust solver behavior touched by UI work.
 
 # Referenced Context
@@ -63,7 +69,7 @@ Build a visualization layer that renders cube state and controls playback withou
 
 # Frontend Rules
 
-Rules for the future web visualization phase.
+Rules for the web visualization and frontend-to-API boundary.
 
 ## Always
 
@@ -73,6 +79,14 @@ Rules for the future web visualization phase.
 - Keep playback and visualization state separate from solver state.
 - Evaluate visualization-only libraries by whether they preserve this boundary.
 - Keep the rendered 3x3 cube no larger than 350px by 350px in the web UI.
+- Keep API request and response normalization in `apps/web/src/api`, not inline in React components.
+- Keep request functions free of React imports unless a concrete hook abstraction is introduced.
+- Keep server/API load state, solve result state, form input state, and visualization playback state separately owned.
+- Lift local UI state only to the nearest component that consumes it.
+- Extract React components only when UI repeats or a named component makes ownership and composition clearer.
+- Keep one-off UI inline when extraction would add indirection without reuse or state-boundary value.
+- Prefer explicit props and children for reusable layout wrappers.
+- Use lightweight local validation for simple solve controls; add a form library only when current form complexity requires it.
 
 ## Never
 
@@ -80,50 +94,74 @@ Rules for the future web visualization phase.
 - Do not make a Three.js/web-component sticker state the canonical engine state.
 - Do not expose facelets, Kociemba strings, or facelet input modes in the UI.
 - Do not make browser clients submit facelets to the API; client-facing solve requests use move notation only.
-- Do not introduce frontend dependencies during engine-only phases.
+- Do not copy API data into broad mutable stores just to pass it through the UI.
+- Do not introduce React Query, Zustand, React Hook Form, Zod, React Router, Tailwind, or Storybook conventions unless the dependency exists and current UI complexity justifies it.
+- Do not turn a large component into a hidden god hook or god provider.
+- Do not import raw request functions into UI once a project-level hook/client boundary exists for that operation.
 
 ## External Library Note
 
-- `@houstonp/rubiks-cube` is acceptable as a future visualization or comparison tool, not as the Rust solver core.
+- `@houstonp/rubiks-cube` is acceptable as a visualization or comparison tool, not as the Rust solver core.
+
+## Verification
+
+- Run `npm run build` after TypeScript, React, or API-client changes.
+- Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
+- Run API or engine tests too when UI changes require Rust contract changes.
 
 ## Reference: `ai/architecture/project-architecture.md`
 
 # Project Architecture
 
-The final target is a hybrid Rubik's Cube solver with a Rust engine, search algorithms, heuristics, pattern databases, optional ML heuristics, a native HTTP API, and a modern web visualization.
+The target is a hybrid Rubik's Cube solver with a Rust engine, search algorithms, heuristics, pattern databases, optional ML heuristics, a native HTTP API, and a modern web visualization.
 
-## Current Bootstrap
+## Current Structure
 
 - `crates/cube-engine`: Rust crate for cube representation, moves, notation, scramble handling, search, and heuristics.
+- `crates/api`: Axum HTTP API around the Rust engine and generated pruning-table artifacts.
+- `apps/web`: Vite React app for notation-only solve requests, cube visualization, and playback-oriented UI.
+- `datasets`: generated and fixture data for solver/ML experiments.
+- `ml`: Python training and smoke-test code for learned value baselines.
 - `ai`: canonical AI knowledge base and route generation system.
 - `roadmap.md`: source roadmap and implementation order.
 
-## Future Boundaries
+## Generated Artifacts
 
-- `crates/api`: HTTP API around the Rust engine and generated pruning-table artifacts.
-- `apps/web`: future TypeScript React visualization and playback UI.
-- `datasets`: future generated training datasets.
-- `ml`: future Python/PyTorch training code.
+- Native pruning tables are generated by `cube-engine` binaries and loaded by `crates/api`.
+- Solver quality reports and real-scramble gates are executable verification artifacts, not frontend behavior.
+- ML datasets should be generated from deterministic Rust solver behavior before training code consumes them.
+
+## Future Or Optional Boundaries
+
+- `crates/wasm`: optional future wasm-bindgen bridge around the Rust engine if browser-local solving becomes a concrete roadmap item.
+- Additional frontend routing, shared component libraries, or state managers should wait for current UI complexity to require them.
 
 ## Ownership
 
 - Cube state, moves, validation, search, and heuristics belong in Rust.
-- Frontend code should only render, send moves, receive states, and play animations.
+- The API validates HTTP contracts, applies safety limits, calls Rust solver code, and returns typed solver results.
+- Frontend code should only render, collect notation/limits, send solve requests, receive states, and play animations.
 - ML code should consume generated datasets and expose learned heuristics only after deterministic search is correct.
 
 ## Reference: `ai/architecture/frontend-visualization.md`
 
 # Frontend Visualization Architecture
 
-The frontend is a later phase. It should not become the source of truth for cube logic.
+The frontend renders and controls solver interaction. It must not become the source of truth for cube logic.
 
-## Future Stack
+## Current Stack
 
 - TypeScript
 - React
-- React Three Fiber or a vetted Three.js abstraction
-- Zustand only when shared local UI state needs it
 - Vite
+- `@houstonp/rubiks-cube` as a visualization custom element
+- Plain CSS owned by `apps/web`
+
+## Optional Additions
+
+- React Three Fiber or another vetted Three.js abstraction only if the current custom element cannot support the needed visualization behavior.
+- Zustand only when shared local UI state is truly cross-component or cross-route and nearest-owner state is insufficient.
+- React Router, React Query, form libraries, Tailwind, and Storybook only after there is a concrete implemented need.
 
 ## Boundary
 
@@ -133,9 +171,26 @@ Facelet/Kociemba strings are internal adapter details only. They must not appear
 
 The visible cube must fit within a 350px by 350px box on desktop and mobile.
 
+## Data And State Flow
+
+- `apps/web/src/api` owns HTTP request details, response normalization, typed results, API base URL handling, and API error mapping.
+- React components own local form inputs, loading indicators, result display, and visualization playback state.
+- API load state, solve result state, form state, and visualization state should remain separate unless a single owner explicitly coordinates them.
+- Selection or playback state should be represented by IDs, move indexes, or notation strings rather than duplicated cube objects when possible.
+
+## UI Composition
+
+- Keep a route or screen component readable as composition as the UI grows.
+- Extract named components for repeated panels, controls, result sections, or visualization shells when the extraction clarifies ownership.
+- Keep page-specific pieces colocated near the owning screen until reused elsewhere.
+- Shared reusable UI should live under `apps/web/src/components` only when there is a real shared consumer.
+- Context-independent helpers can live under a focused utility area, but solver or API-specific helpers should stay with their owning feature.
+
 ## Visualization Libraries
 
 Visualization-only libraries can be used if they do not own the solver state. They should adapt to engine output rather than define engine behavior.
+
+If a visualization library requires a facelet or sticker-state string, keep that value as a rendering adapter detail. The UI should still speak in scramble notation, solution moves, limits, and solver statuses.
 
 ## Reference: `ai/architecture/houstonp-rubiks-cube.md`
 

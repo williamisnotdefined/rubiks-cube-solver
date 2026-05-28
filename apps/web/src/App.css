@@ -31,7 +31,7 @@ rubiks-cube {
 .solve-form {
   width: 100%;
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) minmax(150px, 220px) 154px minmax(190px, 240px) auto;
+  grid-template-columns: minmax(260px, 1fr) 154px minmax(190px, 240px) auto;
   gap: 10px;
   align-items: end;
 }
@@ -88,49 +88,6 @@ button {
 .nodes-input:focus {
   border-color: #f7f7f7;
   outline: none;
-}
-
-.strategy-description {
-  grid-column: 1 / -1;
-  margin: 0;
-  color: #a8a8a8;
-  font-size: 0.9rem;
-}
-
-.api-status {
-  box-sizing: border-box;
-  min-height: 54px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 4px;
-  padding: 4px;
-}
-
-.status-ok,
-.status-bad {
-  font-size: 0.78rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  line-height: 1;
-  text-transform: uppercase;
-}
-
-.status-ok {
-  color: #9affb9;
-}
-
-.status-bad {
-  color: #ff9a9a;
-}
-
-.status-detail {
-  color: #cfcfcf;
-  font-size: 0.88rem;
-  font-weight: 700;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 button {
@@ -215,9 +172,7 @@ button:disabled {
   }
 
   .primary-input,
-  .field-primary,
-  .api-status,
-  .strategy-description {
+  .field-primary {
     grid-column: 1 / -1;
   }
 

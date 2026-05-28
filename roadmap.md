@@ -129,13 +129,13 @@ Entregas:
 
 - Aplicação React/TypeScript buildável em `apps/web`.
 - Cliente HTTP API isolado de componentes React.
-- Input para move notation somente; facelets/Kociemba não aparecem na interface.
+- Input `Scramble` somente; facelets/Kociemba não aparecem na interface.
 - Botão de solve com limites visíveis.
 - Exibição de movimentos, tamanho da solução e métricas.
 - Playback ou step-through usando estados gerados pelo engine.
 - Layout usável em desktop e mobile, com cubo visual no máximo 350x350 px.
 
-Critério de saída: o usuário consegue submeter move notation válida e inválida, recebendo resultado correto em cada caso.
+Critério de saída: o usuário consegue submeter scramble válido e inválido, recebendo resultado correto em cada caso.
 
 ### Fase 6 - Validação E2E
 

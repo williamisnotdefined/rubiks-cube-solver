@@ -1,0 +1,305 @@
+---
+name: "api-boundary"
+description: "Use when adding or changing the Axum HTTP API, API validation, generated solver loading, solve-status contracts, or apps/web API client."
+---
+
+Generated from `ai/registry.json`. Do not edit manually.
+
+Canonical skill: `../../../ai/skills/api-boundary.md`.
+
+Referenced context:
+- `../../../ai/rules/api-rules.md`
+- `../../../ai/rules/frontend-rules.md`
+- `../../../ai/rules/testing-rules.md`
+- `../../../ai/architecture/project-architecture.md`
+- `../../../ai/architecture/api-boundary.md`
+- `../../../ai/glossary/cube-terms.md`
+
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai`, then run `npm run ai:sync`.
+
+# Compiled AI Skill: api-boundary
+
+## Canonical Skill: `ai/skills/api-boundary.md`
+
+# API Boundary
+
+Use this skill when adding or changing `crates/api`, Axum routes, request or response structs, API validation, CORS, generated solver loading, solve-status contracts, or `apps/web/src/api` client behavior.
+
+## Goal
+
+Keep the HTTP API as a thin, typed boundary around the Rust solver engine while preserving the notation-only frontend contract.
+
+## Read First
+
+- `ai/rules/api-rules.md`
+- `ai/rules/frontend-rules.md`
+- `ai/rules/testing-rules.md`
+- `ai/architecture/project-architecture.md`
+- `ai/architecture/api-boundary.md`
+- `ai/glossary/cube-terms.md`
+
+## Workflow
+
+- Inspect nearby route, request, response, API-client, and test patterns before editing.
+- Keep handlers focused on HTTP extraction, validation, solver dispatch, and response mapping.
+- Keep search, cube validation, notation semantics, heuristics, and pruning logic in `cube-engine`.
+- Preserve notation-only solve requests; do not add browser-facing facelet or Kociemba input modes.
+- Update `apps/web/src/api` normalization when API response fields, status strings, or error kinds change.
+- Add or update API tests around observable contract behavior, especially error responses consumed by the frontend.
+
+## Expected Output
+
+- API routes stay thin and typed.
+- Safety caps are enforced before expensive solver work.
+- Response statuses and metadata remain stable or are updated with matching frontend API-client changes.
+- Browser clients submit move notation and limits, never facelet strings.
+- Solver logic remains in Rust engine code.
+
+## Verification
+
+- Run `npm run api:test` or `cargo test -p rubiks-cube-solver-api` for API changes.
+- Run `cargo test -p cube-engine` when API behavior depends on engine changes.
+- Run `npm run build` and `npm run lint -w @rubiks-cube-solver/web` when `apps/web/src/api` changes.
+- Run `npm run ai:check` after AI knowledge changes.
+
+# Referenced Context
+
+## Reference: `ai/rules/api-rules.md`
+
+# API Rules
+
+Rules for the Axum HTTP API and the frontend API contract.
+
+## Always
+
+- Keep route handlers thin: extract state and JSON, validate request limits, choose the solver strategy, delegate to Rust engine code, and map results to HTTP responses.
+- Keep solver behavior in `cube-engine`; `crates/api` owns HTTP shape, safety limits, generated-solver loading, CORS, and error/status mapping.
+- Use Serde request and response structs as the API contract.
+- Keep client-facing solve requests notation-only through `/solve-notation`.
+- Validate API safety limits before parsing notation or invoking search.
+- Use named constants for public API caps such as maximum depth, maximum nodes, notation bytes, and JSON body bytes.
+- Preserve stable response status strings, error kinds, and metadata fields because `apps/web/src/api` normalizes them.
+- Verify returned solutions by replay before reporting success.
+- Keep generated pruning-table availability and corruption errors explicit in API responses.
+- Keep CORS origins narrow to known local web development and preview origins unless deployment requirements change.
+- Update `apps/web/src/api` types and normalization when API response fields or status values change.
+
+## Never
+
+- Do not add facelet, Kociemba, or raw sticker-state request payloads to browser-facing solve endpoints.
+- Do not implement search algorithms, heuristics, pruning table generation, or cube validation logic inside API handlers.
+- Do not let handlers panic or leak internal errors when a stable error response can represent the failure.
+- Do not accept unbounded request depth, node count, notation length, or JSON body size.
+- Do not add broad authentication, tenants, tokens, rate-limit frameworks, or OpenAPI layers without a current product requirement.
+- Do not make the frontend duplicate API status parsing or solver response normalization outside `apps/web/src/api`.
+
+## Verification
+
+- API tests: `npm run api:test` or `cargo test -p rubiks-cube-solver-api`.
+- Engine tests: `cargo test -p cube-engine` when API behavior depends on changed solver behavior.
+- Web API-client changes: `npm run build` and `npm run lint -w @rubiks-cube-solver/web`.
+- Cross-boundary product flow changes: `npm run test:e2e` when API, web, and generated pruning-table prerequisites are available.
+
+## Reference: `ai/rules/frontend-rules.md`
+
+# Frontend Rules
+
+Rules for the web visualization and frontend-to-API boundary.
+
+## Always
+
+- Keep cube logic out of React components.
+- Treat the frontend as a renderer and controller that sends move notation and receives states.
+- Use the Rust HTTP API as the source of truth for solver behavior.
+- Keep playback and visualization state separate from solver state.
+- Evaluate visualization-only libraries by whether they preserve this boundary.
+- Keep the rendered 3x3 cube no larger than 350px by 350px in the web UI.
+- Keep API request and response normalization in `apps/web/src/api`, not inline in React components.
+- Keep request functions free of React imports unless a concrete hook abstraction is introduced.
+- Keep server/API load state, solve result state, form input state, and visualization playback state separately owned.
+- Lift local UI state only to the nearest component that consumes it.
+- Extract React components only when UI repeats or a named component makes ownership and composition clearer.
+- Keep one-off UI inline when extraction would add indirection without reuse or state-boundary value.
+- Prefer explicit props and children for reusable layout wrappers.
+- Use lightweight local validation for simple solve controls; add a form library only when current form complexity requires it.
+
+## Never
+
+- Do not implement solver algorithms in the frontend.
+- Do not make a Three.js/web-component sticker state the canonical engine state.
+- Do not expose facelets, Kociemba strings, or facelet input modes in the UI.
+- Do not make browser clients submit facelets to the API; client-facing solve requests use move notation only.
+- Do not copy API data into broad mutable stores just to pass it through the UI.
+- Do not introduce React Query, Zustand, React Hook Form, Zod, React Router, Tailwind, or Storybook conventions unless the dependency exists and current UI complexity justifies it.
+- Do not turn a large component into a hidden god hook or god provider.
+- Do not import raw request functions into UI once a project-level hook/client boundary exists for that operation.
+
+## External Library Note
+
+- `@houstonp/rubiks-cube` is acceptable as a visualization or comparison tool, not as the Rust solver core.
+
+## Verification
+
+- Run `npm run build` after TypeScript, React, or API-client changes.
+- Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
+- Run API or engine tests too when UI changes require Rust contract changes.
+
+## Reference: `ai/rules/testing-rules.md`
+
+# Testing Rules
+
+Testing rules for this repository.
+
+## Always
+
+- Add Rust unit tests next to pure functions when behavior is introduced.
+- Add integration tests under the owning crate when behavior crosses module boundaries.
+- Add regression tests next to changed behavior when fixing bugs.
+- Test observable cube behavior: solved state, inverse moves, notation parsing, scramble inversion, validation, and search output.
+- Test HTTP/API behavior through request and response contracts when `crates/api` behavior changes.
+- Test web API-client and UI behavior through public component or request boundaries when frontend behavior changes.
+- Test ML and dataset code with deterministic fixtures or fixed seeds.
+- Keep algorithm tests deterministic.
+- Run the narrowest test first, then the affected crate test command.
+
+## Never
+
+- Do not rely on random tests without a fixed seed.
+- Do not assert implementation details when public cube behavior can be asserted.
+- Do not leave focused-only tests such as `.only` in committed test files.
+- Do not add duplicate test helpers when nearby crate, web, API, or ML helpers already cover the setup.
+- Do not add tests for future surfaces that do not exist yet.
+
+## Verification
+
+- Cube engine tests: `cargo test -p cube-engine`.
+- API tests: `npm run api:test` or `cargo test -p rubiks-cube-solver-api`.
+- Workspace tests: `cargo test`.
+- Web build/lint: `npm run build` and `npm run lint -w @rubiks-cube-solver/web`.
+- End-to-end tests: `npm run test:e2e` after the API, web app, and pruning-table prerequisites are available.
+- ML tests: `python -m pytest ml`.
+- Product gate: `npm run product:gate` for release-level or cross-boundary validation.
+- AI routes: `npm run ai:check`.
+
+## Reference: `ai/architecture/project-architecture.md`
+
+# Project Architecture
+
+The target is a hybrid Rubik's Cube solver with a Rust engine, search algorithms, heuristics, pattern databases, optional ML heuristics, a native HTTP API, and a modern web visualization.
+
+## Current Structure
+
+- `crates/cube-engine`: Rust crate for cube representation, moves, notation, scramble handling, search, and heuristics.
+- `crates/api`: Axum HTTP API around the Rust engine and generated pruning-table artifacts.
+- `apps/web`: Vite React app for notation-only solve requests, cube visualization, and playback-oriented UI.
+- `datasets`: generated and fixture data for solver/ML experiments.
+- `ml`: Python training and smoke-test code for learned value baselines.
+- `ai`: canonical AI knowledge base and route generation system.
+- `roadmap.md`: source roadmap and implementation order.
+
+## Generated Artifacts
+
+- Native pruning tables are generated by `cube-engine` binaries and loaded by `crates/api`.
+- Solver quality reports and real-scramble gates are executable verification artifacts, not frontend behavior.
+- ML datasets should be generated from deterministic Rust solver behavior before training code consumes them.
+
+## Future Or Optional Boundaries
+
+- `crates/wasm`: optional future wasm-bindgen bridge around the Rust engine if browser-local solving becomes a concrete roadmap item.
+- Additional frontend routing, shared component libraries, or state managers should wait for current UI complexity to require them.
+
+## Ownership
+
+- Cube state, moves, validation, search, and heuristics belong in Rust.
+- The API validates HTTP contracts, applies safety limits, calls Rust solver code, and returns typed solver results.
+- Frontend code should only render, collect notation/limits, send solve requests, receive states, and play animations.
+- ML code should consume generated datasets and expose learned heuristics only after deterministic search is correct.
+
+## Reference: `ai/architecture/api-boundary.md`
+
+# API Boundary Architecture
+
+`crates/api` is a native Axum HTTP API around the Rust solver engine.
+
+## Request Flow
+
+- `crates/api/src/main.rs` reads `RUBIKS_API_ADDR` and `RUBIKS_PRUNING_TABLE_DIR`, loads the generated two-phase solver, builds the router, and starts Axum.
+- `crates/api/src/lib.rs` owns the public router, CORS, request/response structs, endpoint handlers, request validation, solver dispatch, and engine-error mapping.
+- `ApiState` stores loaded generated solver artifacts behind shared state.
+- `/health` reports API availability and whether generated two-phase tables are loaded.
+- `/strategies` exposes solver strategy metadata from `cube-engine`.
+- `/solve-notation` accepts move notation plus limits, applies the scramble from solved state, invokes the selected solver, verifies replay, and returns a typed solve response.
+
+## Contract Shape
+
+- Requests use move notation, `maxDepth`, optional `maxNodes`, and optional `strategyId`.
+- Responses include `ok`, `status`, strategy metadata, generated-table status, effective limits, solution moves, explored nodes, replay verification, optional visualization state, and optional error metadata.
+- Status strings and error kinds are part of the frontend contract and should change only with matching updates in `apps/web/src/api`.
+- The API may return visualization adapter state, but browser clients should not submit facelet or Kociemba payloads.
+
+## Validation And Safety
+
+- API caps protect search cost and request size before the engine is called.
+- Unsupported strategies, invalid notation, excessive limits, missing generated tables, corrupt tables, no-solution-within-limits, and unverified solutions map to explicit statuses.
+- Search success is accepted only when replay verifies that returned moves solve the requested cube state.
+- Generated pruning tables are loaded at API startup for the generated two-phase strategy; unavailable or incompatible artifacts remain visible as API errors.
+
+## Frontend Boundary
+
+- `apps/web/src/api` owns base URL handling, health/strategy probing, solve request construction, response normalization, and API error fallback.
+- React components should consume normalized API-client results instead of parsing raw HTTP responses.
+- UI copy should describe scrambles, moves, limits, strategies, and solver statuses, not internal facelet/Kociemba representations.
+
+## Test Shape
+
+- Pure request behavior can be tested through `solve_notation_request` without starting a server.
+- Router behavior such as exposed routes and CORS should be tested through Axum service requests.
+- Contract changes should include tests for both success and error responses that the web client depends on.
+
+## Reference: `ai/glossary/cube-terms.md`
+
+# Cube Terms
+
+## Cubie
+
+A physical movable piece of the cube. The core engine tracks cubies rather than face colors as the primary model.
+
+## Corner
+
+A cubie with three stickers. A 3x3 cube has eight corners.
+
+## Edge
+
+A cubie with two stickers. A 3x3 cube has twelve edges.
+
+## Permutation
+
+Which cubie occupies each position.
+
+## Orientation
+
+How a cubie is twisted or flipped in its current position.
+
+## Move
+
+A face turn such as `R`, `U`, `R'`, or `U2`.
+
+## Scramble
+
+A sequence of moves applied from the solved state to produce a valid cube state.
+
+## Heuristic
+
+An estimate of distance from a cube state to the solved state.
+
+## Admissible Heuristic
+
+A heuristic that never overestimates the true distance to the solved state.
+
+## Pattern Database
+
+A precomputed lookup table mapping partial cube states to minimum solution distances.
+
+## Kociemba String
+
+A facelet string format commonly used by two-phase solvers. It can be an adapter format, not the primary engine model.

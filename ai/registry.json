@@ -123,6 +123,33 @@
       }
     },
     {
+      "name": "api-boundary",
+      "description": "Use when adding or changing the Axum HTTP API, API validation, generated solver loading, solve-status contracts, or apps/web API client.",
+      "canonicalPath": "ai/skills/api-boundary.md",
+      "references": [
+        "ai/rules/api-rules.md",
+        "ai/rules/frontend-rules.md",
+        "ai/rules/testing-rules.md",
+        "ai/architecture/project-architecture.md",
+        "ai/architecture/api-boundary.md",
+        "ai/glossary/cube-terms.md"
+      ],
+      "routes": {
+        "opencode": ".opencode/skills/api-boundary/SKILL.md",
+        "cursor": ".cursor/rules/api-boundary.mdc",
+        "github": ".github/instructions/api-boundary.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "crates/api/**/*.{rs,toml},apps/web/src/api/**/*.{ts,tsx},roadmap.md,PRODUCT_VALIDATION.md",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "crates/api/**/*.{rs,toml},apps/web/src/api/**/*.{ts,tsx},roadmap.md,PRODUCT_VALIDATION.md"
+        }
+      }
+    },
+    {
       "name": "frontend-visualization",
       "description": "Use when adding the web UI, 3D cube visualization, playback, or frontend-to-API boundary.",
       "canonicalPath": "ai/skills/frontend-visualization.md",
