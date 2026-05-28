@@ -53,6 +53,7 @@ Each skill entry should include:
 
 - `project-core`: always-on repository baseline for roadmap alignment, boundaries, verification, and AI knowledge maintenance.
 - `repository-engineering-guidelines`: repository-wide engineering standards, workspace commands, AI knowledge maintenance, and final verification.
+- `rust-module-refactor`: Rust file splitting, module facades, visibility, and behavior-preserving refactor workflow.
 - `cube-engine`: Rust cube representation, moves, notation, scrambles, and cube validation.
 - `solver-search`: BFS, IDDFS, IDA*, heuristics, pruning, and pattern database work.
 - `api-boundary`: Axum HTTP API, API validation, generated solver loading, solve-status contracts, and web API-client behavior.

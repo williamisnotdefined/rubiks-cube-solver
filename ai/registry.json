@@ -70,6 +70,32 @@
       }
     },
     {
+      "name": "rust-module-refactor",
+      "description": "Use when splitting large Rust files, changing mod.rs facades, moving tests, tightening visibility, or improving Rust module boundaries without changing behavior.",
+      "canonicalPath": "ai/skills/rust-module-refactor.md",
+      "references": [
+        "ai/rules/rust-module-refactor-rules.md",
+        "ai/rules/testing-rules.md",
+        "ai/architecture/project-architecture.md",
+        "ai/architecture/rust-module-boundaries.md",
+        "ai/glossary/cube-terms.md"
+      ],
+      "routes": {
+        "opencode": ".opencode/skills/rust-module-refactor/SKILL.md",
+        "cursor": ".cursor/rules/rust-module-refactor.mdc",
+        "github": ".github/instructions/rust-module-refactor.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "crates/**/*.rs,crates/**/*.toml,Cargo.toml,roadmap.md",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "crates/**/*.rs,crates/**/*.toml,Cargo.toml,roadmap.md"
+        }
+      }
+    },
+    {
       "name": "cube-engine",
       "description": "Use when adding or changing the Rust cube representation, moves, notation, scrambles, or cube validation.",
       "canonicalPath": "ai/skills/cube-engine.md",
