@@ -1,6 +1,6 @@
 use std::fmt;
 
-use super::{Corner, Edge};
+use crate::cube::cubies::{Corner, Edge};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CornerOrientationCoordinateError {
