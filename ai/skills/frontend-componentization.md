@@ -1,0 +1,42 @@
+# Frontend Componentization
+
+Use this skill when adding, changing, extracting, or reusing React components, page-level screens, large frontend files, or repeated UI in `apps/web`.
+
+## Goal
+
+Split UI by real ownership and reuse while keeping solver logic in Rust and avoiding broad component abstractions.
+
+## Read First
+
+- `ai/rules/frontend-component-rules.md`
+- `ai/rules/frontend-state-rules.md`
+- `ai/rules/frontend-form-rules.md`
+- `ai/rules/frontend-styling-rules.md`
+- `ai/architecture/project-architecture.md`
+- `ai/architecture/frontend-visualization.md`
+
+## Workflow
+
+- Identify whether the change is page composition, shared UI, page-specific UI, form behavior, visualization behavior, or state ownership cleanup.
+- Keep one-off UI inline unless extraction improves reuse, naming, or state boundaries.
+- Move page-level screens under `apps/web/src/pages`.
+- Keep page-specific components, hooks, helpers, and CSS under the owning page folder until reused.
+- Move shared primitives to `apps/web/src/components` only when there is a real shared consumer.
+- Extract focused hooks for stateful behavior such as API loading, form workflow, or custom-element synchronization.
+- Keep API request details behind `apps/web/src/api`.
+- Keep cube validation, search, and solver behavior out of React components.
+
+## Expected Output
+
+- `App.tsx` stays thin and route or screen files read as composition.
+- Props remain explicit and small.
+- API load state, solve result state, form state, and visualization state have clear nearest owners.
+- Extracted components preserve behavior and accessibility.
+- Shared abstractions are added only when current reuse justifies them.
+
+## Verification
+
+- Ensure extracted components do not change behavior.
+- Run `npm run build` after TypeScript or React component moves.
+- Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
+- Run relevant E2E tests when product flow behavior is touched.

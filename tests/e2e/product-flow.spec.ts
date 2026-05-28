@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Locator } from '@playwright/test'
 
 const defaultNotation = "R2 D2 F2 D L2 F2 U' R2 D B2 L2 U' B' R' B' R2 B2 L B U'"
 const realNotation = "B U L U D B' U' R' U' B U2 F' L2 B2 R2 D2 L2 D2 R2 F D2"
@@ -18,7 +18,7 @@ test.describe('product solve flow', () => {
     await expect(input).toBeEnabled({ timeout: 15_000 })
     await expect(input).toHaveValue(defaultNotation)
     const maxMoves = page.getByLabel('Max moves')
-    await expect(maxMoves).toHaveValue('30')
+    await expect(maxMoves).toHaveValue('20')
     const maxNodes = page.getByLabel('Max nodes (M)')
     await expect(maxNodes).toHaveValue('10')
     await expect(maxNodes.locator('option')).toHaveText(['10', '15', '20', '25'])
@@ -36,6 +36,28 @@ test.describe('product solve flow', () => {
     })
     await expect(page.getByText('API unavailable')).toHaveCount(0)
     await expect(page.getByText(/Run npm run dev/i)).toHaveCount(0)
+  })
+
+  test('updates cube visualization while editing the scramble', async ({ page }) => {
+    let solveRequests = 0
+    page.on('request', (request) => {
+      if (request.url().endsWith('/solve-notation')) {
+        solveRequests += 1
+      }
+    })
+
+    await page.goto('/')
+
+    const input = page.getByLabel('Scramble')
+    const cube = page.locator('rubiks-cube')
+    await expect(input).toBeEnabled({ timeout: 15_000 })
+    await expect.poll(() => cubeState(cube)).not.toBe('')
+    const initialState = await cubeState(cube)
+
+    await input.fill('R')
+
+    await expect.poll(() => cubeState(cube)).not.toBe(initialState)
+    expect(solveRequests).toBe(0)
   })
 
   test('solves shallow scramble', async ({ page }) => {
@@ -113,3 +135,13 @@ test.describe('product solve flow', () => {
     expect(solveRequests).toBe(0)
   })
 })
+
+async function cubeState(cube: Locator): Promise<string> {
+  return cube.evaluate((element) => {
+    try {
+      return (element as HTMLElement & { getState: () => string }).getState()
+    } catch {
+      return ''
+    }
+  })
+}

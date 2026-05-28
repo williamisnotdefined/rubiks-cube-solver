@@ -10,6 +10,7 @@ Keep the HTTP API as a thin, typed boundary around the Rust solver engine while 
 
 - `ai/rules/api-rules.md`
 - `ai/rules/frontend-rules.md`
+- `ai/rules/frontend-api-hook-rules.md`
 - `ai/rules/testing-rules.md`
 - `ai/architecture/project-architecture.md`
 - `ai/architecture/api-boundary.md`
@@ -21,7 +22,7 @@ Keep the HTTP API as a thin, typed boundary around the Rust solver engine while 
 - Keep handlers focused on HTTP extraction, validation, solver dispatch, and response mapping.
 - Keep search, cube validation, notation semantics, heuristics, and pruning logic in `cube-engine`.
 - Preserve notation-only solve requests; do not add browser-facing facelet or Kociemba input modes.
-- Update `apps/web/src/api` normalization when API response fields, status strings, or error kinds change.
+- Update `apps/web/src/api` request functions, React Query hooks, and normalization when API response fields, status strings, or error kinds change.
 - Add or update API tests around observable contract behavior, especially error responses consumed by the frontend.
 
 ## Expected Output
@@ -29,6 +30,7 @@ Keep the HTTP API as a thin, typed boundary around the Rust solver engine while 
 - API routes stay thin and typed.
 - Safety caps are enforced before expensive solver work.
 - Response statuses and metadata remain stable or are updated with matching frontend API-client changes.
+- React Query hooks continue to expose typed API state without leaking raw request functions into components.
 - Browser clients submit move notation and limits, never facelet strings.
 - Solver logic remains in Rust engine code.
 

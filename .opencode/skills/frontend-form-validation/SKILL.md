@@ -1,0 +1,264 @@
+---
+name: "frontend-form-validation"
+description: "Use when adding or changing solve controls, scramble inputs, frontend limit validation, or form behavior in apps/web."
+---
+
+Generated from `ai/registry.json`. Do not edit manually.
+
+Canonical skill: `../../../ai/skills/frontend-form-validation.md`.
+
+Referenced context:
+- `../../../ai/rules/frontend-form-rules.md`
+- `../../../ai/rules/frontend-component-rules.md`
+- `../../../ai/rules/frontend-state-rules.md`
+- `../../../ai/rules/api-rules.md`
+- `../../../ai/architecture/api-boundary.md`
+
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai`, then run `npm run ai:sync`.
+
+# Compiled AI Skill: frontend-form-validation
+
+## Canonical Skill: `ai/skills/frontend-form-validation.md`
+
+# Frontend Form Validation
+
+Use this skill when adding or changing solve controls, scramble inputs, frontend limit validation, or form behavior in `apps/web`.
+
+## Goal
+
+Keep form state and lightweight validation clear while preserving the notation-only API boundary and Rust-owned cube semantics.
+
+## Read First
+
+- `ai/rules/frontend-form-rules.md`
+- `ai/rules/frontend-component-rules.md`
+- `ai/rules/frontend-state-rules.md`
+- `ai/rules/api-rules.md`
+- `ai/architecture/api-boundary.md`
+
+## Workflow
+
+- Keep browser-facing solve input as move notation.
+- Keep simple required and numeric limit validation near the owning form.
+- Normalize notation before submitting it through the API client.
+- Let the API and engine own notation parsing, cube validity, search limits, and solver errors.
+- Add form libraries only when the form grows beyond lightweight local validation.
+- Keep validation messages accessible and close to the UI state that owns them.
+
+## Expected Output
+
+- Invalid local limits do not send API requests.
+- Invalid notation remains API-owned behavior.
+- Form code does not expose facelets, Kociemba strings, or sticker-state inputs.
+- Request details remain behind `apps/web/src/api`.
+
+## Verification
+
+- Run `npm run build` after form changes.
+- Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
+- Run relevant E2E tests for solve controls and invalid input behavior.
+
+# Referenced Context
+
+## Reference: `ai/rules/frontend-form-rules.md`
+
+# Frontend Form Rules
+
+Rules for forms and local validation in `apps/web`.
+
+## Always
+
+- Keep the browser-facing solve flow notation-only.
+- Keep simple solve controls in lightweight local state unless complexity justifies a form library.
+- Keep local validation near the owning form when it only validates simple limits or required values.
+- Normalize move notation with `trim()` before API submission.
+- Keep field labels explicit and accessible through visible text.
+- Display validation messages through the page result or field-owned message region that currently owns the UX.
+- Keep API safety caps visible or discoverable in the form controls that enforce them.
+- Use `aria-invalid` when a specific field is invalid and the UI exposes field-level invalidity.
+
+## Never
+
+- Do not expose facelet, Kociemba, sticker-state, or raw cube-state input modes in browser UI.
+- Do not submit facelet or sticker-state payloads from the browser.
+- Do not rely on browser validation for app-level solver messages.
+- Do not add React Hook Form, Zod, or another form library until current form complexity needs schema validation, many fields, or reusable validation.
+- Do not duplicate API validation in the frontend beyond lightweight UX checks.
+- Do not parse or validate cube solvability in React components.
+
+## Boundaries
+
+- The form owns user-entered notation and limit inputs.
+- The API client owns request construction and response normalization.
+- The Rust API and engine own notation semantics, cube validity, solver correctness, and safety enforcement.
+- Visualization hooks may parse supported move tokens only to drive rendering, not to validate solver correctness.
+
+## Verification
+
+- Check invalid local limits do not send API requests.
+- Check invalid notation still returns API-owned errors.
+- Run `npm run build` and relevant E2E tests after form behavior changes.
+
+## Reference: `ai/rules/frontend-component-rules.md`
+
+# Frontend Component Rules
+
+Rules for React component boundaries in `apps/web`.
+
+## Always
+
+- Keep route or screen files readable as composition.
+- Extract components when UI repeats or a named component clarifies ownership, state boundaries, or screen structure.
+- Keep one-off UI inline when extraction only adds indirection.
+- Keep page-level screens under `apps/web/src/pages`.
+- Keep page-specific components, hooks, and helpers under the owning page folder until reused elsewhere.
+- Keep shared reusable components under `apps/web/src/components` only after there is a real shared consumer.
+- Keep visualization-specific components and hooks near the owning visualization feature unless reused.
+- Keep context-independent helpers in focused utility files, not inside React components.
+- Keep React component props explicit and small.
+- Prefer `children` for layout wrappers such as panels, shells, and result regions.
+- Extract focused hooks for repeated or stateful UI behavior, but do not hide an oversized component in a single oversized hook.
+- Keep new or substantially changed React component files at or below 400 lines where practical.
+
+## Never
+
+- Do not turn every extraction into a broad component library.
+- Do not move page, cube, solver, API, or visualization-specific helpers into shared utilities before reuse exists.
+- Do not let `App.tsx`, page files, or hooks become god modules.
+- Do not fix a god component by moving all state and effects into a god provider or god hook.
+- Do not create React Context for mutable UI state.
+- Do not render short fixed control groups through artificial arrays when direct JSX is clearer.
+- Do not mix cube validation, search, or solver behavior into React components.
+
+## Data-Driven Rendering
+
+- Use arrays and `.map()` for API data, dynamic collections, long repeated groups, or lists whose members are not all known at author time.
+- Render items directly when the UI is a short fixed set of product controls.
+
+## Verification
+
+- Ensure extracted components do not change user-visible behavior.
+- Run `npm run build` after TypeScript or React component moves.
+- Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
+
+## Reference: `ai/rules/frontend-state-rules.md`
+
+# Frontend State Rules
+
+Rules for client-side state ownership in `apps/web`.
+
+## Always
+
+- Classify state as API load state, solve result state, form state, visualization state, page workflow state, or component-only UI state before moving it.
+- Keep API request details and response normalization in `apps/web/src/api`.
+- Use React Query as the owner for API health, strategy metadata, solve mutation state, and future server-state operations.
+- Keep API load state separate from solve result state.
+- Keep form input state separate from visualization playback state.
+- Keep visualization sync state in focused visualization hooks or components.
+- Use local component state for short-lived UI state owned by one component.
+- Lift state only to the nearest common owner that explicitly consumes it.
+- Keep state reset rules next to the state owner.
+- Represent selection or playback state by notation strings, move indexes, IDs, or small status values instead of duplicated cube objects.
+- Use stable refs for custom element synchronization details that should not trigger renders.
+
+## Never
+
+- Do not copy API data into broad mutable stores just to pass it through the UI.
+- Do not use React Context for mutable UI state.
+- Do not add Zustand unless state is truly cross-page or cross-feature and local state plus focused hooks are insufficient.
+- Do not copy React Query data into local state just to pass it to children.
+- Do not make a Three.js, web-component, facelet, or sticker state the canonical engine state.
+- Do not let visualization sync state own solver correctness.
+
+## Ownership Order
+
+1. `apps/web/src/api/client.ts` for shared HTTP details.
+2. React Query hooks under `apps/web/src/api/<domain>` for server/cache and mutation state.
+3. Nearest page or screen component for coordinated product workflow state.
+4. Focused hooks for repeated or stateful UI behavior.
+5. Component-local `useState` for component-only state.
+6. Stable refs for imperative custom element coordination.
+7. External client-state libraries only after current ownership options are insufficient.
+
+## Verification
+
+- Check changed components do not mirror API data into unrelated local stores.
+- Check reset behavior after editing scramble, changing limits, and solving.
+- Run `npm run build` after state ownership changes.
+
+## Reference: `ai/rules/api-rules.md`
+
+# API Rules
+
+Rules for the Axum HTTP API and the frontend API contract.
+
+## Always
+
+- Keep route handlers thin: extract state and JSON, validate request limits, choose the solver strategy, delegate to Rust engine code, and map results to HTTP responses.
+- Keep solver behavior in `cube-engine`; `crates/api` owns HTTP shape, safety limits, generated-solver loading, CORS, and error/status mapping.
+- Use Serde request and response structs as the API contract.
+- Keep client-facing solve requests notation-only through `/solve-notation`.
+- Validate API safety limits before parsing notation or invoking search.
+- Use named constants for public API caps such as maximum depth, maximum nodes, notation bytes, and JSON body bytes.
+- Preserve stable response status strings, error kinds, and metadata fields because `apps/web/src/api` normalizes them.
+- Verify returned solutions by replay before reporting success.
+- Keep generated pruning-table availability and corruption errors explicit in API responses.
+- Keep CORS origins narrow to known local web development and preview origins unless deployment requirements change.
+- Update `apps/web/src/api` types and normalization when API response fields or status values change.
+
+## Never
+
+- Do not add facelet, Kociemba, or raw sticker-state request payloads to browser-facing solve endpoints.
+- Do not implement search algorithms, heuristics, pruning table generation, or cube validation logic inside API handlers.
+- Do not let handlers panic or leak internal errors when a stable error response can represent the failure.
+- Do not accept unbounded request depth, node count, notation length, or JSON body size.
+- Do not add broad authentication, tenants, tokens, rate-limit frameworks, or OpenAPI layers without a current product requirement.
+- Do not make the frontend duplicate API status parsing or solver response normalization outside `apps/web/src/api`.
+
+## Verification
+
+- API tests: `npm run api:test` or `cargo test -p rubiks-cube-solver-api`.
+- Engine tests: `cargo test -p cube-engine` when API behavior depends on changed solver behavior.
+- Web API-client changes: `npm run build` and `npm run lint -w @rubiks-cube-solver/web`.
+- Cross-boundary product flow changes: `npm run test:e2e` when API, web, and generated pruning-table prerequisites are available.
+
+## Reference: `ai/architecture/api-boundary.md`
+
+# API Boundary Architecture
+
+`crates/api` is a native Axum HTTP API around the Rust solver engine.
+
+## Request Flow
+
+- `crates/api/src/main.rs` reads `RUBIKS_API_ADDR` and `RUBIKS_PRUNING_TABLE_DIR`, loads the generated two-phase solver, builds the router, and starts Axum.
+- `crates/api/src/lib.rs` owns the public router, CORS, request/response structs, endpoint handlers, request validation, solver dispatch, and engine-error mapping.
+- `ApiState` stores loaded generated solver artifacts behind shared state.
+- `/health` reports API availability and whether generated two-phase tables are loaded.
+- `/strategies` exposes solver strategy metadata from `cube-engine`.
+- `/solve-notation` accepts move notation plus limits, applies the scramble from solved state, invokes the selected solver, verifies replay, and returns a typed solve response.
+
+## Contract Shape
+
+- Requests use move notation, `maxDepth`, optional `maxNodes`, and optional `strategyId`.
+- Responses include `ok`, `status`, strategy metadata, generated-table status, effective limits, solution moves, explored nodes, replay verification, optional visualization state, and optional error metadata.
+- Status strings and error kinds are part of the frontend contract and should change only with matching updates in `apps/web/src/api`.
+- The API may return visualization adapter state, but browser clients should not submit facelet or Kociemba payloads.
+
+## Validation And Safety
+
+- API caps protect search cost and request size before the engine is called.
+- Unsupported strategies, invalid notation, excessive limits, missing generated tables, corrupt tables, no-solution-within-limits, and unverified solutions map to explicit statuses.
+- Search success is accepted only when replay verifies that returned moves solve the requested cube state.
+- Generated pruning tables are loaded at API startup for the generated two-phase strategy; unavailable or incompatible artifacts remain visible as API errors.
+
+## Frontend Boundary
+
+- `apps/web/src/api` owns base URL handling, health/strategy probing, solve request construction, response normalization, and API error fallback.
+- React components should consume normalized API-client results instead of parsing raw HTTP responses.
+- UI copy should describe scrambles, moves, limits, strategies, and solver statuses, not internal facelet/Kociemba representations.
+
+## Test Shape
+
+- Pure request behavior can be tested through `solve_notation_request` without starting a server.
+- Router behavior such as exposed routes and CORS should be tested through Axum service requests.
+- Contract changes should include tests for both success and error responses that the web client depends on.

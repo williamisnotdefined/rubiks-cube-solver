@@ -11,6 +11,7 @@ Canonical skill: `../../ai/skills/api-boundary.md`.
 Referenced context:
 - `../../ai/rules/api-rules.md`
 - `../../ai/rules/frontend-rules.md`
+- `../../ai/rules/frontend-api-hook-rules.md`
 - `../../ai/rules/testing-rules.md`
 - `../../ai/architecture/project-architecture.md`
 - `../../ai/architecture/api-boundary.md`
@@ -34,6 +35,7 @@ Keep the HTTP API as a thin, typed boundary around the Rust solver engine while 
 
 - `ai/rules/api-rules.md`
 - `ai/rules/frontend-rules.md`
+- `ai/rules/frontend-api-hook-rules.md`
 - `ai/rules/testing-rules.md`
 - `ai/architecture/project-architecture.md`
 - `ai/architecture/api-boundary.md`
@@ -45,7 +47,7 @@ Keep the HTTP API as a thin, typed boundary around the Rust solver engine while 
 - Keep handlers focused on HTTP extraction, validation, solver dispatch, and response mapping.
 - Keep search, cube validation, notation semantics, heuristics, and pruning logic in `cube-engine`.
 - Preserve notation-only solve requests; do not add browser-facing facelet or Kociemba input modes.
-- Update `apps/web/src/api` normalization when API response fields, status strings, or error kinds change.
+- Update `apps/web/src/api` request functions, React Query hooks, and normalization when API response fields, status strings, or error kinds change.
 - Add or update API tests around observable contract behavior, especially error responses consumed by the frontend.
 
 ## Expected Output
@@ -53,6 +55,7 @@ Keep the HTTP API as a thin, typed boundary around the Rust solver engine while 
 - API routes stay thin and typed.
 - Safety caps are enforced before expensive solver work.
 - Response statuses and metadata remain stable or are updated with matching frontend API-client changes.
+- React Query hooks continue to expose typed API state without leaking raw request functions into components.
 - Browser clients submit move notation and limits, never facelet strings.
 - Solver logic remains in Rust engine code.
 
@@ -116,13 +119,18 @@ Rules for the web visualization and frontend-to-API boundary.
 - Evaluate visualization-only libraries by whether they preserve this boundary.
 - Keep the rendered 3x3 cube no larger than 350px by 350px in the web UI.
 - Keep API request and response normalization in `apps/web/src/api`, not inline in React components.
-- Keep request functions free of React imports unless a concrete hook abstraction is introduced.
+- Keep request functions free of React imports; React Query hooks are the UI-facing API boundary.
+- Use React Query for API health, strategy metadata, solve mutations, and future server-state operations.
 - Keep server/API load state, solve result state, form input state, and visualization playback state separately owned.
 - Lift local UI state only to the nearest component that consumes it.
 - Extract React components only when UI repeats or a named component makes ownership and composition clearer.
 - Keep one-off UI inline when extraction would add indirection without reuse or state-boundary value.
+- Keep route or screen files readable as composition; `App.tsx` should stay thin as the UI grows.
+- Keep page-specific components, hooks, helpers, and CSS under the owning page folder until reused elsewhere.
+- Keep shared reusable components under `apps/web/src/components` only after there is a real shared consumer.
 - Prefer explicit props and children for reusable layout wrappers.
 - Use lightweight local validation for simple solve controls; add a form library only when current form complexity requires it.
+- Preserve the current plain CSS stack unless a concrete implemented need justifies a styling dependency.
 
 ## Never
 
@@ -131,9 +139,11 @@ Rules for the web visualization and frontend-to-API boundary.
 - Do not expose facelets, Kociemba strings, or facelet input modes in the UI.
 - Do not make browser clients submit facelets to the API; client-facing solve requests use move notation only.
 - Do not copy API data into broad mutable stores just to pass it through the UI.
-- Do not introduce React Query, Zustand, React Hook Form, Zod, React Router, Tailwind, or Storybook conventions unless the dependency exists and current UI complexity justifies it.
+- Do not introduce Zustand, React Hook Form, Zod, React Router, Tailwind, or Storybook conventions unless the dependency exists and current UI complexity justifies it.
 - Do not turn a large component into a hidden god hook or god provider.
 - Do not import raw request functions into UI once a project-level hook/client boundary exists for that operation.
+- Do not import query keys or raw request functions into React components.
+- Do not add styling or state-management dependencies to solve organization problems that focused components, hooks, and files can solve.
 
 ## External Library Note
 
@@ -144,6 +154,52 @@ Rules for the web visualization and frontend-to-API boundary.
 - Run `npm run build` after TypeScript, React, or API-client changes.
 - Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
 - Run API or engine tests too when UI changes require Rust contract changes.
+
+## Reference: `ai/rules/frontend-api-hook-rules.md`
+
+# Frontend API Hook Rules
+
+Rules for React Query API operations in `apps/web/src/api`.
+
+## Always
+
+- Group frontend API code by domain under `apps/web/src/api`.
+- Keep shared HTTP details in `apps/web/src/api/client.ts`, including base URL resolution, JSON headers, request helpers, and transport error mapping.
+- Split every operation into a raw request function, a React Query hook, and an operation `index.ts` when the operation is consumed by UI.
+- Keep request functions free of React imports.
+- Use `useQuery` for cached server state such as API health and strategy metadata.
+- Use `useMutation` for solve requests and other user-triggered operations.
+- Keep query keys stable in a domain-level `queryKeys.ts` when hooks share a domain.
+- Use `enabled` in query hooks when prerequisite API state or inputs are unavailable.
+- Keep operation-specific response normalization beside the operation that needs it.
+- Preserve domain-level API failures such as invalid notation or generated-table errors as typed normalized results when the API returns a stable response payload.
+- Let transport errors and invalid HTTP JSON failures surface through React Query error state instead of fabricating solver metadata.
+- Use explicit named exports in operation and domain barrels.
+
+## Never
+
+- Do not call raw request functions from React components.
+- Do not expose request functions from barrels consumed by UI components.
+- Do not import query keys into components.
+- Do not call `fetch` directly outside `apps/web/src/api/client.ts` unless the request is intentionally outside the app API contract.
+- Do not duplicate API status parsing or solve response normalization inside React components.
+- Do not create fake fallback solve metadata for transport errors.
+- Do not use React Query as the canonical solver state; the Rust API and engine remain authoritative.
+
+## Layout
+
+- Request file: `apps/web/src/api/<domain>/<operation>/<operation>.ts`.
+- Hook file: `apps/web/src/api/<domain>/<operation>/use<Operation>.ts`.
+- Operation barrel: `apps/web/src/api/<domain>/<operation>/index.ts`.
+- Domain barrel: `apps/web/src/api/<domain>/index.ts`.
+- Query keys: `apps/web/src/api/<domain>/queryKeys.ts`.
+- Domain types: `apps/web/src/api/<domain>/types.ts` when multiple operations share API types.
+
+## Verification
+
+- Search changed components for raw request function, `fetch`, or query-key imports.
+- Run `npm run build` after API-client or hook changes.
+- Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
 
 ## Reference: `ai/rules/testing-rules.md`
 

@@ -155,6 +155,7 @@
       "references": [
         "ai/rules/api-rules.md",
         "ai/rules/frontend-rules.md",
+        "ai/rules/frontend-api-hook-rules.md",
         "ai/rules/testing-rules.md",
         "ai/architecture/project-architecture.md",
         "ai/architecture/api-boundary.md",
@@ -181,6 +182,11 @@
       "canonicalPath": "ai/skills/frontend-visualization.md",
       "references": [
         "ai/rules/frontend-rules.md",
+        "ai/rules/frontend-component-rules.md",
+        "ai/rules/frontend-state-rules.md",
+        "ai/rules/frontend-api-hook-rules.md",
+        "ai/rules/frontend-form-rules.md",
+        "ai/rules/frontend-styling-rules.md",
         "ai/architecture/project-architecture.md",
         "ai/architecture/frontend-visualization.md",
         "ai/architecture/houstonp-rubiks-cube.md",
@@ -198,6 +204,136 @@
         },
         "github": {
           "applyTo": "apps/web/**/*.{ts,tsx,css},crates/api/**/*,roadmap.md"
+        }
+      }
+    },
+    {
+      "name": "frontend-componentization",
+      "description": "Use when adding, changing, extracting, or reusing React components, page-level screens, large frontend files, or repeated UI in apps/web.",
+      "canonicalPath": "ai/skills/frontend-componentization.md",
+      "references": [
+        "ai/rules/frontend-component-rules.md",
+        "ai/rules/frontend-state-rules.md",
+        "ai/rules/frontend-form-rules.md",
+        "ai/rules/frontend-styling-rules.md",
+        "ai/architecture/project-architecture.md",
+        "ai/architecture/frontend-visualization.md"
+      ],
+      "routes": {
+        "opencode": ".opencode/skills/frontend-componentization/SKILL.md",
+        "cursor": ".cursor/rules/frontend-componentization.mdc",
+        "github": ".github/instructions/frontend-componentization.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "apps/web/**/*.{ts,tsx,css},roadmap.md",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "apps/web/**/*.{ts,tsx,css},roadmap.md"
+        }
+      }
+    },
+    {
+      "name": "frontend-state-management",
+      "description": "Use when adding or changing client-side state, custom hooks, visualization synchronization, or API load/result flow in apps/web.",
+      "canonicalPath": "ai/skills/frontend-state-management.md",
+      "references": [
+        "ai/rules/frontend-state-rules.md",
+        "ai/rules/frontend-api-hook-rules.md",
+        "ai/rules/frontend-component-rules.md",
+        "ai/rules/frontend-form-rules.md",
+        "ai/architecture/frontend-visualization.md",
+        "ai/glossary/cube-terms.md"
+      ],
+      "routes": {
+        "opencode": ".opencode/skills/frontend-state-management/SKILL.md",
+        "cursor": ".cursor/rules/frontend-state-management.mdc",
+        "github": ".github/instructions/frontend-state-management.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "apps/web/**/*.{ts,tsx},roadmap.md",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "apps/web/**/*.{ts,tsx},roadmap.md"
+        }
+      }
+    },
+    {
+      "name": "frontend-form-validation",
+      "description": "Use when adding or changing solve controls, scramble inputs, frontend limit validation, or form behavior in apps/web.",
+      "canonicalPath": "ai/skills/frontend-form-validation.md",
+      "references": [
+        "ai/rules/frontend-form-rules.md",
+        "ai/rules/frontend-component-rules.md",
+        "ai/rules/frontend-state-rules.md",
+        "ai/rules/api-rules.md",
+        "ai/architecture/api-boundary.md"
+      ],
+      "routes": {
+        "opencode": ".opencode/skills/frontend-form-validation/SKILL.md",
+        "cursor": ".cursor/rules/frontend-form-validation.mdc",
+        "github": ".github/instructions/frontend-form-validation.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "apps/web/**/*.{ts,tsx},crates/api/**/*.{rs,toml},roadmap.md",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "apps/web/**/*.{ts,tsx},crates/api/**/*.{rs,toml},roadmap.md"
+        }
+      }
+    },
+    {
+      "name": "frontend-styling",
+      "description": "Use when changing CSS, responsive layout, visual treatment, or cube visualization sizing in apps/web.",
+      "canonicalPath": "ai/skills/frontend-styling.md",
+      "references": [
+        "ai/rules/frontend-styling-rules.md",
+        "ai/rules/frontend-component-rules.md",
+        "ai/architecture/frontend-visualization.md"
+      ],
+      "routes": {
+        "opencode": ".opencode/skills/frontend-styling/SKILL.md",
+        "cursor": ".cursor/rules/frontend-styling.mdc",
+        "github": ".github/instructions/frontend-styling.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "apps/web/**/*.{ts,tsx,css},roadmap.md",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "apps/web/**/*.{ts,tsx,css},roadmap.md"
+        }
+      }
+    },
+    {
+      "name": "react-query-request-hooks",
+      "description": "Use when adding or changing apps/web API query hooks, mutation hooks, request functions, query keys, or response normalization.",
+      "canonicalPath": "ai/skills/react-query-request-hooks.md",
+      "references": [
+        "ai/rules/frontend-api-hook-rules.md",
+        "ai/rules/frontend-state-rules.md",
+        "ai/rules/api-rules.md",
+        "ai/architecture/api-boundary.md",
+        "ai/architecture/frontend-visualization.md"
+      ],
+      "routes": {
+        "opencode": ".opencode/skills/react-query-request-hooks/SKILL.md",
+        "cursor": ".cursor/rules/react-query-request-hooks.mdc",
+        "github": ".github/instructions/react-query-request-hooks.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "apps/web/src/api/**/*.{ts,tsx},apps/web/src/pages/**/*.{ts,tsx},crates/api/**/*.{rs,toml},roadmap.md",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "apps/web/src/api/**/*.{ts,tsx},apps/web/src/pages/**/*.{ts,tsx},crates/api/**/*.{rs,toml},roadmap.md"
         }
       }
     }

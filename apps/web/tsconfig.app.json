@@ -8,6 +8,13 @@
     "module": "ESNext",
     "skipLibCheck": true,
     "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": {
+      "@api/*": ["src/api/*"],
+      "@components/*": ["src/components/*"],
+      "@pages/*": ["src/pages/*"],
+      "@src/*": ["src/*"]
+    },
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,

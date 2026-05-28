@@ -58,6 +58,11 @@ Each skill entry should include:
 - `solver-search`: BFS, IDDFS, IDA*, heuristics, pruning, and pattern database work.
 - `api-boundary`: Axum HTTP API, API validation, generated solver loading, solve-status contracts, and web API-client behavior.
 - `frontend-visualization`: web UI, 3D visualization, playback, and frontend-to-API boundary.
+- `frontend-componentization`: React component extraction, page composition, and frontend file ownership in `apps/web`.
+- `frontend-state-management`: frontend state ownership, custom hooks, API load/result flow, and visualization synchronization.
+- `frontend-form-validation`: solve controls, scramble inputs, frontend limit validation, and notation-only form behavior.
+- `frontend-styling`: CSS, responsive layout, visual treatment, and cube visualization sizing in `apps/web`.
+- `react-query-request-hooks`: React Query API hooks, request functions, query keys, and response normalization in `apps/web`.
 
 ## Adding Knowledge
 

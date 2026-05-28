@@ -1,0 +1,1 @@
+export { useGetHealth } from './useGetHealth'
