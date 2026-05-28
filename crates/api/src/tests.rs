@@ -2,7 +2,7 @@ use axum::{
     body::Body,
     http::{Method, Request, StatusCode},
 };
-use cube_engine::SolverStrategy;
+use cube_engine::{Scramble, SolverStrategy};
 use tower::ServiceExt;
 
 use crate::response::unverified_solution_response_from_parts;
@@ -47,9 +47,16 @@ fn generated_strategy_reports_unavailable_when_solver_not_loaded() {
 }
 
 #[test]
-fn generated_quality_strategy_reports_unavailable_when_solver_not_loaded() {
+fn generated_quality_strategy_without_tables_does_not_return_reverse_scramble_shortcut() {
+    let moves = "R U";
+    let inverse_moves: Vec<String> = Scramble::parse(moves)
+        .expect("test scramble should parse")
+        .inverse()
+        .into_iter()
+        .map(|move_| move_.notation().to_owned())
+        .collect();
     let request = SolveNotationRequest {
-        moves: String::new(),
+        moves: moves.to_owned(),
         max_depth: 30,
         max_nodes: Some(1_000),
         strategy_id: "generated-two-phase-quality".to_owned(),
@@ -62,6 +69,26 @@ fn generated_quality_strategy_reports_unavailable_when_solver_not_loaded() {
     assert_eq!(response.status, "generated_tables_unavailable");
     assert_eq!(response.strategy_id, "generated-two-phase-quality");
     assert_eq!(response.solver_mode, "generated_two_phase_quality");
+    assert!(response.moves.is_empty());
+    assert_ne!(response.moves, inverse_moves);
+}
+
+#[test]
+fn solve_notation_runtime_source_does_not_use_inverse_notation_shortcut() {
+    const SOLVE_SOURCE: &str = include_str!("solve.rs");
+
+    assert!(
+        !SOLVE_SOURCE.contains("Scramble::"),
+        "/solve-notation must build a cube state from notation, not keep scramble semantics in the runtime solver path"
+    );
+    assert!(
+        !SOLVE_SOURCE.contains(".inverse("),
+        "/solve-notation must not derive a solution by inverting the submitted notation"
+    );
+    assert!(
+        !SOLVE_SOURCE.contains(".inverse_algorithm("),
+        "/solve-notation must not derive a solution by inverting the submitted notation"
+    );
 }
 
 #[test]

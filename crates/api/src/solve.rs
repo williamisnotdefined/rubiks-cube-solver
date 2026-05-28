@@ -1,7 +1,7 @@
 use axum::http::StatusCode;
 use axum::Json;
 use cube_engine::{
-    Cube, FaceletString, Scramble, SearchBudget, SearchOutcome, SolveError, SolverConfig,
+    Algorithm, Cube, FaceletString, SearchBudget, SearchOutcome, SolveError, SolverConfig,
     SolverStrategy,
 };
 
@@ -319,9 +319,9 @@ fn solve_configured_cube(
 }
 
 fn cube_from_notation(input: &str) -> Result<Cube, String> {
-    let scramble = Scramble::parse(input).map_err(|error| error.to_string())?;
+    let algorithm = Algorithm::parse(input).map_err(|error| error.to_string())?;
     let mut cube = Cube::solved();
-    scramble.apply_to(&mut cube);
+    algorithm.apply_to(&mut cube);
 
     Ok(cube)
 }
