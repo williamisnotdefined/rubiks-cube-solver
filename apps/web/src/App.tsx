@@ -5,16 +5,14 @@ import {
   apiSolverBoundary,
   apiSolverLoadingState,
   loadApiSolver,
-  type FaceletSolveResult,
   type ApiSolverLoadState,
+  type SolveResult,
 } from './api/solverClient'
 
 const defaultNotation = "R2 D2 F2 D L2 F2 U' R2 D B2 L2 U' B' R' B' R2 B2 L B U'"
 const defaultMaxDepth = 30
 const defaultMaxNodes = 10_000_000
 const defaultStrategyId = 'generated-two-phase'
-
-type InputMode = 'facelets' | 'notation'
 
 if (!customElements.get('rubiks-cube')) {
   RubiksCubeElement.register()
@@ -38,12 +36,10 @@ function App() {
   const cubeRef = useRef<RubiksCubeElement | null>(null)
   const [solverState, setSolverState] =
     useState<ApiSolverLoadState>(apiSolverBoundary)
-  const [inputMode, setInputMode] = useState<InputMode>('facelets')
-  const [faceletsInput, setFaceletsInput] = useState('')
   const [notation, setNotation] = useState(defaultNotation)
   const [maxDepthInput, setMaxDepthInput] = useState(String(defaultMaxDepth))
   const [maxNodesInput, setMaxNodesInput] = useState(String(defaultMaxNodes))
-  const [cubeFacelets, setCubeFacelets] = useState('')
+  const [cubeVisualState, setCubeVisualState] = useState('')
   const [solveState, setSolveState] = useState<SolveState>({ status: 'idle' })
 
   useEffect(() => {
@@ -56,12 +52,6 @@ function App() {
       }
 
       setSolverState(state)
-
-      if (state.status === 'ready') {
-        const solvedFacelets = state.client.solvedFacelets()
-        setCubeFacelets(solvedFacelets)
-        setFaceletsInput(solvedFacelets)
-      }
     })
 
     return () => {
@@ -70,20 +60,20 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (cubeFacelets.length === 0) {
+    if (cubeVisualState.length === 0) {
       return
     }
 
     const timeout = window.setTimeout(() => {
       try {
-        cubeRef.current?.setState(cubeFacelets)
+        cubeRef.current?.setState(cubeVisualState)
       } catch {
         // The custom element may still be finishing its first connection pass.
       }
     }, 0)
 
     return () => window.clearTimeout(timeout)
-  }, [cubeFacelets])
+  }, [cubeVisualState])
 
   const solverClient = solverState.status === 'ready' ? solverState.client : undefined
   const strategyOptions = solverState.status === 'ready' ? solverState.strategyOptions : []
@@ -96,11 +86,10 @@ function App() {
     maxDepthInput.trim().length > 0 && Number.isInteger(maxDepth) && maxDepth >= 0
   const maxNodesIsValid =
     maxNodesInput.trim().length > 0 && Number.isInteger(maxNodes) && maxNodes >= 0
-  const primaryInputValue = inputMode === 'facelets' ? faceletsInput : notation
   const disabled =
     solverClient === undefined ||
     solving ||
-    primaryInputValue.trim().length === 0 ||
+    notation.trim().length === 0 ||
     selectedStrategy === undefined ||
     !maxDepthIsValid ||
     !maxNodesIsValid
@@ -121,14 +110,11 @@ function App() {
         maxNodes,
         strategyId: defaultStrategyId,
       }
-      const result =
-        inputMode === 'facelets'
-          ? await solverClient.solveFacelets(faceletsInput.trim(), limits)
-          : await solverClient.solveNotation(notation.trim(), limits)
+      const result = await solverClient.solveNotation(notation.trim(), limits)
 
       if (result.status === 'success') {
-        if (result.inputFacelets !== undefined) {
-          setCubeFacelets(result.inputFacelets)
+        if (result.visualState !== undefined) {
+          setCubeVisualState(result.visualState)
         }
         setSolveState({
           status: 'done',
@@ -150,16 +136,6 @@ function App() {
     } catch {
       setSolveState({ status: 'error', message: 'Error' })
     }
-  }
-
-  function handleInputModeChange(nextInputMode: InputMode) {
-    setInputMode(nextInputMode)
-    setSolveState({ status: 'idle' })
-  }
-
-  function handleFaceletsChange(nextFacelets: string) {
-    setFaceletsInput(nextFacelets)
-    setSolveState({ status: 'idle' })
   }
 
   function handleNotationChange(nextNotation: string) {
@@ -193,41 +169,14 @@ function App() {
       </section>
 
       <form className="solve-form" onSubmit={handleSubmit}>
-        <fieldset className="input-mode" aria-label="Input type">
-          <legend className="field-label">Input</legend>
-          <label className="mode-option">
-            <input
-              checked={inputMode === 'facelets'}
-              name="input-mode"
-              type="radio"
-              onChange={() => handleInputModeChange('facelets')}
-            />
-            Facelets
-          </label>
-          <label className="mode-option">
-            <input
-              checked={inputMode === 'notation'}
-              name="input-mode"
-              type="radio"
-              onChange={() => handleInputModeChange('notation')}
-            />
-            Moves
-          </label>
-        </fieldset>
         <label className="field field-primary">
-          <span className="field-label">
-            {inputMode === 'facelets' ? 'Cube state facelets' : 'Move notation'}
-          </span>
+          <span className="field-label">Move notation</span>
           <input
             autoComplete="off"
             className="primary-input"
             spellCheck={false}
-            value={inputMode === 'facelets' ? faceletsInput : notation}
-            onChange={(event) =>
-              inputMode === 'facelets'
-                ? handleFaceletsChange(event.target.value)
-                : handleNotationChange(event.target.value)
-            }
+            value={notation}
+            onChange={(event) => handleNotationChange(event.target.value)}
           />
         </label>
         <div className="api-status" aria-live="polite">
@@ -267,9 +216,7 @@ function App() {
         </button>
         <p className="strategy-description">
           {selectedStrategy?.statusText ?? 'Run npm run dev to start the API and web app together.'}
-          {inputMode === 'facelets'
-            ? ' Paste a 54-character Kociemba state using U, R, F, D, L, and B.'
-            : ' Move notation is converted to a Rust cube state before solving.'}
+          {' Move notation is converted to a Rust cube state before solving.'}
         </p>
       </form>
 
@@ -310,7 +257,7 @@ function App() {
   )
 }
 
-function solveErrorMessage(result: Exclude<FaceletSolveResult, { ok: true }>): string {
+function solveErrorMessage(result: Exclude<SolveResult, { ok: true }>): string {
   if (result.status === 'invalid_notation') {
     return 'Invalid move notation'
   }
@@ -350,7 +297,7 @@ function solveErrorMessage(result: Exclude<FaceletSolveResult, { ok: true }>): s
   return result.message
 }
 
-function solveErrorDetail(result: Exclude<FaceletSolveResult, { ok: true }>): string | undefined {
+function solveErrorDetail(result: Exclude<SolveResult, { ok: true }>): string | undefined {
   if (result.status === 'not_found_within_limits') {
     return `${result.strategyLabel} explored ${formatNumber(
       result.exploredNodes ?? 0,

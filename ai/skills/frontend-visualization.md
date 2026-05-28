@@ -18,13 +18,15 @@ Build a visualization layer that renders cube state and controls playback withou
 
 - Confirm the task belongs to the frontend phase before adding frontend dependencies.
 - Keep solver behavior behind the Rust HTTP API.
+- Keep client-facing solve flows notation-only; do not add facelet or Kociemba UI inputs.
 - Evaluate visualization libraries as adapters, not engine replacements.
 - If using `@houstonp/rubiks-cube`, verify headless move-option behavior before relying on it.
-- Ensure desktop and mobile rendering are considered when UI exists.
+- Ensure desktop and mobile rendering are considered when UI exists, with the cube no larger than 350px by 350px.
 
 ## Expected Output
 
 - UI sends moves and receives states.
+- Browser clients never submit facelets to the API.
 - Solver logic remains in Rust.
 - External visualization code does not define canonical cube state.
 

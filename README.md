@@ -111,12 +111,9 @@ Endpoints:
 
 - `GET /health`
 - `GET /strategies`
-- `POST /validate` with `{ "facelets": "..." }`
-- `POST /solve` with `{ "facelets": "...", "strategyId": "generated-two-phase", "maxDepth": 30, "maxNodes": 10000000 }`
 - `POST /solve-notation` with `{ "moves": "R2 D2 F'", "strategyId": "generated-two-phase", "maxDepth": 30, "maxNodes": 10000000 }`
-- `POST /playback` with `{ "facelets": "...", "moves": "R U R'" }`
 
-Every successful API solve includes `replayVerified=true`. `/solve-notation` uses move notation only to build the submitted cube state inside Rust; it does not use the inverse notation as a solution path.
+Every successful API solve includes `replayVerified=true`. The client-facing API accepts move notation only; facelet/Kociemba strings are not client request payloads.
 
 ## API-Backed Web App
 
@@ -139,7 +136,7 @@ npm run lint -w @rubiks-cube-solver/web
 npm run test:e2e
 ```
 
-Playwright starts both the API and the Vite preview server. The UI accepts Kociemba facelet states as the primary product input, keeps move notation as an alternate input mode, defaults to `generated-two-phase`, rejects impossible facelet states through the Rust API, and displays `replay verified` only for API-confirmed solving results.
+Playwright starts both the API and the Vite preview server. The UI accepts move notation as the only product input, defaults to `generated-two-phase`, never asks the browser client to submit facelets, and displays `replay verified` only for API-confirmed solving results.
 
 ## Dataset Generation
 

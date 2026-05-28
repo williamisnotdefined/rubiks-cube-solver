@@ -6,8 +6,7 @@ use axum::http::{header::CONTENT_TYPE, HeaderValue, Method, StatusCode};
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use cube_engine::{
-    playback_facelet_solution, validate_facelet_string, Cube, CubeValidationError,
-    FaceletConversionError, FaceletParseError, FaceletPlaybackError, FaceletString,
+    Cube, CubeValidationError, FaceletConversionError, FaceletParseError, FaceletString,
     GeneratedTwoPhaseSolver, Scramble, SearchBudget, SearchOutcome, SolveError, SolveInputError,
     SolverConfig, SolverStrategy,
 };
@@ -18,7 +17,6 @@ pub const DEFAULT_API_ADDR: &str = "127.0.0.1:8787";
 pub const DEFAULT_PRUNING_TABLE_DIR: &str = "crates/cube-engine/pruning-tables";
 pub const MAX_API_DEPTH: usize = 30;
 pub const MAX_API_NODES: usize = 10_000_000;
-pub const MAX_FACELET_BYTES: usize = 54;
 pub const MAX_NOTATION_BYTES: usize = 4096;
 pub const MAX_JSON_BODY_BYTES: usize = 8192;
 
@@ -72,10 +70,7 @@ pub fn api_router(state: ApiState) -> Router {
     Router::new()
         .route("/health", get(health))
         .route("/strategies", get(strategies))
-        .route("/validate", post(validate))
-        .route("/solve", post(solve))
         .route("/solve-notation", post(solve_notation))
-        .route("/playback", post(playback))
         .layer(DefaultBodyLimit::max(MAX_JSON_BODY_BYTES))
         .layer(cors_layer())
         .with_state(state)
@@ -141,50 +136,6 @@ async fn strategies() -> Json<Vec<StrategyResponse>> {
     )
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
-pub struct ValidateRequest {
-    pub facelets: String,
-}
-
-#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
-pub struct ValidateResponse {
-    pub ok: bool,
-    pub kind: Option<String>,
-    pub message: Option<String>,
-}
-
-async fn validate(Json(request): Json<ValidateRequest>) -> (StatusCode, Json<ValidateResponse>) {
-    match validate_facelet_string(&request.facelets) {
-        Ok(()) => (
-            StatusCode::OK,
-            Json(ValidateResponse {
-                ok: true,
-                kind: None,
-                message: None,
-            }),
-        ),
-        Err(error) => (
-            StatusCode::BAD_REQUEST,
-            Json(ValidateResponse {
-                ok: false,
-                kind: Some(solve_input_error_kind(&error).to_owned()),
-                message: Some(error.to_string()),
-            }),
-        ),
-    }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
-pub struct SolveRequest {
-    pub facelets: String,
-    #[serde(rename = "maxDepth", default = "default_max_depth")]
-    pub max_depth: usize,
-    #[serde(rename = "maxNodes")]
-    pub max_nodes: Option<usize>,
-    #[serde(rename = "strategyId", default = "default_strategy_id")]
-    pub strategy_id: String,
-}
-
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct SolveResponse {
     pub ok: bool,
@@ -207,8 +158,8 @@ pub struct SolveResponse {
     pub explored_nodes: Option<usize>,
     #[serde(rename = "replayVerified")]
     pub replay_verified: Option<bool>,
-    #[serde(rename = "inputFacelets")]
-    pub input_facelets: Option<String>,
+    #[serde(rename = "visualState")]
+    pub visual_state: Option<String>,
     #[serde(rename = "errorKind")]
     pub error_kind: Option<String>,
     pub message: Option<String>,
@@ -225,47 +176,11 @@ pub struct SolveNotationRequest {
     pub strategy_id: String,
 }
 
-async fn solve(
-    State(state): State<ApiState>,
-    Json(request): Json<SolveRequest>,
-) -> (StatusCode, Json<SolveResponse>) {
-    solve_request(&state, request)
-}
-
 async fn solve_notation(
     State(state): State<ApiState>,
     Json(request): Json<SolveNotationRequest>,
 ) -> (StatusCode, Json<SolveResponse>) {
     solve_notation_request(&state, request)
-}
-
-pub fn solve_request(state: &ApiState, request: SolveRequest) -> (StatusCode, Json<SolveResponse>) {
-    let request = match validate_solve_request_limits(request) {
-        Ok(request) => request,
-        Err(response) => return (StatusCode::BAD_REQUEST, Json(*response)),
-    };
-
-    let Some(strategy) = SolverStrategy::from_id(&request.strategy_id) else {
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(error_response(
-                &request,
-                None,
-                "unsupported_strategy",
-                "unsupported_strategy",
-                SolverStrategy::unsupported_strategy_message(&request.strategy_id),
-            )),
-        );
-    };
-
-    match strategy {
-        SolverStrategy::GeneratedTwoPhase => solve_generated_request(state, request, strategy),
-        SolverStrategy::BoundedIdaStar
-        | SolverStrategy::TwoPhaseBaseline
-        | SolverStrategy::OptimalIdaStarOrientationPdb => {
-            solve_configured_request(request, strategy)
-        }
-    }
 }
 
 pub fn solve_notation_request(
@@ -310,7 +225,7 @@ pub fn solve_notation_request(
             );
         }
     };
-    let input_facelets = FaceletString::from_cube(&cube).to_string();
+    let visual_state = FaceletString::from_cube(&cube).to_string();
 
     match strategy {
         SolverStrategy::GeneratedTwoPhase => solve_generated_cube(
@@ -319,7 +234,7 @@ pub fn solve_notation_request(
             request.max_nodes,
             strategy,
             cube,
-            input_facelets,
+            visual_state,
         ),
         SolverStrategy::BoundedIdaStar
         | SolverStrategy::TwoPhaseBaseline
@@ -328,55 +243,9 @@ pub fn solve_notation_request(
             request.max_nodes,
             strategy,
             &cube,
-            input_facelets,
+            visual_state,
         ),
     }
-}
-
-fn validate_solve_request_limits(
-    mut request: SolveRequest,
-) -> Result<SolveRequest, Box<SolveResponse>> {
-    if request.max_depth > MAX_API_DEPTH {
-        return Err(Box::new(error_response(
-            &request,
-            None,
-            "invalid_limits",
-            "max_depth_exceeds_limit",
-            format!(
-                "maxDepth {} exceeds API limit {}",
-                request.max_depth, MAX_API_DEPTH
-            ),
-        )));
-    }
-
-    if request.facelets.len() > MAX_FACELET_BYTES {
-        return Err(Box::new(error_response(
-            &request,
-            None,
-            "request_too_large",
-            "facelets_too_large",
-            format!(
-                "facelets payload is {} bytes; API limit is {} bytes",
-                request.facelets.len(),
-                MAX_FACELET_BYTES
-            ),
-        )));
-    }
-
-    match normalize_api_max_nodes(request.max_nodes) {
-        Ok(max_nodes) => request.max_nodes = Some(max_nodes),
-        Err((error_kind, message)) => {
-            return Err(Box::new(error_response(
-                &request,
-                None,
-                "invalid_limits",
-                error_kind,
-                message,
-            )));
-        }
-    }
-
-    Ok(request)
 }
 
 fn validate_solve_notation_request_limits(
@@ -447,149 +316,13 @@ fn normalize_api_max_nodes(max_nodes: Option<usize>) -> Result<usize, (&'static 
     Ok(max_nodes)
 }
 
-fn solve_generated_request(
-    state: &ApiState,
-    request: SolveRequest,
-    strategy: SolverStrategy,
-) -> (StatusCode, Json<SolveResponse>) {
-    let Some(solver) = &state.generated_solver else {
-        return (
-            StatusCode::SERVICE_UNAVAILABLE,
-            Json(error_response(
-                &request,
-                Some(strategy),
-                "generated_tables_unavailable",
-                "generated_tables_unavailable",
-                "generated two-phase pruning tables are not loaded".to_owned(),
-            )),
-        );
-    };
-    let cube = match cube_from_facelets(&request.facelets) {
-        Ok(cube) => cube,
-        Err(message) => {
-            return (
-                StatusCode::BAD_REQUEST,
-                Json(error_response(
-                    &request,
-                    Some(strategy),
-                    "invalid_input",
-                    "invalid_input",
-                    message,
-                )),
-            );
-        }
-    };
-    let budget = SearchBudget::with_limits(request.max_depth, request.max_nodes);
-
-    match solver.solve(&cube, budget) {
-        Ok(result) => match result.outcome {
-            SearchOutcome::Found(solution) => {
-                let replay_verified = solution_solves(&cube, solution.moves());
-                if !replay_verified {
-                    return (
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(unverified_solution_response(
-                            &request,
-                            strategy,
-                            Some(FaceletString::from_cube(&cube).to_string()),
-                        )),
-                    );
-                }
-
-                (
-                    StatusCode::OK,
-                    Json(success_response(
-                        &request,
-                        strategy,
-                        solution.moves(),
-                        solution.len(),
-                        solution.explored_nodes(),
-                        true,
-                        Some(FaceletString::from_cube(&cube).to_string()),
-                    )),
-                )
-            }
-            SearchOutcome::NotFoundWithinLimits { explored_nodes } => (
-                StatusCode::OK,
-                Json(not_found_response(&request, strategy, explored_nodes)),
-            ),
-        },
-        Err(error) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(error_response(
-                &request,
-                Some(strategy),
-                "generated_tables_corrupt",
-                "generated_tables_corrupt",
-                error.to_string(),
-            )),
-        ),
-    }
-}
-
-fn solve_configured_request(
-    request: SolveRequest,
-    strategy: SolverStrategy,
-) -> (StatusCode, Json<SolveResponse>) {
-    let config = SolverConfig::with_strategy(request.max_depth, request.max_nodes, strategy);
-
-    match cube_engine::solve_facelet_string(&request.facelets, config) {
-        Ok(solution) => (
-            StatusCode::OK,
-            Json(success_response(
-                &request,
-                strategy,
-                solution.moves(),
-                solution.length(),
-                solution.explored_nodes(),
-                true,
-                Some(request.facelets.clone()),
-            )),
-        ),
-        Err(SolveError::InvalidInput { error }) => (
-            StatusCode::BAD_REQUEST,
-            Json(error_response(
-                &request,
-                Some(strategy),
-                "invalid_input",
-                solve_input_error_kind(&error),
-                error.to_string(),
-            )),
-        ),
-        Err(SolveError::NotFoundWithinLimits { explored_nodes, .. }) => (
-            StatusCode::OK,
-            Json(not_found_response(&request, strategy, explored_nodes)),
-        ),
-        Err(SolveError::GeneratedTablesUnavailable { error, .. }) => (
-            StatusCode::SERVICE_UNAVAILABLE,
-            Json(error_response(
-                &request,
-                Some(strategy),
-                "generated_tables_unavailable",
-                "generated_tables_unavailable",
-                error.to_string(),
-            )),
-        ),
-        Err(SolveError::GeneratedTablesCorrupt { error, .. }) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(error_response(
-                &request,
-                Some(strategy),
-                "generated_tables_corrupt",
-                "generated_tables_corrupt",
-                error.to_string(),
-            )),
-        ),
-    }
-}
-
 fn solve_generated_cube(
     state: &ApiState,
     max_depth: usize,
     max_nodes: Option<usize>,
     strategy: SolverStrategy,
     cube: Cube,
-    input_facelets: String,
+    visual_state: String,
 ) -> (StatusCode, Json<SolveResponse>) {
     let Some(solver) = &state.generated_solver else {
         return (
@@ -602,7 +335,7 @@ fn solve_generated_cube(
                 "generated_tables_unavailable",
                 "generated_tables_unavailable",
                 "generated two-phase pruning tables are not loaded".to_owned(),
-                Some(input_facelets),
+                Some(visual_state),
             )),
         );
     };
@@ -619,7 +352,7 @@ fn solve_generated_cube(
                             max_depth,
                             max_nodes,
                             strategy,
-                            Some(input_facelets),
+                            Some(visual_state),
                         )),
                     );
                 }
@@ -634,7 +367,7 @@ fn solve_generated_cube(
                         solution.len(),
                         solution.explored_nodes(),
                         true,
-                        Some(input_facelets),
+                        Some(visual_state),
                     )),
                 )
             }
@@ -645,7 +378,7 @@ fn solve_generated_cube(
                     max_nodes,
                     strategy,
                     explored_nodes,
-                    Some(input_facelets),
+                    Some(visual_state),
                 )),
             ),
         },
@@ -659,7 +392,7 @@ fn solve_generated_cube(
                 "generated_tables_corrupt",
                 "generated_tables_corrupt",
                 error.to_string(),
-                Some(input_facelets),
+                Some(visual_state),
             )),
         ),
     }
@@ -670,7 +403,7 @@ fn solve_configured_cube(
     max_nodes: Option<usize>,
     strategy: SolverStrategy,
     cube: &Cube,
-    input_facelets: String,
+    visual_state: String,
 ) -> (StatusCode, Json<SolveResponse>) {
     let config = SolverConfig::with_strategy(max_depth, max_nodes, strategy);
 
@@ -685,7 +418,7 @@ fn solve_configured_cube(
                 solution.length(),
                 solution.explored_nodes(),
                 true,
-                Some(input_facelets),
+                Some(visual_state),
             )),
         ),
         Err(SolveError::InvalidInput { error }) => (
@@ -698,7 +431,7 @@ fn solve_configured_cube(
                 "invalid_input",
                 solve_input_error_kind(&error),
                 error.to_string(),
-                Some(input_facelets),
+                Some(visual_state),
             )),
         ),
         Err(SolveError::NotFoundWithinLimits { explored_nodes, .. }) => (
@@ -708,7 +441,7 @@ fn solve_configured_cube(
                 max_nodes,
                 strategy,
                 explored_nodes,
-                Some(input_facelets),
+                Some(visual_state),
             )),
         ),
         Err(SolveError::GeneratedTablesUnavailable { error, .. }) => (
@@ -721,7 +454,7 @@ fn solve_configured_cube(
                 "generated_tables_unavailable",
                 "generated_tables_unavailable",
                 error.to_string(),
-                Some(input_facelets),
+                Some(visual_state),
             )),
         ),
         Err(SolveError::GeneratedTablesCorrupt { error, .. }) => (
@@ -734,76 +467,10 @@ fn solve_configured_cube(
                 "generated_tables_corrupt",
                 "generated_tables_corrupt",
                 error.to_string(),
-                Some(input_facelets),
+                Some(visual_state),
             )),
         ),
     }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
-pub struct PlaybackRequest {
-    pub facelets: String,
-    pub moves: String,
-}
-
-#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
-pub struct PlaybackResponse {
-    pub ok: bool,
-    pub status: String,
-    pub states: Vec<String>,
-    #[serde(rename = "finalIsSolved")]
-    pub final_is_solved: bool,
-    #[serde(rename = "errorKind")]
-    pub error_kind: Option<String>,
-    pub message: Option<String>,
-}
-
-async fn playback(Json(request): Json<PlaybackRequest>) -> (StatusCode, Json<PlaybackResponse>) {
-    match playback_facelet_solution(&request.facelets, &request.moves) {
-        Ok(result) => (
-            StatusCode::OK,
-            Json(PlaybackResponse {
-                ok: true,
-                status: "success".to_owned(),
-                states: result.states,
-                final_is_solved: result.final_is_solved,
-                error_kind: None,
-                message: None,
-            }),
-        ),
-        Err(error) => (
-            StatusCode::BAD_REQUEST,
-            Json(PlaybackResponse {
-                ok: false,
-                status: playback_error_status(&error).to_owned(),
-                states: Vec::new(),
-                final_is_solved: false,
-                error_kind: Some(playback_error_kind(&error).to_owned()),
-                message: Some(error.to_string()),
-            }),
-        ),
-    }
-}
-
-fn success_response(
-    request: &SolveRequest,
-    strategy: SolverStrategy,
-    moves: &[cube_engine::Move],
-    length: usize,
-    explored_nodes: usize,
-    replay_verified: bool,
-    input_facelets: Option<String>,
-) -> SolveResponse {
-    success_response_from_parts(
-        request.max_depth,
-        request.max_nodes,
-        strategy,
-        moves,
-        length,
-        explored_nodes,
-        replay_verified,
-        input_facelets,
-    )
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -815,7 +482,7 @@ fn success_response_from_parts(
     length: usize,
     explored_nodes: usize,
     replay_verified: bool,
-    input_facelets: Option<String>,
+    visual_state: Option<String>,
 ) -> SolveResponse {
     let metadata = strategy.metadata();
     SolveResponse {
@@ -834,24 +501,10 @@ fn success_response_from_parts(
         length: Some(length),
         explored_nodes: Some(explored_nodes),
         replay_verified: Some(replay_verified),
-        input_facelets,
+        visual_state,
         error_kind: None,
         message: None,
     }
-}
-
-fn not_found_response(
-    request: &SolveRequest,
-    strategy: SolverStrategy,
-    explored_nodes: usize,
-) -> SolveResponse {
-    not_found_response_from_parts(
-        request.max_depth,
-        request.max_nodes,
-        strategy,
-        explored_nodes,
-        Some(request.facelets.clone()),
-    )
 }
 
 fn not_found_response_from_parts(
@@ -859,7 +512,7 @@ fn not_found_response_from_parts(
     max_nodes: Option<usize>,
     strategy: SolverStrategy,
     explored_nodes: usize,
-    input_facelets: Option<String>,
+    visual_state: Option<String>,
 ) -> SolveResponse {
     let metadata = strategy.metadata();
     SolveResponse {
@@ -875,7 +528,7 @@ fn not_found_response_from_parts(
         length: None,
         explored_nodes: Some(explored_nodes),
         replay_verified: None,
-        input_facelets,
+        visual_state,
         error_kind: None,
         message: Some(format!(
             "no solution found within limits: max_depth={}, max_nodes={}, explored_nodes={}",
@@ -886,24 +539,11 @@ fn not_found_response_from_parts(
     }
 }
 
-fn unverified_solution_response(
-    request: &SolveRequest,
-    strategy: SolverStrategy,
-    input_facelets: Option<String>,
-) -> SolveResponse {
-    unverified_solution_response_from_parts(
-        request.max_depth,
-        request.max_nodes,
-        strategy,
-        input_facelets,
-    )
-}
-
 fn unverified_solution_response_from_parts(
     max_depth: usize,
     max_nodes: Option<usize>,
     strategy: SolverStrategy,
-    input_facelets: Option<String>,
+    visual_state: Option<String>,
 ) -> SolveResponse {
     error_response_from_parts(
         strategy.id(),
@@ -913,26 +553,7 @@ fn unverified_solution_response_from_parts(
         "unverified_solution",
         "unverified_solution",
         "solver returned a solution that failed replay verification".to_owned(),
-        input_facelets,
-    )
-}
-
-fn error_response(
-    request: &SolveRequest,
-    strategy: Option<SolverStrategy>,
-    status: impl Into<String>,
-    error_kind: impl Into<String>,
-    message: String,
-) -> SolveResponse {
-    error_response_from_parts(
-        &request.strategy_id,
-        request.max_depth,
-        request.max_nodes,
-        strategy,
-        status,
-        error_kind,
-        message,
-        Some(request.facelets.clone()),
+        visual_state,
     )
 }
 
@@ -945,7 +566,7 @@ fn error_response_from_parts(
     status: impl Into<String>,
     error_kind: impl Into<String>,
     message: String,
-    input_facelets: Option<String>,
+    visual_state: Option<String>,
 ) -> SolveResponse {
     let strategy = strategy.unwrap_or(SolverStrategy::BoundedIdaStar);
     let metadata = strategy.metadata();
@@ -962,19 +583,10 @@ fn error_response_from_parts(
         length: None,
         explored_nodes: None,
         replay_verified: None,
-        input_facelets,
+        visual_state,
         error_kind: Some(error_kind.into()),
         message: Some(message),
     }
-}
-
-fn cube_from_facelets(input: &str) -> Result<Cube, String> {
-    let facelets = FaceletString::parse(input).map_err(|error| error.to_string())?;
-    let state = facelets
-        .to_cubie_state()
-        .map_err(|error| error.to_string())?;
-
-    Cube::try_from_state(state).map_err(|error| error.to_string())
 }
 
 fn cube_from_notation(input: &str) -> Result<Cube, String> {
@@ -1021,24 +633,6 @@ fn solve_input_error_kind(error: &SolveInputError) -> &'static str {
     }
 }
 
-fn playback_error_status(error: &FaceletPlaybackError) -> &'static str {
-    match error {
-        FaceletPlaybackError::Notation { .. } => "invalid_move_notation",
-        FaceletPlaybackError::CubieValidation { .. }
-        | FaceletPlaybackError::FaceletParse { .. }
-        | FaceletPlaybackError::FaceletConversion { .. } => "invalid_input",
-    }
-}
-
-fn playback_error_kind(error: &FaceletPlaybackError) -> &'static str {
-    match error {
-        FaceletPlaybackError::CubieValidation { error } => cubie_validation_error_kind(error),
-        FaceletPlaybackError::FaceletParse { error } => facelet_parse_error_kind(error),
-        FaceletPlaybackError::FaceletConversion { error } => facelet_conversion_error_kind(error),
-        FaceletPlaybackError::Notation { .. } => "invalid_move_notation",
-    }
-}
-
 fn facelet_parse_error_kind(error: &FaceletParseError) -> &'static str {
     match error {
         FaceletParseError::InvalidLength { .. } => "invalid_length",
@@ -1076,56 +670,18 @@ fn cubie_validation_error_kind(error: &CubeValidationError) -> &'static str {
 #[cfg(test)]
 mod tests {
     use super::{
-        api_router, solve_notation_request, solve_request, unverified_solution_response_from_parts,
-        ApiState, SolveNotationRequest, SolveRequest, MAX_API_DEPTH, MAX_API_NODES,
-        MAX_FACELET_BYTES, MAX_NOTATION_BYTES,
+        api_router, solve_notation_request, unverified_solution_response_from_parts, ApiState,
+        SolveNotationRequest, MAX_API_DEPTH, MAX_API_NODES, MAX_NOTATION_BYTES,
     };
     use axum::{
         body::Body,
         http::{Method, Request, StatusCode},
     };
-    use cube_engine::{Cube, FaceletString, Move, SolverStrategy};
+    use cube_engine::SolverStrategy;
     use tower::ServiceExt;
 
     #[test]
-    fn bounded_strategy_solves_shallow_facelets_without_generated_tables() {
-        let mut cube = Cube::solved();
-        cube.apply_move(Move::F);
-        let facelets = FaceletString::from_cube(&cube).to_string();
-        let request = SolveRequest {
-            facelets,
-            max_depth: 1,
-            max_nodes: Some(1_000),
-            strategy_id: "bounded-ida-star".to_owned(),
-        };
-
-        let (status, response) = solve_request(&ApiState::without_generated_solver(), request);
-
-        assert_eq!(status, StatusCode::OK);
-        assert!(response.ok);
-        assert_eq!(response.status, "success");
-        assert_eq!(response.moves, vec!["F'"]);
-        assert_eq!(response.replay_verified, Some(true));
-    }
-
-    #[test]
-    fn generated_strategy_reports_unavailable_when_solver_not_loaded() {
-        let request = SolveRequest {
-            facelets: FaceletString::from_cube(&Cube::solved()).to_string(),
-            max_depth: 30,
-            max_nodes: Some(1_000),
-            strategy_id: "generated-two-phase".to_owned(),
-        };
-
-        let (status, response) = solve_request(&ApiState::without_generated_solver(), request);
-
-        assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
-        assert!(!response.ok);
-        assert_eq!(response.status, "generated_tables_unavailable");
-    }
-
-    #[test]
-    fn notation_request_solves_shallow_state_without_exposing_facelet_input() {
+    fn notation_strategy_solves_shallow_state_without_generated_tables() {
         let request = SolveNotationRequest {
             moves: "F".to_owned(),
             max_depth: 1,
@@ -1141,7 +697,24 @@ mod tests {
         assert_eq!(response.status, "success");
         assert_eq!(response.moves, vec!["F'"]);
         assert_eq!(response.replay_verified, Some(true));
-        assert!(response.input_facelets.is_some());
+        assert!(response.visual_state.is_some());
+    }
+
+    #[test]
+    fn generated_strategy_reports_unavailable_when_solver_not_loaded() {
+        let request = SolveNotationRequest {
+            moves: String::new(),
+            max_depth: 30,
+            max_nodes: Some(1_000),
+            strategy_id: "generated-two-phase".to_owned(),
+        };
+
+        let (status, response) =
+            solve_notation_request(&ApiState::without_generated_solver(), request);
+
+        assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+        assert!(!response.ok);
+        assert_eq!(response.status, "generated_tables_unavailable");
     }
 
     #[test]
@@ -1166,15 +739,16 @@ mod tests {
     }
 
     #[test]
-    fn solve_request_defaults_missing_max_nodes_to_api_cap() {
-        let request = SolveRequest {
-            facelets: FaceletString::from_cube(&Cube::solved()).to_string(),
+    fn notation_request_defaults_missing_max_nodes_to_api_cap() {
+        let request = SolveNotationRequest {
+            moves: String::new(),
             max_depth: 0,
             max_nodes: None,
             strategy_id: "bounded-ida-star".to_owned(),
         };
 
-        let (status, response) = solve_request(&ApiState::without_generated_solver(), request);
+        let (status, response) =
+            solve_notation_request(&ApiState::without_generated_solver(), request);
 
         assert_eq!(status, StatusCode::OK);
         assert!(response.ok);
@@ -1182,15 +756,16 @@ mod tests {
     }
 
     #[test]
-    fn solve_request_rejects_excessive_depth() {
-        let request = SolveRequest {
-            facelets: FaceletString::from_cube(&Cube::solved()).to_string(),
+    fn notation_request_rejects_excessive_depth() {
+        let request = SolveNotationRequest {
+            moves: String::new(),
             max_depth: MAX_API_DEPTH + 1,
             max_nodes: Some(1_000),
             strategy_id: "bounded-ida-star".to_owned(),
         };
 
-        let (status, response) = solve_request(&ApiState::without_generated_solver(), request);
+        let (status, response) =
+            solve_notation_request(&ApiState::without_generated_solver(), request);
 
         assert_eq!(status, StatusCode::BAD_REQUEST);
         assert!(!response.ok);
@@ -1202,15 +777,16 @@ mod tests {
     }
 
     #[test]
-    fn solve_request_rejects_excessive_nodes() {
-        let request = SolveRequest {
-            facelets: FaceletString::from_cube(&Cube::solved()).to_string(),
+    fn notation_request_rejects_excessive_nodes() {
+        let request = SolveNotationRequest {
+            moves: String::new(),
             max_depth: 0,
             max_nodes: Some(MAX_API_NODES + 1),
             strategy_id: "bounded-ida-star".to_owned(),
         };
 
-        let (status, response) = solve_request(&ApiState::without_generated_solver(), request);
+        let (status, response) =
+            solve_notation_request(&ApiState::without_generated_solver(), request);
 
         assert_eq!(status, StatusCode::BAD_REQUEST);
         assert!(!response.ok);
@@ -1219,23 +795,6 @@ mod tests {
             response.error_kind.as_deref(),
             Some("max_nodes_exceeds_limit")
         );
-    }
-
-    #[test]
-    fn solve_request_rejects_large_facelet_payload() {
-        let request = SolveRequest {
-            facelets: "U".repeat(MAX_FACELET_BYTES + 1),
-            max_depth: 0,
-            max_nodes: Some(1_000),
-            strategy_id: "bounded-ida-star".to_owned(),
-        };
-
-        let (status, response) = solve_request(&ApiState::without_generated_solver(), request);
-
-        assert_eq!(status, StatusCode::BAD_REQUEST);
-        assert!(!response.ok);
-        assert_eq!(response.status, "request_too_large");
-        assert_eq!(response.error_kind.as_deref(), Some("facelets_too_large"));
     }
 
     #[test]
@@ -1262,13 +821,31 @@ mod tests {
             30,
             Some(1_000),
             SolverStrategy::GeneratedTwoPhase,
-            Some(FaceletString::from_cube(&Cube::solved()).to_string()),
+            Some("visual-state".to_owned()),
         );
 
         assert!(!response.ok);
         assert_eq!(response.status, "unverified_solution");
         assert_eq!(response.replay_verified, None);
         assert!(response.moves.is_empty());
+    }
+
+    #[tokio::test]
+    async fn legacy_solve_route_is_not_exposed() {
+        let app = api_router(ApiState::without_generated_solver());
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .method(Method::POST)
+                    .uri("/solve")
+                    .header("content-type", "application/json")
+                    .body(Body::from("{}"))
+                    .expect("request should build"),
+            )
+            .await
+            .expect("request should complete");
+
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
     }
 
     #[tokio::test]
@@ -1314,14 +891,15 @@ mod tests {
 
     #[test]
     fn unknown_strategy_returns_bad_request() {
-        let request = SolveRequest {
-            facelets: FaceletString::from_cube(&Cube::solved()).to_string(),
+        let request = SolveNotationRequest {
+            moves: String::new(),
             max_depth: 30,
             max_nodes: Some(1_000),
             strategy_id: "unknown".to_owned(),
         };
 
-        let (status, response) = solve_request(&ApiState::without_generated_solver(), request);
+        let (status, response) =
+            solve_notation_request(&ApiState::without_generated_solver(), request);
 
         assert_eq!(status, StatusCode::BAD_REQUEST);
         assert_eq!(response.status, "unsupported_strategy");

@@ -41,13 +41,15 @@ Build a visualization layer that renders cube state and controls playback withou
 
 - Confirm the task belongs to the frontend phase before adding frontend dependencies.
 - Keep solver behavior behind the Rust HTTP API.
+- Keep client-facing solve flows notation-only; do not add facelet or Kociemba UI inputs.
 - Evaluate visualization libraries as adapters, not engine replacements.
 - If using `@houstonp/rubiks-cube`, verify headless move-option behavior before relying on it.
-- Ensure desktop and mobile rendering are considered when UI exists.
+- Ensure desktop and mobile rendering are considered when UI exists, with the cube no larger than 350px by 350px.
 
 ## Expected Output
 
 - UI sends moves and receives states.
+- Browser clients never submit facelets to the API.
 - Solver logic remains in Rust.
 - External visualization code does not define canonical cube state.
 
@@ -67,15 +69,18 @@ Rules for the future web visualization phase.
 ## Always
 
 - Keep cube logic out of React components.
-- Treat the frontend as a renderer and controller that sends moves and receives states.
+- Treat the frontend as a renderer and controller that sends move notation and receives states.
 - Use the Rust HTTP API as the source of truth for solver behavior.
 - Keep playback and visualization state separate from solver state.
 - Evaluate visualization-only libraries by whether they preserve this boundary.
+- Keep the rendered 3x3 cube no larger than 350px by 350px in the web UI.
 
 ## Never
 
 - Do not implement solver algorithms in the frontend.
 - Do not make a Three.js/web-component sticker state the canonical engine state.
+- Do not expose facelets, Kociemba strings, or facelet input modes in the UI.
+- Do not make browser clients submit facelets to the API; client-facing solve requests use move notation only.
 - Do not introduce frontend dependencies during engine-only phases.
 
 ## External Library Note
@@ -123,7 +128,11 @@ The frontend is a later phase. It should not become the source of truth for cube
 
 ## Boundary
 
-The frontend sends moves and receives states from the Rust HTTP API. Rendering, playback, camera controls, and interaction state can live in the frontend. Cube validation, solver behavior, search, and heuristics stay in Rust.
+The frontend sends move notation and receives states from the Rust HTTP API. Rendering, playback, camera controls, and interaction state can live in the frontend. Cube validation, solver behavior, search, and heuristics stay in Rust.
+
+Facelet/Kociemba strings are internal adapter details only. They must not appear as UI copy, input modes, or client-submitted API payloads. If a visualization library requires a sticker string, keep that detail hidden behind a neutral rendering-state field.
+
+The visible cube must fit within a 350px by 350px box on desktop and mobile.
 
 ## Visualization Libraries
 

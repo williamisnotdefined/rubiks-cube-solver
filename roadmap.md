@@ -57,9 +57,9 @@ Deterministic solver baseline
 
 ## Estado Atual Do Projeto
 
-O projeto já tem a base do `cube-engine` em Rust, incluindo representação por cubies, movimentos, notação, scrambles, buscas, heurísticas, parsing/renderização de facelets, conversão para cubies, validação de estados impossíveis, APIs de solver/playback no engine e uma API HTTP nativa.
+O projeto já tem a base do `cube-engine` em Rust, incluindo representação por cubies, movimentos, notação, scrambles, buscas, heurísticas, parsing/renderização interno de facelets, conversão para cubies, validação de estados impossíveis, APIs de solver/playback no engine e uma API HTTP nativa.
 
-A linha de execução atual usa API HTTP nativa como fronteira de produto, valida o fluxo com E2E e mantém qualidade de solver/pesquisa atrás de replay verification.
+A linha de execução atual usa API HTTP nativa como fronteira de produto, aceita move notation como entrada client-facing, valida o fluxo com E2E e mantém qualidade de solver/pesquisa atrás de replay verification.
 
 ## Roadmap Linear
 
@@ -110,15 +110,14 @@ Critério de saída: estados resolvidos e scrambles rasos retornam soluções ve
 
 ### Fase 4 - API HTTP Nativa
 
-Objetivo: expor o engine Rust para o navegador sem duplicar lógica e sem enviar pruning tables ao browser.
+Objetivo: expor o engine Rust para o navegador sem duplicar lógica, sem enviar pruning tables ao browser e sem esperar facelets do client.
 
 Entregas:
 
 - Crate `crates/api` com servidor HTTP.
-- Endpoint de validação de facelets.
-- Endpoint de solve com limites explícitos ou defaults documentados.
-- Endpoint de playback e verificação final resolvida.
-- Resultados JSON com sucesso, erros de validação, erro de notação e limite não atingido.
+- Endpoint de solve por move notation com limites explícitos ou defaults documentados.
+- Resultados JSON com sucesso, erro de notação, erro de validação interna e limite não atingido.
+- Estado de visualização retornado apenas como detalhe neutro de renderização quando necessário.
 
 Critério de saída: chamadas HTTP delegam para `cube-engine` e passam em testes ou smoke tests para sucesso e falhas principais.
 
@@ -130,13 +129,13 @@ Entregas:
 
 - Aplicação React/TypeScript buildável em `apps/web`.
 - Cliente HTTP API isolado de componentes React.
-- Input para facelets com validação e mensagens úteis.
+- Input para move notation somente; facelets/Kociemba não aparecem na interface.
 - Botão de solve com limites visíveis.
 - Exibição de movimentos, tamanho da solução e métricas.
 - Playback ou step-through usando estados gerados pelo engine.
-- Layout usável em desktop e mobile.
+- Layout usável em desktop e mobile, com cubo visual no máximo 350x350 px.
 
-Critério de saída: o usuário consegue submeter estado resolvido, estado raso válido e estado inválido, recebendo resultado correto em cada caso.
+Critério de saída: o usuário consegue submeter move notation válida e inválida, recebendo resultado correto em cada caso.
 
 ### Fase 6 - Validação E2E
 
@@ -145,13 +144,14 @@ Objetivo: proteger o fluxo de produto contra regressões.
 Entregas:
 
 - Playwright configurado.
-- Teste para estado resolvido.
+- Teste para UI notation-only.
+- Teste para cubo visual limitado a 350x350 px.
 - Teste para scramble raso com solução retornada e verificada.
-- Teste para erro de estado inválido.
+- Teste para erro de notação inválida.
 - Teste de playback ou verificação engine-backed chegando ao estado resolvido.
 - Artefatos E2E ignorados no git.
 
-Critério de saída: uma alteração que quebre input, validação, solve ou playback falha em E2E.
+Critério de saída: uma alteração que quebre input, solve, verificação ou o contrato notation-only falha em E2E.
 
 ### Fase 7 - Qualidade Do Solver Clássico
 

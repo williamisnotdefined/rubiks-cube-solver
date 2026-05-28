@@ -2,70 +2,31 @@ import { expect, test } from '@playwright/test'
 
 const defaultNotation = "R2 D2 F2 D L2 F2 U' R2 D B2 L2 U' B' R' B' R2 B2 L B U'"
 const realNotation = "B U L U D B' U' R' U' B U2 F' L2 B2 R2 D2 L2 D2 R2 F D2"
-const solvedFacelets = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB'
-const frontTurnFacelets = 'UUUUUULLLURRURRURRFFFFFFFFFRRRDDDDDDLLDLLDLLDBBBBBBBBB'
-const flippedEdgeFacelets = 'UUUUURUUURURRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB'
 
 test.describe('product solve flow', () => {
-  test('renders the cube and solves solved facelets', async ({ page }) => {
+  test('renders notation-only controls and caps the cube size', async ({ page }) => {
     await page.goto('/')
 
     await expect(page.locator('rubiks-cube')).toBeVisible()
+    await expect(page.getByText(/facelets/i)).toHaveCount(0)
 
-    const faceletsInput = page.getByLabel('Cube state facelets')
-    await expect(faceletsInput).toBeEnabled({ timeout: 15_000 })
-    await expect(faceletsInput).toHaveValue(solvedFacelets)
+    const cubeBox = await page.locator('.cube-stage').boundingBox()
+    expect(cubeBox?.width ?? 0).toBeLessThanOrEqual(350)
+    expect(cubeBox?.height ?? 0).toBeLessThanOrEqual(350)
+
+    const input = page.getByLabel('Move notation')
+    await expect(input).toBeEnabled({ timeout: 15_000 })
+    await expect(input).toHaveValue(defaultNotation)
     const maxMoves = page.getByLabel('Max solution moves')
     await expect(maxMoves).toHaveValue('30')
     const maxNodes = page.getByLabel('Max nodes')
     await expect(maxNodes).toHaveValue('10000000')
     await expect(page.locator('.api-status')).toContainText('API connected')
     await expect(page.locator('.api-status')).toContainText('Generated two-phase solver')
-
-    await maxMoves.fill('0')
-    await page.getByRole('button', { name: 'Solve' }).click()
-
-    await expect(page.locator('.result code')).toHaveText('Solved', {
-      timeout: 30_000,
-    })
-    await expect(page.locator('.result')).toContainText('Generated two-phase solver')
-    await expect(page.locator('.result')).toContainText('replay verified')
-  })
-
-  test('solves shallow facelets through the API', async ({ page }) => {
-    await page.goto('/')
-
-    const faceletsInput = page.getByLabel('Cube state facelets')
-    await expect(faceletsInput).toBeEnabled({ timeout: 15_000 })
-
-    await faceletsInput.fill(frontTurnFacelets)
-    await page.getByLabel('Max solution moves').fill('1')
-    await page.getByRole('button', { name: 'Solve' }).click()
-
-    await expect(page.locator('.result code')).toHaveText(/\S/, {
-      timeout: 30_000,
-    })
-    await expect(page.locator('.result')).toContainText('Generated two-phase solver')
-    await expect(page.locator('.result')).toContainText('replay verified')
-  })
-
-  test('rejects impossible facelets with valid color counts', async ({ page }) => {
-    await page.goto('/')
-
-    const faceletsInput = page.getByLabel('Cube state facelets')
-    await expect(faceletsInput).toBeEnabled({ timeout: 15_000 })
-
-    await faceletsInput.fill(flippedEdgeFacelets)
-    await page.getByRole('button', { name: 'Solve' }).click()
-
-    await expect(page.locator('.result')).toContainText('Invalid cube state')
-    await expect(page.locator('.result')).toContainText('invalid edge orientation sum')
   })
 
   test('solves shallow move notation', async ({ page }) => {
     await page.goto('/')
-
-    await page.getByRole('radio', { name: 'Moves' }).check()
 
     const input = page.getByLabel('Move notation')
     await expect(input).toBeEnabled({ timeout: 15_000 })
@@ -86,8 +47,6 @@ test.describe('product solve flow', () => {
   test('solves real notation through the API', async ({ page }) => {
     await page.goto('/')
 
-    await page.getByRole('radio', { name: 'Moves' }).check()
-
     const input = page.getByLabel('Move notation')
     await expect(input).toBeEnabled({ timeout: 15_000 })
 
@@ -103,8 +62,6 @@ test.describe('product solve flow', () => {
 
   test('shows a short invalid notation error', async ({ page }) => {
     await page.goto('/')
-
-    await page.getByRole('radio', { name: 'Moves' }).check()
 
     const input = page.getByLabel('Move notation')
     await expect(input).toBeEnabled({ timeout: 15_000 })

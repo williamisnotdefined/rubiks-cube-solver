@@ -24,7 +24,7 @@ export type ApiSolverPendingState = Omit<SolverBoundaryInfo, 'status'> & {
   status: 'unloaded' | 'loading'
 }
 
-export type FaceletSolveLimits = {
+export type SolveLimits = {
   maxDepth: number
   maxNodes?: number
   strategyId?: string
@@ -36,17 +36,17 @@ export type GeneratedTableStatus =
   | 'unavailable'
   | 'corrupt_or_incompatible'
 
-export type FaceletSolveMetadata = {
+export type SolveMetadata = {
   maxDepth: number
   maxNodes: number | undefined
   strategyId: string
   strategyLabel: string
   solverMode: string
   generatedTableStatus: GeneratedTableStatus
-  inputFacelets?: string
+  visualState?: string
 }
 
-export type FaceletSolveSuccessResult = FaceletSolveMetadata & {
+export type SolveSuccessResult = SolveMetadata & {
   status: 'success'
   ok: true
   moves: string[]
@@ -55,7 +55,7 @@ export type FaceletSolveSuccessResult = FaceletSolveMetadata & {
   replayVerified: boolean
 }
 
-export type FaceletSolveFailureResult = FaceletSolveMetadata & {
+export type SolveFailureResult = SolveMetadata & {
   status:
     | 'invalid_input'
     | 'invalid_notation'
@@ -73,37 +73,11 @@ export type FaceletSolveFailureResult = FaceletSolveMetadata & {
   exploredNodes?: number
 }
 
-export type FaceletSolveResult = FaceletSolveSuccessResult | FaceletSolveFailureResult
-
-export type FaceletPlaybackSuccessResult = {
-  status: 'success'
-  ok: true
-  states: string[]
-  initialFacelets: string
-  moveStates: string[]
-  finalFacelets: string
-  finalIsSolved: boolean
-}
-
-export type FaceletPlaybackFailureResult = {
-  status: 'invalid_input' | 'invalid_move_notation' | 'api_error'
-  ok: false
-  states: string[]
-  finalIsSolved: boolean
-  errorKind?: string
-  message: string
-}
-
-export type FaceletPlaybackResult =
-  | FaceletPlaybackSuccessResult
-  | FaceletPlaybackFailureResult
+export type SolveResult = SolveSuccessResult | SolveFailureResult
 
 export type ApiSolverClient = {
   solverStrategies(): SolverStrategyOption[]
-  solvedFacelets(): string
-  solveFacelets(input: string, limits: FaceletSolveLimits): Promise<FaceletSolveResult>
-  solveNotation(input: string, limits: FaceletSolveLimits): Promise<FaceletSolveResult>
-  playbackFacelets(startFacelets: string, moves: string): Promise<FaceletPlaybackResult>
+  solveNotation(input: string, limits: SolveLimits): Promise<SolveResult>
 }
 
 export type ApiSolverReadyState = SolverBoundaryInfo & {
@@ -137,21 +111,11 @@ type ApiSolveResponse = {
   length?: number
   exploredNodes?: number
   replayVerified?: boolean
-  inputFacelets?: string
+  visualState?: string
   errorKind?: string
   message?: string
 }
 
-type ApiPlaybackResponse = {
-  ok: boolean
-  status: string
-  states: string[]
-  finalIsSolved: boolean
-  errorKind?: string
-  message?: string
-}
-
-const solvedFaceletString = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB'
 const defaultApiBaseUrl = 'http://127.0.0.1:8787'
 
 export const apiSolverBoundary = {
@@ -207,28 +171,6 @@ function createApiSolverClient(strategyOptions: SolverStrategyOption[]): ApiSolv
     solverStrategies() {
       return strategyOptions
     },
-    solvedFacelets() {
-      return solvedFaceletString
-    },
-    async solveFacelets(input, limits) {
-      try {
-        const response = await fetch(apiUrl('/solve'), {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            facelets: input,
-            maxDepth: limits.maxDepth,
-            maxNodes: limits.maxNodes,
-            strategyId: limits.strategyId,
-          }),
-        })
-        const payload = (await response.json()) as ApiSolveResponse
-
-        return normalizeSolveResponse(payload, response.ok)
-      } catch (error) {
-        return apiSolveError(errorMessage(error, 'API solve request failed.'))
-      }
-    },
     async solveNotation(input, limits) {
       try {
         const response = await fetch(apiUrl('/solve-notation'), {
@@ -248,30 +190,10 @@ function createApiSolverClient(strategyOptions: SolverStrategyOption[]): ApiSolv
         return apiSolveError(errorMessage(error, 'API notation solve request failed.'))
       }
     },
-    async playbackFacelets(startFacelets, moves) {
-      try {
-        const response = await fetch(apiUrl('/playback'), {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ facelets: startFacelets, moves }),
-        })
-        const payload = (await response.json()) as ApiPlaybackResponse
-
-        return normalizePlaybackResponse(startFacelets, payload, response.ok)
-      } catch (error) {
-        return {
-          status: 'api_error',
-          ok: false,
-          states: [],
-          finalIsSolved: false,
-          message: errorMessage(error, 'API playback request failed.'),
-        }
-      }
-    },
   }
 }
 
-function normalizeSolveResponse(payload: ApiSolveResponse, httpOk: boolean): FaceletSolveResult {
+function normalizeSolveResponse(payload: ApiSolveResponse, httpOk: boolean): SolveResult {
   const metadata = {
     maxDepth: payload.maxDepth,
     maxNodes: payload.maxNodes,
@@ -279,7 +201,7 @@ function normalizeSolveResponse(payload: ApiSolveResponse, httpOk: boolean): Fac
     strategyLabel: payload.strategyLabel,
     solverMode: payload.solverMode,
     generatedTableStatus: payload.generatedTableStatus,
-    inputFacelets: payload.inputFacelets,
+    visualState: payload.visualState,
   }
 
   if (httpOk && payload.ok && payload.status === 'success' && payload.replayVerified === true) {
@@ -315,36 +237,7 @@ function normalizeSolveResponse(payload: ApiSolveResponse, httpOk: boolean): Fac
   }
 }
 
-function normalizePlaybackResponse(
-  startFacelets: string,
-  payload: ApiPlaybackResponse,
-  httpOk: boolean,
-): FaceletPlaybackResult {
-  if (httpOk && payload.ok && payload.status === 'success') {
-    const finalFacelets = payload.states.at(-1) ?? startFacelets
-
-    return {
-      status: 'success',
-      ok: true,
-      states: payload.states,
-      initialFacelets: payload.states[0] ?? startFacelets,
-      moveStates: payload.states.slice(1),
-      finalFacelets,
-      finalIsSolved: payload.finalIsSolved,
-    }
-  }
-
-  return {
-    status: playbackFailureStatus(payload.status),
-    ok: false,
-    states: payload.states ?? [],
-    finalIsSolved: payload.finalIsSolved ?? false,
-    errorKind: payload.errorKind,
-    message: payload.message ?? `API playback failed with status ${payload.status}`,
-  }
-}
-
-function solveFailureStatus(status: string): FaceletSolveFailureResult['status'] {
+function solveFailureStatus(status: string): SolveFailureResult['status'] {
   if (
     status === 'invalid_input' ||
     status === 'invalid_notation' ||
@@ -362,15 +255,7 @@ function solveFailureStatus(status: string): FaceletSolveFailureResult['status']
   return 'api_error'
 }
 
-function playbackFailureStatus(status: string): FaceletPlaybackFailureResult['status'] {
-  if (status === 'invalid_input' || status === 'invalid_move_notation') {
-    return status
-  }
-
-  return 'api_error'
-}
-
-function apiSolveError(message: string): FaceletSolveFailureResult {
+function apiSolveError(message: string): SolveFailureResult {
   return {
     status: 'api_error',
     ok: false,
