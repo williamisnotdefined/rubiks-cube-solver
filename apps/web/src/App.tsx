@@ -12,8 +12,8 @@ import {
 const defaultNotation = "R2 D2 F2 D L2 F2 U' R2 D B2 L2 U' B' R' B' R2 B2 L B U'"
 const maxMovesLimit = 30
 const defaultMaxMoves = maxMovesLimit
-const maxNodesMillionLimit = 10
-const defaultMaxNodesMillion = maxNodesMillionLimit
+const maxNodesMillionOptions = [10, 15, 20, 25] as const
+const defaultMaxNodesMillion = 10
 const nodesPerMillion = 1_000_000
 const fallbackStrategyId = 'generated-two-phase'
 const preferredQualityStrategyId = 'generated-two-phase-quality'
@@ -94,11 +94,7 @@ function App() {
     'Max moves',
     maxMovesLimit,
   )
-  const maxNodesValidation = validateWholeNumberLimit(
-    maxNodesMillionInput,
-    'Max nodes (M)',
-    maxNodesMillionLimit,
-  )
+  const maxNodesValidation = validateMaxNodesMillionOption(maxNodesMillionInput)
   const localValidationMessage = maxMovesValidation ?? maxNodesValidation
   const disabled =
     !apiReady ||
@@ -206,16 +202,17 @@ function App() {
         </label>
         <label className="field field-nodes">
           <span className="field-label">Max nodes (M)</span>
-          <input
+          <select
             className="nodes-input"
-            inputMode="numeric"
-            max={maxNodesMillionLimit}
-            min="0"
-            step="1"
-            type="number"
             value={maxNodesMillionInput}
             onChange={(event) => handleMaxNodesMillionChange(event.target.value)}
-          />
+          >
+            {maxNodesMillionOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
         </label>
         <button
           aria-label={buttonLoading ? 'Loading' : undefined}
@@ -330,6 +327,25 @@ function validateWholeNumberLimit(
 
   if (value > limit) {
     return `${label} must be ${limit} or less`
+  }
+
+  return undefined
+}
+
+function validateMaxNodesMillionOption(input: string): string | undefined {
+  const trimmed = input.trim()
+  const value = Number(trimmed)
+
+  if (trimmed.length === 0) {
+    return 'Max nodes (M) is required'
+  }
+
+  if (!Number.isInteger(value)) {
+    return 'Max nodes (M) must be a whole number'
+  }
+
+  if (!maxNodesMillionOptions.some((option) => option === value)) {
+    return `Max nodes (M) must be one of ${maxNodesMillionOptions.join(', ')}`
   }
 
   return undefined

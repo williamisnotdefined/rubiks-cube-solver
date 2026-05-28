@@ -5,7 +5,7 @@ use cube_engine::{
     SolverStrategy,
 };
 
-use crate::config::{MAX_API_DEPTH, MAX_API_NODES, MAX_NOTATION_BYTES};
+use crate::config::{DEFAULT_API_NODES, MAX_API_DEPTH, MAX_API_NODES, MAX_NOTATION_BYTES};
 use crate::error_kind::solve_input_error_kind;
 use crate::response::{
     error_response_from_parts, not_found_response_from_parts, success_response_from_parts,
@@ -137,7 +137,7 @@ fn validate_solve_notation_request_limits(
 }
 
 fn normalize_api_max_nodes(max_nodes: Option<usize>) -> Result<usize, (&'static str, String)> {
-    let max_nodes = max_nodes.unwrap_or(MAX_API_NODES);
+    let max_nodes = max_nodes.unwrap_or(DEFAULT_API_NODES);
 
     if max_nodes > MAX_API_NODES {
         return Err((

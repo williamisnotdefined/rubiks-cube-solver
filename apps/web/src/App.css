@@ -83,6 +83,11 @@ button {
   text-align: center;
 }
 
+select.nodes-input {
+  cursor: pointer;
+  text-align-last: center;
+}
+
 .primary-input:focus,
 .depth-input:focus,
 .nodes-input:focus {

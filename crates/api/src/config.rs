@@ -3,7 +3,8 @@ use std::path::PathBuf;
 pub const DEFAULT_API_ADDR: &str = "127.0.0.1:8787";
 pub const DEFAULT_PRUNING_TABLE_DIR: &str = "crates/cube-engine/pruning-tables";
 pub const MAX_API_DEPTH: usize = 30;
-pub const MAX_API_NODES: usize = 10_000_000;
+pub const DEFAULT_API_NODES: usize = 10_000_000;
+pub const MAX_API_NODES: usize = 25_000_000;
 pub const MAX_NOTATION_BYTES: usize = 4096;
 pub const MAX_JSON_BODY_BYTES: usize = 8192;
 

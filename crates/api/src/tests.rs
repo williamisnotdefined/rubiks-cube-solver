@@ -7,8 +7,8 @@ use tower::ServiceExt;
 
 use crate::response::unverified_solution_response_from_parts;
 use crate::{
-    api_router, solve_notation_request, ApiState, SolveNotationRequest, MAX_API_DEPTH,
-    MAX_API_NODES, MAX_NOTATION_BYTES,
+    api_router, solve_notation_request, ApiState, SolveNotationRequest, DEFAULT_API_NODES,
+    MAX_API_DEPTH, MAX_API_NODES, MAX_NOTATION_BYTES,
 };
 
 #[test]
@@ -138,11 +138,27 @@ fn notation_request_reports_invalid_notation() {
 }
 
 #[test]
-fn notation_request_defaults_missing_max_nodes_to_api_cap() {
+fn notation_request_defaults_missing_max_nodes_to_default_budget() {
     let request = SolveNotationRequest {
         moves: String::new(),
         max_depth: 0,
         max_nodes: None,
+        strategy_id: "bounded-ida-star".to_owned(),
+    };
+
+    let (status, response) = solve_notation_request(&ApiState::without_generated_solver(), request);
+
+    assert_eq!(status, StatusCode::OK);
+    assert!(response.ok);
+    assert_eq!(response.max_nodes, Some(DEFAULT_API_NODES));
+}
+
+#[test]
+fn notation_request_accepts_explicit_max_nodes_up_to_api_cap() {
+    let request = SolveNotationRequest {
+        moves: String::new(),
+        max_depth: 0,
+        max_nodes: Some(MAX_API_NODES),
         strategy_id: "bounded-ida-star".to_owned(),
     };
 

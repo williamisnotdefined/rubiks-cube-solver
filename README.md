@@ -141,6 +141,7 @@ Endpoints:
 - `GET /health`
 - `GET /strategies`
 - `POST /solve-notation` with `{ "moves": "R2 D2 F'", "strategyId": "generated-two-phase-quality", "maxDepth": 30, "maxNodes": 10000000 }`
+- If `maxNodes` is omitted, the API uses `10000000`; the request cap is `25000000`.
 - Experimental: `strategyId="generated-two-phase-multiprobe"` runs the quality solver first, then uses inverse-state move-order probes only when the quality result is still longer than 20 moves and node budget remains.
 - Experimental: `strategyId="optimal-bounded-corner-pdb"` tries the local corner PDB first, then falls back to generated two-phase quality.
 

@@ -21,6 +21,7 @@ test.describe('product solve flow', () => {
     await expect(maxMoves).toHaveValue('30')
     const maxNodes = page.getByLabel('Max nodes (M)')
     await expect(maxNodes).toHaveValue('10')
+    await expect(maxNodes.locator('option')).toHaveText(['10', '15', '20', '25'])
     await expect(page.getByText('API connected')).toHaveCount(0)
     await expect(page.getByText(/Generated-table solver/i)).toHaveCount(0)
   })
@@ -66,7 +67,7 @@ test.describe('product solve flow', () => {
 
     await input.fill(realNotation)
     await page.getByLabel('Max moves').fill('30')
-    await page.getByLabel('Max nodes (M)').fill('10')
+    await page.getByLabel('Max nodes (M)').selectOption('10')
     await page.getByRole('button', { name: 'Solve' }).click()
 
     await expect(page.locator('.result code')).toHaveText(/\S/, { timeout: 60_000 })
@@ -106,10 +107,9 @@ test.describe('product solve flow', () => {
     expect(solveRequests).toBe(0)
 
     await page.getByLabel('Max moves').fill('30')
-    await page.getByLabel('Max nodes (M)').fill('11')
+    await page.getByLabel('Max nodes (M)').selectOption('25')
 
-    await expect(page.getByRole('button', { name: 'Solve' })).toBeDisabled()
-    await expect(page.locator('.result')).toContainText('Max nodes (M) must be 10 or less')
+    await expect(page.getByRole('button', { name: 'Solve' })).toBeEnabled()
     expect(solveRequests).toBe(0)
   })
 })
