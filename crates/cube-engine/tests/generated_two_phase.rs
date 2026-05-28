@@ -263,6 +263,13 @@ fn generated_two_phase_quality_solves_short_scramble_with_replay() {
     );
     assert!(result.explored_nodes() > 0);
 
+    let multiprobe_result = solve_cubie_state(state.clone(), multiprobe_config(&directory, 4))
+        .expect("multiprobe generated two-phase should solve a shallow scramble");
+
+    assert_solution_solves_state(state.clone(), multiprobe_result.moves());
+    assert!(multiprobe_result.length() <= 2);
+    assert!(multiprobe_result.explored_nodes() > 0);
+
     let corner_result = solve_cubie_state(state.clone(), corner_pdb_config(&directory, 4))
         .expect("corner PDB strategy should fall back to generated quality when PDB is absent");
 
@@ -357,6 +364,15 @@ fn quality_generated_config(directory: &Path, max_depth: usize) -> SolverConfig 
         max_depth,
         Some(1_000_000),
         SolverStrategy::GeneratedTwoPhaseQuality,
+    )
+    .with_pruning_table_dir(directory.to_path_buf())
+}
+
+fn multiprobe_config(directory: &Path, max_depth: usize) -> SolverConfig {
+    SolverConfig::with_strategy(
+        max_depth,
+        Some(1_000_000),
+        SolverStrategy::GeneratedTwoPhaseMultiprobe,
     )
     .with_pruning_table_dir(directory.to_path_buf())
 }

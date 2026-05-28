@@ -1,4 +1,4 @@
-use super::cubies::{CubeValidationError, CubieState, CORNER_COUNT, EDGE_COUNT};
+use super::cubies::{Corner, CubeValidationError, CubieState, Edge, CORNER_COUNT, EDGE_COUNT};
 use super::moves::{Face, Move, Turn};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -25,6 +25,28 @@ impl Cube {
 
     pub fn is_solved(&self) -> bool {
         self.state.is_solved()
+    }
+
+    pub fn inverse(&self) -> Self {
+        let mut inverse = CubieState::solved();
+
+        for (position_index, corner) in self.state.corner_permutation.iter().copied().enumerate() {
+            let inverse_position = corner.index();
+            inverse.corner_permutation[inverse_position] = Corner::from_index(position_index)
+                .expect("corner position index must map to a corner");
+            inverse.corner_orientation[inverse_position] =
+                (3 - self.state.corner_orientation[position_index]) % 3;
+        }
+
+        for (position_index, edge) in self.state.edge_permutation.iter().copied().enumerate() {
+            let inverse_position = edge.index();
+            inverse.edge_permutation[inverse_position] =
+                Edge::from_index(position_index).expect("edge position index must map to an edge");
+            inverse.edge_orientation[inverse_position] =
+                (2 - self.state.edge_orientation[position_index]) % 2;
+        }
+
+        Self { state: inverse }
     }
 
     pub fn apply_move(&mut self, move_: Move) {
@@ -316,6 +338,24 @@ mod tests {
         cube.apply_moves(&[Move::R, Move::U, Move::RPrime, Move::UPrime]);
 
         assert!(cube.state().is_valid());
+    }
+
+    #[test]
+    fn inverse_cube_matches_inverse_algorithm() {
+        let moves = [Move::R, Move::U, Move::F2, Move::LPrime, Move::D];
+        let mut cube = Cube::solved();
+        cube.apply_moves(&moves);
+
+        let mut expected_inverse = Cube::solved();
+        let inverse_moves = moves
+            .iter()
+            .rev()
+            .map(|move_| move_.inverse())
+            .collect::<Vec<_>>();
+        expected_inverse.apply_moves(&inverse_moves);
+
+        assert_eq!(cube.inverse(), expected_inverse);
+        assert_eq!(cube.inverse().inverse(), cube);
     }
 
     #[test]

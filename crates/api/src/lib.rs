@@ -228,16 +228,16 @@ pub fn solve_notation_request(
     let visual_state = FaceletString::from_cube(&cube).to_string();
 
     match strategy {
-        SolverStrategy::GeneratedTwoPhase | SolverStrategy::GeneratedTwoPhaseQuality => {
-            solve_generated_cube(
-                state,
-                request.max_depth,
-                request.max_nodes,
-                strategy,
-                cube,
-                visual_state,
-            )
-        }
+        SolverStrategy::GeneratedTwoPhase
+        | SolverStrategy::GeneratedTwoPhaseQuality
+        | SolverStrategy::GeneratedTwoPhaseMultiprobe => solve_generated_cube(
+            state,
+            request.max_depth,
+            request.max_nodes,
+            strategy,
+            cube,
+            visual_state,
+        ),
         SolverStrategy::BoundedIdaStar
         | SolverStrategy::TwoPhaseBaseline
         | SolverStrategy::OptimalIdaStarOrientationPdb
@@ -347,6 +347,7 @@ fn solve_generated_cube(
     let result = match strategy {
         SolverStrategy::GeneratedTwoPhase => solver.solve(&cube, budget),
         SolverStrategy::GeneratedTwoPhaseQuality => solver.solve_quality(&cube, budget),
+        SolverStrategy::GeneratedTwoPhaseMultiprobe => solver.solve_multiprobe(&cube, budget),
         SolverStrategy::BoundedIdaStar
         | SolverStrategy::TwoPhaseBaseline
         | SolverStrategy::OptimalIdaStarOrientationPdb
@@ -622,6 +623,7 @@ fn generated_table_status(strategy: SolverStrategy) -> &'static str {
     match strategy {
         SolverStrategy::GeneratedTwoPhase
         | SolverStrategy::GeneratedTwoPhaseQuality
+        | SolverStrategy::GeneratedTwoPhaseMultiprobe
         | SolverStrategy::OptimalBoundedCornerPdb => "available",
         SolverStrategy::BoundedIdaStar
         | SolverStrategy::TwoPhaseBaseline
@@ -755,6 +757,7 @@ mod tests {
     #[test]
     fn strategy_metadata_includes_quality_solver() {
         let metadata = SolverStrategy::GeneratedTwoPhaseQuality.metadata();
+        let multiprobe_metadata = SolverStrategy::GeneratedTwoPhaseMultiprobe.metadata();
         let corner_metadata = SolverStrategy::OptimalBoundedCornerPdb.metadata();
 
         assert!(SolverStrategy::ALL
@@ -763,8 +766,16 @@ mod tests {
         assert!(SolverStrategy::ALL
             .into_iter()
             .any(|strategy| strategy == SolverStrategy::OptimalBoundedCornerPdb));
+        assert!(SolverStrategy::ALL
+            .into_iter()
+            .any(|strategy| strategy == SolverStrategy::GeneratedTwoPhaseMultiprobe));
         assert_eq!(metadata.id, "generated-two-phase-quality");
         assert_eq!(metadata.solver_mode, "generated_two_phase_quality");
+        assert_eq!(multiprobe_metadata.id, "generated-two-phase-multiprobe");
+        assert_eq!(
+            multiprobe_metadata.solver_mode,
+            "generated_two_phase_multiprobe"
+        );
         assert_eq!(corner_metadata.id, "optimal-bounded-corner-pdb");
         assert_eq!(corner_metadata.solver_mode, "optimal_bounded_corner_pdb");
     }

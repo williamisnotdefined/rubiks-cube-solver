@@ -30,8 +30,9 @@ pub use ida_star::{
 pub use iddfs::{depth_limited_search, solve_iddfs};
 pub use solution::{SearchBudget, SearchOutcome, SearchSolution};
 pub(crate) use two_phase::{
-    solve_generated_two_phase, solve_generated_two_phase_quality,
-    solve_generated_two_phase_with_artifacts, solve_two_phase_baseline, GeneratedTwoPhaseMetrics,
+    solve_generated_two_phase, solve_generated_two_phase_multiprobe,
+    solve_generated_two_phase_quality, solve_generated_two_phase_with_artifacts,
+    solve_two_phase_baseline, GeneratedTwoPhaseMetrics,
 };
 pub use two_phase::{
     GeneratedPruningTableArtifact, GeneratedTwoPhaseError, GeneratedTwoPhaseSolver,

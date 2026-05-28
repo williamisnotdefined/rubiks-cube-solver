@@ -74,6 +74,14 @@ The npm script uses `generated-two-phase-quality` with `max_depth=30` and a smal
 
 The CLI also supports a quality gate such as `--require-max-solution-len 20`; combine it with `--require-success` only when the current generated tables and budgets support that threshold locally.
 
+For an intentionally heavy local/server-side run, use the deep 20-move gate:
+
+```bash
+npm run solver:real-scrambles:deep20
+```
+
+This uses `generated-two-phase-quality` with `max_nodes=50000000`. At that budget the quality schedule gives the depth-20 attempt up to 40M nodes, which is enough for the current committed real-scramble fixture set to replay-verify `9/9` at `<=20`. It can take minutes and is not the web/API default budget.
+
 Run the real-scramble gate after generating native pruning tables with Phase 2 depth 10:
 
 ```bash
@@ -123,6 +131,7 @@ Endpoints:
 - `GET /health`
 - `GET /strategies`
 - `POST /solve-notation` with `{ "moves": "R2 D2 F'", "strategyId": "generated-two-phase-quality", "maxDepth": 30, "maxNodes": 10000000 }`
+- Experimental: `strategyId="generated-two-phase-multiprobe"` runs the quality solver first, then uses inverse-state move-order probes only when the quality result is still longer than 20 moves and node budget remains.
 - Experimental: `strategyId="optimal-bounded-corner-pdb"` tries the local corner PDB first, then falls back to generated two-phase quality.
 
 Every successful API solve includes `replayVerified=true`. The client-facing API accepts move notation only; facelet/Kociemba strings are not client request payloads.

@@ -21,7 +21,7 @@ use crate::cube::coordinates::{
     UD_EDGE_PERMUTATION_COORDINATE_COUNT, UD_SLICE_EDGE_COMBINATION_COORDINATE_COUNT,
 };
 use crate::cube::cubies::{Corner, Edge};
-use crate::cube::moves::{Face, Move, FACE_MOVES};
+use crate::cube::moves::{Axis, Face, Move, Turn, FACE_MOVES};
 use crate::cube::{Cube, CubeValidationError, CubieState};
 
 const TINY_PHASE1_DEPTH1_FIXTURE: &str =
@@ -46,6 +46,9 @@ const QUALITY_PROBE_NODE_CAP: usize = 1_000_000;
 const QUALITY_DEPTH_16_NODE_CAP: usize = 500_000;
 const QUALITY_DEPTH_18_NODE_CAP: usize = 1_000_000;
 const QUALITY_DEPTH_20_NODE_CAP: usize = 3_000_000;
+const QUALITY_DEPTH_20_DEEP_NODE_THRESHOLD: usize = 50_000_000;
+const QUALITY_DEPTH_20_DEEP_NODE_CAP: usize = 40_000_000;
+const MULTIPROBE_NODE_CAP: usize = 1_000_000;
 const UD_SLICE_EDGES: [Edge; 4] = [Edge::Fr, Edge::Fl, Edge::Bl, Edge::Br];
 const UD_NON_SLICE_EDGES: [Edge; 8] = [
     Edge::Ur,
@@ -56,6 +59,24 @@ const UD_NON_SLICE_EDGES: [Edge; 8] = [
     Edge::Df,
     Edge::Dl,
     Edge::Db,
+];
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+enum MoveOrderingProfile {
+    #[default]
+    Default,
+    Reverse,
+    HalfTurnsFirst,
+    AxisZFirst,
+    AxisXFirst,
+}
+
+const MULTIPROBE_INVERSE_ORDERING_PROFILES: [MoveOrderingProfile; 5] = [
+    MoveOrderingProfile::Default,
+    MoveOrderingProfile::Reverse,
+    MoveOrderingProfile::HalfTurnsFirst,
+    MoveOrderingProfile::AxisZFirst,
+    MoveOrderingProfile::AxisXFirst,
 ];
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -248,6 +269,18 @@ pub fn solve_generated_two_phase_quality(
         .map(|result| result.outcome)
 }
 
+pub fn solve_generated_two_phase_multiprobe(
+    start: &Cube,
+    budget: SearchBudget,
+    table_dir: &Path,
+) -> Result<SearchOutcome, GeneratedTwoPhaseError> {
+    let solver = GeneratedTwoPhaseSolver::load_from_dir(table_dir)?;
+
+    solver
+        .solve_multiprobe(start, budget)
+        .map(|result| result.outcome)
+}
+
 pub fn solve_generated_two_phase_with_artifacts(
     start: &Cube,
     budget: SearchBudget,
@@ -410,6 +443,97 @@ impl GeneratedTwoPhaseSolver {
     ) -> Result<GeneratedTwoPhaseSearchResult, GeneratedTwoPhaseError> {
         solve_generated_two_phase_quality_schedule_with_tables(start, budget, &self.tables)
     }
+
+    pub fn solve_multiprobe(
+        &self,
+        start: &Cube,
+        budget: SearchBudget,
+    ) -> Result<GeneratedTwoPhaseSearchResult, GeneratedTwoPhaseError> {
+        solve_generated_two_phase_multiprobe_with_tables(start, budget, &self.tables)
+    }
+}
+
+fn solve_generated_two_phase_multiprobe_with_tables(
+    start: &Cube,
+    budget: SearchBudget,
+    tables: &GeneratedPruningTables,
+) -> Result<GeneratedTwoPhaseSearchResult, GeneratedTwoPhaseError> {
+    let mut metrics = GeneratedTwoPhaseMetrics::default();
+    let mut explored_nodes = 0_usize;
+    let mut best_solution: Option<SearchSolution> = None;
+    let probe_depth = budget.max_depth.min(20);
+
+    let fallback = solve_generated_two_phase_quality_schedule_with_tables(
+        start,
+        SearchBudget::with_limits(budget.max_depth, budget.max_nodes),
+        tables,
+    )?;
+    if let Some(solution) = record_quality_attempt(fallback, &mut metrics, &mut explored_nodes) {
+        if solution.len() <= probe_depth {
+            return Ok(GeneratedTwoPhaseSearchResult {
+                outcome: SearchOutcome::Found(solution),
+                metrics,
+            });
+        }
+        best_solution = Some(solution);
+    }
+
+    let inverse_start = start.inverse();
+    for profile in MULTIPROBE_INVERSE_ORDERING_PROFILES {
+        let remaining_nodes = remaining_node_budget(budget.max_nodes, explored_nodes);
+        if remaining_nodes == Some(0) {
+            break;
+        }
+
+        let attempt_nodes = multiprobe_node_budget(budget.max_nodes, remaining_nodes);
+        let attempt = solve_generated_two_phase_quality_with_tables_and_profile(
+            &inverse_start,
+            SearchBudget::with_limits(probe_depth, attempt_nodes),
+            tables,
+            profile,
+        )?;
+        let attempt_nodes = attempt.metrics.explored_nodes();
+        metrics = metrics.saturating_add(attempt.metrics);
+        explored_nodes = explored_nodes.saturating_add(attempt_nodes);
+
+        if let SearchOutcome::Found(inverse_solution) = attempt.outcome {
+            let solution = SearchSolution::with_metrics(
+                inverse_solution_moves(inverse_solution.moves()),
+                explored_nodes,
+            );
+            if best_solution
+                .as_ref()
+                .is_none_or(|best| solution.len() < best.len())
+            {
+                best_solution = Some(solution);
+            }
+            if best_solution
+                .as_ref()
+                .is_some_and(|solution| solution.len() <= probe_depth)
+            {
+                break;
+            }
+        }
+    }
+
+    if let Some(solution) = best_solution {
+        return Ok(GeneratedTwoPhaseSearchResult {
+            outcome: SearchOutcome::Found(SearchSolution::with_metrics(
+                solution.moves,
+                explored_nodes,
+            )),
+            metrics,
+        });
+    }
+
+    Ok(GeneratedTwoPhaseSearchResult {
+        outcome: SearchOutcome::NotFoundWithinLimits { explored_nodes },
+        metrics,
+    })
+}
+
+fn inverse_solution_moves(moves: &[Move]) -> Vec<Move> {
+    moves.iter().rev().map(|move_| move_.inverse()).collect()
 }
 
 fn solve_generated_two_phase_quality_schedule_with_tables(
@@ -508,6 +632,22 @@ fn quality_probe_node_budget(max_nodes: Option<usize>) -> Option<usize> {
     }
 }
 
+fn multiprobe_node_budget(
+    max_nodes: Option<usize>,
+    remaining_nodes: Option<usize>,
+) -> Option<usize> {
+    match max_nodes {
+        Some(0) => Some(0),
+        Some(max_nodes) => {
+            let candidate = (max_nodes / 10)
+                .clamp(1_000, MULTIPROBE_NODE_CAP)
+                .min(max_nodes);
+            Some(remaining_nodes.map_or(candidate, |remaining| candidate.min(remaining)))
+        }
+        None => Some(MULTIPROBE_NODE_CAP),
+    }
+}
+
 fn quality_depth_node_budget(
     max_nodes: Option<usize>,
     remaining_nodes: Option<usize>,
@@ -521,6 +661,13 @@ fn quality_depth_node_budget(
         Some(max_nodes) if depth_limit <= 18 => (max_nodes / 10)
             .clamp(1_000, QUALITY_DEPTH_18_NODE_CAP)
             .min(max_nodes),
+        Some(max_nodes)
+            if depth_limit <= 20 && max_nodes >= QUALITY_DEPTH_20_DEEP_NODE_THRESHOLD =>
+        {
+            (max_nodes.saturating_mul(4) / 5)
+                .clamp(QUALITY_DEPTH_20_NODE_CAP, QUALITY_DEPTH_20_DEEP_NODE_CAP)
+                .min(max_nodes)
+        }
         Some(max_nodes) => (max_nodes.saturating_mul(3) / 10)
             .clamp(1_000, QUALITY_DEPTH_20_NODE_CAP)
             .min(max_nodes),
@@ -541,6 +688,20 @@ fn solve_generated_two_phase_with_tables(
     budget: SearchBudget,
     tables: &GeneratedPruningTables,
 ) -> Result<GeneratedTwoPhaseSearchResult, GeneratedTwoPhaseError> {
+    solve_generated_two_phase_with_tables_and_profile(
+        start,
+        budget,
+        tables,
+        MoveOrderingProfile::Default,
+    )
+}
+
+fn solve_generated_two_phase_with_tables_and_profile(
+    start: &Cube,
+    budget: SearchBudget,
+    tables: &GeneratedPruningTables,
+    ordering_profile: MoveOrderingProfile,
+) -> Result<GeneratedTwoPhaseSearchResult, GeneratedTwoPhaseError> {
     let mut context = TwoPhaseSearchContext::new(budget.max_nodes);
     let start_coordinates = Phase1Coordinates::try_from_cube(start)?;
     let phase1_minimum = tables.phase1_heuristic_coordinates(start_coordinates, &mut context)?;
@@ -560,6 +721,7 @@ fn solve_generated_two_phase_with_tables(
             phase1_limit,
             start,
             tables,
+            ordering_profile,
             context: &mut context,
         };
 
@@ -591,6 +753,20 @@ fn solve_generated_two_phase_quality_with_tables(
     budget: SearchBudget,
     tables: &GeneratedPruningTables,
 ) -> Result<GeneratedTwoPhaseSearchResult, GeneratedTwoPhaseError> {
+    solve_generated_two_phase_quality_with_tables_and_profile(
+        start,
+        budget,
+        tables,
+        MoveOrderingProfile::Default,
+    )
+}
+
+fn solve_generated_two_phase_quality_with_tables_and_profile(
+    start: &Cube,
+    budget: SearchBudget,
+    tables: &GeneratedPruningTables,
+    ordering_profile: MoveOrderingProfile,
+) -> Result<GeneratedTwoPhaseSearchResult, GeneratedTwoPhaseError> {
     let mut context = TwoPhaseSearchContext::new(budget.max_nodes);
     let start_coordinates = Phase1Coordinates::try_from_cube(start)?;
     let phase1_minimum = tables.phase1_heuristic_coordinates(start_coordinates, &mut context)?;
@@ -612,6 +788,7 @@ fn solve_generated_two_phase_quality_with_tables(
             phase1_limit: total_limit,
             start,
             tables,
+            ordering_profile,
             context: &mut context,
         };
 
@@ -1063,6 +1240,14 @@ struct Phase1Search<'a> {
     phase1_limit: usize,
     start: &'a Cube,
     tables: &'a GeneratedPruningTables,
+    ordering_profile: MoveOrderingProfile,
+    context: &'a mut TwoPhaseSearchContext,
+}
+
+struct Phase2Search<'a> {
+    phase2_limit: usize,
+    tables: &'a GeneratedPruningTables,
+    ordering_profile: MoveOrderingProfile,
     context: &'a mut TwoPhaseSearchContext,
 }
 
@@ -1094,6 +1279,7 @@ fn search_phase1(
             remaining_depth,
             last_move,
             search.tables,
+            search.ordering_profile,
             search.context,
         )? {
             TwoPhaseSearchResult::Found(phase2_moves) => {
@@ -1158,7 +1344,7 @@ fn phase1_ordered_candidates(
         });
     }
 
-    sort_phase1_candidates(&mut candidates);
+    sort_phase1_candidates_with_profile(&mut candidates, search.ordering_profile);
     search
         .context
         .record_phase1_ordered_candidates(candidates.len());
@@ -1173,14 +1359,30 @@ fn phase1_candidate_moves(last_move: Option<Move>) -> impl Iterator<Item = (usiz
         .filter(move |(_, move_)| !should_skip_move(last_move, *move_))
 }
 
+#[cfg(test)]
 fn sort_phase1_candidates(candidates: &mut [Phase1Candidate]) {
-    candidates.sort_by_key(|candidate| {
-        (
-            candidate.estimated_total,
-            candidate.heuristic,
-            candidate.move_index,
-        )
-    });
+    sort_phase1_candidates_with_profile(candidates, MoveOrderingProfile::Default);
+}
+
+fn sort_phase1_candidates_with_profile(
+    candidates: &mut [Phase1Candidate],
+    profile: MoveOrderingProfile,
+) {
+    candidates.sort_by_key(|candidate| phase1_sort_key(*candidate, profile));
+}
+
+fn phase1_sort_key(
+    candidate: Phase1Candidate,
+    profile: MoveOrderingProfile,
+) -> (usize, usize, usize, usize) {
+    candidate_sort_key(
+        candidate.estimated_total,
+        candidate.heuristic,
+        candidate.move_index,
+        candidate.move_,
+        PHASE1_MOVE_COUNT,
+        profile,
+    )
 }
 
 fn solve_phase2_from(
@@ -1188,6 +1390,7 @@ fn solve_phase2_from(
     remaining_depth: usize,
     last_phase1_move: Option<Move>,
     tables: &GeneratedPruningTables,
+    ordering_profile: MoveOrderingProfile,
     context: &mut TwoPhaseSearchContext,
 ) -> Result<TwoPhaseSearchResult, GeneratedTwoPhaseError> {
     context.record_phase2_call();
@@ -1201,13 +1404,17 @@ fn solve_phase2_from(
     for phase2_limit in phase2_minimum..=remaining_depth {
         let mut path = Vec::new();
         let mut path_states = HashSet::<Phase2Coordinates>::from([start_coordinates]);
+        let mut phase2_search = Phase2Search {
+            phase2_limit,
+            tables,
+            ordering_profile,
+            context,
+        };
 
         match search_phase2(
             start_coordinates,
-            phase2_limit,
             last_phase1_move,
-            tables,
-            context,
+            &mut phase2_search,
             &mut path_states,
             &mut path,
         )? {
@@ -1224,19 +1431,22 @@ fn solve_phase2_from(
 
 fn search_phase2(
     coordinates: Phase2Coordinates,
-    phase2_limit: usize,
     last_move: Option<Move>,
-    tables: &GeneratedPruningTables,
-    context: &mut TwoPhaseSearchContext,
+    search: &mut Phase2Search<'_>,
     path_states: &mut HashSet<Phase2Coordinates>,
     path: &mut Vec<Move>,
 ) -> Result<TwoPhaseSearchResult, GeneratedTwoPhaseError> {
-    if !context.visit_phase2() {
+    if !search.context.visit_phase2() {
         return Ok(TwoPhaseSearchResult::NodeLimitReached);
     }
 
-    if path.len() + tables.phase2_heuristic_coordinates(coordinates, context)? > phase2_limit {
-        context.record_heuristic_prune();
+    if path.len()
+        + search
+            .tables
+            .phase2_heuristic_coordinates(coordinates, search.context)?
+        > search.phase2_limit
+    {
+        search.context.record_heuristic_prune();
         return Ok(TwoPhaseSearchResult::Exhausted);
     }
 
@@ -1244,12 +1454,18 @@ fn search_phase2(
         return Ok(TwoPhaseSearchResult::Found(path.clone()));
     }
 
-    if path.len() == phase2_limit {
+    if path.len() == search.phase2_limit {
         return Ok(TwoPhaseSearchResult::Exhausted);
     }
 
-    for candidate in phase2_ordered_candidates(coordinates, last_move, path.len(), tables, context)?
-    {
+    for candidate in phase2_ordered_candidates(
+        coordinates,
+        last_move,
+        path.len(),
+        search.tables,
+        search.ordering_profile,
+        search.context,
+    )? {
         if !path_states.insert(candidate.coordinates) {
             continue;
         }
@@ -1257,10 +1473,8 @@ fn search_phase2(
         path.push(candidate.move_);
         let result = search_phase2(
             candidate.coordinates,
-            phase2_limit,
             Some(candidate.move_),
-            tables,
-            context,
+            search,
             path_states,
             path,
         )?;
@@ -1283,6 +1497,7 @@ fn phase2_ordered_candidates(
     last_move: Option<Move>,
     path_len: usize,
     tables: &GeneratedPruningTables,
+    ordering_profile: MoveOrderingProfile,
     context: &mut TwoPhaseSearchContext,
 ) -> Result<Vec<Phase2Candidate>, GeneratedTwoPhaseError> {
     let mut candidates = Vec::with_capacity(PHASE2_MOVES.len());
@@ -1300,7 +1515,7 @@ fn phase2_ordered_candidates(
         });
     }
 
-    sort_phase2_candidates(&mut candidates);
+    sort_phase2_candidates_with_profile(&mut candidates, ordering_profile);
     context.record_phase2_ordered_candidates(candidates.len());
 
     Ok(candidates)
@@ -1313,14 +1528,79 @@ fn phase2_candidate_moves(last_move: Option<Move>) -> impl Iterator<Item = (usiz
         .filter(move |(_, move_)| !should_skip_move(last_move, *move_))
 }
 
+#[cfg(test)]
 fn sort_phase2_candidates(candidates: &mut [Phase2Candidate]) {
-    candidates.sort_by_key(|candidate| {
-        (
-            candidate.estimated_total,
-            candidate.heuristic,
-            candidate.move_index,
-        )
-    });
+    sort_phase2_candidates_with_profile(candidates, MoveOrderingProfile::Default);
+}
+
+fn sort_phase2_candidates_with_profile(
+    candidates: &mut [Phase2Candidate],
+    profile: MoveOrderingProfile,
+) {
+    candidates.sort_by_key(|candidate| phase2_sort_key(*candidate, profile));
+}
+
+fn phase2_sort_key(
+    candidate: Phase2Candidate,
+    profile: MoveOrderingProfile,
+) -> (usize, usize, usize, usize) {
+    candidate_sort_key(
+        candidate.estimated_total,
+        candidate.heuristic,
+        candidate.move_index,
+        candidate.move_,
+        PHASE2_MOVE_COUNT,
+        profile,
+    )
+}
+
+fn candidate_sort_key(
+    estimated_total: usize,
+    heuristic: usize,
+    move_index: usize,
+    move_: Move,
+    move_count: usize,
+    profile: MoveOrderingProfile,
+) -> (usize, usize, usize, usize) {
+    match profile {
+        MoveOrderingProfile::Default => (estimated_total, heuristic, move_index, 0),
+        MoveOrderingProfile::Reverse => (
+            estimated_total,
+            heuristic,
+            move_count.saturating_sub(1).saturating_sub(move_index),
+            0,
+        ),
+        MoveOrderingProfile::HalfTurnsFirst => {
+            (estimated_total, turn_priority(move_), heuristic, move_index)
+        }
+        MoveOrderingProfile::AxisZFirst => (
+            estimated_total,
+            axis_priority(move_, [Axis::Z, Axis::Y, Axis::X]),
+            heuristic,
+            move_index,
+        ),
+        MoveOrderingProfile::AxisXFirst => (
+            estimated_total,
+            axis_priority(move_, [Axis::X, Axis::Z, Axis::Y]),
+            heuristic,
+            move_index,
+        ),
+    }
+}
+
+fn turn_priority(move_: Move) -> usize {
+    match move_.turn() {
+        Turn::Half => 0,
+        Turn::Clockwise => 1,
+        Turn::CounterClockwise => 2,
+    }
+}
+
+fn axis_priority(move_: Move, ordered_axes: [Axis; 3]) -> usize {
+    ordered_axes
+        .into_iter()
+        .position(|axis| axis == move_.axis())
+        .unwrap_or(ordered_axes.len())
 }
 
 fn load_generated_table_from_dir(
@@ -1805,12 +2085,13 @@ fn expected_tiny_phase1_metadata() -> PruningTableMetadata {
 #[cfg(test)]
 mod tests {
     use super::{
-        phase1_candidate_moves, phase2_candidate_moves, quality_depth_node_budget,
-        quality_depth_schedule, quality_probe_budget, record_quality_attempt, should_skip_move,
-        sort_phase1_candidates, sort_phase2_candidates, table_distance_index,
-        GeneratedTwoPhaseMetrics, GeneratedTwoPhaseSearchResult, Phase1Candidate,
-        Phase1Coordinates, Phase1MoveTables, Phase2Candidate, Phase2Coordinates, Phase2MoveTables,
-        TwoPhaseSearchContext, FACE_MOVES, PHASE2_MOVES,
+        inverse_solution_moves, multiprobe_node_budget, phase1_candidate_moves,
+        phase2_candidate_moves, quality_depth_node_budget, quality_depth_schedule,
+        quality_probe_budget, record_quality_attempt, should_skip_move, sort_phase1_candidates,
+        sort_phase1_candidates_with_profile, sort_phase2_candidates, table_distance_index,
+        GeneratedTwoPhaseMetrics, GeneratedTwoPhaseSearchResult, MoveOrderingProfile,
+        Phase1Candidate, Phase1Coordinates, Phase1MoveTables, Phase2Candidate, Phase2Coordinates,
+        Phase2MoveTables, TwoPhaseSearchContext, FACE_MOVES, PHASE2_MOVES,
     };
     use crate::cube::{Cube, Move};
     use crate::search::pruning::{
@@ -1895,8 +2176,33 @@ mod tests {
             Some(3_000_000)
         );
         assert_eq!(
+            quality_depth_node_budget(Some(50_000_000), Some(49_000_000), 20),
+            Some(40_000_000)
+        );
+        assert_eq!(
             quality_depth_node_budget(Some(10_000_000), Some(250), 20),
             Some(250)
+        );
+    }
+
+    #[test]
+    fn multiprobe_node_budget_preserves_fallback_budget() {
+        assert_eq!(
+            multiprobe_node_budget(Some(10_000_000), Some(9_000_000)),
+            Some(1_000_000)
+        );
+        assert_eq!(
+            multiprobe_node_budget(Some(10_000_000), Some(500)),
+            Some(500)
+        );
+        assert_eq!(multiprobe_node_budget(None, None), Some(1_000_000));
+    }
+
+    #[test]
+    fn inverse_solution_moves_reverses_and_inverts_moves() {
+        assert_eq!(
+            inverse_solution_moves(&[Move::R, Move::U2, Move::FPrime]),
+            vec![Move::F, Move::U2, Move::RPrime]
         );
     }
 
@@ -2026,6 +2332,41 @@ mod tests {
                 .map(|candidate| candidate.move_)
                 .collect::<Vec<_>>(),
             vec![Move::UPrime, Move::U2, Move::DPrime, Move::U]
+        );
+    }
+
+    #[test]
+    fn phase1_multiprobe_profile_can_prioritize_half_turns() {
+        let coordinates = Phase1Coordinates {
+            corner_orientation: 0,
+            edge_orientation: 0,
+            ud_slice: 0,
+        };
+        let mut candidates = vec![
+            Phase1Candidate {
+                move_index: 0,
+                move_: Move::U,
+                coordinates,
+                heuristic: 2,
+                estimated_total: 5,
+            },
+            Phase1Candidate {
+                move_index: 1,
+                move_: Move::U2,
+                coordinates,
+                heuristic: 2,
+                estimated_total: 5,
+            },
+        ];
+
+        sort_phase1_candidates_with_profile(&mut candidates, MoveOrderingProfile::HalfTurnsFirst);
+
+        assert_eq!(
+            candidates
+                .iter()
+                .map(|candidate| candidate.move_)
+                .collect::<Vec<_>>(),
+            vec![Move::U2, Move::U]
         );
     }
 

@@ -329,7 +329,9 @@ pub fn run_real_scramble_benchmark(
 
     if matches!(
         config.strategy,
-        SolverStrategy::GeneratedTwoPhase | SolverStrategy::GeneratedTwoPhaseQuality
+        SolverStrategy::GeneratedTwoPhase
+            | SolverStrategy::GeneratedTwoPhaseQuality
+            | SolverStrategy::GeneratedTwoPhaseMultiprobe
     ) {
         let setup_started = Instant::now();
         let solver = GeneratedTwoPhaseSolver::load_from_dir(config.pruning_table_dir());
@@ -475,6 +477,7 @@ fn run_generated_real_scramble_row(
     let result = match config.strategy {
         SolverStrategy::GeneratedTwoPhase => solver.solve(&cube, budget),
         SolverStrategy::GeneratedTwoPhaseQuality => solver.solve_quality(&cube, budget),
+        SolverStrategy::GeneratedTwoPhaseMultiprobe => solver.solve_multiprobe(&cube, budget),
         SolverStrategy::BoundedIdaStar
         | SolverStrategy::TwoPhaseBaseline
         | SolverStrategy::OptimalIdaStarOrientationPdb

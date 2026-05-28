@@ -28,6 +28,8 @@
     "solver:bench": "cargo run --quiet -p cube-engine --bin solver_quality_report",
     "solver:real-scrambles": "cargo run --quiet -p cube-engine --bin solver_real_scramble_report -- --strategy generated-two-phase-quality --max-depth 30 --max-nodes 1000",
     "solver:real-scrambles:gate": "cargo run --quiet -p cube-engine --bin solver_real_scramble_report -- --strategy generated-two-phase-quality --max-depth 30 --max-nodes 10000000 --require-success",
+    "solver:real-scrambles:deep20": "cargo run --quiet -p cube-engine --bin solver_real_scramble_report -- --strategy generated-two-phase-quality --max-depth 30 --max-nodes 50000000 --require-success --require-max-solution-len 20",
+    "solver:real-scrambles:multiprobe": "cargo run --quiet -p cube-engine --bin solver_real_scramble_report -- --strategy generated-two-phase-multiprobe --max-depth 30 --max-nodes 10000000",
     "solver:real-scrambles:corner-pdb": "cargo run --quiet -p cube-engine --bin solver_real_scramble_report -- --strategy optimal-bounded-corner-pdb --max-depth 30 --max-nodes 10000000",
     "roadmap:check": "roadrunner check --roadmap roadmap.md",
     "roadmap:cleanup": "roadrunner cleanup --roadmap roadmap.md",

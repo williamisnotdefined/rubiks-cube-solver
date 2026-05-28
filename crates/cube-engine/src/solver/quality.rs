@@ -1102,6 +1102,7 @@ fn run_quality_row(
         config.strategy,
         SolverStrategy::GeneratedTwoPhase
             | SolverStrategy::GeneratedTwoPhaseQuality
+            | SolverStrategy::GeneratedTwoPhaseMultiprobe
             | SolverStrategy::OptimalBoundedCornerPdb
     ) {
         config = config.with_pruning_table_dir(generated_pruning_table_dir.to_path_buf());
@@ -1380,6 +1381,7 @@ fn report_row(
         config.strategy,
         SolverStrategy::GeneratedTwoPhase
             | SolverStrategy::GeneratedTwoPhaseQuality
+            | SolverStrategy::GeneratedTwoPhaseMultiprobe
             | SolverStrategy::OptimalBoundedCornerPdb
     ) && table_status
         == QualityTableStatus::Available
@@ -1447,6 +1449,7 @@ fn table_status_for_success(strategy: SolverStrategy) -> QualityTableStatus {
     match strategy {
         SolverStrategy::GeneratedTwoPhase
         | SolverStrategy::GeneratedTwoPhaseQuality
+        | SolverStrategy::GeneratedTwoPhaseMultiprobe
         | SolverStrategy::OptimalBoundedCornerPdb => QualityTableStatus::Available,
         SolverStrategy::BoundedIdaStar
         | SolverStrategy::TwoPhaseBaseline
