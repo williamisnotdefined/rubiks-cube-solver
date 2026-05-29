@@ -41,10 +41,15 @@ pub enum SolverStrategy {
     /// The PDB artifact is server-side and optional. When it is missing, this strategy preserves the
     /// generated two-phase quality fallback instead of reporting false short-solution guarantees.
     OptimalBoundedCornerPdb,
+    /// IDA* bounded to 16 moves using corner and 6-edge PDB artifacts before quality two-phase fallback.
+    ///
+    /// This is a method-agnostic short-solution strategy. Missing PDB artifacts skip the proof attempt
+    /// and fall back to generated two-phase quality without claiming that no <=16 solution exists.
+    OptimalBoundedPdb16,
 }
 
 impl SolverStrategy {
-    pub const ALL: [Self; 7] = [
+    pub const ALL: [Self; 8] = [
         Self::BoundedIdaStar,
         Self::TwoPhaseBaseline,
         Self::GeneratedTwoPhase,
@@ -52,6 +57,7 @@ impl SolverStrategy {
         Self::GeneratedTwoPhaseMultiprobe,
         Self::OptimalIdaStarOrientationPdb,
         Self::OptimalBoundedCornerPdb,
+        Self::OptimalBoundedPdb16,
     ];
 
     pub const fn metadata(self) -> SolverStrategyMetadata {
@@ -72,6 +78,7 @@ impl SolverStrategy {
             Self::GeneratedTwoPhaseMultiprobe => "generated-two-phase-multiprobe",
             Self::OptimalIdaStarOrientationPdb => "optimal-ida-star-orientation-pdb",
             Self::OptimalBoundedCornerPdb => "optimal-bounded-corner-pdb",
+            Self::OptimalBoundedPdb16 => "optimal-bounded-pdb16",
         }
     }
 
@@ -84,6 +91,7 @@ impl SolverStrategy {
             Self::GeneratedTwoPhaseMultiprobe => "Generated two-phase multiprobe solver",
             Self::OptimalIdaStarOrientationPdb => "Optimal IDA* orientation PDB",
             Self::OptimalBoundedCornerPdb => "Optimal bounded corner PDB",
+            Self::OptimalBoundedPdb16 => "Optimal bounded PDB16",
         }
     }
 
@@ -96,6 +104,7 @@ impl SolverStrategy {
             Self::GeneratedTwoPhaseMultiprobe => "generated_two_phase_multiprobe",
             Self::OptimalIdaStarOrientationPdb => "optimal_ida_star_orientation_pdb",
             Self::OptimalBoundedCornerPdb => "optimal_bounded_corner_pdb",
+            Self::OptimalBoundedPdb16 => "optimal_bounded_pdb16",
         }
     }
 
@@ -122,6 +131,9 @@ impl SolverStrategy {
             Self::OptimalBoundedCornerPdb => {
                 "Quality path that tries admissible corner-PDB IDA* at short limits, then falls back to generated two-phase quality when the PDB is missing or the short proof budget is exhausted."
             }
+            Self::OptimalBoundedPdb16 => {
+                "Short-solution path that tries admissible corner and 6-edge PDB IDA* up to 16 moves, then falls back to generated two-phase quality without claiming a <=16 guarantee."
+            }
         }
     }
 
@@ -134,6 +146,7 @@ impl SolverStrategy {
             "generated-two-phase-multiprobe" => Some(Self::GeneratedTwoPhaseMultiprobe),
             "optimal-ida-star-orientation-pdb" => Some(Self::OptimalIdaStarOrientationPdb),
             "optimal-bounded-corner-pdb" => Some(Self::OptimalBoundedCornerPdb),
+            "optimal-bounded-pdb16" => Some(Self::OptimalBoundedPdb16),
             _ => None,
         }
     }

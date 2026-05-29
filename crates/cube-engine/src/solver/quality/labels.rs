@@ -12,7 +12,8 @@ pub(super) fn table_status_for_success(strategy: SolverStrategy) -> QualityTable
         SolverStrategy::GeneratedTwoPhase
         | SolverStrategy::GeneratedTwoPhaseQuality
         | SolverStrategy::GeneratedTwoPhaseMultiprobe
-        | SolverStrategy::OptimalBoundedCornerPdb => QualityTableStatus::Available,
+        | SolverStrategy::OptimalBoundedCornerPdb
+        | SolverStrategy::OptimalBoundedPdb16 => QualityTableStatus::Available,
         SolverStrategy::BoundedIdaStar
         | SolverStrategy::TwoPhaseBaseline
         | SolverStrategy::OptimalIdaStarOrientationPdb => QualityTableStatus::NotRequired,

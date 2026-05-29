@@ -71,7 +71,8 @@ pub fn solve_notation_request(
         SolverStrategy::BoundedIdaStar
         | SolverStrategy::TwoPhaseBaseline
         | SolverStrategy::OptimalIdaStarOrientationPdb
-        | SolverStrategy::OptimalBoundedCornerPdb => solve_configured_cube(
+        | SolverStrategy::OptimalBoundedCornerPdb
+        | SolverStrategy::OptimalBoundedPdb16 => solve_configured_cube(
             request.max_depth,
             request.max_nodes,
             strategy,
@@ -181,7 +182,8 @@ fn solve_generated_cube(
         SolverStrategy::BoundedIdaStar
         | SolverStrategy::TwoPhaseBaseline
         | SolverStrategy::OptimalIdaStarOrientationPdb
-        | SolverStrategy::OptimalBoundedCornerPdb => {
+        | SolverStrategy::OptimalBoundedCornerPdb
+        | SolverStrategy::OptimalBoundedPdb16 => {
             unreachable!("non-generated strategies should use the configured API solver path")
         }
     };

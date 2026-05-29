@@ -81,11 +81,12 @@ Use the short-solution benchmark to track replay-verified `<=16` frequency on a 
 ```bash
 npm run solver:short16
 npm run solver:short16:corner-pdb
+npm run solver:short16:pdb16
 npm run solver:short16:multiprobe
 npm run solver:short16:api-budget
 ```
 
-These scripts run deterministic generated depth-16 scrambles with seed `0` and report the same exclusive buckets, including `len_0_to_16`. The default and API-budget variants use 20 generated fixtures; the corner-PDB and `multiprobe` variants intentionally use 5 fixtures because they spend more budget on short-solution attempts. This is a quality metric and not a guarantee that every state has a 16-move solution. Generate the local corner PDB first with `npm run pdb:corner:deep` before relying on `solver:short16:corner-pdb` results.
+These scripts run deterministic generated depth-16 scrambles with seed `0` and report the same exclusive buckets, including `len_0_to_16`. The default and API-budget variants use 20 generated fixtures; the corner-PDB, PDB16, and `multiprobe` variants intentionally use 5 fixtures because they spend more budget on short-solution attempts. This is a quality metric and not a guarantee that every state has a 16-move solution. Generate the local corner PDB first with `npm run pdb:corner:deep` before relying on `solver:short16:corner-pdb`, and generate both corner plus edge PDBs before relying on `solver:short16:pdb16`.
 
 For an intentionally heavy local/server-side run, use the deep 20-move gate:
 
@@ -116,6 +117,15 @@ npm run pdb:corner:deep
 ```
 
 `pdb:corner` creates a depth-8 smoke artifact. `pdb:corner:deep` creates a full corner permutation+orientation artifact at `crates/cube-engine/pruning-tables/corner-pattern-database.rpdb`; it is about 88 MB locally and should not be committed. The strategy uses the corner PDB only for a bounded `<=16` proof attempt, then falls back to `generated-two-phase-quality`, so it is diagnostic/experimental rather than the product default.
+
+Optional 6-edge pattern databases can be generated for the experimental `optimal-bounded-pdb16` strategy:
+
+```bash
+npm run pdb:edge
+npm run pdb:edge:deep
+```
+
+`pdb:edge` creates two depth-6 smoke artifacts. `pdb:edge:deep` creates two denser depth-8 local artifacts, `edge-pattern-database-a.repdb` and `edge-pattern-database-b.repdb`, under `crates/cube-engine/pruning-tables/`; this can take many minutes. The `optimal-bounded-pdb16` strategy uses `max(corner_pdb, edge_pdb_a, edge_pdb_b, orientation_pdb)` for an admissible IDA* attempt up to 16 moves, then falls back to `generated-two-phase-quality` without claiming that no short solution exists.
 
 Generate ML training rows labeled by the generated two-phase solver instead of inverse scrambles:
 
@@ -157,6 +167,7 @@ Endpoints:
 - If `maxNodes` is omitted, the API uses `10000000`; the request cap is `25000000`.
 - Experimental: `strategyId="generated-two-phase-multiprobe"` runs the quality solver first, then uses inverse-state move-order probes when the quality result is still longer than 16 moves and node budget remains.
 - Experimental: `strategyId="optimal-bounded-corner-pdb"` tries the local corner PDB first, then falls back to generated two-phase quality.
+- Experimental: `strategyId="optimal-bounded-pdb16"` tries local corner plus 6-edge PDBs for a bounded `<=16` IDA* attempt, then falls back to generated two-phase quality.
 
 Every successful API solve includes `replayVerified=true`. The client-facing API accepts move notation only; facelet/Kociemba strings are not client request payloads.
 

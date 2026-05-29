@@ -166,7 +166,8 @@ fn run_generated_real_scramble_row(
         SolverStrategy::BoundedIdaStar
         | SolverStrategy::TwoPhaseBaseline
         | SolverStrategy::OptimalIdaStarOrientationPdb
-        | SolverStrategy::OptimalBoundedCornerPdb => unreachable!(
+        | SolverStrategy::OptimalBoundedCornerPdb
+        | SolverStrategy::OptimalBoundedPdb16 => unreachable!(
             "non-generated strategies should use the generic real scramble benchmark path"
         ),
     };
