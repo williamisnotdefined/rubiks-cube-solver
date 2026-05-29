@@ -74,6 +74,16 @@ The npm script uses `generated-two-phase-quality` with `max_depth=30` and a smal
 
 The CLI also supports a quality gate such as `--require-max-solution-len 20`; combine it with `--require-success` only when the current generated tables and budgets support that threshold locally.
 
+Use the short-solution benchmark to track replay-verified `<=16` frequency on a deterministic generated sample without giving the solver inverse scrambles:
+
+```bash
+npm run solver:short16
+npm run solver:short16:multiprobe
+npm run solver:short16:api-budget
+```
+
+These scripts run deterministic generated depth-16 scrambles with seed `0` and report the same exclusive buckets, including `len_0_to_16`. The default and API-budget variants use 20 generated fixtures; the `multiprobe` variant intentionally uses 5 fixtures because it spends remaining budget on deterministic inverse-state probes targeting `<=16`. This is a quality metric and not a guarantee that every state has a 16-move solution.
+
 For an intentionally heavy local/server-side run, use the deep 20-move gate:
 
 ```bash
@@ -142,7 +152,7 @@ Endpoints:
 - `GET /strategies`
 - `POST /solve-notation` with `{ "moves": "R2 D2 F'", "strategyId": "generated-two-phase-quality", "maxDepth": 30, "maxNodes": 10000000 }`
 - If `maxNodes` is omitted, the API uses `10000000`; the request cap is `25000000`.
-- Experimental: `strategyId="generated-two-phase-multiprobe"` runs the quality solver first, then uses inverse-state move-order probes only when the quality result is still longer than 20 moves and node budget remains.
+- Experimental: `strategyId="generated-two-phase-multiprobe"` runs the quality solver first, then uses inverse-state move-order probes when the quality result is still longer than 16 moves and node budget remains.
 - Experimental: `strategyId="optimal-bounded-corner-pdb"` tries the local corner PDB first, then falls back to generated two-phase quality.
 
 Every successful API solve includes `replayVerified=true`. The client-facing API accepts move notation only; facelet/Kociemba strings are not client request payloads.

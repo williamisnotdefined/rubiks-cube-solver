@@ -26,13 +26,14 @@ pub(super) const SLICE_EDGE_PERMUTATION_COORDINATE_COUNT: usize =
 pub(super) const UD_SLICE_EDGE_COMBINATION_COORDINATE_COUNT: usize =
     crate::cube::coordinates::UD_SLICE_EDGE_COMBINATION_COORDINATE_COUNT;
 pub(super) const QUALITY_PROBE_MAX_DEPTH: usize = 16;
-pub(super) const QUALITY_PROBE_NODE_CAP: usize = 1_000_000;
-pub(super) const QUALITY_DEPTH_16_NODE_CAP: usize = 500_000;
+pub(super) const QUALITY_PROBE_NODE_CAP: usize = 3_000_000;
+pub(super) const QUALITY_DEPTH_16_NODE_CAP: usize = 3_000_000;
 pub(super) const QUALITY_DEPTH_18_NODE_CAP: usize = 1_000_000;
 pub(super) const QUALITY_DEPTH_20_NODE_CAP: usize = 3_000_000;
 pub(super) const QUALITY_DEPTH_20_DEEP_NODE_THRESHOLD: usize = 50_000_000;
 pub(super) const QUALITY_DEPTH_20_DEEP_NODE_CAP: usize = 40_000_000;
-pub(super) const MULTIPROBE_NODE_CAP: usize = 1_000_000;
+pub(super) const MULTIPROBE_TARGET_DEPTH: usize = 16;
+pub(super) const MULTIPROBE_NODE_CAP: usize = 2_000_000;
 pub(super) const UD_SLICE_EDGES: [Edge; 4] = [Edge::Fr, Edge::Fl, Edge::Bl, Edge::Br];
 pub(super) const UD_NON_SLICE_EDGES: [Edge; 8] = [
     Edge::Ur,

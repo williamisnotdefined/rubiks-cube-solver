@@ -12,10 +12,18 @@ pub struct RealScrambleSpec {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RealScrambleFixture {
-    pub id: &'static str,
-    pub scramble: &'static str,
+    pub id: String,
+    pub scramble: String,
     pub scramble_len: usize,
     pub state: CubieState,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct GeneratedRealScrambleConfig {
+    pub count: usize,
+    pub seed: u64,
+    pub scramble_depth: usize,
+    pub include_committed: bool,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -45,8 +53,8 @@ impl RealScrambleBenchmarkStatus {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RealScrambleBenchmarkRow {
-    pub fixture_id: &'static str,
-    pub scramble: &'static str,
+    pub fixture_id: String,
+    pub scramble: String,
     pub scramble_len: usize,
     pub strategy: SolverStrategy,
     pub max_depth: usize,
@@ -59,6 +67,8 @@ pub struct RealScrambleBenchmarkRow {
     pub phase2_nodes: Option<usize>,
     pub phase1_depth_attempts: Option<usize>,
     pub max_phase1_depth_attempted: Option<usize>,
+    pub total_depth_attempts: Option<usize>,
+    pub max_total_depth_attempted: Option<usize>,
     pub phase1_ordered_candidates: Option<usize>,
     pub phase1_ordering_heuristic_evals: Option<usize>,
     pub phase2_ordered_candidates: Option<usize>,
@@ -67,6 +77,10 @@ pub struct RealScrambleBenchmarkRow {
     pub heuristic_prunes: Option<usize>,
     pub node_limit_hits: Option<usize>,
     pub table_missing_entries: Option<usize>,
+    pub solutions_found: Option<usize>,
+    pub best_solution_length: Option<usize>,
+    pub best_phase1_length: Option<usize>,
+    pub best_phase2_length: Option<usize>,
     pub replay_verified: Option<bool>,
     pub moves: Vec<Move>,
     pub message: Option<String>,
@@ -172,12 +186,18 @@ impl RealScrambleBenchmarkSummary {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum RealScrambleBenchmarkError {
     Notation {
-        fixture_id: &'static str,
+        fixture_id: String,
         error: NotationError,
     },
     CubieValidation {
-        fixture_id: &'static str,
+        fixture_id: String,
         error: CubeValidationError,
+    },
+    UnableToGenerateUniqueFixtures {
+        requested: usize,
+        generated: usize,
+        attempts: usize,
+        scramble_depth: usize,
     },
 }
 
@@ -194,6 +214,15 @@ impl fmt::Display for RealScrambleBenchmarkError {
                 formatter,
                 "benchmark fixture {fixture_id} produced an invalid cubie state: {error}"
             ),
+            Self::UnableToGenerateUniqueFixtures {
+                requested,
+                generated,
+                attempts,
+                scramble_depth,
+            } => write!(
+                formatter,
+                "could not generate {requested} unique real-scramble benchmark fixtures at depth {scramble_depth}: generated {generated} after {attempts} attempts"
+            ),
         }
     }
 }
@@ -203,6 +232,7 @@ impl std::error::Error for RealScrambleBenchmarkError {
         match self {
             Self::Notation { error, .. } => Some(error),
             Self::CubieValidation { error, .. } => Some(error),
+            Self::UnableToGenerateUniqueFixtures { .. } => None,
         }
     }
 }

@@ -32,6 +32,7 @@ use candidates::{
     phase1_candidate_moves, phase2_candidate_moves, should_skip_move, sort_phase1_candidates,
     sort_phase1_candidates_with_profile, sort_phase2_candidates, Phase1Candidate, Phase2Candidate,
 };
+use constants::MULTIPROBE_TARGET_DEPTH;
 #[cfg(test)]
 use constants::PHASE2_MOVES;
 use context::TwoPhaseSearchContext;
@@ -65,7 +66,7 @@ fn solve_generated_two_phase_multiprobe_with_tables(
     let mut metrics = GeneratedTwoPhaseMetrics::default();
     let mut explored_nodes = 0_usize;
     let mut best_solution: Option<SearchSolution> = None;
-    let probe_depth = budget.max_depth.min(20);
+    let target_depth = budget.max_depth.min(MULTIPROBE_TARGET_DEPTH);
 
     let fallback = solve_generated_two_phase_quality_schedule_with_tables(
         start,
@@ -73,7 +74,7 @@ fn solve_generated_two_phase_multiprobe_with_tables(
         tables,
     )?;
     if let Some(solution) = record_quality_attempt(fallback, &mut metrics, &mut explored_nodes) {
-        if solution.len() <= probe_depth {
+        if solution.len() <= target_depth {
             return Ok(GeneratedTwoPhaseSearchResult {
                 outcome: SearchOutcome::Found(solution),
                 metrics,
@@ -92,7 +93,7 @@ fn solve_generated_two_phase_multiprobe_with_tables(
         let attempt_nodes = multiprobe_node_budget(budget.max_nodes, remaining_nodes);
         let attempt = solve_generated_two_phase_quality_with_tables_and_profile(
             &inverse_start,
-            SearchBudget::with_limits(probe_depth, attempt_nodes),
+            SearchBudget::with_limits(target_depth, attempt_nodes),
             tables,
             profile,
         )?;
@@ -113,7 +114,7 @@ fn solve_generated_two_phase_multiprobe_with_tables(
             }
             if best_solution
                 .as_ref()
-                .is_some_and(|solution| solution.len() <= probe_depth)
+                .is_some_and(|solution| solution.len() <= target_depth)
             {
                 break;
             }
@@ -246,7 +247,7 @@ mod tests {
     fn quality_probe_budget_uses_short_depth_and_small_node_slice() {
         assert_eq!(
             quality_probe_budget(SearchBudget::with_limits(30, Some(10_000_000))),
-            SearchBudget::with_limits(16, Some(1_000_000))
+            SearchBudget::with_limits(16, Some(2_000_000))
         );
         assert_eq!(
             quality_probe_budget(SearchBudget::with_limits(12, Some(500))),
@@ -254,7 +255,7 @@ mod tests {
         );
         assert_eq!(
             quality_probe_budget(SearchBudget::with_limits(30, None)),
-            SearchBudget::with_limits(16, Some(1_000_000))
+            SearchBudget::with_limits(16, Some(3_000_000))
         );
     }
 
@@ -270,7 +271,7 @@ mod tests {
     fn quality_depth_node_budget_slices_short_depth_attempts() {
         assert_eq!(
             quality_depth_node_budget(Some(10_000_000), Some(9_000_000), 16),
-            Some(500_000)
+            Some(2_000_000)
         );
         assert_eq!(
             quality_depth_node_budget(Some(10_000_000), Some(9_000_000), 18),
@@ -294,13 +295,13 @@ mod tests {
     fn multiprobe_node_budget_preserves_fallback_budget() {
         assert_eq!(
             multiprobe_node_budget(Some(10_000_000), Some(9_000_000)),
-            Some(1_000_000)
+            Some(2_000_000)
         );
         assert_eq!(
             multiprobe_node_budget(Some(10_000_000), Some(500)),
             Some(500)
         );
-        assert_eq!(multiprobe_node_budget(None, None), Some(1_000_000));
+        assert_eq!(multiprobe_node_budget(None, None), Some(2_000_000));
     }
 
     #[test]

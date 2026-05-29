@@ -4,12 +4,12 @@ mod markdown;
 mod runner;
 mod types;
 
-pub use fixtures::{real_scramble_fixtures, REAL_SCRAMBLE_SPECS};
-pub use runner::run_real_scramble_benchmark;
+pub use fixtures::{generated_real_scramble_fixtures, real_scramble_fixtures, REAL_SCRAMBLE_SPECS};
+pub use runner::{run_real_scramble_benchmark, run_real_scramble_benchmark_for_fixtures};
 pub use types::{
-    RealScrambleBenchmarkError, RealScrambleBenchmarkReport, RealScrambleBenchmarkRow,
-    RealScrambleBenchmarkStatus, RealScrambleBenchmarkSummary, RealScrambleFixture,
-    RealScrambleSpec,
+    GeneratedRealScrambleConfig, RealScrambleBenchmarkError, RealScrambleBenchmarkReport,
+    RealScrambleBenchmarkRow, RealScrambleBenchmarkStatus, RealScrambleBenchmarkSummary,
+    RealScrambleFixture, RealScrambleSpec,
 };
 
 #[cfg(test)]
@@ -17,8 +17,9 @@ mod tests {
     use std::time::Duration;
 
     use super::{
-        real_scramble_fixtures, run_real_scramble_benchmark, RealScrambleBenchmarkReport,
-        RealScrambleBenchmarkRow, RealScrambleBenchmarkStatus, REAL_SCRAMBLE_SPECS,
+        generated_real_scramble_fixtures, real_scramble_fixtures, run_real_scramble_benchmark,
+        GeneratedRealScrambleConfig, RealScrambleBenchmarkReport, RealScrambleBenchmarkRow,
+        RealScrambleBenchmarkStatus, REAL_SCRAMBLE_SPECS,
     };
     use crate::cube::Move;
     use crate::solver::{SolverConfig, SolverStrategy};
@@ -33,6 +34,33 @@ mod tests {
         assert!(fixtures
             .iter()
             .all(|fixture| fixture.state != crate::CubieState::solved()));
+    }
+
+    #[test]
+    fn generated_real_scramble_fixtures_are_deterministic_unique_states() {
+        let config = GeneratedRealScrambleConfig {
+            count: 4,
+            seed: 7,
+            scramble_depth: 10,
+            include_committed: false,
+        };
+        let fixtures = generated_real_scramble_fixtures(config)
+            .expect("generated real-scramble fixtures should build");
+        let repeated = generated_real_scramble_fixtures(config)
+            .expect("generated real-scramble fixtures should be repeatable");
+
+        assert_eq!(fixtures, repeated);
+        assert_eq!(fixtures.len(), 4);
+        assert!(fixtures.iter().all(|fixture| fixture.scramble_len == 10));
+        assert!(fixtures.iter().all(|fixture| fixture.state.is_valid()));
+        assert_eq!(
+            fixtures
+                .iter()
+                .map(|fixture| fixture.state.serialize())
+                .collect::<std::collections::BTreeSet<_>>()
+                .len(),
+            fixtures.len()
+        );
     }
 
     #[test]
@@ -153,8 +181,8 @@ mod tests {
         elapsed_us: u64,
     ) -> RealScrambleBenchmarkRow {
         RealScrambleBenchmarkRow {
-            fixture_id: "test",
-            scramble: "R U",
+            fixture_id: "test".to_owned(),
+            scramble: "R U".to_owned(),
             scramble_len: 2,
             strategy: SolverStrategy::GeneratedTwoPhase,
             max_depth: 30,
@@ -167,6 +195,8 @@ mod tests {
             phase2_nodes: None,
             phase1_depth_attempts: None,
             max_phase1_depth_attempted: None,
+            total_depth_attempts: None,
+            max_total_depth_attempted: None,
             phase1_ordered_candidates: None,
             phase1_ordering_heuristic_evals: None,
             phase2_ordered_candidates: None,
@@ -175,6 +205,10 @@ mod tests {
             heuristic_prunes: None,
             node_limit_hits: None,
             table_missing_entries: None,
+            solutions_found: None,
+            best_solution_length: None,
+            best_phase1_length: None,
+            best_phase2_length: None,
             replay_verified,
             moves: solution_length.map_or_else(Vec::new, |_| vec![Move::U]),
             message: None,

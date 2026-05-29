@@ -33,9 +33,11 @@ pub use search::{
     ZeroHeuristic,
 };
 pub use solver::benchmark::{
-    real_scramble_fixtures, run_real_scramble_benchmark, RealScrambleBenchmarkError,
-    RealScrambleBenchmarkReport, RealScrambleBenchmarkRow, RealScrambleBenchmarkStatus,
-    RealScrambleBenchmarkSummary, RealScrambleFixture, RealScrambleSpec, REAL_SCRAMBLE_SPECS,
+    generated_real_scramble_fixtures, real_scramble_fixtures, run_real_scramble_benchmark,
+    run_real_scramble_benchmark_for_fixtures, GeneratedRealScrambleConfig,
+    RealScrambleBenchmarkError, RealScrambleBenchmarkReport, RealScrambleBenchmarkRow,
+    RealScrambleBenchmarkStatus, RealScrambleBenchmarkSummary, RealScrambleFixture,
+    RealScrambleSpec, REAL_SCRAMBLE_SPECS,
 };
 pub use solver::{
     playback_facelet_solution, solve_cube, solve_cube_with_generated_pruning_tables,

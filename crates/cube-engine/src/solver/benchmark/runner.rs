@@ -19,6 +19,13 @@ pub fn run_real_scramble_benchmark(
 ) -> Result<RealScrambleBenchmarkReport, RealScrambleBenchmarkError> {
     let fixtures = real_scramble_fixtures()?;
 
+    run_real_scramble_benchmark_for_fixtures(config, &fixtures)
+}
+
+pub fn run_real_scramble_benchmark_for_fixtures(
+    config: SolverConfig,
+    fixtures: &[RealScrambleFixture],
+) -> Result<RealScrambleBenchmarkReport, RealScrambleBenchmarkError> {
     if matches!(
         config.strategy,
         SolverStrategy::GeneratedTwoPhase
@@ -70,8 +77,8 @@ fn run_real_scramble_row(
             };
 
             RealScrambleBenchmarkRow {
-                fixture_id: fixture.id,
-                scramble: fixture.scramble,
+                fixture_id: fixture.id.clone(),
+                scramble: fixture.scramble.clone(),
                 scramble_len: fixture.scramble_len,
                 strategy: config.strategy,
                 max_depth: config.max_depth,
@@ -84,6 +91,8 @@ fn run_real_scramble_row(
                 phase2_nodes: None,
                 phase1_depth_attempts: None,
                 max_phase1_depth_attempted: None,
+                total_depth_attempts: None,
+                max_total_depth_attempted: None,
                 phase1_ordered_candidates: None,
                 phase1_ordering_heuristic_evals: None,
                 phase2_ordered_candidates: None,
@@ -92,6 +101,10 @@ fn run_real_scramble_row(
                 heuristic_prunes: None,
                 node_limit_hits: None,
                 table_missing_entries: None,
+                solutions_found: None,
+                best_solution_length: None,
+                best_phase1_length: None,
+                best_phase2_length: None,
                 replay_verified: Some(replay_verified),
                 moves: result.moves,
                 message: None,
@@ -110,8 +123,8 @@ fn run_generated_real_scramble_row(
         Ok(cube) => cube,
         Err(error) => {
             return RealScrambleBenchmarkRow {
-                fixture_id: fixture.id,
-                scramble: fixture.scramble,
+                fixture_id: fixture.id.clone(),
+                scramble: fixture.scramble.clone(),
                 scramble_len: fixture.scramble_len,
                 strategy: config.strategy,
                 max_depth: config.max_depth,
@@ -124,6 +137,8 @@ fn run_generated_real_scramble_row(
                 phase2_nodes: None,
                 phase1_depth_attempts: None,
                 max_phase1_depth_attempted: None,
+                total_depth_attempts: None,
+                max_total_depth_attempted: None,
                 phase1_ordered_candidates: None,
                 phase1_ordering_heuristic_evals: None,
                 phase2_ordered_candidates: None,
@@ -132,6 +147,10 @@ fn run_generated_real_scramble_row(
                 heuristic_prunes: None,
                 node_limit_hits: None,
                 table_missing_entries: None,
+                solutions_found: None,
+                best_solution_length: None,
+                best_phase1_length: None,
+                best_phase2_length: None,
                 replay_verified: None,
                 moves: Vec::new(),
                 message: Some(error.to_string()),
@@ -220,8 +239,8 @@ fn error_row(
     };
 
     RealScrambleBenchmarkRow {
-        fixture_id: fixture.id,
-        scramble: fixture.scramble,
+        fixture_id: fixture.id.clone(),
+        scramble: fixture.scramble.clone(),
         scramble_len: fixture.scramble_len,
         strategy: config.strategy,
         max_depth: config.max_depth,
@@ -234,6 +253,8 @@ fn error_row(
         phase2_nodes: None,
         phase1_depth_attempts: None,
         max_phase1_depth_attempted: None,
+        total_depth_attempts: None,
+        max_total_depth_attempted: None,
         phase1_ordered_candidates: None,
         phase1_ordering_heuristic_evals: None,
         phase2_ordered_candidates: None,
@@ -242,6 +263,10 @@ fn error_row(
         heuristic_prunes: None,
         node_limit_hits: None,
         table_missing_entries: None,
+        solutions_found: None,
+        best_solution_length: None,
+        best_phase1_length: None,
+        best_phase2_length: None,
         replay_verified: None,
         moves: Vec::new(),
         message: Some(error.to_string()),
@@ -262,8 +287,8 @@ fn row_with_generated_metrics(
     metrics: GeneratedTwoPhaseMetrics,
 ) -> RealScrambleBenchmarkRow {
     RealScrambleBenchmarkRow {
-        fixture_id: fixture.id,
-        scramble: fixture.scramble,
+        fixture_id: fixture.id.clone(),
+        scramble: fixture.scramble.clone(),
         scramble_len: fixture.scramble_len,
         strategy: config.strategy,
         max_depth: config.max_depth,
@@ -276,6 +301,8 @@ fn row_with_generated_metrics(
         phase2_nodes: Some(metrics.phase2_nodes),
         phase1_depth_attempts: Some(metrics.phase1_depth_attempts),
         max_phase1_depth_attempted: metrics.max_phase1_depth_attempted,
+        total_depth_attempts: Some(metrics.total_depth_attempts),
+        max_total_depth_attempted: metrics.max_total_depth_attempted,
         phase1_ordered_candidates: Some(metrics.phase1_ordered_candidates),
         phase1_ordering_heuristic_evals: Some(metrics.phase1_ordering_heuristic_evals),
         phase2_ordered_candidates: Some(metrics.phase2_ordered_candidates),
@@ -284,6 +311,10 @@ fn row_with_generated_metrics(
         heuristic_prunes: Some(metrics.heuristic_prunes),
         node_limit_hits: Some(metrics.node_limit_hits),
         table_missing_entries: Some(metrics.table_missing_entries),
+        solutions_found: Some(metrics.solutions_found),
+        best_solution_length: metrics.best_solution_length,
+        best_phase1_length: metrics.best_phase1_length,
+        best_phase2_length: metrics.best_phase2_length,
         replay_verified,
         moves,
         message,
@@ -303,8 +334,8 @@ fn generated_error_row(
     };
 
     RealScrambleBenchmarkRow {
-        fixture_id: fixture.id,
-        scramble: fixture.scramble,
+        fixture_id: fixture.id.clone(),
+        scramble: fixture.scramble.clone(),
         scramble_len: fixture.scramble_len,
         strategy: config.strategy,
         max_depth: config.max_depth,
@@ -317,6 +348,8 @@ fn generated_error_row(
         phase2_nodes: None,
         phase1_depth_attempts: None,
         max_phase1_depth_attempted: None,
+        total_depth_attempts: None,
+        max_total_depth_attempted: None,
         phase1_ordered_candidates: None,
         phase1_ordering_heuristic_evals: None,
         phase2_ordered_candidates: None,
@@ -325,6 +358,10 @@ fn generated_error_row(
         heuristic_prunes: None,
         node_limit_hits: None,
         table_missing_entries: None,
+        solutions_found: None,
+        best_solution_length: None,
+        best_phase1_length: None,
+        best_phase2_length: None,
         replay_verified: None,
         moves: Vec::new(),
         message: Some(error.to_string()),

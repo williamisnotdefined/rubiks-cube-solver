@@ -1,8 +1,13 @@
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-use cube_engine::solver::benchmark::run_real_scramble_benchmark;
-use cube_engine::{RealScrambleBenchmarkStatus, SolverConfig, SolverStrategy};
+use cube_engine::solver::benchmark::{
+    generated_real_scramble_fixtures, real_scramble_fixtures,
+    run_real_scramble_benchmark_for_fixtures,
+};
+use cube_engine::{
+    GeneratedRealScrambleConfig, RealScrambleBenchmarkStatus, SolverConfig, SolverStrategy,
+};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct BenchmarkConfig {
@@ -12,6 +17,10 @@ struct BenchmarkConfig {
     pruning_table_dir: Option<PathBuf>,
     require_success: bool,
     require_max_solution_len: Option<usize>,
+    generated_count: Option<usize>,
+    generated_seed: u64,
+    generated_scramble_depth: usize,
+    include_committed_fixtures: bool,
 }
 
 impl Default for BenchmarkConfig {
@@ -23,6 +32,10 @@ impl Default for BenchmarkConfig {
             pruning_table_dir: None,
             require_success: false,
             require_max_solution_len: None,
+            generated_count: None,
+            generated_seed: 0,
+            generated_scramble_depth: 25,
+            include_committed_fixtures: false,
         }
     }
 }
@@ -37,9 +50,16 @@ fn main() -> ExitCode {
     };
     let require_success = config.require_success;
     let require_max_solution_len = config.require_max_solution_len;
-    let solver_config = solver_config(config);
+    let fixtures = match benchmark_fixtures(&config) {
+        Ok(fixtures) => fixtures,
+        Err(error) => {
+            eprintln!("real scramble benchmark failed: {error}");
+            return ExitCode::FAILURE;
+        }
+    };
+    let solver_config = solver_config(&config);
 
-    match run_real_scramble_benchmark(solver_config) {
+    match run_real_scramble_benchmark_for_fixtures(solver_config, &fixtures) {
         Ok(report) => {
             print!("{}", report.to_markdown());
             if require_success && !all_rows_succeeded(&report) {
@@ -69,14 +89,28 @@ fn main() -> ExitCode {
     }
 }
 
-fn solver_config(config: BenchmarkConfig) -> SolverConfig {
+fn solver_config(config: &BenchmarkConfig) -> SolverConfig {
     let solver_config =
         SolverConfig::with_strategy(config.max_depth, config.max_nodes, config.strategy);
 
-    if let Some(directory) = config.pruning_table_dir {
-        solver_config.with_pruning_table_dir(directory)
+    if let Some(directory) = &config.pruning_table_dir {
+        solver_config.with_pruning_table_dir(directory.clone())
     } else {
         solver_config
+    }
+}
+
+fn benchmark_fixtures(
+    config: &BenchmarkConfig,
+) -> Result<Vec<cube_engine::RealScrambleFixture>, cube_engine::RealScrambleBenchmarkError> {
+    match config.generated_count {
+        Some(count) => generated_real_scramble_fixtures(GeneratedRealScrambleConfig {
+            count,
+            seed: config.generated_seed,
+            scramble_depth: config.generated_scramble_depth,
+            include_committed: config.include_committed_fixtures,
+        }),
+        None => real_scramble_fixtures(),
     }
 }
 
@@ -118,6 +152,27 @@ fn parse_args(args: impl IntoIterator<Item = String>) -> Result<BenchmarkConfig,
                     args.next(),
                 )?));
             }
+            "--generated-count" => {
+                config.generated_count = Some(parse_usize(
+                    "--generated-count",
+                    required_value("--generated-count", args.next())?,
+                )?);
+            }
+            "--generated-seed" => {
+                config.generated_seed = parse_u64(
+                    "--generated-seed",
+                    required_value("--generated-seed", args.next())?,
+                )?;
+            }
+            "--generated-scramble-depth" => {
+                config.generated_scramble_depth = parse_usize(
+                    "--generated-scramble-depth",
+                    required_value("--generated-scramble-depth", args.next())?,
+                )?;
+            }
+            "--include-committed-fixtures" => {
+                config.include_committed_fixtures = true;
+            }
             _ if arg.starts_with("--strategy=") => {
                 config.strategy = parse_strategy(&arg["--strategy=".len()..])?;
             }
@@ -136,6 +191,22 @@ fn parse_args(args: impl IntoIterator<Item = String>) -> Result<BenchmarkConfig,
             _ if arg.starts_with("--pruning-table-dir=") => {
                 config.pruning_table_dir =
                     Some(PathBuf::from(&arg["--pruning-table-dir=".len()..]));
+            }
+            _ if arg.starts_with("--generated-count=") => {
+                config.generated_count = Some(parse_usize(
+                    "--generated-count",
+                    &arg["--generated-count=".len()..],
+                )?);
+            }
+            _ if arg.starts_with("--generated-seed=") => {
+                config.generated_seed =
+                    parse_u64("--generated-seed", &arg["--generated-seed=".len()..])?;
+            }
+            _ if arg.starts_with("--generated-scramble-depth=") => {
+                config.generated_scramble_depth = parse_usize(
+                    "--generated-scramble-depth",
+                    &arg["--generated-scramble-depth=".len()..],
+                )?;
             }
             _ => return Err(format!("unknown argument: {arg}\n{}", help_text())),
         }
@@ -186,8 +257,16 @@ fn parse_usize(flag: &str, value: impl AsRef<str>) -> Result<usize, String> {
         .map_err(|_| format!("{flag} must be a non-negative integer, got {value}"))
 }
 
+fn parse_u64(flag: &str, value: impl AsRef<str>) -> Result<u64, String> {
+    let value = value.as_ref();
+
+    value
+        .parse()
+        .map_err(|_| format!("{flag} must be a non-negative integer, got {value}"))
+}
+
 fn help_text() -> String {
-    "usage: solver_real_scramble_report [--strategy ID] [--max-depth N] [--max-nodes N|--unlimited-nodes] [--pruning-table-dir DIR] [--require-success] [--require-max-solution-len N]\n\nDefaults: --strategy generated-two-phase --max-depth 30 --max-nodes 1000. Raise --max-nodes for deeper local runs. The report converts committed real scramble cases into cubie states and gives only those states to the selected solver; it never passes inverse scrambles as solutions. Use --require-success to fail the process unless every row succeeds with replay verification. Use --require-max-solution-len to fail when any replay-verified success is longer than N moves."
+    "usage: solver_real_scramble_report [--strategy ID] [--max-depth N] [--max-nodes N|--unlimited-nodes] [--pruning-table-dir DIR] [--generated-count N] [--generated-seed N] [--generated-scramble-depth N] [--include-committed-fixtures] [--require-success] [--require-max-solution-len N]\n\nDefaults: --strategy generated-two-phase --max-depth 30 --max-nodes 1000. Without --generated-count, the report uses committed real-scramble fixtures. With --generated-count, it builds deterministic generated fixtures at --generated-scramble-depth, optionally adding committed fixtures with --include-committed-fixtures. Raise --max-nodes for deeper local runs. The report converts scrambles into cubie states and gives only those states to the selected solver; it never passes inverse scrambles as solutions. Use --require-success to fail the process unless every row succeeds with replay verification. Use --require-max-solution-len to fail when any replay-verified success is longer than N moves."
         .to_owned()
 }
 
@@ -251,5 +330,22 @@ mod tests {
             .expect("separate max solution length gate should parse");
 
         assert_eq!(config.require_max_solution_len, Some(16));
+    }
+
+    #[test]
+    fn parse_args_accepts_generated_fixture_options() {
+        let config = parse_args([
+            "--generated-count=100".to_owned(),
+            "--generated-seed".to_owned(),
+            "7".to_owned(),
+            "--generated-scramble-depth=25".to_owned(),
+            "--include-committed-fixtures".to_owned(),
+        ])
+        .expect("generated fixture options should parse");
+
+        assert_eq!(config.generated_count, Some(100));
+        assert_eq!(config.generated_seed, 7);
+        assert_eq!(config.generated_scramble_depth, 25);
+        assert!(config.include_committed_fixtures);
     }
 }

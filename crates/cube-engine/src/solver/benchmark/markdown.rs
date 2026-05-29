@@ -16,8 +16,8 @@ Only replay-verified successes are counted in solution-length buckets. The bucke
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |\n\
 | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |\n\n\
 ## Rows\n\n\
-| fixture | scramble_len | strategy | max_depth | max_nodes | status | solution_len | explored_nodes | elapsed_us | phase1_nodes | phase2_nodes | phase1_depth_attempts | max_phase1_depth | phase1_ordered_candidates | phase1_ordering_heuristic_evals | phase2_ordered_candidates | phase2_ordering_heuristic_evals | phase2_calls | heuristic_prunes | node_limit_hits | table_missing_entries | replay_verified | solution | message |\n\
-| --- | ---: | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- | --- |\n",
+| fixture | scramble_len | strategy | max_depth | max_nodes | status | solution_len | explored_nodes | elapsed_us | phase1_nodes | phase2_nodes | phase1_depth_attempts | max_phase1_depth | total_depth_attempts | max_total_depth | phase1_ordered_candidates | phase1_ordering_heuristic_evals | phase2_ordered_candidates | phase2_ordering_heuristic_evals | phase2_calls | heuristic_prunes | node_limit_hits | table_missing_entries | solutions_found | best_solution_len | best_phase1_len | best_phase2_len | replay_verified | solution | message |\n\
+| --- | ---: | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- | --- |\n",
             self.setup_elapsed().as_micros(),
             summary.rows,
             summary.success,
@@ -34,7 +34,7 @@ Only replay-verified successes are counted in solution-length buckets. The bucke
 
         for row in self.rows() {
             output.push_str(&format!(
-                "| {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |\n",
+                "| {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |\n",
                 row.fixture_id,
                 row.scramble_len,
                 row.strategy.id(),
@@ -48,6 +48,8 @@ Only replay-verified successes are counted in solution-length buckets. The bucke
                 optional_usize_label(row.phase2_nodes),
                 optional_usize_label(row.phase1_depth_attempts),
                 optional_usize_label(row.max_phase1_depth_attempted),
+                optional_usize_label(row.total_depth_attempts),
+                optional_usize_label(row.max_total_depth_attempted),
                 optional_usize_label(row.phase1_ordered_candidates),
                 optional_usize_label(row.phase1_ordering_heuristic_evals),
                 optional_usize_label(row.phase2_ordered_candidates),
@@ -56,6 +58,10 @@ Only replay-verified successes are counted in solution-length buckets. The bucke
                 optional_usize_label(row.heuristic_prunes),
                 optional_usize_label(row.node_limit_hits),
                 optional_usize_label(row.table_missing_entries),
+                optional_usize_label(row.solutions_found),
+                optional_usize_label(row.best_solution_length),
+                optional_usize_label(row.best_phase1_length),
+                optional_usize_label(row.best_phase2_length),
                 optional_bool_label(row.replay_verified),
                 moves_label(&row.moves),
                 row.message.as_deref().unwrap_or(""),

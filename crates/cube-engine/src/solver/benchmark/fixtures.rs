@@ -1,6 +1,10 @@
+use std::collections::BTreeSet;
+
 use crate::cube::{Cube, Scramble};
 
-use super::types::{RealScrambleBenchmarkError, RealScrambleFixture, RealScrambleSpec};
+use super::types::{
+    GeneratedRealScrambleConfig, RealScrambleBenchmarkError, RealScrambleFixture, RealScrambleSpec,
+};
 
 pub const REAL_SCRAMBLE_SPECS: [RealScrambleSpec; 9] = [
     RealScrambleSpec {
@@ -48,28 +52,91 @@ pub fn real_scramble_fixtures() -> Result<Vec<RealScrambleFixture>, RealScramble
         .collect()
 }
 
+pub fn generated_real_scramble_fixtures(
+    config: GeneratedRealScrambleConfig,
+) -> Result<Vec<RealScrambleFixture>, RealScrambleBenchmarkError> {
+    let mut fixtures = if config.include_committed {
+        real_scramble_fixtures()?
+    } else {
+        Vec::new()
+    };
+    let mut seen_states = fixtures
+        .iter()
+        .map(|fixture| fixture.state.serialize())
+        .collect::<BTreeSet<_>>();
+    let mut generated = 0_usize;
+    let mut attempts = 0_usize;
+    let max_attempts = config.count.saturating_mul(500).saturating_add(500);
+
+    while generated < config.count && attempts < max_attempts {
+        let scramble_seed = generated_scramble_seed(config.seed, attempts);
+        let scramble = Scramble::generate(config.scramble_depth, scramble_seed);
+        let fixture = build_scramble_fixture(
+            format!(
+                "generated-seed{}-depth{}-{:04}",
+                config.seed,
+                config.scramble_depth,
+                generated + 1
+            ),
+            scramble,
+        )?;
+
+        if seen_states.insert(fixture.state.serialize()) {
+            fixtures.push(fixture);
+            generated += 1;
+        }
+
+        attempts += 1;
+    }
+
+    if generated != config.count {
+        return Err(RealScrambleBenchmarkError::UnableToGenerateUniqueFixtures {
+            requested: config.count,
+            generated,
+            attempts,
+            scramble_depth: config.scramble_depth,
+        });
+    }
+
+    Ok(fixtures)
+}
+
 fn build_real_scramble_fixture(
     spec: RealScrambleSpec,
 ) -> Result<RealScrambleFixture, RealScrambleBenchmarkError> {
     let scramble =
         Scramble::parse(spec.scramble).map_err(|error| RealScrambleBenchmarkError::Notation {
-            fixture_id: spec.id,
+            fixture_id: spec.id.to_owned(),
             error,
         })?;
+
+    build_scramble_fixture(spec.id.to_owned(), scramble)
+}
+
+fn build_scramble_fixture(
+    id: String,
+    scramble: Scramble,
+) -> Result<RealScrambleFixture, RealScrambleBenchmarkError> {
     let mut cube = Cube::solved();
     scramble.apply_to(&mut cube);
     let state = cube.state().clone();
     state
         .validate()
         .map_err(|error| RealScrambleBenchmarkError::CubieValidation {
-            fixture_id: spec.id,
+            fixture_id: id.clone(),
             error,
         })?;
+    let scramble_len = scramble.len();
+    let scramble = scramble.to_string();
 
     Ok(RealScrambleFixture {
-        id: spec.id,
-        scramble: spec.scramble,
-        scramble_len: scramble.len(),
+        id,
+        scramble,
+        scramble_len,
         state,
     })
+}
+
+fn generated_scramble_seed(seed: u64, attempts: usize) -> u64 {
+    seed.wrapping_add((attempts as u64).wrapping_mul(0x9e37_79b9_7f4a_7c15))
 }

@@ -49,7 +49,7 @@ fn quality_probe_node_budget(max_nodes: Option<usize>) -> Option<usize> {
     match max_nodes {
         Some(0) => Some(0),
         Some(max_nodes) => {
-            let proportional = (max_nodes / 10).max(1_000);
+            let proportional = (max_nodes / 5).max(1_000);
             Some(proportional.min(QUALITY_PROBE_NODE_CAP).min(max_nodes))
         }
         None => Some(QUALITY_PROBE_NODE_CAP),
@@ -63,7 +63,7 @@ pub(super) fn multiprobe_node_budget(
     match max_nodes {
         Some(0) => Some(0),
         Some(max_nodes) => {
-            let candidate = (max_nodes / 10)
+            let candidate = (max_nodes / 5)
                 .clamp(1_000, MULTIPROBE_NODE_CAP)
                 .min(max_nodes);
             Some(remaining_nodes.map_or(candidate, |remaining| candidate.min(remaining)))
@@ -79,7 +79,7 @@ pub(super) fn quality_depth_node_budget(
 ) -> Option<usize> {
     let candidate = match max_nodes {
         Some(0) => 0,
-        Some(max_nodes) if depth_limit <= 16 => (max_nodes / 20)
+        Some(max_nodes) if depth_limit <= 16 => (max_nodes / 5)
             .clamp(1_000, QUALITY_DEPTH_16_NODE_CAP)
             .min(max_nodes),
         Some(max_nodes) if depth_limit <= 18 => (max_nodes / 10)
