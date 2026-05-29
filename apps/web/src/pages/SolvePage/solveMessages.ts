@@ -1,5 +1,5 @@
 import type { SolveResult } from '@api/solver/types'
-import { formatNumber } from './format'
+import { formatNumber } from '@core/format/formatNumber'
 
 type SolveFailure = Exclude<SolveResult, { ok: true }>
 

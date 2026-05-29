@@ -11,11 +11,14 @@ Rules for React component boundaries in `apps/web`.
 - Keep page-specific components, hooks, and helpers under the owning page folder until reused elsewhere.
 - Keep shared reusable components under `apps/web/src/components` only after there is a real shared consumer.
 - Keep visualization-specific components and hooks near the owning visualization feature unless reused.
-- Keep context-independent helpers in focused utility files, not inside React components.
+- Keep context-independent helpers in focused `apps/web/src/core/<category>/<name>.ts` files, not inside React components.
+- Import core helpers from direct file paths; do not add `src/core` barrels.
 - Keep React component props explicit and small.
 - Prefer `children` for layout wrappers such as panels, shells, and result regions.
 - Extract focused hooks for repeated or stateful UI behavior, but do not hide an oversized component in a single oversized hook.
 - Keep new or substantially changed React component files at or below 400 lines where practical.
+- Keep Storybook stories in a `stories/` child folder beside the source area they cover.
+- Use one primary story export per component and expose prop variation through controls instead of one story per prop.
 
 ## Never
 
@@ -26,6 +29,7 @@ Rules for React component boundaries in `apps/web`.
 - Do not create React Context for mutable UI state.
 - Do not render short fixed control groups through artificial arrays when direct JSX is clearer.
 - Do not mix cube validation, search, or solver behavior into React components.
+- Do not place component stories in a shared fixtures folder; reserve shared story data for `src/stories` if it exists.
 
 ## Data-Driven Rendering
 
@@ -37,3 +41,4 @@ Rules for React component boundaries in `apps/web`.
 - Ensure extracted components do not change user-visible behavior.
 - Run `npm run build` after TypeScript or React component moves.
 - Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
+- Run `npm run storybook:build -w @rubiks-cube-solver/web` after adding or changing stories.

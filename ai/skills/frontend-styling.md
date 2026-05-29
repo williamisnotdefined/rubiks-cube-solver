@@ -1,10 +1,10 @@
 # Frontend Styling
 
-Use this skill when changing CSS, responsive layout, visual treatment, or cube visualization sizing in `apps/web`.
+Use this skill when changing Tailwind CSS v4 utilities, responsive layout, visual treatment, classnames usage, or cube visualization sizing in `apps/web`.
 
 ## Goal
 
-Preserve the existing visual language and mobile usability while keeping the plain CSS stack small.
+Preserve the existing visual language and mobile usability while using Tailwind CSS v4 and `classnames` consistently.
 
 ## Read First
 
@@ -14,22 +14,25 @@ Preserve the existing visual language and mobile usability while keeping the pla
 
 ## Workflow
 
-- Inspect nearby CSS and components before adding new selectors or visual patterns.
-- Keep global CSS limited to base document styling and app-wide primitives.
-- Keep page or component styling near the owning page or feature when files are split.
+- Inspect nearby components before adding new utility combinations or visual patterns.
+- Keep global CSS limited to Tailwind import, app-wide theme tokens, document defaults, and small base styles.
+- Put layout and visual treatment in component `className` utilities.
+- Use `classnames` as `cls` only when conditional classes or caller-provided `className` need composition.
 - Preserve the 350px by 350px cube cap on desktop and mobile.
+- Preserve the current square UI by avoiding `border-radius` and Tailwind `rounded-*` utilities.
 - Check mobile layouts for changed forms, grids, and visualization containers.
-- Avoid adding styling dependencies unless there is a concrete current need.
+- Avoid adding a Tailwind config or design-system abstraction unless there is a concrete current need.
 
 ## Expected Output
 
-- Styling remains semantic HTML plus focused CSS classes.
+- Styling remains semantic HTML plus Tailwind utilities.
 - Responsive behavior is preserved.
 - The cube visualization stays within the product size cap.
-- No new styling framework or class-name library is introduced without need.
+- Conditional classes use `classnames` imported as `cls`.
 
 ## Verification
 
 - Run `npm run build` after CSS or component style changes.
 - Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
+- Search changed files for `rounded-`, `border-radius`, local `cn`, and local `classNames` helpers.
 - Check mobile breakpoints when feasible.

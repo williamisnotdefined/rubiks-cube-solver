@@ -1,6 +1,6 @@
 import { expect, test, type Locator } from '@playwright/test'
 
-const defaultNotation = "R2 D2 F2 D L2 F2 U' R2 D B2 L2 U' B' R' B' R2 B2 L B U'"
+const scramblePlaceholder = "R2 D2 F2 D L2 F2 U' R2 D B2 L2 U' B' R' B' R2 B2 L B U'"
 const realNotation = "B U L U D B' U' R' U' B U2 F' L2 B2 R2 D2 L2 D2 R2 F D2"
 
 test.describe('product solve flow', () => {
@@ -11,12 +11,17 @@ test.describe('product solve flow', () => {
     await expect(page.getByText(/facelets/i)).toHaveCount(0)
 
     const cubeBox = await page.locator('.cube-stage').boundingBox()
-    expect(cubeBox?.width ?? 0).toBeLessThanOrEqual(350)
-    expect(cubeBox?.height ?? 0).toBeLessThanOrEqual(350)
+    expect(cubeBox?.width ?? 0).toBeLessThanOrEqual(300)
+    expect(cubeBox?.height ?? 0).toBeLessThanOrEqual(300)
+    await expect
+      .poll(() => page.locator('.cube-stage').evaluate((element) => getComputedStyle(element).borderRadius))
+      .toBe('0px')
 
     const input = page.getByLabel('Scramble')
     await expect(input).toBeEnabled({ timeout: 15_000 })
-    await expect(input).toHaveValue(defaultNotation)
+    await expect(input).toHaveValue('')
+    await expect(input).toHaveAttribute('placeholder', scramblePlaceholder)
+    await expect(page.getByRole('button', { name: 'Solve' })).toBeDisabled()
     const maxMoves = page.getByLabel('Max moves')
     await expect(maxMoves).toHaveValue('20')
     const maxNodes = page.getByLabel('Max nodes (M)')
@@ -65,7 +70,6 @@ test.describe('product solve flow', () => {
 
     const input = page.getByLabel('Scramble')
     await expect(input).toBeEnabled({ timeout: 15_000 })
-    await expect(input).toHaveValue(defaultNotation)
     const maxMoves = page.getByLabel('Max moves')
 
     await input.fill('R U')
@@ -78,7 +82,25 @@ test.describe('product solve flow', () => {
     await expect(page.locator('.result')).toContainText(
       /Generated two-phase (quality )?solver/,
     )
+    await expect(page.locator('.result')).toContainText(/found in/)
     await expect(page.locator('.result')).toContainText('replay verified')
+
+    const cube = page.locator('rubiks-cube')
+    const step0State = await cubeState(cube)
+    const range = page.getByLabel('Solution step')
+    await expect(range).toHaveAttribute('type', 'range')
+    await expect(range).toHaveValue('0')
+
+    await page.getByRole('button', { name: 'Next move' }).click()
+
+    await expect(range).toHaveValue('1')
+    await expect.poll(() => cubeState(cube)).not.toBe(step0State)
+    const step1State = await cubeState(cube)
+
+    await page.getByRole('button', { name: 'Previous move' }).click()
+
+    await expect(range).toHaveValue('0')
+    await expect.poll(() => cubeState(cube)).not.toBe(step1State)
   })
 
   test('solves real scramble through the API', async ({ page }) => {
@@ -122,6 +144,7 @@ test.describe('product solve flow', () => {
     await page.goto('/')
 
     await expect(page.getByLabel('Scramble')).toBeEnabled({ timeout: 15_000 })
+    await page.getByLabel('Scramble').fill('R')
     await page.getByLabel('Max moves').fill('46')
 
     await expect(page.getByRole('button', { name: 'Solve' })).toBeDisabled()

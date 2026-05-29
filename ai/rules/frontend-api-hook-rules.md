@@ -12,6 +12,7 @@ Rules for React Query API operations in `apps/web/src/api`.
 - Use `useMutation` for solve requests and other user-triggered operations.
 - Keep query keys stable in a domain-level `queryKeys.ts` when hooks share a domain.
 - Use `enabled` in query hooks when prerequisite API state or inputs are unavailable.
+- Keep mutation cache invalidation inside mutation hooks when a mutation makes cached server state stale.
 - Keep operation-specific response normalization beside the operation that needs it.
 - Preserve domain-level API failures such as invalid notation or generated-table errors as typed normalized results when the API returns a stable response payload.
 - Let transport errors and invalid HTTP JSON failures surface through React Query error state instead of fabricating solver metadata.
@@ -26,6 +27,7 @@ Rules for React Query API operations in `apps/web/src/api`.
 - Do not duplicate API status parsing or solve response normalization inside React components.
 - Do not create fake fallback solve metadata for transport errors.
 - Do not use React Query as the canonical solver state; the Rust API and engine remain authoritative.
+- Do not manually synchronize server results in components after mutations when React Query invalidation belongs in the hook.
 
 ## Layout
 
@@ -39,5 +41,6 @@ Rules for React Query API operations in `apps/web/src/api`.
 ## Verification
 
 - Search changed components for raw request function, `fetch`, or query-key imports.
+- Test request functions and React Query hooks with mocked successful responses and mocked API errors when API behavior changes.
 - Run `npm run build` after API-client or hook changes.
 - Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.

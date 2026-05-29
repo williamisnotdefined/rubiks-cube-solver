@@ -103,6 +103,12 @@ Testing rules for this repository.
 - Test ML and dataset code with deterministic fixtures or fixed seeds.
 - Keep algorithm tests deterministic.
 - Run the narrowest test first, then the affected crate test command.
+- Use Vitest APIs such as `describe`, `it`, `expect`, `vi.fn`, and `vi.spyOn` for `apps/web` unit and component tests.
+- Keep `apps/web` tests in `__tests__/` folders beside the source area they cover.
+- Use Testing Library for React component behavior and public accessibility queries.
+- Keep `apps/web/src/api` request and hook tests in `apps/web/src/api/__tests__`, using shared fetch and React Query helpers under `apps/web/src/test`.
+- Keep `apps/web/src/core` tests under `apps/web/src/core/<category>/__tests__/<name>.test.ts`.
+- Keep `apps/web` coverage thresholds at 95% or higher for statements, branches, functions, and lines when coverage is configured.
 
 ## Never
 
@@ -111,6 +117,9 @@ Testing rules for this repository.
 - Do not leave focused-only tests such as `.only` in committed test files.
 - Do not add duplicate test helpers when nearby crate, web, API, or ML helpers already cover the setup.
 - Do not add tests for future surfaces that do not exist yet.
+- Do not use Jest-only APIs or `jest.mock` patterns in Vitest tests.
+- Do not place `apps/web` tests as loose sibling `*.test.ts(x)` files when a nearby `__tests__/` folder is available.
+- Do not add duplicate web test helpers when `apps/web/src/test/render.tsx` or `apps/web/src/test/api.ts` already covers the setup.
 
 ## Verification
 
@@ -118,6 +127,9 @@ Testing rules for this repository.
 - API tests: `npm run api:test` or `cargo test -p rubiks-cube-solver-api`.
 - Workspace tests: `cargo test`.
 - Web build/lint: `npm run build` and `npm run lint -w @rubiks-cube-solver/web`.
+- Web unit tests: `npm run test -w @rubiks-cube-solver/web`.
+- Web coverage: `npm run test:coverage -w @rubiks-cube-solver/web`.
+- Web Storybook: `npm run storybook:build -w @rubiks-cube-solver/web`.
 - End-to-end tests: `npm run test:e2e` after the API, web app, and pruning-table prerequisites are available.
 - ML tests: `python -m pytest ml`.
 - Product gate: `npm run product:gate` for release-level or cross-boundary validation.

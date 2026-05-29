@@ -38,9 +38,13 @@ export function CubeStage({ cubeRef, onReady }: CubeStageProps) {
   }, [onReady])
 
   return (
-    <section className="cube-stage" aria-label="Cube visualization">
+    <section
+      className="cube-stage aspect-square w-[min(280px,calc(100vw-24px))] overflow-hidden border border-border bg-card"
+      aria-label="Cube visualization"
+    >
       {registered ? (
         <rubiks-cube
+          className="block size-full brightness-[0.78] saturate-[0.9] contrast-[0.96]"
           ref={cubeRef}
           animation-speed-ms="180"
           animation-style="exponential"

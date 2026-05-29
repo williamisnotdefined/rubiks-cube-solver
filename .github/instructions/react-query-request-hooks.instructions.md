@@ -42,6 +42,7 @@ Keep React Query as the frontend server-state boundary while keeping raw HTTP de
 - Keep request functions private to the API layer and free of React imports.
 - Keep domain-specific response normalization beside the operation that needs it.
 - Use query hooks for API state that should be cached and mutation hooks for user-triggered solve requests.
+- Put cache invalidation in mutation hooks when mutations make cached API state stale.
 - Keep transport errors in React Query error state and stable API failure statuses in typed normalized results.
 - Update components to consume domain hooks only.
 
@@ -52,11 +53,13 @@ Keep React Query as the frontend server-state boundary while keeping raw HTTP de
 - Request details stay behind `apps/web/src/api/client.ts`.
 - Solve response status parsing stays in `apps/web/src/api`, not page components.
 - Browser clients still submit move notation and limits, never facelets or sticker state.
+- Request functions and hooks have Vitest coverage for success, API failure payloads, disabled queries, and mutation behavior when changed.
 
 ## Verification
 
 - Search changed components for direct `fetch`, raw request function, or query-key usage.
 - Run `npm run build` after API-client or hook changes.
+- Run `npm run test -w @rubiks-cube-solver/web` after changing request functions or hooks.
 - Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
 - Run relevant E2E tests for solve flow behavior.
 
@@ -78,6 +81,7 @@ Rules for React Query API operations in `apps/web/src/api`.
 - Use `useMutation` for solve requests and other user-triggered operations.
 - Keep query keys stable in a domain-level `queryKeys.ts` when hooks share a domain.
 - Use `enabled` in query hooks when prerequisite API state or inputs are unavailable.
+- Keep mutation cache invalidation inside mutation hooks when a mutation makes cached server state stale.
 - Keep operation-specific response normalization beside the operation that needs it.
 - Preserve domain-level API failures such as invalid notation or generated-table errors as typed normalized results when the API returns a stable response payload.
 - Let transport errors and invalid HTTP JSON failures surface through React Query error state instead of fabricating solver metadata.
@@ -92,6 +96,7 @@ Rules for React Query API operations in `apps/web/src/api`.
 - Do not duplicate API status parsing or solve response normalization inside React components.
 - Do not create fake fallback solve metadata for transport errors.
 - Do not use React Query as the canonical solver state; the Rust API and engine remain authoritative.
+- Do not manually synchronize server results in components after mutations when React Query invalidation belongs in the hook.
 
 ## Layout
 
@@ -105,6 +110,7 @@ Rules for React Query API operations in `apps/web/src/api`.
 ## Verification
 
 - Search changed components for raw request function, `fetch`, or query-key imports.
+- Test request functions and React Query hooks with mocked successful responses and mocked API errors when API behavior changes.
 - Run `npm run build` after API-client or hook changes.
 - Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
 
@@ -243,13 +249,16 @@ The frontend renders and controls solver interaction. It must not become the sou
 - Vite
 - `@tanstack/react-query` for API health, strategy metadata, and solve mutation state
 - `@houstonp/rubiks-cube` as a visualization custom element
-- Plain CSS owned by `apps/web`
+- Tailwind CSS v4 through `@tailwindcss/vite` and `@import "tailwindcss"`
+- `classnames` imported as `cls` for conditional class composition
+- Vitest, Testing Library, and V8 coverage for unit/component/API-hook tests
+- Storybook for component stories and visual inspection
 
 ## Optional Additions
 
 - React Three Fiber or another vetted Three.js abstraction only if the current custom element cannot support the needed visualization behavior.
 - Zustand only when shared local UI state is truly cross-component or cross-route and nearest-owner state is insufficient.
-- React Router, form libraries, Tailwind, and Storybook only after there is a concrete implemented need.
+- React Router and form libraries only after there is a concrete implemented need.
 
 ## Boundary
 
@@ -258,6 +267,8 @@ The frontend sends move notation and receives states from the Rust HTTP API. Ren
 Facelet/Kociemba strings are internal adapter details only. They must not appear as UI copy, input modes, or client-submitted API payloads. If a visualization library requires a sticker string, keep that detail hidden behind a neutral rendering-state field.
 
 The visible cube must fit within a 350px by 350px box on desktop and mobile.
+
+The solve form defaults to an empty scramble so the visualization starts solved; sample scrambles are placeholders or examples.
 
 ## Data And State Flow
 
@@ -277,9 +288,11 @@ The visible cube must fit within a 350px by 350px box on desktop and mobile.
 - Extract named components for repeated panels, controls, result sections, or visualization shells when the extraction clarifies ownership.
 - Keep page-specific pieces colocated near the owning screen until reused elsewhere.
 - Shared reusable UI should live under `apps/web/src/components` only when there is a real shared consumer.
-- Context-independent helpers can live under a focused utility area, but solver or API-specific helpers should stay with their owning feature.
+- Context-independent helpers live under `apps/web/src/core/<category>/<name>.ts` and are imported directly without core barrels.
 - Keep page-specific hooks, validation helpers, message mapping, constants, and CSS under the owning page folder until reuse exists.
 - Keep new or substantially changed React component files at or below 400 lines where practical.
+- Storybook stories live in a `stories/` child folder beside the source area they cover.
+- Use one primary story export per component and rely on controls for prop variation.
 
 ## API Hooks
 
@@ -288,13 +301,24 @@ The visible cube must fit within a 350px by 350px box on desktop and mobile.
 - React Query hooks are the UI-facing API boundary and live beside their operation request function.
 - Domain barrels should export hooks for UI consumption; components should not import raw request functions or query keys.
 - Domain-level API failures stay as typed normalized results when the API returns a stable payload; transport errors stay in React Query error state.
+- Mutation hooks own cache invalidation when mutations make cached server state stale.
 
 ## Styling
 
-- Global CSS should stay limited to document defaults and app-wide base styles.
-- Page-specific CSS belongs near the owning page or feature when files are split.
-- Do not add Tailwind, CSS-in-JS, Sass, class-name libraries, Storybook, or a design-system dependency without a concrete current need.
+- Global CSS should stay limited to Tailwind import, app-wide theme tokens, document defaults, and small base styles.
+- Component layout and visual treatment should use Tailwind utilities.
+- The current web UI is intentionally square; do not add `border-radius` or Tailwind `rounded-*` utilities.
+- Conditional class composition uses `classnames` as `cls`.
+- Do not add CSS-in-JS, Sass, or a design-system dependency without a concrete current need.
 - Desktop and mobile layouts should be considered for every UI change.
+
+## Tests And Stories
+
+- Shared web test setup lives under `apps/web/src/test`.
+- React Query hook tests use test `QueryClient` providers with retry disabled.
+- API request tests mock fetch success and API error payloads.
+- Coverage runs with `npm run test:coverage -w @rubiks-cube-solver/web` and keeps thresholds at 95% or higher.
+- Storybook builds with `npm run storybook:build -w @rubiks-cube-solver/web`.
 
 ## Visualization Libraries
 

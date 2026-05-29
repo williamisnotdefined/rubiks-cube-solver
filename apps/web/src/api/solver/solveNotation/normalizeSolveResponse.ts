@@ -22,6 +22,7 @@ export function normalizeSolveResponse(
       moves: payload.moves,
       length: payload.length ?? payload.moves.length,
       exploredNodes: payload.exploredNodes ?? 0,
+      elapsedMs: payload.elapsedMs ?? 0,
       replayVerified: true,
     }
   }

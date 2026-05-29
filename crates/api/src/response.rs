@@ -38,6 +38,8 @@ pub struct SolveResponse {
     pub length: Option<usize>,
     #[serde(rename = "exploredNodes")]
     pub explored_nodes: Option<usize>,
+    #[serde(rename = "elapsedMs")]
+    pub elapsed_ms: Option<u128>,
     #[serde(rename = "replayVerified")]
     pub replay_verified: Option<bool>,
     #[serde(rename = "visualState")]
@@ -66,6 +68,7 @@ pub(crate) fn success_response_from_parts(
     moves: &[cube_engine::Move],
     length: usize,
     explored_nodes: usize,
+    elapsed_ms: u128,
     replay_verified: bool,
     visual_state: Option<String>,
 ) -> SolveResponse {
@@ -85,6 +88,7 @@ pub(crate) fn success_response_from_parts(
             .collect(),
         length: Some(length),
         explored_nodes: Some(explored_nodes),
+        elapsed_ms: Some(elapsed_ms),
         replay_verified: Some(replay_verified),
         visual_state,
         error_kind: None,
@@ -97,6 +101,7 @@ pub(crate) fn not_found_response_from_parts(
     max_nodes: Option<usize>,
     strategy: SolverStrategy,
     explored_nodes: usize,
+    elapsed_ms: u128,
     visual_state: Option<String>,
 ) -> SolveResponse {
     let metadata = strategy.metadata();
@@ -112,6 +117,7 @@ pub(crate) fn not_found_response_from_parts(
         moves: Vec::new(),
         length: None,
         explored_nodes: Some(explored_nodes),
+        elapsed_ms: Some(elapsed_ms),
         replay_verified: None,
         visual_state,
         error_kind: None,
@@ -167,6 +173,7 @@ pub(crate) fn error_response_from_parts(
         moves: Vec::new(),
         length: None,
         explored_nodes: None,
+        elapsed_ms: None,
         replay_verified: None,
         visual_state,
         error_kind: Some(error_kind.into()),

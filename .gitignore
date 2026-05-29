@@ -4,6 +4,7 @@ node_modules/
 .roadrunner/
 dist/
 coverage/
+storybook-static/
 playwright-report/
 test-results/
 blob-report/

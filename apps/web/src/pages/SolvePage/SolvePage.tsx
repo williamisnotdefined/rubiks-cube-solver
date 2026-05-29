@@ -1,20 +1,21 @@
 import { useReducer, useRef, useState, type FormEvent } from 'react'
 import type { RubiksCubeElement } from '@houstonp/rubiks-cube/view'
 import { useGetHealth, useGetStrategies, useSolveNotation } from '@api/solver'
+import { waitForPaint } from '@core/timing/waitForPaint'
 import { CubeStage } from './CubeStage'
 import { SolveForm } from './SolveForm'
 import { SolveResult } from './SolveResult'
-import './SolvePage.css'
+import { SolutionPlayback } from './SolutionPlayback'
 import {
   defaultMaxMoves,
   defaultMaxNodesMillion,
   defaultNotation,
   maxMovesLimit,
   nodesPerMillion,
+  scramblePlaceholder,
 } from './constants'
 import { useCubeVisualization } from './hooks/useCubeVisualization'
 import { preferredStrategyId } from './strategy'
-import { waitForPaint } from './timing'
 import {
   validateMaxNodesMillionOption,
   validateWholeNumberLimit,
@@ -34,8 +35,19 @@ export function SolvePage() {
   const [maxNodesMillionInput, setMaxNodesMillionInput] = useState(
     String(defaultMaxNodesMillion),
   )
+  const [solutionStep, setSolutionStep] = useState(0)
+  const successResult =
+    solveMutation.data?.status === 'success' ? solveMutation.data : undefined
+  const visibleSolutionStep = clampSolutionStep(
+    solutionStep,
+    successResult?.moves.length ?? 0,
+  )
+  const visualizationNotation = notationWithSolutionPrefix(
+    notation,
+    successResult?.moves.slice(0, visibleSolutionStep) ?? [],
+  )
 
-  useCubeVisualization(cubeRef, notation, cubeReadyRevision)
+  useCubeVisualization(cubeRef, visualizationNotation, cubeReadyRevision)
 
   const strategyOptions = strategiesQuery.data ?? []
   const apiReady = healthQuery.data?.ok === true && strategiesQuery.isSuccess
@@ -65,6 +77,8 @@ export function SolvePage() {
       return
     }
 
+    setSolutionStep(0)
+
     try {
       const solvePromise = solveMutation.mutateAsync({
         notation: notation.trim(),
@@ -82,7 +96,12 @@ export function SolvePage() {
   }
 
   function resetSolveResult() {
+    setSolutionStep(0)
     solveMutation.reset()
+  }
+
+  function handleSolutionStepChange(nextStep: number) {
+    setSolutionStep(clampSolutionStep(nextStep, successResult?.moves.length ?? 0))
   }
 
   function handleNotationChange(nextNotation: string) {
@@ -101,25 +120,46 @@ export function SolvePage() {
   }
 
   return (
-    <main className="app-shell">
-      <CubeStage cubeRef={cubeRef} onReady={markCubeReady} />
-      <SolveForm
-        notation={notation}
-        maxMovesInput={maxMovesInput}
-        maxNodesMillionInput={maxNodesMillionInput}
-        buttonLoading={buttonLoading}
-        disabled={disabled}
-        onNotationChange={handleNotationChange}
-        onMaxMovesChange={handleMaxMovesChange}
-        onMaxNodesMillionChange={handleMaxNodesMillionChange}
-        onSubmit={handleSubmit}
-      />
-      <SolveResult
-        result={solveMutation.data}
-        error={solveMutation.error}
-        solving={solving}
-        localValidationMessage={localValidationMessage}
-      />
+    <main className="app-shell min-h-screen w-full bg-background px-3 py-4 text-foreground sm:px-5 sm:py-6">
+      <section className="mx-auto grid w-full max-w-4xl content-start justify-items-center gap-4">
+        <CubeStage cubeRef={cubeRef} onReady={markCubeReady} />
+        <SolveForm
+          notation={notation}
+          maxMovesInput={maxMovesInput}
+          maxNodesMillionInput={maxNodesMillionInput}
+          buttonLoading={buttonLoading}
+          disabled={disabled}
+          maxMovesInvalid={maxMovesValidation !== undefined}
+          maxNodesInvalid={maxNodesValidation !== undefined}
+          scramblePlaceholder={scramblePlaceholder}
+          onNotationChange={handleNotationChange}
+          onMaxMovesChange={handleMaxMovesChange}
+          onMaxNodesMillionChange={handleMaxNodesMillionChange}
+          onSubmit={handleSubmit}
+        />
+        <SolveResult
+          result={solveMutation.data}
+          error={solveMutation.error}
+          solving={solving}
+          localValidationMessage={localValidationMessage}
+        />
+        <SolutionPlayback
+          moves={successResult?.moves ?? []}
+          step={visibleSolutionStep}
+          onStepChange={handleSolutionStepChange}
+        />
+      </section>
     </main>
   )
+}
+
+function notationWithSolutionPrefix(
+  notation: string,
+  solutionMoves: readonly string[],
+): string {
+  return [notation.trim(), ...solutionMoves].filter(Boolean).join(' ')
+}
+
+function clampSolutionStep(step: number, maxStep: number): number {
+  return Math.min(Math.max(step, 0), maxStep)
 }

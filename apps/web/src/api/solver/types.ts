@@ -40,6 +40,7 @@ export type SolveSuccessResult = SolveMetadata & {
   moves: string[]
   length: number
   exploredNodes: number
+  elapsedMs: number
   replayVerified: boolean
 }
 
@@ -75,6 +76,7 @@ export type ApiSolveResponse = {
   moves: string[]
   length?: number
   exploredNodes?: number
+  elapsedMs?: number
   replayVerified?: boolean
   visualState?: string
   errorKind?: string

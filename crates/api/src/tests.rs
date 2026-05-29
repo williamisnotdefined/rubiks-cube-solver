@@ -26,6 +26,7 @@ fn notation_strategy_solves_shallow_state_without_generated_tables() {
     assert!(response.ok);
     assert_eq!(response.status, "success");
     assert_eq!(response.moves, vec!["F'"]);
+    assert!(response.elapsed_ms.is_some());
     assert_eq!(response.replay_verified, Some(true));
     assert!(response.visual_state.is_some());
 }

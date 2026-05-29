@@ -1,11 +1,12 @@
 import { fileURLToPath } from 'node:url'
+import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 
 const threeSourceMarker = '/node_modules/three/src/'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   build: {
     chunkSizeWarningLimit: 550,
     rollupOptions: {
@@ -76,8 +77,41 @@ export default defineConfig({
         find: '@components',
         replacement: fileURLToPath(new URL('./src/components', import.meta.url)),
       },
+      { find: '@core', replacement: fileURLToPath(new URL('./src/core', import.meta.url)) },
       { find: '@pages', replacement: fileURLToPath(new URL('./src/pages', import.meta.url)) },
       { find: '@src', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
     ],
+  },
+  test: {
+    coverage: {
+      exclude: [
+        'src/**/*.stories.{ts,tsx}',
+        'src/**/__tests__/**',
+        'src/api/**/index.ts',
+        'src/App.tsx',
+        'src/custom-elements.d.ts',
+        'src/main.tsx',
+        'src/pages/**/index.ts',
+        'src/stories/**',
+        'src/test/**',
+        'src/vendor/**',
+        'src/vite-env.d.ts',
+      ],
+      include: [
+        'src/api/**/*.{ts,tsx}',
+        'src/components/**/*.{ts,tsx}',
+        'src/core/**/*.{ts,tsx}',
+        'src/pages/**/*.{ts,tsx}',
+      ],
+      provider: 'v8',
+      thresholds: {
+        branches: 95,
+        functions: 95,
+        lines: 95,
+        statements: 95,
+      },
+    },
+    environment: 'jsdom',
+    setupFiles: './src/test/setup.ts',
   },
 })

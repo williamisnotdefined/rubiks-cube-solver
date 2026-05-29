@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use axum::http::StatusCode;
 use axum::Json;
 use cube_engine::{
@@ -177,6 +179,7 @@ fn solve_generated_cube(
     };
     let budget = SearchBudget::with_limits(max_depth, max_nodes);
 
+    let started = Instant::now();
     let result = match strategy {
         SolverStrategy::GeneratedTwoPhase => solver.solve(&cube, budget),
         SolverStrategy::GeneratedTwoPhaseQuality => solver.solve_quality(&cube, budget),
@@ -190,6 +193,8 @@ fn solve_generated_cube(
             unreachable!("non-generated strategies should use the configured API solver path")
         }
     };
+
+    let elapsed_ms = started.elapsed().as_millis();
 
     match result {
         Ok(result) => match result.outcome {
@@ -216,6 +221,7 @@ fn solve_generated_cube(
                         solution.moves(),
                         solution.len(),
                         solution.explored_nodes(),
+                        elapsed_ms,
                         true,
                         Some(visual_state),
                     )),
@@ -228,6 +234,7 @@ fn solve_generated_cube(
                     max_nodes,
                     strategy,
                     explored_nodes,
+                    elapsed_ms,
                     Some(visual_state),
                 )),
             ),
@@ -259,7 +266,11 @@ fn solve_configured_cube(
     let config = SolverConfig::with_strategy(max_depth, max_nodes, strategy)
         .with_pruning_table_dir(state.pruning_table_dir.clone());
 
-    match cube_engine::solve_cube(cube, config) {
+    let started = Instant::now();
+    let result = cube_engine::solve_cube(cube, config);
+    let elapsed_ms = started.elapsed().as_millis();
+
+    match result {
         Ok(solution) => (
             StatusCode::OK,
             Json(success_response_from_parts(
@@ -269,6 +280,7 @@ fn solve_configured_cube(
                 solution.moves(),
                 solution.length(),
                 solution.explored_nodes(),
+                elapsed_ms,
                 true,
                 Some(visual_state),
             )),
@@ -293,6 +305,7 @@ fn solve_configured_cube(
                 max_nodes,
                 strategy,
                 explored_nodes,
+                elapsed_ms,
                 Some(visual_state),
             )),
         ),

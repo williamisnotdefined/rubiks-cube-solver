@@ -56,7 +56,9 @@ Build a visualization layer that renders cube state and controls playback withou
 - Extract React components only when reuse, naming clarity, or state boundaries justify the new file.
 - Keep `App.tsx` thin and move page composition, page-specific components, hooks, helpers, and CSS under the owning page folder as UI grows.
 - Use focused hooks for imperative custom-element synchronization instead of broad page effects.
-- Preserve the current plain CSS stack unless a concrete implemented need justifies adding a styling dependency.
+- Use the current Tailwind CSS v4 stack and `classnames` conventions for visual work.
+- Keep reusable context-independent helpers under `apps/web/src/core` and import them directly.
+- Add one Storybook story per component when component surfaces are introduced or changed.
 - Evaluate visualization libraries as adapters, not engine replacements.
 - If using `@houstonp/rubiks-cube`, verify headless move-option behavior before relying on it.
 - Ensure desktop and mobile rendering are considered when UI exists, with the cube no larger than 350px by 350px.
@@ -71,11 +73,14 @@ Build a visualization layer that renders cube state and controls playback withou
 - External visualization code does not define canonical cube state.
 - Screen files read as composition instead of accumulating all form, result, validation, and visualization details.
 - Components consume domain API hooks instead of raw request functions or query keys.
+- Component stories and Vitest coverage protect changed frontend surfaces.
 
 ## Verification
 
 - Run `npm run build` after TypeScript, React, or API-client changes.
 - Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
+- Run `npm run test -w @rubiks-cube-solver/web` and `npm run test:coverage -w @rubiks-cube-solver/web` after broad frontend changes.
+- Run `npm run storybook:build -w @rubiks-cube-solver/web` after story changes.
 - Run engine/API tests for any Rust solver behavior touched by UI work.
 
 # Referenced Context
@@ -146,11 +151,14 @@ Rules for React component boundaries in `apps/web`.
 - Keep page-specific components, hooks, and helpers under the owning page folder until reused elsewhere.
 - Keep shared reusable components under `apps/web/src/components` only after there is a real shared consumer.
 - Keep visualization-specific components and hooks near the owning visualization feature unless reused.
-- Keep context-independent helpers in focused utility files, not inside React components.
+- Keep context-independent helpers in focused `apps/web/src/core/<category>/<name>.ts` files, not inside React components.
+- Import core helpers from direct file paths; do not add `src/core` barrels.
 - Keep React component props explicit and small.
 - Prefer `children` for layout wrappers such as panels, shells, and result regions.
 - Extract focused hooks for repeated or stateful UI behavior, but do not hide an oversized component in a single oversized hook.
 - Keep new or substantially changed React component files at or below 400 lines where practical.
+- Keep Storybook stories in a `stories/` child folder beside the source area they cover.
+- Use one primary story export per component and expose prop variation through controls instead of one story per prop.
 
 ## Never
 
@@ -161,6 +169,7 @@ Rules for React component boundaries in `apps/web`.
 - Do not create React Context for mutable UI state.
 - Do not render short fixed control groups through artificial arrays when direct JSX is clearer.
 - Do not mix cube validation, search, or solver behavior into React components.
+- Do not place component stories in a shared fixtures folder; reserve shared story data for `src/stories` if it exists.
 
 ## Data-Driven Rendering
 
@@ -172,6 +181,7 @@ Rules for React component boundaries in `apps/web`.
 - Ensure extracted components do not change user-visible behavior.
 - Run `npm run build` after TypeScript or React component moves.
 - Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
+- Run `npm run storybook:build -w @rubiks-cube-solver/web` after adding or changing stories.
 
 ## Reference: `ai/rules/frontend-state-rules.md`
 
@@ -234,6 +244,7 @@ Rules for React Query API operations in `apps/web/src/api`.
 - Use `useMutation` for solve requests and other user-triggered operations.
 - Keep query keys stable in a domain-level `queryKeys.ts` when hooks share a domain.
 - Use `enabled` in query hooks when prerequisite API state or inputs are unavailable.
+- Keep mutation cache invalidation inside mutation hooks when a mutation makes cached server state stale.
 - Keep operation-specific response normalization beside the operation that needs it.
 - Preserve domain-level API failures such as invalid notation or generated-table errors as typed normalized results when the API returns a stable response payload.
 - Let transport errors and invalid HTTP JSON failures surface through React Query error state instead of fabricating solver metadata.
@@ -248,6 +259,7 @@ Rules for React Query API operations in `apps/web/src/api`.
 - Do not duplicate API status parsing or solve response normalization inside React components.
 - Do not create fake fallback solve metadata for transport errors.
 - Do not use React Query as the canonical solver state; the Rust API and engine remain authoritative.
+- Do not manually synchronize server results in components after mutations when React Query invalidation belongs in the hook.
 
 ## Layout
 
@@ -261,6 +273,7 @@ Rules for React Query API operations in `apps/web/src/api`.
 ## Verification
 
 - Search changed components for raw request function, `fetch`, or query-key imports.
+- Test request functions and React Query hooks with mocked successful responses and mocked API errors when API behavior changes.
 - Run `npm run build` after API-client or hook changes.
 - Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
 
@@ -280,6 +293,7 @@ Rules for forms and local validation in `apps/web`.
 - Display validation messages through the page result or field-owned message region that currently owns the UX.
 - Keep API safety caps visible or discoverable in the form controls that enforce them.
 - Use `aria-invalid` when a specific field is invalid and the UI exposes field-level invalidity.
+- Keep the default scramble input empty so the cube starts solved; sample scrambles belong in placeholders or examples, not initial form state.
 
 ## Never
 
@@ -301,35 +315,43 @@ Rules for forms and local validation in `apps/web`.
 
 - Check invalid local limits do not send API requests.
 - Check invalid notation still returns API-owned errors.
+- Check the empty default scramble keeps solve disabled and the visualization solved.
 - Run `npm run build` and relevant E2E tests after form behavior changes.
 
 ## Reference: `ai/rules/frontend-styling-rules.md`
 
 # Frontend Styling Rules
 
-Rules for styling `apps/web` with the current plain CSS stack.
+Rules for styling `apps/web` with Tailwind CSS v4 and class composition.
 
 ## Always
 
+- Use Tailwind CSS v4 through `@tailwindcss/vite` and `@import "tailwindcss"`.
+- Keep global CSS limited to Tailwind import, app-wide theme tokens, document defaults, and small base styles.
+- Prefer Tailwind utility classes in components over custom CSS selectors.
 - Preserve the existing product visual language unless the task explicitly changes design direction.
-- Keep global CSS limited to document defaults, base typography, selection colors, and app-wide primitives.
-- Keep page-specific CSS near the owning page or feature when files are split.
-- Prefer semantic HTML with focused class names over broad global selectors.
 - Consider desktop and mobile layouts for every UI change.
 - Keep the rendered 3x3 cube no larger than 350px by 350px.
-- Keep static class names as plain strings when there is no conditional styling.
-- Add a tiny local class-name helper only after repeated conditional class composition exists.
+- Keep the current web UI square: do not add `border-radius` CSS or Tailwind `rounded-*` utilities.
+- Use the `classnames` package for conditional class composition.
+- Import `classnames` as `cls` with `import cls from 'classnames'`.
+- Use object form where possible for conditional classes: `cls('base', { active: isActive })`.
+- Keep static Tailwind class sets as plain strings when there are no conditions.
 
 ## Never
 
-- Do not add Tailwind, CSS-in-JS, Sass, classnames, or a design-system dependency without a concrete current need.
-- Do not add broad selectors to global CSS when component or page CSS can own the behavior.
+- Do not add a Tailwind config file unless custom theme primitives cannot stay in CSS tokens.
+- Do not add CSS-in-JS, Sass, or a design-system dependency without a concrete current need.
+- Do not add local `classNames`, `cn`, or wrapper helpers without a concrete repeated need.
+- Do not use template literals only to append conditional classes.
+- Do not add broad selectors to global CSS when component utility classes can express the behavior.
 - Do not turn repeated class sets into broad design-system abstractions before reuse is real.
 - Do not create generic interchangeable layouts that ignore the existing cube visualization tone.
 - Do not let visual experiments break mobile usability or the 350px cube cap.
 
 ## Verification
 
+- Search changed files for local class-name helpers and `rounded-` before finishing.
 - Run `npm run build` after CSS or component style changes.
 - Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
 - Check mobile breakpoints for changed grids, forms, and visualization containers when feasible.
@@ -381,13 +403,16 @@ The frontend renders and controls solver interaction. It must not become the sou
 - Vite
 - `@tanstack/react-query` for API health, strategy metadata, and solve mutation state
 - `@houstonp/rubiks-cube` as a visualization custom element
-- Plain CSS owned by `apps/web`
+- Tailwind CSS v4 through `@tailwindcss/vite` and `@import "tailwindcss"`
+- `classnames` imported as `cls` for conditional class composition
+- Vitest, Testing Library, and V8 coverage for unit/component/API-hook tests
+- Storybook for component stories and visual inspection
 
 ## Optional Additions
 
 - React Three Fiber or another vetted Three.js abstraction only if the current custom element cannot support the needed visualization behavior.
 - Zustand only when shared local UI state is truly cross-component or cross-route and nearest-owner state is insufficient.
-- React Router, form libraries, Tailwind, and Storybook only after there is a concrete implemented need.
+- React Router and form libraries only after there is a concrete implemented need.
 
 ## Boundary
 
@@ -396,6 +421,8 @@ The frontend sends move notation and receives states from the Rust HTTP API. Ren
 Facelet/Kociemba strings are internal adapter details only. They must not appear as UI copy, input modes, or client-submitted API payloads. If a visualization library requires a sticker string, keep that detail hidden behind a neutral rendering-state field.
 
 The visible cube must fit within a 350px by 350px box on desktop and mobile.
+
+The solve form defaults to an empty scramble so the visualization starts solved; sample scrambles are placeholders or examples.
 
 ## Data And State Flow
 
@@ -415,9 +442,11 @@ The visible cube must fit within a 350px by 350px box on desktop and mobile.
 - Extract named components for repeated panels, controls, result sections, or visualization shells when the extraction clarifies ownership.
 - Keep page-specific pieces colocated near the owning screen until reused elsewhere.
 - Shared reusable UI should live under `apps/web/src/components` only when there is a real shared consumer.
-- Context-independent helpers can live under a focused utility area, but solver or API-specific helpers should stay with their owning feature.
+- Context-independent helpers live under `apps/web/src/core/<category>/<name>.ts` and are imported directly without core barrels.
 - Keep page-specific hooks, validation helpers, message mapping, constants, and CSS under the owning page folder until reuse exists.
 - Keep new or substantially changed React component files at or below 400 lines where practical.
+- Storybook stories live in a `stories/` child folder beside the source area they cover.
+- Use one primary story export per component and rely on controls for prop variation.
 
 ## API Hooks
 
@@ -426,13 +455,24 @@ The visible cube must fit within a 350px by 350px box on desktop and mobile.
 - React Query hooks are the UI-facing API boundary and live beside their operation request function.
 - Domain barrels should export hooks for UI consumption; components should not import raw request functions or query keys.
 - Domain-level API failures stay as typed normalized results when the API returns a stable payload; transport errors stay in React Query error state.
+- Mutation hooks own cache invalidation when mutations make cached server state stale.
 
 ## Styling
 
-- Global CSS should stay limited to document defaults and app-wide base styles.
-- Page-specific CSS belongs near the owning page or feature when files are split.
-- Do not add Tailwind, CSS-in-JS, Sass, class-name libraries, Storybook, or a design-system dependency without a concrete current need.
+- Global CSS should stay limited to Tailwind import, app-wide theme tokens, document defaults, and small base styles.
+- Component layout and visual treatment should use Tailwind utilities.
+- The current web UI is intentionally square; do not add `border-radius` or Tailwind `rounded-*` utilities.
+- Conditional class composition uses `classnames` as `cls`.
+- Do not add CSS-in-JS, Sass, or a design-system dependency without a concrete current need.
 - Desktop and mobile layouts should be considered for every UI change.
+
+## Tests And Stories
+
+- Shared web test setup lives under `apps/web/src/test`.
+- React Query hook tests use test `QueryClient` providers with retry disabled.
+- API request tests mock fetch success and API error payloads.
+- Coverage runs with `npm run test:coverage -w @rubiks-cube-solver/web` and keeps thresholds at 95% or higher.
+- Storybook builds with `npm run storybook:build -w @rubiks-cube-solver/web`.
 
 ## Visualization Libraries
 

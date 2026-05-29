@@ -17,6 +17,7 @@ Keep form state and lightweight validation clear while preserving the notation-o
 ## Workflow
 
 - Keep browser-facing solve input as move notation.
+- Keep the default scramble empty so the cube starts solved; place sample scrambles in placeholders or examples.
 - Keep simple required and numeric limit validation near the owning form.
 - Normalize notation before submitting it through the API client.
 - Let the API and engine own notation parsing, cube validity, search limits, and solver errors.
@@ -26,6 +27,7 @@ Keep form state and lightweight validation clear while preserving the notation-o
 ## Expected Output
 
 - Invalid local limits do not send API requests.
+- Empty default scramble keeps solve disabled and visualization solved.
 - Invalid notation remains API-owned behavior.
 - Form code does not expose facelets, Kociemba strings, or sticker-state inputs.
 - Request details remain behind `apps/web/src/api`.

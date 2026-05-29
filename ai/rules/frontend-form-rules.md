@@ -12,6 +12,7 @@ Rules for forms and local validation in `apps/web`.
 - Display validation messages through the page result or field-owned message region that currently owns the UX.
 - Keep API safety caps visible or discoverable in the form controls that enforce them.
 - Use `aria-invalid` when a specific field is invalid and the UI exposes field-level invalidity.
+- Keep the default scramble input empty so the cube starts solved; sample scrambles belong in placeholders or examples, not initial form state.
 
 ## Never
 
@@ -33,4 +34,5 @@ Rules for forms and local validation in `apps/web`.
 
 - Check invalid local limits do not send API requests.
 - Check invalid notation still returns API-owned errors.
+- Check the empty default scramble keeps solve disabled and the visualization solved.
 - Run `npm run build` and relevant E2E tests after form behavior changes.

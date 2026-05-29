@@ -63,6 +63,7 @@ Each skill entry should include:
 - `frontend-form-validation`: solve controls, scramble inputs, frontend limit validation, and notation-only form behavior.
 - `frontend-styling`: CSS, responsive layout, visual treatment, and cube visualization sizing in `apps/web`.
 - `react-query-request-hooks`: React Query API hooks, request functions, query keys, and response normalization in `apps/web`.
+- `frontend-testing`: Vitest, Testing Library, React Query hook tests, coverage configuration, and Storybook stories in `apps/web`.
 
 ## Adding Knowledge
 

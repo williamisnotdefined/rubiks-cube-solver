@@ -21,6 +21,7 @@ Keep React Query as the frontend server-state boundary while keeping raw HTTP de
 - Keep request functions private to the API layer and free of React imports.
 - Keep domain-specific response normalization beside the operation that needs it.
 - Use query hooks for API state that should be cached and mutation hooks for user-triggered solve requests.
+- Put cache invalidation in mutation hooks when mutations make cached API state stale.
 - Keep transport errors in React Query error state and stable API failure statuses in typed normalized results.
 - Update components to consume domain hooks only.
 
@@ -31,10 +32,12 @@ Keep React Query as the frontend server-state boundary while keeping raw HTTP de
 - Request details stay behind `apps/web/src/api/client.ts`.
 - Solve response status parsing stays in `apps/web/src/api`, not page components.
 - Browser clients still submit move notation and limits, never facelets or sticker state.
+- Request functions and hooks have Vitest coverage for success, API failure payloads, disabled queries, and mutation behavior when changed.
 
 ## Verification
 
 - Search changed components for direct `fetch`, raw request function, or query-key usage.
 - Run `npm run build` after API-client or hook changes.
+- Run `npm run test -w @rubiks-cube-solver/web` after changing request functions or hooks.
 - Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
 - Run relevant E2E tests for solve flow behavior.

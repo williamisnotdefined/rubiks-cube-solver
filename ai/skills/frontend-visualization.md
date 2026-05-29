@@ -29,7 +29,9 @@ Build a visualization layer that renders cube state and controls playback withou
 - Extract React components only when reuse, naming clarity, or state boundaries justify the new file.
 - Keep `App.tsx` thin and move page composition, page-specific components, hooks, helpers, and CSS under the owning page folder as UI grows.
 - Use focused hooks for imperative custom-element synchronization instead of broad page effects.
-- Preserve the current plain CSS stack unless a concrete implemented need justifies adding a styling dependency.
+- Use the current Tailwind CSS v4 stack and `classnames` conventions for visual work.
+- Keep reusable context-independent helpers under `apps/web/src/core` and import them directly.
+- Add one Storybook story per component when component surfaces are introduced or changed.
 - Evaluate visualization libraries as adapters, not engine replacements.
 - If using `@houstonp/rubiks-cube`, verify headless move-option behavior before relying on it.
 - Ensure desktop and mobile rendering are considered when UI exists, with the cube no larger than 350px by 350px.
@@ -44,9 +46,12 @@ Build a visualization layer that renders cube state and controls playback withou
 - External visualization code does not define canonical cube state.
 - Screen files read as composition instead of accumulating all form, result, validation, and visualization details.
 - Components consume domain API hooks instead of raw request functions or query keys.
+- Component stories and Vitest coverage protect changed frontend surfaces.
 
 ## Verification
 
 - Run `npm run build` after TypeScript, React, or API-client changes.
 - Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
+- Run `npm run test -w @rubiks-cube-solver/web` and `npm run test:coverage -w @rubiks-cube-solver/web` after broad frontend changes.
+- Run `npm run storybook:build -w @rubiks-cube-solver/web` after story changes.
 - Run engine/API tests for any Rust solver behavior touched by UI work.
