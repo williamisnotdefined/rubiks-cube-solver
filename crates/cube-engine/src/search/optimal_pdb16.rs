@@ -14,7 +14,7 @@ use super::two_phase::{solve_generated_two_phase_quality, GeneratedTwoPhaseError
 use crate::cube::Cube;
 
 const PDB16_TARGET_DEPTH: usize = 16;
-const PDB16_ATTEMPT_NODE_CAP: usize = 5_000_000;
+const PDB16_MIN_ATTEMPT_NODES: usize = 1_000;
 
 #[derive(Clone, Debug)]
 struct Pdb16Databases {
@@ -74,23 +74,9 @@ pub(crate) fn solve_optimal_bounded_pdb16_quality(
 ) -> Result<SearchOutcome, GeneratedTwoPhaseError> {
     let mut explored_nodes = 0_usize;
 
-    if let Some(databases) = Pdb16Databases::load_from_dir(artifact_dir) {
-        let depth_limit = PDB16_TARGET_DEPTH.min(budget.max_depth);
-        let attempt_nodes = pdb16_attempt_nodes(
-            budget.max_nodes,
-            remaining_node_budget(budget.max_nodes, explored_nodes),
-        );
-        if attempt_nodes != Some(0) {
-            let heuristic = databases.heuristic();
-            let outcome = solve_ida_star_bounded_with_heuristic(
-                start,
-                SearchBudget::with_limits(depth_limit, attempt_nodes),
-                &heuristic,
-            );
-
-            if let Some(solution) = record_attempt_outcome(outcome, &mut explored_nodes) {
-                return Ok(SearchOutcome::Found(solution));
-            }
+    if let Some(outcome) = solve_optimal_bounded_pdb16_attempt(start, budget, artifact_dir) {
+        if let Some(solution) = record_attempt_outcome(outcome, &mut explored_nodes) {
+            return Ok(SearchOutcome::Found(solution));
         }
     }
 
@@ -107,15 +93,33 @@ pub(crate) fn solve_optimal_bounded_pdb16_quality(
     Ok(offset_outcome_explored_nodes(fallback, explored_nodes))
 }
 
+pub(crate) fn solve_optimal_bounded_pdb16_attempt(
+    start: &Cube,
+    budget: SearchBudget,
+    artifact_dir: &Path,
+) -> Option<SearchOutcome> {
+    let databases = Pdb16Databases::load_from_dir(artifact_dir)?;
+    let depth_limit = PDB16_TARGET_DEPTH.min(budget.max_depth);
+    let attempt_nodes = pdb16_attempt_nodes(budget.max_nodes, budget.max_nodes);
+    if attempt_nodes == Some(0) {
+        return Some(SearchOutcome::NotFoundWithinLimits { explored_nodes: 0 });
+    }
+
+    let heuristic = databases.heuristic();
+    Some(solve_ida_star_bounded_with_heuristic(
+        start,
+        SearchBudget::with_limits(depth_limit, attempt_nodes),
+        &heuristic,
+    ))
+}
+
 fn pdb16_attempt_nodes(max_nodes: Option<usize>, remaining_nodes: Option<usize>) -> Option<usize> {
     match max_nodes {
         Some(max_nodes) => {
-            let attempt = (max_nodes / 2)
-                .clamp(1_000, PDB16_ATTEMPT_NODE_CAP)
-                .min(max_nodes);
+            let attempt = (max_nodes / 2).max(PDB16_MIN_ATTEMPT_NODES).min(max_nodes);
             Some(remaining_nodes.map_or(attempt, |remaining| attempt.min(remaining)))
         }
-        None => Some(PDB16_ATTEMPT_NODE_CAP),
+        None => None,
     }
 }
 
@@ -162,7 +166,11 @@ mod tests {
             pdb16_attempt_nodes(Some(10_000_000), Some(10_000_000)),
             Some(5_000_000)
         );
+        assert_eq!(
+            pdb16_attempt_nodes(Some(100_000_000), Some(100_000_000)),
+            Some(50_000_000)
+        );
         assert_eq!(pdb16_attempt_nodes(Some(10_000_000), Some(500)), Some(500));
-        assert_eq!(pdb16_attempt_nodes(None, None), Some(5_000_000));
+        assert_eq!(pdb16_attempt_nodes(None, None), None);
     }
 }

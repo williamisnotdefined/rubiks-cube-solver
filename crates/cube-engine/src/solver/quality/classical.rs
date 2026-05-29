@@ -29,6 +29,7 @@ pub(super) fn run_quality_row(
             | SolverStrategy::GeneratedTwoPhaseMultiprobe
             | SolverStrategy::OptimalBoundedCornerPdb
             | SolverStrategy::OptimalBoundedPdb16
+            | SolverStrategy::ShortSolutionPortfolio
     ) {
         config = config.with_pruning_table_dir(generated_pruning_table_dir.to_path_buf());
     }
@@ -153,6 +154,7 @@ fn report_row(
             | SolverStrategy::GeneratedTwoPhaseMultiprobe
             | SolverStrategy::OptimalBoundedCornerPdb
             | SolverStrategy::OptimalBoundedPdb16
+            | SolverStrategy::ShortSolutionPortfolio
     ) && table_status
         == QualityTableStatus::Available
     {

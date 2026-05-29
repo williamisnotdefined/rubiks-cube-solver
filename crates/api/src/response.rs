@@ -180,7 +180,8 @@ fn generated_table_status(strategy: SolverStrategy) -> &'static str {
         | SolverStrategy::GeneratedTwoPhaseQuality
         | SolverStrategy::GeneratedTwoPhaseMultiprobe
         | SolverStrategy::OptimalBoundedCornerPdb
-        | SolverStrategy::OptimalBoundedPdb16 => "available",
+        | SolverStrategy::OptimalBoundedPdb16
+        | SolverStrategy::ShortSolutionPortfolio => "available",
         SolverStrategy::BoundedIdaStar
         | SolverStrategy::TwoPhaseBaseline
         | SolverStrategy::OptimalIdaStarOrientationPdb => "not_required",

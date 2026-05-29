@@ -8,7 +8,7 @@ pub(super) enum MoveOrderingProfile {
     AxisXFirst,
 }
 
-pub(super) const MULTIPROBE_INVERSE_ORDERING_PROFILES: [MoveOrderingProfile; 5] = [
+pub(super) const MULTIPROBE_ORDERING_PROFILES: [MoveOrderingProfile; 5] = [
     MoveOrderingProfile::Default,
     MoveOrderingProfile::Reverse,
     MoveOrderingProfile::HalfTurnsFirst,

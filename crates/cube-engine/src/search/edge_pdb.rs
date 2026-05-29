@@ -550,7 +550,7 @@ fn cube_from_edge_pattern_coordinate(
             state.edge_orientation[position] = orientations[pattern_position_index];
             pattern_position_index += 1;
         } else {
-            state.edge_permutation[position] = non_pattern_edges.next().ok_or_else(|| {
+            state.edge_permutation[position] = non_pattern_edges.next().ok_or({
                 EdgePatternDatabaseError::TableSizeMismatch {
                     expected: EDGE_COUNT,
                     actual: position,

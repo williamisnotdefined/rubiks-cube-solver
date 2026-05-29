@@ -273,9 +273,16 @@ fn generated_two_phase_quality_solves_short_scramble_with_replay() {
     let corner_result = solve_cubie_state(state.clone(), corner_pdb_config(&directory, 4))
         .expect("corner PDB strategy should fall back to generated quality when PDB is absent");
 
-    assert_solution_solves_state(state, corner_result.moves());
+    assert_solution_solves_state(state.clone(), corner_result.moves());
     assert!(corner_result.length() <= 2);
     assert!(corner_result.explored_nodes() > 0);
+
+    let portfolio_result = solve_cubie_state(state.clone(), portfolio_config(&directory, 4))
+        .expect("short-solution portfolio should solve through generated short probes");
+
+    assert_solution_solves_state(state, portfolio_result.moves());
+    assert!(portfolio_result.length() <= 2);
+    assert!(portfolio_result.explored_nodes() > 0);
 
     let _ = fs::remove_dir_all(directory);
 }
@@ -382,6 +389,15 @@ fn corner_pdb_config(directory: &Path, max_depth: usize) -> SolverConfig {
         max_depth,
         Some(1_000_000),
         SolverStrategy::OptimalBoundedCornerPdb,
+    )
+    .with_pruning_table_dir(directory.to_path_buf())
+}
+
+fn portfolio_config(directory: &Path, max_depth: usize) -> SolverConfig {
+    SolverConfig::with_strategy(
+        max_depth,
+        Some(1_000_000),
+        SolverStrategy::ShortSolutionPortfolio,
     )
     .with_pruning_table_dir(directory.to_path_buf())
 }

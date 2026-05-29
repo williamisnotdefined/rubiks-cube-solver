@@ -96,6 +96,7 @@ fn strategy_metadata_includes_quality_solver() {
     let metadata = SolverStrategy::GeneratedTwoPhaseQuality.metadata();
     let multiprobe_metadata = SolverStrategy::GeneratedTwoPhaseMultiprobe.metadata();
     let corner_metadata = SolverStrategy::OptimalBoundedCornerPdb.metadata();
+    let portfolio_metadata = SolverStrategy::ShortSolutionPortfolio.metadata();
 
     assert!(SolverStrategy::ALL
         .into_iter()
@@ -106,6 +107,9 @@ fn strategy_metadata_includes_quality_solver() {
     assert!(SolverStrategy::ALL
         .into_iter()
         .any(|strategy| strategy == SolverStrategy::GeneratedTwoPhaseMultiprobe));
+    assert!(SolverStrategy::ALL
+        .into_iter()
+        .any(|strategy| strategy == SolverStrategy::ShortSolutionPortfolio));
     assert_eq!(metadata.id, "generated-two-phase-quality");
     assert_eq!(metadata.solver_mode, "generated_two_phase_quality");
     assert_eq!(multiprobe_metadata.id, "generated-two-phase-multiprobe");
@@ -115,6 +119,8 @@ fn strategy_metadata_includes_quality_solver() {
     );
     assert_eq!(corner_metadata.id, "optimal-bounded-corner-pdb");
     assert_eq!(corner_metadata.solver_mode, "optimal_bounded_corner_pdb");
+    assert_eq!(portfolio_metadata.id, "short-solution-portfolio");
+    assert_eq!(portfolio_metadata.solver_mode, "short_solution_portfolio");
 }
 
 #[test]

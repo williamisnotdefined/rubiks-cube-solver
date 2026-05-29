@@ -40,9 +40,7 @@ use context::TwoPhaseSearchContext;
 use coordinates::{Phase1Coordinates, Phase2Coordinates};
 #[cfg(test)]
 use move_tables::{Phase1MoveTables, Phase2MoveTables};
-#[cfg(test)]
-use ordering::MoveOrderingProfile;
-use ordering::MULTIPROBE_INVERSE_ORDERING_PROFILES;
+use ordering::{MoveOrderingProfile, MULTIPROBE_ORDERING_PROFILES};
 use search::{
     solve_generated_two_phase_quality_with_tables,
     solve_generated_two_phase_quality_with_tables_and_profile,
@@ -68,57 +66,54 @@ fn solve_generated_two_phase_multiprobe_with_tables(
     let mut best_solution: Option<SearchSolution> = None;
     let target_depth = budget.max_depth.min(MULTIPROBE_TARGET_DEPTH);
 
-    let fallback = solve_generated_two_phase_quality_schedule_with_tables(
-        start,
-        SearchBudget::with_limits(budget.max_depth, budget.max_nodes),
-        tables,
-    )?;
-    if let Some(solution) = record_quality_attempt(fallback, &mut metrics, &mut explored_nodes) {
-        if solution.len() <= target_depth {
+    for profile in MULTIPROBE_ORDERING_PROFILES {
+        if let Some(solution) = run_multiprobe_attempt(
+            start,
+            target_depth,
+            budget.max_nodes,
+            tables,
+            profile,
+            &mut metrics,
+            &mut explored_nodes,
+        )? {
             return Ok(GeneratedTwoPhaseSearchResult {
                 outcome: SearchOutcome::Found(solution),
                 metrics,
             });
         }
-        best_solution = Some(solution);
     }
 
     let inverse_start = start.inverse();
-    for profile in MULTIPROBE_INVERSE_ORDERING_PROFILES {
-        let remaining_nodes = remaining_node_budget(budget.max_nodes, explored_nodes);
-        if remaining_nodes == Some(0) {
-            break;
-        }
-
-        let attempt_nodes = multiprobe_node_budget(budget.max_nodes, remaining_nodes);
-        let attempt = solve_generated_two_phase_quality_with_tables_and_profile(
+    for profile in MULTIPROBE_ORDERING_PROFILES {
+        if let Some(inverse_solution) = run_multiprobe_attempt(
             &inverse_start,
-            SearchBudget::with_limits(target_depth, attempt_nodes),
+            target_depth,
+            budget.max_nodes,
             tables,
             profile,
-        )?;
-        let attempt_nodes = attempt.metrics.explored_nodes();
-        metrics = metrics.saturating_add(attempt.metrics);
-        explored_nodes = explored_nodes.saturating_add(attempt_nodes);
-
-        if let SearchOutcome::Found(inverse_solution) = attempt.outcome {
+            &mut metrics,
+            &mut explored_nodes,
+        )? {
             let solution = SearchSolution::with_metrics(
                 inverse_solution_moves(inverse_solution.moves()),
                 explored_nodes,
             );
-            if best_solution
-                .as_ref()
-                .is_none_or(|best| solution.len() < best.len())
-            {
-                best_solution = Some(solution);
-            }
-            if best_solution
-                .as_ref()
-                .is_some_and(|solution| solution.len() <= target_depth)
-            {
-                break;
-            }
+            return Ok(GeneratedTwoPhaseSearchResult {
+                outcome: SearchOutcome::Found(solution),
+                metrics,
+            });
         }
+    }
+
+    if budget.max_depth > target_depth {
+        best_solution = run_quality_depth_schedule(
+            start,
+            budget,
+            tables,
+            target_depth,
+            &mut metrics,
+            &mut explored_nodes,
+        )?;
     }
 
     if let Some(solution) = best_solution {
@@ -141,6 +136,31 @@ fn inverse_solution_moves(moves: &[Move]) -> Vec<Move> {
     moves.iter().rev().map(|move_| move_.inverse()).collect()
 }
 
+fn run_multiprobe_attempt(
+    start: &Cube,
+    target_depth: usize,
+    max_nodes: Option<usize>,
+    tables: &GeneratedPruningTables,
+    profile: MoveOrderingProfile,
+    metrics: &mut GeneratedTwoPhaseMetrics,
+    explored_nodes: &mut usize,
+) -> Result<Option<SearchSolution>, GeneratedTwoPhaseError> {
+    let remaining_nodes = remaining_node_budget(max_nodes, *explored_nodes);
+    if remaining_nodes == Some(0) {
+        return Ok(None);
+    }
+
+    let attempt_nodes = multiprobe_node_budget(max_nodes, remaining_nodes);
+    let attempt = solve_generated_two_phase_quality_with_tables_and_profile(
+        start,
+        SearchBudget::with_limits(target_depth, attempt_nodes),
+        tables,
+        profile,
+    )?;
+
+    Ok(record_quality_attempt(attempt, metrics, explored_nodes))
+}
+
 fn solve_generated_two_phase_quality_schedule_with_tables(
     start: &Cube,
     budget: SearchBudget,
@@ -158,8 +178,34 @@ fn solve_generated_two_phase_quality_schedule_with_tables(
         });
     }
 
-    for depth_limit in quality_depth_schedule(budget.max_depth) {
-        let remaining_nodes = remaining_node_budget(budget.max_nodes, explored_nodes);
+    if let Some(solution) =
+        run_quality_depth_schedule(start, budget, tables, 0, &mut metrics, &mut explored_nodes)?
+    {
+        return Ok(GeneratedTwoPhaseSearchResult {
+            outcome: SearchOutcome::Found(solution),
+            metrics,
+        });
+    }
+
+    Ok(GeneratedTwoPhaseSearchResult {
+        outcome: SearchOutcome::NotFoundWithinLimits { explored_nodes },
+        metrics,
+    })
+}
+
+fn run_quality_depth_schedule(
+    start: &Cube,
+    budget: SearchBudget,
+    tables: &GeneratedPruningTables,
+    min_depth_exclusive: usize,
+    metrics: &mut GeneratedTwoPhaseMetrics,
+    explored_nodes: &mut usize,
+) -> Result<Option<SearchSolution>, GeneratedTwoPhaseError> {
+    for depth_limit in quality_depth_schedule(budget.max_depth)
+        .into_iter()
+        .filter(|depth_limit| *depth_limit > min_depth_exclusive)
+    {
+        let remaining_nodes = remaining_node_budget(budget.max_nodes, *explored_nodes);
         if remaining_nodes == Some(0) {
             break;
         }
@@ -174,18 +220,12 @@ fn solve_generated_two_phase_quality_schedule_with_tables(
             SearchBudget::with_limits(depth_limit, attempt_nodes),
             tables,
         )?;
-        if let Some(solution) = record_quality_attempt(attempt, &mut metrics, &mut explored_nodes) {
-            return Ok(GeneratedTwoPhaseSearchResult {
-                outcome: SearchOutcome::Found(solution),
-                metrics,
-            });
+        if let Some(solution) = record_quality_attempt(attempt, metrics, explored_nodes) {
+            return Ok(Some(solution));
         }
     }
 
-    Ok(GeneratedTwoPhaseSearchResult {
-        outcome: SearchOutcome::NotFoundWithinLimits { explored_nodes },
-        metrics,
-    })
+    Ok(None)
 }
 
 #[cfg(test)]

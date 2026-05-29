@@ -46,10 +46,15 @@ pub enum SolverStrategy {
     /// This is a method-agnostic short-solution strategy. Missing PDB artifacts skip the proof attempt
     /// and fall back to generated two-phase quality without claiming that no <=16 solution exists.
     OptimalBoundedPdb16,
+    /// Portfolio that spends budget on short-solution attempts before falling back to quality two-phase.
+    ///
+    /// It tries bounded PDB16, generated short probes, and then generated two-phase quality while
+    /// preserving replay verification and honest limit failures.
+    ShortSolutionPortfolio,
 }
 
 impl SolverStrategy {
-    pub const ALL: [Self; 8] = [
+    pub const ALL: [Self; 9] = [
         Self::BoundedIdaStar,
         Self::TwoPhaseBaseline,
         Self::GeneratedTwoPhase,
@@ -58,6 +63,7 @@ impl SolverStrategy {
         Self::OptimalIdaStarOrientationPdb,
         Self::OptimalBoundedCornerPdb,
         Self::OptimalBoundedPdb16,
+        Self::ShortSolutionPortfolio,
     ];
 
     pub const fn metadata(self) -> SolverStrategyMetadata {
@@ -79,6 +85,7 @@ impl SolverStrategy {
             Self::OptimalIdaStarOrientationPdb => "optimal-ida-star-orientation-pdb",
             Self::OptimalBoundedCornerPdb => "optimal-bounded-corner-pdb",
             Self::OptimalBoundedPdb16 => "optimal-bounded-pdb16",
+            Self::ShortSolutionPortfolio => "short-solution-portfolio",
         }
     }
 
@@ -92,6 +99,7 @@ impl SolverStrategy {
             Self::OptimalIdaStarOrientationPdb => "Optimal IDA* orientation PDB",
             Self::OptimalBoundedCornerPdb => "Optimal bounded corner PDB",
             Self::OptimalBoundedPdb16 => "Optimal bounded PDB16",
+            Self::ShortSolutionPortfolio => "Short solution portfolio",
         }
     }
 
@@ -105,6 +113,7 @@ impl SolverStrategy {
             Self::OptimalIdaStarOrientationPdb => "optimal_ida_star_orientation_pdb",
             Self::OptimalBoundedCornerPdb => "optimal_bounded_corner_pdb",
             Self::OptimalBoundedPdb16 => "optimal_bounded_pdb16",
+            Self::ShortSolutionPortfolio => "short_solution_portfolio",
         }
     }
 
@@ -134,6 +143,9 @@ impl SolverStrategy {
             Self::OptimalBoundedPdb16 => {
                 "Short-solution path that tries admissible corner and 6-edge PDB IDA* up to 16 moves, then falls back to generated two-phase quality without claiming a <=16 guarantee."
             }
+            Self::ShortSolutionPortfolio => {
+                "Portfolio path that tries replay-verified <=16 attempts first, then falls back to generated two-phase quality and reports honest limit failures."
+            }
         }
     }
 
@@ -147,6 +159,7 @@ impl SolverStrategy {
             "optimal-ida-star-orientation-pdb" => Some(Self::OptimalIdaStarOrientationPdb),
             "optimal-bounded-corner-pdb" => Some(Self::OptimalBoundedCornerPdb),
             "optimal-bounded-pdb16" => Some(Self::OptimalBoundedPdb16),
+            "short-solution-portfolio" => Some(Self::ShortSolutionPortfolio),
             _ => None,
         }
     }

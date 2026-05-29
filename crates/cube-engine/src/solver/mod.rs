@@ -120,6 +120,7 @@ mod tests {
                 SolverStrategy::OptimalIdaStarOrientationPdb,
                 SolverStrategy::OptimalBoundedCornerPdb,
                 SolverStrategy::OptimalBoundedPdb16,
+                SolverStrategy::ShortSolutionPortfolio,
             ]
         );
 
@@ -267,6 +268,25 @@ mod tests {
             SolverStrategy::from_id("optimal-bounded-pdb16"),
             Some(SolverStrategy::OptimalBoundedPdb16)
         );
+        assert_eq!(
+            SolverStrategy::ShortSolutionPortfolio.id(),
+            "short-solution-portfolio"
+        );
+        assert_eq!(
+            SolverStrategy::ShortSolutionPortfolio.label(),
+            "Short solution portfolio"
+        );
+        assert_eq!(
+            SolverStrategy::ShortSolutionPortfolio.solver_mode(),
+            "short_solution_portfolio"
+        );
+        assert!(SolverStrategy::ShortSolutionPortfolio
+            .status_text()
+            .contains("Portfolio path"));
+        assert_eq!(
+            SolverStrategy::from_id("short-solution-portfolio"),
+            Some(SolverStrategy::ShortSolutionPortfolio)
+        );
         assert_eq!(SolverStrategy::from_id("unknown"), None);
 
         let metadata = SolverStrategy::GeneratedTwoPhase.metadata();
@@ -283,7 +303,7 @@ mod tests {
     fn solver_strategy_supported_message_lists_all_strategy_ids() {
         assert_eq!(
             SolverStrategy::supported_strategy_ids(),
-            "bounded-ida-star, two-phase-baseline, generated-two-phase, generated-two-phase-quality, generated-two-phase-multiprobe, optimal-ida-star-orientation-pdb, optimal-bounded-corner-pdb, optimal-bounded-pdb16"
+            "bounded-ida-star, two-phase-baseline, generated-two-phase, generated-two-phase-quality, generated-two-phase-multiprobe, optimal-ida-star-orientation-pdb, optimal-bounded-corner-pdb, optimal-bounded-pdb16, short-solution-portfolio"
         );
 
         let message = SolverStrategy::unsupported_strategy_message("made-up");
@@ -296,6 +316,7 @@ mod tests {
         assert!(message.contains("optimal-ida-star-orientation-pdb"));
         assert!(message.contains("optimal-bounded-corner-pdb"));
         assert!(message.contains("optimal-bounded-pdb16"));
+        assert!(message.contains("short-solution-portfolio"));
 
         assert!(SolverStrategy::unsupported_strategy_message("").contains("<empty>"));
     }

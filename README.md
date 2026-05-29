@@ -83,10 +83,17 @@ npm run solver:short16
 npm run solver:short16:corner-pdb
 npm run solver:short16:pdb16
 npm run solver:short16:multiprobe
+npm run solver:short16:portfolio
 npm run solver:short16:api-budget
 ```
 
-These scripts run deterministic generated depth-16 scrambles with seed `0` and report the same exclusive buckets, including `len_0_to_16`. The default and API-budget variants use 20 generated fixtures; the corner-PDB, PDB16, and `multiprobe` variants intentionally use 5 fixtures because they spend more budget on short-solution attempts. This is a quality metric and not a guarantee that every state has a 16-move solution. Generate the local corner PDB first with `npm run pdb:corner:deep` before relying on `solver:short16:corner-pdb`, and generate both corner plus edge PDBs before relying on `solver:short16:pdb16`.
+These scripts run deterministic generated depth-16 scrambles with seed `0` and report the same exclusive buckets, including `len_0_to_16`. The default and API-budget variants use 20 generated fixtures; the corner-PDB, PDB16, `multiprobe`, and portfolio variants intentionally use 5 fixtures because they spend more budget on short-solution attempts. This is a quality metric and not a guarantee that every state has a 16-move solution. Generate the local corner PDB first with `npm run pdb:corner:deep` before relying on `solver:short16:corner-pdb`, and generate both corner plus edge PDBs before relying on `solver:short16:pdb16` or `solver:short16:portfolio`.
+
+For a heavier local portfolio sample, run:
+
+```bash
+npm run solver:short16:portfolio:large
+```
 
 For an intentionally heavy local/server-side run, use the deep 20-move gate:
 
@@ -165,9 +172,10 @@ Endpoints:
 - `GET /strategies`
 - `POST /solve-notation` with `{ "moves": "R2 D2 F'", "strategyId": "generated-two-phase-quality", "maxDepth": 30, "maxNodes": 10000000 }`
 - If `maxNodes` is omitted, the API uses `10000000`; the request cap is `25000000`.
-- Experimental: `strategyId="generated-two-phase-multiprobe"` runs the quality solver first, then uses inverse-state move-order probes when the quality result is still longer than 16 moves and node budget remains.
+- Experimental: `strategyId="generated-two-phase-multiprobe"` spends budget on forward and inverse `<=16` move-order probes before falling back to deeper generated two-phase quality.
 - Experimental: `strategyId="optimal-bounded-corner-pdb"` tries the local corner PDB first, then falls back to generated two-phase quality.
 - Experimental: `strategyId="optimal-bounded-pdb16"` tries local corner plus 6-edge PDBs for a bounded `<=16` IDA* attempt, then falls back to generated two-phase quality.
+- Experimental: `strategyId="short-solution-portfolio"` tries bounded PDB16 and generated `<=16` probes before falling back to generated two-phase quality.
 
 Every successful API solve includes `replayVerified=true`. The client-facing API accepts move notation only; facelet/Kociemba strings are not client request payloads.
 

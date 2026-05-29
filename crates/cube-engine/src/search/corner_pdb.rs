@@ -27,7 +27,7 @@ const UNREACHED_DISTANCE: u8 = u8::MAX;
 const CHECKSUM_OFFSET_BASIS: u64 = 0xcbf2_9ce4_8422_2325;
 const CHECKSUM_PRIME: u64 = 0x0000_0100_0000_01b3;
 const FACE_MOVE_COUNT: usize = FACE_MOVES.len();
-const CORNER_PDB_ATTEMPT_NODE_CAP: usize = 2_000_000;
+const CORNER_PDB_MIN_ATTEMPT_NODES: usize = 1_000;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum CornerPatternDatabaseError {
@@ -465,11 +465,11 @@ fn bounded_corner_pdb_attempt_nodes(
     match max_nodes {
         Some(max_nodes) => {
             let attempt = (max_nodes / 2)
-                .clamp(1_000, CORNER_PDB_ATTEMPT_NODE_CAP)
+                .max(CORNER_PDB_MIN_ATTEMPT_NODES)
                 .min(max_nodes);
             Some(remaining_nodes.map_or(attempt, |remaining| attempt.min(remaining)))
         }
-        None => Some(CORNER_PDB_ATTEMPT_NODE_CAP),
+        None => None,
     }
 }
 
@@ -748,16 +748,17 @@ mod tests {
     fn bounded_corner_pdb_attempt_nodes_keeps_fallback_budget() {
         assert_eq!(
             bounded_corner_pdb_attempt_nodes(Some(10_000_000), Some(9_000_000)),
-            Some(2_000_000)
+            Some(5_000_000)
+        );
+        assert_eq!(
+            bounded_corner_pdb_attempt_nodes(Some(100_000_000), Some(100_000_000)),
+            Some(50_000_000)
         );
         assert_eq!(
             bounded_corner_pdb_attempt_nodes(Some(10_000_000), Some(500)),
             Some(500)
         );
-        assert_eq!(
-            bounded_corner_pdb_attempt_nodes(None, None),
-            Some(2_000_000)
-        );
+        assert_eq!(bounded_corner_pdb_attempt_nodes(None, None), None);
     }
 
     #[test]

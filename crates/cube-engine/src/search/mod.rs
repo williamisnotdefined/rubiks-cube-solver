@@ -6,6 +6,7 @@ pub(crate) mod hybrid;
 pub mod ida_star;
 pub mod iddfs;
 pub(crate) mod optimal_pdb16;
+pub(crate) mod portfolio;
 pub mod pruning;
 pub mod solution;
 pub(crate) mod two_phase;
@@ -36,6 +37,7 @@ pub use ida_star::{
 };
 pub use iddfs::{depth_limited_search, solve_iddfs};
 pub(crate) use optimal_pdb16::solve_optimal_bounded_pdb16_quality;
+pub(crate) use portfolio::solve_short_solution_portfolio;
 pub use solution::{SearchBudget, SearchOutcome, SearchSolution};
 pub(crate) use two_phase::{
     solve_generated_two_phase, solve_generated_two_phase_multiprobe,

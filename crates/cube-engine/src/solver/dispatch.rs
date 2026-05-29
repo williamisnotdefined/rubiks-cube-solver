@@ -4,8 +4,8 @@ use crate::search::{
     solve_generated_two_phase_quality, solve_generated_two_phase_with_artifacts,
     solve_ida_star_bounded, solve_ida_star_bounded_with_heuristic,
     solve_optimal_bounded_corner_pdb_quality, solve_optimal_bounded_pdb16_quality,
-    solve_two_phase_baseline, GeneratedPruningTableArtifact, GeneratedTwoPhaseError,
-    OrientationPatternDatabaseHeuristic, SearchBudget, SearchOutcome,
+    solve_short_solution_portfolio, solve_two_phase_baseline, GeneratedPruningTableArtifact,
+    GeneratedTwoPhaseError, OrientationPatternDatabaseHeuristic, SearchBudget, SearchOutcome,
 };
 
 use super::{SolveError, SolveInputError, SolveMetrics, SolveResult, SolverConfig, SolverStrategy};
@@ -58,6 +58,14 @@ pub fn solve_cube(cube: &Cube, config: SolverConfig) -> Result<SolveResult, Solv
         }
         SolverStrategy::OptimalBoundedPdb16 => {
             match solve_optimal_bounded_pdb16_quality(cube, budget, config.pruning_table_dir()) {
+                Ok(outcome) => outcome,
+                Err(error) => {
+                    return Err(generated_tables_error(config, error));
+                }
+            }
+        }
+        SolverStrategy::ShortSolutionPortfolio => {
+            match solve_short_solution_portfolio(cube, budget, config.pruning_table_dir()) {
                 Ok(outcome) => outcome,
                 Err(error) => {
                     return Err(generated_tables_error(config, error));

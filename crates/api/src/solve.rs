@@ -72,7 +72,9 @@ pub fn solve_notation_request(
         | SolverStrategy::TwoPhaseBaseline
         | SolverStrategy::OptimalIdaStarOrientationPdb
         | SolverStrategy::OptimalBoundedCornerPdb
-        | SolverStrategy::OptimalBoundedPdb16 => solve_configured_cube(
+        | SolverStrategy::OptimalBoundedPdb16
+        | SolverStrategy::ShortSolutionPortfolio => solve_configured_cube(
+            state,
             request.max_depth,
             request.max_nodes,
             strategy,
@@ -183,7 +185,8 @@ fn solve_generated_cube(
         | SolverStrategy::TwoPhaseBaseline
         | SolverStrategy::OptimalIdaStarOrientationPdb
         | SolverStrategy::OptimalBoundedCornerPdb
-        | SolverStrategy::OptimalBoundedPdb16 => {
+        | SolverStrategy::OptimalBoundedPdb16
+        | SolverStrategy::ShortSolutionPortfolio => {
             unreachable!("non-generated strategies should use the configured API solver path")
         }
     };
@@ -246,13 +249,15 @@ fn solve_generated_cube(
 }
 
 fn solve_configured_cube(
+    state: &ApiState,
     max_depth: usize,
     max_nodes: Option<usize>,
     strategy: SolverStrategy,
     cube: &Cube,
     visual_state: String,
 ) -> (StatusCode, Json<SolveResponse>) {
-    let config = SolverConfig::with_strategy(max_depth, max_nodes, strategy);
+    let config = SolverConfig::with_strategy(max_depth, max_nodes, strategy)
+        .with_pruning_table_dir(state.pruning_table_dir.clone());
 
     match cube_engine::solve_cube(cube, config) {
         Ok(solution) => (
