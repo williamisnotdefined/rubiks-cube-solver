@@ -2,7 +2,7 @@
 
 This report is the durable product gate for `GOALS.md` and completed roadmap phases 1 through 10. It maps the product capabilities to concrete repository checks and records the latest local gate outcome for generated artifacts, Rust engine logic, native HTTP API, web UI, Playwright, AI route checks, dataset fixtures, ML smoke tests, solver quality reporting, and the isolated hybrid move-ordering experiment.
 
-The gate does not claim optimality, God's Number coverage, or a 20-move guarantee. Success means returned moves are replay verified for the covered states and that unsupported or insufficient limits are reported honestly.
+The gate does not claim optimality, `<=16`, God's Number coverage, or a 20-move guarantee. Success means returned moves are replay verified for the covered states and that unsupported or insufficient limits are reported honestly, regardless of which solver strategy produced the moves.
 
 ## Latest Result
 
@@ -43,7 +43,7 @@ Environment notes for this run:
 | Convert user-facing notation into Rust cubie representation. | Notation parsing and cube construction live in Rust; facelet conversion remains an internal adapter for engine quality and rendering state only. | `cargo test`, `cargo run --quiet -p cube-engine --bin solver_quality_report`, `npm run test:e2e`. |
 | Solve valid states with Rust solver logic exposed through the native HTTP API. | `crates/api` delegates solving to `cube-engine`; `apps/web/src/api/solverClient.ts` is the browser boundary adapter. | `npm run api:test`, `npm run build`, `npm run test:e2e`, `cargo test`. |
 | Return a move sequence that is verified to solve the submitted state. | Rust solver APIs and API responses verify results by replay before success; the web app displays `replay verified` only for API-confirmed solves. | `cargo test`, `cargo run --quiet -p cube-engine --bin solver_quality_report`, `npm run test:e2e`. |
-| Prefer short solutions while reporting honest configured limits. | Solver strategies expose explicit limits, metrics, and `not_found_within_limits`; generated two-phase artifacts report unavailable or corrupt states. | `cargo run --quiet -p cube-engine --bin solver_quality_report`, `npm run test:e2e`. |
+| Prefer the shortest verified solution available within configured limits. | Solver strategies expose explicit limits, metrics, and `not_found_within_limits`; generated two-phase, bounded/PDB, hybrid, and future portfolio strategies are implementation details as long as every success is replay verified. | `cargo run --quiet -p cube-engine --bin solver_quality_report`, `npm run test:e2e`. |
 | Display notation and support playback or visual verification in the UI. | The UI displays notation, metrics, strategy status, and API replay verification. | `npm run build`, `npm run lint -w @rubiks-cube-solver/web`, `npm run test:e2e`. |
 | Let automated tests submit known states, receive solutions, replay them, and verify solved. | `tests/e2e/product-flow.spec.ts` covers notation-only UI, cube size cap, shallow notation, real notation through API, and invalid notation handling. | `npm run test:e2e`. |
 
@@ -80,4 +80,5 @@ Committed durable evidence lives in this report, `README.md`, source tests, comm
 - Generated pruning tables are optional local artifacts. Missing or corrupt artifacts produce structured unavailable/corrupt outcomes.
 - ML labels are replay-verified inverse scramble lengths, not optimal-distance labels.
 - ML value outputs are isolated to native hybrid move ordering and do not validate states, prune branches, replace replay verification, or change Rust API/web defaults.
-- The solver quality report and generated two-phase path do not claim optimality or a 20-move guarantee.
+- Solver strategy names are implementation details; the product target is the shortest replay-verified solution found within explicit limits.
+- The solver quality report and generated two-phase path do not claim optimality, `<=16`, or a 20-move guarantee.

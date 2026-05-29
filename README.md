@@ -2,7 +2,9 @@
 
 Bootstrap repository for a Rubik's Cube solver focused on a Rust engine first, then user-state validation, short-solution search, a native HTTP API, and a web interface.
 
-The product goal is defined in `GOALS.md`: a web interface where a user can input a valid 3x3 cube state and receive a verified solution, preferably within 20 moves when feasible.
+The product goal is defined in `GOALS.md`: a web interface where a user can input a valid 3x3 cube state and receive the shortest practical replay-verified solution found within explicit limits.
+
+The project is method-agnostic. Generated two-phase search is a current classical strategy, not the final product goal; bounded optimal search, stronger pattern databases, solver portfolios, external classical algorithms, ML-assisted ordering, and hybrid search are valid paths when they keep Rust-owned validation and replay verification intact.
 
 ## Current Status
 
@@ -30,7 +32,7 @@ cargo test
 
 ## Product Validation Gate
 
-`PRODUCT_VALIDATION.md` is the durable product gate report for `GOALS.md` and completed roadmap phases. It lists the required Roadrunner verification commands, latest dated outcomes, generated artifact locations, and the product safety limits: every success is replay verified, generated tables are local artifacts, ML is research-only, and the solver does not claim optimality or a 20-move guarantee.
+`PRODUCT_VALIDATION.md` is the durable product gate report for `GOALS.md` and completed roadmap phases. It lists the required Roadrunner verification commands, latest dated outcomes, generated artifact locations, and the product safety limits: every success is replay verified, generated tables are local artifacts, solver methods are interchangeable implementation details, ML is research-only unless explicitly integrated behind replay verification, and the solver does not claim optimality, `<=16`, or a 20-move guarantee.
 
 ## Solver Quality Report
 
@@ -60,11 +62,11 @@ npm run pruning:native
 
 The generated harder quality fixtures use the documented phase-2/G1 scramble `U R2 F2 D L2 B2 U2 R2` and require matching local depth-8 artifacts. The report includes generated artifact depth, table versions, move sets, generation source, and coordinate profile metadata in `table_depths` and `table_metadata` columns when those local artifacts are available.
 
-The quality report verifies every success by replay, but it does not claim optimality or a 20-move guarantee.
+The quality report verifies every success by replay, but it does not claim optimality, `<=16`, or a 20-move guarantee.
 
 ## Real Scramble Benchmark
 
-Use the real scramble benchmark to track hard user-provided scrambles without giving the solver the inverse scramble. Each fixture is converted to a cubie state first; only that state is submitted to the configured solver, and every success is replay verified:
+Use the real scramble benchmark to track hard user-provided scrambles without giving the solver the inverse scramble. Each fixture is converted to a cubie state first; only that state is submitted to the configured solver, and every success is replay verified. Treat strategy names as current implementations; the durable metric is solution length, success/failure honesty, nodes, time, and replay verification:
 
 ```bash
 npm run solver:real-scrambles
@@ -78,11 +80,12 @@ Use the short-solution benchmark to track replay-verified `<=16` frequency on a 
 
 ```bash
 npm run solver:short16
+npm run solver:short16:corner-pdb
 npm run solver:short16:multiprobe
 npm run solver:short16:api-budget
 ```
 
-These scripts run deterministic generated depth-16 scrambles with seed `0` and report the same exclusive buckets, including `len_0_to_16`. The default and API-budget variants use 20 generated fixtures; the `multiprobe` variant intentionally uses 5 fixtures because it spends remaining budget on deterministic inverse-state probes targeting `<=16`. This is a quality metric and not a guarantee that every state has a 16-move solution.
+These scripts run deterministic generated depth-16 scrambles with seed `0` and report the same exclusive buckets, including `len_0_to_16`. The default and API-budget variants use 20 generated fixtures; the corner-PDB and `multiprobe` variants intentionally use 5 fixtures because they spend more budget on short-solution attempts. This is a quality metric and not a guarantee that every state has a 16-move solution. Generate the local corner PDB first with `npm run pdb:corner:deep` before relying on `solver:short16:corner-pdb` results.
 
 For an intentionally heavy local/server-side run, use the deep 20-move gate:
 

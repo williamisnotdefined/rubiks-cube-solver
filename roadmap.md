@@ -4,7 +4,7 @@ Este roadmap descreve a ordem estratégica do projeto.
 
 ## Fontes De Verdade
 
-- `GOALS.md`: norte do produto. Deve ser tratado como somente leitura pela automação.
+- `GOALS.md`: norte do produto. A automação só deve alterá-lo quando houver instrução explícita do usuário.
 - `roadmap.md`: plano técnico linear e critérios de fase.
 - `crates/cube-engine`: fonte de verdade para estado do cubo, movimentos, validação, busca e solver.
 
@@ -17,7 +17,7 @@ Prioridades do produto:
 1. Nunca retornar uma solução inválida.
 2. Rejeitar estados impossíveis com erros úteis.
 3. Resolver estados informados pelo usuário, não apenas scrambles gerados internamente.
-4. Melhorar qualidade de solução depois da correção, mirando soluções curtas e sendo honesto quando um limite configurado não for atingido.
+4. Melhorar qualidade de solução depois da correção, minimizando a quantidade de movimentos verificados e sendo honesto quando um limite configurado não for atingido.
 5. Entregar localmente por API HTTP nativa e UI web.
 6. Só depois expandir para datasets, Machine Learning e busca híbrida.
 
@@ -30,6 +30,7 @@ Prioridades do produto:
 - Manter API HTTP e frontend como adapters finos.
 - Verificar toda solução retornada por replay antes de expor sucesso.
 - Não prometer otimalidade ou garantia de 20 movimentos sem algoritmo e testes que sustentem isso.
+- Não transformar uma técnica específica em objetivo do produto: two-phase, IDA*, PDBs, solver portfolios, algoritmos clássicos externos/portados, ML para ordenação e busca híbrida são caminhos válidos quando preservam validação, limites explícitos e replay verification.
 - Não commitar datasets grandes, pruning tables grandes, checkpoints de modelo ou logs de automação.
 
 ## Arquitetura Alvo
@@ -39,8 +40,8 @@ Web UI (TypeScript + React)
         -> Rust HTTP API
         -> Rust cube-engine
         -> validated cubie state
-        -> deterministic solver
-        -> verified move sequence
+        -> method-agnostic solver portfolio
+        -> shortest practical verified move sequence
         -> playback / solved verification
 ```
 
@@ -50,6 +51,7 @@ Extensões de pesquisa entram somente depois do fluxo acima funcionar:
 Deterministic solver baseline
         -> coordinates and pruning tables
         -> solver benchmarks
+        -> bounded optimal attempts / solver portfolio
         -> generated datasets
         -> ML value / policy experiments
         -> hybrid move ordering or guided search
@@ -155,7 +157,7 @@ Critério de saída: uma alteração que quebre input, solve, verificação ou o
 
 ### Fase 7 - Qualidade Do Solver Clássico
 
-Objetivo: sair do solver raso limitado para uma base mais útil e mensurável, ainda sem ML.
+Objetivo: sair do solver raso limitado para uma base mais útil e mensurável, ainda sem ML, tratando two-phase como baseline clássico e não como destino final obrigatório.
 
 Entregas:
 
@@ -163,10 +165,11 @@ Entregas:
 - Indexação com erros checados, sem panics em helpers públicos.
 - Pattern databases ou pruning tables geradas de forma determinística.
 - Fixtures pequenas commitáveis para testes; tabelas grandes devem ser geradas localmente e ignoradas no git.
-- Integração do solver two-phase atrás de `SolverConfig`.
+- Integração do solver two-phase atrás de `SolverConfig` como estratégia clássica inicial.
+- Estrutura para comparar estratégias por solução verificada, nós, tempo, limites e frequência em buckets curtos como `<=16`.
 - Benchmarks com estados conhecidos, profundidades, nós expandidos, tempo e tamanho de solução.
 
-Critério de saída: existe um baseline clássico verificável, com métricas reais e sem promessa falsa de otimalidade.
+Critério de saída: existe um baseline clássico verificável, com métricas reais e sem promessa falsa de otimalidade, e o projeto está livre para adicionar estratégias alternativas que minimizem movimentos verificados.
 
 ### Fase 8 - Datasets
 
@@ -242,7 +245,21 @@ Ordem segura de integração:
 
 Critério de saída: a busca híbrida melhora métricas em fixtures conhecidas sem degradar correção, mensagens de erro ou comportamento padrão.
 
-### Fase 11 - Pesquisa Avançada
+### Fase 11 - Solver Portfolio E Soluções Mais Curtas
+
+Objetivo: combinar estratégias verificadas para retornar a melhor solução encontrada dentro dos limites configurados, sem depender de uma única técnica.
+
+Possíveis linhas:
+
+- Tentativa ótima limitada para `<=16` com IDA* e PDBs admissíveis mais fortes.
+- Pattern databases de edges/corners maiores, geradas localmente e ignoradas no git.
+- Portfolio que roda uma tentativa curta/ótima antes do fallback two-phase.
+- Seleção da menor solução replay-verificada entre estratégias concorrentes.
+- Métricas comparáveis para frequência `<=16`, `17-18`, `19-20`, `>20`, nós, tempo e falhas honestas.
+
+Critério de saída: a API consegue expor uma estratégia de portfolio que retorna a menor solução replay-verificada encontrada no orçamento, registra qual estratégia venceu e nunca apresenta ausência de prova como garantia de inexistência de solução curta.
+
+### Fase 12 - Pesquisa Avançada
 
 Objetivo: explorar ideias que não bloqueiam o produto principal.
 
@@ -273,12 +290,13 @@ Critério de saída: cada experimento deve ter baseline, métrica, fallback e es
 4. HTTP API validation / solve / playback
 5. Web input / solve / playback
 6. Playwright product flow
-7. Two-phase and pruning-table foundations
+7. Classical solver foundations and pruning tables
 8. Solver benchmarks
 9. Dataset generation
 10. ML value baseline
 11. Hybrid search
-12. Advanced research
+12. Solver portfolio for short solutions
+13. Advanced research
 ```
 
 ## Definição De Pronto Do Projeto
