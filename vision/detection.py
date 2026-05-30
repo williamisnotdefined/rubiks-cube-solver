@@ -7,7 +7,13 @@ import math
 import cv2
 import numpy as np
 
-from .color import SCAN_SYMBOLS, classify_rgb, neutral_white_likelihood, sample_sticker_rgb
+from .color import (
+    SCAN_SYMBOLS,
+    classify_rgb,
+    neutral_white_likelihood,
+    normalize_face_lighting,
+    sample_sticker_rgb,
+)
 from .schemas import (
     AnalyzeScanFaceRequest,
     AnalyzeScanFaceResponse,
@@ -59,7 +65,7 @@ def analyze_face(request: AnalyzeScanFaceRequest) -> AnalyzeScanFaceResponse:
         )
 
     ordered_quad = order_points(quad)
-    warped = warp_face(image, ordered_quad)
+    warped = normalize_face_lighting(warp_face(image, ordered_quad))
     stickers = []
     warnings = quality_warnings + detection_warnings
 

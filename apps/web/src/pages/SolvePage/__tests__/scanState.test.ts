@@ -36,6 +36,16 @@ describe('scan state helpers', () => {
     })
   })
 
+  it('allows detected partial overcounts when alternatives can stay within color limits', () => {
+    const confirmedFaces: ScanFaces = {
+      U: { symbol: 'U', stickers: filledStickers('U') },
+    }
+    const nextFace = detectedStickersWithAlternative('U', 'R')
+    nextFace[4] = { symbol: 'R', confidence: 1, source: 'center' }
+
+    expect(validateScanFaceDraft(confirmedFaces, 'R', nextFace)).toBeUndefined()
+  })
+
   it('builds a solve payload only after all faces are complete with exact counts', () => {
     const faces = Object.fromEntries(
       scanSymbols.map((symbol) => [symbol, { symbol, stickers: filledStickers(symbol) }]),
@@ -51,6 +61,39 @@ describe('scan state helpers', () => {
     })
 
     expect(scanFacesToPayload({ ...faces, B: undefined })).toBeUndefined()
+  })
+
+  it('balances detected low-confidence stickers before building the solve payload', () => {
+    const faces = Object.fromEntries(
+      scanSymbols.map((symbol) => [symbol, { symbol, stickers: filledStickers(symbol) }]),
+    ) as ScanFaces
+    faces.U!.stickers[0] = {
+      alternatives: [
+        { confidence: 0.95, symbol: 'U' },
+        { confidence: 0.45, symbol: 'R' },
+      ],
+      confidence: 0.12,
+      source: 'detected',
+      symbol: 'R',
+    }
+
+    expect(scanFacesToPayload(faces)).toEqual({
+      U: 'UUUUUUUUU',
+      R: 'RRRRRRRRR',
+      F: 'FFFFFFFFF',
+      D: 'DDDDDDDDD',
+      L: 'LLLLLLLLL',
+      B: 'BBBBBBBBB',
+    })
+  })
+
+  it('does not rebalance manual color count errors', () => {
+    const faces = Object.fromEntries(
+      scanSymbols.map((symbol) => [symbol, { symbol, stickers: filledStickers(symbol) }]),
+    ) as ScanFaces
+    faces.U!.stickers[0] = { confidence: 1, source: 'manual', symbol: 'R' }
+
+    expect(scanFacesToPayload(faces)).toBeUndefined()
   })
 
   it('rotates the white face captured with green on top before solving', () => {
@@ -101,5 +144,20 @@ function stickersFromSymbols(symbols: string): ScanSticker[] {
     symbol: symbol as (typeof scanSymbols)[number],
     confidence: 1,
     source: index === 4 ? 'center' : 'manual',
+  }))
+}
+
+function detectedStickersWithAlternative(
+  detectedSymbol: (typeof scanSymbols)[number],
+  alternativeSymbol: (typeof scanSymbols)[number],
+): ScanSticker[] {
+  return Array.from({ length: 9 }, (_, index) => ({
+    alternatives: [
+      { confidence: 0.8, symbol: alternativeSymbol },
+      { confidence: 0.4, symbol: detectedSymbol },
+    ],
+    confidence: 0.18,
+    source: index === 4 ? 'center' : 'detected',
+    symbol: detectedSymbol,
   }))
 }

@@ -90,6 +90,18 @@ def test_detects_off_center_face_without_guide_fallback() -> None:
     assert len(response.faceQuad) == 4
 
 
+def test_detects_face_under_directional_shadow_and_warm_cast() -> None:
+    symbols = ["L", "U", "D", "R", "F", "F", "R", "U", "F"]
+    image = apply_directional_lighting(synthetic_face(symbols))
+    response = analyze_face(AnalyzeScanFaceRequest(expectedCenter="F", image=encode_image(image)))
+
+    assert response.ok
+    assert not response.centerMismatch
+    assert response.detectedCenter == "F"
+    assert response.detectionMode in {"contour", "sticker_grid"}
+    assert [sticker.symbol for sticker in response.stickers] == symbols
+
+
 def synthetic_face(
     symbols: list[str],
     color_overrides: dict[int, tuple[int, int, int]] | None = None,
@@ -121,6 +133,17 @@ def synthetic_face(
     )
     transform = cv2.getPerspectiveTransform(source, target)
     return cv2.warpPerspective(image, transform, (720, 720))
+
+
+def apply_directional_lighting(image: np.ndarray) -> np.ndarray:
+    height, width = image.shape[:2]
+    x_gradient = np.linspace(0.56, 1.14, width, dtype=np.float32)
+    y_gradient = np.linspace(0.78, 1.06, height, dtype=np.float32)
+    gradient = np.outer(y_gradient, x_gradient)
+    warm_cast_bgr = np.array([0.9, 0.96, 1.12], dtype=np.float32)
+    lit = image.astype(np.float32) * gradient[:, :, None] * warm_cast_bgr
+
+    return np.clip(lit, 0, 255).astype(np.uint8)
 
 
 def encode_image(image: np.ndarray) -> str:

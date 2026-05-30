@@ -12,6 +12,42 @@ The project is method-agnostic. Generated two-phase search is a current classica
 - `cube-engine` contains cubie state, moves, notation parsing, scrambles, validation, BFS, IDDFS, generated two-phase search, and quality reporting.
 - AI knowledge routing is managed from canonical files under `ai/`.
 
+## Quick Start
+
+Prerequisites:
+
+- Node.js and npm (for workspace scripts)
+- Rust toolchain (for API, tests, and pruning-table generation)
+- Python 3.11+ for optional vision and machine-learning helpers
+
+Install the required Node dependencies:
+
+```bash
+npm install
+```
+
+Optional local helpers:
+
+```bash
+npm run vision:install
+python -m pip install -r ml/requirements.txt
+```
+
+Start the full local stack (API, optional vision service, and web dev server):
+
+```bash
+npm run dev
+```
+
+Core command quick refs:
+
+```bash
+npm run api:dev
+npm run web:dev
+npm run build
+npm run product:gate
+```
+
 ## Commands
 
 ```bash
@@ -168,18 +204,48 @@ Defaults:
 - `RUBIKS_PRUNING_TABLE_DIR=crates/cube-engine/pruning-tables`
 - `RUBIKS_WEB_DIST_DIR=apps/web/dist`
 
-Endpoints:
+API endpoints:
 
 - `GET /health`
 - `GET /strategies`
 - `POST /solve-notation` with `{ "moves": "R2 D2 F'", "strategyId": "generated-two-phase-quality", "maxDepth": 30, "maxNodes": 10000000 }`
+- `POST /solve-scan` with `{"faces": {"U":"UUURRR...", "R":"...", ...}, "strategyId": "generated-two-phase-quality", "maxDepth": 30, "maxNodes": 10000000 }`
+- `POST /scan/analyze-face` with `{ "expectedCenter": "R", "image": "<base64-png>", "knownCenters": { ... } }`
 - If `maxNodes` is omitted, the API uses `10000000`; the request cap is `25000000`.
+- `strategyId` must be one of the IDs returned by `GET /strategies`.
 - Experimental: `strategyId="generated-two-phase-multiprobe"` spends budget on forward and inverse `<=16` move-order probes before falling back to deeper generated two-phase quality.
 - Experimental: `strategyId="optimal-bounded-corner-pdb"` tries the local corner PDB first, then falls back to generated two-phase quality.
 - Experimental: `strategyId="optimal-bounded-pdb16"` tries local corner plus 6-edge PDBs for a bounded `<=16` IDA* attempt, then falls back to generated two-phase quality.
 - Experimental: `strategyId="short-solution-portfolio"` tries bounded PDB16 and generated `<=16` probes before falling back to generated two-phase quality.
 
-Every successful API solve includes `replayVerified=true`. The client-facing API accepts move notation only; facelet/Kociemba strings are not client request payloads.
+Every successful API solve includes `replayVerified=true`.
+The default web-facing contract is move-notation solves via `POST /solve-notation`; facelet/Kociemba strings are not used by the main product input form. Scan-based input uses the additional `/solve-scan` and `/scan/analyze-face` endpoints.
+
+### Vision Service Integration
+
+Scan analysis is handled by the optional Rust-proxied vision service.
+
+- API defaults to `http://127.0.0.1:8790` for scan analysis (`RUBIKS_VISION_URL` overrides this).
+- Start the service with:
+
+```bash
+npm run vision:dev
+```
+
+- The canonical scanner workflow and tests are documented in `vision/README.md`.
+
+## Troubleshooting
+
+- If solving returns `generated_tables_unavailable`, run:
+
+```bash
+npm run pruning:native
+```
+
+- If solving returns `unsupported_strategy`, use one of the IDs from `GET /strategies`.
+- If the client gets `invalid_notation` or `invalid_limits`, send shorter notation and keep limits within `maxDepth <= 30` and `maxNodes <= 25000000`.
+- If image scan fails, check `RUBIKS_VISION_URL` and restart both `npm run vision:dev` and the API.
+- If startup logs show web missing, ensure `npm run build` produced `apps/web/dist/index.html`.
 
 ## API-Backed Web App
 
