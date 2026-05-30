@@ -1,28 +1,43 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { captureScanFrame } from '../scanColor'
+import type { AnalyzeScanFaceResponse } from '@api/scan'
+import { captureScanImage } from '../scanCapture'
 import { ScanCubeModal } from '../ScanCubeModal'
-import type { ScanSticker } from '../scanState'
+
+const apiMocks = vi.hoisted(() => ({
+  analyzeReset: vi.fn(),
+  analyzeMutateAsync: vi.fn(),
+}))
+
+vi.mock('@api/scan', async () => {
+  const actual = await vi.importActual<typeof import('@api/scan')>('@api/scan')
+
+  return {
+    ...actual,
+    useAnalyzeScanFace: () => ({
+      mutateAsync: apiMocks.analyzeMutateAsync,
+      reset: apiMocks.analyzeReset,
+    }),
+  }
+})
 
 vi.mock('../hooks/useCameraStream', () => ({
   useCameraStream: () => ({ status: 'ready', stream: {} }),
 }))
 
-vi.mock('../scanColor', async () => {
-  const actual = await vi.importActual<typeof import('../scanColor')>('../scanColor')
+vi.mock('../scanCapture', () => ({
+  captureScanImage: vi.fn(),
+}))
 
-  return {
-    ...actual,
-    captureScanFrame: vi.fn(),
-  }
-})
-
-const captureScanFrameMock = vi.mocked(captureScanFrame)
+const captureScanImageMock = vi.mocked(captureScanImage)
 
 describe('ScanCubeModal', () => {
   beforeEach(() => {
-    captureScanFrameMock.mockReset()
+    apiMocks.analyzeMutateAsync.mockReset()
+    apiMocks.analyzeReset.mockReset()
+    captureScanImageMock.mockReset()
+    captureScanImageMock.mockReturnValue({ photoDataUrl: 'data:image/jpeg;base64,scan' })
     Object.defineProperty(HTMLMediaElement.prototype, 'play', {
       configurable: true,
       value: vi.fn().mockResolvedValue(undefined),
@@ -31,17 +46,7 @@ describe('ScanCubeModal', () => {
 
   it('blocks confirming a face when the captured center is a different color', async () => {
     const user = userEvent.setup()
-    captureScanFrameMock.mockResolvedValue({
-      centerAnalysis: {
-        confidence: 0.8,
-        detectedSymbol: 'F',
-        expectedSymbol: 'U',
-        mismatched: true,
-      },
-      centerRgb: { r: 38, g: 172, b: 86 },
-      photoDataUrl: 'data:image/jpeg;base64,scan',
-      stickers: filledStickers('U'),
-    })
+    apiMocks.analyzeMutateAsync.mockResolvedValue(scanAnalysisResponse({ centerMismatch: true }))
 
     render(
       <ScanCubeModal
@@ -60,17 +65,7 @@ describe('ScanCubeModal', () => {
 
   it('clears the current photo instead of navigating to a previous face', async () => {
     const user = userEvent.setup()
-    captureScanFrameMock.mockResolvedValue({
-      centerAnalysis: {
-        confidence: 1,
-        detectedSymbol: 'U',
-        expectedSymbol: 'U',
-        mismatched: false,
-      },
-      centerRgb: { r: 205, g: 210, b: 218 },
-      photoDataUrl: 'data:image/jpeg;base64,scan',
-      stickers: filledStickers('U'),
-    })
+    apiMocks.analyzeMutateAsync.mockResolvedValue(scanAnalysisResponse())
 
     render(
       <ScanCubeModal
@@ -96,14 +91,29 @@ describe('ScanCubeModal', () => {
       expect(screen.queryByAltText('Captured cube face')).not.toBeInTheDocument()
     })
     expect(screen.getByRole('button', { name: 'Confirm face' })).toBeDisabled()
+    expect(apiMocks.analyzeReset).toHaveBeenCalled()
   })
 })
 
-function filledStickers(symbol: NonNullable<ScanSticker['symbol']>): ScanSticker[] {
-  return Array.from({ length: 9 }, (_, index) => ({
-    symbol,
-    rgb: { r: 205, g: 210, b: 218 },
-    confidence: 1,
-    source: index === 4 ? 'center' : 'detected',
-  }))
+function scanAnalysisResponse({ centerMismatch = false } = {}): AnalyzeScanFaceResponse {
+  return {
+    centerMismatch,
+    confidence: centerMismatch ? 0.8 : 1,
+    detectedCenter: centerMismatch ? 'F' : 'U',
+    expectedCenter: 'U',
+    faceQuad: [],
+    imageSize: { width: 640, height: 640 },
+    message: centerMismatch ? 'Captured center does not match the expected face.' : undefined,
+    ok: !centerMismatch,
+    status: centerMismatch ? 'center_mismatch' : 'detected',
+    stickers: Array.from({ length: 9 }, (_, index) => ({
+      alternatives: [],
+      confidence: 1,
+      index,
+      polygon: [],
+      rgb: { r: 205, g: 210, b: 218 },
+      symbol: 'U',
+    })),
+    warnings: [],
+  }
 }

@@ -6,7 +6,11 @@ use rubiks_cube_solver_api::{api_router, api_router_with_web_dist, ApiConfig, Ap
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = ApiConfig::from_env();
     let addr = config.addr.parse::<SocketAddr>()?;
-    let state = ApiState::load_generated_solver(&config.pruning_table_dir).map_err(|error| {
+    let state = ApiState::load_generated_solver_with_vision_url(
+        &config.pruning_table_dir,
+        config.vision_url.clone(),
+    )
+    .map_err(|error| {
         format!(
             "failed to load generated two-phase solver from {}: {error}",
             config.pruning_table_dir.display()

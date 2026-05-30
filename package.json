@@ -6,9 +6,11 @@
     "apps/web"
   ],
   "scripts": {
-    "dev": "npm run pruning:native && concurrently -k -n api,web -c blue,green \"npm run api:dev\" \"npm run web:dev\"",
+    "dev": "npm run pruning:native && concurrently -k -n api,vision,web -c blue,magenta,green \"npm run api:dev\" \"npm run vision:dev\" \"npm run web:dev\"",
     "web:dev": "npm run dev -w @rubiks-cube-solver/web",
     "api:dev": "cargo run -p rubiks-cube-solver-api",
+    "vision:dev": "python -m uvicorn vision.app:app --host 127.0.0.1 --port 8790 --reload",
+    "vision:test": "python -m pytest vision",
     "api:test": "cargo test -p rubiks-cube-solver-api",
     "build": "npm run build -w @rubiks-cube-solver/web",
     "build:api": "cargo build -p rubiks-cube-solver-api --release",

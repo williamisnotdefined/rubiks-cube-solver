@@ -2,6 +2,8 @@ import { waitFor } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { mockApiError, mockApiSuccess } from '@src/test/api'
 import { renderHookWithProviders } from '@src/test/render'
+import { analyzeScanFace } from '../scan/analyzeFace/analyzeFace'
+import { useAnalyzeScanFace } from '../scan/analyzeFace/useAnalyzeScanFace'
 import { getHealth } from '../solver/getHealth/getHealth'
 import { useGetHealth } from '../solver/getHealth/useGetHealth'
 import { getStrategies } from '../solver/getStrategies/getStrategies'
@@ -107,6 +109,37 @@ describe('solver API operations', () => {
     )
   })
 
+  it('posts scan photos for vision analysis through the request client', async () => {
+    const payload = {
+      ok: true,
+      status: 'detected',
+      centerMismatch: false,
+      confidence: 1,
+      faceQuad: [],
+      stickers: [],
+      warnings: [],
+    }
+    const fetchMock = mockApiSuccess(payload)
+
+    await expect(
+      analyzeScanFace({
+        expectedCenter: 'U',
+        image: 'data:image/jpeg;base64,scan',
+        knownCenters: { U: { r: 205, g: 210, b: 218 } },
+      }),
+    ).resolves.toEqual(payload)
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:8787/scan/analyze-face',
+      expect.objectContaining({
+        body: JSON.stringify({
+          expectedCenter: 'U',
+          image: 'data:image/jpeg;base64,scan',
+          knownCenters: { U: { r: 205, g: 210, b: 218 } },
+        }),
+      }),
+    )
+  })
+
   it('defaults missing optional success metrics', () => {
     const { elapsedMs, exploredNodes, length } = normalizeSolveResponse(
       {
@@ -202,5 +235,26 @@ describe('solver React Query hooks', () => {
         limits: { maxDepth: 0 },
       }),
     ).resolves.toMatchObject({ ok: true, status: 'success' })
+  })
+
+  it('runs scan analysis mutations', async () => {
+    mockApiSuccess({
+      ok: true,
+      status: 'detected',
+      centerMismatch: false,
+      confidence: 1,
+      faceQuad: [],
+      stickers: [],
+      warnings: [],
+    })
+    const { result } = renderHookWithProviders(() => useAnalyzeScanFace())
+
+    await expect(
+      result.current.mutateAsync({
+        expectedCenter: 'U',
+        image: 'data:image/jpeg;base64,scan',
+        knownCenters: {},
+      }),
+    ).resolves.toMatchObject({ ok: true, status: 'detected' })
   })
 })

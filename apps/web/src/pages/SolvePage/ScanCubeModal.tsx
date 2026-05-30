@@ -1,12 +1,8 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
-import type { ScanFacesPayload, SolveResult } from '@api/solver/types'
+import { useAnalyzeScanFace, type AnalyzeScanFaceResponse, type RgbColor } from '@api/scan'
+import type { ScanFaceSymbol, ScanFacesPayload, SolveResult } from '@api/solver/types'
 import { Button } from '@components/Button'
-import {
-  captureScanFrame,
-  reclassifyDetectedScanStickers,
-  type ScanCenterAnalysis,
-  type ScanColorReferences,
-} from './scanColor'
+import { captureScanImage } from './scanCapture'
 import { ScanCameraFrame } from './ScanCameraFrame'
 import { ScanFaceColorEditor } from './ScanFaceColorEditor'
 import {
@@ -33,13 +29,6 @@ type ScanCubeModalProps = {
   onSolve: (faces: ScanFacesPayload) => Promise<SolveResult | undefined>
 }
 
-function centerMismatchMessage({
-  detectedSymbol,
-  expectedSymbol,
-}: ScanCenterAnalysis): string {
-  return `Center looks ${scanSymbolDetails[detectedSymbol].label}, but this step expects ${scanSymbolDetails[expectedSymbol].label}. Rotate to the expected face and retake the photo before confirming.`
-}
-
 export function ScanCubeModal({
   apiReady,
   solveDisabledReason,
@@ -50,6 +39,7 @@ export function ScanCubeModal({
   const titleId = useId()
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const camera = useCameraStream(true)
+  const analyzeScanFace = useAnalyzeScanFace()
   const [faces, setFaces] = useState<ScanFaces>({})
   const [currentFaceIndex, setCurrentFaceIndex] = useState(0)
   const currentFace = scanFaceOrder[currentFaceIndex]
@@ -57,13 +47,13 @@ export function ScanCubeModal({
     createEmptyScanStickers(currentFace.symbol),
   )
   const [photoDataUrl, setPhotoDataUrl] = useState<string | undefined>()
-  const [centerAnalysis, setCenterAnalysis] = useState<ScanCenterAnalysis | undefined>()
+  const [scanAnalysis, setScanAnalysis] = useState<AnalyzeScanFaceResponse | undefined>()
   const [capturing, setCapturing] = useState(false)
   const [message, setMessage] = useState<string | undefined>()
   const completePayload = scanFacesToPayload(faces)
   const draftValidation = validateScanFaceDraft(faces, currentFace.symbol, stickers)
-  const centerValidation = centerAnalysis?.mismatched
-    ? centerMismatchMessage(centerAnalysis)
+  const centerValidation = scanAnalysis?.centerMismatch
+    ? centerMismatchMessage(scanAnalysis)
     : undefined
   const faceValidation = centerValidation ?? draftValidation
   const previewFaces: ScanFaces = {
@@ -71,17 +61,17 @@ export function ScanCubeModal({
     [currentFace.symbol]: { symbol: currentFace.symbol, stickers },
   }
   const previewCounts = countScanSymbols(previewFaces)
-  const colorReferences = useMemo(() => scanColorReferencesFromFaces(faces), [faces])
+  const knownCenters = useMemo(() => knownCenterReferencesFromFaces(faces), [faces])
   const canClearPhoto =
     photoDataUrl !== undefined ||
-    centerAnalysis !== undefined ||
+    scanAnalysis !== undefined ||
     stickers.some((sticker, index) => index !== 4 && sticker.symbol !== undefined)
 
   useEffect(() => {
     const face = faces[currentFace.symbol]
     setStickers(face?.stickers ?? createEmptyScanStickers(currentFace.symbol))
     setPhotoDataUrl(face?.photoDataUrl)
-    setCenterAnalysis(undefined)
+    setScanAnalysis(undefined)
     setMessage(undefined)
   }, [currentFace.symbol, faces])
 
@@ -113,23 +103,38 @@ export function ScanCubeModal({
     }
 
     setCapturing(true)
-    setCenterAnalysis(undefined)
+    setScanAnalysis(undefined)
     setMessage('Capturing photo...')
 
     try {
-      const capture = await captureScanFrame(videoRef.current, currentFace.symbol, colorReferences)
+      const capture = captureScanImage(videoRef.current)
       if (capture === undefined) {
         setMessage('Could not read a camera frame. Try again.')
         return
       }
 
-      setStickers(capture.stickers)
       setPhotoDataUrl(capture.photoDataUrl)
-      setCenterAnalysis(capture.centerAnalysis)
-      const uncertain = lowConfidenceCount(capture.stickers)
-      const centerMessage = capture.centerAnalysis.mismatched
-        ? centerMismatchMessage(capture.centerAnalysis)
-        : undefined
+      setMessage('Analyzing cube face...')
+
+      const analysis = await analyzeScanFace.mutateAsync({
+        expectedCenter: currentFace.symbol,
+        image: capture.photoDataUrl,
+        knownCenters,
+      })
+      setScanAnalysis(analysis)
+
+      if (analysis.stickers.length === 0) {
+        setStickers(createEmptyScanStickers(currentFace.symbol))
+        setMessage(
+          analysis.message ?? 'Could not detect a cube face. Retake the photo or fill the grid manually.',
+        )
+        return
+      }
+
+      const nextStickers = scanStickersFromAnalysis(analysis, currentFace.symbol)
+      setStickers(nextStickers)
+      const uncertain = lowConfidenceCount(nextStickers)
+      const centerMessage = analysis.centerMismatch ? centerMismatchMessage(analysis) : undefined
       const detectionMessage =
         uncertain > 0
           ? `${uncertain} detected colors are uncertain. Review the highlighted squares.`
@@ -137,6 +142,9 @@ export function ScanCubeModal({
       setMessage(
         centerMessage === undefined ? detectionMessage : `${centerMessage} ${detectionMessage}`,
       )
+    } catch (error) {
+      setStickers(createEmptyScanStickers(currentFace.symbol))
+      setMessage(error instanceof Error ? error.message : 'The scan analysis request failed.')
     } finally {
       setCapturing(false)
     }
@@ -161,8 +169,9 @@ export function ScanCubeModal({
     })
     setStickers(createEmptyScanStickers(currentFace.symbol))
     setPhotoDataUrl(undefined)
-    setCenterAnalysis(undefined)
+    setScanAnalysis(undefined)
     setMessage(undefined)
+    analyzeScanFace.reset()
   }
 
   function handleConfirmFace() {
@@ -176,7 +185,7 @@ export function ScanCubeModal({
       return
     }
 
-    const draftFaces: ScanFaces = {
+    const nextFaces: ScanFaces = {
       ...faces,
       [currentFace.symbol]: {
         symbol: currentFace.symbol,
@@ -184,11 +193,8 @@ export function ScanCubeModal({
         photoDataUrl,
       },
     }
-    const nextReferences = scanColorReferencesFromFaces(draftFaces)
-    const nextFaces = reclassifyScanFaces(draftFaces, nextReferences)
 
     setFaces(nextFaces)
-    setStickers(nextFaces[currentFace.symbol]?.stickers ?? stickers)
     if (currentFaceIndex < scanFaceOrder.length - 1) {
       setCurrentFaceIndex((index) => index + 1)
       return
@@ -278,7 +284,9 @@ export function ScanCubeModal({
             <ScanCameraFrame
               cameraMessage={camera.status === 'error' ? camera.message : undefined}
               cameraStatus={camera.status}
+              faceQuad={scanAnalysis?.faceQuad}
               photoDataUrl={photoDataUrl}
+              stickerPolygons={scanAnalysis?.stickers}
               videoRef={videoRef}
             />
 
@@ -290,7 +298,7 @@ export function ScanCubeModal({
                 disabled={camera.status !== 'ready' || capturing}
                 onClick={handleTakePhoto}
               >
-                {capturing ? 'Capturing' : photoDataUrl === undefined ? 'Take photo' : 'Retake photo'}
+                {capturing ? 'Analyzing' : photoDataUrl === undefined ? 'Take photo' : 'Retake photo'}
               </Button>
               <Button
                 className="min-h-10 px-4 py-2"
@@ -360,8 +368,19 @@ export function ScanCubeModal({
   )
 }
 
-function scanColorReferencesFromFaces(faces: ScanFaces): ScanColorReferences {
-  const references: ScanColorReferences = {}
+function centerMismatchMessage(analysis: AnalyzeScanFaceResponse): string {
+  const detectedSymbol = analysis.detectedCenter
+  const expectedSymbol = analysis.expectedCenter
+
+  if (detectedSymbol === undefined || expectedSymbol === undefined) {
+    return analysis.message ?? 'Captured center does not match this scan step. Retake the photo.'
+  }
+
+  return `Center looks ${scanSymbolDetails[detectedSymbol].label}, but this step expects ${scanSymbolDetails[expectedSymbol].label}. Rotate to the expected face and retake the photo before confirming.`
+}
+
+function knownCenterReferencesFromFaces(faces: ScanFaces): Partial<Record<ScanFaceSymbol, RgbColor>> {
+  const references: Partial<Record<ScanFaceSymbol, RgbColor>> = {}
 
   for (const face of Object.values(faces)) {
     const center = face?.stickers[4]
@@ -373,19 +392,24 @@ function scanColorReferencesFromFaces(faces: ScanFaces): ScanColorReferences {
   return references
 }
 
-function reclassifyScanFaces(faces: ScanFaces, references: ScanColorReferences): ScanFaces {
-  const nextFaces: ScanFaces = {}
+function scanStickersFromAnalysis(
+  analysis: AnalyzeScanFaceResponse,
+  centerSymbol: ScanFaceSymbol,
+): ScanSticker[] {
+  const stickers = createEmptyScanStickers(centerSymbol)
 
-  for (const face of Object.values(faces)) {
-    if (face === undefined) {
+  for (const analyzedSticker of analysis.stickers) {
+    if (analyzedSticker.index < 0 || analyzedSticker.index > 8) {
       continue
     }
 
-    nextFaces[face.symbol] = {
-      ...face,
-      stickers: reclassifyDetectedScanStickers(face.stickers, face.symbol, references),
+    stickers[analyzedSticker.index] = {
+      confidence: analyzedSticker.index === 4 ? 1 : analyzedSticker.confidence,
+      rgb: analyzedSticker.rgb,
+      source: analyzedSticker.index === 4 ? 'center' : 'detected',
+      symbol: analyzedSticker.index === 4 ? centerSymbol : analyzedSticker.symbol,
     }
   }
 
-  return nextFaces
+  return stickers
 }

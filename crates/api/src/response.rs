@@ -1,5 +1,6 @@
 use cube_engine::SolverStrategy;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub struct HealthResponse {
@@ -85,6 +86,70 @@ pub struct ScanFacesRequest {
     pub l: String,
     #[serde(rename = "B")]
     pub b: String,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct RgbColorRequest {
+    pub r: u8,
+    pub g: u8,
+    pub b: u8,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct AnalyzeScanFaceRequest {
+    #[serde(rename = "expectedCenter")]
+    pub expected_center: String,
+    pub image: String,
+    #[serde(rename = "knownCenters", default)]
+    pub known_centers: HashMap<String, RgbColorRequest>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct PointResponse {
+    pub x: f64,
+    pub y: f64,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct ImageSizeResponse {
+    pub width: usize,
+    pub height: usize,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct ScanColorAlternativeResponse {
+    pub symbol: String,
+    pub confidence: f64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct AnalyzedStickerResponse {
+    pub index: usize,
+    pub symbol: String,
+    pub confidence: f64,
+    pub rgb: RgbColorRequest,
+    pub polygon: Vec<PointResponse>,
+    pub alternatives: Vec<ScanColorAlternativeResponse>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct AnalyzeScanFaceResponse {
+    pub ok: bool,
+    pub status: String,
+    pub message: Option<String>,
+    #[serde(rename = "centerMismatch")]
+    pub center_mismatch: bool,
+    #[serde(rename = "detectedCenter")]
+    pub detected_center: Option<String>,
+    #[serde(rename = "expectedCenter")]
+    pub expected_center: Option<String>,
+    pub confidence: f64,
+    #[serde(rename = "imageSize")]
+    pub image_size: Option<ImageSizeResponse>,
+    #[serde(rename = "faceQuad")]
+    pub face_quad: Vec<PointResponse>,
+    pub stickers: Vec<AnalyzedStickerResponse>,
+    pub warnings: Vec<String>,
 }
 
 #[allow(clippy::too_many_arguments)]

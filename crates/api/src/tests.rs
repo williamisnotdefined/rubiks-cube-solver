@@ -7,9 +7,9 @@ use tower::ServiceExt;
 
 use crate::response::unverified_solution_response_from_parts;
 use crate::{
-    api_router, api_router_with_web_dist, solve_notation_request, solve_scan_request, ApiState,
-    ScanFacesRequest, SolveNotationRequest, SolveScanRequest, DEFAULT_API_NODES, MAX_API_DEPTH,
-    MAX_API_NODES, MAX_NOTATION_BYTES,
+    api_router, api_router_with_web_dist, solve_notation_request, solve_scan_request,
+    AnalyzeScanFaceRequest, ApiState, ScanFacesRequest, SolveNotationRequest, SolveScanRequest,
+    DEFAULT_API_NODES, MAX_API_DEPTH, MAX_API_NODES, MAX_NOTATION_BYTES,
 };
 
 #[test]
@@ -361,6 +361,54 @@ async fn solve_scan_route_is_exposed() {
         .expect("request should complete");
 
     assert_eq!(response.status(), StatusCode::OK);
+}
+
+#[tokio::test]
+async fn analyze_scan_face_route_rejects_invalid_center_before_proxy() {
+    let app = api_router(ApiState::without_generated_solver());
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/scan/analyze-face")
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    serde_json::json!({
+                        "expectedCenter": "Q",
+                        "image": "data:image/jpeg;base64,AAAA",
+                        "knownCenters": {}
+                    })
+                    .to_string(),
+                ))
+                .expect("request should build"),
+        )
+        .await
+        .expect("request should complete");
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    let body = to_bytes(response.into_body(), usize::MAX)
+        .await
+        .expect("body should be readable");
+    let response: crate::AnalyzeScanFaceResponse =
+        serde_json::from_slice(&body).expect("response should be JSON");
+    assert!(!response.ok);
+    assert_eq!(response.status, "invalid_image");
+}
+
+#[tokio::test]
+async fn analyze_scan_face_reports_unavailable_vision_service() {
+    let state = ApiState::without_generated_solver().with_vision_url("http://127.0.0.1:9");
+    let request = AnalyzeScanFaceRequest {
+        expected_center: "U".to_owned(),
+        image: "data:image/jpeg;base64,AAAA".to_owned(),
+        known_centers: Default::default(),
+    };
+
+    let (status, response) = crate::analyze_scan_face_request(&state, request).await;
+
+    assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+    assert!(!response.ok);
+    assert_eq!(response.status, "vision_unavailable");
 }
 
 #[tokio::test]

@@ -19,6 +19,11 @@ const apiMocks = vi.hoisted(() => ({
   solveError: null as Error | null,
 }))
 
+const scanApiMocks = vi.hoisted(() => ({
+  analyzeMutateAsync: vi.fn(),
+  analyzeReset: vi.fn(),
+}))
+
 vi.mock('@api/solver', () => ({
   useGetHealth: () => ({ data: { generatedTwoPhaseReady: true, ok: true } }),
   useGetStrategies: () => ({
@@ -45,6 +50,13 @@ vi.mock('@api/solver', () => ({
     isPending: apiMocks.scanIsPending,
     mutateAsync: apiMocks.scanMutateAsync,
     reset: apiMocks.scanReset,
+  }),
+}))
+
+vi.mock('@api/scan', () => ({
+  useAnalyzeScanFace: () => ({
+    mutateAsync: scanApiMocks.analyzeMutateAsync,
+    reset: scanApiMocks.analyzeReset,
   }),
 }))
 
@@ -80,6 +92,8 @@ describe('SolvePage', () => {
     apiMocks.scanSolveData = undefined
     apiMocks.solveData = undefined
     apiMocks.solveError = null
+    scanApiMocks.analyzeMutateAsync.mockClear()
+    scanApiMocks.analyzeReset.mockClear()
   })
 
   it('starts solved with an empty scramble and the sample scramble as placeholder', () => {

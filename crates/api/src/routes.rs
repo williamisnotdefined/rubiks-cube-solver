@@ -10,8 +10,10 @@ use tower_http::services::{ServeDir, ServeFile};
 
 use crate::config::MAX_JSON_BODY_BYTES;
 use crate::response::{
-    HealthResponse, SolveNotationRequest, SolveResponse, SolveScanRequest, StrategyResponse,
+    AnalyzeScanFaceRequest, AnalyzeScanFaceResponse, HealthResponse, SolveNotationRequest,
+    SolveResponse, SolveScanRequest, StrategyResponse,
 };
+use crate::scan_analysis::analyze_scan_face_request;
 use crate::solve::{solve_notation_request, solve_scan_request};
 use crate::state::ApiState;
 
@@ -19,6 +21,7 @@ pub fn api_router(state: ApiState) -> Router {
     Router::new()
         .route("/health", get(health))
         .route("/strategies", get(strategies))
+        .route("/scan/analyze-face", post(analyze_scan_face))
         .route("/solve-notation", post(solve_notation))
         .route("/solve-scan", post(solve_scan))
         .layer(DefaultBodyLimit::max(MAX_JSON_BODY_BYTES))
@@ -88,4 +91,11 @@ async fn solve_scan(
     Json(request): Json<SolveScanRequest>,
 ) -> (StatusCode, Json<SolveResponse>) {
     solve_scan_request(&state, request)
+}
+
+async fn analyze_scan_face(
+    State(state): State<ApiState>,
+    Json(request): Json<AnalyzeScanFaceRequest>,
+) -> (StatusCode, Json<AnalyzeScanFaceResponse>) {
+    analyze_scan_face_request(&state, request).await
 }
