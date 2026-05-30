@@ -2,7 +2,7 @@ import type { FormEvent } from 'react'
 import { Button } from '@components/Button'
 import { Field } from '@components/Field'
 import { SelectInput, TextInput } from '@components/FormControls'
-import { LoadingIndicator } from '@components/LoadingIndicator'
+import { Loader3x3 } from '@components/Loader3x3'
 import { maxMovesLimit, maxNodesMillionOptions } from './constants'
 
 type SolveFormProps = {
@@ -89,7 +89,7 @@ export function SolveForm({
           type="submit"
           disabled={disabled}
         >
-          {buttonLoading ? <LoadingIndicator decorative className="size-4" /> : 'Solve'}
+          {buttonLoading ? <Loader3x3 decorative className="size-8" registerDelayMs={150} /> : 'Solve'}
         </Button>
       </div>
     </form>

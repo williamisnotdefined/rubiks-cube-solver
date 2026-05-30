@@ -35,8 +35,8 @@ Preserve the existing visual language and mobile usability while using Tailwind 
 ## Workflow
 
 - Inspect nearby components before adding new utility combinations or visual patterns.
-- Keep global CSS limited to Tailwind import, app-wide theme tokens, document defaults, and small base styles.
-- Put layout and visual treatment in component `className` utilities.
+- Do not create or import `.css` files; `apps/web/src/index.css` is the only allowed CSS file and must contain only `@import "tailwindcss";`.
+- Put all layout, visual treatment, animations, and state styles in component `className` utilities.
 - Use `classnames` as `cls` only when conditional classes or caller-provided `className` need composition.
 - Preserve the 350px by 350px cube cap on desktop and mobile.
 - Preserve the current square UI by avoiding `border-radius` and Tailwind `rounded-*` utilities.
@@ -45,16 +45,16 @@ Preserve the existing visual language and mobile usability while using Tailwind 
 
 ## Expected Output
 
-- Styling remains semantic HTML plus Tailwind utilities.
+- Styling remains semantic HTML plus Tailwind utilities, with no component or page CSS files.
 - Responsive behavior is preserved.
 - The cube visualization stays within the product size cap.
 - Conditional classes use `classnames` imported as `cls`.
 
 ## Verification
 
-- Run `npm run build` after CSS or component style changes.
+- Run `npm run build` after Tailwind or component style changes.
 - Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
-- Search changed files for `rounded-`, `border-radius`, local `cn`, and local `classNames` helpers.
+- Search changed files for `rounded-`, `border-radius`, local `cn`, local `classNames` helpers, and new `.css` files.
 - Check mobile breakpoints when feasible.
 
 # Referenced Context
@@ -63,13 +63,13 @@ Preserve the existing visual language and mobile usability while using Tailwind 
 
 # Frontend Styling Rules
 
-Rules for styling `apps/web` with Tailwind CSS v4 and class composition.
+Rules for styling `apps/web` with Tailwind CSS v4 utilities and class composition.
 
 ## Always
 
-- Use Tailwind CSS v4 through `@tailwindcss/vite` and `@import "tailwindcss"`.
-- Keep global CSS limited to Tailwind import, app-wide theme tokens, document defaults, and small base styles.
-- Prefer Tailwind utility classes in components over custom CSS selectors.
+- Use Tailwind CSS v4 through `@tailwindcss/vite` and the single required `apps/web/src/index.css` entrypoint.
+- Keep `apps/web/src/index.css` limited to exactly `@import "tailwindcss";`.
+- Put all styling in Tailwind utility classes on elements and components.
 - Preserve the existing product visual language unless the task explicitly changes design direction.
 - Consider desktop and mobile layouts for every UI change.
 - Keep the rendered 3x3 cube no larger than 350px by 350px.
@@ -81,19 +81,21 @@ Rules for styling `apps/web` with Tailwind CSS v4 and class composition.
 
 ## Never
 
-- Do not add a Tailwind config file unless custom theme primitives cannot stay in CSS tokens.
+- Do not add, import, or keep component, page, feature, or global `.css` files.
+- Do not put custom selectors, theme tokens, document defaults, base styles, animations, or keyframes in `.css` files.
+- Do not add a Tailwind config file unless Tailwind utility classes cannot express a concrete current need.
 - Do not add CSS-in-JS, Sass, or a design-system dependency without a concrete current need.
 - Do not add local `classNames`, `cn`, or wrapper helpers without a concrete repeated need.
 - Do not use template literals only to append conditional classes.
-- Do not add broad selectors to global CSS when component utility classes can express the behavior.
+- Do not add broad selectors or global CSS rules when component utility classes can express the behavior.
 - Do not turn repeated class sets into broad design-system abstractions before reuse is real.
 - Do not create generic interchangeable layouts that ignore the existing cube visualization tone.
 - Do not let visual experiments break mobile usability or the 350px cube cap.
 
 ## Verification
 
-- Search changed files for local class-name helpers and `rounded-` before finishing.
-- Run `npm run build` after CSS or component style changes.
+- Search changed files for local class-name helpers, `rounded-`, and new `.css` files before finishing.
+- Run `npm run build` after Tailwind or component style changes.
 - Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
 - Check mobile breakpoints for changed grids, forms, and visualization containers when feasible.
 
@@ -157,7 +159,7 @@ The frontend renders and controls solver interaction. It must not become the sou
 - Vite
 - `@tanstack/react-query` for API health, strategy metadata, and solve mutation state
 - `@houstonp/rubiks-cube` as a visualization custom element
-- Tailwind CSS v4 through `@tailwindcss/vite` and `@import "tailwindcss"`
+- Tailwind CSS v4 through `@tailwindcss/vite` and the single `apps/web/src/index.css` entrypoint
 - `classnames` imported as `cls` for conditional class composition
 - Vitest, Testing Library, and V8 coverage for unit/component/API-hook tests
 - Storybook for component stories and visual inspection
@@ -197,7 +199,7 @@ The solve form defaults to an empty scramble so the visualization starts solved;
 - Keep page-specific pieces colocated near the owning screen until reused elsewhere.
 - Shared reusable UI should live under `apps/web/src/components` only when there is a real shared consumer.
 - Context-independent helpers live under `apps/web/src/core/<category>/<name>.ts` and are imported directly without core barrels.
-- Keep page-specific hooks, validation helpers, message mapping, constants, and CSS under the owning page folder until reuse exists.
+- Keep page-specific hooks, validation helpers, message mapping, and constants under the owning page folder until reuse exists.
 - Keep new or substantially changed React component files at or below 400 lines where practical.
 - Storybook stories live in a `stories/` child folder beside the source area they cover.
 - Use one primary story export per component and rely on controls for prop variation.
@@ -213,11 +215,11 @@ The solve form defaults to an empty scramble so the visualization starts solved;
 
 ## Styling
 
-- Global CSS should stay limited to Tailwind import, app-wide theme tokens, document defaults, and small base styles.
-- Component layout and visual treatment should use Tailwind utilities.
+- `apps/web/src/index.css` is the only allowed CSS file and must contain only `@import "tailwindcss";`.
+- Component layout, visual treatment, animations, and state styles should use Tailwind utilities.
 - The current web UI is intentionally square; do not add `border-radius` or Tailwind `rounded-*` utilities.
 - Conditional class composition uses `classnames` as `cls`.
-- Do not add CSS-in-JS, Sass, or a design-system dependency without a concrete current need.
+- Do not add component/page CSS files, CSS-in-JS, Sass, or a design-system dependency without a concrete current need.
 - Desktop and mobile layouts should be considered for every UI change.
 
 ## Tests And Stories

@@ -1,5 +1,5 @@
 use axum::{
-    body::Body,
+    body::{to_bytes, Body},
     http::{Method, Request, StatusCode},
 };
 use cube_engine::{Scramble, SolverStrategy};
@@ -7,8 +7,8 @@ use tower::ServiceExt;
 
 use crate::response::unverified_solution_response_from_parts;
 use crate::{
-    api_router, solve_notation_request, ApiState, SolveNotationRequest, DEFAULT_API_NODES,
-    MAX_API_DEPTH, MAX_API_NODES, MAX_NOTATION_BYTES,
+    api_router, api_router_with_web_dist, solve_notation_request, ApiState, SolveNotationRequest,
+    DEFAULT_API_NODES, MAX_API_DEPTH, MAX_API_NODES, MAX_NOTATION_BYTES,
 };
 
 #[test]
@@ -264,6 +264,43 @@ async fn legacy_solve_route_is_not_exposed() {
         .expect("request should complete");
 
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
+#[tokio::test]
+async fn router_with_web_dist_serves_spa_fallback() {
+    let web_dist_dir = std::env::temp_dir().join(format!(
+        "rubiks-api-web-dist-test-{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("system time should be after unix epoch")
+            .as_nanos()
+    ));
+    std::fs::create_dir_all(&web_dist_dir).expect("web dist should be created");
+    std::fs::write(
+        web_dist_dir.join("index.html"),
+        "<!doctype html><div id=\"root\"></div>",
+    )
+    .expect("index should be written");
+
+    let app = api_router_with_web_dist(ApiState::without_generated_solver(), web_dist_dir.clone());
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/solve/real-scramble")
+                .body(Body::empty())
+                .expect("request should build"),
+        )
+        .await
+        .expect("request should complete");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = to_bytes(response.into_body(), usize::MAX)
+        .await
+        .expect("body should be readable");
+    assert!(String::from_utf8_lossy(&body).contains("id=\"root\""));
+
+    std::fs::remove_dir_all(web_dist_dir).expect("web dist should be removed");
 }
 
 #[tokio::test]

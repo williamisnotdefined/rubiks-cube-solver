@@ -16,7 +16,7 @@ axum = "0.7"
 cube-engine = { path = "../cube-engine" }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["macros", "net", "rt-multi-thread"] }
-tower-http = { version = "0.6", features = ["cors"] }
+tower-http = { version = "0.6", features = ["cors", "fs"] }
 
 [dev-dependencies]
 serde_json = "1"

@@ -120,7 +120,7 @@ export function SolvePage() {
   }
 
   return (
-    <main className="app-shell min-h-screen w-full bg-background px-3 py-4 text-foreground sm:px-5 sm:py-6">
+    <main className="app-shell min-h-screen w-full bg-[#070707] px-3 py-4 text-[#f7f7f7] sm:px-5 sm:py-6">
       <section className="mx-auto grid w-full max-w-4xl content-start justify-items-center gap-4">
         <CubeStage cubeRef={cubeRef} onReady={markCubeReady} />
         <SolveForm

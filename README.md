@@ -21,6 +21,7 @@ npm run dev
 npm run web:dev
 npm run api:dev
 npm run build
+npm run live:start
 npm run product:gate
 ```
 
@@ -165,6 +166,7 @@ Defaults:
 
 - `RUBIKS_API_ADDR=127.0.0.1:8787`
 - `RUBIKS_PRUNING_TABLE_DIR=crates/cube-engine/pruning-tables`
+- `RUBIKS_WEB_DIST_DIR=apps/web/dist`
 
 Endpoints:
 
@@ -201,6 +203,43 @@ npm run test:e2e
 ```
 
 Playwright starts both the API and the Vite preview server. The UI accepts a `Scramble` field as the only product input, prefers `generated-two-phase-quality` when the API advertises it, falls back to `generated-two-phase`, never asks the browser client to submit facelets, and displays `replay verified` only for API-confirmed solving results.
+
+## Cloudflare Tunnel
+
+Production follows the same local tunnel model used by `zelda-proto`: one local HTTP server listens on port `3001`, serves the built web app, exposes the Rust API routes, and Cloudflare Tunnel publishes it at `wilho.com.br`.
+
+Start the full production boot path plus tunnel:
+
+```bash
+npm run live:start
+```
+
+Start only the local production server after a build:
+
+```bash
+npm run pruning:native
+npm run build
+npm run build:api
+npm start
+```
+
+Start only the tunnel:
+
+```bash
+npm run live:tunnel
+```
+
+Example tunnel config is included in `cloudflared-config.example.yml`.
+
+Current production route target:
+
+- `wilho.com.br` -> `http://localhost:3001`
+
+Production defaults:
+
+- `RUBIKS_API_ADDR=127.0.0.1:3001` in `npm start`
+- `RUBIKS_WEB_DIST_DIR=apps/web/dist`
+- The production web build uses the same origin for API calls when `VITE_RUBIKS_API_URL` is not set
 
 ## Dataset Generation
 

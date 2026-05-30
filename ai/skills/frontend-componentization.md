@@ -20,7 +20,7 @@ Split UI by real ownership and reuse while keeping solver logic in Rust and avoi
 - Identify whether the change is page composition, shared UI, page-specific UI, form behavior, visualization behavior, story coverage, or state ownership cleanup.
 - Keep one-off UI inline unless extraction improves reuse, naming, or state boundaries.
 - Move page-level screens under `apps/web/src/pages`.
-- Keep page-specific components, hooks, helpers, and CSS under the owning page folder until reused.
+- Keep page-specific components, hooks, and helpers under the owning page folder until reused.
 - Move shared primitives to `apps/web/src/components` only when there is a real shared consumer.
 - Move context-independent helpers such as formatting and paint timing to `apps/web/src/core/<category>/<name>.ts` with direct imports.
 - Extract focused hooks for stateful behavior such as API loading, form workflow, or custom-element synchronization.

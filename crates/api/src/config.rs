@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 pub const DEFAULT_API_ADDR: &str = "127.0.0.1:8787";
 pub const DEFAULT_PRUNING_TABLE_DIR: &str = "crates/cube-engine/pruning-tables";
+pub const DEFAULT_WEB_DIST_DIR: &str = "apps/web/dist";
 pub const MAX_API_DEPTH: usize = 30;
 pub const DEFAULT_API_NODES: usize = 10_000_000;
 pub const MAX_API_NODES: usize = 25_000_000;
@@ -12,6 +13,7 @@ pub const MAX_JSON_BODY_BYTES: usize = 8192;
 pub struct ApiConfig {
     pub addr: String,
     pub pruning_table_dir: PathBuf,
+    pub web_dist_dir: PathBuf,
 }
 
 impl ApiConfig {
@@ -20,10 +22,14 @@ impl ApiConfig {
         let pruning_table_dir = std::env::var("RUBIKS_PRUNING_TABLE_DIR")
             .map(PathBuf::from)
             .unwrap_or_else(|_| PathBuf::from(DEFAULT_PRUNING_TABLE_DIR));
+        let web_dist_dir = std::env::var("RUBIKS_WEB_DIST_DIR")
+            .map(PathBuf::from)
+            .unwrap_or_else(|_| PathBuf::from(DEFAULT_WEB_DIST_DIR));
 
         Self {
             addr,
             pruning_table_dir,
+            web_dist_dir,
         }
     }
 }

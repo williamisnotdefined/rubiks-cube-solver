@@ -1,9 +1,12 @@
+use std::path::PathBuf;
+
 use axum::extract::{DefaultBodyLimit, State};
 use axum::http::{header::CONTENT_TYPE, HeaderValue, Method, StatusCode};
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use cube_engine::SolverStrategy;
 use tower_http::cors::{AllowOrigin, CorsLayer};
+use tower_http::services::{ServeDir, ServeFile};
 
 use crate::config::MAX_JSON_BODY_BYTES;
 use crate::response::{HealthResponse, SolveNotationRequest, SolveResponse, StrategyResponse};
@@ -18,6 +21,13 @@ pub fn api_router(state: ApiState) -> Router {
         .layer(DefaultBodyLimit::max(MAX_JSON_BODY_BYTES))
         .layer(cors_layer())
         .with_state(state)
+}
+
+pub fn api_router_with_web_dist(state: ApiState, web_dist_dir: PathBuf) -> Router {
+    let index_file = web_dist_dir.join("index.html");
+
+    api_router(state)
+        .fallback_service(ServeDir::new(web_dist_dir).fallback(ServeFile::new(index_file)))
 }
 
 fn cors_layer() -> CorsLayer {

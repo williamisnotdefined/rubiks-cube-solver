@@ -27,7 +27,7 @@ Build a visualization layer that renders cube state and controls playback withou
 - Keep API request/response code and React Query hooks in `apps/web/src/api`, with React components focused on interaction and rendering.
 - Keep API load state, solve result state, form input state, and visualization playback state separately owned.
 - Extract React components only when reuse, naming clarity, or state boundaries justify the new file.
-- Keep `App.tsx` thin and move page composition, page-specific components, hooks, helpers, and CSS under the owning page folder as UI grows.
+- Keep `App.tsx` thin and move page composition, page-specific components, hooks, and helpers under the owning page folder as UI grows.
 - Use focused hooks for imperative custom-element synchronization instead of broad page effects.
 - Use the current Tailwind CSS v4 stack and `classnames` conventions for visual work.
 - Keep reusable context-independent helpers under `apps/web/src/core` and import them directly.

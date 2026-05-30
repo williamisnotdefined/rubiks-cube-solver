@@ -20,7 +20,17 @@ export class ApiRequestError extends Error {
 }
 
 export function apiBaseUrl(): string {
-  return import.meta.env.VITE_RUBIKS_API_URL ?? defaultApiBaseUrl
+  const configuredApiUrl = import.meta.env.VITE_RUBIKS_API_URL
+
+  if (configuredApiUrl !== undefined) {
+    return configuredApiUrl
+  }
+
+  if (import.meta.env.PROD && typeof window !== 'undefined') {
+    return window.location.origin
+  }
+
+  return defaultApiBaseUrl
 }
 
 export function apiUrl(path: string): string {

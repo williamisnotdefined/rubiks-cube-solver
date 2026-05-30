@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { SolveResult } from '../SolveResult'
 import type { SolveResult as ApiSolveResult } from '@api/solver/types'
@@ -36,12 +37,28 @@ function failureResult(status: Exclude<ApiSolveResult, { ok: true }>['status']):
 }
 
 describe('SolveResult', () => {
-  it('renders successful solutions with metrics', () => {
+  it('renders successful solutions with a short summary', () => {
     render(<SolveResult error={null} result={successResult} solving={false} />)
 
     expect(screen.getByText("U' R'")).toBeInTheDocument()
-    expect(screen.getByText(/12,345 nodes - found in 1.23 s/)).toBeInTheDocument()
-    expect(screen.getByText(/replay verified/)).toBeInTheDocument()
+    expect(screen.getByText(/2 moves - found in 1.23 s/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'see more' })).toBeInTheDocument()
+    expect(screen.queryByText(/12,345 nodes/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/replay verified/)).not.toBeInTheDocument()
+  })
+
+  it('opens solver details from the summary link', async () => {
+    const user = userEvent.setup()
+    render(<SolveResult error={null} result={successResult} solving={false} />)
+
+    await user.click(screen.getByRole('button', { name: 'see more' }))
+
+    const dialog = screen.getByRole('dialog', { name: 'Solver details' })
+    expect(within(dialog).getByText('Generated two-phase quality solver')).toBeInTheDocument()
+    expect(within(dialog).getAllByText('12,345 nodes').length).toBeGreaterThan(0)
+    expect(within(dialog).getByText('tables available')).toBeInTheDocument()
+    expect(within(dialog).getByText('replay verified')).toBeInTheDocument()
+    expect(within(dialog).getByText(/does not mean generative AI/)).toBeInTheDocument()
   })
 
   it('renders solved states with no moves', () => {

@@ -1,12 +1,12 @@
 # Frontend Styling Rules
 
-Rules for styling `apps/web` with Tailwind CSS v4 and class composition.
+Rules for styling `apps/web` with Tailwind CSS v4 utilities and class composition.
 
 ## Always
 
-- Use Tailwind CSS v4 through `@tailwindcss/vite` and `@import "tailwindcss"`.
-- Keep global CSS limited to Tailwind import, app-wide theme tokens, document defaults, and small base styles.
-- Prefer Tailwind utility classes in components over custom CSS selectors.
+- Use Tailwind CSS v4 through `@tailwindcss/vite` and the single required `apps/web/src/index.css` entrypoint.
+- Keep `apps/web/src/index.css` limited to exactly `@import "tailwindcss";`.
+- Put all styling in Tailwind utility classes on elements and components.
 - Preserve the existing product visual language unless the task explicitly changes design direction.
 - Consider desktop and mobile layouts for every UI change.
 - Keep the rendered 3x3 cube no larger than 350px by 350px.
@@ -18,18 +18,20 @@ Rules for styling `apps/web` with Tailwind CSS v4 and class composition.
 
 ## Never
 
-- Do not add a Tailwind config file unless custom theme primitives cannot stay in CSS tokens.
+- Do not add, import, or keep component, page, feature, or global `.css` files.
+- Do not put custom selectors, theme tokens, document defaults, base styles, animations, or keyframes in `.css` files.
+- Do not add a Tailwind config file unless Tailwind utility classes cannot express a concrete current need.
 - Do not add CSS-in-JS, Sass, or a design-system dependency without a concrete current need.
 - Do not add local `classNames`, `cn`, or wrapper helpers without a concrete repeated need.
 - Do not use template literals only to append conditional classes.
-- Do not add broad selectors to global CSS when component utility classes can express the behavior.
+- Do not add broad selectors or global CSS rules when component utility classes can express the behavior.
 - Do not turn repeated class sets into broad design-system abstractions before reuse is real.
 - Do not create generic interchangeable layouts that ignore the existing cube visualization tone.
 - Do not let visual experiments break mobile usability or the 350px cube cap.
 
 ## Verification
 
-- Search changed files for local class-name helpers and `rounded-` before finishing.
-- Run `npm run build` after CSS or component style changes.
+- Search changed files for local class-name helpers, `rounded-`, and new `.css` files before finishing.
+- Run `npm run build` after Tailwind or component style changes.
 - Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
 - Check mobile breakpoints for changed grids, forms, and visualization containers when feasible.

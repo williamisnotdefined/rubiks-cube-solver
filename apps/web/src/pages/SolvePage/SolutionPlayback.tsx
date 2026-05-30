@@ -26,12 +26,12 @@ export function SolutionPlayback({
 
   return (
     <section
-      className="solution-playback grid w-full max-w-xl gap-3 border border-border bg-card p-3"
+      className="solution-playback grid w-full max-w-xl gap-3 border border-[#2b2b2b] bg-[#101010] p-3"
       aria-label="Solution playback"
     >
-      <div className="playback-summary flex items-center justify-between gap-3 text-sm font-extrabold text-foreground sm:text-base">
+      <div className="playback-summary flex items-center justify-between gap-3 text-sm font-extrabold text-[#f7f7f7] sm:text-base">
         <span>{currentLabel}</span>
-        <span className="playback-step whitespace-nowrap text-xs font-bold text-muted-foreground sm:text-sm">
+        <span className="playback-step whitespace-nowrap text-xs font-bold text-[#a8a8a8] sm:text-sm">
           {step} / {moves.length}
           {isFinalStep ? ' solved' : ''}
         </span>
@@ -48,7 +48,7 @@ export function SolutionPlayback({
           <ChevronLeft aria-hidden="true" size={22} strokeWidth={2.6} />
         </Button>
         <input
-          className="playback-range w-full accent-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+          className="playback-range w-full accent-[#f7f7f7] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f7f7f7]"
           type="range"
           aria-label="Solution step"
           min="0"

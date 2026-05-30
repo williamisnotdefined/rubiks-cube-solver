@@ -15,8 +15,8 @@ Preserve the existing visual language and mobile usability while using Tailwind 
 ## Workflow
 
 - Inspect nearby components before adding new utility combinations or visual patterns.
-- Keep global CSS limited to Tailwind import, app-wide theme tokens, document defaults, and small base styles.
-- Put layout and visual treatment in component `className` utilities.
+- Do not create or import `.css` files; `apps/web/src/index.css` is the only allowed CSS file and must contain only `@import "tailwindcss";`.
+- Put all layout, visual treatment, animations, and state styles in component `className` utilities.
 - Use `classnames` as `cls` only when conditional classes or caller-provided `className` need composition.
 - Preserve the 350px by 350px cube cap on desktop and mobile.
 - Preserve the current square UI by avoiding `border-radius` and Tailwind `rounded-*` utilities.
@@ -25,14 +25,14 @@ Preserve the existing visual language and mobile usability while using Tailwind 
 
 ## Expected Output
 
-- Styling remains semantic HTML plus Tailwind utilities.
+- Styling remains semantic HTML plus Tailwind utilities, with no component or page CSS files.
 - Responsive behavior is preserved.
 - The cube visualization stays within the product size cap.
 - Conditional classes use `classnames` imported as `cls`.
 
 ## Verification
 
-- Run `npm run build` after CSS or component style changes.
+- Run `npm run build` after Tailwind or component style changes.
 - Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
-- Search changed files for `rounded-`, `border-radius`, local `cn`, and local `classNames` helpers.
+- Search changed files for `rounded-`, `border-radius`, local `cn`, local `classNames` helpers, and new `.css` files.
 - Check mobile breakpoints when feasible.

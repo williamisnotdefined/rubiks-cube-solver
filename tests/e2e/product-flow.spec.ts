@@ -7,7 +7,7 @@ test.describe('product solve flow', () => {
   test('renders notation-only controls and caps the cube size', async ({ page }) => {
     await page.goto('/')
 
-    await expect(page.locator('rubiks-cube')).toBeVisible()
+    await expect(page.locator('.cube-stage rubiks-cube')).toBeVisible()
     await expect(page.getByText(/facelets/i)).toHaveCount(0)
 
     const cubeBox = await page.locator('.cube-stage').boundingBox()
@@ -54,7 +54,7 @@ test.describe('product solve flow', () => {
     await page.goto('/')
 
     const input = page.getByLabel('Scramble')
-    const cube = page.locator('rubiks-cube')
+    const cube = page.locator('.cube-stage rubiks-cube')
     await expect(input).toBeEnabled({ timeout: 15_000 })
     await expect.poll(() => cubeState(cube)).not.toBe('')
     const initialState = await cubeState(cube)
@@ -79,13 +79,14 @@ test.describe('product solve flow', () => {
     await expect(page.locator('.result code')).toHaveText("U' R'", {
       timeout: 30_000,
     })
-    await expect(page.locator('.result')).toContainText(
-      /Generated two-phase (quality )?solver/,
-    )
     await expect(page.locator('.result')).toContainText(/found in/)
-    await expect(page.locator('.result')).toContainText('replay verified')
+    await page.getByRole('button', { name: 'see more' }).click()
+    const details = page.getByRole('dialog', { name: 'Solver details' })
+    await expect(details).toContainText(/Generated two-phase (quality )?solver/)
+    await expect(details).toContainText('replay verified')
+    await page.getByRole('button', { name: 'Close' }).click()
 
-    const cube = page.locator('rubiks-cube')
+    const cube = page.locator('.cube-stage rubiks-cube')
     const step0State = await cubeState(cube)
     const range = page.getByLabel('Solution step')
     await expect(range).toHaveAttribute('type', 'range')
@@ -115,10 +116,10 @@ test.describe('product solve flow', () => {
     await page.getByRole('button', { name: 'Solve' }).click()
 
     await expect(page.locator('.result code')).toHaveText(/\S/, { timeout: 60_000 })
-    await expect(page.locator('.result')).toContainText(
-      /Generated two-phase (quality )?solver/,
-    )
-    await expect(page.locator('.result')).toContainText('replay verified')
+    await page.getByRole('button', { name: 'see more' }).click()
+    const details = page.getByRole('dialog', { name: 'Solver details' })
+    await expect(details).toContainText(/Generated two-phase (quality )?solver/)
+    await expect(details).toContainText('replay verified')
   })
 
   test('shows a short invalid scramble error', async ({ page }) => {
