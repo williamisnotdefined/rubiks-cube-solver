@@ -1,10 +1,10 @@
 # Frontend Styling
 
-Use this skill when changing Tailwind CSS v4 utilities, responsive layout, visual treatment, classnames usage, or cube visualization sizing in `apps/web`.
+Use this skill when changing Tailwind CSS v4 utilities, theme/color variables, responsive layout, visual treatment, classnames usage, or cube visualization sizing in `apps/web`.
 
 ## Goal
 
-Preserve the existing visual language and mobile usability while using Tailwind CSS v4 and `classnames` consistently.
+Preserve the existing visual language and mobile usability while using Tailwind CSS v4, semantic theme tokens, and `classnames` consistently.
 
 ## Read First
 
@@ -15,7 +15,11 @@ Preserve the existing visual language and mobile usability while using Tailwind 
 ## Workflow
 
 - Inspect nearby components before adding new utility combinations or visual patterns.
-- Do not create or import `.css` files; `apps/web/src/index.css` is the only allowed CSS file and must contain only `@import "tailwindcss";`.
+- Do not create or import `.css` files; `apps/web/src/index.css` is the only allowed CSS file and owns Tailwind import, project resets, semantic theme/color variables, and minimal root theme selectors.
+- Put all reusable color values in semantic variables in `apps/web/src/index.css` before using them from Tailwind utilities.
+- Use Tailwind classes backed by semantic tokens such as `bg-app-bg`, `bg-app-surface`, `text-app-text`, `text-app-muted`, `border-app-border`, and `ring-app-focus`; do not add hardcoded arbitrary color classes like `bg-[#...]`.
+- Keep theme behavior system-default by default, with explicit `dark` and `light` overrides only through root theme selectors when implemented.
+- Treat the current visual palette as `dark`; make `light` a gray, not-so-dark theme rather than a white theme.
 - Put all layout, visual treatment, animations, and state styles in component `className` utilities.
 - Use `classnames` as `cls` only when conditional classes or caller-provided `className` need composition.
 - Preserve the 350px by 350px cube cap on desktop and mobile.
@@ -26,6 +30,9 @@ Preserve the existing visual language and mobile usability while using Tailwind 
 ## Expected Output
 
 - Styling remains semantic HTML plus Tailwind utilities, with no component or page CSS files.
+- `apps/web/src/index.css` remains the only CSS file and contains only Tailwind import, resets, semantic theme/color variables, Tailwind token mappings, and minimal root theme selectors.
+- Components use semantic color utilities instead of hardcoded arbitrary hex colors.
+- Theme behavior defaults to system preference, with the current dark theme preserved and the light theme kept gray/not-so-dark.
 - Responsive behavior is preserved.
 - The cube visualization stays within the product size cap.
 - Conditional classes use `classnames` imported as `cls`.
@@ -34,5 +41,6 @@ Preserve the existing visual language and mobile usability while using Tailwind 
 
 - Run `npm run build` after Tailwind or component style changes.
 - Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
-- Search changed files for `rounded-`, `border-radius`, local `cn`, local `classNames` helpers, and new `.css` files.
+- Search changed files for `rounded-`, `border-radius`, local `cn`, local `classNames` helpers, new `.css` files, and hardcoded arbitrary color utilities such as `bg-[#`, `text-[#`, `border-[#`, `ring-[#`, `from-[#`, `via-[#`, and `to-[#`.
+- Check system-default, `dark`, and `light` theme behavior when theme code changes.
 - Check mobile breakpoints when feasible.

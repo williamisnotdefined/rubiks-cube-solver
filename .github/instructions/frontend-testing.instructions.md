@@ -218,7 +218,7 @@ The frontend renders and controls solver interaction. It must not become the sou
 - Vite
 - `@tanstack/react-query` for API health, strategy metadata, and solve mutation state
 - `@houstonp/rubiks-cube` as a visualization custom element
-- Tailwind CSS v4 through `@tailwindcss/vite` and the single `apps/web/src/index.css` entrypoint
+- Tailwind CSS v4 through `@tailwindcss/vite` and the single `apps/web/src/index.css` entrypoint for Tailwind import, resets, and semantic theme/color variables
 - `classnames` imported as `cls` for conditional class composition
 - Vitest, Testing Library, and V8 coverage for unit/component/API-hook tests
 - Storybook for component stories and visual inspection
@@ -274,8 +274,11 @@ The solve form defaults to an empty scramble so the visualization starts solved;
 
 ## Styling
 
-- `apps/web/src/index.css` is the only allowed CSS file and must contain only `@import "tailwindcss";`.
+- `apps/web/src/index.css` is the only allowed CSS file and owns Tailwind import, project-level CSS resets, semantic theme/color variables, Tailwind v4 token mappings, and minimal root theme selectors.
 - Component layout, visual treatment, animations, and state styles should use Tailwind utilities.
+- Reusable color values must be defined as semantic CSS variables in `apps/web/src/index.css` and consumed through semantic Tailwind utilities such as `bg-app-bg`, `bg-app-surface`, `text-app-text`, `text-app-muted`, `border-app-border`, and `ring-app-focus`.
+- Do not use hardcoded arbitrary Tailwind color utilities such as `bg-[#...]`, `text-[#...]`, `border-[#...]`, `ring-[#...]`, `from-[#...]`, `via-[#...]`, or `to-[#...]` in components.
+- Theme behavior defaults to the user's system preference; the `dark` theme preserves the current visual palette, and the `light` theme should be gray/not-so-dark rather than white.
 - The current web UI is intentionally square; do not add `border-radius` or Tailwind `rounded-*` utilities.
 - Conditional class composition uses `classnames` as `cls`.
 - Do not add component/page CSS files, CSS-in-JS, Sass, or a design-system dependency without a concrete current need.

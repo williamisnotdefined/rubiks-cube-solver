@@ -289,7 +289,7 @@
     },
     {
       "name": "frontend-styling",
-      "description": "Use when changing Tailwind CSS v4 utilities, responsive layout, visual treatment, classnames usage, or cube visualization sizing in apps/web.",
+      "description": "Use when changing Tailwind CSS v4 utilities, theme/color variables, responsive layout, visual treatment, classnames usage, or cube visualization sizing in apps/web.",
       "canonicalPath": "ai/skills/frontend-styling.md",
       "references": [
         "ai/rules/frontend-styling-rules.md",
