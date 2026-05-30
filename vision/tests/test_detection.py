@@ -29,7 +29,7 @@ def test_detects_synthetic_front_face() -> None:
     assert response.status == "detected"
     assert response.detectedCenter == "F"
     assert response.faceConfidence > 0.55
-    assert response.detectionMode in {"contour", "guide_fallback"}
+    assert response.detectionMode in {"contour", "sticker_grid"}
     assert len(response.faceQuad) == 4
     assert [sticker.symbol for sticker in response.stickers] == [
         "L",
@@ -77,9 +77,23 @@ def test_rejects_blank_frame_instead_of_classifying_center_guide() -> None:
     assert response.stickers == []
 
 
+def test_detects_off_center_face_without_guide_fallback() -> None:
+    image = synthetic_face(
+        ["L", "U", "D", "R", "F", "F", "R", "U", "F"],
+        target_offset=(-110, 35),
+    )
+    response = analyze_face(AnalyzeScanFaceRequest(expectedCenter="F", image=encode_image(image)))
+
+    assert response.ok
+    assert response.detectionMode in {"contour", "sticker_grid"}
+    assert response.detectionMode != "guide_fallback"
+    assert len(response.faceQuad) == 4
+
+
 def synthetic_face(
     symbols: list[str],
     color_overrides: dict[int, tuple[int, int, int]] | None = None,
+    target_offset: tuple[int, int] = (0, 0),
 ) -> np.ndarray:
     image = np.full((720, 720, 3), 16, dtype=np.uint8)
     top_left = 120
@@ -100,7 +114,11 @@ def synthetic_face(
         cv2.rectangle(image, (x0, y0), (x1, y1), bgr, -1)
 
     source = np.array([[120, 120], [600, 120], [600, 600], [120, 600]], dtype=np.float32)
-    target = np.array([[95, 145], [610, 95], [585, 640], [135, 595]], dtype=np.float32)
+    offset_x, offset_y = target_offset
+    target = np.array(
+        [[95 + offset_x, 145 + offset_y], [610 + offset_x, 95 + offset_y], [585 + offset_x, 640 + offset_y], [135 + offset_x, 595 + offset_y]],
+        dtype=np.float32,
+    )
     transform = cv2.getPerspectiveTransform(source, target)
     return cv2.warpPerspective(image, transform, (720, 720))
 

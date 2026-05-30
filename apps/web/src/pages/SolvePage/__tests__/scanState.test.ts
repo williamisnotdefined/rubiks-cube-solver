@@ -50,6 +50,26 @@ describe('scan state helpers', () => {
     expect(scanFacesToPayload({ ...faces, B: undefined })).toBeUndefined()
   })
 
+  it('rotates the white face captured with green on top before solving', () => {
+    const faces: ScanFaces = {
+      U: { symbol: 'U', stickers: stickersFromSymbols('FRBLUDFRB') },
+      R: { symbol: 'R', stickers: stickersFromSymbols('UURRRRRRR') },
+      F: { symbol: 'F', stickers: stickersFromSymbols('UUFFFFFFF') },
+      D: { symbol: 'D', stickers: stickersFromSymbols('UDDDDDDDD') },
+      L: { symbol: 'L', stickers: stickersFromSymbols('ULLLLLLLL') },
+      B: { symbol: 'B', stickers: stickersFromSymbols('UUBBBBBBB') },
+    }
+
+    expect(scanFacesToPayload(faces)).toEqual({
+      U: 'BRFDULBRF',
+      R: 'UURRRRRRR',
+      F: 'UUFFFFFFF',
+      D: 'UDDDDDDDD',
+      L: 'ULLLLLLLL',
+      B: 'UUBBBBBBB',
+    })
+  })
+
   it('replaces a selected sticker with a manual color', () => {
     const stickers = createEmptyScanStickers('U')
     stickers[0] = {
@@ -68,6 +88,14 @@ describe('scan state helpers', () => {
 function filledStickers(symbol: (typeof scanSymbols)[number]): ScanSticker[] {
   return Array.from({ length: 9 }, (_, index) => ({
     symbol,
+    confidence: 1,
+    source: index === 4 ? 'center' : 'manual',
+  }))
+}
+
+function stickersFromSymbols(symbols: string): ScanSticker[] {
+  return [...symbols].map((symbol, index) => ({
+    symbol: symbol as (typeof scanSymbols)[number],
     confidence: 1,
     source: index === 4 ? 'center' : 'manual',
   }))

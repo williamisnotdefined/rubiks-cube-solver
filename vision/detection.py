@@ -26,6 +26,8 @@ CENTER_MISMATCH_WITHOUT_REFERENCE_CONFIDENCE = 0.45
 LOW_CONFIDENCE = 0.3
 LOW_FACE_CONFIDENCE = 0.55
 MIN_CONTOUR_FACE_CONFIDENCE = 0.34
+MIN_STICKER_GRID_CANDIDATES = 5
+MIN_STICKER_GRID_CONFIDENCE = 0.56
 MIN_FALLBACK_GRID_CONFIDENCE = 0.36
 GUIDE_FALLBACK_MAX_CONFIDENCE = 0.62
 
@@ -185,6 +187,10 @@ def detect_face_quad(image: np.ndarray) -> tuple[np.ndarray | None, list[str], s
             return quad, warnings, "contour", score
         warnings.append("weak_face_contour")
 
+    sticker_quad, sticker_confidence = detect_sticker_grid_quad(image)
+    if sticker_quad is not None and sticker_confidence >= MIN_STICKER_GRID_CONFIDENCE:
+        return sticker_quad, warnings, "sticker_grid", sticker_confidence
+
     fallback_quad = centered_fallback_quad(width, height)
     fallback_confidence = min(
         GUIDE_FALLBACK_MAX_CONFIDENCE,
@@ -233,6 +239,297 @@ def contour_face_confidence(image: np.ndarray, quad: np.ndarray, area: float) ->
     grid_score = grid_evidence_confidence(image, quad)
 
     return clip01(area_score * 0.32 + center_score * 0.24 + square_score * 0.2 + grid_score * 0.24)
+
+
+def detect_sticker_grid_quad(image: np.ndarray) -> tuple[np.ndarray | None, float]:
+    candidates = find_sticker_candidates(image)
+    if len(candidates) < MIN_STICKER_GRID_CANDIDATES:
+        return None, 0.0
+
+    best_quad: np.ndarray | None = None
+    best_confidence = 0.0
+    candidate_clusters = sticker_candidate_clusters(candidates)
+
+    for cluster in candidate_clusters:
+        quad, confidence = sticker_grid_candidate_quad(image, cluster)
+        if quad is not None and confidence > best_confidence:
+            best_quad = quad
+            best_confidence = confidence
+
+    return best_quad, best_confidence
+
+
+def find_sticker_candidates(image: np.ndarray) -> list[tuple[np.ndarray, float, float]]:
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    saturation = hsv[:, :, 1]
+    value = hsv[:, :, 2]
+    color_mask = (saturation > 45) & (value > 45)
+    white_mask = (saturation < 70) & (value > 145)
+    mask = np.where(color_mask | white_mask, 255, 0).astype(np.uint8)
+    kernel = np.ones((5, 5), dtype=np.uint8)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel, iterations=1)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=1)
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    height, width = image.shape[:2]
+    image_area = float(width * height)
+    candidates: list[tuple[np.ndarray, float, float]] = []
+
+    for contour in contours:
+        candidates.extend(sticker_candidates_from_contour(contour, image_area))
+
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8)).apply(gray)
+    edges = cv2.Canny(cv2.GaussianBlur(clahe, (3, 3), 0), 35, 110)
+    edge_contours, _ = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    for contour in edge_contours:
+        candidates.extend(sticker_candidates_from_contour(contour, image_area))
+
+    return dedupe_sticker_candidates(candidates)
+
+
+def sticker_candidates_from_contour(
+    contour: np.ndarray,
+    image_area: float,
+) -> list[tuple[np.ndarray, float, float]]:
+    area = cv2.contourArea(contour)
+    min_area = image_area * 0.0010
+    max_area = image_area * 0.16
+    if area < min_area or area > max_area:
+        return []
+
+    center, size, _angle = cv2.minAreaRect(contour)
+    rect_width, rect_height = size
+    shortest = min(rect_width, rect_height)
+    longest = max(rect_width, rect_height)
+    if shortest < 10:
+        return []
+
+    aspect = longest / max(1.0, shortest)
+    extent = area / max(1.0, rect_width * rect_height)
+    if extent < 0.34 or aspect > 3.6:
+        return []
+
+    side = (rect_width + rect_height) / 2.0
+    if aspect >= 1.55:
+        split_count = max(2, min(3, round(aspect)))
+        if area / split_count >= min_area:
+            return [
+                (split_center, float(area / split_count), shortest)
+                for split_center in split_contour_centers(contour, split_count)
+            ]
+
+    if area > image_area * 0.08 and aspect < 1.35:
+        return []
+
+    return [(np.array(center, dtype=np.float32), float(area), side)]
+
+
+def split_contour_centers(contour: np.ndarray, split_count: int) -> list[np.ndarray]:
+    points = contour.reshape(-1, 2).astype(np.float32)
+    mean = np.mean(points, axis=0)
+    covariance = np.cov((points - mean).T)
+    if covariance.shape != (2, 2) or not np.all(np.isfinite(covariance)):
+        return [mean]
+
+    eigenvalues, eigenvectors = np.linalg.eigh(covariance)
+    axis = eigenvectors[:, int(np.argmax(eigenvalues))].astype(np.float32)
+    axis = axis / max(1e-6, float(np.linalg.norm(axis)))
+    projections = (points - mean) @ axis
+    minimum = float(np.min(projections))
+    maximum = float(np.max(projections))
+    step = (maximum - minimum) / split_count
+
+    return [
+        mean + axis * (minimum + step * (index + 0.5))
+        for index in range(split_count)
+    ]
+
+
+def dedupe_sticker_candidates(
+    candidates: list[tuple[np.ndarray, float, float]],
+) -> list[tuple[np.ndarray, float, float]]:
+    deduped: list[tuple[np.ndarray, float, float]] = []
+
+    for candidate in sorted(candidates, key=lambda item: item[1], reverse=True):
+        center, _area, side = candidate
+        duplicate_index = next(
+            (
+                index
+                for index, (existing_center, _existing_area, existing_side) in enumerate(deduped)
+                if np.linalg.norm(center - existing_center) < max(8.0, min(side, existing_side) * 0.35)
+            ),
+            None,
+        )
+        if duplicate_index is None:
+            deduped.append(candidate)
+
+    return deduped
+
+
+def sticker_candidate_clusters(
+    candidates: list[tuple[np.ndarray, float, float]],
+) -> list[list[tuple[np.ndarray, float, float]]]:
+    clusters: list[list[tuple[np.ndarray, float, float]]] = []
+    seen_signatures: set[tuple[int, ...]] = set()
+
+    for anchor_index, (anchor_center, _area, anchor_side) in enumerate(candidates):
+        radius = max(60.0, anchor_side * 5.2)
+        distances = [
+            (index, float(np.linalg.norm(center - anchor_center)))
+            for index, (center, _area, _side) in enumerate(candidates)
+        ]
+        nearby_indexes = [index for index, distance in sorted(distances, key=lambda item: item[1]) if distance <= radius]
+        if anchor_index not in nearby_indexes:
+            nearby_indexes.append(anchor_index)
+        nearby_indexes = nearby_indexes[:12]
+        if len(nearby_indexes) < MIN_STICKER_GRID_CANDIDATES:
+            continue
+
+        signature = tuple(sorted(nearby_indexes))
+        if signature in seen_signatures:
+            continue
+
+        seen_signatures.add(signature)
+        clusters.append([candidates[index] for index in signature])
+
+    if len(candidates) <= 12:
+        signature = tuple(range(len(candidates)))
+        if signature not in seen_signatures:
+            clusters.append(candidates)
+
+    return clusters
+
+
+def sticker_grid_candidate_quad(
+    image: np.ndarray,
+    cluster: list[tuple[np.ndarray, float, float]],
+) -> tuple[np.ndarray | None, float]:
+    if len(cluster) < MIN_STICKER_GRID_CANDIDATES:
+        return None, 0.0
+
+    centers = np.array([candidate[0] for candidate in cluster], dtype=np.float32)
+    axes = sticker_grid_axes(centers)
+    if axes is None:
+        return None, 0.0
+
+    mean, u_axis, v_axis = axes
+    relative = centers - mean
+    u_values = relative @ u_axis
+    v_values = relative @ v_axis
+    u_range = float(np.max(u_values) - np.min(u_values))
+    v_range = float(np.max(v_values) - np.min(v_values))
+    if u_range < 24.0 or v_range < 24.0:
+        return None, 0.0
+
+    u_norm = (u_values - np.min(u_values)) / u_range
+    v_norm = (v_values - np.min(v_values)) / v_range
+    regularity_score, unique_cells, row_count, column_count, u_indexes, v_indexes = sticker_grid_regularity(
+        u_norm,
+        v_norm,
+    )
+    if unique_cells < MIN_STICKER_GRID_CANDIDATES or row_count < 2 or column_count < 2:
+        return None, 0.0
+
+    quad = sticker_grid_homography_quad(centers, u_indexes, v_indexes)
+    if quad is None:
+        center_point = mean + u_axis * float((np.min(u_values) + np.max(u_values)) / 2.0) + v_axis * float(
+            (np.min(v_values) + np.max(v_values)) / 2.0
+        )
+        half_u = u_axis * (u_range * 0.75)
+        half_v = v_axis * (v_range * 0.75)
+        quad = np.array(
+            [
+                center_point - half_u - half_v,
+                center_point + half_u - half_v,
+                center_point + half_u + half_v,
+                center_point - half_u + half_v,
+            ],
+            dtype=np.float32,
+        )
+    ordered_quad = order_points(quad)
+    height, width = image.shape[:2]
+    face_area_ratio = cv2.contourArea(ordered_quad) / float(width * height)
+    area_score = clip01((face_area_ratio - 0.035) / 0.34)
+    aspect_score = 1.0 - clip01((max(u_range, v_range) / max(1.0, min(u_range, v_range)) - 1.0) / 0.9)
+    count_score = clip01(unique_cells / 9.0)
+    side_lengths = [candidate[2] for candidate in cluster]
+    side_similarity = 1.0 - clip01(float(np.std(side_lengths) / max(1.0, np.mean(side_lengths))) / 0.75)
+    grid_score = grid_evidence_confidence(image, ordered_quad)
+    confidence = clip01(
+        count_score * 0.28
+        + regularity_score * 0.26
+        + area_score * 0.16
+        + aspect_score * 0.12
+        + side_similarity * 0.08
+        + grid_score * 0.10
+    )
+
+    return ordered_quad, confidence
+
+
+def sticker_grid_axes(centers: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray] | None:
+    if len(centers) < MIN_STICKER_GRID_CANDIDATES:
+        return None
+
+    mean = np.mean(centers, axis=0)
+    covariance = np.cov((centers - mean).T)
+    if covariance.shape != (2, 2) or not np.all(np.isfinite(covariance)):
+        return None
+
+    eigenvalues, eigenvectors = np.linalg.eigh(covariance)
+    order = np.argsort(eigenvalues)[::-1]
+    u_axis = eigenvectors[:, order[0]].astype(np.float32)
+    v_axis = eigenvectors[:, order[1]].astype(np.float32)
+    if np.linalg.norm(u_axis) == 0 or np.linalg.norm(v_axis) == 0:
+        return None
+
+    u_axis = u_axis / np.linalg.norm(u_axis)
+    v_axis = v_axis / np.linalg.norm(v_axis)
+    return mean.astype(np.float32), u_axis, v_axis
+
+
+def sticker_grid_homography_quad(
+    centers: np.ndarray,
+    u_indexes: np.ndarray,
+    v_indexes: np.ndarray,
+) -> np.ndarray | None:
+    cell_points: dict[tuple[int, int], np.ndarray] = {}
+    for center, u_index, v_index in zip(centers, u_indexes, v_indexes, strict=False):
+        cell = (int(u_index), int(v_index))
+        if cell not in cell_points:
+            cell_points[cell] = center
+
+    if len(cell_points) < 4:
+        return None
+
+    source_points = np.array(
+        [[u_index + 0.5, v_index + 0.5] for u_index, v_index in cell_points.keys()],
+        dtype=np.float32,
+    )
+    target_points = np.array(list(cell_points.values()), dtype=np.float32)
+    homography, _mask = cv2.findHomography(source_points, target_points, 0)
+    if homography is None:
+        return None
+
+    corners = np.array([[[0.0, 0.0], [3.0, 0.0], [3.0, 3.0], [0.0, 3.0]]], dtype=np.float32)
+    return cv2.perspectiveTransform(corners, homography)[0].astype(np.float32)
+
+
+def sticker_grid_regularity(
+    u_norm: np.ndarray,
+    v_norm: np.ndarray,
+) -> tuple[float, int, int, int, np.ndarray, np.ndarray]:
+    grid_positions = np.array([0.0, 0.5, 1.0], dtype=np.float32)
+    u_indexes = np.argmin(np.abs(u_norm[:, None] - grid_positions[None, :]), axis=1)
+    v_indexes = np.argmin(np.abs(v_norm[:, None] - grid_positions[None, :]), axis=1)
+    u_distances = np.min(np.abs(u_norm[:, None] - grid_positions[None, :]), axis=1)
+    v_distances = np.min(np.abs(v_norm[:, None] - grid_positions[None, :]), axis=1)
+    mean_distance = float(np.mean(np.hypot(u_distances, v_distances)))
+    regularity = clip01(1.0 - mean_distance / 0.18)
+    unique_cells = len({(int(u_index), int(v_index)) for u_index, v_index in zip(u_indexes, v_indexes, strict=False)})
+    row_count = len(set(int(index) for index in v_indexes))
+    column_count = len(set(int(index) for index in u_indexes))
+    return regularity, unique_cells, row_count, column_count, u_indexes, v_indexes
 
 
 def grid_evidence_score(image: np.ndarray, quad: np.ndarray) -> float:

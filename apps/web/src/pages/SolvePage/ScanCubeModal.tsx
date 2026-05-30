@@ -2,9 +2,11 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useAnalyzeScanFace, type AnalyzeScanFaceResponse, type RgbColor } from '@api/scan'
 import type { ScanFaceSymbol, ScanFacesPayload, SolveResult } from '@api/solver/types'
 import { Button } from '@components/Button'
+import { Loader3x3 } from '@components/Loader3x3'
 import { captureScanImage } from './scanCapture'
 import { ScanCameraFrame } from './ScanCameraFrame'
 import { ScanFaceColorEditor } from './ScanFaceColorEditor'
+import { ScanSolveSettingsModal } from './ScanSolveSettingsModal'
 import {
   confirmedFaceCount,
   countScanSymbols,
@@ -20,6 +22,7 @@ import {
   type ScanSticker,
 } from './scanState'
 import { useCameraStream } from './hooks/useCameraStream'
+import { useLiveScanPreview } from './hooks/useLiveScanPreview'
 
 type ScanCubeModalProps = {
   apiReady: boolean
@@ -27,6 +30,11 @@ type ScanCubeModalProps = {
   solving: boolean
   onClose: () => void
   onSolve: (faces: ScanFacesPayload) => Promise<SolveResult | undefined>
+}
+
+type SolveFailure = Exclude<SolveResult, { ok: true }>
+type SolveLimitsFailure = SolveFailure & {
+  status: 'not_found_within_limits' | 'invalid_limits'
 }
 
 export function ScanCubeModal({
@@ -38,6 +46,7 @@ export function ScanCubeModal({
 }: ScanCubeModalProps) {
   const titleId = useId()
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  const takePhotoRef = useRef<((source?: 'auto' | 'manual') => Promise<void>) | undefined>(undefined)
   const camera = useCameraStream(true)
   const analyzeScanFace = useAnalyzeScanFace()
   const [faces, setFaces] = useState<ScanFaces>({})
@@ -48,7 +57,9 @@ export function ScanCubeModal({
   )
   const [photoDataUrl, setPhotoDataUrl] = useState<string | undefined>()
   const [scanAnalysis, setScanAnalysis] = useState<AnalyzeScanFaceResponse | undefined>()
+  const [autoScanEnabled, setAutoScanEnabled] = useState(true)
   const [capturing, setCapturing] = useState(false)
+  const [limitsFailureResult, setLimitsFailureResult] = useState<SolveLimitsFailure | undefined>()
   const [message, setMessage] = useState<string | undefined>()
   const completePayload = scanFacesToPayload(faces)
   const draftValidation = validateScanFaceDraft(faces, currentFace.symbol, stickers)
@@ -62,6 +73,31 @@ export function ScanCubeModal({
   }
   const previewCounts = countScanSymbols(previewFaces)
   const knownCenters = useMemo(() => knownCenterReferencesFromFaces(faces), [faces])
+  const liveScan = useLiveScanPreview({
+    enabled: autoScanEnabled && photoDataUrl === undefined && camera.status === 'ready' && !capturing,
+    expectedCenter: currentFace.symbol,
+    knownCenters,
+    videoRef,
+  })
+  const {
+    latestAnalysis: liveAnalysis,
+    message: liveMessage,
+    resetAutoCapture: resetLiveAutoCapture,
+    shouldAutoCapture,
+    stableFrameCount: liveStableFrameCount,
+    status: liveStatus,
+  } = liveScan
+  const cameraAnalysis = photoDataUrl === undefined ? liveAnalysis : scanAnalysis
+  const liveDetectedAnalysis =
+    photoDataUrl === undefined && cameraAnalysis?.detectionMode === 'guide_fallback'
+      ? undefined
+      : cameraAnalysis
+  const scannerMessage =
+    photoDataUrl === undefined
+      ? autoScanEnabled
+        ? liveMessage
+        : 'Auto scan paused. Use Take photo when the face is visible.'
+      : faceValidation
   const canClearPhoto =
     photoDataUrl !== undefined ||
     scanAnalysis !== undefined ||
@@ -96,15 +132,25 @@ export function ScanCubeModal({
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [onClose])
 
-  async function handleTakePhoto() {
+  useEffect(() => {
+    if (!shouldAutoCapture || capturing || photoDataUrl !== undefined) {
+      return
+    }
+
+    resetLiveAutoCapture()
+    void takePhotoRef.current?.('auto')
+  }, [capturing, photoDataUrl, resetLiveAutoCapture, shouldAutoCapture])
+
+  async function handleTakePhoto(source: 'auto' | 'manual' = 'manual') {
     if (videoRef.current === null || camera.status !== 'ready') {
       setMessage('Camera is not ready yet.')
       return
     }
 
+    resetLiveAutoCapture()
     setCapturing(true)
     setScanAnalysis(undefined)
-    setMessage('Capturing photo...')
+    setMessage(source === 'auto' ? 'Auto-capturing stable face...' : 'Capturing photo...')
 
     try {
       const capture = captureScanImage(videoRef.current)
@@ -113,7 +159,6 @@ export function ScanCubeModal({
         return
       }
 
-      setPhotoDataUrl(capture.photoDataUrl)
       setMessage('Analyzing cube face...')
 
       const analysis = await analyzeScanFace.mutateAsync({
@@ -123,23 +168,30 @@ export function ScanCubeModal({
       })
       setScanAnalysis(analysis)
 
-      if (analysis.stickers.length === 0) {
+      if (analysis.stickers.length === 0 || isGuideFallbackAnalysis(analysis)) {
         setStickers(createEmptyScanStickers(currentFace.symbol))
         setMessage(
-          analysis.message ?? 'Could not detect a cube face. Retake the photo or fill the grid manually.',
+          isGuideFallbackAnalysis(analysis)
+            ? 'Still looking for the cube face. Keep the full face visible and let auto scan try again.'
+            : analysis.message ?? 'Could not detect a cube face. Retake the photo or fill the grid manually.',
         )
         return
       }
 
+      setPhotoDataUrl(capture.photoDataUrl)
       const nextStickers = scanStickersFromAnalysis(analysis, currentFace.symbol)
       setStickers(nextStickers)
       const uncertain = lowConfidenceCount(nextStickers)
       const centerMessage = analysis.centerMismatch ? centerMismatchMessage(analysis) : undefined
       const qualityMessage = scanQualityMessage(analysis)
+      const captureMessage =
+        source === 'auto'
+          ? 'Captured automatically. Review the colors before confirming this face.'
+          : 'Photo captured. Review the colors before confirming this face.'
       const detectionMessage =
         uncertain > 0
           ? `${uncertain} detected colors are uncertain. Review the highlighted squares or retake the photo.`
-          : 'Photo captured. Review the colors before confirming this face.'
+          : captureMessage
       setMessage(
         [centerMessage, qualityMessage, detectionMessage].filter(Boolean).join(' '),
       )
@@ -150,6 +202,8 @@ export function ScanCubeModal({
       setCapturing(false)
     }
   }
+
+  takePhotoRef.current = handleTakePhoto
 
   function handleStickerColorChange(index: number, symbol: ScanSticker['symbol']) {
     if (symbol === undefined) {
@@ -172,7 +226,14 @@ export function ScanCubeModal({
     setPhotoDataUrl(undefined)
     setScanAnalysis(undefined)
     setMessage(undefined)
+    resetLiveAutoCapture()
     analyzeScanFace.reset()
+  }
+
+  function handleAutoScanToggle() {
+    setAutoScanEnabled((enabled) => !enabled)
+    resetLiveAutoCapture()
+    setMessage(undefined)
   }
 
   function handleConfirmFace() {
@@ -221,10 +282,42 @@ export function ScanCubeModal({
       return
     }
 
+    await solveScanPayload(payload)
+  }
+
+  async function handleRetrySolveScan() {
+    const payload = scanFacesToPayload(faces)
+    if (payload === undefined) {
+      setLimitsFailureResult(undefined)
+      setMessage('Confirm all six faces and make sure each color appears exactly 9 times.')
+      return
+    }
+
+    if (!apiReady) {
+      setMessage('The API is not ready yet.')
+      return
+    }
+
+    if (solveDisabledReason !== undefined) {
+      setMessage(solveDisabledReason)
+      return
+    }
+
+    await solveScanPayload(payload)
+  }
+
+  async function solveScanPayload(payload: ScanFacesPayload) {
     try {
+      setLimitsFailureResult(undefined)
       const result = await onSolve(payload)
       if (result?.ok) {
         onClose()
+        return
+      }
+
+      if (isSolveLimitsFailure(result)) {
+        setLimitsFailureResult(result)
+        setMessage(result.message)
         return
       }
 
@@ -254,7 +347,7 @@ export function ScanCubeModal({
               Scan cube
             </h2>
             <p className="text-sm font-semibold text-[#a8a8a8]">
-              Capture one face at a time. The solution uses the colors you confirm.
+              Capture one face at a time with the requested top color. The solution uses the colors you confirm.
             </p>
           </div>
           <Button className="min-h-10 px-4 py-2" type="button" variant="secondary" onClick={onClose}>
@@ -276,6 +369,9 @@ export function ScanCubeModal({
                 <p className="mt-1 text-xs font-extrabold uppercase tracking-[0.16em] text-[#f7f7f7]">
                   Expected center: {scanSymbolDetails[currentFace.symbol].label}
                 </p>
+                <p className="mt-1 text-xs font-extrabold uppercase tracking-[0.16em] text-[#f7f7f7]">
+                  Keep at top: {currentFace.topLabel}
+                </p>
               </div>
               <span className="border border-[#2b2b2b] bg-[#171717] px-3 py-2 text-xs font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
                 {confirmedFaceCount(faces)} confirmed
@@ -285,11 +381,14 @@ export function ScanCubeModal({
             <ScanCameraFrame
               cameraMessage={camera.status === 'error' ? camera.message : undefined}
               cameraStatus={camera.status}
-              detectionMode={scanAnalysis?.detectionMode}
-              faceQuad={scanAnalysis?.faceQuad}
-              faceConfidence={scanAnalysis?.faceConfidence}
+              centerMismatch={liveDetectedAnalysis?.centerMismatch}
+              detectionMode={cameraAnalysis?.detectionMode}
+              faceQuad={liveDetectedAnalysis?.faceQuad}
+              faceConfidence={cameraAnalysis?.faceConfidence}
               photoDataUrl={photoDataUrl}
-              stickerPolygons={scanAnalysis?.stickers}
+              stableFrameCount={liveStableFrameCount}
+              stickerPolygons={liveDetectedAnalysis?.stickers}
+              trackingStatus={liveStatus}
               videoRef={videoRef}
             />
 
@@ -297,9 +396,19 @@ export function ScanCubeModal({
               <Button
                 className="min-h-10 px-4 py-2"
                 type="button"
+                variant="ghost"
+                aria-pressed={autoScanEnabled}
+                disabled={photoDataUrl !== undefined || capturing || camera.status !== 'ready'}
+                onClick={handleAutoScanToggle}
+              >
+                {autoScanEnabled ? 'Auto scan on' : 'Auto scan off'}
+              </Button>
+              <Button
+                className="min-h-10 px-4 py-2"
+                type="button"
                 variant="secondary"
                 disabled={camera.status !== 'ready' || capturing}
-                onClick={handleTakePhoto}
+                onClick={() => void handleTakePhoto('manual')}
               >
                 {capturing ? 'Analyzing' : photoDataUrl === undefined ? 'Take photo' : 'Retake photo'}
               </Button>
@@ -352,23 +461,43 @@ export function ScanCubeModal({
             <p className="min-h-10 text-sm font-semibold leading-relaxed text-[#a8a8a8]" aria-live="polite">
               {message ??
                 solveDisabledReason ??
-                faceValidation ??
+                scannerMessage ??
                 'Select a square, then pick a color to correct it.'}
             </p>
             <Button
+              aria-label={solving ? 'Loading' : undefined}
               type="button"
               disabled={
                 completePayload === undefined || !apiReady || solving || solveDisabledReason !== undefined
               }
               onClick={handleSolveScan}
             >
-              {solving ? 'Solving scan' : 'Solve scanned cube'}
+              {solving ? <Loader3x3 decorative className="size-8" registerDelayMs={150} /> : 'Solve scanned cube'}
             </Button>
           </div>
         </div>
       </section>
+      {limitsFailureResult === undefined ? null : (
+        <ScanSolveSettingsModal
+          result={limitsFailureResult}
+          solving={solving}
+          onClose={() => setLimitsFailureResult(undefined)}
+          onRetry={handleRetrySolveScan}
+        />
+      )}
     </div>
   )
+}
+
+function isSolveLimitsFailure(result: SolveResult | undefined): result is SolveLimitsFailure {
+  return (
+    result?.ok === false &&
+    (result.status === 'not_found_within_limits' || result.status === 'invalid_limits')
+  )
+}
+
+function isGuideFallbackAnalysis(analysis: AnalyzeScanFaceResponse): boolean {
+  return analysis.detectionMode === 'guide_fallback' || analysis.detectionMode === 'rejected'
 }
 
 function centerMismatchMessage(analysis: AnalyzeScanFaceResponse): string {

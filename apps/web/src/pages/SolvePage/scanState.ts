@@ -33,38 +33,45 @@ export type ScanFaceDefinition = {
   symbol: ScanFaceSymbol
   label: string
   instruction: string
+  topLabel: string
 }
 
 export const scanFaceOrder = [
   {
-    symbol: 'U',
-    label: 'Top face',
-    instruction: 'Hold the top face square inside the guide, then confirm the colors.',
+    symbol: 'F',
+    label: 'Green face',
+    instruction: 'Capture the green face with the white face at the top of the camera view.',
+    topLabel: 'White',
   },
   {
     symbol: 'R',
-    label: 'Right face',
-    instruction: 'Turn the cube to the right face without changing your confirmed colors.',
-  },
-  {
-    symbol: 'F',
-    label: 'Front face',
-    instruction: 'Capture the front face as flat and centered as possible.',
-  },
-  {
-    symbol: 'D',
-    label: 'Bottom face',
-    instruction: 'Turn to the bottom face and review every detected square.',
-  },
-  {
-    symbol: 'L',
-    label: 'Left face',
-    instruction: 'Capture the left face, then correct any uncertain colors.',
+    label: 'Red face',
+    instruction: 'Capture the red face with the white face at the top of the camera view.',
+    topLabel: 'White',
   },
   {
     symbol: 'B',
-    label: 'Back face',
-    instruction: 'Capture the back face. The final solve uses the colors you confirm.',
+    label: 'Blue face',
+    instruction: 'Capture the blue face with the white face at the top of the camera view.',
+    topLabel: 'White',
+  },
+  {
+    symbol: 'L',
+    label: 'Orange face',
+    instruction: 'Capture the orange face with the white face at the top of the camera view.',
+    topLabel: 'White',
+  },
+  {
+    symbol: 'U',
+    label: 'White face',
+    instruction: 'Capture the white face with the green face at the top of the camera view.',
+    topLabel: 'Green',
+  },
+  {
+    symbol: 'D',
+    label: 'Yellow face',
+    instruction: 'Capture the yellow face with the green face at the top of the camera view.',
+    topLabel: 'Green',
   },
 ] as const satisfies readonly ScanFaceDefinition[]
 
@@ -132,10 +139,10 @@ export function scanFacesToPayload(faces: ScanFaces): ScanFacesPayload | undefin
       return undefined
     }
 
-    payload[symbol] = face.stickers
+    const faceSymbols = face.stickers
       .map((sticker) => sticker.symbol)
       .filter((stickerSymbol): stickerSymbol is ScanFaceSymbol => stickerSymbol !== undefined)
-      .join('')
+    payload[symbol] = orientScanFaceSymbols(symbol, faceSymbols).join('')
   }
 
   const counts = countScanSymbols(faces)
@@ -200,4 +207,29 @@ export function lowConfidenceCount(stickers: readonly ScanSticker[]): number {
 
 export function isLowConfidenceScanSticker(sticker: ScanSticker, index: number): boolean {
   return index !== 4 && sticker.source === 'detected' && sticker.confidence < lowConfidenceThreshold
+}
+
+function orientScanFaceSymbols(
+  symbol: ScanFaceSymbol,
+  faceSymbols: readonly ScanFaceSymbol[],
+): ScanFaceSymbol[] {
+  if (symbol === 'U') {
+    return rotateFaceSymbols180(faceSymbols)
+  }
+
+  return faceSymbols.slice()
+}
+
+function rotateFaceSymbols180(faceSymbols: readonly ScanFaceSymbol[]): ScanFaceSymbol[] {
+  return [
+    faceSymbols[8],
+    faceSymbols[7],
+    faceSymbols[6],
+    faceSymbols[5],
+    faceSymbols[4],
+    faceSymbols[3],
+    faceSymbols[2],
+    faceSymbols[1],
+    faceSymbols[0],
+  ]
 }

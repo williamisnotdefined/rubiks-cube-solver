@@ -32,8 +32,10 @@ export function useCubeVisualization(
   cubeRef: RefObject<RubiksCubeElement | null>,
   notation: string,
   readyRevision: number,
+  visualState?: string,
 ) {
   const visualMovesRef = useRef<Movement[]>([])
+  const visualStateRef = useRef<string | undefined>(undefined)
   const visualSyncIdRef = useRef(0)
   const visualHasSyncedRef = useRef(false)
 
@@ -49,18 +51,21 @@ export function useCubeVisualization(
       void syncCubeVisualization({
         cube: cubeRef.current,
         nextMoves: parsed.moves,
+        nextState: visualState,
         previousMoves: visualMovesRef.current,
+        previousState: visualStateRef.current,
         hasSynced: visualHasSyncedRef.current,
         shouldContinue: () => visualSyncIdRef.current === syncId,
-        onSynced: (moves) => {
+        onSynced: (moves, state) => {
           visualMovesRef.current = moves
+          visualStateRef.current = state
           visualHasSyncedRef.current = true
         },
       })
     }, 0)
 
     return () => window.clearTimeout(timeout)
-  }, [cubeRef, notation, readyRevision])
+  }, [cubeRef, notation, readyRevision, visualState])
 }
 
 function parseVisualizationNotation(input: string): VisualizationNotationParseResult {
@@ -84,16 +89,20 @@ function parseVisualizationNotation(input: string): VisualizationNotationParseRe
 type SyncCubeVisualizationInput = {
   cube: RubiksCubeElement | null
   nextMoves: Movement[]
+  nextState: string | undefined
   previousMoves: Movement[]
+  previousState: string | undefined
   hasSynced: boolean
   shouldContinue: () => boolean
-  onSynced: (moves: Movement[]) => void
+  onSynced: (moves: Movement[], state: string | undefined) => void
 }
 
 async function syncCubeVisualization({
   cube,
   nextMoves,
+  nextState,
   previousMoves,
+  previousState,
   hasSynced,
   shouldContinue,
   onSynced,
@@ -104,18 +113,23 @@ async function syncCubeVisualization({
 
   const animateNewMoves =
     hasSynced &&
+    nextState === previousState &&
     startsWithMoves(nextMoves, previousMoves) &&
     nextMoves.length > previousMoves.length
   const movesToApply = animateNewMoves
     ? nextMoves.slice(previousMoves.length)
     : nextMoves
 
-  onSynced(nextMoves)
-
   try {
     if (!animateNewMoves) {
-      cube.reset()
+      if (nextState === undefined) {
+        cube.reset()
+      } else if (!cube.setState(nextState)) {
+        return
+      }
     }
+
+    onSynced(nextMoves, nextState)
 
     for (const move of movesToApply) {
       if (!shouldContinue()) {

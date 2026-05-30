@@ -7,12 +7,14 @@ import { useCubeVisualization } from '../useCubeVisualization'
 type FakeCube = {
   move: ReturnType<typeof vi.fn>
   reset: ReturnType<typeof vi.fn>
+  setState: ReturnType<typeof vi.fn>
 }
 
 function createFakeCube(): FakeCube {
   return {
     move: vi.fn().mockResolvedValue(undefined),
     reset: vi.fn(),
+    setState: vi.fn().mockReturnValue(true),
   }
 }
 
@@ -20,13 +22,15 @@ function HookHarness({
   cube,
   notation,
   revision = 0,
+  visualState,
 }: {
   cube: FakeCube | null
   notation: string
   revision?: number
+  visualState?: string
 }) {
   const cubeRef = useRef(cube as unknown as RubiksCubeElement | null)
-  useCubeVisualization(cubeRef, notation, revision)
+  useCubeVisualization(cubeRef, notation, revision, visualState)
 
   return null
 }
@@ -74,6 +78,33 @@ describe('useCubeVisualization', () => {
 
     expect(cube.reset).toHaveBeenCalledTimes(1)
     expect(cube.move).toHaveBeenLastCalledWith('U', undefined)
+  })
+
+  it('sets visual state before applying solution moves', async () => {
+    vi.useFakeTimers()
+    const cube = createFakeCube()
+    const visualState = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB'
+
+    render(<HookHarness cube={cube} notation="R" visualState={visualState} />)
+    await runVisualizationSync()
+
+    expect(cube.reset).not.toHaveBeenCalled()
+    expect(cube.setState).toHaveBeenCalledWith(visualState)
+    expect(cube.move).toHaveBeenCalledWith('R', { animationSpeedMs: 0 })
+  })
+
+  it('animates appended moves from the same visual state', async () => {
+    vi.useFakeTimers()
+    const cube = createFakeCube()
+    const visualState = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB'
+    const { rerender } = render(<HookHarness cube={cube} notation="" visualState={visualState} />)
+
+    await runVisualizationSync()
+    rerender(<HookHarness cube={cube} notation="R" visualState={visualState} />)
+    await runVisualizationSync()
+
+    expect(cube.setState).toHaveBeenCalledTimes(1)
+    expect(cube.move).toHaveBeenLastCalledWith('R', undefined)
   })
 
   it('ignores invalid visualization tokens', async () => {

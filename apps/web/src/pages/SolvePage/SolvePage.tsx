@@ -9,14 +9,13 @@ import { SolveForm } from './SolveForm'
 import { SolveResult } from './SolveResult'
 import { SolutionPlayback } from './SolutionPlayback'
 import {
-  defaultMaxMoves,
-  defaultMaxNodesMillion,
   defaultNotation,
   maxMovesLimit,
   nodesPerMillion,
   scramblePlaceholder,
 } from './constants'
 import { useCubeVisualization } from './hooks/useCubeVisualization'
+import { useSolveSettingsStore } from './solveSettingsStore'
 import { preferredStrategyId } from './strategy'
 import {
   validateMaxNodesMillionOption,
@@ -34,9 +33,11 @@ export function SolvePage() {
     0,
   )
   const [notation, setNotation] = useState(defaultNotation)
-  const [maxMovesInput, setMaxMovesInput] = useState(String(defaultMaxMoves))
-  const [maxNodesMillionInput, setMaxNodesMillionInput] = useState(
-    String(defaultMaxNodesMillion),
+  const maxMovesInput = useSolveSettingsStore((state) => state.maxMovesInput)
+  const maxNodesMillionInput = useSolveSettingsStore((state) => state.maxNodesMillionInput)
+  const setMaxMovesInput = useSolveSettingsStore((state) => state.setMaxMovesInput)
+  const setMaxNodesMillionInput = useSolveSettingsStore(
+    (state) => state.setMaxNodesMillionInput,
   )
   const [solutionStep, setSolutionStep] = useState(0)
   const [scanModalOpen, setScanModalOpen] = useState(false)
@@ -49,15 +50,17 @@ export function SolvePage() {
     solutionStep,
     successResult?.moves.length ?? 0,
   )
+  const visibleSolutionMoves = successResult?.moves.slice(0, visibleSolutionStep) ?? []
+  const visualizationState = successResult?.visualState
   const visualizationNotation =
-    activeSolveSource === 'notation'
+    visualizationState === undefined
       ? notationWithSolutionPrefix(
           notation,
-          successResult?.moves.slice(0, visibleSolutionStep) ?? [],
+          activeSolveSource === 'notation' ? visibleSolutionMoves : [],
         )
-      : notation
+      : visibleSolutionMoves.join(' ')
 
-  useCubeVisualization(cubeRef, visualizationNotation, cubeReadyRevision)
+  useCubeVisualization(cubeRef, visualizationNotation, cubeReadyRevision, visualizationState)
 
   const strategyOptions = strategiesQuery.data ?? []
   const apiReady = healthQuery.data?.ok === true && strategiesQuery.isSuccess
@@ -176,7 +179,7 @@ export function SolvePage() {
           solving={solving}
           localValidationMessage={localValidationMessage}
         />
-        {activeSolveSource === 'notation' ? (
+        {successResult !== undefined ? (
           <SolutionPlayback
             moves={successResult?.moves ?? []}
             step={visibleSolutionStep}

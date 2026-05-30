@@ -80,6 +80,12 @@ describe('solve page messages', () => {
 
   it('adds useful failure details', () => {
     expect(solveErrorDetail(failure('not_found_within_limits'))).toContain('12,345 nodes')
+    expect(
+      solveErrorDetail({
+        ...failure('invalid_input'),
+        errorKind: 'unknown_corner_stickers',
+      }),
+    ).toContain('capture green, red, blue, and orange with white on top')
     expect(solveErrorDetail(failure('invalid_limits'))).toBe('invalid_limits message')
     expect(solveErrorDetail(failure('request_too_large'))).toBe('request_too_large message')
     expect(solveErrorDetail(failure('unverified_solution'))).toBe('unverified_solution message')

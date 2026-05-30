@@ -1,7 +1,11 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { SolveResult } from '@api/solver/types'
+import { ScanSolveSettingsModal } from '../ScanSolveSettingsModal'
 import { SolvePage } from '../SolvePage'
+import { useCubeVisualization } from '../hooks/useCubeVisualization'
+import { useSolveSettingsStore } from '../solveSettingsStore'
 
 const scramblePlaceholder =
   "R2 D2 F2 D L2 F2 U' R2 D B2 L2 U' B' R' B' R2 B2 L B U'"
@@ -23,6 +27,22 @@ const scanApiMocks = vi.hoisted(() => ({
   analyzeMutateAsync: vi.fn(),
   analyzeReset: vi.fn(),
 }))
+
+type SolveFailure = Exclude<SolveResult, { ok: true }>
+
+const limitFailure: SolveFailure = {
+  errorKind: undefined,
+  exploredNodes: 12_345,
+  generatedTableStatus: 'available',
+  maxDepth: 20,
+  maxNodes: 10_000_000,
+  message: 'no solution found within limits',
+  ok: false,
+  solverMode: 'generated_two_phase_quality',
+  status: 'not_found_within_limits',
+  strategyId: 'generated-two-phase-quality',
+  strategyLabel: 'Generated two-phase quality solver',
+}
 
 vi.mock('@api/solver', () => ({
   useGetHealth: () => ({ data: { generatedTwoPhaseReady: true, ok: true } }),
@@ -60,6 +80,47 @@ vi.mock('@api/scan', () => ({
   }),
 }))
 
+vi.mock('../ScanCubeModal', () => ({
+  ScanCubeModal: ({
+    apiReady,
+    onClose,
+    onSolve,
+    solving,
+  }: {
+    apiReady: boolean
+    onClose: () => void
+    onSolve: (faces: {
+      U: string
+      R: string
+      F: string
+      D: string
+      L: string
+      B: string
+    }) => Promise<unknown>
+    solving: boolean
+  }) => (
+    <section aria-label="Scan cube" role="dialog">
+      <p>Face 1 of 6</p>
+      <button
+        type="button"
+        disabled={!apiReady || solving}
+        onClick={() => {
+          void onSolve({
+            U: 'UUUUUUUUU',
+            R: 'RRRRRRRRR',
+            F: 'FFFFFFFFF',
+            D: 'DDDDDDDDD',
+            L: 'LLLLLLLLL',
+            B: 'BBBBBBBBB',
+          }).then(() => onClose())
+        }}
+      >
+        Solve scanned cube
+      </button>
+    </section>
+  ),
+}))
+
 vi.mock('../CubeStage', async () => {
   const { useEffect } = await vi.importActual<typeof import('react')>('react')
 
@@ -78,6 +139,8 @@ vi.mock('../hooks/useCubeVisualization', () => ({
   useCubeVisualization: vi.fn(),
 }))
 
+const useCubeVisualizationMock = vi.mocked(useCubeVisualization)
+
 describe('SolvePage', () => {
   beforeEach(() => {
     apiMocks.isPending = false
@@ -94,6 +157,8 @@ describe('SolvePage', () => {
     apiMocks.solveError = null
     scanApiMocks.analyzeMutateAsync.mockClear()
     scanApiMocks.analyzeReset.mockClear()
+    useSolveSettingsStore.getState().resetSolveSettings()
+    useCubeVisualizationMock.mockClear()
   })
 
   it('starts solved with an empty scramble and the sample scramble as placeholder', () => {
@@ -194,5 +259,73 @@ describe('SolvePage', () => {
     await user.click(screen.getByRole('button', { name: 'Next move' }))
 
     expect(screen.getByLabelText('Solution step')).toHaveValue('1')
+  })
+
+  it('drives playback and cube state from a successful scan solve result', async () => {
+    const user = userEvent.setup()
+    const visualState = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB'
+    const scanResult = {
+      elapsedMs: 12,
+      exploredNodes: 42,
+      generatedTableStatus: 'available',
+      length: 2,
+      maxDepth: 2,
+      maxNodes: 10_000_000,
+      moves: ['R', 'U'],
+      ok: true,
+      replayVerified: true,
+      solverMode: 'generated_two_phase_quality',
+      status: 'success',
+      strategyId: 'generated-two-phase-quality',
+      strategyLabel: 'Generated two-phase quality solver',
+      visualState,
+    }
+    apiMocks.scanMutateAsync.mockImplementation(async () => {
+      apiMocks.scanSolveData = scanResult
+
+      return scanResult
+    })
+
+    const { rerender } = render(<SolvePage />)
+    await user.click(screen.getByRole('button', { name: 'Scan cube with camera' }))
+    await user.click(screen.getByRole('button', { name: 'Solve scanned cube' }))
+    await waitFor(() => expect(apiMocks.scanMutateAsync).toHaveBeenCalled())
+
+    rerender(<SolvePage />)
+    expect(screen.getByLabelText('Solution step')).toHaveValue('0')
+
+    await user.click(screen.getByRole('button', { name: 'Next move' }))
+
+    expect(screen.getByLabelText('Solution step')).toHaveValue('1')
+    expect(useCubeVisualizationMock).toHaveBeenLastCalledWith(
+      expect.anything(),
+      'R',
+      expect.any(Number),
+      visualState,
+    )
+  })
+
+  it('syncs retry modal settings back to the page controls', async () => {
+    const user = userEvent.setup()
+    render(
+      <>
+        <SolvePage />
+        <ScanSolveSettingsModal
+          result={limitFailure}
+          solving={false}
+          onClose={vi.fn()}
+          onRetry={vi.fn()}
+        />
+      </>,
+    )
+
+    const dialog = screen.getByRole('dialog', { name: 'Adjust solve limits' })
+    await user.clear(within(dialog).getByLabelText('Max moves'))
+    await user.type(within(dialog).getByLabelText('Max moves'), '30')
+    await user.selectOptions(within(dialog).getByLabelText('Max nodes (M)'), '25')
+
+    const limitsRow = screen.getByTestId('limits-row')
+    expect(within(limitsRow).getByLabelText('Max moves')).toHaveValue(30)
+    expect(within(limitsRow).getByLabelText('Max nodes (M)')).toHaveValue('25')
   })
 })

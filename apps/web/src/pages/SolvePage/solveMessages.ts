@@ -44,6 +44,12 @@ export function solveErrorMessage(result: SolveFailure): string {
 }
 
 export function solveErrorDetail(result: SolveFailure): string | undefined {
+  if (result.status === 'invalid_input') {
+    const scanOrientationHint = scanInvalidInputOrientationHint(result)
+
+    return [result.message, scanOrientationHint].filter(Boolean).join(' ')
+  }
+
   if (result.status === 'not_found_within_limits') {
     return `${result.strategyLabel} explored ${formatNumber(
       result.exploredNodes ?? 0,
@@ -71,4 +77,21 @@ export function solveErrorDetail(result: SolveFailure): string | undefined {
   }
 
   return result.message
+}
+
+function scanInvalidInputOrientationHint(result: SolveFailure): string | undefined {
+  if (
+    result.errorKind !== 'unknown_corner_stickers' &&
+    result.errorKind !== 'unknown_edge_stickers' &&
+    result.errorKind !== 'invalid_corner_sticker_order' &&
+    result.errorKind !== 'invalid_corner_orientation' &&
+    result.errorKind !== 'invalid_edge_orientation' &&
+    result.errorKind !== 'invalid_corner_orientation_sum' &&
+    result.errorKind !== 'invalid_edge_orientation_sum' &&
+    result.errorKind !== 'invalid_permutation_parity'
+  ) {
+    return undefined
+  }
+
+  return 'Check scan orientation: capture green, red, blue, and orange with white on top; capture white and yellow with green on top.'
 }
