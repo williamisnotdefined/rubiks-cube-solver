@@ -14,6 +14,7 @@ const meta = {
     onMaxMovesChange: () => undefined,
     onMaxNodesMillionChange: () => undefined,
     onNotationChange: () => undefined,
+    onScanClick: () => undefined,
     onSubmit: (event) => event.preventDefault(),
   },
   component: SolveForm,

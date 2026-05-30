@@ -10,6 +10,8 @@ import { solverQueryKeys } from '../solver/queryKeys'
 import { normalizeSolveResponse } from '../solver/solveNotation/normalizeSolveResponse'
 import { solveNotation } from '../solver/solveNotation/solveNotation'
 import { useSolveNotation } from '../solver/solveNotation/useSolveNotation'
+import { solveScan } from '../solver/solveScan/solveScan'
+import { useSolveScan } from '../solver/solveScan/useSolveScan'
 import type { ApiSolveResponse } from '../solver/types'
 
 const successPayload: ApiSolveResponse = {
@@ -73,6 +75,36 @@ describe('solver API operations', () => {
       ok: true,
       status: 'success',
     })
+  })
+
+  it('posts scanned faces through the request client', async () => {
+    const fetchMock = mockApiSuccess(successPayload)
+    const faces = {
+      U: 'UUUUUUUUU',
+      R: 'RRRRRRRRR',
+      F: 'FFFFFFFFF',
+      D: 'DDDDDDDDD',
+      L: 'LLLLLLLLL',
+      B: 'BBBBBBBBB',
+    }
+
+    await expect(
+      solveScan({
+        faces,
+        limits: { maxDepth: 0, maxNodes: 1_000, strategyId: 'bounded-ida-star' },
+      }),
+    ).resolves.toMatchObject({ ok: true, status: 'success' })
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:8787/solve-scan',
+      expect.objectContaining({
+        body: JSON.stringify({
+          faces,
+          maxDepth: 0,
+          maxNodes: 1_000,
+          strategyId: 'bounded-ida-star',
+        }),
+      }),
+    )
   })
 
   it('defaults missing optional success metrics', () => {
@@ -150,6 +182,25 @@ describe('solver React Query hooks', () => {
 
     await expect(
       result.current.mutateAsync({ limits: { maxDepth: 2 }, notation: 'R U' }),
+    ).resolves.toMatchObject({ ok: true, status: 'success' })
+  })
+
+  it('runs scanned cube solve mutations', async () => {
+    mockApiSuccess(successPayload)
+    const { result } = renderHookWithProviders(() => useSolveScan())
+
+    await expect(
+      result.current.mutateAsync({
+        faces: {
+          U: 'UUUUUUUUU',
+          R: 'RRRRRRRRR',
+          F: 'FFFFFFFFF',
+          D: 'DDDDDDDDD',
+          L: 'LLLLLLLLL',
+          B: 'BBBBBBBBB',
+        },
+        limits: { maxDepth: 0 },
+      }),
     ).resolves.toMatchObject({ ok: true, status: 'success' })
   })
 })

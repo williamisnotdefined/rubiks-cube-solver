@@ -9,8 +9,10 @@ use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::services::{ServeDir, ServeFile};
 
 use crate::config::MAX_JSON_BODY_BYTES;
-use crate::response::{HealthResponse, SolveNotationRequest, SolveResponse, StrategyResponse};
-use crate::solve::solve_notation_request;
+use crate::response::{
+    HealthResponse, SolveNotationRequest, SolveResponse, SolveScanRequest, StrategyResponse,
+};
+use crate::solve::{solve_notation_request, solve_scan_request};
 use crate::state::ApiState;
 
 pub fn api_router(state: ApiState) -> Router {
@@ -18,6 +20,7 @@ pub fn api_router(state: ApiState) -> Router {
         .route("/health", get(health))
         .route("/strategies", get(strategies))
         .route("/solve-notation", post(solve_notation))
+        .route("/solve-scan", post(solve_scan))
         .layer(DefaultBodyLimit::max(MAX_JSON_BODY_BYTES))
         .layer(cors_layer())
         .with_state(state)
@@ -78,4 +81,11 @@ async fn solve_notation(
     Json(request): Json<SolveNotationRequest>,
 ) -> (StatusCode, Json<SolveResponse>) {
     solve_notation_request(&state, request)
+}
+
+async fn solve_scan(
+    State(state): State<ApiState>,
+    Json(request): Json<SolveScanRequest>,
+) -> (StatusCode, Json<SolveResponse>) {
+    solve_scan_request(&state, request)
 }

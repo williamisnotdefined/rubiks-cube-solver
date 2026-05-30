@@ -1,5 +1,7 @@
 export type SolverStrategyId = string
 
+export type ScanFaceSymbol = 'U' | 'R' | 'F' | 'D' | 'L' | 'B'
+
 export type SolverStrategyOption = {
   id: SolverStrategyId
   label: string
@@ -85,5 +87,12 @@ export type ApiSolveResponse = {
 
 export type SolveNotationVariables = {
   notation: string
+  limits: SolveLimits
+}
+
+export type ScanFacesPayload = Record<ScanFaceSymbol, string>
+
+export type SolveScanVariables = {
+  faces: ScanFacesPayload
   limits: SolveLimits
 }

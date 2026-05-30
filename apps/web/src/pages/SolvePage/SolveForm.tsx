@@ -1,4 +1,5 @@
 import type { FormEvent } from 'react'
+import { Camera } from 'lucide-react'
 import { Button } from '@components/Button'
 import { Field } from '@components/Field'
 import { SelectInput, TextInput } from '@components/FormControls'
@@ -14,6 +15,7 @@ type SolveFormProps = {
   maxMovesInvalid?: boolean
   maxNodesInvalid?: boolean
   scramblePlaceholder: string
+  onScanClick: () => void
   onNotationChange: (notation: string) => void
   onMaxMovesChange: (maxMoves: string) => void
   onMaxNodesMillionChange: (maxNodesMillion: string) => void
@@ -29,6 +31,7 @@ export function SolveForm({
   maxMovesInvalid = false,
   maxNodesInvalid = false,
   scramblePlaceholder,
+  onScanClick,
   onNotationChange,
   onMaxMovesChange,
   onMaxNodesMillionChange,
@@ -42,14 +45,25 @@ export function SolveForm({
     >
       <div data-testid="scramble-row">
         <Field className="field-primary" label="Scramble">
-          <TextInput
-            autoComplete="off"
-            className="primary-input font-mono tracking-[0.08em]"
-            placeholder={scramblePlaceholder}
-            spellCheck={false}
-            value={notation}
-            onChange={(event) => onNotationChange(event.target.value)}
-          />
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+            <TextInput
+              autoComplete="off"
+              className="primary-input font-mono tracking-[0.08em]"
+              placeholder={scramblePlaceholder}
+              spellCheck={false}
+              value={notation}
+              onChange={(event) => onNotationChange(event.target.value)}
+            />
+            <Button
+              aria-label="Scan cube with camera"
+              className="aspect-square min-h-0 w-12 px-0 py-0"
+              type="button"
+              variant="secondary"
+              onClick={onScanClick}
+            >
+              <Camera aria-hidden="true" />
+            </Button>
+          </div>
         </Field>
       </div>
       <div

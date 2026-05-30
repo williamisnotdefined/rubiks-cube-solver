@@ -3,15 +3,16 @@ use std::time::Instant;
 use axum::http::StatusCode;
 use axum::Json;
 use cube_engine::{
-    Algorithm, Cube, FaceletString, SearchBudget, SearchOutcome, SolveError, SolverConfig,
-    SolverStrategy,
+    Algorithm, Cube, FaceletString, SearchBudget, SearchOutcome, SolveError, SolveInputError,
+    SolverConfig, SolverStrategy,
 };
 
 use crate::config::{DEFAULT_API_NODES, MAX_API_DEPTH, MAX_API_NODES, MAX_NOTATION_BYTES};
 use crate::error_kind::solve_input_error_kind;
 use crate::response::{
     error_response_from_parts, not_found_response_from_parts, success_response_from_parts,
-    unverified_solution_response_from_parts, SolveNotationRequest, SolveResponse,
+    unverified_solution_response_from_parts, ScanFacesRequest, SolveNotationRequest, SolveResponse,
+    SolveScanRequest,
 };
 use crate::state::ApiState;
 
@@ -59,30 +60,96 @@ pub fn solve_notation_request(
     };
     let visual_state = FaceletString::from_cube(&cube).to_string();
 
+    solve_prepared_cube(
+        state,
+        request.max_depth,
+        request.max_nodes,
+        strategy,
+        cube,
+        visual_state,
+    )
+}
+
+pub fn solve_scan_request(
+    state: &ApiState,
+    request: SolveScanRequest,
+) -> (StatusCode, Json<SolveResponse>) {
+    let request = match validate_solve_scan_request_limits(request) {
+        Ok(request) => request,
+        Err(response) => return (StatusCode::BAD_REQUEST, Json(*response)),
+    };
+
+    let Some(strategy) = SolverStrategy::from_id(&request.strategy_id) else {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(error_response_from_parts(
+                &request.strategy_id,
+                request.max_depth,
+                request.max_nodes,
+                None,
+                "unsupported_strategy",
+                "unsupported_strategy",
+                SolverStrategy::unsupported_strategy_message(&request.strategy_id),
+                None,
+            )),
+        );
+    };
+    let facelet_input = scan_faces_to_facelet_string(&request.faces);
+    let parsed_visual_state = FaceletString::parse(&facelet_input)
+        .map(|facelets| facelets.to_string())
+        .ok();
+    let cube = match cube_from_facelet_string(&facelet_input) {
+        Ok(cube) => cube,
+        Err(error) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(error_response_from_parts(
+                    &request.strategy_id,
+                    request.max_depth,
+                    request.max_nodes,
+                    Some(strategy),
+                    "invalid_input",
+                    solve_input_error_kind(&error),
+                    error.to_string(),
+                    parsed_visual_state,
+                )),
+            );
+        }
+    };
+    let visual_state = FaceletString::from_cube(&cube).to_string();
+
+    solve_prepared_cube(
+        state,
+        request.max_depth,
+        request.max_nodes,
+        strategy,
+        cube,
+        visual_state,
+    )
+}
+
+fn solve_prepared_cube(
+    state: &ApiState,
+    max_depth: usize,
+    max_nodes: Option<usize>,
+    strategy: SolverStrategy,
+    cube: Cube,
+    visual_state: String,
+) -> (StatusCode, Json<SolveResponse>) {
     match strategy {
         SolverStrategy::GeneratedTwoPhase
         | SolverStrategy::GeneratedTwoPhaseQuality
-        | SolverStrategy::GeneratedTwoPhaseMultiprobe => solve_generated_cube(
-            state,
-            request.max_depth,
-            request.max_nodes,
-            strategy,
-            cube,
-            visual_state,
-        ),
+        | SolverStrategy::GeneratedTwoPhaseMultiprobe => {
+            solve_generated_cube(state, max_depth, max_nodes, strategy, cube, visual_state)
+        }
         SolverStrategy::BoundedIdaStar
         | SolverStrategy::TwoPhaseBaseline
         | SolverStrategy::OptimalIdaStarOrientationPdb
         | SolverStrategy::OptimalBoundedCornerPdb
         | SolverStrategy::OptimalBoundedPdb16
-        | SolverStrategy::ShortSolutionPortfolio => solve_configured_cube(
-            state,
-            request.max_depth,
-            request.max_nodes,
-            strategy,
-            &cube,
-            visual_state,
-        ),
+        | SolverStrategy::ShortSolutionPortfolio => {
+            solve_configured_cube(state, max_depth, max_nodes, strategy, &cube, visual_state)
+        }
     }
 }
 
@@ -117,6 +184,44 @@ fn validate_solve_notation_request_limits(
                 "move notation payload is {} bytes; API limit is {} bytes",
                 request.moves.len(),
                 MAX_NOTATION_BYTES
+            ),
+            None,
+        )));
+    }
+
+    match normalize_api_max_nodes(request.max_nodes) {
+        Ok(max_nodes) => request.max_nodes = Some(max_nodes),
+        Err((error_kind, message)) => {
+            return Err(Box::new(error_response_from_parts(
+                &request.strategy_id,
+                request.max_depth,
+                request.max_nodes,
+                None,
+                "invalid_limits",
+                error_kind,
+                message,
+                None,
+            )));
+        }
+    }
+
+    Ok(request)
+}
+
+fn validate_solve_scan_request_limits(
+    mut request: SolveScanRequest,
+) -> Result<SolveScanRequest, Box<SolveResponse>> {
+    if request.max_depth > MAX_API_DEPTH {
+        return Err(Box::new(error_response_from_parts(
+            &request.strategy_id,
+            request.max_depth,
+            request.max_nodes,
+            None,
+            "invalid_limits",
+            "max_depth_exceeds_limit",
+            format!(
+                "maxDepth {} exceeds API limit {}",
+                request.max_depth, MAX_API_DEPTH
             ),
             None,
         )));
@@ -344,6 +449,25 @@ fn cube_from_notation(input: &str) -> Result<Cube, String> {
     algorithm.apply_to(&mut cube);
 
     Ok(cube)
+}
+
+fn cube_from_facelet_string(input: &str) -> Result<Cube, SolveInputError> {
+    let facelets = FaceletString::parse(input).map_err(SolveInputError::from)?;
+    let state = facelets.to_cubie_state().map_err(SolveInputError::from)?;
+
+    Cube::try_from_state(state).map_err(SolveInputError::from)
+}
+
+fn scan_faces_to_facelet_string(faces: &ScanFacesRequest) -> String {
+    [
+        faces.u.as_str(),
+        faces.r.as_str(),
+        faces.f.as_str(),
+        faces.d.as_str(),
+        faces.l.as_str(),
+        faces.b.as_str(),
+    ]
+    .concat()
 }
 
 fn solution_solves(start: &Cube, moves: &[cube_engine::Move]) -> bool {

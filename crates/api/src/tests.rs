@@ -7,8 +7,9 @@ use tower::ServiceExt;
 
 use crate::response::unverified_solution_response_from_parts;
 use crate::{
-    api_router, api_router_with_web_dist, solve_notation_request, ApiState, SolveNotationRequest,
-    DEFAULT_API_NODES, MAX_API_DEPTH, MAX_API_NODES, MAX_NOTATION_BYTES,
+    api_router, api_router_with_web_dist, solve_notation_request, solve_scan_request, ApiState,
+    ScanFacesRequest, SolveNotationRequest, SolveScanRequest, DEFAULT_API_NODES, MAX_API_DEPTH,
+    MAX_API_NODES, MAX_NOTATION_BYTES,
 };
 
 #[test]
@@ -29,6 +30,69 @@ fn notation_strategy_solves_shallow_state_without_generated_tables() {
     assert!(response.elapsed_ms.is_some());
     assert_eq!(response.replay_verified, Some(true));
     assert!(response.visual_state.is_some());
+}
+
+#[test]
+fn scan_strategy_solves_solved_state_without_generated_tables() {
+    let request = solved_scan_request("bounded-ida-star", 0);
+
+    let (status, response) = solve_scan_request(&ApiState::without_generated_solver(), request);
+
+    assert_eq!(status, StatusCode::OK);
+    assert!(response.ok);
+    assert_eq!(response.status, "success");
+    assert!(response.moves.is_empty());
+    assert_eq!(response.replay_verified, Some(true));
+    assert_eq!(
+        response.visual_state.as_deref(),
+        Some("UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB")
+    );
+}
+
+#[test]
+fn scan_request_reports_invalid_symbol() {
+    let request = scan_request_from_facelets(
+        "QUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB",
+        "bounded-ida-star",
+        0,
+    );
+
+    let (status, response) = solve_scan_request(&ApiState::without_generated_solver(), request);
+
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert!(!response.ok);
+    assert_eq!(response.status, "invalid_input");
+    assert_eq!(response.error_kind.as_deref(), Some("invalid_symbol"));
+}
+
+#[test]
+fn scan_request_reports_invalid_center_sticker() {
+    let request = scan_request_from_facelets(
+        "UUUURUUUURRRRURRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB",
+        "bounded-ida-star",
+        0,
+    );
+
+    let (status, response) = solve_scan_request(&ApiState::without_generated_solver(), request);
+
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert!(!response.ok);
+    assert_eq!(response.status, "invalid_input");
+    assert_eq!(
+        response.error_kind.as_deref(),
+        Some("invalid_center_sticker")
+    );
+}
+
+#[test]
+fn generated_scan_strategy_reports_unavailable_when_solver_not_loaded() {
+    let request = solved_scan_request("generated-two-phase", 30);
+
+    let (status, response) = solve_scan_request(&ApiState::without_generated_solver(), request);
+
+    assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+    assert!(!response.ok);
+    assert_eq!(response.status, "generated_tables_unavailable");
 }
 
 #[test]
@@ -267,6 +331,39 @@ async fn legacy_solve_route_is_not_exposed() {
 }
 
 #[tokio::test]
+async fn solve_scan_route_is_exposed() {
+    let app = api_router(ApiState::without_generated_solver());
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/solve-scan")
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    serde_json::json!({
+                        "faces": {
+                            "U": "UUUUUUUUU",
+                            "R": "RRRRRRRRR",
+                            "F": "FFFFFFFFF",
+                            "D": "DDDDDDDDD",
+                            "L": "LLLLLLLLL",
+                            "B": "BBBBBBBBB"
+                        },
+                        "maxDepth": 0,
+                        "maxNodes": 1000,
+                        "strategyId": "bounded-ida-star"
+                    })
+                    .to_string(),
+                ))
+                .expect("request should build"),
+        )
+        .await
+        .expect("request should complete");
+
+    assert_eq!(response.status(), StatusCode::OK);
+}
+
+#[tokio::test]
 async fn router_with_web_dist_serves_spa_fallback() {
     let web_dist_dir = std::env::temp_dir().join(format!(
         "rubiks-api-web-dist-test-{}",
@@ -358,4 +455,34 @@ fn unknown_strategy_returns_bad_request() {
     assert_eq!(status, StatusCode::BAD_REQUEST);
     assert_eq!(response.status, "unsupported_strategy");
     assert_eq!(response.error_kind.as_deref(), Some("unsupported_strategy"));
+}
+
+fn solved_scan_request(strategy_id: &str, max_depth: usize) -> SolveScanRequest {
+    scan_request_from_facelets(
+        "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB",
+        strategy_id,
+        max_depth,
+    )
+}
+
+fn scan_request_from_facelets(
+    facelets: &str,
+    strategy_id: &str,
+    max_depth: usize,
+) -> SolveScanRequest {
+    assert_eq!(facelets.len(), 54);
+
+    SolveScanRequest {
+        faces: ScanFacesRequest {
+            u: facelets[0..9].to_owned(),
+            r: facelets[9..18].to_owned(),
+            f: facelets[18..27].to_owned(),
+            d: facelets[27..36].to_owned(),
+            l: facelets[36..45].to_owned(),
+            b: facelets[45..54].to_owned(),
+        },
+        max_depth,
+        max_nodes: Some(1_000),
+        strategy_id: strategy_id.to_owned(),
+    }
 }

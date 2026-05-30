@@ -60,6 +60,33 @@ pub struct SolveNotationRequest {
     pub strategy_id: String,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
+pub struct SolveScanRequest {
+    pub faces: ScanFacesRequest,
+    #[serde(rename = "maxDepth", default = "default_max_depth")]
+    pub max_depth: usize,
+    #[serde(rename = "maxNodes")]
+    pub max_nodes: Option<usize>,
+    #[serde(rename = "strategyId", default = "default_strategy_id")]
+    pub strategy_id: String,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
+pub struct ScanFacesRequest {
+    #[serde(rename = "U")]
+    pub u: String,
+    #[serde(rename = "R")]
+    pub r: String,
+    #[serde(rename = "F")]
+    pub f: String,
+    #[serde(rename = "D")]
+    pub d: String,
+    #[serde(rename = "L")]
+    pub l: String,
+    #[serde(rename = "B")]
+    pub b: String,
+}
+
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn success_response_from_parts(
     max_depth: usize,

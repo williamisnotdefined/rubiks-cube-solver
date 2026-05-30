@@ -10,6 +10,11 @@ const apiMocks = vi.hoisted(() => ({
   isPending: false,
   mutateAsync: vi.fn(),
   reset: vi.fn(),
+  scanError: null as Error | null,
+  scanIsPending: false,
+  scanMutateAsync: vi.fn(),
+  scanReset: vi.fn(),
+  scanSolveData: undefined as unknown,
   solveData: undefined as unknown,
   solveError: null as Error | null,
 }))
@@ -33,6 +38,13 @@ vi.mock('@api/solver', () => ({
     isPending: apiMocks.isPending,
     mutateAsync: apiMocks.mutateAsync,
     reset: apiMocks.reset,
+  }),
+  useSolveScan: () => ({
+    data: apiMocks.scanSolveData,
+    error: apiMocks.scanError,
+    isPending: apiMocks.scanIsPending,
+    mutateAsync: apiMocks.scanMutateAsync,
+    reset: apiMocks.scanReset,
   }),
 }))
 
@@ -60,6 +72,12 @@ describe('SolvePage', () => {
     apiMocks.mutateAsync.mockClear()
     apiMocks.mutateAsync.mockResolvedValue(undefined)
     apiMocks.reset.mockClear()
+    apiMocks.scanError = null
+    apiMocks.scanIsPending = false
+    apiMocks.scanMutateAsync.mockClear()
+    apiMocks.scanMutateAsync.mockResolvedValue(undefined)
+    apiMocks.scanReset.mockClear()
+    apiMocks.scanSolveData = undefined
     apiMocks.solveData = undefined
     apiMocks.solveError = null
   })
@@ -72,6 +90,7 @@ describe('SolvePage', () => {
     expect(input).toHaveValue('')
     expect(input).toHaveAttribute('placeholder', scramblePlaceholder)
     expect(screen.getByRole('button', { name: 'Solve' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Scan cube with camera' })).toBeInTheDocument()
   })
 
   it('keeps the scramble field on its own row and limits plus submit on the next row', () => {
@@ -81,9 +100,20 @@ describe('SolvePage', () => {
     const limitsRow = screen.getByTestId('limits-row')
 
     expect(within(scrambleRow).getByLabelText('Scramble')).toBeInTheDocument()
+    expect(within(scrambleRow).getByRole('button', { name: 'Scan cube with camera' })).toBeInTheDocument()
     expect(within(limitsRow).getByLabelText('Max moves')).toBeInTheDocument()
     expect(within(limitsRow).getByLabelText('Max nodes (M)')).toBeInTheDocument()
     expect(within(limitsRow).getByRole('button', { name: 'Solve' })).toBeInTheDocument()
+  })
+
+  it('opens the scan modal from the camera button', async () => {
+    const user = userEvent.setup()
+    render(<SolvePage />)
+
+    await user.click(screen.getByRole('button', { name: 'Scan cube with camera' }))
+
+    expect(screen.getByRole('dialog', { name: 'Scan cube' })).toBeInTheDocument()
+    expect(screen.getByText('Face 1 of 6')).toBeInTheDocument()
   })
 
   it('submits trimmed notation with selected solver limits', async () => {
