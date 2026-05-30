@@ -1,4 +1,5 @@
 import { memo, type RefObject } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { ScanAnalysisPoint } from '@api/scan'
 import type { LiveScanPreviewStatus } from './hooks/useLiveScanPreview'
 
@@ -35,6 +36,7 @@ export const ScanCameraFrame = memo(function ScanCameraFrame({
   trackingStatus = 'idle',
   videoRef,
 }: ScanCameraFrameProps) {
+  const { t } = useTranslation()
   const hasDetectedFace = faceQuad.length === 4
   const detectionStroke = centerMismatch
     ? '#ef4444'
@@ -47,6 +49,7 @@ export const ScanCameraFrame = memo(function ScanCameraFrame({
     detectionMode,
     faceConfidence,
     stableFrameCount,
+    t,
     trackingStatus,
   })
 
@@ -59,7 +62,7 @@ export const ScanCameraFrame = memo(function ScanCameraFrame({
         ref={videoRef}
       />
       {photoDataUrl === undefined ? null : (
-        <img className="block size-full object-cover" src={photoDataUrl} alt="Captured cube face" />
+        <img className="block size-full object-cover" src={photoDataUrl} alt={t('scan.camera.capturedFaceAlt')} />
       )}
       {hasDetectedFace || stickerPolygons.length > 0 ? (
         <svg className="pointer-events-none absolute inset-0 size-full" viewBox="0 0 100 100">
@@ -100,12 +103,12 @@ export const ScanCameraFrame = memo(function ScanCameraFrame({
       )}
       {cameraStatus === 'loading' ? (
         <div className="absolute inset-0 grid place-items-center bg-[#070707]/70 text-sm font-extrabold uppercase tracking-[0.16em] text-[#f7f7f7]">
-          Opening camera
+          {t('scan.camera.opening')}
         </div>
       ) : null}
       {cameraStatus === 'error' ? (
         <div className="absolute inset-0 grid place-items-center bg-[#070707]/85 p-4 text-center text-sm font-semibold leading-relaxed text-[#f7f7f7]">
-          {cameraMessage} You can still fill the grid manually.
+          {t('scan.camera.errorManualFallback', { message: cameraMessage })}
         </div>
       ) : null}
     </div>
@@ -120,19 +123,21 @@ function cameraStatusLabel({
   detectionMode,
   faceConfidence,
   stableFrameCount,
+  t,
   trackingStatus,
 }: {
   detectionMode?: string | null
   faceConfidence?: number
   stableFrameCount: number
+  t: ReturnType<typeof useTranslation>['t']
   trackingStatus: LiveScanPreviewStatus
 }): string | undefined {
   if (trackingStatus === 'holding_steady') {
-    return `hold steady ${stableFrameCount}/6`
+    return t('scan.camera.holdSteady', { count: stableFrameCount, target: 6 })
   }
 
   if (trackingStatus === 'tracking') {
-    return `tracking ${stableFrameCount}/6`
+    return t('scan.camera.tracking', { count: stableFrameCount, target: 6 })
   }
 
   if (detectionMode == null) {
@@ -140,9 +145,18 @@ function cameraStatusLabel({
   }
 
   if (detectionMode === 'guide_fallback' || detectionMode === 'rejected') {
-    return 'looking for cube'
+    return t('scan.camera.lookingForCube')
   }
 
-  const confidence = faceConfidence === undefined ? '' : ` ${Math.round(faceConfidence * 100)}%`
-  return `${detectionMode.replace('_', ' ')}${confidence}`
+  const mode = t(`scan.camera.modes.${detectionMode}`, {
+    defaultValue: detectionMode.replaceAll('_', ' '),
+  })
+  if (faceConfidence === undefined) {
+    return mode
+  }
+
+  return t('scan.camera.statusWithConfidence', {
+    confidence: Math.round(faceConfidence * 100),
+    mode,
+  })
 }

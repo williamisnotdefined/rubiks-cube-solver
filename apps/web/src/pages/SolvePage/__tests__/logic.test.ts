@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import type { SolveResult } from '@api/solver/types'
+import i18n from '@src/i18n/i18n'
 import { preferredStrategyId } from '../strategy'
 import { solveErrorDetail, solveErrorMessage } from '../solveMessages'
-import { validateMaxNodesMillionOption, validateWholeNumberLimit } from '../validation'
+import {
+  validateMaxNodesMillionOption,
+  validateWholeNumberLimit,
+  validationErrorMessage,
+} from '../validation'
 
 function failure(status: Exclude<SolveResult, { ok: true }>['status']): Exclude<SolveResult, { ok: true }> {
   return {
@@ -21,24 +26,32 @@ function failure(status: Exclude<SolveResult, { ok: true }>['status']): Exclude<
 
 describe('solve page validation', () => {
   it('validates whole-number limits', () => {
-    expect(validateWholeNumberLimit('', 'Max moves', 30)).toBe('Max moves is required')
-    expect(validateWholeNumberLimit('1.5', 'Max moves', 30)).toBe(
+    expect(validationErrorMessage(i18n.t, validateWholeNumberLimit('', 'Max moves', 30))).toBe(
+      'Max moves is required',
+    )
+    expect(validationErrorMessage(i18n.t, validateWholeNumberLimit('1.5', 'Max moves', 30))).toBe(
       'Max moves must be a whole number',
     )
-    expect(validateWholeNumberLimit('-1', 'Max moves', 30)).toBe(
+    expect(validationErrorMessage(i18n.t, validateWholeNumberLimit('-1', 'Max moves', 30))).toBe(
       'Max moves must be a whole number',
     )
-    expect(validateWholeNumberLimit('31', 'Max moves', 30)).toBe(
+    expect(validationErrorMessage(i18n.t, validateWholeNumberLimit('31', 'Max moves', 30))).toBe(
       'Max moves must be 30 or less',
     )
     expect(validateWholeNumberLimit('30', 'Max moves', 30)).toBeUndefined()
   })
 
   it('validates max-node options', () => {
-    expect(validateMaxNodesMillionOption('')).toBe('Max nodes (M) is required')
-    expect(validateMaxNodesMillionOption('1.5')).toBe('Max nodes (M) must be a whole number')
-    expect(validateMaxNodesMillionOption('11')).toBe('Max nodes (M) must be one of 10, 15, 20, 25')
-    expect(validateMaxNodesMillionOption('25')).toBeUndefined()
+    expect(validationErrorMessage(i18n.t, validateMaxNodesMillionOption('', 'Max nodes (M)'))).toBe(
+      'Max nodes (M) is required',
+    )
+    expect(validationErrorMessage(i18n.t, validateMaxNodesMillionOption('1.5', 'Max nodes (M)'))).toBe(
+      'Max nodes (M) must be a whole number',
+    )
+    expect(validationErrorMessage(i18n.t, validateMaxNodesMillionOption('11', 'Max nodes (M)'))).toBe(
+      'Max nodes (M) must be one of 10, 15, 20, 25',
+    )
+    expect(validateMaxNodesMillionOption('25', 'Max nodes (M)')).toBeUndefined()
   })
 })
 
@@ -73,26 +86,26 @@ describe('solve page messages', () => {
     ['generated_tables_unavailable', 'Generated two-phase tables unavailable on the API'],
     ['generated_tables_corrupt', 'Generated two-phase API tables corrupt or incompatible'],
     ['api_error', 'API solve request failed'],
-    ['unsupported_strategy', 'unsupported_strategy message'],
+    ['unsupported_strategy', 'Unsupported solver strategy'],
   ] as const)('maps %s to a user-facing message', (status, message) => {
-    expect(solveErrorMessage(failure(status))).toBe(message)
+    expect(solveErrorMessage(failure(status), i18n.t)).toBe(message)
   })
 
   it('adds useful failure details', () => {
-    expect(solveErrorDetail(failure('not_found_within_limits'))).toContain('12,345 nodes')
+    expect(solveErrorDetail(failure('not_found_within_limits'), i18n.t)).toContain('12,345 nodes')
     expect(
       solveErrorDetail({
         ...failure('invalid_input'),
         errorKind: 'unknown_corner_stickers',
-      }),
+      }, i18n.t),
     ).toContain('capture green, red, blue, and orange with white on top')
-    expect(solveErrorDetail(failure('invalid_limits'))).toBe('invalid_limits message')
-    expect(solveErrorDetail(failure('request_too_large'))).toBe('request_too_large message')
-    expect(solveErrorDetail(failure('unverified_solution'))).toBe('unverified_solution message')
-    expect(solveErrorDetail(failure('generated_tables_unavailable'))).toContain(
+    expect(solveErrorDetail(failure('invalid_limits'), i18n.t)).toBe('invalid_limits message')
+    expect(solveErrorDetail(failure('request_too_large'), i18n.t)).toBe('request_too_large message')
+    expect(solveErrorDetail(failure('unverified_solution'), i18n.t)).toBe('unverified_solution message')
+    expect(solveErrorDetail(failure('generated_tables_unavailable'), i18n.t)).toContain(
       'Generate native pruning tables',
     )
-    expect(solveErrorDetail(failure('generated_tables_corrupt'))).toContain('Regenerate')
-    expect(solveErrorDetail(failure('invalid_notation'))).toBe('invalid_notation message')
+    expect(solveErrorDetail(failure('generated_tables_corrupt'), i18n.t)).toContain('Regenerate')
+    expect(solveErrorDetail(failure('invalid_notation'), i18n.t)).toBe('invalid_notation message')
   })
 })

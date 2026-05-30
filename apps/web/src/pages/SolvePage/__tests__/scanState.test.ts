@@ -18,9 +18,9 @@ describe('scan state helpers', () => {
   })
 
   it('requires all stickers before confirming a face', () => {
-    expect(validateScanFaceDraft({}, 'U', createEmptyScanStickers('U'))).toBe(
-      'Confirm all 9 colors before continuing.',
-    )
+    expect(validateScanFaceDraft({}, 'U', createEmptyScanStickers('U'))).toEqual({
+      key: 'confirmAllNineColors',
+    })
   })
 
   it('blocks partial color counts above nine', () => {
@@ -30,7 +30,10 @@ describe('scan state helpers', () => {
     const nextFace = filledStickers('U')
     nextFace[4] = { symbol: 'R', confidence: 1, source: 'center' }
 
-    expect(validateScanFaceDraft(confirmedFaces, 'R', nextFace)).toBe('White appears more than 9 times.')
+    expect(validateScanFaceDraft(confirmedFaces, 'R', nextFace)).toEqual({
+      key: 'colorAppearsMoreThanNine',
+      values: { symbol: 'U' },
+    })
   })
 
   it('builds a solve payload only after all faces are complete with exact counts', () => {

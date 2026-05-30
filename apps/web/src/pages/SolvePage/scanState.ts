@@ -36,6 +36,11 @@ export type ScanFaceDefinition = {
   topLabel: string
 }
 
+export type ScanFaceDraftValidation =
+  | { key: 'confirmAllNineColors' }
+  | { key: 'centerColorMismatch' }
+  | { key: 'colorAppearsMoreThanNine'; values: { symbol: ScanFaceSymbol } }
+
 export const scanFaceOrder = [
   {
     symbol: 'F',
@@ -107,13 +112,13 @@ export function validateScanFaceDraft(
   faces: ScanFaces,
   symbol: ScanFaceSymbol,
   stickers: readonly ScanSticker[],
-): string | undefined {
+): ScanFaceDraftValidation | undefined {
   if (!isScanFaceComplete(stickers)) {
-    return 'Confirm all 9 colors before continuing.'
+    return { key: 'confirmAllNineColors' }
   }
 
   if (stickers[4]?.symbol !== symbol) {
-    return 'The center color must match the face being scanned.'
+    return { key: 'centerColorMismatch' }
   }
 
   const nextFaces: ScanFaces = {
@@ -124,7 +129,7 @@ export function validateScanFaceDraft(
   const overflowSymbol = scanSymbols.find((scanSymbol) => counts[scanSymbol] > 9)
 
   if (overflowSymbol !== undefined) {
-    return `${scanSymbolDetails[overflowSymbol].label} appears more than 9 times.`
+    return { key: 'colorAppearsMoreThanNine', values: { symbol: overflowSymbol } }
   }
 
   return undefined

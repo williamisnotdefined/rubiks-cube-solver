@@ -1,43 +1,66 @@
 import { maxNodesMillionOptions } from './constants'
 
+export type LimitValidationError =
+  | { key: 'required'; values: { label: string } }
+  | { key: 'wholeNumber'; values: { label: string } }
+  | { key: 'withinLimit'; values: { label: string; limit: number } }
+  | { key: 'oneOf'; values: { label: string; options: string } }
+
 export function validateWholeNumberLimit(
   input: string,
   label: string,
   limit: number,
-): string | undefined {
+): LimitValidationError | undefined {
   const trimmed = input.trim()
   const value = Number(trimmed)
 
   if (trimmed.length === 0) {
-    return `${label} is required`
+    return { key: 'required', values: { label } }
   }
 
   if (!Number.isInteger(value) || value < 0) {
-    return `${label} must be a whole number`
+    return { key: 'wholeNumber', values: { label } }
   }
 
   if (value > limit) {
-    return `${label} must be ${limit} or less`
+    return { key: 'withinLimit', values: { label, limit } }
   }
 
   return undefined
 }
 
-export function validateMaxNodesMillionOption(input: string): string | undefined {
+export function validateMaxNodesMillionOption(
+  input: string,
+  label: string,
+): LimitValidationError | undefined {
   const trimmed = input.trim()
   const value = Number(trimmed)
 
   if (trimmed.length === 0) {
-    return 'Max nodes (M) is required'
+    return { key: 'required', values: { label } }
   }
 
   if (!Number.isInteger(value)) {
-    return 'Max nodes (M) must be a whole number'
+    return { key: 'wholeNumber', values: { label } }
   }
 
   if (!maxNodesMillionOptions.some((option) => option === value)) {
-    return `Max nodes (M) must be one of ${maxNodesMillionOptions.join(', ')}`
+    return {
+      key: 'oneOf',
+      values: { label, options: maxNodesMillionOptions.join(', ') },
+    }
   }
 
   return undefined
+}
+
+export function validationErrorMessage(
+  t: (key: string, values?: Record<string, string | number>) => string,
+  error: LimitValidationError | undefined,
+): string | undefined {
+  if (error === undefined) {
+    return undefined
+  }
+
+  return t(`solve.validation.${error.key}`, error.values)
 }

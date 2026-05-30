@@ -1,5 +1,6 @@
 import type { Decorator, Preview } from '@storybook/react-vite'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import '../src/i18n/i18n'
 import '../src/index.css'
 
 const withAppProviders: Decorator = (Story) => {

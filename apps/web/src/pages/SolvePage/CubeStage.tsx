@@ -1,4 +1,5 @@
 import { useEffect, useState, type RefObject } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { RubiksCubeElement } from '@houstonp/rubiks-cube/view'
 
 const cubeElementName = 'rubiks-cube'
@@ -9,6 +10,7 @@ type CubeStageProps = {
 }
 
 export function CubeStage({ cubeRef, onReady }: CubeStageProps) {
+  const { t } = useTranslation()
   const [registered, setRegistered] = useState(
     () => customElements.get(cubeElementName) !== undefined,
   )
@@ -40,7 +42,7 @@ export function CubeStage({ cubeRef, onReady }: CubeStageProps) {
   return (
     <section
       className="cube-stage aspect-square w-[min(280px,calc(100vw-24px))] overflow-hidden border border-[#2b2b2b] bg-[#101010]"
-      aria-label="Cube visualization"
+      aria-label={t('cube.visualization')}
     >
       {registered ? (
         <rubiks-cube

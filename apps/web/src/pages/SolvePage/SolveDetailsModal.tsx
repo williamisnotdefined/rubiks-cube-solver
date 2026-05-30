@@ -1,8 +1,10 @@
 import { useEffect, useId } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { GeneratedTableStatus, SolveSuccessResult } from '@api/solver/types'
 import { Button } from '@components/Button'
 import { formatElapsedMs } from '@core/format/formatElapsedMs'
 import { formatNumber } from '@core/format/formatNumber'
+import { solveStrategyLabel } from './solveMessages'
 
 type SolveDetailsModalProps = {
   result: SolveSuccessResult
@@ -15,14 +17,21 @@ type DetailRow = {
 }
 
 export function SolveDetailsModal({ result, onClose }: SolveDetailsModalProps) {
+  const { t } = useTranslation()
   const titleId = useId()
-  const movesLabel = `${result.length} moves`
-  const elapsedLabel = `found in ${formatElapsedMs(result.elapsedMs)}`
-  const nodesLabel = `${formatNumber(result.exploredNodes)} nodes`
-  const tablesLabel = tableStatusLabel(result.generatedTableStatus)
-  const replayLabel = result.replayVerified ? 'replay verified' : 'replay not verified'
+  const movesLabel = t('solve.details.movesLabel', { count: result.length })
+  const elapsedLabel = t('solve.details.elapsedLabel', {
+    elapsed: formatElapsedMs(result.elapsedMs),
+  })
+  const nodesLabel = t('solve.details.nodesLabel', { nodes: formatNumber(result.exploredNodes) })
+  const tablesLabel = tableStatusLabel(result.generatedTableStatus, t)
+  const replayLabel = result.replayVerified
+    ? t('solve.details.replayVerified')
+    : t('solve.details.replayNotVerified')
   const maxNodesLabel =
-    result.maxNodes === undefined ? 'no configured node cap' : `${formatNumber(result.maxNodes)} node cap`
+    result.maxNodes === undefined
+      ? t('solve.details.maxNodesUnlimited')
+      : t('solve.details.maxNodesConfigured', { nodes: formatNumber(result.maxNodes) })
   const detailRows = explainRows(result, {
     elapsedLabel,
     maxNodesLabel,
@@ -30,6 +39,7 @@ export function SolveDetailsModal({ result, onClose }: SolveDetailsModalProps) {
     nodesLabel,
     replayLabel,
     tablesLabel,
+    t,
   })
 
   useEffect(() => {
@@ -47,7 +57,7 @@ export function SolveDetailsModal({ result, onClose }: SolveDetailsModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-3 py-6 sm:px-6">
       <button
-        aria-label="Dismiss solver details"
+        aria-label={t('solve.details.dismiss')}
         className="absolute inset-0 bg-[#070707]/85 backdrop-blur-sm"
         type="button"
         onClick={onClose}
@@ -61,28 +71,28 @@ export function SolveDetailsModal({ result, onClose }: SolveDetailsModalProps) {
         <div className="flex items-start justify-between gap-4">
           <div className="grid gap-1">
             <h2 className="text-lg font-extrabold uppercase tracking-[0.16em]" id={titleId}>
-              Solver details
+              {t('solve.details.title')}
             </h2>
             <p className="text-sm font-semibold text-[#a8a8a8]">
-              These metrics describe how the backend found and verified this solution.
+              {t('solve.details.subtitle')}
             </p>
           </div>
           <Button className="min-h-10 px-4 py-2" type="button" variant="secondary" onClick={onClose}>
-            Close
+            {t('common.close')}
           </Button>
         </div>
 
         <dl className="mt-5 grid gap-2 text-sm sm:grid-cols-3">
           <div className="border border-[#2b2b2b] bg-[#171717] p-3">
-            <dt className="font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">Solution</dt>
+            <dt className="font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">{t('solve.details.solution')}</dt>
             <dd className="mt-1 font-mono text-emerald-300">{movesLabel}</dd>
           </div>
           <div className="border border-[#2b2b2b] bg-[#171717] p-3">
-            <dt className="font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">Search</dt>
+            <dt className="font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">{t('solve.details.search')}</dt>
             <dd className="mt-1 font-mono text-emerald-300">{nodesLabel}</dd>
           </div>
           <div className="border border-[#2b2b2b] bg-[#171717] p-3">
-            <dt className="font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">Time</dt>
+            <dt className="font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">{t('solve.details.time')}</dt>
             <dd className="mt-1 font-mono text-emerald-300">{elapsedLabel}</dd>
           </div>
         </dl>
@@ -92,10 +102,10 @@ export function SolveDetailsModal({ result, onClose }: SolveDetailsModalProps) {
             <thead>
               <tr className="border-b border-[#2b2b2b] bg-[#070707]">
                 <th className="w-48 px-3 py-3 text-left font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
-                  Text
+                  {t('solve.details.columns.text')}
                 </th>
                 <th className="px-3 py-3 text-left font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
-                  Meaning
+                  {t('solve.details.columns.meaning')}
                 </th>
               </tr>
             </thead>
@@ -125,69 +135,49 @@ function explainRows(
     nodesLabel: string
     replayLabel: string
     tablesLabel: string
+    t: ReturnType<typeof useTranslation>['t']
   },
 ): DetailRow[] {
   return [
     {
-      text: result.strategyLabel,
-      meaning: strategyMeaning(result.strategyLabel),
+      text: solveStrategyLabel(result.strategyId, result.strategyLabel, labels.t),
+      meaning: strategyMeaning(result.strategyId, labels.t),
     },
     {
       text: labels.movesLabel,
-      meaning:
-        'The returned solution length. Each notation token counts as one move, including half turns such as R2 or B2.',
+      meaning: labels.t('solve.details.solutionLengthMeaning'),
     },
     {
       text: labels.nodesLabel,
-      meaning: `The solver explored this many internal search nodes before finding the solution. This run used ${labels.maxNodesLabel}.`,
+      meaning: labels.t('solve.details.nodesMeaning', { maxNodesLabel: labels.maxNodesLabel }),
     },
     {
       text: labels.elapsedLabel,
-      meaning:
-        'The backend search time for this solve. It does not include total UI time, network latency, or cube rendering time.',
+      meaning: labels.t('solve.details.elapsedMeaning'),
     },
     {
       text: labels.tablesLabel,
-      meaning: tableStatusMeaning(result.generatedTableStatus),
+      meaning: tableStatusMeaning(result.generatedTableStatus, labels.t),
     },
     {
       text: labels.replayLabel,
-      meaning:
-        'After finding the moves, the backend replayed them on the scrambled cube and confirmed that the cube becomes solved.',
+      meaning: labels.t('solve.details.replayVerifiedMeaning'),
     },
   ]
 }
 
-function strategyMeaning(strategyLabel: string): string {
-  if (strategyLabel.toLowerCase().includes('generated two-phase')) {
-    return 'The strategy used. Generated does not mean generative AI; this is a two-phase solver backed by pre-generated pruning tables. Quality modes try shorter solution depths before falling back to the configured maximum.'
+function strategyMeaning(strategyId: string, t: ReturnType<typeof useTranslation>['t']): string {
+  if (strategyId.includes('generated-two-phase')) {
+    return t('solve.strategies.meaningGeneratedTwoPhase')
   }
 
-  return 'The deterministic backend solver strategy used for this request. It is search logic, not generative AI.'
+  return t('solve.strategies.meaningDefault')
 }
 
-function tableStatusLabel(status: GeneratedTableStatus): string {
-  switch (status) {
-    case 'available':
-      return 'tables available'
-    case 'corrupt_or_incompatible':
-      return 'tables corrupt or incompatible'
-    case 'not_required':
-      return 'tables not required'
-    case 'unavailable':
-      return 'tables unavailable'
-  }
+function tableStatusLabel(status: GeneratedTableStatus, t: ReturnType<typeof useTranslation>['t']): string {
+  return t(`solve.details.tables.${status}.label`)
 }
 
-function tableStatusMeaning(status: GeneratedTableStatus): string {
-  switch (status) {
-    case 'available':
-      return 'The pre-generated pruning tables required by this strategy were available. They help prune the search.'
-    case 'corrupt_or_incompatible':
-      return 'The required pruning tables exist but do not match the expected format or metadata, so they should be regenerated.'
-    case 'not_required':
-      return 'This strategy does not require generated pruning tables.'
-    case 'unavailable':
-      return 'The required pruning tables were not available on the API server.'
-  }
+function tableStatusMeaning(status: GeneratedTableStatus, t: ReturnType<typeof useTranslation>['t']): string {
+  return t(`solve.details.tables.${status}.meaning`)
 }

@@ -1,5 +1,7 @@
+import { useTranslation } from 'react-i18next'
 import type { ScanFaceSymbol } from '@api/solver/types'
 import { scanSymbolDetails, scanSymbols } from './scanState'
+import { scanColorLabel } from './scanTranslations'
 
 type ScanColorPaletteProps = {
   selectedSymbol?: ScanFaceSymbol
@@ -7,10 +9,12 @@ type ScanColorPaletteProps = {
 }
 
 export function ScanColorPalette({ selectedSymbol, onSelect }: ScanColorPaletteProps) {
+  const { t } = useTranslation()
+
   return (
-    <div className="grid gap-2" aria-label="Color palette" role="group">
+    <div className="grid gap-2" aria-label={t('scan.editor.paletteLabel')} role="group">
       <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
-        Pick a color
+        {t('scan.editor.pickColor')}
       </span>
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
         {scanSymbols.map((symbol) => {
@@ -30,7 +34,7 @@ export function ScanColorPalette({ selectedSymbol, onSelect }: ScanColorPaletteP
               key={symbol}
               onClick={() => onSelect(symbol)}
             >
-              {details.label}
+              {scanColorLabel(t, symbol)}
             </button>
           )
         })}

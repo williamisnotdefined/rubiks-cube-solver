@@ -1,85 +1,75 @@
+import type { TFunction } from 'i18next'
 import type { SolveResult } from '@api/solver/types'
 import { formatNumber } from '@core/format/formatNumber'
 
 type SolveFailure = Exclude<SolveResult, { ok: true }>
 
-export function solveErrorMessage(result: SolveFailure): string {
+export function solveErrorMessage(result: SolveFailure, t: TFunction): string {
+  return t(`solve.errors.status.${result.status}`, { defaultValue: result.message })
+}
+
+export function solveErrorDetail(result: SolveFailure, t: TFunction): string | undefined {
+  if (result.status === 'invalid_input') {
+    const scanOrientationHint = scanInvalidInputOrientationHint(result, t)
+    const inputMessage = solveErrorKindMessage(result.errorKind, t) ?? result.message
+
+    return [inputMessage, scanOrientationHint].filter(Boolean).join(' ')
+  }
+
   if (result.status === 'invalid_notation') {
-    return 'Invalid scramble'
-  }
-
-  if (result.status === 'invalid_input') {
-    return 'Invalid cube state'
+    return solveErrorKindMessage(result.errorKind, t) ?? result.message
   }
 
   if (result.status === 'not_found_within_limits') {
-    return 'No solution within the configured limits'
+    return t('solve.errors.detail.not_found_within_limits', {
+      maxDepth: result.maxDepth,
+      nodes: formatNumber(result.exploredNodes ?? 0),
+      strategy: solveStrategyLabel(result.strategyId, result.strategyLabel, t),
+    })
   }
 
   if (result.status === 'invalid_limits') {
-    return 'Solver limits exceed API safety caps'
+    return solveErrorKindMessage(result.errorKind, t) ?? result.message
   }
 
   if (result.status === 'request_too_large') {
-    return 'Solve request is too large'
+    return solveErrorKindMessage(result.errorKind, t) ?? result.message
   }
 
   if (result.status === 'unverified_solution') {
-    return 'Solver solution failed replay verification'
+    return solveErrorKindMessage(result.errorKind, t) ?? result.message
   }
 
   if (result.status === 'generated_tables_unavailable') {
-    return 'Generated two-phase tables unavailable on the API'
+    return t('solve.errors.detail.generated_tables_unavailable')
   }
 
   if (result.status === 'generated_tables_corrupt') {
-    return 'Generated two-phase API tables corrupt or incompatible'
+    return t('solve.errors.detail.generated_tables_corrupt')
   }
 
-  if (result.status === 'api_error') {
-    return 'API solve request failed'
-  }
-
-  return result.message
+  return solveErrorKindMessage(result.errorKind, t) ?? result.message
 }
 
-export function solveErrorDetail(result: SolveFailure): string | undefined {
-  if (result.status === 'invalid_input') {
-    const scanOrientationHint = scanInvalidInputOrientationHint(result)
-
-    return [result.message, scanOrientationHint].filter(Boolean).join(' ')
-  }
-
-  if (result.status === 'not_found_within_limits') {
-    return `${result.strategyLabel} explored ${formatNumber(
-      result.exploredNodes ?? 0,
-    )} nodes at max moves ${result.maxDepth}.`
-  }
-
-  if (result.status === 'invalid_limits') {
-    return result.message
-  }
-
-  if (result.status === 'request_too_large') {
-    return result.message
-  }
-
-  if (result.status === 'unverified_solution') {
-    return result.message
-  }
-
-  if (result.status === 'generated_tables_unavailable') {
-    return 'Generate native pruning tables and start npm run api:dev before solving.'
-  }
-
-  if (result.status === 'generated_tables_corrupt') {
-    return 'Regenerate native pruning tables; the current API artifacts do not match the Rust engine.'
-  }
-
-  return result.message
+export function solveStrategyLabel(
+  strategyId: string,
+  fallbackLabel: string,
+  t: TFunction,
+): string {
+  return t(`solve.strategies.${strategyId}`, { defaultValue: fallbackLabel })
 }
 
-function scanInvalidInputOrientationHint(result: SolveFailure): string | undefined {
+function solveErrorKindMessage(errorKind: string | undefined, t: TFunction): string | undefined {
+  if (errorKind === undefined) {
+    return undefined
+  }
+
+  const message = t(`solve.errors.errorKind.${errorKind}`, { defaultValue: '' })
+
+  return message.length > 0 ? message : undefined
+}
+
+function scanInvalidInputOrientationHint(result: SolveFailure, t: TFunction): string | undefined {
   if (
     result.errorKind !== 'unknown_corner_stickers' &&
     result.errorKind !== 'unknown_edge_stickers' &&
@@ -93,5 +83,5 @@ function scanInvalidInputOrientationHint(result: SolveFailure): string | undefin
     return undefined
   }
 
-  return 'Check scan orientation: capture green, red, blue, and orange with white on top; capture white and yellow with green on top.'
+  return t('solve.errors.detail.invalid_input_orientation_hint')
 }

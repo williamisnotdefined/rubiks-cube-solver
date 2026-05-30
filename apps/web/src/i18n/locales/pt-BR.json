@@ -1,0 +1,284 @@
+{
+  "common": {
+    "applyAndRetry": "Aplicar e tentar de novo",
+    "close": "Fechar",
+    "loading": "Carregando"
+  },
+  "cube": {
+    "visualization": "Visualização do cubo"
+  },
+  "scan": {
+    "actions": {
+      "analyzing": "Analisando",
+      "autoScanOff": "Auto scan desligado",
+      "autoScanOn": "Auto scan ligado",
+      "clearPhoto": "Limpar foto",
+      "confirmFace": "Confirmar face",
+      "retakePhoto": "Tirar de novo",
+      "solveScannedCube": "Resolver cubo escaneado",
+      "takePhoto": "Tirar foto"
+    },
+    "camera": {
+      "capturedFaceAlt": "Face do cubo capturada",
+      "errorManualFallback": "{{message}} Você ainda pode preencher a grade manualmente.",
+      "holdSteady": "segure firme {{count}}/{{target}}",
+      "lookingForCube": "procurando o cubo",
+      "modes": {
+        "contour": "contorno",
+        "guide_fallback": "guia",
+        "rejected": "rejeitado",
+        "sticker_grid": "grade de adesivos"
+      },
+      "opening": "Abrindo câmera",
+      "statusWithConfidence": "{{mode}} {{confidence}}%",
+      "tracking": "rastreando {{count}}/{{target}}"
+    },
+    "colors": {
+      "B": "Azul",
+      "D": "Amarelo",
+      "F": "Verde",
+      "L": "Laranja",
+      "R": "Vermelho",
+      "U": "Branco"
+    },
+    "editor": {
+      "colorCount": "Contagem de cores",
+      "orAlternative": "ou {{colorInitial}}",
+      "paletteLabel": "Paleta de cores",
+      "pickColor": "Escolha uma cor",
+      "reviewColors": "Revise as cores",
+      "reviewGroupLabel": "Cores da face escaneada",
+      "selectSquareHint": "Selecione um quadrado e escolha uma cor para corrigir.",
+      "stickerLabel": "Adesivo {{index}}{{color}}",
+      "uncertainColor": "cor incerta",
+      "uncertainMaybe": "talvez {{color}}"
+    },
+    "faces": {
+      "B": {
+        "instruction": "Capture a face azul com a face branca no topo da visão da câmera.",
+        "label": "Face azul",
+        "top": "Branco"
+      },
+      "D": {
+        "instruction": "Capture a face amarela com a face verde no topo da visão da câmera.",
+        "label": "Face amarela",
+        "top": "Verde"
+      },
+      "F": {
+        "instruction": "Capture a face verde com a face branca no topo da visão da câmera.",
+        "label": "Face verde",
+        "top": "Branco"
+      },
+      "L": {
+        "instruction": "Capture a face laranja com a face branca no topo da visão da câmera.",
+        "label": "Face laranja",
+        "top": "Branco"
+      },
+      "R": {
+        "instruction": "Capture a face vermelha com a face branca no topo da visão da câmera.",
+        "label": "Face vermelha",
+        "top": "Branco"
+      },
+      "U": {
+        "instruction": "Capture a face branca com a face verde no topo da visão da câmera.",
+        "label": "Face branca",
+        "top": "Verde"
+      }
+    },
+    "live": {
+      "cameraDenied": "A permissão da câmera foi negada ou nenhuma câmera foi encontrada.",
+      "cameraUnavailable": "O acesso à câmera não está disponível neste navegador.",
+      "centerMismatch": "Outra cor central foi detectada. Gire para a face esperada.",
+      "faceDetected": "Face detectada. Segure firme.",
+      "imageBlurry": "A imagem está borrada. Segure o cubo firme.",
+      "looking": "Procurando a face do cubo.",
+      "lookingKeepVisible": "Procurando a face do cubo. Mantenha o cubo inteiro visível.",
+      "scanFailed": "A análise ao vivo falhou.",
+      "stableCapturing": "A face está estável. Capturando foto...",
+      "tooBright": "Há brilho demais. Reduza reflexos fortes.",
+      "tooDark": "Está escuro demais. Adicione mais luz."
+    },
+    "messages": {
+      "allFacesConfirmed": "Todas as faces foram confirmadas. Resolva o cubo escaneado quando quiser.",
+      "analysisFailed": "A requisição de análise do scan falhou.",
+      "analyzingFace": "Analisando a face do cubo...",
+      "apiNotReady": "A API ainda não está pronta.",
+      "autoCaptured": "Capturada automaticamente. Revise as cores antes de confirmar esta face.",
+      "autoCapturing": "Capturando automaticamente a face estável...",
+      "autoPaused": "Auto scan pausado. Use Tirar foto quando a face estiver visível.",
+      "cameraFrameFailed": "Não foi possível ler um quadro da câmera. Tente de novo.",
+      "cameraNotReady": "A câmera ainda não está pronta.",
+      "captured": "Foto capturada. Revise as cores antes de confirmar esta face.",
+      "capturingPhoto": "Capturando foto...",
+      "centerMismatchFallback": "O centro capturado não corresponde a esta etapa. Tire a foto de novo.",
+      "centerMismatchWithColors": "O centro parece {{detectedColor}}{{confidence}}, mas esta etapa espera {{expectedColor}}. Gire para a face esperada e tire a foto de novo antes de confirmar.",
+      "confirmAllFaces": "Confirme as seis faces e verifique se cada cor aparece exatamente 9 vezes.",
+      "confidenceSuffix": " ({{confidence}}% de confiança)",
+      "detectedUncertain": "{{count}} cores detectadas estão incertas. Revise os quadrados destacados ou tire a foto de novo.",
+      "faceOutlineWeak": "O contorno da face está fraco; mantenha o cubo plano dentro da guia.",
+      "genericRejected": "O cubo escaneado foi rejeitado. Revise as cores confirmadas.",
+      "lowConfidence": "A confiança da detecção está baixa.",
+      "manualDetectionFailed": "Não foi possível detectar uma face do cubo. Tire a foto de novo ou preencha a grade manualmente.",
+      "qualityBlurry": "Segure o cubo firme para uma foto mais nítida.",
+      "qualityBright": "Reduza o brilho antes de escanear.",
+      "qualityDark": "Adicione mais luz antes de escanear.",
+      "solveFailed": "A requisição para resolver o scan falhou.",
+      "stillLooking": "Ainda procurando a face do cubo. Mantenha a face inteira visível e deixe o auto scan tentar de novo."
+    },
+    "modal": {
+      "confirmed": "{{count}} confirmadas",
+      "description": "Capture uma face por vez com a cor de topo solicitada. A solução usa as cores que você confirmar.",
+      "dismiss": "Fechar scan do cubo",
+      "expectedCenter": "Centro esperado: {{color}}",
+      "faceProgress": "Face {{current}} de {{total}}",
+      "keepAtTop": "Mantenha no topo: {{color}}",
+      "title": "Escanear cubo"
+    },
+    "settings": {
+      "dismiss": "Fechar ajustes da solução",
+      "hint": "Esses valores também atualizam os controles de solução da página.",
+      "intro": "{{message}}. Aumente os limites e tente de novo sem escanear o cubo novamente.",
+      "kicker": "O scan precisa de mais orçamento",
+      "title": "Ajustar limites da solução"
+    },
+    "validation": {
+      "centerColorMismatch": "A cor central deve corresponder à face escaneada.",
+      "colorAppearsMoreThanNine": "{{color}} aparece mais de 9 vezes.",
+      "confirmAllNineColors": "Confirme as 9 cores antes de continuar."
+    },
+    "warnings": {
+      "face_detection_rejected": "A detecção da face foi rejeitada. Mantenha a face plana e centralizada.",
+      "image_blurry": "A imagem está borrada. Segure o cubo firme.",
+      "image_too_bright": "Há brilho demais. Reduza reflexos fortes.",
+      "image_too_dark": "Está escuro demais. Adicione mais luz.",
+      "low_confidence_sticker": "Um ou mais adesivos estão incertos. Revise os quadrados destacados.",
+      "using_center_guide_fallback": "Mantenha o cubo inteiro visível dentro da guia.",
+      "weak_face_contour": "O contorno da face está fraco. Mantenha o cubo plano dentro da guia."
+    }
+  },
+  "solve": {
+    "details": {
+      "columns": {
+        "meaning": "Significado",
+        "text": "Texto"
+      },
+      "dismiss": "Fechar detalhes do solver",
+      "elapsedLabel": "encontrado em {{elapsed}}",
+      "elapsedMeaning": "O tempo de busca no backend para esta solução. Não inclui o tempo total da UI, latência de rede ou renderização do cubo.",
+      "maxNodesConfigured": "limite de {{nodes}} nós",
+      "maxNodesUnlimited": "sem limite de nós configurado",
+      "movesLabel": "{{count}} movimentos",
+      "nodesLabel": "{{nodes}} nós",
+      "nodesMeaning": "O solver explorou essa quantidade de nós internos de busca antes de encontrar a solução. Esta execução usou {{maxNodesLabel}}.",
+      "replayNotVerified": "replay não verificado",
+      "replayVerified": "replay verificado",
+      "replayVerifiedMeaning": "Depois de encontrar os movimentos, o backend os reproduziu no cubo embaralhado e confirmou que o cubo fica resolvido.",
+      "search": "Busca",
+      "solution": "Solução",
+      "solutionLengthMeaning": "O tamanho da solução retornada. Cada token de notação conta como um movimento, incluindo meias-voltas como R2 ou B2.",
+      "subtitle": "Estas métricas descrevem como o backend encontrou e verificou esta solução.",
+      "tables": {
+        "available": {
+          "label": "tabelas disponíveis",
+          "meaning": "As tabelas de poda pré-geradas exigidas por esta estratégia estavam disponíveis. Elas ajudam a podar a busca."
+        },
+        "corrupt_or_incompatible": {
+          "label": "tabelas corrompidas ou incompatíveis",
+          "meaning": "As tabelas de poda exigidas existem, mas não correspondem ao formato ou metadados esperados, então devem ser geradas novamente."
+        },
+        "not_required": {
+          "label": "tabelas não necessárias",
+          "meaning": "Esta estratégia não exige tabelas de poda geradas."
+        },
+        "unavailable": {
+          "label": "tabelas indisponíveis",
+          "meaning": "As tabelas de poda exigidas não estavam disponíveis no servidor da API."
+        }
+      },
+      "time": "Tempo",
+      "title": "Detalhes do solver"
+    },
+    "errors": {
+      "detail": {
+        "generated_tables_corrupt": "Gere novamente as tabelas de poda nativas; os artefatos atuais da API não correspondem ao engine Rust.",
+        "generated_tables_unavailable": "Gere as tabelas de poda nativas e inicie npm run api:dev antes de resolver.",
+        "invalid_input_orientation_hint": "Verifique a orientação do scan: capture verde, vermelho, azul e laranja com branco no topo; capture branco e amarelo com verde no topo.",
+        "not_found_within_limits": "{{strategy}} explorou {{nodes}} nós com máximo de {{maxDepth}} movimentos."
+      },
+      "errorKind": {
+        "duplicate_corner": "O cubo escaneado tem uma peça de canto duplicada.",
+        "duplicate_corner_stickers": "O cubo escaneado tem adesivos de canto duplicados.",
+        "duplicate_edge": "O cubo escaneado tem uma peça de aresta duplicada.",
+        "duplicate_edge_stickers": "O cubo escaneado tem adesivos de aresta duplicados.",
+        "generated_tables_unavailable": "A API não carregou as tabelas de poda geradas exigidas por esta estratégia.",
+        "invalid_center_sticker": "Um ou mais adesivos centrais não correspondem a um layout válido de cubo.",
+        "invalid_corner_orientation": "A orientação dos cantos escaneados é inválida.",
+        "invalid_corner_orientation_sum": "As torções dos cantos escaneados não formam um cubo solucionável.",
+        "invalid_corner_sticker_order": "Um canto escaneado tem ordem de adesivos inválida.",
+        "invalid_edge_orientation": "A orientação das arestas escaneadas é inválida.",
+        "invalid_edge_orientation_sum": "As inversões das arestas escaneadas não formam um cubo solucionável.",
+        "invalid_face_count": "As cores do cubo devem aparecer exatamente 9 vezes cada.",
+        "invalid_length": "O estado do cubo tem o número errado de adesivos.",
+        "invalid_move_notation": "Use notação padrão, como R, U, R' ou U2.",
+        "invalid_permutation_parity": "As peças escaneadas têm paridade de permutação impossível.",
+        "invalid_symbol": "O estado do cubo contém um símbolo de cor inválido.",
+        "max_depth_exceeds_limit": "O máximo de movimentos excede o limite de segurança da API.",
+        "max_nodes_exceeds_limit": "O máximo de nós excede o limite de segurança da API.",
+        "missing_corner": "Falta uma peça de canto no cubo escaneado.",
+        "missing_edge": "Falta uma peça de aresta no cubo escaneado.",
+        "notation_too_large": "A notação do embaralhamento é grande demais.",
+        "unknown_corner_stickers": "O cubo escaneado contém uma combinação desconhecida de cores de canto.",
+        "unknown_edge_stickers": "O cubo escaneado contém uma combinação desconhecida de cores de aresta.",
+        "unsupported_strategy": "A estratégia de solver selecionada não é suportada por esta API.",
+        "unverified_solution": "O solver retornou uma solução que falhou na verificação por replay."
+      },
+      "status": {
+        "api_error": "A requisição de solução da API falhou",
+        "generated_tables_corrupt": "Tabelas da API two-phase gerada estão corrompidas ou incompatíveis",
+        "generated_tables_unavailable": "Tabelas two-phase geradas indisponíveis na API",
+        "invalid_input": "Estado do cubo inválido",
+        "invalid_limits": "Os limites do solver excedem os limites de segurança da API",
+        "invalid_notation": "Embaralhamento inválido",
+        "not_found_within_limits": "Nenhuma solução dentro dos limites configurados",
+        "request_too_large": "A requisição de solução é grande demais",
+        "unsupported_strategy": "Estratégia de solver não suportada",
+        "unverified_solution": "A solução do solver falhou na verificação por replay"
+      }
+    },
+    "form": {
+      "maxMoves": "Máx. movimentos",
+      "maxNodesMillion": "Máx. nós (M)",
+      "scanCube": "Escanear cubo com a câmera",
+      "scramble": "Embaralhamento",
+      "solve": "Resolver"
+    },
+    "playback": {
+      "ariaLabel": "Reprodução da solução",
+      "currentMove": "Movimento {{step}}: {{move}}",
+      "nextMove": "Próximo movimento",
+      "previousMove": "Movimento anterior",
+      "scramble": "Embaralhamento",
+      "solutionStep": "Etapa da solução",
+      "solved": " resolvido"
+    },
+    "result": {
+      "foundIn": "encontrado em {{elapsed}}",
+      "seeMore": "ver mais",
+      "solved": "Resolvido",
+      "successMeta": "{{count}} movimentos - {{elapsed}} -"
+    },
+    "strategies": {
+      "generated-two-phase": "Solver two-phase gerado",
+      "generated-two-phase-multiprobe": "Solver two-phase gerado multiprobe",
+      "generated-two-phase-quality": "Solver two-phase gerado de qualidade",
+      "meaningDefault": "A estratégia determinística do backend usada nesta requisição. É lógica de busca, não IA generativa.",
+      "meaningGeneratedTwoPhase": "A estratégia usada. Gerado não significa IA generativa; é um solver two-phase apoiado por tabelas de poda pré-geradas. Modos de qualidade tentam soluções mais curtas antes de cair no máximo configurado."
+    },
+    "validation": {
+      "oneOf": "{{label}} deve ser um destes valores: {{options}}",
+      "required": "{{label}} é obrigatório",
+      "wholeNumber": "{{label}} deve ser um número inteiro",
+      "withinLimit": "{{label}} deve ser {{limit}} ou menos"
+    }
+  }
+}

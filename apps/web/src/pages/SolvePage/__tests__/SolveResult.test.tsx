@@ -97,7 +97,7 @@ describe('SolveResult', () => {
     ['generated_tables_unavailable', 'Generated two-phase tables unavailable on the API'],
     ['generated_tables_corrupt', 'Generated two-phase API tables corrupt or incompatible'],
     ['api_error', 'API solve request failed'],
-    ['unsupported_strategy', 'unsupported_strategy detail'],
+    ['unsupported_strategy', 'Unsupported solver strategy'],
   ] as const)('renders %s failures', (status, message) => {
     render(<SolveResult error={null} result={failureResult(status)} solving={false} />)
 

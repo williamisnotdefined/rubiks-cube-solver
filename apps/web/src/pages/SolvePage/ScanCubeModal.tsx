@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAnalyzeScanFace, type AnalyzeScanFaceResponse, type RgbColor } from '@api/scan'
 import type { ScanFaceSymbol, ScanFacesPayload, SolveResult } from '@api/solver/types'
 import { Button } from '@components/Button'
@@ -21,6 +22,14 @@ import {
   type ScanFaces,
   type ScanSticker,
 } from './scanState'
+import {
+  scanColorLabel,
+  scanFaceDraftValidationMessage,
+  scanFaceInstruction,
+  scanFaceLabel,
+  scanFaceTopLabel,
+} from './scanTranslations'
+import { solveErrorDetail, solveErrorMessage } from './solveMessages'
 import { useCameraStream } from './hooks/useCameraStream'
 import { useLiveScanPreview } from './hooks/useLiveScanPreview'
 
@@ -44,6 +53,7 @@ export function ScanCubeModal({
   onClose,
   onSolve,
 }: ScanCubeModalProps) {
+  const { t } = useTranslation()
   const titleId = useId()
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const takePhotoRef = useRef<((source?: 'auto' | 'manual') => Promise<void>) | undefined>(undefined)
@@ -63,10 +73,11 @@ export function ScanCubeModal({
   const [message, setMessage] = useState<string | undefined>()
   const completePayload = scanFacesToPayload(faces)
   const draftValidation = validateScanFaceDraft(faces, currentFace.symbol, stickers)
+  const draftValidationMessage = scanFaceDraftValidationMessage(t, draftValidation)
   const centerValidation = scanAnalysis?.centerMismatch
-    ? centerMismatchMessage(scanAnalysis)
+    ? centerMismatchMessage(t, scanAnalysis)
     : undefined
-  const faceValidation = centerValidation ?? draftValidation
+  const faceValidation = centerValidation ?? draftValidationMessage
   const previewFaces: ScanFaces = {
     ...faces,
     [currentFace.symbol]: { symbol: currentFace.symbol, stickers },
@@ -96,7 +107,7 @@ export function ScanCubeModal({
     photoDataUrl === undefined
       ? autoScanEnabled
         ? liveMessage
-        : 'Auto scan paused. Use Take photo when the face is visible.'
+        : t('scan.messages.autoPaused')
       : faceValidation
   const canClearPhoto =
     photoDataUrl !== undefined ||
@@ -143,23 +154,23 @@ export function ScanCubeModal({
 
   async function handleTakePhoto(source: 'auto' | 'manual' = 'manual') {
     if (videoRef.current === null || camera.status !== 'ready') {
-      setMessage('Camera is not ready yet.')
+      setMessage(t('scan.messages.cameraNotReady'))
       return
     }
 
     resetLiveAutoCapture()
     setCapturing(true)
     setScanAnalysis(undefined)
-    setMessage(source === 'auto' ? 'Auto-capturing stable face...' : 'Capturing photo...')
+    setMessage(source === 'auto' ? t('scan.messages.autoCapturing') : t('scan.messages.capturingPhoto'))
 
     try {
       const capture = captureScanImage(videoRef.current)
       if (capture === undefined) {
-        setMessage('Could not read a camera frame. Try again.')
+        setMessage(t('scan.messages.cameraFrameFailed'))
         return
       }
 
-      setMessage('Analyzing cube face...')
+      setMessage(t('scan.messages.analyzingFace'))
 
       const analysis = await analyzeScanFace.mutateAsync({
         expectedCenter: currentFace.symbol,
@@ -172,8 +183,8 @@ export function ScanCubeModal({
         setStickers(createEmptyScanStickers(currentFace.symbol))
         setMessage(
           isGuideFallbackAnalysis(analysis)
-            ? 'Still looking for the cube face. Keep the full face visible and let auto scan try again.'
-            : analysis.message ?? 'Could not detect a cube face. Retake the photo or fill the grid manually.',
+            ? t('scan.messages.stillLooking')
+            : scanAnalysisMessage(t, analysis) ?? t('scan.messages.manualDetectionFailed'),
         )
         return
       }
@@ -182,22 +193,22 @@ export function ScanCubeModal({
       const nextStickers = scanStickersFromAnalysis(analysis, currentFace.symbol)
       setStickers(nextStickers)
       const uncertain = lowConfidenceCount(nextStickers)
-      const centerMessage = analysis.centerMismatch ? centerMismatchMessage(analysis) : undefined
-      const qualityMessage = scanQualityMessage(analysis)
+      const centerMessage = analysis.centerMismatch ? centerMismatchMessage(t, analysis) : undefined
+      const qualityMessage = scanQualityMessage(t, analysis)
       const captureMessage =
         source === 'auto'
-          ? 'Captured automatically. Review the colors before confirming this face.'
-          : 'Photo captured. Review the colors before confirming this face.'
+          ? t('scan.messages.autoCaptured')
+          : t('scan.messages.captured')
       const detectionMessage =
         uncertain > 0
-          ? `${uncertain} detected colors are uncertain. Review the highlighted squares or retake the photo.`
+          ? t('scan.messages.detectedUncertain', { count: uncertain })
           : captureMessage
       setMessage(
         [centerMessage, qualityMessage, detectionMessage].filter(Boolean).join(' '),
       )
     } catch (error) {
       setStickers(createEmptyScanStickers(currentFace.symbol))
-      setMessage(error instanceof Error ? error.message : 'The scan analysis request failed.')
+      setMessage(error instanceof Error ? error.message : t('scan.messages.analysisFailed'))
     } finally {
       setCapturing(false)
     }
@@ -242,8 +253,8 @@ export function ScanCubeModal({
       return
     }
 
-    if (draftValidation !== undefined) {
-      setMessage(draftValidation)
+    if (draftValidationMessage !== undefined) {
+      setMessage(draftValidationMessage)
       return
     }
 
@@ -262,18 +273,18 @@ export function ScanCubeModal({
       return
     }
 
-    setMessage('All faces are confirmed. Solve the scanned cube when ready.')
+    setMessage(t('scan.messages.allFacesConfirmed'))
   }
 
   async function handleSolveScan() {
     const payload = scanFacesToPayload(faces)
     if (payload === undefined) {
-      setMessage('Confirm all six faces and make sure each color appears exactly 9 times.')
+      setMessage(t('scan.messages.confirmAllFaces'))
       return
     }
 
     if (!apiReady) {
-      setMessage('The API is not ready yet.')
+      setMessage(t('scan.messages.apiNotReady'))
       return
     }
 
@@ -289,12 +300,12 @@ export function ScanCubeModal({
     const payload = scanFacesToPayload(faces)
     if (payload === undefined) {
       setLimitsFailureResult(undefined)
-      setMessage('Confirm all six faces and make sure each color appears exactly 9 times.')
+      setMessage(t('scan.messages.confirmAllFaces'))
       return
     }
 
     if (!apiReady) {
-      setMessage('The API is not ready yet.')
+      setMessage(t('scan.messages.apiNotReady'))
       return
     }
 
@@ -317,20 +328,24 @@ export function ScanCubeModal({
 
       if (isSolveLimitsFailure(result)) {
         setLimitsFailureResult(result)
-        setMessage(result.message)
+        setMessage(solveErrorMessage(result, t))
         return
       }
 
-      setMessage(result?.message ?? 'The scanned cube was rejected. Review the confirmed colors.')
+      setMessage(
+        result === undefined
+          ? t('scan.messages.genericRejected')
+          : solveErrorDetail(result, t) ?? solveErrorMessage(result, t),
+      )
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'The scan solve request failed.')
+      setMessage(error instanceof Error ? error.message : t('scan.messages.solveFailed'))
     }
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-3 py-6 sm:px-6">
       <button
-        aria-label="Dismiss scan cube"
+        aria-label={t('scan.modal.dismiss')}
         className="absolute inset-0 bg-[#070707]/90"
         type="button"
         onClick={onClose}
@@ -344,14 +359,14 @@ export function ScanCubeModal({
         <div className="flex items-start justify-between gap-4">
           <div className="grid gap-1">
             <h2 className="text-lg font-extrabold uppercase tracking-[0.16em]" id={titleId}>
-              Scan cube
+              {t('scan.modal.title')}
             </h2>
             <p className="text-sm font-semibold text-[#a8a8a8]">
-              Capture one face at a time with the requested top color. The solution uses the colors you confirm.
+              {t('scan.modal.description')}
             </p>
           </div>
           <Button className="min-h-10 px-4 py-2" type="button" variant="secondary" onClick={onClose}>
-            Close
+            {t('common.close')}
           </Button>
         </div>
 
@@ -360,21 +375,28 @@ export function ScanCubeModal({
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
                 <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
-                  Face {currentFaceIndex + 1} of {scanFaceOrder.length}
+                  {t('scan.modal.faceProgress', {
+                    current: currentFaceIndex + 1,
+                    total: scanFaceOrder.length,
+                  })}
                 </p>
-                <h3 className="mt-1 text-xl font-extrabold">{currentFace.label}</h3>
+                <h3 className="mt-1 text-xl font-extrabold">{scanFaceLabel(t, currentFace.symbol)}</h3>
                 <p className="mt-1 text-sm font-semibold leading-relaxed text-[#a8a8a8]">
-                  {currentFace.instruction}
+                  {scanFaceInstruction(t, currentFace.symbol)}
                 </p>
                 <p className="mt-1 text-xs font-extrabold uppercase tracking-[0.16em] text-[#f7f7f7]">
-                  Expected center: {scanSymbolDetails[currentFace.symbol].label}
+                  {t('scan.modal.expectedCenter', {
+                    color: scanColorLabel(t, currentFace.symbol),
+                  })}
                 </p>
                 <p className="mt-1 text-xs font-extrabold uppercase tracking-[0.16em] text-[#f7f7f7]">
-                  Keep at top: {currentFace.topLabel}
+                  {t('scan.modal.keepAtTop', {
+                    color: scanFaceTopLabel(t, currentFace.symbol),
+                  })}
                 </p>
               </div>
               <span className="border border-[#2b2b2b] bg-[#171717] px-3 py-2 text-xs font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
-                {confirmedFaceCount(faces)} confirmed
+                {t('scan.modal.confirmed', { count: confirmedFaceCount(faces) })}
               </span>
             </div>
 
@@ -401,7 +423,7 @@ export function ScanCubeModal({
                 disabled={photoDataUrl !== undefined || capturing || camera.status !== 'ready'}
                 onClick={handleAutoScanToggle}
               >
-                {autoScanEnabled ? 'Auto scan on' : 'Auto scan off'}
+                {autoScanEnabled ? t('scan.actions.autoScanOn') : t('scan.actions.autoScanOff')}
               </Button>
               <Button
                 className="min-h-10 px-4 py-2"
@@ -410,7 +432,11 @@ export function ScanCubeModal({
                 disabled={camera.status !== 'ready' || capturing}
                 onClick={() => void handleTakePhoto('manual')}
               >
-                {capturing ? 'Analyzing' : photoDataUrl === undefined ? 'Take photo' : 'Retake photo'}
+                {capturing
+                  ? t('scan.actions.analyzing')
+                  : photoDataUrl === undefined
+                    ? t('scan.actions.takePhoto')
+                    : t('scan.actions.retakePhoto')}
               </Button>
               <Button
                 className="min-h-10 px-4 py-2"
@@ -419,7 +445,7 @@ export function ScanCubeModal({
                 disabled={!canClearPhoto || capturing}
                 onClick={handleClearPhoto}
               >
-                Clear photo
+                {t('scan.actions.clearPhoto')}
               </Button>
               <Button
                 className="min-h-10 px-4 py-2"
@@ -428,7 +454,7 @@ export function ScanCubeModal({
                 disabled={faceValidation !== undefined}
                 onClick={handleConfirmFace}
               >
-                Confirm face
+                {t('scan.actions.confirmFace')}
               </Button>
             </div>
           </div>
@@ -441,7 +467,7 @@ export function ScanCubeModal({
               onStickerColorChange={handleStickerColorChange}
             />
             <div className="grid gap-2 border border-[#2b2b2b] bg-[#171717] p-3 text-sm font-semibold text-[#a8a8a8]">
-              <span className="text-xs font-extrabold uppercase tracking-[0.16em]">Color count</span>
+              <span className="text-xs font-extrabold uppercase tracking-[0.16em]">{t('scan.editor.colorCount')}</span>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {scanSymbols.map((symbol) => {
                   const details = scanSymbolDetails[symbol]
@@ -452,7 +478,7 @@ export function ScanCubeModal({
                         className="size-3 border border-[#2b2b2b]"
                         style={{ backgroundColor: details.background }}
                       />
-                      {details.label}: {previewCounts[symbol]}/9
+                      {scanColorLabel(t, symbol)}: {previewCounts[symbol]}/9
                     </span>
                   )
                 })}
@@ -462,17 +488,17 @@ export function ScanCubeModal({
               {message ??
                 solveDisabledReason ??
                 scannerMessage ??
-                'Select a square, then pick a color to correct it.'}
+                t('scan.editor.selectSquareHint')}
             </p>
             <Button
-              aria-label={solving ? 'Loading' : undefined}
+              aria-label={solving ? t('common.loading') : undefined}
               type="button"
               disabled={
                 completePayload === undefined || !apiReady || solving || solveDisabledReason !== undefined
               }
               onClick={handleSolveScan}
             >
-              {solving ? <Loader3x3 decorative className="size-8" registerDelayMs={150} /> : 'Solve scanned cube'}
+              {solving ? <Loader3x3 decorative className="size-8" registerDelayMs={150} /> : t('scan.actions.solveScannedCube')}
             </Button>
           </div>
         </div>
@@ -500,50 +526,86 @@ function isGuideFallbackAnalysis(analysis: AnalyzeScanFaceResponse): boolean {
   return analysis.detectionMode === 'guide_fallback' || analysis.detectionMode === 'rejected'
 }
 
-function centerMismatchMessage(analysis: AnalyzeScanFaceResponse): string {
+function centerMismatchMessage(
+  t: ReturnType<typeof useTranslation>['t'],
+  analysis: AnalyzeScanFaceResponse,
+): string {
   const detectedSymbol = analysis.detectedCenter
   const expectedSymbol = analysis.expectedCenter
   const confidence =
     analysis.detectedCenterConfidence > 0
-      ? ` (${Math.round(analysis.detectedCenterConfidence * 100)}% confidence)`
+      ? t('scan.messages.confidenceSuffix', {
+          confidence: Math.round(analysis.detectedCenterConfidence * 100),
+        })
       : ''
 
   if (detectedSymbol === undefined || expectedSymbol === undefined) {
-    return analysis.message ?? 'Captured center does not match this scan step. Retake the photo.'
+    return t('scan.messages.centerMismatchFallback')
   }
 
-  return `Center looks ${scanSymbolDetails[detectedSymbol].label}${confidence}, but this step expects ${scanSymbolDetails[expectedSymbol].label}. Rotate to the expected face and retake the photo before confirming.`
+  return t('scan.messages.centerMismatchWithColors', {
+    confidence,
+    detectedColor: scanColorLabel(t, detectedSymbol),
+    expectedColor: scanColorLabel(t, expectedSymbol),
+  })
 }
 
-function scanQualityMessage(analysis: AnalyzeScanFaceResponse): string | undefined {
+function scanQualityMessage(
+  t: ReturnType<typeof useTranslation>['t'],
+  analysis: AnalyzeScanFaceResponse,
+): string | undefined {
   const warnings = new Set([...(analysis.qualityWarnings ?? []), ...(analysis.warnings ?? [])])
   const messages: string[] = []
 
   if (analysis.detectionMode === 'guide_fallback') {
-    messages.push('The face outline was weak; keep the cube flat inside the guide.')
+    messages.push(t('scan.messages.faceOutlineWeak'))
   }
 
   if (analysis.faceConfidence > 0 && analysis.faceConfidence < 0.55) {
-    messages.push('Detection confidence is low.')
+    messages.push(t('scan.messages.lowConfidence'))
   }
 
   if (warnings.has('image_blurry')) {
-    messages.push('Hold the cube steady for a sharper photo.')
+    messages.push(t('scan.messages.qualityBlurry'))
   }
 
   if (warnings.has('image_too_dark')) {
-    messages.push('Add more light before scanning.')
+    messages.push(t('scan.messages.qualityDark'))
   }
 
   if (warnings.has('image_too_bright')) {
-    messages.push('Reduce glare before scanning.')
+    messages.push(t('scan.messages.qualityBright'))
   }
 
   if (messages.length > 0) {
     return messages.join(' ')
   }
 
-  return analysis.status === 'low_confidence' ? analysis.message : undefined
+  return analysis.status === 'low_confidence' ? t('scan.messages.lowConfidence') : undefined
+}
+
+function scanAnalysisMessage(
+  t: ReturnType<typeof useTranslation>['t'],
+  analysis: AnalyzeScanFaceResponse,
+): string | undefined {
+  if (analysis.centerMismatch) {
+    return centerMismatchMessage(t, analysis)
+  }
+
+  const qualityMessage = scanQualityMessage(t, analysis)
+  if (qualityMessage !== undefined) {
+    return qualityMessage
+  }
+
+  if (analysis.status === 'face_not_found') {
+    return t('scan.messages.manualDetectionFailed')
+  }
+
+  if (analysis.status === 'invalid_image') {
+    return t('scan.messages.analysisFailed')
+  }
+
+  return undefined
 }
 
 function knownCenterReferencesFromFaces(faces: ScanFaces): Partial<Record<ScanFaceSymbol, RgbColor>> {

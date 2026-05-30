@@ -1,4 +1,5 @@
 import { useReducer, useRef, useState, type FormEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { RubiksCubeElement } from '@houstonp/rubiks-cube/view'
 import { useGetHealth, useGetStrategies, useSolveNotation, useSolveScan } from '@api/solver'
 import type { ScanFacesPayload } from '@api/solver/types'
@@ -20,9 +21,11 @@ import { preferredStrategyId } from './strategy'
 import {
   validateMaxNodesMillionOption,
   validateWholeNumberLimit,
+  validationErrorMessage,
 } from './validation'
 
 export function SolvePage() {
+  const { t } = useTranslation()
   const cubeRef = useRef<RubiksCubeElement | null>(null)
   const healthQuery = useGetHealth()
   const strategiesQuery = useGetStrategies({ enabled: healthQuery.data?.ok === true })
@@ -72,11 +75,17 @@ export function SolvePage() {
   const maxNodes = maxNodesMillion * nodesPerMillion
   const maxMovesValidation = validateWholeNumberLimit(
     maxMovesInput,
-    'Max moves',
+    t('solve.form.maxMoves'),
     maxMovesLimit,
   )
-  const maxNodesValidation = validateMaxNodesMillionOption(maxNodesMillionInput)
-  const localValidationMessage = maxMovesValidation ?? maxNodesValidation
+  const maxNodesValidation = validateMaxNodesMillionOption(
+    maxNodesMillionInput,
+    t('solve.form.maxNodesMillion'),
+  )
+  const localValidationMessage = validationErrorMessage(
+    t,
+    maxMovesValidation ?? maxNodesValidation,
+  )
   const disabled =
     !apiReady ||
     solving ||

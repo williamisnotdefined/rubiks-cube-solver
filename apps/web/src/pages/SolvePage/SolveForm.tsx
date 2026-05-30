@@ -1,4 +1,5 @@
 import type { FormEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Camera } from 'lucide-react'
 import { Button } from '@components/Button'
 import { Field } from '@components/Field'
@@ -37,6 +38,8 @@ export function SolveForm({
   onMaxNodesMillionChange,
   onSubmit,
 }: SolveFormProps) {
+  const { t } = useTranslation()
+
   return (
     <form
       className="solve-form grid w-full max-w-4xl gap-3"
@@ -44,7 +47,7 @@ export function SolveForm({
       onSubmit={onSubmit}
     >
       <div data-testid="scramble-row">
-        <Field className="field-primary" label="Scramble">
+        <Field className="field-primary" label={t('solve.form.scramble')}>
           <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
             <TextInput
               autoComplete="off"
@@ -55,7 +58,7 @@ export function SolveForm({
               onChange={(event) => onNotationChange(event.target.value)}
             />
             <Button
-              aria-label="Scan cube with camera"
+              aria-label={t('solve.form.scanCube')}
               className="aspect-square min-h-0 w-12 px-0 py-0"
               type="button"
               variant="secondary"
@@ -70,7 +73,7 @@ export function SolveForm({
         className="grid gap-3 sm:grid-cols-[minmax(0,10rem)_minmax(0,12rem)_auto] sm:items-end"
         data-testid="limits-row"
       >
-        <Field className="field-depth" label="Max moves">
+        <Field className="field-depth" label={t('solve.form.maxMoves')}>
           <TextInput
             aria-invalid={maxMovesInvalid || undefined}
             className="depth-input text-center"
@@ -83,7 +86,7 @@ export function SolveForm({
             onChange={(event) => onMaxMovesChange(event.target.value)}
           />
         </Field>
-        <Field className="field-nodes" label="Max nodes (M)">
+        <Field className="field-nodes" label={t('solve.form.maxNodesMillion')}>
           <SelectInput
             aria-invalid={maxNodesInvalid || undefined}
             className="nodes-input text-center"
@@ -98,12 +101,12 @@ export function SolveForm({
           </SelectInput>
         </Field>
         <Button
-          aria-label={buttonLoading ? 'Loading' : undefined}
+          aria-label={buttonLoading ? t('common.loading') : undefined}
           className="w-full sm:w-auto"
           type="submit"
           disabled={disabled}
         >
-          {buttonLoading ? <Loader3x3 decorative className="size-8" registerDelayMs={150} /> : 'Solve'}
+          {buttonLoading ? <Loader3x3 decorative className="size-8" registerDelayMs={150} /> : t('solve.form.solve')}
         </Button>
       </div>
     </form>

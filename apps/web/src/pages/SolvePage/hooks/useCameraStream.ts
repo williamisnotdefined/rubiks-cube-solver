@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 type CameraStreamState =
   | { status: 'idle' | 'loading' }
@@ -6,6 +7,7 @@ type CameraStreamState =
   | { status: 'error'; message: string }
 
 export function useCameraStream(active: boolean): CameraStreamState {
+  const { t } = useTranslation()
   const [state, setState] = useState<CameraStreamState>({ status: 'idle' })
 
   useEffect(() => {
@@ -19,7 +21,7 @@ export function useCameraStream(active: boolean): CameraStreamState {
 
     async function openCamera() {
       if (!navigator.mediaDevices?.getUserMedia) {
-        setState({ status: 'error', message: 'Camera access is not available in this browser.' })
+        setState({ status: 'error', message: t('scan.live.cameraUnavailable') })
         return
       }
 
@@ -42,7 +44,7 @@ export function useCameraStream(active: boolean): CameraStreamState {
         if (!cancelled) {
           setState({
             status: 'error',
-            message: 'Camera permission was denied or no camera was found.',
+            message: t('scan.live.cameraDenied'),
           })
         }
       }
@@ -54,7 +56,7 @@ export function useCameraStream(active: boolean): CameraStreamState {
       cancelled = true
       stream?.getTracks().forEach((track) => track.stop())
     }
-  }, [active])
+  }, [active, t])
 
   return state
 }

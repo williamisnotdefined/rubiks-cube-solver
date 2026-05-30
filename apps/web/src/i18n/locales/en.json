@@ -1,0 +1,284 @@
+{
+  "common": {
+    "applyAndRetry": "Apply and retry",
+    "close": "Close",
+    "loading": "Loading"
+  },
+  "cube": {
+    "visualization": "Cube visualization"
+  },
+  "scan": {
+    "actions": {
+      "analyzing": "Analyzing",
+      "autoScanOff": "Auto scan off",
+      "autoScanOn": "Auto scan on",
+      "clearPhoto": "Clear photo",
+      "confirmFace": "Confirm face",
+      "retakePhoto": "Retake photo",
+      "solveScannedCube": "Solve scanned cube",
+      "takePhoto": "Take photo"
+    },
+    "camera": {
+      "capturedFaceAlt": "Captured cube face",
+      "errorManualFallback": "{{message}} You can still fill the grid manually.",
+      "holdSteady": "hold steady {{count}}/{{target}}",
+      "lookingForCube": "looking for cube",
+      "modes": {
+        "contour": "contour",
+        "guide_fallback": "guide fallback",
+        "rejected": "rejected",
+        "sticker_grid": "sticker grid"
+      },
+      "opening": "Opening camera",
+      "statusWithConfidence": "{{mode}} {{confidence}}%",
+      "tracking": "tracking {{count}}/{{target}}"
+    },
+    "colors": {
+      "B": "Blue",
+      "D": "Yellow",
+      "F": "Green",
+      "L": "Orange",
+      "R": "Red",
+      "U": "White"
+    },
+    "editor": {
+      "colorCount": "Color count",
+      "orAlternative": "or {{colorInitial}}",
+      "paletteLabel": "Color palette",
+      "pickColor": "Pick a color",
+      "reviewColors": "Review colors",
+      "reviewGroupLabel": "Scanned face colors",
+      "selectSquareHint": "Select a square, then pick a color to correct it.",
+      "stickerLabel": "Sticker {{index}}{{color}}",
+      "uncertainColor": "uncertain color",
+      "uncertainMaybe": "maybe {{color}}"
+    },
+    "faces": {
+      "B": {
+        "instruction": "Capture the blue face with the white face at the top of the camera view.",
+        "label": "Blue face",
+        "top": "White"
+      },
+      "D": {
+        "instruction": "Capture the yellow face with the green face at the top of the camera view.",
+        "label": "Yellow face",
+        "top": "Green"
+      },
+      "F": {
+        "instruction": "Capture the green face with the white face at the top of the camera view.",
+        "label": "Green face",
+        "top": "White"
+      },
+      "L": {
+        "instruction": "Capture the orange face with the white face at the top of the camera view.",
+        "label": "Orange face",
+        "top": "White"
+      },
+      "R": {
+        "instruction": "Capture the red face with the white face at the top of the camera view.",
+        "label": "Red face",
+        "top": "White"
+      },
+      "U": {
+        "instruction": "Capture the white face with the green face at the top of the camera view.",
+        "label": "White face",
+        "top": "Green"
+      }
+    },
+    "live": {
+      "cameraDenied": "Camera permission was denied or no camera was found.",
+      "cameraUnavailable": "Camera access is not available in this browser.",
+      "centerMismatch": "Detected another center color. Rotate to the expected face.",
+      "faceDetected": "Face detected. Hold steady.",
+      "imageBlurry": "Image is blurry. Hold the cube steady.",
+      "looking": "Looking for cube face.",
+      "lookingKeepVisible": "Looking for cube face. Keep the cube fully visible.",
+      "scanFailed": "Live scan analysis failed.",
+      "stableCapturing": "Cube face is stable. Capturing photo...",
+      "tooBright": "Too much glare. Reduce bright reflections.",
+      "tooDark": "Too dark. Add more light."
+    },
+    "messages": {
+      "allFacesConfirmed": "All faces are confirmed. Solve the scanned cube when ready.",
+      "analysisFailed": "The scan analysis request failed.",
+      "analyzingFace": "Analyzing cube face...",
+      "apiNotReady": "The API is not ready yet.",
+      "autoCaptured": "Captured automatically. Review the colors before confirming this face.",
+      "autoCapturing": "Auto-capturing stable face...",
+      "autoPaused": "Auto scan paused. Use Take photo when the face is visible.",
+      "cameraFrameFailed": "Could not read a camera frame. Try again.",
+      "cameraNotReady": "Camera is not ready yet.",
+      "captured": "Photo captured. Review the colors before confirming this face.",
+      "capturingPhoto": "Capturing photo...",
+      "centerMismatchFallback": "Captured center does not match this scan step. Retake the photo.",
+      "centerMismatchWithColors": "Center looks {{detectedColor}}{{confidence}}, but this step expects {{expectedColor}}. Rotate to the expected face and retake the photo before confirming.",
+      "confirmAllFaces": "Confirm all six faces and make sure each color appears exactly 9 times.",
+      "confidenceSuffix": " ({{confidence}}% confidence)",
+      "detectedUncertain": "{{count}} detected colors are uncertain. Review the highlighted squares or retake the photo.",
+      "faceOutlineWeak": "The face outline was weak; keep the cube flat inside the guide.",
+      "genericRejected": "The scanned cube was rejected. Review the confirmed colors.",
+      "lowConfidence": "Detection confidence is low.",
+      "manualDetectionFailed": "Could not detect a cube face. Retake the photo or fill the grid manually.",
+      "qualityBlurry": "Hold the cube steady for a sharper photo.",
+      "qualityBright": "Reduce glare before scanning.",
+      "qualityDark": "Add more light before scanning.",
+      "solveFailed": "The scan solve request failed.",
+      "stillLooking": "Still looking for the cube face. Keep the full face visible and let auto scan try again."
+    },
+    "modal": {
+      "confirmed": "{{count}} confirmed",
+      "description": "Capture one face at a time with the requested top color. The solution uses the colors you confirm.",
+      "dismiss": "Dismiss scan cube",
+      "expectedCenter": "Expected center: {{color}}",
+      "faceProgress": "Face {{current}} of {{total}}",
+      "keepAtTop": "Keep at top: {{color}}",
+      "title": "Scan cube"
+    },
+    "settings": {
+      "dismiss": "Dismiss solve settings",
+      "hint": "These values also update the solve controls on the page.",
+      "intro": "{{message}}. Increase the limits and retry without scanning the cube again.",
+      "kicker": "Scan solve needs more budget",
+      "title": "Adjust solve limits"
+    },
+    "validation": {
+      "centerColorMismatch": "The center color must match the face being scanned.",
+      "colorAppearsMoreThanNine": "{{color}} appears more than 9 times.",
+      "confirmAllNineColors": "Confirm all 9 colors before continuing."
+    },
+    "warnings": {
+      "face_detection_rejected": "Face detection was rejected. Keep the face flat and centered.",
+      "image_blurry": "Image is blurry. Hold the cube steady.",
+      "image_too_bright": "Too much glare. Reduce bright reflections.",
+      "image_too_dark": "Too dark. Add more light.",
+      "low_confidence_sticker": "One or more stickers are uncertain. Review the highlighted squares.",
+      "using_center_guide_fallback": "Keep the cube fully visible inside the guide.",
+      "weak_face_contour": "The face outline is weak. Keep the cube flat inside the guide."
+    }
+  },
+  "solve": {
+    "details": {
+      "columns": {
+        "meaning": "Meaning",
+        "text": "Text"
+      },
+      "dismiss": "Dismiss solver details",
+      "elapsedLabel": "found in {{elapsed}}",
+      "elapsedMeaning": "The backend search time for this solve. It does not include total UI time, network latency, or cube rendering time.",
+      "maxNodesConfigured": "{{nodes}} node cap",
+      "maxNodesUnlimited": "no configured node cap",
+      "movesLabel": "{{count}} moves",
+      "nodesLabel": "{{nodes}} nodes",
+      "nodesMeaning": "The solver explored this many internal search nodes before finding the solution. This run used {{maxNodesLabel}}.",
+      "replayNotVerified": "replay not verified",
+      "replayVerified": "replay verified",
+      "replayVerifiedMeaning": "After finding the moves, the backend replayed them on the scrambled cube and confirmed that the cube becomes solved.",
+      "search": "Search",
+      "solution": "Solution",
+      "solutionLengthMeaning": "The returned solution length. Each notation token counts as one move, including half turns such as R2 or B2.",
+      "subtitle": "These metrics describe how the backend found and verified this solution.",
+      "tables": {
+        "available": {
+          "label": "tables available",
+          "meaning": "The pre-generated pruning tables required by this strategy were available. They help prune the search."
+        },
+        "corrupt_or_incompatible": {
+          "label": "tables corrupt or incompatible",
+          "meaning": "The required pruning tables exist but do not match the expected format or metadata, so they should be regenerated."
+        },
+        "not_required": {
+          "label": "tables not required",
+          "meaning": "This strategy does not require generated pruning tables."
+        },
+        "unavailable": {
+          "label": "tables unavailable",
+          "meaning": "The required pruning tables were not available on the API server."
+        }
+      },
+      "time": "Time",
+      "title": "Solver details"
+    },
+    "errors": {
+      "detail": {
+        "generated_tables_corrupt": "Regenerate native pruning tables; the current API artifacts do not match the Rust engine.",
+        "generated_tables_unavailable": "Generate native pruning tables and start npm run api:dev before solving.",
+        "invalid_input_orientation_hint": "Check scan orientation: capture green, red, blue, and orange with white on top; capture white and yellow with green on top.",
+        "not_found_within_limits": "{{strategy}} explored {{nodes}} nodes at max moves {{maxDepth}}."
+      },
+      "errorKind": {
+        "duplicate_corner": "The scanned cube has a duplicated corner piece.",
+        "duplicate_corner_stickers": "The scanned cube has duplicated corner stickers.",
+        "duplicate_edge": "The scanned cube has a duplicated edge piece.",
+        "duplicate_edge_stickers": "The scanned cube has duplicated edge stickers.",
+        "generated_tables_unavailable": "The API has not loaded the generated pruning tables required by this strategy.",
+        "invalid_center_sticker": "One or more center stickers do not match a valid cube layout.",
+        "invalid_corner_orientation": "The scanned corner orientation is invalid.",
+        "invalid_corner_orientation_sum": "The scanned corner twists do not form a solvable cube.",
+        "invalid_corner_sticker_order": "A scanned corner has an invalid sticker order.",
+        "invalid_edge_orientation": "The scanned edge orientation is invalid.",
+        "invalid_edge_orientation_sum": "The scanned edge flips do not form a solvable cube.",
+        "invalid_face_count": "The cube colors must appear exactly 9 times each.",
+        "invalid_length": "The cube state has the wrong number of stickers.",
+        "invalid_move_notation": "Use standard move notation such as R, U, R' or U2.",
+        "invalid_permutation_parity": "The scanned pieces have impossible permutation parity.",
+        "invalid_symbol": "The cube state contains an invalid color symbol.",
+        "max_depth_exceeds_limit": "Max moves exceeds the API safety limit.",
+        "max_nodes_exceeds_limit": "Max nodes exceeds the API safety limit.",
+        "missing_corner": "The scanned cube is missing a corner piece.",
+        "missing_edge": "The scanned cube is missing an edge piece.",
+        "notation_too_large": "The scramble notation is too large.",
+        "unknown_corner_stickers": "The scanned cube contains an unknown corner color combination.",
+        "unknown_edge_stickers": "The scanned cube contains an unknown edge color combination.",
+        "unsupported_strategy": "The selected solver strategy is not supported by this API.",
+        "unverified_solution": "The solver returned a solution that failed replay verification."
+      },
+      "status": {
+        "api_error": "API solve request failed",
+        "generated_tables_corrupt": "Generated two-phase API tables corrupt or incompatible",
+        "generated_tables_unavailable": "Generated two-phase tables unavailable on the API",
+        "invalid_input": "Invalid cube state",
+        "invalid_limits": "Solver limits exceed API safety caps",
+        "invalid_notation": "Invalid scramble",
+        "not_found_within_limits": "No solution within the configured limits",
+        "request_too_large": "Solve request is too large",
+        "unsupported_strategy": "Unsupported solver strategy",
+        "unverified_solution": "Solver solution failed replay verification"
+      }
+    },
+    "form": {
+      "maxMoves": "Max moves",
+      "maxNodesMillion": "Max nodes (M)",
+      "scanCube": "Scan cube with camera",
+      "scramble": "Scramble",
+      "solve": "Solve"
+    },
+    "playback": {
+      "ariaLabel": "Solution playback",
+      "currentMove": "Move {{step}}: {{move}}",
+      "nextMove": "Next move",
+      "previousMove": "Previous move",
+      "scramble": "Scramble",
+      "solutionStep": "Solution step",
+      "solved": " solved"
+    },
+    "result": {
+      "foundIn": "found in {{elapsed}}",
+      "seeMore": "see more",
+      "solved": "Solved",
+      "successMeta": "{{count}} moves - {{elapsed}} -"
+    },
+    "strategies": {
+      "generated-two-phase": "Generated two-phase solver",
+      "generated-two-phase-multiprobe": "Generated two-phase multiprobe solver",
+      "generated-two-phase-quality": "Generated two-phase quality solver",
+      "meaningDefault": "The deterministic backend solver strategy used for this request. It is search logic, not generative AI.",
+      "meaningGeneratedTwoPhase": "The strategy used. Generated does not mean generative AI; this is a two-phase solver backed by pre-generated pruning tables. Quality modes try shorter solution depths before falling back to the configured maximum."
+    },
+    "validation": {
+      "oneOf": "{{label}} must be one of {{options}}",
+      "required": "{{label}} is required",
+      "wholeNumber": "{{label}} must be a whole number",
+      "withinLimit": "{{label}} must be {{limit}} or less"
+    }
+  }
+}

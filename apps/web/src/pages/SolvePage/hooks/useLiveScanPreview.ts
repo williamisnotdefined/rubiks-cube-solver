@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   useAnalyzeScanFace,
   type AnalyzeScanFaceResponse,
@@ -40,12 +41,13 @@ export function useLiveScanPreview({
   knownCenters,
   videoRef,
 }: UseLiveScanPreviewOptions): UseLiveScanPreviewResult {
+  const { t } = useTranslation()
   const { mutateAsync } = useAnalyzeScanFace()
   const previousAnalysisRef = useRef<AnalyzeScanFaceResponse | undefined>(undefined)
   const stableFrameCountRef = useRef(0)
   const autoCaptureFiredRef = useRef(false)
   const [latestAnalysis, setLatestAnalysis] = useState<AnalyzeScanFaceResponse | undefined>()
-  const [message, setMessage] = useState('Looking for cube face.')
+  const [message, setMessage] = useState(() => t('scan.live.looking'))
   const [shouldAutoCapture, setShouldAutoCapture] = useState(false)
   const [stableFrameCount, setStableFrameCount] = useState(0)
   const [status, setStatus] = useState<LiveScanPreviewStatus>('idle')
@@ -60,11 +62,11 @@ export function useLiveScanPreview({
     stableFrameCountRef.current = 0
     autoCaptureFiredRef.current = false
     setLatestAnalysis(undefined)
-    setMessage('Looking for cube face.')
+    setMessage(t('scan.live.looking'))
     setShouldAutoCapture(false)
     setStableFrameCount(0)
     setStatus(enabled ? 'searching' : 'idle')
-  }, [enabled])
+  }, [enabled, t])
 
   useEffect(() => {
     resetTracking()
@@ -102,7 +104,7 @@ export function useLiveScanPreview({
       const video = videoRef.current
       if (video === null) {
         setStatus('searching')
-        setMessage('Looking for cube face.')
+        setMessage(t('scan.live.looking'))
         scheduleNextPreview()
         return
       }
@@ -110,7 +112,7 @@ export function useLiveScanPreview({
       const capture = captureScanPreviewImage(video)
       if (capture === undefined) {
         setStatus('searching')
-        setMessage('Looking for cube face.')
+        setMessage(t('scan.live.looking'))
         scheduleNextPreview()
         return
       }
@@ -130,7 +132,7 @@ export function useLiveScanPreview({
       } catch (error) {
         if (!cancelled) {
           setStatus('error')
-          setMessage(error instanceof Error ? error.message : 'Live scan analysis failed.')
+          setMessage(error instanceof Error ? error.message : t('scan.live.scanFailed'))
         }
       } finally {
         if (!cancelled) {
@@ -158,20 +160,20 @@ export function useLiveScanPreview({
       setLatestAnalysis(analysis)
       setStableFrameCount(nextStableFrameCount)
       setStatus(nextStatus)
-      setMessage(liveScanMessage(analysis, nextStatus))
+      setMessage(liveScanMessage(analysis, nextStatus, t))
 
       if (nextStableFrameCount >= stableFrameTarget && !autoCaptureFiredRef.current) {
         autoCaptureFiredRef.current = true
         setShouldAutoCapture(true)
         setStatus('holding_steady')
-        setMessage('Cube face is stable. Capturing photo...')
+        setMessage(t('scan.live.stableCapturing'))
       } else if (!autoCaptureFiredRef.current) {
         setShouldAutoCapture(false)
       }
     }
 
     setStatus('searching')
-    setMessage('Looking for cube face.')
+    setMessage(t('scan.live.looking'))
     scheduleNextPreview()
 
     return () => {
@@ -180,7 +182,7 @@ export function useLiveScanPreview({
         window.clearTimeout(timeoutId)
       }
     }
-  }, [enabled, expectedCenter, knownCenters, mutateAsync, videoRef])
+  }, [enabled, expectedCenter, knownCenters, mutateAsync, t, videoRef])
 
   return {
     latestAnalysis,
@@ -210,44 +212,48 @@ function liveStatusFromAnalysis(
 function liveScanMessage(
   analysis: AnalyzeScanFaceResponse,
   status: LiveScanPreviewStatus,
+  t: ReturnType<typeof useTranslation>['t'],
 ): string {
   if (status === 'holding_steady') {
-    return 'Cube face is stable. Capturing photo...'
+    return t('scan.live.stableCapturing')
   }
 
   if (analysis.centerMismatch) {
-    return 'Detected another center color. Rotate to the expected face.'
+    return t('scan.live.centerMismatch')
   }
 
-  const warningMessage = qualityWarningMessage(analysis)
+  const warningMessage = qualityWarningMessage(analysis, t)
   if (warningMessage !== undefined) {
     return warningMessage
   }
 
   if (status === 'tracking') {
-    return 'Face detected. Hold steady.'
+    return t('scan.live.faceDetected')
   }
 
-  return 'Looking for cube face.'
+  return t('scan.live.looking')
 }
 
-function qualityWarningMessage(analysis: AnalyzeScanFaceResponse): string | undefined {
+function qualityWarningMessage(
+  analysis: AnalyzeScanFaceResponse,
+  t: ReturnType<typeof useTranslation>['t'],
+): string | undefined {
   const warnings = new Set([...(analysis.qualityWarnings ?? []), ...(analysis.warnings ?? [])])
 
   if (warnings.has('image_blurry')) {
-    return 'Image is blurry. Hold the cube steady.'
+    return t('scan.live.imageBlurry')
   }
 
   if (warnings.has('image_too_dark')) {
-    return 'Too dark. Add more light.'
+    return t('scan.live.tooDark')
   }
 
   if (warnings.has('image_too_bright')) {
-    return 'Too much glare. Reduce bright reflections.'
+    return t('scan.live.tooBright')
   }
 
   if (analysis.detectionMode === 'guide_fallback') {
-    return 'Looking for cube face. Keep the cube fully visible.'
+    return t('scan.live.lookingKeepVisible')
   }
 
   return undefined
