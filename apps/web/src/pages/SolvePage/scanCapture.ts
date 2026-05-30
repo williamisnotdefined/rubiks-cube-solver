@@ -28,6 +28,6 @@ export function captureScanImage(video: HTMLVideoElement): CapturedScanImage | u
   context.drawImage(video, sourceX, sourceY, sourceSize, sourceSize, 0, 0, outputSize, outputSize)
 
   return {
-    photoDataUrl: canvas.toDataURL('image/jpeg', 0.82),
+    photoDataUrl: canvas.toDataURL('image/jpeg', 0.9),
   }
 }

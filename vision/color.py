@@ -10,6 +10,7 @@ from .schemas import RgbColor, ScanColorAlternative
 
 
 SCAN_SYMBOLS = ("U", "R", "F", "D", "L", "B")
+NEUTRAL_WHITE_THRESHOLD = 0.62
 DEFAULT_REFERENCES: dict[str, RgbColor] = {
     "U": RgbColor(r=248, g=250, b=252),
     "R": RgbColor(r=239, g=68, b=68),
@@ -39,17 +40,49 @@ def classify_rgb(rgb: RgbColor, known_centers: dict[str, RgbColor]) -> Classifie
     best_symbol, best_distance = distances[0]
     second_distance = distances[1][1]
     confidence = 1.0 if second_distance == 0 else (second_distance - best_distance) / second_distance
+    white_likelihood = neutral_white_likelihood(rgb)
 
-    alternatives = [
-        ScanColorAlternative(symbol=symbol, confidence=max(0.0, min(1.0, 1.0 - distance / 100.0)))
-        for symbol, distance in distances[:3]
-    ]
+    if white_likelihood >= NEUTRAL_WHITE_THRESHOLD:
+        u_distance = next(distance for symbol, distance in distances if symbol == "U")
+        nearest_non_u_distance = min(distance for symbol, distance in distances if symbol != "U")
+        u_distance_confidence = (
+            1.0
+            if nearest_non_u_distance == 0
+            else (nearest_non_u_distance - u_distance) / nearest_non_u_distance
+        )
+        distances = sorted(distances, key=lambda item: (item[0] != "U", item[1]))
+
+        return ClassifiedColor(
+            symbol="U",
+            confidence=clamp01(max(white_likelihood * 0.86, u_distance_confidence)),
+            alternatives=color_alternatives(distances),
+        )
 
     return ClassifiedColor(
         symbol=best_symbol,
-        confidence=max(0.0, min(1.0, confidence)),
-        alternatives=alternatives,
+        confidence=clamp01(confidence),
+        alternatives=color_alternatives(distances),
     )
+
+
+def color_alternatives(distances: list[tuple[str, float]]) -> list[ScanColorAlternative]:
+    return [
+        ScanColorAlternative(symbol=symbol, confidence=clamp01(1.0 - distance / 100.0))
+        for symbol, distance in distances[:3]
+    ]
+
+
+def neutral_white_likelihood(rgb: RgbColor) -> float:
+    hsv = rgb_to_hsv(rgb)
+    saturation = float(hsv[1])
+    value = float(hsv[2])
+
+    if value < 0.32 or saturation > 0.42:
+        return 0.0
+
+    neutral_score = 1.0 - saturation / 0.42
+    brightness_score = clamp01((value - 0.32) / 0.45)
+    return clamp01(neutral_score * 0.72 + brightness_score * 0.28)
 
 
 def sample_sticker_rgb(warped_bgr: np.ndarray, row: int, column: int) -> RgbColor:
@@ -119,3 +152,7 @@ def rgb_to_hsv(rgb: RgbColor) -> np.ndarray:
 def lab_distance(left: np.ndarray, right: np.ndarray) -> float:
     delta = left - right
     return float(np.sqrt(np.dot(delta, delta)))
+
+
+def clamp01(value: float) -> float:
+    return max(0.0, min(1.0, value))

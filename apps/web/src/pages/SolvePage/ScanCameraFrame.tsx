@@ -6,7 +6,9 @@ type ScanCameraStatus = 'idle' | 'loading' | 'ready' | 'error'
 type ScanCameraFrameProps = {
   cameraMessage?: string
   cameraStatus: ScanCameraStatus
+  detectionMode?: string | null
   faceQuad?: readonly ScanAnalysisPoint[]
+  faceConfidence?: number
   photoDataUrl?: string
   stickerPolygons?: readonly {
     confidence: number
@@ -19,7 +21,9 @@ type ScanCameraFrameProps = {
 export const ScanCameraFrame = memo(function ScanCameraFrame({
   cameraMessage,
   cameraStatus,
+  detectionMode,
   faceQuad = [],
+  faceConfidence,
   photoDataUrl,
   stickerPolygons = [],
   videoRef,
@@ -57,6 +61,11 @@ export const ScanCameraFrame = memo(function ScanCameraFrame({
             />
           ))}
         </svg>
+      )}
+      {photoDataUrl === undefined || detectionMode == null ? null : (
+        <div className="absolute left-2 top-2 border border-[#2b2b2b] bg-[#070707]/80 px-2 py-1 text-[0.65rem] font-extrabold uppercase tracking-[0.12em] text-[#f7f7f7]">
+          {detectionMode.replace('_', ' ')} {faceConfidence === undefined ? '' : `${Math.round(faceConfidence * 100)}%`}
+        </div>
       )}
       <div className="pointer-events-none absolute left-1/2 top-1/2 grid aspect-square w-[72%] -translate-x-1/2 -translate-y-1/2 grid-cols-3 grid-rows-3 gap-1 border border-[#f7f7f7]/80 p-1">
         {Array.from({ length: 9 }, (_, index) => (

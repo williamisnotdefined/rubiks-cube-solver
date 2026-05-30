@@ -393,6 +393,9 @@ async fn analyze_scan_face_route_rejects_invalid_center_before_proxy() {
         serde_json::from_slice(&body).expect("response should be JSON");
     assert!(!response.ok);
     assert_eq!(response.status, "invalid_image");
+    assert_eq!(response.face_confidence, 0.0);
+    assert!(response.detection_mode.is_none());
+    assert!(response.quality_warnings.is_empty());
 }
 
 #[tokio::test]

@@ -51,9 +51,17 @@ describe('scan state helpers', () => {
   })
 
   it('replaces a selected sticker with a manual color', () => {
-    const next = replaceScanSticker(createEmptyScanStickers('U'), 0, 'R')
+    const stickers = createEmptyScanStickers('U')
+    stickers[0] = {
+      alternatives: [{ confidence: 0.4, symbol: 'U' }],
+      confidence: 0.2,
+      source: 'detected',
+      symbol: 'B',
+    }
+    const next = replaceScanSticker(stickers, 0, 'R')
 
     expect(next[0]).toMatchObject({ symbol: 'R', source: 'manual' })
+    expect(next[0].alternatives).toBeUndefined()
   })
 })
 

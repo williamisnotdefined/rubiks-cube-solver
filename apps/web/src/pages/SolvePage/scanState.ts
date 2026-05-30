@@ -8,9 +8,15 @@ export type RgbColor = {
 
 export type ScanStickerSource = 'empty' | 'detected' | 'manual' | 'center'
 
+export type ScanStickerAlternative = {
+  symbol: ScanFaceSymbol
+  confidence: number
+}
+
 export type ScanSticker = {
   symbol?: ScanFaceSymbol
   rgb?: RgbColor
+  alternatives?: ScanStickerAlternative[]
   confidence: number
   source: ScanStickerSource
 }
@@ -167,16 +173,21 @@ export function replaceScanSticker(
   symbol: ScanFaceSymbol,
   source: ScanStickerSource = 'manual',
 ): ScanSticker[] {
-  return stickers.map((sticker, stickerIndex) =>
-    stickerIndex === index
-      ? {
-          ...sticker,
-          symbol,
-          confidence: 1,
-          source: stickerIndex === 4 ? 'center' : source,
-        }
-      : sticker,
-  )
+  return stickers.map((sticker, stickerIndex) => {
+    if (stickerIndex !== index) {
+      return sticker
+    }
+
+    const nextSticker: ScanSticker = {
+      ...sticker,
+      symbol,
+      confidence: 1,
+      source: stickerIndex === 4 ? 'center' : source,
+    }
+    delete nextSticker.alternatives
+
+    return nextSticker
+  })
 }
 
 export function confirmedFaceCount(faces: ScanFaces): number {

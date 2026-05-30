@@ -59,7 +59,7 @@ describe('ScanCubeModal', () => {
 
     await user.click(screen.getByRole('button', { name: 'Take photo' }))
 
-    expect(await screen.findByText(/Center looks Green, but this step expects White/)).toBeInTheDocument()
+    expect(await screen.findByText(/Center looks Green.*expects White/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Confirm face' })).toBeDisabled()
   })
 
@@ -99,13 +99,17 @@ function scanAnalysisResponse({ centerMismatch = false } = {}): AnalyzeScanFaceR
   return {
     centerMismatch,
     confidence: centerMismatch ? 0.8 : 1,
+    detectedCenterConfidence: centerMismatch ? 0.8 : 1,
     detectedCenter: centerMismatch ? 'F' : 'U',
+    detectionMode: 'contour',
     expectedCenter: 'U',
+    faceConfidence: 1,
     faceQuad: [],
     imageSize: { width: 640, height: 640 },
     message: centerMismatch ? 'Captured center does not match the expected face.' : undefined,
     ok: !centerMismatch,
     status: centerMismatch ? 'center_mismatch' : 'detected',
+    qualityWarnings: [],
     stickers: Array.from({ length: 9 }, (_, index) => ({
       alternatives: [],
       confidence: 1,

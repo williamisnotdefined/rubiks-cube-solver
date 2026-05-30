@@ -28,6 +28,8 @@ def test_detects_synthetic_front_face() -> None:
     assert response.ok
     assert response.status == "detected"
     assert response.detectedCenter == "F"
+    assert response.faceConfidence > 0.55
+    assert response.detectionMode in {"contour", "guide_fallback"}
     assert len(response.faceQuad) == 4
     assert [sticker.symbol for sticker in response.stickers] == [
         "L",
@@ -52,17 +54,44 @@ def test_reports_mismatched_center() -> None:
     assert response.detectedCenter == "F"
 
 
-def synthetic_face(symbols: list[str]) -> np.ndarray:
+def test_shaded_white_center_does_not_report_blue_mismatch() -> None:
+    image = synthetic_face(
+        ["R", "F", "B", "D", "U", "L", "R", "F", "B"],
+        color_overrides={4: (172, 181, 214)},
+    )
+    response = analyze_face(AnalyzeScanFaceRequest(expectedCenter="U", image=encode_image(image)))
+
+    assert response.ok
+    assert not response.centerMismatch
+    assert response.detectedCenter == "U"
+
+
+def test_rejects_blank_frame_instead_of_classifying_center_guide() -> None:
+    image = np.full((720, 720, 3), 180, dtype=np.uint8)
+    response = analyze_face(AnalyzeScanFaceRequest(expectedCenter="U", image=encode_image(image)))
+
+    assert not response.ok
+    assert response.status == "face_not_found"
+    assert response.detectionMode == "rejected"
+    assert response.faceConfidence == 0
+    assert response.stickers == []
+
+
+def synthetic_face(
+    symbols: list[str],
+    color_overrides: dict[int, tuple[int, int, int]] | None = None,
+) -> np.ndarray:
     image = np.full((720, 720, 3), 16, dtype=np.uint8)
     top_left = 120
     size = 480
     cell = size // 3
+    color_overrides = color_overrides or {}
 
     cv2.rectangle(image, (top_left - 8, top_left - 8), (top_left + size + 8, top_left + size + 8), (0, 0, 0), -1)
     for index, symbol in enumerate(symbols):
         row = index // 3
         column = index % 3
-        rgb = COLORS[symbol]
+        rgb = color_overrides.get(index, COLORS[symbol])
         bgr = (rgb[2], rgb[1], rgb[0])
         x0 = top_left + column * cell + 6
         y0 = top_left + row * cell + 6

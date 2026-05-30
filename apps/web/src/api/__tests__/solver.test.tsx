@@ -115,7 +115,11 @@ describe('solver API operations', () => {
       status: 'detected',
       centerMismatch: false,
       confidence: 1,
+      detectedCenterConfidence: 1,
+      detectionMode: 'contour',
+      faceConfidence: 1,
       faceQuad: [],
+      qualityWarnings: [],
       stickers: [],
       warnings: [],
     }
@@ -243,7 +247,11 @@ describe('solver React Query hooks', () => {
       status: 'detected',
       centerMismatch: false,
       confidence: 1,
+      detectedCenterConfidence: 1,
+      detectionMode: 'contour',
+      faceConfidence: 1,
       faceQuad: [],
+      qualityWarnings: [],
       stickers: [],
       warnings: [],
     })

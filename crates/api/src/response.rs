@@ -144,11 +144,19 @@ pub struct AnalyzeScanFaceResponse {
     #[serde(rename = "expectedCenter")]
     pub expected_center: Option<String>,
     pub confidence: f64,
+    #[serde(rename = "detectedCenterConfidence", default)]
+    pub detected_center_confidence: f64,
+    #[serde(rename = "faceConfidence", default)]
+    pub face_confidence: f64,
+    #[serde(rename = "detectionMode", default)]
+    pub detection_mode: Option<String>,
     #[serde(rename = "imageSize")]
     pub image_size: Option<ImageSizeResponse>,
     #[serde(rename = "faceQuad")]
     pub face_quad: Vec<PointResponse>,
     pub stickers: Vec<AnalyzedStickerResponse>,
+    #[serde(rename = "qualityWarnings", default)]
+    pub quality_warnings: Vec<String>,
     pub warnings: Vec<String>,
 }
 

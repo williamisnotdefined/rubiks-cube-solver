@@ -135,12 +135,13 @@ export function ScanCubeModal({
       setStickers(nextStickers)
       const uncertain = lowConfidenceCount(nextStickers)
       const centerMessage = analysis.centerMismatch ? centerMismatchMessage(analysis) : undefined
+      const qualityMessage = scanQualityMessage(analysis)
       const detectionMessage =
         uncertain > 0
-          ? `${uncertain} detected colors are uncertain. Review the highlighted squares.`
+          ? `${uncertain} detected colors are uncertain. Review the highlighted squares or retake the photo.`
           : 'Photo captured. Review the colors before confirming this face.'
       setMessage(
-        centerMessage === undefined ? detectionMessage : `${centerMessage} ${detectionMessage}`,
+        [centerMessage, qualityMessage, detectionMessage].filter(Boolean).join(' '),
       )
     } catch (error) {
       setStickers(createEmptyScanStickers(currentFace.symbol))
@@ -284,7 +285,9 @@ export function ScanCubeModal({
             <ScanCameraFrame
               cameraMessage={camera.status === 'error' ? camera.message : undefined}
               cameraStatus={camera.status}
+              detectionMode={scanAnalysis?.detectionMode}
               faceQuad={scanAnalysis?.faceQuad}
+              faceConfidence={scanAnalysis?.faceConfidence}
               photoDataUrl={photoDataUrl}
               stickerPolygons={scanAnalysis?.stickers}
               videoRef={videoRef}
@@ -371,12 +374,47 @@ export function ScanCubeModal({
 function centerMismatchMessage(analysis: AnalyzeScanFaceResponse): string {
   const detectedSymbol = analysis.detectedCenter
   const expectedSymbol = analysis.expectedCenter
+  const confidence =
+    analysis.detectedCenterConfidence > 0
+      ? ` (${Math.round(analysis.detectedCenterConfidence * 100)}% confidence)`
+      : ''
 
   if (detectedSymbol === undefined || expectedSymbol === undefined) {
     return analysis.message ?? 'Captured center does not match this scan step. Retake the photo.'
   }
 
-  return `Center looks ${scanSymbolDetails[detectedSymbol].label}, but this step expects ${scanSymbolDetails[expectedSymbol].label}. Rotate to the expected face and retake the photo before confirming.`
+  return `Center looks ${scanSymbolDetails[detectedSymbol].label}${confidence}, but this step expects ${scanSymbolDetails[expectedSymbol].label}. Rotate to the expected face and retake the photo before confirming.`
+}
+
+function scanQualityMessage(analysis: AnalyzeScanFaceResponse): string | undefined {
+  const warnings = new Set([...(analysis.qualityWarnings ?? []), ...(analysis.warnings ?? [])])
+  const messages: string[] = []
+
+  if (analysis.detectionMode === 'guide_fallback') {
+    messages.push('The face outline was weak; keep the cube flat inside the guide.')
+  }
+
+  if (analysis.faceConfidence > 0 && analysis.faceConfidence < 0.55) {
+    messages.push('Detection confidence is low.')
+  }
+
+  if (warnings.has('image_blurry')) {
+    messages.push('Hold the cube steady for a sharper photo.')
+  }
+
+  if (warnings.has('image_too_dark')) {
+    messages.push('Add more light before scanning.')
+  }
+
+  if (warnings.has('image_too_bright')) {
+    messages.push('Reduce glare before scanning.')
+  }
+
+  if (messages.length > 0) {
+    return messages.join(' ')
+  }
+
+  return analysis.status === 'low_confidence' ? analysis.message : undefined
 }
 
 function knownCenterReferencesFromFaces(faces: ScanFaces): Partial<Record<ScanFaceSymbol, RgbColor>> {
@@ -404,7 +442,11 @@ function scanStickersFromAnalysis(
     }
 
     stickers[analyzedSticker.index] = {
-      confidence: analyzedSticker.index === 4 ? 1 : analyzedSticker.confidence,
+      alternatives: analyzedSticker.alternatives,
+      confidence:
+        analyzedSticker.index === 4
+          ? analysis.detectedCenterConfidence || analysis.confidence
+          : analyzedSticker.confidence,
       rgb: analyzedSticker.rgb,
       source: analyzedSticker.index === 4 ? 'center' : 'detected',
       symbol: analyzedSticker.index === 4 ? centerSymbol : analyzedSticker.symbol,

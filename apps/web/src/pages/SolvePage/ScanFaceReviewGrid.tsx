@@ -23,6 +23,10 @@ export function ScanFaceReviewGrid({
           const details = sticker.symbol === undefined ? undefined : scanSymbolDetails[sticker.symbol]
           const selected = selectedIndex === index
           const lowConfidence = isLowConfidenceScanSticker(sticker, index)
+          const alternative = sticker.alternatives?.find(
+            (candidate) => candidate.symbol !== sticker.symbol,
+          )
+          const reviewLabel = stickerReviewLabel(index, details?.label, lowConfidence, alternative)
 
           return (
             <button
@@ -38,15 +42,21 @@ export function ScanFaceReviewGrid({
                   : { backgroundColor: details.background, color: details.foreground }
               }
               type="button"
-              aria-label={`Sticker ${index + 1}${details === undefined ? '' : ` ${details.label}`}`}
+              aria-label={reviewLabel}
               aria-pressed={selected}
               data-testid={`scan-sticker-${index}`}
               key={index}
+              title={reviewLabel}
               onClick={() => onSelect(index)}
             >
               {details?.label.slice(0, 1) ?? '?'}
               {lowConfidence ? (
                 <span className="absolute right-1 top-1 text-[0.65rem] leading-none">?</span>
+              ) : null}
+              {lowConfidence && alternative !== undefined ? (
+                <span className="absolute bottom-1 left-1 right-1 truncate text-[0.55rem] normal-case tracking-normal">
+                  or {scanSymbolDetails[alternative.symbol].label.slice(0, 1)}
+                </span>
               ) : null}
             </button>
           )
@@ -54,4 +64,24 @@ export function ScanFaceReviewGrid({
       </div>
     </div>
   )
+}
+
+function stickerReviewLabel(
+  index: number,
+  label: string | undefined,
+  lowConfidence: boolean,
+  alternative: NonNullable<ScanSticker['alternatives']>[number] | undefined,
+): string {
+  const base = `Sticker ${index + 1}${label === undefined ? '' : ` ${label}`}`
+
+  if (!lowConfidence) {
+    return base
+  }
+
+  if (alternative === undefined) {
+    return `${base}, uncertain color`
+  }
+
+  const alternativeLabel = scanSymbolDetails[alternative.symbol].label
+  return `${base}, uncertain color, maybe ${alternativeLabel}`
 }

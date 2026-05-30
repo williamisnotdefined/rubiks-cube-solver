@@ -22,8 +22,12 @@ export async function analyzeScanFace({
     message: result.statusText || 'The scan analysis request failed.',
     centerMismatch: false,
     confidence: 0,
+    detectedCenterConfidence: 0,
+    faceConfidence: 0,
+    detectionMode: 'rejected',
     faceQuad: [],
     stickers: [],
+    qualityWarnings: [],
     warnings: [],
   }
 }

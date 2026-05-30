@@ -42,12 +42,16 @@ export type AnalyzeScanFaceResponse = {
   detectedCenter?: ScanFaceSymbol
   expectedCenter?: ScanFaceSymbol
   confidence: number
+  detectedCenterConfidence: number
+  faceConfidence: number
+  detectionMode?: 'contour' | 'guide_fallback' | 'rejected' | string | null
   imageSize?: {
     width: number
     height: number
   }
   faceQuad: ScanAnalysisPoint[]
   stickers: AnalyzedScanSticker[]
+  qualityWarnings: string[]
   warnings: string[]
 }
 

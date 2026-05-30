@@ -2,17 +2,19 @@ from __future__ import annotations
 
 import base64
 import binascii
+import math
 
 import cv2
 import numpy as np
 
-from .color import SCAN_SYMBOLS, classify_rgb, sample_sticker_rgb
+from .color import SCAN_SYMBOLS, classify_rgb, neutral_white_likelihood, sample_sticker_rgb
 from .schemas import (
     AnalyzeScanFaceRequest,
     AnalyzeScanFaceResponse,
     AnalyzedSticker,
     ImageSize,
     Point,
+    RgbColor,
 )
 
 
@@ -20,7 +22,12 @@ MAX_IMAGE_DECODE_BYTES = 1_000_000
 MAX_PROCESSING_DIMENSION = 960
 WARP_SIZE = 600
 CENTER_MISMATCH_CONFIDENCE = 0.22
+CENTER_MISMATCH_WITHOUT_REFERENCE_CONFIDENCE = 0.45
 LOW_CONFIDENCE = 0.3
+LOW_FACE_CONFIDENCE = 0.55
+MIN_CONTOUR_FACE_CONFIDENCE = 0.34
+MIN_FALLBACK_GRID_CONFIDENCE = 0.36
+GUIDE_FALLBACK_MAX_CONFIDENCE = 0.62
 
 
 def analyze_face(request: AnalyzeScanFaceRequest) -> AnalyzeScanFaceResponse:
@@ -33,34 +40,40 @@ def analyze_face(request: AnalyzeScanFaceRequest) -> AnalyzeScanFaceResponse:
 
     image = resize_for_processing(image)
     height, width = image.shape[:2]
-    quad, warnings = detect_face_quad(image)
+    quality_warnings = image_quality_warnings(image)
+    quad, detection_warnings, detection_mode, face_confidence = detect_face_quad(image)
     if quad is None:
+        warnings = quality_warnings + detection_warnings
         return AnalyzeScanFaceResponse(
             ok=False,
             status="face_not_found",
             message="Could not find a 3x3 cube face. Retake the photo with the face flatter and centered.",
             expectedCenter=request.expectedCenter,
+            faceConfidence=face_confidence,
+            detectionMode=detection_mode,
             imageSize=ImageSize(width=width, height=height),
+            qualityWarnings=warnings,
             warnings=warnings,
         )
 
     ordered_quad = order_points(quad)
     warped = warp_face(image, ordered_quad)
     stickers = []
-    warnings = list(warnings)
+    warnings = quality_warnings + detection_warnings
 
     for index in range(9):
         row = index // 3
         column = index % 3
         rgb = sample_sticker_rgb(warped, row, column)
         classified = classify_rgb(rgb, request.knownCenters)
-        if index != 4 and classified.confidence < LOW_CONFIDENCE:
+        sticker_confidence = min(classified.confidence, face_confidence)
+        if index != 4 and sticker_confidence < LOW_CONFIDENCE:
             warnings.append(f"low_confidence_sticker_{index}")
         stickers.append(
             AnalyzedSticker(
                 index=index,
                 symbol=request.expectedCenter if index == 4 else classified.symbol,
-                confidence=1.0 if index == 4 else classified.confidence,
+                confidence=1.0 if index == 4 else sticker_confidence,
                 rgb=rgb,
                 polygon=sticker_polygon(ordered_quad, row, column, width, height),
                 alternatives=classified.alternatives,
@@ -69,11 +82,22 @@ def analyze_face(request: AnalyzeScanFaceRequest) -> AnalyzeScanFaceResponse:
 
     center_rgb = stickers[4].rgb
     center_classified = classify_rgb(center_rgb, request.knownCenters)
+    center_mismatch_confidence = (
+        CENTER_MISMATCH_CONFIDENCE
+        if request.expectedCenter in request.knownCenters
+        else CENTER_MISMATCH_WITHOUT_REFERENCE_CONFIDENCE
+    )
     center_mismatch = (
         center_classified.symbol != request.expectedCenter
-        and center_classified.confidence >= CENTER_MISMATCH_CONFIDENCE
+        and center_classified.confidence >= center_mismatch_confidence
+        and not expected_center_still_plausible(center_rgb, request.expectedCenter)
     )
-    status = "center_mismatch" if center_mismatch else "detected"
+    low_confidence = (
+        face_confidence < LOW_FACE_CONFIDENCE
+        or quality_warnings
+        or any(warning.startswith("low_confidence_sticker_") for warning in warnings)
+    )
+    status = "center_mismatch" if center_mismatch else "low_confidence" if low_confidence else "detected"
 
     return AnalyzeScanFaceResponse(
         ok=not center_mismatch,
@@ -81,15 +105,21 @@ def analyze_face(request: AnalyzeScanFaceRequest) -> AnalyzeScanFaceResponse:
         message=(
             "Captured center does not match the expected face. Retake the photo with the expected face visible."
             if center_mismatch
+            else "Photo captured with low confidence. Review highlighted squares or retake the photo."
+            if low_confidence
             else None
         ),
         centerMismatch=center_mismatch,
         detectedCenter=center_classified.symbol,
         expectedCenter=request.expectedCenter,
         confidence=center_classified.confidence,
+        detectedCenterConfidence=center_classified.confidence,
+        faceConfidence=face_confidence,
+        detectionMode=detection_mode,
         imageSize=ImageSize(width=width, height=height),
         faceQuad=normalize_polygon(ordered_quad, width, height),
         stickers=stickers,
+        qualityWarnings=warnings,
         warnings=warnings,
     )
 
@@ -122,7 +152,7 @@ def resize_for_processing(image: np.ndarray) -> np.ndarray:
     return cv2.resize(image, (int(width * scale), int(height * scale)), interpolation=cv2.INTER_AREA)
 
 
-def detect_face_quad(image: np.ndarray) -> tuple[np.ndarray | None, list[str]]:
+def detect_face_quad(image: np.ndarray) -> tuple[np.ndarray | None, list[str], str, float]:
     warnings: list[str] = []
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8)).apply(gray)
@@ -145,15 +175,64 @@ def detect_face_quad(image: np.ndarray) -> tuple[np.ndarray | None, list[str]]:
             continue
 
         quad = approx.reshape(4, 2).astype(np.float32)
-        score = area + grid_evidence_score(image, order_points(quad))
+        score = contour_face_confidence(image, order_points(quad), area)
         candidates.append((score, quad))
 
     if candidates:
         candidates.sort(key=lambda item: item[0], reverse=True)
-        return candidates[0][1], warnings
+        score, quad = candidates[0]
+        if score >= MIN_CONTOUR_FACE_CONFIDENCE:
+            return quad, warnings, "contour", score
+        warnings.append("weak_face_contour")
 
-    warnings.append("using_center_guide_fallback")
-    return centered_fallback_quad(width, height), warnings
+    fallback_quad = centered_fallback_quad(width, height)
+    fallback_confidence = min(
+        GUIDE_FALLBACK_MAX_CONFIDENCE,
+        grid_evidence_confidence(image, fallback_quad),
+    )
+    if fallback_confidence >= MIN_FALLBACK_GRID_CONFIDENCE:
+        warnings.append("using_center_guide_fallback")
+        return fallback_quad, warnings, "guide_fallback", fallback_confidence
+
+    warnings.append("face_detection_rejected")
+    return None, warnings, "rejected", 0.0
+
+
+def image_quality_warnings(image: np.ndarray) -> list[str]:
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    mean_luminance = float(np.mean(gray))
+    blur_score = float(cv2.Laplacian(gray, cv2.CV_64F).var())
+    warnings: list[str] = []
+
+    if mean_luminance < 38.0:
+        warnings.append("image_too_dark")
+    if mean_luminance > 238.0:
+        warnings.append("image_too_bright")
+    if blur_score < 18.0:
+        warnings.append("image_blurry")
+
+    return warnings
+
+
+def contour_face_confidence(image: np.ndarray, quad: np.ndarray, area: float) -> float:
+    height, width = image.shape[:2]
+    area_ratio = area / float(width * height)
+    area_score = clip01((area_ratio - 0.08) / 0.42)
+
+    center = np.mean(quad, axis=0)
+    distance = math.dist((float(center[0]), float(center[1])), (width / 2.0, height / 2.0))
+    center_score = 1.0 - clip01(distance / (min(width, height) * 0.38))
+
+    lengths = [
+        math.dist(tuple(quad[index]), tuple(quad[(index + 1) % 4]))
+        for index in range(4)
+    ]
+    shortest = max(1.0, min(lengths))
+    longest = max(lengths)
+    square_score = 1.0 - clip01((longest / shortest - 1.0) / 0.85)
+    grid_score = grid_evidence_confidence(image, quad)
+
+    return clip01(area_score * 0.32 + center_score * 0.24 + square_score * 0.2 + grid_score * 0.24)
 
 
 def grid_evidence_score(image: np.ndarray, quad: np.ndarray) -> float:
@@ -166,6 +245,14 @@ def grid_evidence_score(image: np.ndarray, quad: np.ndarray) -> float:
         score += float(np.std(gray[:, max(0, x - 2) : min(WARP_SIZE, x + 2)]))
         score += float(np.std(gray[max(0, y - 2) : min(WARP_SIZE, y + 2), :]))
     return score * 1000.0
+
+
+def grid_evidence_confidence(image: np.ndarray, quad: np.ndarray) -> float:
+    return clip01(grid_evidence_score(image, quad) / 70_000.0)
+
+
+def expected_center_still_plausible(rgb: RgbColor, expected_center: str) -> bool:
+    return expected_center == "U" and neutral_white_likelihood(rgb) >= 0.48
 
 
 def centered_fallback_quad(width: int, height: int) -> np.ndarray:

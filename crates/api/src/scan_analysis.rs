@@ -81,9 +81,13 @@ fn error_response(status: &str, message: String) -> AnalyzeScanFaceResponse {
         detected_center: None,
         expected_center: None,
         confidence: 0.0,
+        detected_center_confidence: 0.0,
+        face_confidence: 0.0,
+        detection_mode: None,
         image_size: None,
         face_quad: Vec::new(),
         stickers: Vec::new(),
+        quality_warnings: Vec::new(),
         warnings: Vec::new(),
     }
 }
