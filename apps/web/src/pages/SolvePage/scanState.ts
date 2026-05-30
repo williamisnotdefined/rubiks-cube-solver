@@ -76,6 +76,8 @@ export const scanSymbolDetails: Record<
   B: { label: 'Blue', background: '#2563eb', foreground: '#ffffff' },
 }
 
+const lowConfidenceThreshold = 0.3
+
 export function createEmptyScanStickers(centerSymbol: ScanFaceSymbol): ScanSticker[] {
   return Array.from({ length: 9 }, (_, index) =>
     index === 4
@@ -182,7 +184,9 @@ export function confirmedFaceCount(faces: ScanFaces): number {
 }
 
 export function lowConfidenceCount(stickers: readonly ScanSticker[]): number {
-  return stickers.filter(
-    (sticker, index) => index !== 4 && sticker.source === 'detected' && sticker.confidence < 0.2,
-  ).length
+  return stickers.filter((sticker, index) => isLowConfidenceScanSticker(sticker, index)).length
+}
+
+export function isLowConfidenceScanSticker(sticker: ScanSticker, index: number): boolean {
+  return index !== 4 && sticker.source === 'detected' && sticker.confidence < lowConfidenceThreshold
 }

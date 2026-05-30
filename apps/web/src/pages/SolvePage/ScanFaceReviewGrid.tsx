@@ -1,6 +1,6 @@
 import cls from 'classnames'
 import type { ScanSticker } from './scanState'
-import { scanSymbolDetails } from './scanState'
+import { isLowConfidenceScanSticker, scanSymbolDetails } from './scanState'
 
 type ScanFaceReviewGridProps = {
   stickers: readonly ScanSticker[]
@@ -22,8 +22,7 @@ export function ScanFaceReviewGrid({
         {stickers.map((sticker, index) => {
           const details = sticker.symbol === undefined ? undefined : scanSymbolDetails[sticker.symbol]
           const selected = selectedIndex === index
-          const lowConfidence =
-            index !== 4 && sticker.source === 'detected' && sticker.confidence < 0.2
+          const lowConfidence = isLowConfidenceScanSticker(sticker, index)
 
           return (
             <button

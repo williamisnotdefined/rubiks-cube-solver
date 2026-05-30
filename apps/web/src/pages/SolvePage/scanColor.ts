@@ -37,6 +37,11 @@ type PixelSample = RgbColor & {
   luminance: number
 }
 
+type ScanFrameData = {
+  canvas: HTMLCanvasElement
+  stickerRgb: RgbColor[]
+}
+
 const defaultColorReferences: Record<ScanFaceSymbol, RgbColor> = {
   U: { r: 248, g: 250, b: 252 },
   R: { r: 239, g: 68, b: 68 },
@@ -47,74 +52,40 @@ const defaultColorReferences: Record<ScanFaceSymbol, RgbColor> = {
 }
 
 const centerMismatchConfidence = 0.22
+const captureFrameCount = 3
+const captureFrameDelayMs = 60
 const maxCaptureFrameSize = 640
 const scanGuideScale = 0.72
+const stickerSampleOffsets = [
+  [0.5, 0.5],
+  [0.38, 0.5],
+  [0.62, 0.5],
+  [0.5, 0.38],
+  [0.5, 0.62],
+] as const
 
-export function captureScanFrame(
+export async function captureScanFrame(
   video: HTMLVideoElement,
   centerSymbol: ScanFaceSymbol,
   references: ScanColorReferences,
-): CapturedScanFrame | undefined {
-  const width = video.videoWidth
-  const height = video.videoHeight
+): Promise<CapturedScanFrame | undefined> {
+  const frames: ScanFrameData[] = []
 
-  if (width === 0 || height === 0) {
-    return undefined
-  }
+  for (let frameIndex = 0; frameIndex < captureFrameCount; frameIndex += 1) {
+    const frame = readScanFrame(video)
 
-  const sourceSize = Math.min(width, height)
-  const frameSize = Math.min(maxCaptureFrameSize, sourceSize)
-  const sourceX = Math.floor((width - sourceSize) / 2)
-  const sourceY = Math.floor((height - sourceSize) / 2)
-  const canvas = document.createElement('canvas')
-  canvas.width = frameSize
-  canvas.height = frameSize
-  const context = canvas.getContext('2d', { willReadFrequently: true })
+    if (frame === undefined) {
+      return frames.length === 0 ? undefined : buildCapturedScanFrame(frames, centerSymbol, references)
+    }
 
-  if (context === null) {
-    return undefined
-  }
+    frames.push(frame)
 
-  context.drawImage(video, sourceX, sourceY, sourceSize, sourceSize, 0, 0, frameSize, frameSize)
-
-  const squareSize = Math.floor(frameSize * scanGuideScale)
-  const startX = Math.floor((frameSize - squareSize) / 2)
-  const startY = Math.floor((frameSize - squareSize) / 2)
-  const cellSize = squareSize / 3
-  const centerRgb = sampleStickerColor(context, startX, startY, cellSize, 1, 1)
-  const centerDetection = classifyScanColor(centerRgb, references)
-  const centerAnalysis: ScanCenterAnalysis = {
-    confidence: centerDetection.confidence,
-    detectedSymbol: centerDetection.symbol,
-    expectedSymbol: centerSymbol,
-    mismatched: isMismatchedScanCenter(centerSymbol, centerDetection),
-  }
-  const nextReferences = centerAnalysis.mismatched
-    ? references
-    : { ...references, [centerSymbol]: centerRgb }
-  const stickers = createEmptyScanStickers(centerSymbol)
-
-  for (let row = 0; row < 3; row += 1) {
-    for (let column = 0; column < 3; column += 1) {
-      const index = row * 3 + column
-      const rgb = sampleStickerColor(context, startX, startY, cellSize, column, row)
-      const detected = classifyScanColor(rgb, nextReferences)
-
-      stickers[index] = {
-        rgb,
-        symbol: index === 4 ? centerSymbol : detected.symbol,
-        confidence: index === 4 ? 1 : detected.confidence,
-        source: index === 4 ? 'center' : 'detected',
-      }
+    if (frameIndex < captureFrameCount - 1) {
+      await waitForNextCaptureFrame()
     }
   }
 
-  return {
-    stickers,
-    photoDataUrl: canvas.toDataURL('image/jpeg', 0.76),
-    centerRgb,
-    centerAnalysis,
-  }
+  return buildCapturedScanFrame(frames, centerSymbol, references)
 }
 
 export function classifyScanColor(
@@ -145,6 +116,116 @@ export function isMismatchedScanCenter(
   return detected.symbol !== expectedSymbol && detected.confidence >= centerMismatchConfidence
 }
 
+export function reclassifyDetectedScanStickers(
+  stickers: readonly ScanSticker[],
+  centerSymbol: ScanFaceSymbol,
+  references: ScanColorReferences,
+): ScanSticker[] {
+  return stickers.map((sticker, index) => {
+    if (index === 4 || sticker.source === 'center') {
+      return {
+        ...sticker,
+        symbol: centerSymbol,
+        confidence: 1,
+        source: 'center',
+      }
+    }
+
+    if (sticker.source !== 'detected' || sticker.rgb === undefined) {
+      return sticker
+    }
+
+    const detected = classifyScanColor(sticker.rgb, references)
+
+    return {
+      ...sticker,
+      symbol: detected.symbol,
+      confidence: detected.confidence,
+    }
+  })
+}
+
+function readScanFrame(video: HTMLVideoElement): ScanFrameData | undefined {
+  const width = video.videoWidth
+  const height = video.videoHeight
+
+  if (width === 0 || height === 0) {
+    return undefined
+  }
+
+  const sourceSize = Math.min(width, height)
+  const frameSize = Math.min(maxCaptureFrameSize, sourceSize)
+  const sourceX = Math.floor((width - sourceSize) / 2)
+  const sourceY = Math.floor((height - sourceSize) / 2)
+  const canvas = document.createElement('canvas')
+  canvas.width = frameSize
+  canvas.height = frameSize
+  const context = canvas.getContext('2d', { willReadFrequently: true })
+
+  if (context === null) {
+    return undefined
+  }
+
+  context.drawImage(video, sourceX, sourceY, sourceSize, sourceSize, 0, 0, frameSize, frameSize)
+
+  const squareSize = Math.floor(frameSize * scanGuideScale)
+  const startX = Math.floor((frameSize - squareSize) / 2)
+  const startY = Math.floor((frameSize - squareSize) / 2)
+  const cellSize = squareSize / 3
+  const stickerRgb: RgbColor[] = []
+
+  for (let row = 0; row < 3; row += 1) {
+    for (let column = 0; column < 3; column += 1) {
+      stickerRgb[row * 3 + column] = sampleStickerColor(context, startX, startY, cellSize, column, row)
+    }
+  }
+
+  return { canvas, stickerRgb }
+}
+
+function buildCapturedScanFrame(
+  frames: readonly ScanFrameData[],
+  centerSymbol: ScanFaceSymbol,
+  references: ScanColorReferences,
+): CapturedScanFrame {
+  const combinedRgb = Array.from({ length: 9 }, (_, index) =>
+    medianRgb(frames.map((frame) => frame.stickerRgb[index])),
+  )
+  const centerRgb = combinedRgb[4]
+  const centerDetection = classifyScanColor(centerRgb, references)
+  const centerAnalysis: ScanCenterAnalysis = {
+    confidence: centerDetection.confidence,
+    detectedSymbol: centerDetection.symbol,
+    expectedSymbol: centerSymbol,
+    mismatched: isMismatchedScanCenter(centerSymbol, centerDetection),
+  }
+  const nextReferences = centerAnalysis.mismatched
+    ? references
+    : { ...references, [centerSymbol]: centerRgb }
+  const stickers = createEmptyScanStickers(centerSymbol)
+
+  for (let index = 0; index < combinedRgb.length; index += 1) {
+    const rgb = combinedRgb[index]
+    const detected = classifyScanColor(rgb, nextReferences)
+
+    stickers[index] = {
+      rgb,
+      symbol: index === 4 ? centerSymbol : detected.symbol,
+      confidence: index === 4 ? 1 : detected.confidence,
+      source: index === 4 ? 'center' : 'detected',
+    }
+  }
+
+  const photoCanvas = frames[frames.length - 1].canvas
+
+  return {
+    stickers,
+    photoDataUrl: photoCanvas.toDataURL('image/jpeg', 0.76),
+    centerRgb,
+    centerAnalysis,
+  }
+}
+
 function sampleStickerColor(
   context: CanvasRenderingContext2D,
   startX: number,
@@ -153,9 +234,30 @@ function sampleStickerColor(
   column: number,
   row: number,
 ): RgbColor {
-  const sampleSize = Math.max(8, Math.floor(cellSize * 0.38))
-  const x = Math.floor(startX + column * cellSize + (cellSize - sampleSize) / 2)
-  const y = Math.floor(startY + row * cellSize + (cellSize - sampleSize) / 2)
+  const sampleSize = Math.max(5, Math.floor(cellSize * 0.16))
+  const samples = stickerSampleOffsets.map(([offsetX, offsetY]) =>
+    sampleStickerPatch(
+      context,
+      startX + column * cellSize + cellSize * offsetX,
+      startY + row * cellSize + cellSize * offsetY,
+      sampleSize,
+    ),
+  )
+
+  return medianRgb(samples)
+}
+
+function sampleStickerPatch(
+  context: CanvasRenderingContext2D,
+  centerX: number,
+  centerY: number,
+  requestedSampleSize: number,
+): RgbColor {
+  const sampleSize = Math.min(context.canvas.width, context.canvas.height, requestedSampleSize)
+  const maxX = Math.max(0, context.canvas.width - sampleSize)
+  const maxY = Math.max(0, context.canvas.height - sampleSize)
+  const x = Math.min(maxX, Math.max(0, Math.floor(centerX - sampleSize / 2)))
+  const y = Math.min(maxY, Math.max(0, Math.floor(centerY - sampleSize / 2)))
   const imageData = context.getImageData(x, y, sampleSize, sampleSize)
   const samples: PixelSample[] = []
 
@@ -187,6 +289,29 @@ function sampleStickerColor(
     g: Math.round(g / pixels),
     b: Math.round(b / pixels),
   }
+}
+
+function medianRgb(colors: readonly RgbColor[]): RgbColor {
+  return {
+    r: median(colors.map((color) => color.r)),
+    g: median(colors.map((color) => color.g)),
+    b: median(colors.map((color) => color.b)),
+  }
+}
+
+function median(values: readonly number[]): number {
+  const sorted = values.slice().sort((a, b) => a - b)
+  const middle = Math.floor(sorted.length / 2)
+
+  if (sorted.length % 2 === 1) {
+    return Math.round(sorted[middle])
+  }
+
+  return Math.round((sorted[middle - 1] + sorted[middle]) / 2)
+}
+
+function waitForNextCaptureFrame(): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, captureFrameDelayMs))
 }
 
 function colorDistance(left: HsvColor, right: HsvColor, symbol: ScanFaceSymbol): number {
