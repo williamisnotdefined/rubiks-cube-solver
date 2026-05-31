@@ -113,6 +113,41 @@ describe('ScanCubeModal', () => {
     expect(screen.getByText('Vision status unavailable')).toBeInTheDocument()
   })
 
+  it('hides local scan export unless explicitly enabled', () => {
+    render(
+      <ScanCubeModal
+        apiReady
+        solving={false}
+        onClose={vi.fn()}
+        onSolve={vi.fn()}
+      />,
+    )
+
+    expect(screen.queryByRole('button', { name: 'Export scan session' })).not.toBeInTheDocument()
+  })
+
+  it('enables local scan export after a photo when configured', async () => {
+    vi.stubEnv('VITE_ENABLE_SCAN_EXPORT', 'true')
+    const user = userEvent.setup()
+    apiMocks.analyzeMutateAsync.mockResolvedValue(scanAnalysisResponse())
+
+    render(
+      <ScanCubeModal
+        apiReady
+        solving={false}
+        onClose={vi.fn()}
+        onSolve={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: 'Export scan session' })).toBeDisabled()
+
+    await user.click(screen.getByRole('button', { name: 'Take photo' }))
+    await screen.findByAltText('Captured cube face')
+
+    expect(screen.getByRole('button', { name: 'Export scan session' })).toBeEnabled()
+  })
+
   it('blocks confirming a face when the captured center is a different color', async () => {
     const user = userEvent.setup()
     apiMocks.analyzeMutateAsync.mockResolvedValue(scanAnalysisResponse({ centerMismatch: true }))

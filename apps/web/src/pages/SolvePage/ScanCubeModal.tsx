@@ -48,6 +48,12 @@ import {
 import { solveErrorDetail, solveErrorMessage } from './solveMessages'
 import { useCameraStream } from './hooks/useCameraStream'
 import { useLiveScanPreview } from './hooks/useLiveScanPreview'
+import {
+  buildScanSessionExport,
+  downloadScanSessionExport,
+  hasExportableScanSession,
+  scanExportEnabled,
+} from './scanExport'
 
 type ScanCubeModalProps = {
   apiReady: boolean
@@ -108,6 +114,7 @@ export function ScanCubeModal({
     emptyBackendReviewTargets(),
   )
   const [limitsFailureResult, setLimitsFailureResult] = useState<SolveLimitsFailure | undefined>()
+  const [lastSessionResult, setLastSessionResult] = useState<ScanSessionResult | undefined>()
   const [message, setMessage] = useState<string | undefined>()
   const confirmedFaces = useMemo(() => scanFacesFromDrafts(drafts), [drafts])
   const completePayload = scanFacesToPayload(confirmedFaces)
@@ -171,6 +178,8 @@ export function ScanCubeModal({
     stickers.some((sticker, index) => index !== 4 && sticker.symbol !== undefined)
   const sessionSolving = solveScanSession.isPending
   const reviewTargetIndexes = backendReviewTargets.manualTargets[currentFace.symbol] ?? []
+  const exportEnabled = scanExportEnabled()
+  const canExportScanSession = hasExportableScanSession(drafts)
 
   useEffect(() => {
     if (camera.status !== 'ready' || videoRef.current === null) {
@@ -211,6 +220,7 @@ export function ScanCubeModal({
     resetLiveAutoCapture()
     setCapturing(true)
     clearBackendReviewForFace(currentFace.symbol)
+    setLastSessionResult(undefined)
     setCurrentDraft({ analysis: undefined })
     setMessage(source === 'auto' ? t('scan.messages.autoCapturing') : t('scan.messages.capturingPhoto'))
 
@@ -317,11 +327,13 @@ export function ScanCubeModal({
       ),
     )
     clearBackendManualTarget(currentFace.symbol, index)
+    setLastSessionResult(undefined)
   }
 
   function handleClearPhoto() {
     setDrafts((currentDrafts) => clearScanFaceDraft(currentDrafts, currentFace.symbol))
     clearBackendReviewForFace(currentFace.symbol)
+    setLastSessionResult(undefined)
     setMessage(undefined)
     resetLiveAutoCapture()
     analyzeScanFace.reset()
@@ -356,6 +368,7 @@ export function ScanCubeModal({
     const nextFaceIndex = nextUnconfirmedFaceIndex(nextDrafts, currentFaceIndex)
     setDrafts(nextDrafts)
     clearBackendReviewForFace(currentFace.symbol)
+    setLastSessionResult(undefined)
 
     if (nextFaceIndex !== undefined) {
       handleFaceIndexChange(nextFaceIndex)
@@ -394,6 +407,7 @@ export function ScanCubeModal({
         strategyId,
       })
 
+      setLastSessionResult(result)
       handleScanSessionResult(result)
     } catch (error) {
       setMessage(error instanceof Error ? error.message : t('scan.messages.solveFailed'))
@@ -484,6 +498,18 @@ export function ScanCubeModal({
     }
 
     setMessage(scanSessionMessage(t, result))
+  }
+
+  function handleExportScanSession() {
+    if (!canExportScanSession) {
+      setMessage(t('scan.messages.exportRequiresPhoto'))
+      return
+    }
+
+    const filename = downloadScanSessionExport(
+      buildScanSessionExport({ drafts, sessionResult: lastSessionResult }),
+    )
+    setMessage(t('scan.messages.exportedSession', { filename }))
   }
 
   return (
@@ -664,6 +690,17 @@ export function ScanCubeModal({
             >
               {t('scan.actions.solveReviewedColors')}
             </Button>
+            {exportEnabled ? (
+              <Button
+                className="min-h-10 px-4 py-2"
+                type="button"
+                variant="ghost"
+                disabled={!canExportScanSession}
+                onClick={handleExportScanSession}
+              >
+                {t('scan.actions.exportSession')}
+              </Button>
+            ) : null}
           </div>
         </div>
         </ScanFaceCarousel>

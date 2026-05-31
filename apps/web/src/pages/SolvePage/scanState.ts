@@ -590,7 +590,7 @@ function orientScanFaceSymbols(
   return faceSymbols.slice()
 }
 
-function expectedTopForScanFace(symbol: ScanFaceSymbol): ScanFaceSymbol {
+export function expectedTopForScanFace(symbol: ScanFaceSymbol): ScanFaceSymbol {
   return symbol === 'U' || symbol === 'D' ? 'F' : 'U'
 }
 

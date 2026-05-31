@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "scan-session-export-v1",
+  "createdAt": "2026-01-02T03:04:05.000Z",
+  "source": "web-scan-modal",
+  "complete": false,
+  "faces": [
+    {
+      "symbol": "F",
+      "expectedTop": "U",
+      "confirmed": true,
+      "photoDataUrl": "data:image/jpeg;base64,synthetic",
+      "capture": {
+        "capturedAt": 123,
+        "height": 1280,
+        "source": "canvas",
+        "width": 1280
+      },
+      "stickers": [
+        { "index": 0, "symbol": "F", "confidence": 1.0, "source": "detected" },
+        { "index": 1, "symbol": "F", "confidence": 1.0, "source": "detected" },
+        { "index": 2, "symbol": "F", "confidence": 1.0, "source": "detected" },
+        { "index": 3, "symbol": "F", "confidence": 1.0, "source": "detected" },
+        { "index": 4, "symbol": "F", "confidence": 1.0, "source": "center" },
+        { "index": 5, "symbol": "F", "confidence": 1.0, "source": "detected" },
+        { "index": 6, "symbol": "F", "confidence": 1.0, "source": "detected" },
+        { "index": 7, "symbol": "F", "confidence": 1.0, "source": "detected" },
+        { "index": 8, "symbol": "F", "confidence": 1.0, "source": "detected" }
+      ],
+      "manualOverrides": {},
+      "analysis": {
+        "ok": true,
+        "status": "detected"
+      }
+    }
+  ],
+  "label": {
+    "faces": {
+      "F": "FFFFFFFFF"
+    },
+    "notes": "Synthetic partial export fixture"
+  }
+}
