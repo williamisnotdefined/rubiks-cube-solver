@@ -88,6 +88,16 @@ def get_default_cnn() -> VisionCnn:
     return _DEFAULT_CNN
 
 
+def cnn_health(cnn: VisionCnn | None = None) -> dict[str, bool | str | None]:
+    cnn = cnn or get_default_cnn()
+
+    return {
+        "cnnAvailable": cnn.available,
+        "cnnConfigured": cnn.model_configured,
+        "cnnReason": None if cnn.available else cnn.unavailable_reason,
+    }
+
+
 def first_input_name(session: Any) -> str | None:
     inputs = getattr(session, "get_inputs", lambda: [])()
     if not inputs:

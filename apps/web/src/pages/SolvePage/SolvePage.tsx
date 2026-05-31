@@ -216,6 +216,9 @@ export function SolvePage() {
             solveDisabledReason={localValidationMessage}
             solving={scanMutation.isPending}
             strategyId={strategyId}
+            visionCnnAvailable={healthQuery.data?.visionCnnAvailable}
+            visionCnnReason={healthQuery.data?.visionCnnReason}
+            visionOk={healthQuery.data?.visionOk}
             onClose={() => setScanModalOpen(false)}
             onSolve={handleScanSolve}
             onSessionAccepted={handleScanSessionAccepted}

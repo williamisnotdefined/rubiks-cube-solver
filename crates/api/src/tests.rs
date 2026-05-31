@@ -2,7 +2,7 @@ use axum::{
     body::{to_bytes, Body},
     http::{Method, Request, StatusCode},
 };
-use cube_engine::{Facelet, Scramble, SolverStrategy};
+use cube_engine::{infer_scan, Facelet, Scramble, SolverStrategy};
 use tower::ServiceExt;
 
 use crate::response::unverified_solution_response_from_parts;
@@ -365,6 +365,57 @@ async fn solve_scan_route_is_exposed() {
 }
 
 #[tokio::test]
+async fn health_route_reports_vision_cnn_status() {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("vision listener should bind");
+    let addr = listener
+        .local_addr()
+        .expect("vision addr should be available");
+    let vision_app = axum::Router::new().route(
+        "/health",
+        axum::routing::get(|| async {
+            axum::Json(serde_json::json!({
+                "ok": true,
+                "cnnAvailable": false,
+                "cnnReason": "cnn_model_not_configured"
+            }))
+        }),
+    );
+    let vision_server = tokio::spawn(async move {
+        axum::serve(listener, vision_app)
+            .await
+            .expect("vision server should run")
+    });
+    let app =
+        api_router(ApiState::without_generated_solver().with_vision_url(format!("http://{addr}")));
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/health")
+                .body(Body::empty())
+                .expect("request should build"),
+        )
+        .await
+        .expect("request should complete");
+
+    vision_server.abort();
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = to_bytes(response.into_body(), usize::MAX)
+        .await
+        .expect("body should be readable");
+    let response: serde_json::Value =
+        serde_json::from_slice(&body).expect("response should be JSON");
+    assert_eq!(response["ok"], true);
+    assert_eq!(response["generatedTwoPhaseReady"], false);
+    assert_eq!(response["visionOk"], true);
+    assert_eq!(response["visionCnnAvailable"], false);
+    assert_eq!(response["visionCnnReason"], "cnn_model_not_configured");
+}
+
+#[tokio::test]
 async fn analyze_scan_face_route_rejects_invalid_center_before_proxy() {
     let app = api_router(ApiState::without_generated_solver());
     let response = app
@@ -551,6 +602,78 @@ fn scan_session_adapter_builds_inference_input_from_vision_probabilities() {
 }
 
 #[test]
+fn scan_quality_gate_accepts_high_quality_solved_session() {
+    let scan = solved_scan_session_analysis();
+    let inference = inference_for_scan_session(&scan);
+
+    let decision = crate::scan_quality_gate::evaluate_scan_quality(&scan, &inference);
+
+    assert_eq!(decision.status, cube_engine::ScanInferenceStatus::Accepted);
+    assert!(decision.quality_reasons.is_empty());
+    assert!(decision.rescan_faces.is_empty());
+    assert!(decision.manual_targets.is_empty());
+}
+
+#[test]
+fn scan_quality_gate_rescans_blurry_face() {
+    let mut scan = solved_scan_session_analysis();
+    scan.faces[0]
+        .analysis
+        .image_quality
+        .as_mut()
+        .expect("image quality should exist")
+        .blur_score = 1.0;
+    let inference = inference_for_scan_session(&scan);
+
+    let decision = crate::scan_quality_gate::evaluate_scan_quality(&scan, &inference);
+
+    assert_eq!(
+        decision.status,
+        cube_engine::ScanInferenceStatus::NeedsRescanFace
+    );
+    assert_eq!(decision.rescan_faces, vec![Facelet::U]);
+    assert!(decision
+        .quality_reasons
+        .contains(&"image_blurry:U".to_owned()));
+}
+
+#[test]
+fn scan_quality_gate_requests_manual_for_few_ambiguous_stickers() {
+    let mut scan = solved_scan_session_analysis();
+    make_sticker_ambiguous(&mut scan, 0, 0);
+    let inference = inference_for_scan_session(&scan);
+
+    let decision = crate::scan_quality_gate::evaluate_scan_quality(&scan, &inference);
+
+    assert_eq!(
+        decision.status,
+        cube_engine::ScanInferenceStatus::NeedsManualConfirmation
+    );
+    assert_eq!(decision.manual_targets[0].face, "U");
+    assert_eq!(decision.manual_targets[0].stickers, vec![0]);
+}
+
+#[test]
+fn scan_quality_gate_rescans_many_ambiguous_stickers_on_same_face() {
+    let mut scan = solved_scan_session_analysis();
+    make_sticker_ambiguous(&mut scan, 0, 0);
+    make_sticker_ambiguous(&mut scan, 0, 1);
+    make_sticker_ambiguous(&mut scan, 0, 2);
+    let inference = inference_for_scan_session(&scan);
+
+    let decision = crate::scan_quality_gate::evaluate_scan_quality(&scan, &inference);
+
+    assert_eq!(
+        decision.status,
+        cube_engine::ScanInferenceStatus::NeedsRescanFace
+    );
+    assert_eq!(decision.rescan_faces, vec![Facelet::U]);
+    assert!(decision
+        .quality_reasons
+        .contains(&"several_ambiguous_stickers:U".to_owned()));
+}
+
+#[test]
 fn scan_session_response_preserves_inference_fields() {
     let response: crate::ScanSessionResponse = serde_json::from_value(serde_json::json!({
         "ok": false,
@@ -562,7 +685,8 @@ fn scan_session_response_preserves_inference_fields() {
             "stateConfidence": 0.33,
             "candidateFacelets": "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB",
             "rescanFaces": [],
-            "manualTargets": [{ "face": "U", "stickers": [0] }]
+            "manualTargets": [{ "face": "U", "stickers": [0] }],
+            "qualityReasons": ["sticker_ambiguous:U:0"]
         },
         "rescanFaces": [],
         "manualTargets": [{ "face": "U", "stickers": [0] }]
@@ -576,6 +700,7 @@ fn scan_session_response_preserves_inference_fields() {
     assert_eq!(inference.status, "needs_manual_confirmation");
     assert_eq!(inference.margin, Some(0.4));
     assert_eq!(inference.manual_targets[0].face, "U");
+    assert_eq!(inference.quality_reasons, vec!["sticker_ambiguous:U:0"]);
 
     let serialized = serde_json::to_value(response).expect("response should serialize");
     assert_eq!(
@@ -695,7 +820,7 @@ fn solved_scan_session_request() -> ScanSessionRequest {
                 expected_top: None,
                 image: "data:image/jpeg;base64,AAAA".to_owned(),
                 manual_overrides: Default::default(),
-                client_rotation: None,
+                client_rotation: Some(0),
             })
             .collect(),
         max_depth: 0,
@@ -740,7 +865,12 @@ fn analyzed_session_face(symbol: &str) -> serde_json::Value {
             "faceConfidence": 0.98,
             "detectionMode": "contour",
             "imageSize": { "width": 640, "height": 640 },
-            "imageQuality": null,
+            "imageQuality": {
+                "blurScore": 128.0,
+                "meanLuminance": 120.0,
+                "glareRatio": 0.02,
+                "shadowRatio": 0.03
+            },
             "faceQuad": [],
             "stickers": stickers,
             "qualityWarnings": [],
@@ -765,8 +895,49 @@ fn analyzed_sticker(index: usize, symbol: &str) -> serde_json::Value {
             "L": probability_for_symbol(symbol, "L"),
             "B": probability_for_symbol(symbol, "B")
         },
-        "quality": null
+        "quality": {
+            "colorVariance": 0.04,
+            "glareRatio": 0.01,
+            "shadowRatio": 0.02,
+            "margin": 0.88
+        }
     })
+}
+
+fn inference_for_scan_session(
+    scan: &crate::AnalyzeScanSessionResponse,
+) -> cube_engine::ScanInferenceResult {
+    let input = crate::scan_analysis::scan_inference_input_from_session(
+        scan,
+        &solved_scan_session_request(),
+    )
+    .expect("scan session should adapt to inference input");
+
+    infer_scan(&input)
+}
+
+fn make_sticker_ambiguous(
+    scan: &mut crate::AnalyzeScanSessionResponse,
+    face_index: usize,
+    sticker_index: usize,
+) {
+    let sticker = &mut scan.faces[face_index].analysis.stickers[sticker_index];
+    sticker.confidence = 0.50;
+    let probabilities = sticker
+        .probabilities
+        .as_mut()
+        .expect("probabilities should exist");
+    probabilities.u = 0.50;
+    probabilities.r = 0.46;
+    probabilities.f = 0.01;
+    probabilities.d = 0.01;
+    probabilities.l = 0.01;
+    probabilities.b = 0.01;
+    sticker
+        .quality
+        .as_mut()
+        .expect("quality should exist")
+        .margin = 0.04;
 }
 
 fn probability_for_symbol(actual: &str, expected: &str) -> f64 {

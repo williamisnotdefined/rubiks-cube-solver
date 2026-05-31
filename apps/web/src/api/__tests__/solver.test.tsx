@@ -50,9 +50,16 @@ describe('solver API operations', () => {
   })
 
   it('gets API health through the request client', async () => {
-    const fetchMock = mockApiSuccess({ generatedTwoPhaseReady: true, ok: true })
+    const health = {
+      generatedTwoPhaseReady: true,
+      ok: true,
+      visionCnnAvailable: false,
+      visionCnnReason: 'cnn_model_not_configured',
+      visionOk: true,
+    }
+    const fetchMock = mockApiSuccess(health)
 
-    await expect(getHealth()).resolves.toEqual({ generatedTwoPhaseReady: true, ok: true })
+    await expect(getHealth()).resolves.toEqual(health)
     expect(fetchMock).toHaveBeenCalledWith(
       'http://127.0.0.1:8787/health',
       expect.objectContaining({ headers: expect.any(Headers) }),
@@ -160,6 +167,7 @@ describe('solver API operations', () => {
       inference: {
         candidateFacelets: 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB',
         manualTargets: [],
+        qualityReasons: [],
         rescanFaces: [],
         stateConfidence: 1,
         status: 'accepted',
@@ -265,11 +273,21 @@ describe('solver API operations', () => {
 
 describe('solver React Query hooks', () => {
   it('loads health responses', async () => {
-    mockApiSuccess({ generatedTwoPhaseReady: true, ok: true })
+    mockApiSuccess({
+      generatedTwoPhaseReady: true,
+      ok: true,
+      visionCnnAvailable: true,
+      visionOk: true,
+    })
     const { result } = renderHookWithProviders(() => useGetHealth())
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
-    expect(result.current.data).toEqual({ generatedTwoPhaseReady: true, ok: true })
+    expect(result.current.data).toEqual({
+      generatedTwoPhaseReady: true,
+      ok: true,
+      visionCnnAvailable: true,
+      visionOk: true,
+    })
   })
 
   it('respects disabled strategy queries', () => {
@@ -338,6 +356,7 @@ describe('solver React Query hooks', () => {
       inference: {
         candidateFacelets: 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB',
         manualTargets: [],
+        qualityReasons: [],
         rescanFaces: [],
         stateConfidence: 1,
         status: 'accepted',

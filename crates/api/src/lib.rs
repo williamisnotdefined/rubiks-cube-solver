@@ -3,6 +3,7 @@ mod error_kind;
 mod response;
 mod routes;
 mod scan_analysis;
+mod scan_quality_gate;
 mod solve;
 mod state;
 

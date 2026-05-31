@@ -134,6 +134,7 @@ export type ScanSessionInference = {
   candidateFacelets?: string
   rescanFaces: ScanFaceSymbol[]
   manualTargets: ScanSessionManualTarget[]
+  qualityReasons?: string[]
 }
 
 export type ScanSessionResult = {

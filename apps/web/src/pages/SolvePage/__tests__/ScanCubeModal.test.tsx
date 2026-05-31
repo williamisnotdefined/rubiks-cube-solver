@@ -72,6 +72,47 @@ describe('ScanCubeModal', () => {
     expect(screen.queryByText('Solving scan')).not.toBeInTheDocument()
   })
 
+  it('shows the optional CNN evidence status', () => {
+    const { rerender } = render(
+      <ScanCubeModal
+        apiReady
+        solving={false}
+        visionCnnAvailable
+        visionOk
+        onClose={vi.fn()}
+        onSolve={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('CNN evidence active')).toBeInTheDocument()
+
+    rerender(
+      <ScanCubeModal
+        apiReady
+        solving={false}
+        visionCnnAvailable={false}
+        visionCnnReason="cnn_model_not_configured"
+        visionOk
+        onClose={vi.fn()}
+        onSolve={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('Color-only fallback: cnn_model_not_configured')).toBeInTheDocument()
+
+    rerender(
+      <ScanCubeModal
+        apiReady
+        solving={false}
+        visionOk={false}
+        onClose={vi.fn()}
+        onSolve={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('Vision status unavailable')).toBeInTheDocument()
+  })
+
   it('blocks confirming a face when the captured center is a different color', async () => {
     const user = userEvent.setup()
     apiMocks.analyzeMutateAsync.mockResolvedValue(scanAnalysisResponse({ centerMismatch: true }))

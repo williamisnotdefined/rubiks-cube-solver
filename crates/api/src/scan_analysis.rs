@@ -11,9 +11,9 @@ use crate::config::MAX_SCAN_IMAGE_BYTES;
 use crate::response::{
     AnalyzeScanFaceRequest, AnalyzeScanFaceResponse, AnalyzeScanSessionResponse,
     AnalyzedStickerResponse, ColorProbabilitiesResponse, ScanFacesRequest, ScanSessionFaceRequest,
-    ScanSessionInferenceResponse, ScanSessionManualTargetResponse, ScanSessionRequest,
-    ScanSessionResponse, SolveScanRequest,
+    ScanSessionInferenceResponse, ScanSessionRequest, ScanSessionResponse, SolveScanRequest,
 };
+use crate::scan_quality_gate::{evaluate_scan_quality, ScanQualityGateDecision};
 use crate::solve::solve_scan_request;
 use crate::state::ApiState;
 
@@ -143,38 +143,25 @@ pub async fn solve_scan_session_request(
     };
 
     let inference = infer_scan(&inference_input);
-    let inference_response = scan_session_inference_response(&inference);
+    let quality_gate = evaluate_scan_quality(&scan, &inference);
+    let inference_response = scan_session_inference_response(&inference, &quality_gate);
 
-    if inference.status != ScanInferenceStatus::Accepted {
-        let message = match inference.status {
-            ScanInferenceStatus::NeedsRescanFace => "One or more faces need to be rescanned.",
-            ScanInferenceStatus::NeedsManualConfirmation => {
-                "Confirm the highlighted stickers before solving."
-            }
-            ScanInferenceStatus::StateAmbiguous => {
-                "The scanned stickers match more than one valid cube state."
-            }
-            ScanInferenceStatus::InvalidCubeState => {
-                "The scan does not describe a valid cube state."
-            }
-            ScanInferenceStatus::Accepted => "",
-        };
-
+    if quality_gate.status != ScanInferenceStatus::Accepted {
         return (
             StatusCode::OK,
             Json(ScanSessionResponse {
                 ok: false,
-                status: inference.status.as_str().to_owned(),
-                message: Some(message.to_owned()),
+                status: quality_gate.status.as_str().to_owned(),
+                message: Some(scan_quality_gate_message(quality_gate.status).to_owned()),
                 scan: Some(scan),
                 solve: None,
                 inference: Some(inference_response),
-                rescan_faces: inference
+                rescan_faces: quality_gate
                     .rescan_faces
                     .iter()
                     .map(|facelet| facelet.symbol().to_string())
                     .collect(),
-                manual_targets: inference_manual_targets_response(&inference),
+                manual_targets: quality_gate.manual_targets,
             }),
         );
     }
@@ -468,9 +455,10 @@ fn probabilities_from_response(
 
 fn scan_session_inference_response(
     inference: &ScanInferenceResult,
+    quality_gate: &ScanQualityGateDecision,
 ) -> ScanSessionInferenceResponse {
     ScanSessionInferenceResponse {
-        status: inference.status.as_str().to_owned(),
+        status: quality_gate.status.as_str().to_owned(),
         margin: inference.margin,
         state_confidence: inference.state_confidence,
         candidate_facelets: inference
@@ -482,21 +470,9 @@ fn scan_session_inference_response(
             .iter()
             .map(|facelet| facelet.symbol().to_string())
             .collect(),
-        manual_targets: inference_manual_targets_response(inference),
+        manual_targets: quality_gate.manual_targets.clone(),
+        quality_reasons: quality_gate.quality_reasons.clone(),
     }
-}
-
-fn inference_manual_targets_response(
-    inference: &ScanInferenceResult,
-) -> Vec<ScanSessionManualTargetResponse> {
-    inference
-        .manual_targets
-        .iter()
-        .map(|target| ScanSessionManualTargetResponse {
-            face: target.face.symbol().to_string(),
-            stickers: target.stickers.clone(),
-        })
-        .collect()
 }
 
 fn facelet_from_str(symbol: &str) -> Option<Facelet> {
@@ -507,6 +483,20 @@ fn facelet_from_str(symbol: &str) -> Option<Facelet> {
     }
 
     Facelet::from_symbol(symbol)
+}
+
+fn scan_quality_gate_message(status: ScanInferenceStatus) -> &'static str {
+    match status {
+        ScanInferenceStatus::NeedsRescanFace => "One or more faces need to be rescanned.",
+        ScanInferenceStatus::NeedsManualConfirmation => {
+            "Confirm the highlighted stickers before solving."
+        }
+        ScanInferenceStatus::StateAmbiguous => {
+            "The scanned stickers match more than one valid cube state."
+        }
+        ScanInferenceStatus::InvalidCubeState => "The scan does not describe a valid cube state.",
+        ScanInferenceStatus::Accepted => "",
+    }
 }
 
 fn scan_session_error(status: &str, message: String) -> ScanSessionResponse {

@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::time::Duration;
 
 use axum::extract::{DefaultBodyLimit, State};
 use axum::http::{header::CONTENT_TYPE, HeaderValue, Method, StatusCode};
@@ -16,6 +17,17 @@ use crate::response::{
 use crate::scan_analysis::{analyze_scan_face_request, solve_scan_session_request};
 use crate::solve::{solve_notation_request, solve_scan_request};
 use crate::state::ApiState;
+
+const HEALTH_VISION_TIMEOUT: Duration = Duration::from_millis(250);
+
+#[derive(serde::Deserialize)]
+struct VisionHealthResponse {
+    ok: bool,
+    #[serde(rename = "cnnAvailable", default)]
+    cnn_available: bool,
+    #[serde(rename = "cnnReason", default)]
+    cnn_reason: Option<String>,
+}
 
 pub fn api_router(state: ApiState) -> Router {
     Router::new()
@@ -60,10 +72,30 @@ fn allowed_web_origin(origin: &HeaderValue) -> bool {
 }
 
 async fn health(State(state): State<ApiState>) -> Json<HealthResponse> {
+    let vision_health = request_vision_health(&state).await;
+
     Json(HealthResponse {
         ok: true,
         generated_two_phase_ready: state.generated_solver_ready(),
+        vision_ok: vision_health.as_ref().is_some_and(|health| health.ok),
+        vision_cnn_available: vision_health
+            .as_ref()
+            .is_some_and(|health| health.cnn_available),
+        vision_cnn_reason: vision_health.and_then(|health| health.cnn_reason),
     })
+}
+
+async fn request_vision_health(state: &ApiState) -> Option<VisionHealthResponse> {
+    let url = format!("{}/health", state.vision_url.trim_end_matches('/'));
+    reqwest::Client::new()
+        .get(url)
+        .timeout(HEALTH_VISION_TIMEOUT)
+        .send()
+        .await
+        .ok()?
+        .json::<VisionHealthResponse>()
+        .await
+        .ok()
 }
 
 async fn strategies() -> Json<Vec<StrategyResponse>> {

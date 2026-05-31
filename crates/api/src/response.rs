@@ -7,6 +7,12 @@ pub struct HealthResponse {
     pub ok: bool,
     #[serde(rename = "generatedTwoPhaseReady")]
     pub generated_two_phase_ready: bool,
+    #[serde(rename = "visionOk")]
+    pub vision_ok: bool,
+    #[serde(rename = "visionCnnAvailable")]
+    pub vision_cnn_available: bool,
+    #[serde(rename = "visionCnnReason", skip_serializing_if = "Option::is_none")]
+    pub vision_cnn_reason: Option<String>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
@@ -137,6 +143,8 @@ pub struct ScanSessionInferenceResponse {
     pub rescan_faces: Vec<String>,
     #[serde(rename = "manualTargets", default)]
     pub manual_targets: Vec<ScanSessionManualTargetResponse>,
+    #[serde(rename = "qualityReasons", default)]
+    pub quality_reasons: Vec<String>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]

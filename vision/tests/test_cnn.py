@@ -4,7 +4,7 @@ import pytest
 
 np = pytest.importorskip("numpy")
 
-from vision.cnn import VisionCnn, probability_rows_from_output, sticker_patch_batch
+from vision.cnn import VisionCnn, cnn_health, probability_rows_from_output, sticker_patch_batch
 
 
 def test_unconfigured_cnn_is_optional() -> None:
@@ -14,6 +14,31 @@ def test_unconfigured_cnn_is_optional() -> None:
     assert not cnn.available
     assert cnn.unavailable_reason == "cnn_model_not_configured"
     assert cnn.predict_sticker_probabilities(image) is None
+
+
+def test_cnn_health_reports_optional_status() -> None:
+    health = cnn_health(VisionCnn())
+
+    assert health == {
+        "cnnAvailable": False,
+        "cnnConfigured": False,
+        "cnnReason": "cnn_model_not_configured",
+    }
+
+
+def test_health_endpoint_reports_unconfigured_cnn(monkeypatch) -> None:
+    monkeypatch.delenv("RUBIKS_VISION_CNN_MODEL", raising=False)
+    import vision.cnn as cnn_module
+    from vision.app import health
+
+    monkeypatch.setattr(cnn_module, "_DEFAULT_CNN", None)
+
+    response = health()
+
+    assert response.ok is True
+    assert response.cnnAvailable is False
+    assert response.cnnConfigured is False
+    assert response.cnnReason == "cnn_model_not_configured"
 
 
 def test_probability_rows_normalize_logits() -> None:

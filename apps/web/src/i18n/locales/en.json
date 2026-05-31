@@ -150,13 +150,17 @@
       "stillLooking": "Still looking for the cube face. Keep the full face visible and let auto scan try again."
     },
     "modal": {
+      "cnnEvidenceActive": "CNN evidence active",
+      "cnnReasonUnknown": "not configured",
+      "colorFallbackActive": "Color-only fallback: {{reason}}",
       "confirmed": "{{count}} confirmed",
       "description": "Capture one face at a time with the requested top color. The solution uses the colors you confirm.",
       "dismiss": "Dismiss scan cube",
       "expectedCenter": "Expected center: {{color}}",
       "faceProgress": "Face {{current}} of {{total}}",
       "keepAtTop": "Keep at top: {{color}}",
-      "title": "Scan cube"
+      "title": "Scan cube",
+      "visionStatusUnavailable": "Vision status unavailable"
     },
     "settings": {
       "dismiss": "Dismiss solve settings",

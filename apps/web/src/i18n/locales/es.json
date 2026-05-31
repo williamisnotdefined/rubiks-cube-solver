@@ -150,13 +150,17 @@
       "stillLooking": "Aún buscando la cara del cubo. Mantén toda la cara visible y deja que el autoescaneo intente de nuevo."
     },
     "modal": {
+      "cnnEvidenceActive": "Evidencia CNN activa",
+      "cnnReasonUnknown": "no configurada",
+      "colorFallbackActive": "Respaldo solo por color: {{reason}}",
       "confirmed": "{{count}} confirmadas",
       "description": "Captura una cara a la vez con el color superior solicitado. La solución usa los colores que confirmes.",
       "dismiss": "Cerrar escaneo del cubo",
       "expectedCenter": "Centro esperado: {{color}}",
       "faceProgress": "Cara {{current}} de {{total}}",
       "keepAtTop": "Mantén arriba: {{color}}",
-      "title": "Escanear cubo"
+      "title": "Escanear cubo",
+      "visionStatusUnavailable": "Estado de visión no disponible"
     },
     "settings": {
       "dismiss": "Cerrar ajustes de solución",

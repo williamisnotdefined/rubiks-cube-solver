@@ -150,13 +150,17 @@
       "stillLooking": "Ainda procurando a face do cubo. Mantenha a face inteira visível e deixe o auto scan tentar de novo."
     },
     "modal": {
+      "cnnEvidenceActive": "Evidência CNN ativa",
+      "cnnReasonUnknown": "não configurada",
+      "colorFallbackActive": "Fallback só por cor: {{reason}}",
       "confirmed": "{{count}} confirmadas",
       "description": "Capture uma face por vez com a cor de topo solicitada. A solução usa as cores que você confirmar.",
       "dismiss": "Fechar scan do cubo",
       "expectedCenter": "Centro esperado: {{color}}",
       "faceProgress": "Face {{current}} de {{total}}",
       "keepAtTop": "Mantenha no topo: {{color}}",
-      "title": "Escanear cubo"
+      "title": "Escanear cubo",
+      "visionStatusUnavailable": "Status da visão indisponível"
     },
     "settings": {
       "dismiss": "Fechar ajustes da solução",

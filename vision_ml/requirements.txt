@@ -4,6 +4,7 @@ numpy>=2.0
 opencv-python-headless>=4.10
 torch>=2.4
 onnx>=1.16
+onnxscript>=0.5
 
 # Optional for loading exported models in the Vision runtime:
 # onnxruntime>=1.18

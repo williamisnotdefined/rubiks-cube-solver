@@ -12,6 +12,9 @@ export type SolverStrategyOption = {
 export type HealthResponse = {
   ok: boolean
   generatedTwoPhaseReady: boolean
+  visionOk?: boolean
+  visionCnnAvailable?: boolean
+  visionCnnReason?: string
 }
 
 export type SolveLimits = {

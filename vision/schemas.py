@@ -6,6 +6,13 @@ from pydantic import BaseModel, Field
 ScanFaceSymbol = str
 
 
+class VisionHealthResponse(BaseModel):
+    ok: bool
+    cnnAvailable: bool = False
+    cnnConfigured: bool = False
+    cnnReason: str | None = None
+
+
 class RgbColor(BaseModel):
     r: int = Field(ge=0, le=255)
     g: int = Field(ge=0, le=255)

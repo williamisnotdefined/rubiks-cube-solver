@@ -56,6 +56,9 @@ type ScanCubeModalProps = {
   solveDisabledReason?: string
   solving: boolean
   strategyId?: string
+  visionCnnAvailable?: boolean
+  visionCnnReason?: string
+  visionOk?: boolean
   onClose: () => void
   onSolve: (faces: ScanFacesPayload) => Promise<SolveResult | undefined>
   onSessionAccepted?: (solve: SolveResult) => void
@@ -78,6 +81,9 @@ export function ScanCubeModal({
   solveDisabledReason,
   solving,
   strategyId,
+  visionCnnAvailable,
+  visionCnnReason,
+  visionOk,
   onClose,
   onSolve,
   onSessionAccepted,
@@ -502,6 +508,9 @@ export function ScanCubeModal({
             <p className="text-sm font-semibold text-[#a8a8a8]">
               {t('scan.modal.description')}
             </p>
+            <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
+              {scanCnnStatusMessage(t, visionOk, visionCnnAvailable, visionCnnReason)}
+            </p>
           </div>
           <Button className="min-h-10 px-4 py-2" type="button" variant="secondary" onClick={onClose}>
             {t('common.close')}
@@ -765,6 +774,25 @@ function scanSessionMessage(
     default:
       return t('scan.messages.sessionRejected')
   }
+}
+
+function scanCnnStatusMessage(
+  t: ReturnType<typeof useTranslation>['t'],
+  visionOk: boolean | undefined,
+  visionCnnAvailable: boolean | undefined,
+  visionCnnReason: string | undefined,
+): string {
+  if (visionOk === false) {
+    return t('scan.modal.visionStatusUnavailable')
+  }
+
+  if (visionCnnAvailable === true) {
+    return t('scan.modal.cnnEvidenceActive')
+  }
+
+  return t('scan.modal.colorFallbackActive', {
+    reason: visionCnnReason ?? t('scan.modal.cnnReasonUnknown'),
+  })
 }
 
 function nextUnconfirmedFaceIndex(
