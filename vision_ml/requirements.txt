@@ -1,0 +1,9 @@
+pydantic>=2.0
+pytest>=8.0
+numpy>=2.0
+opencv-python-headless>=4.10
+torch>=2.4
+onnx>=1.16
+
+# Optional for loading exported models in the Vision runtime:
+# onnxruntime>=1.18

@@ -14,9 +14,13 @@
       "autoScanOn": "Auto scan on",
       "clearPhoto": "Clear photo",
       "confirmFace": "Confirm face",
+      "nextFace": "Next face",
+      "previousFace": "Previous face",
       "retakePhoto": "Retake photo",
+      "solveReviewedColors": "Solve reviewed colors",
       "solveScannedCube": "Solve scanned cube",
-      "takePhoto": "Take photo"
+      "takePhoto": "Take photo",
+      "updateFace": "Update face"
     },
     "camera": {
       "capturedFaceAlt": "Captured cube face",
@@ -33,6 +37,16 @@
       "statusWithConfidence": "{{mode}} {{confidence}}%",
       "tracking": "tracking {{count}}/{{target}}"
     },
+    "carousel": {
+      "faceConfirmed": "confirmed",
+      "faceDraft": "draft",
+      "faceInvalid": "invalid",
+      "faceNeedsReview": "review",
+      "facePending": "pending",
+      "goToFace": "Go to {{face}}, {{status}}",
+      "next": "Next",
+      "previous": "Previous"
+    },
     "colors": {
       "B": "Blue",
       "D": "Yellow",
@@ -46,6 +60,7 @@
       "orAlternative": "or {{colorInitial}}",
       "paletteLabel": "Color palette",
       "pickColor": "Pick a color",
+      "needsConfirmation": "needs confirmation",
       "reviewColors": "Review colors",
       "reviewGroupLabel": "Scanned face colors",
       "selectSquareHint": "Select a square, then pick a color to correct it.",
@@ -116,13 +131,22 @@
       "confidenceSuffix": " ({{confidence}}% confidence)",
       "detectedUncertain": "{{count}} detected colors are uncertain. Review the highlighted squares or retake the photo.",
       "faceOutlineWeak": "The face outline was weak; keep the cube flat inside the guide.",
+      "faceNeedsReview": "Review this face before solving.",
+      "faceUpdated": "Face updated. Review the other faces or solve when ready.",
       "genericRejected": "The scanned cube was rejected. Review the confirmed colors.",
       "lowConfidence": "Detection confidence is low.",
       "manualDetectionFailed": "Could not detect a cube face. Retake the photo or fill the grid manually.",
       "qualityBlurry": "Hold the cube steady for a sharper photo.",
       "qualityBright": "Reduce glare before scanning.",
       "qualityDark": "Add more light before scanning.",
+      "sessionAmbiguous": "The backend found more than one valid cube state. Review the highlighted stickers or rescan unclear faces.",
+      "sessionInvalidCubeState": "The scan does not describe a valid cube. Review the faces or use the reviewed-color fallback after checking every sticker.",
+      "sessionNeedsManualConfirmation": "Confirm the highlighted stickers before solving.",
+      "sessionNeedsRescan": "One or more faces need to be rescanned.",
+      "sessionRejected": "The scan session was rejected. Review the faces before solving.",
+      "sessionVisionUnavailable": "The vision service could not complete the session. You can retry or use the reviewed-color fallback.",
       "solveFailed": "The scan solve request failed.",
+      "submittingSession": "Checking the full scan with cube constraints...",
       "stillLooking": "Still looking for the cube face. Keep the full face visible and let auto scan try again."
     },
     "modal": {

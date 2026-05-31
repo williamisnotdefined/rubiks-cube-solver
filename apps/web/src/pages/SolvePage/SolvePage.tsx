@@ -2,7 +2,7 @@ import { useReducer, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { RubiksCubeElement } from '@houstonp/rubiks-cube/view'
 import { useGetHealth, useGetStrategies, useSolveNotation, useSolveScan } from '@api/solver'
-import type { ScanFacesPayload } from '@api/solver/types'
+import type { ScanFacesPayload, SolveResult as ApiSolveResult } from '@api/solver/types'
 import { waitForPaint } from '@core/timing/waitForPaint'
 import { CubeStage } from './CubeStage'
 import { ScanCubeModal } from './ScanCubeModal'
@@ -45,7 +45,9 @@ export function SolvePage() {
   const [solutionStep, setSolutionStep] = useState(0)
   const [scanModalOpen, setScanModalOpen] = useState(false)
   const [activeSolveSource, setActiveSolveSource] = useState<'notation' | 'scan'>('notation')
-  const activeSolveResult = activeSolveSource === 'scan' ? scanMutation.data : solveMutation.data
+  const [scanSessionSolveResult, setScanSessionSolveResult] = useState<ApiSolveResult | undefined>()
+  const activeSolveResult =
+    activeSolveSource === 'scan' ? scanSessionSolveResult ?? scanMutation.data : solveMutation.data
   const activeSolveError = activeSolveSource === 'scan' ? scanMutation.error : solveMutation.error
   const successResult =
     activeSolveResult?.status === 'success' ? activeSolveResult : undefined
@@ -102,6 +104,7 @@ export function SolvePage() {
     setSolutionStep(0)
     setActiveSolveSource('notation')
     scanMutation.reset()
+    setScanSessionSolveResult(undefined)
 
     try {
       const solvePromise = solveMutation.mutateAsync({
@@ -124,6 +127,7 @@ export function SolvePage() {
     setActiveSolveSource('notation')
     solveMutation.reset()
     scanMutation.reset()
+    setScanSessionSolveResult(undefined)
   }
 
   function handleSolutionStepChange(nextStep: number) {
@@ -149,6 +153,7 @@ export function SolvePage() {
     setSolutionStep(0)
     setActiveSolveSource('scan')
     solveMutation.reset()
+    setScanSessionSolveResult(undefined)
 
     const solvePromise = scanMutation.mutateAsync({
       faces,
@@ -161,6 +166,14 @@ export function SolvePage() {
     await waitForPaint()
 
     return solvePromise
+  }
+
+  function handleScanSessionAccepted(solve: ApiSolveResult) {
+    setSolutionStep(0)
+    setActiveSolveSource('scan')
+    solveMutation.reset()
+    scanMutation.reset()
+    setScanSessionSolveResult(solve)
   }
 
   return (
@@ -198,10 +211,14 @@ export function SolvePage() {
         {scanModalOpen ? (
           <ScanCubeModal
             apiReady={apiReady}
+            maxDepth={maxMoves}
+            maxNodes={maxNodes}
             solveDisabledReason={localValidationMessage}
             solving={scanMutation.isPending}
+            strategyId={strategyId}
             onClose={() => setScanModalOpen(false)}
             onSolve={handleScanSolve}
+            onSessionAccepted={handleScanSessionAccepted}
           />
         ) : null}
       </section>

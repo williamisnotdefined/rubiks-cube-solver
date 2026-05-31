@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import {
+  clearScanFaceDraft,
+  confirmScanFaceDraft,
+  confirmedDraftCount,
   createEmptyScanStickers,
+  createInitialScanFaceDrafts,
   replaceScanSticker,
+  replaceScanFaceDraftSticker,
+  scanFaceStatusFromDraft,
+  scanFacesFromDrafts,
+  scanSessionFacesFromDrafts,
   scanFacesToPayload,
   scanSymbols,
   validateScanFaceDraft,
@@ -15,6 +23,37 @@ describe('scan state helpers', () => {
 
     expect(stickers[4]).toMatchObject({ symbol: 'F', source: 'center' })
     expect(stickers.filter((sticker) => sticker.symbol === undefined)).toHaveLength(8)
+  })
+
+  it('creates editable drafts for all scan faces', () => {
+    const drafts = createInitialScanFaceDrafts()
+
+    expect(scanSymbols.every((symbol) => drafts[symbol].symbol === symbol)).toBe(true)
+    expect(scanSymbols.every((symbol) => drafts[symbol].stickers[4]?.symbol === symbol)).toBe(true)
+    expect(confirmedDraftCount(drafts)).toBe(0)
+  })
+
+  it('keeps draft edits until a face is confirmed or cleared', () => {
+    const drafts = createInitialScanFaceDrafts()
+    const editedDrafts = replaceScanFaceDraftSticker(drafts, 'F', 0, 'R')
+
+    expect(scanFaceStatusFromDraft(editedDrafts.F)).toBe('draft')
+    expect(editedDrafts.F.stickers[0]).toMatchObject({ source: 'manual', symbol: 'R' })
+
+    const readyDrafts = {
+      ...editedDrafts,
+      F: { ...editedDrafts.F, stickers: filledStickers('F') },
+    }
+    const confirmedDrafts = confirmScanFaceDraft(readyDrafts, 'F')
+
+    expect(confirmedDraftCount(confirmedDrafts)).toBe(1)
+    expect(scanFacesFromDrafts(confirmedDrafts).F).toMatchObject({ symbol: 'F' })
+
+    const clearedDrafts = clearScanFaceDraft(confirmedDrafts, 'F')
+
+    expect(confirmedDraftCount(clearedDrafts)).toBe(0)
+    expect(scanFacesFromDrafts(clearedDrafts).F).toBeUndefined()
+    expect(scanFaceStatusFromDraft(clearedDrafts.F)).toBe('pending')
   })
 
   it('requires all stickers before confirming a face', () => {
@@ -61,6 +100,39 @@ describe('scan state helpers', () => {
     })
 
     expect(scanFacesToPayload({ ...faces, B: undefined })).toBeUndefined()
+  })
+
+  it('builds a scan session payload from confirmed photo drafts', () => {
+    const drafts = createInitialScanFaceDrafts()
+    const confirmedDrafts = scanSymbols.reduce((currentDrafts, symbol) => {
+      const nextDrafts = {
+        ...currentDrafts,
+        [symbol]: {
+          ...currentDrafts[symbol],
+          photoDataUrl: `data:image/jpeg;base64,${symbol}`,
+          stickers: filledDetectedStickers(symbol),
+        },
+      }
+
+      return confirmScanFaceDraft(nextDrafts, symbol)
+    }, drafts)
+    const editedDrafts = replaceScanFaceDraftSticker(confirmedDrafts, 'F', 0, 'R')
+
+    expect(scanSessionFacesFromDrafts(editedDrafts)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          expectedTop: 'U',
+          image: 'data:image/jpeg;base64,F',
+          manualOverrides: { 0: 'R' },
+          symbol: 'F',
+        }),
+        expect.objectContaining({
+          expectedTop: 'F',
+          image: 'data:image/jpeg;base64,U',
+          symbol: 'U',
+        }),
+      ]),
+    )
   })
 
   it('balances detected low-confidence stickers before building the solve payload', () => {
@@ -136,6 +208,14 @@ function filledStickers(symbol: (typeof scanSymbols)[number]): ScanSticker[] {
     symbol,
     confidence: 1,
     source: index === 4 ? 'center' : 'manual',
+  }))
+}
+
+function filledDetectedStickers(symbol: (typeof scanSymbols)[number]): ScanSticker[] {
+  return Array.from({ length: 9 }, (_, index) => ({
+    symbol,
+    confidence: 1,
+    source: index === 4 ? 'center' : 'detected',
   }))
 }
 

@@ -1,5 +1,6 @@
 pub mod cube;
 pub mod dataset;
+pub mod scan_inference;
 pub mod search;
 pub mod solver;
 
@@ -20,6 +21,12 @@ pub use cube::{
     EDGE_FACELET_MAPPINGS, EDGE_ORIENTATION_COORDINATE_COUNT,
     SLICE_EDGE_PERMUTATION_COORDINATE_COUNT, UD_EDGE_PERMUTATION_COORDINATE_COUNT,
     UD_SLICE_EDGE_COMBINATION_COORDINATE_COUNT,
+};
+pub use scan_inference::{
+    infer_scan, infer_scan_with_options, ScanFaceletProbabilities, ScanInferenceCandidate,
+    ScanInferenceInput, ScanInferenceManualTarget, ScanInferenceOptions, ScanInferenceResult,
+    ScanInferenceStatus, ScanManualOverride, SCAN_FACELET_COUNT, SCAN_FACELET_SYMBOL_COUNT,
+    SCAN_FACE_COUNT, SCAN_STICKERS_PER_FACE,
 };
 pub use search::{
     corner_pattern_coordinate, corner_pattern_database_path, depth_limited_search, solve_bfs,

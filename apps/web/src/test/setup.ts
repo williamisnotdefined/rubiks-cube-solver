@@ -17,6 +17,45 @@ if (!globalThis.cancelAnimationFrame) {
   globalThis.cancelAnimationFrame = (handle) => window.clearTimeout(handle)
 }
 
+if (!window.matchMedia) {
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      addEventListener: vi.fn(),
+      addListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+      matches: false,
+      media: query,
+      onchange: null,
+      removeEventListener: vi.fn(),
+      removeListener: vi.fn(),
+    })),
+  })
+}
+
+if (!window.ResizeObserver) {
+  window.ResizeObserver = class MockResizeObserver implements ResizeObserver {
+    disconnect() {}
+    observe() {}
+    unobserve() {}
+  }
+}
+
+if (!window.IntersectionObserver) {
+  window.IntersectionObserver = class MockIntersectionObserver implements IntersectionObserver {
+    readonly root = null
+    readonly rootMargin = ''
+    readonly thresholds = []
+
+    disconnect() {}
+    observe() {}
+    takeRecords() {
+      return []
+    }
+    unobserve() {}
+  }
+}
+
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()

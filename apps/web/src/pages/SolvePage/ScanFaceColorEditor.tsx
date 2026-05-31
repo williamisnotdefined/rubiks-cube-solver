@@ -6,12 +6,14 @@ import type { ScanSticker } from './scanState'
 
 type ScanFaceColorEditorProps = {
   centerSymbol: ScanFaceSymbol
+  reviewTargetIndexes?: readonly number[]
   stickers: readonly ScanSticker[]
   onStickerColorChange: (index: number, symbol: ScanFaceSymbol) => void
 }
 
 export function ScanFaceColorEditor({
   centerSymbol,
+  reviewTargetIndexes,
   stickers,
   onStickerColorChange,
 }: ScanFaceColorEditorProps) {
@@ -25,6 +27,7 @@ export function ScanFaceColorEditor({
   return (
     <>
       <ScanFaceReviewGrid
+        reviewTargetIndexes={reviewTargetIndexes}
         stickers={stickers}
         selectedIndex={selectedStickerIndex}
         onSelect={setSelectedStickerIndex}

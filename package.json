@@ -15,6 +15,7 @@
     "vision:dev": "if [ -x .venv/bin/python ]; then .venv/bin/python -m uvicorn vision.app:app --host 127.0.0.1 --port 8790 --reload; else python -m uvicorn vision.app:app --host 127.0.0.1 --port 8790 --reload; fi",
     "vision:start": "if [ -x .venv/bin/python ]; then .venv/bin/python -m uvicorn vision.app:app --host 127.0.0.1 --port ${RUBIKS_VISION_PORT:-8790}; else python -m uvicorn vision.app:app --host 127.0.0.1 --port ${RUBIKS_VISION_PORT:-8790}; fi",
     "vision:test": "if [ -x .venv/bin/python ]; then .venv/bin/python -m pytest vision; else python -m pytest vision; fi",
+    "vision-ml:test": "if [ -x .venv/bin/python ]; then .venv/bin/python -m pytest vision_ml; else python -m pytest vision_ml; fi",
     "api:test": "cargo test -p rubiks-cube-solver-api",
     "build": "npm run build -w @rubiks-cube-solver/web",
     "build:api": "cargo build -p rubiks-cube-solver-api --release",

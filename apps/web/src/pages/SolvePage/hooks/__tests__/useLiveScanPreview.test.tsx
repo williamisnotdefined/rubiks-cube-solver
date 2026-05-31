@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AnalyzeScanFaceResponse } from '@api/scan'
-import { captureScanPreviewImage } from '../../scanCapture'
+import { captureScanPreviewImage, type CapturedScanImage } from '../../scanCapture'
 import { averageQuadMovement, useLiveScanPreview } from '../useLiveScanPreview'
 
 const apiMocks = vi.hoisted(() => ({
@@ -30,7 +30,7 @@ describe('useLiveScanPreview', () => {
     vi.useFakeTimers()
     apiMocks.analyzeMutateAsync.mockReset()
     captureScanPreviewImageMock.mockReset()
-    captureScanPreviewImageMock.mockReturnValue({ photoDataUrl: 'data:image/jpeg;base64,preview' })
+    captureScanPreviewImageMock.mockReturnValue(capturedPreviewImage())
     vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible')
   })
 
@@ -161,5 +161,15 @@ function stableAnalysis({
     status: centerMismatch ? 'center_mismatch' : 'detected',
     stickers: [],
     warnings: [],
+  }
+}
+
+function capturedPreviewImage(): CapturedScanImage {
+  return {
+    capturedAt: 123,
+    height: 480,
+    photoDataUrl: 'data:image/jpeg;base64,preview',
+    source: 'canvas',
+    width: 480,
   }
 }

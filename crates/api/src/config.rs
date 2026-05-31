@@ -10,6 +10,7 @@ pub const MAX_API_NODES: usize = 25_000_000;
 pub const MAX_NOTATION_BYTES: usize = 4096;
 pub const MAX_SCAN_IMAGE_BYTES: usize = 1_000_000;
 pub const MAX_JSON_BODY_BYTES: usize = 1_500_000;
+pub const MAX_SCAN_SESSION_BODY_BYTES: usize = 14_000_000;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ApiConfig {

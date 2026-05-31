@@ -31,6 +31,8 @@ def test_detects_synthetic_front_face() -> None:
     assert response.faceConfidence > 0.55
     assert response.detectionMode in {"contour", "sticker_grid"}
     assert len(response.faceQuad) == 4
+    assert response.imageQuality is not None
+    assert response.imageQuality.blurScore > 0
     assert [sticker.symbol for sticker in response.stickers] == [
         "L",
         "U",
@@ -42,6 +44,13 @@ def test_detects_synthetic_front_face() -> None:
         "U",
         "F",
     ]
+    for sticker in response.stickers:
+        assert sticker.probabilities is not None
+        assert sticker.quality is not None
+        probabilities = sticker.probabilities.model_dump()
+        assert set(probabilities) == set(COLORS)
+        assert sum(probabilities.values()) == pytest.approx(1.0, abs=1e-6)
+        assert 0 <= sticker.quality.margin <= 1
 
 
 def test_reports_mismatched_center() -> None:
@@ -100,6 +109,22 @@ def test_detects_face_under_directional_shadow_and_warm_cast() -> None:
     assert response.detectedCenter == "F"
     assert response.detectionMode in {"contour", "sticker_grid"}
     assert [sticker.symbol for sticker in response.stickers] == symbols
+    assert response.stickers[4].probabilities is not None
+    assert response.stickers[4].probabilities.F > 0.5
+
+
+def test_merges_optional_cnn_probabilities_when_available() -> None:
+    image = synthetic_face(["F"] * 9)
+    response = analyze_face(
+        AnalyzeScanFaceRequest(expectedCenter="F", image=encode_image(image)),
+        cnn=FakeCnn(),
+    )
+
+    assert response.ok
+    assert "cnn_used" in response.warnings
+    assert response.stickers[0].probabilities is not None
+    assert response.stickers[0].symbol == "F"
+    assert response.stickers[0].probabilities.B > 0.4
 
 
 def synthetic_face(
@@ -150,3 +175,14 @@ def encode_image(image: np.ndarray) -> str:
     ok, data = cv2.imencode(".jpg", image, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
     assert ok
     return "data:image/jpeg;base64," + base64.b64encode(data.tobytes()).decode("ascii")
+
+
+class FakeCnn:
+    model_configured = True
+    available = True
+
+    def predict_sticker_probabilities(self, _warped_bgr: np.ndarray) -> list[dict[str, float]]:
+        return [
+            {"U": 0.01, "R": 0.01, "F": 0.01, "D": 0.01, "L": 0.01, "B": 0.95}
+            for _index in range(9)
+        ]

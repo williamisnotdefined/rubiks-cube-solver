@@ -1,4 +1,6 @@
+import type { AnalyzeScanFaceResponse, ScanSessionFaceRequest } from '@api/scan'
 import type { ScanFaceSymbol, ScanFacesPayload } from '@api/solver/types'
+import type { ScanCaptureSource } from './scanCapture'
 
 export type RgbColor = {
   r: number
@@ -22,12 +24,29 @@ export type ScanSticker = {
 }
 
 export type ConfirmedScanFace = {
+  capture?: ScanCaptureMetadata
   symbol: ScanFaceSymbol
   stickers: ScanSticker[]
   photoDataUrl?: string
 }
 
+export type ScanCaptureMetadata = {
+  capturedAt: number
+  height: number
+  source: ScanCaptureSource
+  width: number
+}
+
 export type ScanFaces = Partial<Record<ScanFaceSymbol, ConfirmedScanFace>>
+
+export type ScanFaceStatus = 'pending' | 'draft' | 'confirmed' | 'invalid' | 'needsReview'
+
+export type ScanFaceDraft = ConfirmedScanFace & {
+  analysis?: AnalyzeScanFaceResponse
+  confirmed: boolean
+}
+
+export type ScanFaceDrafts = Record<ScanFaceSymbol, ScanFaceDraft>
 
 export type ScanFaceDefinition = {
   symbol: ScanFaceSymbol
@@ -115,6 +134,19 @@ export function createEmptyScanStickers(centerSymbol: ScanFaceSymbol): ScanStick
   )
 }
 
+export function createInitialScanFaceDrafts(): ScanFaceDrafts {
+  return Object.fromEntries(
+    scanFaceOrder.map(({ symbol }) => [
+      symbol,
+      {
+        confirmed: false,
+        stickers: createEmptyScanStickers(symbol),
+        symbol,
+      },
+    ]),
+  ) as ScanFaceDrafts
+}
+
 export function isScanFaceComplete(stickers: readonly ScanSticker[]): boolean {
   return stickers.length === 9 && stickers.every((sticker) => sticker.symbol !== undefined)
 }
@@ -173,6 +205,118 @@ export function scanFacesToPayload(faces: ScanFaces): ScanFacesPayload | undefin
   return payload
 }
 
+export function scanFacesFromDrafts(drafts: ScanFaceDrafts): ScanFaces {
+  const faces: ScanFaces = {}
+
+  for (const { symbol } of scanFaceOrder) {
+    const draft = drafts[symbol]
+    if (!draft.confirmed) {
+      continue
+    }
+
+    faces[symbol] = {
+      capture: draft.capture,
+      photoDataUrl: draft.photoDataUrl,
+      stickers: draft.stickers,
+      symbol,
+    }
+  }
+
+  return faces
+}
+
+export function scanSessionFacesFromDrafts(
+  drafts: ScanFaceDrafts,
+): ScanSessionFaceRequest[] | undefined {
+  const faces: ScanSessionFaceRequest[] = []
+
+  for (const { symbol } of scanFaceOrder) {
+    const draft = drafts[symbol]
+    if (!draft.confirmed || draft.photoDataUrl === undefined || !isScanFaceComplete(draft.stickers)) {
+      return undefined
+    }
+
+    const manualOverrides: Partial<Record<number, ScanFaceSymbol>> = {}
+    for (const [index, sticker] of draft.stickers.entries()) {
+      if (index !== 4 && sticker.source === 'manual' && sticker.symbol !== undefined) {
+        manualOverrides[index] = sticker.symbol
+      }
+    }
+
+    faces.push({
+      expectedTop: expectedTopForScanFace(symbol),
+      image: draft.photoDataUrl,
+      manualOverrides: Object.keys(manualOverrides).length > 0 ? manualOverrides : undefined,
+      symbol,
+    })
+  }
+
+  return faces
+}
+
+export function confirmedDraftCount(drafts: ScanFaceDrafts): number {
+  return scanFaceOrder.filter(({ symbol }) => drafts[symbol].confirmed).length
+}
+
+export function scanFaceStatusFromDraft(
+  draft: ScanFaceDraft,
+  validation?: ScanFaceDraftValidation,
+): ScanFaceStatus {
+  if (!draft.confirmed) {
+    return hasScanFaceDraftContent(draft) ? 'draft' : 'pending'
+  }
+
+  if (validation !== undefined) {
+    return 'invalid'
+  }
+
+  return lowConfidenceCount(draft.stickers) > 0 ? 'needsReview' : 'confirmed'
+}
+
+export function replaceScanFaceDraftSticker(
+  drafts: ScanFaceDrafts,
+  symbol: ScanFaceSymbol,
+  index: number,
+  stickerSymbol: ScanFaceSymbol,
+): ScanFaceDrafts {
+  const draft = drafts[symbol]
+
+  return {
+    ...drafts,
+    [symbol]: {
+      ...draft,
+      stickers: replaceScanSticker(draft.stickers, index, stickerSymbol),
+    },
+  }
+}
+
+export function clearScanFaceDraft(
+  drafts: ScanFaceDrafts,
+  symbol: ScanFaceSymbol,
+): ScanFaceDrafts {
+  return {
+    ...drafts,
+    [symbol]: {
+      confirmed: false,
+      stickers: createEmptyScanStickers(symbol),
+      symbol,
+    },
+  }
+}
+
+export function confirmScanFaceDraft(
+  drafts: ScanFaceDrafts,
+  symbol: ScanFaceSymbol,
+): ScanFaceDrafts {
+  return {
+    ...drafts,
+    [symbol]: {
+      ...drafts[symbol],
+      confirmed: true,
+    },
+  }
+}
+
 export function countScanSymbols(faces: ScanFaces): Record<ScanFaceSymbol, number> {
   const counts = Object.fromEntries(scanSymbols.map((symbol) => [symbol, 0])) as Record<
     ScanFaceSymbol,
@@ -227,6 +371,14 @@ export function lowConfidenceCount(stickers: readonly ScanSticker[]): number {
 
 export function isLowConfidenceScanSticker(sticker: ScanSticker, index: number): boolean {
   return index !== 4 && sticker.source === 'detected' && sticker.confidence < lowConfidenceThreshold
+}
+
+function hasScanFaceDraftContent(draft: ScanFaceDraft): boolean {
+  return (
+    draft.photoDataUrl !== undefined ||
+    draft.analysis !== undefined ||
+    draft.stickers.some((sticker, index) => index !== 4 && sticker.symbol !== undefined)
+  )
 }
 
 function allScanFacesComplete(faces: ScanFaces): boolean {
@@ -436,6 +588,10 @@ function orientScanFaceSymbols(
   }
 
   return faceSymbols.slice()
+}
+
+function expectedTopForScanFace(symbol: ScanFaceSymbol): ScanFaceSymbol {
+  return symbol === 'U' || symbol === 'D' ? 'F' : 'U'
 }
 
 function rotateFaceSymbols180(faceSymbols: readonly ScanFaceSymbol[]): ScanFaceSymbol[] {

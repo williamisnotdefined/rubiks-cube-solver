@@ -20,6 +20,10 @@ __pycache__/
 ml/outputs/
 ml/runs/
 ml/checkpoints/
+vision_ml/outputs/
+vision_ml/runs/
+vision_ml/checkpoints/
+vision_ml/local-images/
 *.log
 .env
 .env.*

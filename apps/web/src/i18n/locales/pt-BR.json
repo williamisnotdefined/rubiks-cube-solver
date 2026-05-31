@@ -14,9 +14,13 @@
       "autoScanOn": "Auto scan ligado",
       "clearPhoto": "Limpar foto",
       "confirmFace": "Confirmar face",
+      "nextFace": "Próxima face",
+      "previousFace": "Face anterior",
       "retakePhoto": "Tirar de novo",
+      "solveReviewedColors": "Resolver cores revisadas",
       "solveScannedCube": "Resolver cubo escaneado",
-      "takePhoto": "Tirar foto"
+      "takePhoto": "Tirar foto",
+      "updateFace": "Atualizar face"
     },
     "camera": {
       "capturedFaceAlt": "Face do cubo capturada",
@@ -33,6 +37,16 @@
       "statusWithConfidence": "{{mode}} {{confidence}}%",
       "tracking": "rastreando {{count}}/{{target}}"
     },
+    "carousel": {
+      "faceConfirmed": "confirmada",
+      "faceDraft": "rascunho",
+      "faceInvalid": "inválida",
+      "faceNeedsReview": "revisar",
+      "facePending": "pendente",
+      "goToFace": "Ir para {{face}}, {{status}}",
+      "next": "Próxima",
+      "previous": "Anterior"
+    },
     "colors": {
       "B": "Azul",
       "D": "Amarelo",
@@ -46,6 +60,7 @@
       "orAlternative": "ou {{colorInitial}}",
       "paletteLabel": "Paleta de cores",
       "pickColor": "Escolha uma cor",
+      "needsConfirmation": "precisa de confirmação",
       "reviewColors": "Revise as cores",
       "reviewGroupLabel": "Cores da face escaneada",
       "selectSquareHint": "Selecione um quadrado e escolha uma cor para corrigir.",
@@ -116,13 +131,22 @@
       "confidenceSuffix": " ({{confidence}}% de confiança)",
       "detectedUncertain": "{{count}} cores detectadas estão incertas. Revise os quadrados destacados ou tire a foto de novo.",
       "faceOutlineWeak": "O contorno da face está fraco; mantenha o cubo plano dentro da guia.",
+      "faceNeedsReview": "Revise esta face antes de resolver.",
+      "faceUpdated": "Face atualizada. Revise as outras faces ou resolva quando quiser.",
       "genericRejected": "O cubo escaneado foi rejeitado. Revise as cores confirmadas.",
       "lowConfidence": "A confiança da detecção está baixa.",
       "manualDetectionFailed": "Não foi possível detectar uma face do cubo. Tire a foto de novo ou preencha a grade manualmente.",
       "qualityBlurry": "Segure o cubo firme para uma foto mais nítida.",
       "qualityBright": "Reduza o brilho antes de escanear.",
       "qualityDark": "Adicione mais luz antes de escanear.",
+      "sessionAmbiguous": "O backend encontrou mais de um estado válido para o cubo. Revise os adesivos destacados ou escaneie novamente as faces incertas.",
+      "sessionInvalidCubeState": "O scan não descreve um cubo válido. Revise as faces ou use o fallback de cores revisadas depois de verificar cada adesivo.",
+      "sessionNeedsManualConfirmation": "Confirme os adesivos destacados antes de resolver.",
+      "sessionNeedsRescan": "Uma ou mais faces precisam ser escaneadas novamente.",
+      "sessionRejected": "A sessão de scan foi rejeitada. Revise as faces antes de resolver.",
+      "sessionVisionUnavailable": "O serviço de visão não conseguiu concluir a sessão. Tente de novo ou use o fallback de cores revisadas.",
       "solveFailed": "A requisição para resolver o scan falhou.",
+      "submittingSession": "Verificando o scan completo com as restrições do cubo...",
       "stillLooking": "Ainda procurando a face do cubo. Mantenha a face inteira visível e deixe o auto scan tentar de novo."
     },
     "modal": {

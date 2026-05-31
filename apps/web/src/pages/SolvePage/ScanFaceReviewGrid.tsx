@@ -5,17 +5,20 @@ import { isLowConfidenceScanSticker, scanSymbolDetails } from './scanState'
 import { scanColorInitial, scanColorLabel } from './scanTranslations'
 
 type ScanFaceReviewGridProps = {
+  reviewTargetIndexes?: readonly number[]
   stickers: readonly ScanSticker[]
   selectedIndex: number
   onSelect: (index: number) => void
 }
 
 export function ScanFaceReviewGrid({
+  reviewTargetIndexes = [],
   stickers,
   selectedIndex,
   onSelect,
 }: ScanFaceReviewGridProps) {
   const { t } = useTranslation()
+  const reviewTargets = new Set(reviewTargetIndexes)
 
   return (
     <div className="grid gap-2" aria-label={t('scan.editor.reviewGroupLabel')} role="group">
@@ -27,11 +30,12 @@ export function ScanFaceReviewGrid({
           const details = sticker.symbol === undefined ? undefined : scanSymbolDetails[sticker.symbol]
           const selected = selectedIndex === index
           const lowConfidence = isLowConfidenceScanSticker(sticker, index)
+          const reviewTarget = reviewTargets.has(index)
           const alternative = sticker.alternatives?.find(
             (candidate) => candidate.symbol !== sticker.symbol,
           )
           const colorLabel = sticker.symbol === undefined ? undefined : scanColorLabel(t, sticker.symbol)
-          const reviewLabel = stickerReviewLabel(t, index, colorLabel, lowConfidence, alternative)
+          const reviewLabel = stickerReviewLabel(t, index, colorLabel, lowConfidence, reviewTarget, alternative)
 
           return (
             <button
@@ -40,6 +44,7 @@ export function ScanFaceReviewGrid({
                 selected ? 'border-[#f7f7f7]' : 'border-[#2b2b2b]',
                 details === undefined ? 'bg-[#171717] text-[#a8a8a8]' : '',
                 lowConfidence ? 'ring-2 ring-amber-300/80' : '',
+                reviewTarget ? 'ring-4 ring-cyan-300/90' : '',
               )}
               style={
                 details === undefined
@@ -57,6 +62,9 @@ export function ScanFaceReviewGrid({
               {sticker.symbol === undefined ? '?' : scanColorInitial(t, sticker.symbol)}
               {lowConfidence ? (
                 <span className="absolute right-1 top-1 text-[0.65rem] leading-none">?</span>
+              ) : null}
+              {reviewTarget ? (
+                <span className="absolute left-1 top-1 text-[0.65rem] leading-none">!</span>
               ) : null}
               {lowConfidence && alternative !== undefined ? (
                 <span className="absolute bottom-1 left-1 right-1 truncate text-[0.55rem] normal-case tracking-normal">
@@ -78,6 +86,7 @@ function stickerReviewLabel(
   index: number,
   label: string | undefined,
   lowConfidence: boolean,
+  reviewTarget: boolean,
   alternative: NonNullable<ScanSticker['alternatives']>[number] | undefined,
 ): string {
   const base = t('scan.editor.stickerLabel', {
@@ -85,14 +94,16 @@ function stickerReviewLabel(
     index: index + 1,
   })
 
+  const targetLabel = reviewTarget ? `, ${t('scan.editor.needsConfirmation')}` : ''
+
   if (!lowConfidence) {
-    return base
+    return `${base}${targetLabel}`
   }
 
   if (alternative === undefined) {
-    return `${base}, ${t('scan.editor.uncertainColor')}`
+    return `${base}${targetLabel}, ${t('scan.editor.uncertainColor')}`
   }
 
   const alternativeLabel = scanColorLabel(t, alternative.symbol)
-  return `${base}, ${t('scan.editor.uncertainColor')}, ${t('scan.editor.uncertainMaybe', { color: alternativeLabel })}`
+  return `${base}${targetLabel}, ${t('scan.editor.uncertainColor')}, ${t('scan.editor.uncertainMaybe', { color: alternativeLabel })}`
 }

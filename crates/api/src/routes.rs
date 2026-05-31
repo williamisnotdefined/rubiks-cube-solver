@@ -8,12 +8,12 @@ use cube_engine::SolverStrategy;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::services::{ServeDir, ServeFile};
 
-use crate::config::MAX_JSON_BODY_BYTES;
+use crate::config::{MAX_JSON_BODY_BYTES, MAX_SCAN_SESSION_BODY_BYTES};
 use crate::response::{
-    AnalyzeScanFaceRequest, AnalyzeScanFaceResponse, HealthResponse, SolveNotationRequest,
-    SolveResponse, SolveScanRequest, StrategyResponse,
+    AnalyzeScanFaceRequest, AnalyzeScanFaceResponse, HealthResponse, ScanSessionRequest,
+    ScanSessionResponse, SolveNotationRequest, SolveResponse, SolveScanRequest, StrategyResponse,
 };
-use crate::scan_analysis::analyze_scan_face_request;
+use crate::scan_analysis::{analyze_scan_face_request, solve_scan_session_request};
 use crate::solve::{solve_notation_request, solve_scan_request};
 use crate::state::ApiState;
 
@@ -22,6 +22,10 @@ pub fn api_router(state: ApiState) -> Router {
         .route("/health", get(health))
         .route("/strategies", get(strategies))
         .route("/scan/analyze-face", post(analyze_scan_face))
+        .route(
+            "/scan/solve-session",
+            post(solve_scan_session).layer(DefaultBodyLimit::max(MAX_SCAN_SESSION_BODY_BYTES)),
+        )
         .route("/solve-notation", post(solve_notation))
         .route("/solve-scan", post(solve_scan))
         .layer(DefaultBodyLimit::max(MAX_JSON_BODY_BYTES))
@@ -98,4 +102,11 @@ async fn analyze_scan_face(
     Json(request): Json<AnalyzeScanFaceRequest>,
 ) -> (StatusCode, Json<AnalyzeScanFaceResponse>) {
     analyze_scan_face_request(&state, request).await
+}
+
+async fn solve_scan_session(
+    State(state): State<ApiState>,
+    Json(request): Json<ScanSessionRequest>,
+) -> (StatusCode, Json<ScanSessionResponse>) {
+    solve_scan_session_request(&state, request).await
 }

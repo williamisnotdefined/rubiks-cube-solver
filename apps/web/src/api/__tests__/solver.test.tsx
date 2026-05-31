@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest'
 import { mockApiError, mockApiSuccess } from '@src/test/api'
 import { renderHookWithProviders } from '@src/test/render'
 import { analyzeScanFace } from '../scan/analyzeFace/analyzeFace'
+import { solveScanSession } from '../scan/solveSession/solveSession'
 import { useAnalyzeScanFace } from '../scan/analyzeFace/useAnalyzeScanFace'
+import { useSolveScanSession } from '../scan/solveSession/useSolveScanSession'
 import { getHealth } from '../solver/getHealth/getHealth'
 import { useGetHealth } from '../solver/getHealth/useGetHealth'
 import { getStrategies } from '../solver/getStrategies/getStrategies'
@@ -31,6 +33,15 @@ const successPayload: ApiSolveResponse = {
   exploredNodes: 42,
   length: 2,
 }
+
+const scanSessionFaces = [
+  { symbol: 'U', image: 'data:image/jpeg;base64,U' },
+  { symbol: 'R', image: 'data:image/jpeg;base64,R' },
+  { symbol: 'F', image: 'data:image/jpeg;base64,F' },
+  { symbol: 'D', image: 'data:image/jpeg;base64,D' },
+  { symbol: 'L', image: 'data:image/jpeg;base64,L' },
+  { symbol: 'B', image: 'data:image/jpeg;base64,B' },
+] as const
 
 describe('solver API operations', () => {
   it('exposes stable query keys', () => {
@@ -142,6 +153,62 @@ describe('solver API operations', () => {
         }),
       }),
     )
+  })
+
+  it('posts scan sessions through the request client', async () => {
+    const payload = {
+      inference: {
+        candidateFacelets: 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB',
+        manualTargets: [],
+        rescanFaces: [],
+        stateConfidence: 1,
+        status: 'accepted',
+      },
+      manualTargets: [],
+      ok: true,
+      rescanFaces: [],
+      solve: successPayload,
+      status: 'accepted',
+    }
+    const fetchMock = mockApiSuccess(payload)
+
+    await expect(
+      solveScanSession({
+        faces: [...scanSessionFaces],
+        maxDepth: 0,
+        maxNodes: 1_000,
+        strategyId: 'bounded-ida-star',
+      }),
+    ).resolves.toEqual(payload)
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:8787/scan/solve-session',
+      expect.objectContaining({
+        body: JSON.stringify({
+          faces: [...scanSessionFaces],
+          maxDepth: 0,
+          maxNodes: 1_000,
+          strategyId: 'bounded-ida-star',
+        }),
+      }),
+    )
+  })
+
+  it('returns scan session API failures without throwing', async () => {
+    const payload = {
+      manualTargets: [],
+      message: 'One or more faces need to be rescanned.',
+      ok: false,
+      rescanFaces: ['F'],
+      status: 'needs_rescan_face',
+    }
+    mockApiError(payload)
+
+    await expect(
+      solveScanSession({
+        faces: [...scanSessionFaces],
+        maxDepth: 0,
+      }),
+    ).resolves.toEqual(payload)
   })
 
   it('defaults missing optional success metrics', () => {
@@ -264,5 +331,30 @@ describe('solver React Query hooks', () => {
         knownCenters: {},
       }),
     ).resolves.toMatchObject({ ok: true, status: 'detected' })
+  })
+
+  it('runs scan session mutations', async () => {
+    mockApiSuccess({
+      inference: {
+        candidateFacelets: 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB',
+        manualTargets: [],
+        rescanFaces: [],
+        stateConfidence: 1,
+        status: 'accepted',
+      },
+      manualTargets: [],
+      ok: true,
+      rescanFaces: [],
+      solve: successPayload,
+      status: 'accepted',
+    })
+    const { result } = renderHookWithProviders(() => useSolveScanSession())
+
+    await expect(
+      result.current.mutateAsync({
+        faces: [...scanSessionFaces],
+        maxDepth: 0,
+      }),
+    ).resolves.toMatchObject({ ok: true, status: 'accepted' })
   })
 })

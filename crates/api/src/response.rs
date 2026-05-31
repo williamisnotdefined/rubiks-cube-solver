@@ -19,7 +19,7 @@ pub struct StrategyResponse {
     pub status_text: &'static str,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SolveResponse {
     pub ok: bool,
     pub status: String,
@@ -72,6 +72,79 @@ pub struct SolveScanRequest {
     pub strategy_id: String,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct ScanSessionRequest {
+    pub faces: Vec<ScanSessionFaceRequest>,
+    #[serde(rename = "maxDepth", default = "default_max_depth")]
+    pub max_depth: usize,
+    #[serde(rename = "maxNodes")]
+    pub max_nodes: Option<usize>,
+    #[serde(rename = "strategyId", default = "default_strategy_id")]
+    pub strategy_id: String,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct ScanSessionFaceRequest {
+    pub symbol: String,
+    #[serde(
+        rename = "expectedTop",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub expected_top: Option<String>,
+    pub image: String,
+    #[serde(rename = "manualOverrides", default)]
+    pub manual_overrides: HashMap<usize, String>,
+    #[serde(
+        rename = "clientRotation",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub client_rotation: Option<u16>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct ScanSessionResponse {
+    pub ok: bool,
+    pub status: String,
+    pub message: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scan: Option<AnalyzeScanSessionResponse>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub solve: Option<SolveResponse>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub inference: Option<ScanSessionInferenceResponse>,
+    #[serde(rename = "rescanFaces", default)]
+    pub rescan_faces: Vec<String>,
+    #[serde(rename = "manualTargets", default)]
+    pub manual_targets: Vec<ScanSessionManualTargetResponse>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct ScanSessionInferenceResponse {
+    pub status: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub margin: Option<f64>,
+    #[serde(rename = "stateConfidence")]
+    pub state_confidence: f64,
+    #[serde(
+        rename = "candidateFacelets",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub candidate_facelets: Option<String>,
+    #[serde(rename = "rescanFaces", default)]
+    pub rescan_faces: Vec<String>,
+    #[serde(rename = "manualTargets", default)]
+    pub manual_targets: Vec<ScanSessionManualTargetResponse>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct ScanSessionManualTargetResponse {
+    pub face: String,
+    pub stickers: Vec<usize>,
+}
+
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
 pub struct ScanFacesRequest {
     #[serde(rename = "U")]
@@ -86,6 +159,25 @@ pub struct ScanFacesRequest {
     pub l: String,
     #[serde(rename = "B")]
     pub b: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct AnalyzeScanSessionResponse {
+    pub ok: bool,
+    pub status: String,
+    pub message: Option<String>,
+    #[serde(default)]
+    pub faces: Vec<AnalyzedSessionFaceResponse>,
+    #[serde(default)]
+    pub warnings: Vec<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct AnalyzedSessionFaceResponse {
+    pub symbol: String,
+    #[serde(rename = "expectedTop", default)]
+    pub expected_top: Option<String>,
+    pub analysis: AnalyzeScanFaceResponse,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -123,6 +215,45 @@ pub struct ScanColorAlternativeResponse {
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct ColorProbabilitiesResponse {
+    #[serde(rename = "U")]
+    pub u: f64,
+    #[serde(rename = "R")]
+    pub r: f64,
+    #[serde(rename = "F")]
+    pub f: f64,
+    #[serde(rename = "D")]
+    pub d: f64,
+    #[serde(rename = "L")]
+    pub l: f64,
+    #[serde(rename = "B")]
+    pub b: f64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct StickerQualityResponse {
+    #[serde(rename = "colorVariance")]
+    pub color_variance: f64,
+    #[serde(rename = "glareRatio")]
+    pub glare_ratio: f64,
+    #[serde(rename = "shadowRatio")]
+    pub shadow_ratio: f64,
+    pub margin: f64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct ImageQualityResponse {
+    #[serde(rename = "blurScore")]
+    pub blur_score: f64,
+    #[serde(rename = "meanLuminance")]
+    pub mean_luminance: f64,
+    #[serde(rename = "glareRatio")]
+    pub glare_ratio: f64,
+    #[serde(rename = "shadowRatio")]
+    pub shadow_ratio: f64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AnalyzedStickerResponse {
     pub index: usize,
     pub symbol: String,
@@ -130,6 +261,10 @@ pub struct AnalyzedStickerResponse {
     pub rgb: RgbColorRequest,
     pub polygon: Vec<PointResponse>,
     pub alternatives: Vec<ScanColorAlternativeResponse>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub probabilities: Option<ColorProbabilitiesResponse>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub quality: Option<StickerQualityResponse>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -152,6 +287,12 @@ pub struct AnalyzeScanFaceResponse {
     pub detection_mode: Option<String>,
     #[serde(rename = "imageSize")]
     pub image_size: Option<ImageSizeResponse>,
+    #[serde(
+        rename = "imageQuality",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub image_quality: Option<ImageQualityResponse>,
     #[serde(rename = "faceQuad")]
     pub face_quad: Vec<PointResponse>,
     pub stickers: Vec<AnalyzedStickerResponse>,

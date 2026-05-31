@@ -10,17 +10,23 @@ import numpy as np
 from .color import (
     SCAN_SYMBOLS,
     classify_rgb,
+    estimated_color_from_probabilities,
+    estimate_color_probabilities,
     neutral_white_likelihood,
     normalize_face_lighting,
     sample_sticker_rgb,
 )
+from .cnn import VisionCnn, get_default_cnn
 from .schemas import (
     AnalyzeScanFaceRequest,
     AnalyzeScanFaceResponse,
     AnalyzedSticker,
+    ColorProbabilities,
     ImageSize,
+    ImageQuality,
     Point,
     RgbColor,
+    StickerQuality,
 )
 
 
@@ -38,7 +44,7 @@ MIN_FALLBACK_GRID_CONFIDENCE = 0.36
 GUIDE_FALLBACK_MAX_CONFIDENCE = 0.62
 
 
-def analyze_face(request: AnalyzeScanFaceRequest) -> AnalyzeScanFaceResponse:
+def analyze_face(request: AnalyzeScanFaceRequest, cnn: VisionCnn | None = None) -> AnalyzeScanFaceResponse:
     if request.expectedCenter not in SCAN_SYMBOLS:
         return failure("invalid_image", "expectedCenter must be one of U, R, F, D, L, B")
 
@@ -48,7 +54,7 @@ def analyze_face(request: AnalyzeScanFaceRequest) -> AnalyzeScanFaceResponse:
 
     image = resize_for_processing(image)
     height, width = image.shape[:2]
-    quality_warnings = image_quality_warnings(image)
+    image_quality, quality_warnings = image_quality_metrics(image)
     quad, detection_warnings, detection_mode, face_confidence = detect_face_quad(image)
     if quad is None:
         warnings = quality_warnings + detection_warnings
@@ -60,35 +66,17 @@ def analyze_face(request: AnalyzeScanFaceRequest) -> AnalyzeScanFaceResponse:
             faceConfidence=face_confidence,
             detectionMode=detection_mode,
             imageSize=ImageSize(width=width, height=height),
+            imageQuality=image_quality,
             qualityWarnings=warnings,
             warnings=warnings,
         )
 
     ordered_quad = order_points(quad)
-    warped = normalize_face_lighting(warp_face(image, ordered_quad))
+    warped_for_color = warp_face(image, ordered_quad)
+    warped_normalized = normalize_face_lighting(warped_for_color)
     stickers = []
     warnings = quality_warnings + detection_warnings
-
-    for index in range(9):
-        row = index // 3
-        column = index % 3
-        rgb = sample_sticker_rgb(warped, row, column)
-        classified = classify_rgb(rgb, request.knownCenters)
-        sticker_confidence = min(classified.confidence, face_confidence)
-        if index != 4 and sticker_confidence < LOW_CONFIDENCE:
-            warnings.append(f"low_confidence_sticker_{index}")
-        stickers.append(
-            AnalyzedSticker(
-                index=index,
-                symbol=request.expectedCenter if index == 4 else classified.symbol,
-                confidence=1.0 if index == 4 else sticker_confidence,
-                rgb=rgb,
-                polygon=sticker_polygon(ordered_quad, row, column, width, height),
-                alternatives=classified.alternatives,
-            )
-        )
-
-    center_rgb = stickers[4].rgb
+    center_rgb = sample_sticker_rgb(warped_for_color, 1, 1)
     center_classified = classify_rgb(center_rgb, request.knownCenters)
     center_mismatch_confidence = (
         CENTER_MISMATCH_CONFIDENCE
@@ -100,6 +88,48 @@ def analyze_face(request: AnalyzeScanFaceRequest) -> AnalyzeScanFaceResponse:
         and center_classified.confidence >= center_mismatch_confidence
         and not expected_center_still_plausible(center_rgb, request.expectedCenter)
     )
+    effective_known_centers = dict(request.knownCenters)
+    if not center_mismatch:
+        effective_known_centers[request.expectedCenter] = center_rgb
+
+    cnn = cnn or get_default_cnn()
+    cnn_probabilities = cnn.predict_sticker_probabilities(warped_for_color)
+    if cnn_probabilities is not None:
+        warnings.append("cnn_used")
+    elif cnn.model_configured and not cnn.available:
+        warnings.append("cnn_unavailable")
+
+    for index in range(9):
+        row = index // 3
+        column = index % 3
+        rgb = sample_sticker_rgb(warped_for_color, row, column)
+        estimated = estimate_color_probabilities(rgb, effective_known_centers)
+        if estimated.margin < 0.08:
+            normalized_rgb = sample_sticker_rgb(warped_normalized, row, column)
+            normalized_estimated = estimate_color_probabilities(normalized_rgb, effective_known_centers)
+            if normalized_estimated.margin > estimated.margin:
+                rgb = normalized_rgb
+                estimated = normalized_estimated
+        if cnn_probabilities is not None and index < len(cnn_probabilities):
+            estimated = estimated_color_from_probabilities(
+                combined_probabilities(estimated.probabilities, cnn_probabilities[index])
+            )
+        sticker_confidence = min(estimated.confidence, face_confidence)
+        if index != 4 and sticker_confidence < LOW_CONFIDENCE:
+            warnings.append(f"low_confidence_sticker_{index}")
+        stickers.append(
+            AnalyzedSticker(
+                index=index,
+                symbol=request.expectedCenter if index == 4 else estimated.symbol,
+                confidence=1.0 if index == 4 else sticker_confidence,
+                rgb=rgb,
+                polygon=sticker_polygon(ordered_quad, row, column, width, height),
+                alternatives=estimated.alternatives,
+                probabilities=ColorProbabilities(**estimated.probabilities),
+                quality=sticker_quality_metrics(warped_for_color, row, column, estimated.margin),
+            )
+        )
+
     low_confidence = (
         face_confidence < LOW_FACE_CONFIDENCE
         or quality_warnings
@@ -125,11 +155,22 @@ def analyze_face(request: AnalyzeScanFaceRequest) -> AnalyzeScanFaceResponse:
         faceConfidence=face_confidence,
         detectionMode=detection_mode,
         imageSize=ImageSize(width=width, height=height),
+        imageQuality=image_quality,
         faceQuad=normalize_polygon(ordered_quad, width, height),
         stickers=stickers,
         qualityWarnings=warnings,
         warnings=warnings,
     )
+
+
+def combined_probabilities(
+    color_probabilities: dict[str, float],
+    cnn_probabilities: dict[str, float],
+) -> dict[str, float]:
+    return {
+        symbol: color_probabilities.get(symbol, 0.0) * 0.55 + cnn_probabilities.get(symbol, 0.0) * 0.45
+        for symbol in SCAN_SYMBOLS
+    }
 
 
 def decode_image(image: str) -> np.ndarray | None:
@@ -210,10 +251,12 @@ def detect_face_quad(image: np.ndarray) -> tuple[np.ndarray | None, list[str], s
     return None, warnings, "rejected", 0.0
 
 
-def image_quality_warnings(image: np.ndarray) -> list[str]:
+def image_quality_metrics(image: np.ndarray) -> tuple[ImageQuality, list[str]]:
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     mean_luminance = float(np.mean(gray))
     blur_score = float(cv2.Laplacian(gray, cv2.CV_64F).var())
+    glare_ratio = float(np.mean(gray > 245))
+    shadow_ratio = float(np.mean(gray < 32))
     warnings: list[str] = []
 
     if mean_luminance < 38.0:
@@ -223,7 +266,38 @@ def image_quality_warnings(image: np.ndarray) -> list[str]:
     if blur_score < 18.0:
         warnings.append("image_blurry")
 
-    return warnings
+    return (
+        ImageQuality(
+            blurScore=blur_score,
+            meanLuminance=mean_luminance,
+            glareRatio=glare_ratio,
+            shadowRatio=shadow_ratio,
+        ),
+        warnings,
+    )
+
+
+def sticker_quality_metrics(warped_bgr: np.ndarray, row: int, column: int, margin: float) -> StickerQuality:
+    height, width = warped_bgr.shape[:2]
+    cell_width = width / 3.0
+    cell_height = height / 3.0
+    patch_size = max(10, int(min(cell_width, cell_height) * 0.22))
+    center_x = int(column * cell_width + cell_width * 0.5)
+    center_y = int(row * cell_height + cell_height * 0.5)
+    x0 = min(max(0, center_x - patch_size // 2), width - patch_size)
+    y0 = min(max(0, center_y - patch_size // 2), height - patch_size)
+    patch = warped_bgr[y0 : y0 + patch_size, x0 : x0 + patch_size]
+    rgb = cv2.cvtColor(patch, cv2.COLOR_BGR2RGB)
+    hsv = cv2.cvtColor(patch, cv2.COLOR_BGR2HSV)
+    saturation = hsv[:, :, 1]
+    value = hsv[:, :, 2]
+
+    return StickerQuality(
+        colorVariance=float(np.mean(np.std(rgb.reshape(-1, 3), axis=0)) / 255.0),
+        glareRatio=float(np.mean((value > 245) & (saturation < 60))),
+        shadowRatio=float(np.mean(value < 35)),
+        margin=clip01(margin),
+    )
 
 
 def contour_face_confidence(image: np.ndarray, quad: np.ndarray, area: float) -> float:

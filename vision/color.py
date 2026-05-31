@@ -26,48 +26,123 @@ class ClassifiedColor:
     symbol: str
     confidence: float
     alternatives: list[ScanColorAlternative]
+    probabilities: dict[str, float]
+    margin: float
+
+
+@dataclass(frozen=True)
+class EstimatedColor:
+    symbol: str
+    confidence: float
+    alternatives: list[ScanColorAlternative]
+    probabilities: dict[str, float]
+    margin: float
 
 
 def classify_rgb(rgb: RgbColor, known_centers: dict[str, RgbColor]) -> ClassifiedColor:
-    distances = sorted(
-        (
-            (symbol, perceptual_color_distance(rgb, reference_for_symbol(symbol, known_centers)))
-            for symbol in SCAN_SYMBOLS
-        ),
-        key=lambda item: item[1],
+    estimated = estimate_color_probabilities(rgb, known_centers)
+
+    return ClassifiedColor(
+        symbol=estimated.symbol,
+        confidence=estimated.confidence,
+        alternatives=estimated.alternatives,
+        probabilities=estimated.probabilities,
+        margin=estimated.margin,
     )
-    best_symbol, best_distance = distances[0]
-    second_distance = distances[1][1]
-    confidence = 1.0 if second_distance == 0 else (second_distance - best_distance) / second_distance
+
+
+def estimate_color_probabilities(rgb: RgbColor, known_centers: dict[str, RgbColor]) -> EstimatedColor:
+    distances = sorted(color_distances(rgb, known_centers), key=lambda item: item[1])
+    probabilities = probabilities_from_distances(distances)
     white_likelihood = neutral_white_likelihood(rgb)
 
     if white_likelihood >= NEUTRAL_WHITE_THRESHOLD:
-        u_distance = next(distance for symbol, distance in distances if symbol == "U")
-        nearest_non_u_distance = min(distance for symbol, distance in distances if symbol != "U")
-        u_distance_confidence = (
-            1.0
-            if nearest_non_u_distance == 0
-            else (nearest_non_u_distance - u_distance) / nearest_non_u_distance
-        )
+        probabilities = boost_white_probability(probabilities, white_likelihood)
         distances = sorted(distances, key=lambda item: (item[0] != "U", item[1]))
 
-        return ClassifiedColor(
-            symbol="U",
-            confidence=clamp01(max(white_likelihood * 0.86, u_distance_confidence)),
-            alternatives=color_alternatives(distances),
-        )
+    ranked_probabilities = sorted(probabilities.items(), key=lambda item: item[1], reverse=True)
+    best_symbol, best_probability = ranked_probabilities[0]
+    second_probability = ranked_probabilities[1][1]
 
-    return ClassifiedColor(
+    return EstimatedColor(
+        alternatives=color_alternatives_from_probabilities(ranked_probabilities),
+        confidence=clamp01(best_probability),
+        margin=clamp01(best_probability - second_probability),
+        probabilities=probabilities,
         symbol=best_symbol,
-        confidence=clamp01(confidence),
-        alternatives=color_alternatives(distances),
     )
+
+
+def estimated_color_from_probabilities(probabilities: dict[str, float]) -> EstimatedColor:
+    normalized = normalize_symbol_probabilities(probabilities)
+    ranked_probabilities = sorted(normalized.items(), key=lambda item: item[1], reverse=True)
+    best_symbol, best_probability = ranked_probabilities[0]
+    second_probability = ranked_probabilities[1][1]
+
+    return EstimatedColor(
+        alternatives=color_alternatives_from_probabilities(ranked_probabilities),
+        confidence=clamp01(best_probability),
+        margin=clamp01(best_probability - second_probability),
+        probabilities=normalized,
+        symbol=best_symbol,
+    )
+
+
+def normalize_symbol_probabilities(probabilities: dict[str, float]) -> dict[str, float]:
+    values = {
+        symbol: clamp01(float(probabilities.get(symbol, 0.0)))
+        for symbol in SCAN_SYMBOLS
+    }
+    total = sum(values.values())
+
+    if total <= 0.0:
+        return {symbol: 1.0 / len(SCAN_SYMBOLS) for symbol in SCAN_SYMBOLS}
+
+    return {symbol: values[symbol] / total for symbol in SCAN_SYMBOLS}
+
+
+def color_distances(rgb: RgbColor, known_centers: dict[str, RgbColor]) -> list[tuple[str, float]]:
+    return [
+        (symbol, perceptual_color_distance(rgb, reference_for_symbol(symbol, known_centers)))
+        for symbol in SCAN_SYMBOLS
+    ]
+
+
+def probabilities_from_distances(distances: list[tuple[str, float]], temperature: float = 12.0) -> dict[str, float]:
+    scores = {symbol: math.exp(-distance / temperature) for symbol, distance in distances}
+    total = sum(scores.values())
+
+    if total == 0.0:
+        return {symbol: 1.0 / len(SCAN_SYMBOLS) for symbol in SCAN_SYMBOLS}
+
+    return {symbol: clamp01(scores[symbol] / total) for symbol in SCAN_SYMBOLS}
+
+
+def boost_white_probability(probabilities: dict[str, float], white_likelihood: float) -> dict[str, float]:
+    desired_u_probability = max(probabilities["U"], white_likelihood)
+    current_non_u_total = max(1e-9, 1.0 - probabilities["U"])
+    next_non_u_total = max(0.0, 1.0 - desired_u_probability)
+    scale = next_non_u_total / current_non_u_total
+
+    return {
+        symbol: desired_u_probability if symbol == "U" else probabilities[symbol] * scale
+        for symbol in SCAN_SYMBOLS
+    }
 
 
 def color_alternatives(distances: list[tuple[str, float]]) -> list[ScanColorAlternative]:
     return [
         ScanColorAlternative(symbol=symbol, confidence=clamp01(1.0 - distance / 70.0))
         for symbol, distance in distances[:3]
+    ]
+
+
+def color_alternatives_from_probabilities(
+    ranked_probabilities: list[tuple[str, float]],
+) -> list[ScanColorAlternative]:
+    return [
+        ScanColorAlternative(symbol=symbol, confidence=clamp01(probability))
+        for symbol, probability in ranked_probabilities[:3]
     ]
 
 

@@ -2,13 +2,14 @@ use axum::{
     body::{to_bytes, Body},
     http::{Method, Request, StatusCode},
 };
-use cube_engine::{Scramble, SolverStrategy};
+use cube_engine::{Facelet, Scramble, SolverStrategy};
 use tower::ServiceExt;
 
 use crate::response::unverified_solution_response_from_parts;
 use crate::{
     api_router, api_router_with_web_dist, solve_notation_request, solve_scan_request,
-    AnalyzeScanFaceRequest, ApiState, ScanFacesRequest, SolveNotationRequest, SolveScanRequest,
+    solve_scan_session_request, AnalyzeScanFaceRequest, ApiState, ScanFacesRequest,
+    ScanSessionFaceRequest, ScanSessionRequest, SolveNotationRequest, SolveScanRequest,
     DEFAULT_API_NODES, MAX_API_DEPTH, MAX_API_NODES, MAX_NOTATION_BYTES,
 };
 
@@ -415,6 +416,175 @@ async fn analyze_scan_face_reports_unavailable_vision_service() {
 }
 
 #[tokio::test]
+async fn solve_scan_session_route_rejects_incomplete_session() {
+    let app = api_router(ApiState::without_generated_solver());
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/scan/solve-session")
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    serde_json::json!({
+                        "faces": [],
+                        "maxDepth": 0,
+                        "maxNodes": 1000,
+                        "strategyId": "bounded-ida-star"
+                    })
+                    .to_string(),
+                ))
+                .expect("request should build"),
+        )
+        .await
+        .expect("request should complete");
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    let body = to_bytes(response.into_body(), usize::MAX)
+        .await
+        .expect("body should be readable");
+    let response: crate::ScanSessionResponse =
+        serde_json::from_slice(&body).expect("response should be JSON");
+    assert!(!response.ok);
+    assert_eq!(response.status, "invalid_session");
+}
+
+#[tokio::test]
+async fn solve_scan_session_reports_unavailable_vision_service() {
+    let state = ApiState::without_generated_solver().with_vision_url("http://127.0.0.1:9");
+
+    let (status, response) =
+        solve_scan_session_request(&state, solved_scan_session_request()).await;
+
+    assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+    assert!(!response.ok);
+    assert_eq!(response.status, "vision_unavailable");
+}
+
+#[test]
+fn analyze_scan_face_response_preserves_vision_v2_fields() {
+    let response: crate::AnalyzeScanFaceResponse = serde_json::from_value(serde_json::json!({
+        "ok": true,
+        "status": "detected",
+        "message": null,
+        "centerMismatch": false,
+        "detectedCenter": "F",
+        "expectedCenter": "F",
+        "confidence": 0.9,
+        "detectedCenterConfidence": 0.9,
+        "faceConfidence": 0.8,
+        "detectionMode": "contour",
+        "imageSize": { "width": 640, "height": 640 },
+        "imageQuality": {
+            "blurScore": 128.0,
+            "meanLuminance": 120.0,
+            "glareRatio": 0.02,
+            "shadowRatio": 0.03
+        },
+        "faceQuad": [],
+        "stickers": [{
+            "index": 0,
+            "symbol": "F",
+            "confidence": 0.7,
+            "rgb": { "r": 34, "g": 197, "b": 94 },
+            "polygon": [],
+            "alternatives": [],
+            "probabilities": {
+                "U": 0.01,
+                "R": 0.02,
+                "F": 0.91,
+                "D": 0.01,
+                "L": 0.03,
+                "B": 0.02
+            },
+            "quality": {
+                "colorVariance": 0.12,
+                "glareRatio": 0.01,
+                "shadowRatio": 0.02,
+                "margin": 0.88
+            }
+        }],
+        "qualityWarnings": [],
+        "warnings": []
+    }))
+    .expect("vision v2 response should deserialize");
+
+    let sticker = response.stickers.first().expect("sticker should exist");
+    assert_eq!(
+        response
+            .image_quality
+            .as_ref()
+            .map(|quality| quality.blur_score),
+        Some(128.0)
+    );
+    assert_eq!(
+        sticker
+            .probabilities
+            .as_ref()
+            .map(|probabilities| probabilities.f),
+        Some(0.91)
+    );
+    assert_eq!(
+        sticker.quality.as_ref().map(|quality| quality.margin),
+        Some(0.88)
+    );
+
+    let serialized = serde_json::to_value(response).expect("response should serialize");
+    assert_eq!(serialized["stickers"][0]["probabilities"]["F"], 0.91);
+    assert_eq!(serialized["imageQuality"]["glareRatio"], 0.02);
+}
+
+#[test]
+fn scan_session_adapter_builds_inference_input_from_vision_probabilities() {
+    let scan = solved_scan_session_analysis();
+    let mut request = solved_scan_session_request();
+    request.faces[0].client_rotation = Some(90);
+    request.faces[0].manual_overrides.insert(0, "R".to_owned());
+
+    let input = crate::scan_analysis::scan_inference_input_from_session(&scan, &request)
+        .expect("complete vision session should adapt to inference input");
+
+    assert_eq!(input.face_rotation_priors[Facelet::U.index()], Some(90));
+    assert_eq!(input.facelet_probabilities[0][Facelet::U.index()], 0.98);
+    assert_eq!(input.manual_overrides.len(), 1);
+    assert_eq!(input.manual_overrides[0].position, 0);
+    assert_eq!(input.manual_overrides[0].facelet, Facelet::R);
+}
+
+#[test]
+fn scan_session_response_preserves_inference_fields() {
+    let response: crate::ScanSessionResponse = serde_json::from_value(serde_json::json!({
+        "ok": false,
+        "status": "needs_manual_confirmation",
+        "message": "Confirm the highlighted stickers before solving.",
+        "inference": {
+            "status": "needs_manual_confirmation",
+            "margin": 0.4,
+            "stateConfidence": 0.33,
+            "candidateFacelets": "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB",
+            "rescanFaces": [],
+            "manualTargets": [{ "face": "U", "stickers": [0] }]
+        },
+        "rescanFaces": [],
+        "manualTargets": [{ "face": "U", "stickers": [0] }]
+    }))
+    .expect("scan session response should deserialize");
+
+    let inference = response
+        .inference
+        .as_ref()
+        .expect("inference should be present");
+    assert_eq!(inference.status, "needs_manual_confirmation");
+    assert_eq!(inference.margin, Some(0.4));
+    assert_eq!(inference.manual_targets[0].face, "U");
+
+    let serialized = serde_json::to_value(response).expect("response should serialize");
+    assert_eq!(
+        serialized["inference"]["candidateFacelets"],
+        "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB"
+    );
+}
+
+#[tokio::test]
 async fn router_with_web_dist_serves_spa_fallback() {
     let web_dist_dir = std::env::temp_dir().join(format!(
         "rubiks-api-web-dist-test-{}",
@@ -514,6 +684,97 @@ fn solved_scan_request(strategy_id: &str, max_depth: usize) -> SolveScanRequest 
         strategy_id,
         max_depth,
     )
+}
+
+fn solved_scan_session_request() -> ScanSessionRequest {
+    ScanSessionRequest {
+        faces: ["U", "R", "F", "D", "L", "B"]
+            .into_iter()
+            .map(|symbol| ScanSessionFaceRequest {
+                symbol: symbol.to_owned(),
+                expected_top: None,
+                image: "data:image/jpeg;base64,AAAA".to_owned(),
+                manual_overrides: Default::default(),
+                client_rotation: None,
+            })
+            .collect(),
+        max_depth: 0,
+        max_nodes: Some(1_000),
+        strategy_id: "bounded-ida-star".to_owned(),
+    }
+}
+
+fn solved_scan_session_analysis() -> crate::AnalyzeScanSessionResponse {
+    let faces = ["U", "R", "F", "D", "L", "B"]
+        .into_iter()
+        .map(analyzed_session_face)
+        .collect::<Vec<_>>();
+
+    serde_json::from_value(serde_json::json!({
+        "ok": true,
+        "status": "analyzed",
+        "message": null,
+        "faces": faces,
+        "warnings": []
+    }))
+    .expect("solved scan session analysis should deserialize")
+}
+
+fn analyzed_session_face(symbol: &str) -> serde_json::Value {
+    let stickers = (0..9)
+        .map(|index| analyzed_sticker(index, symbol))
+        .collect::<Vec<_>>();
+
+    serde_json::json!({
+        "symbol": symbol,
+        "expectedTop": null,
+        "analysis": {
+            "ok": true,
+            "status": "detected",
+            "message": null,
+            "centerMismatch": false,
+            "detectedCenter": symbol,
+            "expectedCenter": symbol,
+            "confidence": 0.98,
+            "detectedCenterConfidence": 0.98,
+            "faceConfidence": 0.98,
+            "detectionMode": "contour",
+            "imageSize": { "width": 640, "height": 640 },
+            "imageQuality": null,
+            "faceQuad": [],
+            "stickers": stickers,
+            "qualityWarnings": [],
+            "warnings": []
+        }
+    })
+}
+
+fn analyzed_sticker(index: usize, symbol: &str) -> serde_json::Value {
+    serde_json::json!({
+        "index": index,
+        "symbol": symbol,
+        "confidence": 0.98,
+        "rgb": { "r": 0, "g": 0, "b": 0 },
+        "polygon": [],
+        "alternatives": [],
+        "probabilities": {
+            "U": probability_for_symbol(symbol, "U"),
+            "R": probability_for_symbol(symbol, "R"),
+            "F": probability_for_symbol(symbol, "F"),
+            "D": probability_for_symbol(symbol, "D"),
+            "L": probability_for_symbol(symbol, "L"),
+            "B": probability_for_symbol(symbol, "B")
+        },
+        "quality": null
+    })
+}
+
+fn probability_for_symbol(actual: &str, expected: &str) -> f64 {
+    if actual == expected {
+        0.98
+    } else {
+        0.004
+    }
 }
 
 fn scan_request_from_facelets(

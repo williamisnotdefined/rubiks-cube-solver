@@ -1,24 +1,40 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useAnalyzeScanFace, type AnalyzeScanFaceResponse, type RgbColor } from '@api/scan'
+import {
+  useAnalyzeScanFace,
+  useSolveScanSession,
+  type AnalyzeScanFaceResponse,
+  type RgbColor,
+  type ScanSessionResult,
+} from '@api/scan'
 import type { ScanFaceSymbol, ScanFacesPayload, SolveResult } from '@api/solver/types'
 import { Button } from '@components/Button'
 import { Loader3x3 } from '@components/Loader3x3'
-import { captureScanImage } from './scanCapture'
+import { captureScanImage, type CapturedScanImage } from './scanCapture'
 import { ScanCameraFrame } from './ScanCameraFrame'
+import { ScanFaceCarousel } from './ScanFaceCarousel'
 import { ScanFaceColorEditor } from './ScanFaceColorEditor'
 import { ScanSolveSettingsModal } from './ScanSolveSettingsModal'
 import {
-  confirmedFaceCount,
+  clearScanFaceDraft,
+  confirmScanFaceDraft,
+  confirmedDraftCount,
   countScanSymbols,
   createEmptyScanStickers,
+  createInitialScanFaceDrafts,
   lowConfidenceCount,
-  replaceScanSticker,
+  replaceScanFaceDraftSticker,
   scanFaceOrder,
+  scanFaceStatusFromDraft,
+  scanFacesFromDrafts,
+  scanSessionFacesFromDrafts,
   scanFacesToPayload,
   scanSymbolDetails,
   scanSymbols,
   validateScanFaceDraft,
+  type ScanFaceDraft,
+  type ScanFaceDrafts,
+  type ScanCaptureMetadata,
   type ScanFaces,
   type ScanSticker,
 } from './scanState'
@@ -35,10 +51,14 @@ import { useLiveScanPreview } from './hooks/useLiveScanPreview'
 
 type ScanCubeModalProps = {
   apiReady: boolean
+  maxDepth?: number
+  maxNodes?: number
   solveDisabledReason?: string
   solving: boolean
+  strategyId?: string
   onClose: () => void
   onSolve: (faces: ScanFacesPayload) => Promise<SolveResult | undefined>
+  onSessionAccepted?: (solve: SolveResult) => void
 }
 
 type SolveFailure = Exclude<SolveResult, { ok: true }>
@@ -46,12 +66,21 @@ type SolveLimitsFailure = SolveFailure & {
   status: 'not_found_within_limits' | 'invalid_limits'
 }
 
+type BackendReviewTargets = {
+  manualTargets: Partial<Record<ScanFaceSymbol, number[]>>
+  rescanFaces: ScanFaceSymbol[]
+}
+
 export function ScanCubeModal({
   apiReady,
+  maxDepth = 30,
+  maxNodes,
   solveDisabledReason,
   solving,
+  strategyId,
   onClose,
   onSolve,
+  onSessionAccepted,
 }: ScanCubeModalProps) {
   const { t } = useTranslation()
   const titleId = useId()
@@ -59,31 +88,52 @@ export function ScanCubeModal({
   const takePhotoRef = useRef<((source?: 'auto' | 'manual') => Promise<void>) | undefined>(undefined)
   const camera = useCameraStream(true)
   const analyzeScanFace = useAnalyzeScanFace()
-  const [faces, setFaces] = useState<ScanFaces>({})
+  const solveScanSession = useSolveScanSession()
+  const [drafts, setDrafts] = useState(() => createInitialScanFaceDrafts())
   const [currentFaceIndex, setCurrentFaceIndex] = useState(0)
   const currentFace = scanFaceOrder[currentFaceIndex]
-  const [stickers, setStickers] = useState<ScanSticker[]>(() =>
-    createEmptyScanStickers(currentFace.symbol),
-  )
-  const [photoDataUrl, setPhotoDataUrl] = useState<string | undefined>()
-  const [scanAnalysis, setScanAnalysis] = useState<AnalyzeScanFaceResponse | undefined>()
+  const currentDraft = drafts[currentFace.symbol]
+  const stickers = currentDraft.stickers
+  const photoDataUrl = currentDraft.photoDataUrl
+  const scanAnalysis = currentDraft.analysis
   const [autoScanEnabled, setAutoScanEnabled] = useState(true)
   const [capturing, setCapturing] = useState(false)
+  const [backendReviewTargets, setBackendReviewTargets] = useState<BackendReviewTargets>(() =>
+    emptyBackendReviewTargets(),
+  )
   const [limitsFailureResult, setLimitsFailureResult] = useState<SolveLimitsFailure | undefined>()
   const [message, setMessage] = useState<string | undefined>()
-  const completePayload = scanFacesToPayload(faces)
-  const draftValidation = validateScanFaceDraft(faces, currentFace.symbol, stickers)
+  const confirmedFaces = useMemo(() => scanFacesFromDrafts(drafts), [drafts])
+  const completePayload = scanFacesToPayload(confirmedFaces)
+  const sessionFaces = scanSessionFacesFromDrafts(drafts)
+  const draftValidation = validateScanFaceDraft(confirmedFaces, currentFace.symbol, stickers)
   const draftValidationMessage = scanFaceDraftValidationMessage(t, draftValidation)
   const centerValidation = scanAnalysis?.centerMismatch
     ? centerMismatchMessage(t, scanAnalysis)
     : undefined
   const faceValidation = centerValidation ?? draftValidationMessage
   const previewFaces: ScanFaces = {
-    ...faces,
+    ...confirmedFaces,
     [currentFace.symbol]: { symbol: currentFace.symbol, stickers },
   }
   const previewCounts = countScanSymbols(previewFaces)
-  const knownCenters = useMemo(() => knownCenterReferencesFromFaces(faces), [faces])
+  const faceStatuses = useMemo(
+    () =>
+      scanFaceOrder.map(({ symbol }) => {
+        const status = scanFaceStatusFromDraft(
+          drafts[symbol],
+          validateScanFaceDraft(confirmedFaces, symbol, drafts[symbol].stickers),
+        )
+
+        if (status === 'invalid' || status === 'pending') {
+          return status
+        }
+
+        return isBackendReviewFace(backendReviewTargets, symbol) ? 'needsReview' : status
+      }),
+    [backendReviewTargets, confirmedFaces, drafts],
+  )
+  const knownCenters = useMemo(() => knownCenterReferencesFromFaces(confirmedFaces), [confirmedFaces])
   const liveScan = useLiveScanPreview({
     enabled: autoScanEnabled && photoDataUrl === undefined && camera.status === 'ready' && !capturing,
     expectedCenter: currentFace.symbol,
@@ -113,14 +163,8 @@ export function ScanCubeModal({
     photoDataUrl !== undefined ||
     scanAnalysis !== undefined ||
     stickers.some((sticker, index) => index !== 4 && sticker.symbol !== undefined)
-
-  useEffect(() => {
-    const face = faces[currentFace.symbol]
-    setStickers(face?.stickers ?? createEmptyScanStickers(currentFace.symbol))
-    setPhotoDataUrl(face?.photoDataUrl)
-    setScanAnalysis(undefined)
-    setMessage(undefined)
-  }, [currentFace.symbol, faces])
+  const sessionSolving = solveScanSession.isPending
+  const reviewTargetIndexes = backendReviewTargets.manualTargets[currentFace.symbol] ?? []
 
   useEffect(() => {
     if (camera.status !== 'ready' || videoRef.current === null) {
@@ -160,11 +204,12 @@ export function ScanCubeModal({
 
     resetLiveAutoCapture()
     setCapturing(true)
-    setScanAnalysis(undefined)
+    clearBackendReviewForFace(currentFace.symbol)
+    setCurrentDraft({ analysis: undefined })
     setMessage(source === 'auto' ? t('scan.messages.autoCapturing') : t('scan.messages.capturingPhoto'))
 
     try {
-      const capture = captureScanImage(videoRef.current)
+      const capture = await captureScanImage(videoRef.current, camera.stream)
       if (capture === undefined) {
         setMessage(t('scan.messages.cameraFrameFailed'))
         return
@@ -177,10 +222,15 @@ export function ScanCubeModal({
         image: capture.photoDataUrl,
         knownCenters,
       })
-      setScanAnalysis(analysis)
+      setCurrentDraft({ analysis })
 
       if (analysis.stickers.length === 0 || isGuideFallbackAnalysis(analysis)) {
-        setStickers(createEmptyScanStickers(currentFace.symbol))
+        setCurrentDraft({
+          capture: undefined,
+          confirmed: false,
+          photoDataUrl: undefined,
+          stickers: createEmptyScanStickers(currentFace.symbol),
+        })
         setMessage(
           isGuideFallbackAnalysis(analysis)
             ? t('scan.messages.stillLooking')
@@ -189,9 +239,13 @@ export function ScanCubeModal({
         return
       }
 
-      setPhotoDataUrl(capture.photoDataUrl)
       const nextStickers = scanStickersFromAnalysis(analysis, currentFace.symbol)
-      setStickers(nextStickers)
+      setCurrentDraft({
+        capture: scanCaptureMetadata(capture),
+        confirmed: false,
+        photoDataUrl: capture.photoDataUrl,
+        stickers: nextStickers,
+      })
       const uncertain = lowConfidenceCount(nextStickers)
       const centerMessage = analysis.centerMismatch ? centerMismatchMessage(t, analysis) : undefined
       const qualityMessage = scanQualityMessage(t, analysis)
@@ -207,7 +261,13 @@ export function ScanCubeModal({
         [centerMessage, qualityMessage, detectionMessage].filter(Boolean).join(' '),
       )
     } catch (error) {
-      setStickers(createEmptyScanStickers(currentFace.symbol))
+      setCurrentDraft({
+        analysis: undefined,
+        capture: undefined,
+        confirmed: false,
+        photoDataUrl: undefined,
+        stickers: createEmptyScanStickers(currentFace.symbol),
+      })
       setMessage(error instanceof Error ? error.message : t('scan.messages.analysisFailed'))
     } finally {
       setCapturing(false)
@@ -216,26 +276,46 @@ export function ScanCubeModal({
 
   takePhotoRef.current = handleTakePhoto
 
+  function setCurrentDraft(patch: Partial<ScanFaceDraft>) {
+    setDrafts((currentDrafts) => ({
+      ...currentDrafts,
+      [currentFace.symbol]: {
+        ...currentDrafts[currentFace.symbol],
+        ...patch,
+      },
+    }))
+  }
+
+  function handleFaceIndexChange(index: number) {
+    if (index < 0 || index >= scanFaceOrder.length || index === currentFaceIndex) {
+      return
+    }
+
+    setCurrentFaceIndex(index)
+    setMessage(undefined)
+    resetLiveAutoCapture()
+    analyzeScanFace.reset()
+  }
+
   function handleStickerColorChange(index: number, symbol: ScanSticker['symbol']) {
     if (symbol === undefined) {
       return
     }
 
-    setStickers((currentStickers) =>
-      replaceScanSticker(currentStickers, index, index === 4 ? currentFace.symbol : symbol),
+    setDrafts((currentDrafts) =>
+      replaceScanFaceDraftSticker(
+        currentDrafts,
+        currentFace.symbol,
+        index,
+        index === 4 ? currentFace.symbol : symbol,
+      ),
     )
+    clearBackendManualTarget(currentFace.symbol, index)
   }
 
   function handleClearPhoto() {
-    setFaces((currentFaces) => {
-      const nextFaces = { ...currentFaces }
-      delete nextFaces[currentFace.symbol]
-
-      return nextFaces
-    })
-    setStickers(createEmptyScanStickers(currentFace.symbol))
-    setPhotoDataUrl(undefined)
-    setScanAnalysis(undefined)
+    setDrafts((currentDrafts) => clearScanFaceDraft(currentDrafts, currentFace.symbol))
+    clearBackendReviewForFace(currentFace.symbol)
     setMessage(undefined)
     resetLiveAutoCapture()
     analyzeScanFace.reset()
@@ -245,6 +325,14 @@ export function ScanCubeModal({
     setAutoScanEnabled((enabled) => !enabled)
     resetLiveAutoCapture()
     setMessage(undefined)
+  }
+
+  function clearBackendReviewForFace(symbol: ScanFaceSymbol) {
+    setBackendReviewTargets((targets) => removeBackendReviewFace(targets, symbol))
+  }
+
+  function clearBackendManualTarget(symbol: ScanFaceSymbol, index: number) {
+    setBackendReviewTargets((targets) => removeBackendManualTarget(targets, symbol, index))
   }
 
   function handleConfirmFace() {
@@ -258,26 +346,56 @@ export function ScanCubeModal({
       return
     }
 
-    const nextFaces: ScanFaces = {
-      ...faces,
-      [currentFace.symbol]: {
-        symbol: currentFace.symbol,
-        stickers,
-        photoDataUrl,
-      },
-    }
+    const nextDrafts = confirmScanFaceDraft(drafts, currentFace.symbol)
+    const nextFaceIndex = nextUnconfirmedFaceIndex(nextDrafts, currentFaceIndex)
+    setDrafts(nextDrafts)
+    clearBackendReviewForFace(currentFace.symbol)
 
-    setFaces(nextFaces)
-    if (currentFaceIndex < scanFaceOrder.length - 1) {
-      setCurrentFaceIndex((index) => index + 1)
+    if (nextFaceIndex !== undefined) {
+      handleFaceIndexChange(nextFaceIndex)
       return
     }
 
-    setMessage(t('scan.messages.allFacesConfirmed'))
+    setMessage(
+      currentDraft.confirmed ? t('scan.messages.faceUpdated') : t('scan.messages.allFacesConfirmed'),
+    )
   }
 
   async function handleSolveScan() {
-    const payload = scanFacesToPayload(faces)
+    const faces = sessionFaces
+    if (faces === undefined) {
+      setMessage(t('scan.messages.confirmAllFaces'))
+      return
+    }
+
+    if (!apiReady) {
+      setMessage(t('scan.messages.apiNotReady'))
+      return
+    }
+
+    if (solveDisabledReason !== undefined) {
+      setMessage(solveDisabledReason)
+      return
+    }
+
+    try {
+      setLimitsFailureResult(undefined)
+      setMessage(t('scan.messages.submittingSession'))
+      const result = await solveScanSession.mutateAsync({
+        faces,
+        maxDepth,
+        maxNodes,
+        strategyId,
+      })
+
+      handleScanSessionResult(result)
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : t('scan.messages.solveFailed'))
+    }
+  }
+
+  async function handleFallbackSolveScan() {
+    const payload = scanFacesToPayload(confirmedFaces)
     if (payload === undefined) {
       setMessage(t('scan.messages.confirmAllFaces'))
       return
@@ -297,7 +415,7 @@ export function ScanCubeModal({
   }
 
   async function handleRetrySolveScan() {
-    const payload = scanFacesToPayload(faces)
+    const payload = scanFacesToPayload(confirmedFaces)
     if (payload === undefined) {
       setLimitsFailureResult(undefined)
       setMessage(t('scan.messages.confirmAllFaces'))
@@ -342,6 +460,26 @@ export function ScanCubeModal({
     }
   }
 
+  function handleScanSessionResult(result: ScanSessionResult) {
+    if (result.ok && result.solve?.ok) {
+      onSessionAccepted?.(result.solve)
+      onClose()
+      return
+    }
+
+    const nextTargets = backendReviewTargetsFromSessionResult(result)
+    setBackendReviewTargets(nextTargets)
+    const targetFace = firstBackendReviewFace(nextTargets)
+    if (targetFace !== undefined) {
+      const targetIndex = scanFaceOrder.findIndex(({ symbol }) => symbol === targetFace)
+      if (targetIndex !== -1) {
+        setCurrentFaceIndex(targetIndex)
+      }
+    }
+
+    setMessage(scanSessionMessage(t, result))
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-3 py-6 sm:px-6">
       <button
@@ -370,7 +508,12 @@ export function ScanCubeModal({
           </Button>
         </div>
 
-        <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
+        <ScanFaceCarousel
+          currentFaceIndex={currentFaceIndex}
+          faceStatuses={faceStatuses}
+          onFaceIndexChange={handleFaceIndexChange}
+        >
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
           <div className="grid gap-3">
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
@@ -396,7 +539,7 @@ export function ScanCubeModal({
                 </p>
               </div>
               <span className="border border-[#2b2b2b] bg-[#171717] px-3 py-2 text-xs font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
-                {t('scan.modal.confirmed', { count: confirmedFaceCount(faces) })}
+                {t('scan.modal.confirmed', { count: confirmedDraftCount(drafts) })}
               </span>
             </div>
 
@@ -454,7 +597,7 @@ export function ScanCubeModal({
                 disabled={faceValidation !== undefined}
                 onClick={handleConfirmFace}
               >
-                {t('scan.actions.confirmFace')}
+                {currentDraft.confirmed ? t('scan.actions.updateFace') : t('scan.actions.confirmFace')}
               </Button>
             </div>
           </div>
@@ -463,6 +606,7 @@ export function ScanCubeModal({
             <ScanFaceColorEditor
               centerSymbol={currentFace.symbol}
               key={currentFace.symbol}
+              reviewTargetIndexes={reviewTargetIndexes}
               stickers={stickers}
               onStickerColorChange={handleStickerColorChange}
             />
@@ -491,17 +635,29 @@ export function ScanCubeModal({
                 t('scan.editor.selectSquareHint')}
             </p>
             <Button
-              aria-label={solving ? t('common.loading') : undefined}
+              aria-label={solving || sessionSolving ? t('common.loading') : undefined}
               type="button"
               disabled={
-                completePayload === undefined || !apiReady || solving || solveDisabledReason !== undefined
+                sessionFaces === undefined || !apiReady || solving || sessionSolving || solveDisabledReason !== undefined
               }
               onClick={handleSolveScan}
             >
-              {solving ? <Loader3x3 decorative className="size-8" registerDelayMs={150} /> : t('scan.actions.solveScannedCube')}
+              {solving || sessionSolving ? <Loader3x3 decorative className="size-8" registerDelayMs={150} /> : t('scan.actions.solveScannedCube')}
+            </Button>
+            <Button
+              className="min-h-10 px-4 py-2"
+              type="button"
+              variant="ghost"
+              disabled={
+                completePayload === undefined || !apiReady || solving || sessionSolving || solveDisabledReason !== undefined
+              }
+              onClick={handleFallbackSolveScan}
+            >
+              {t('scan.actions.solveReviewedColors')}
             </Button>
           </div>
         </div>
+        </ScanFaceCarousel>
       </section>
       {limitsFailureResult === undefined ? null : (
         <ScanSolveSettingsModal
@@ -520,6 +676,120 @@ function isSolveLimitsFailure(result: SolveResult | undefined): result is SolveL
     result?.ok === false &&
     (result.status === 'not_found_within_limits' || result.status === 'invalid_limits')
   )
+}
+
+function emptyBackendReviewTargets(): BackendReviewTargets {
+  return { manualTargets: {}, rescanFaces: [] }
+}
+
+function isBackendReviewFace(targets: BackendReviewTargets, symbol: ScanFaceSymbol): boolean {
+  return targets.rescanFaces.includes(symbol) || (targets.manualTargets[symbol]?.length ?? 0) > 0
+}
+
+function removeBackendReviewFace(
+  targets: BackendReviewTargets,
+  symbol: ScanFaceSymbol,
+): BackendReviewTargets {
+  const manualTargets = { ...targets.manualTargets }
+  delete manualTargets[symbol]
+
+  return {
+    manualTargets,
+    rescanFaces: targets.rescanFaces.filter((face) => face !== symbol),
+  }
+}
+
+function removeBackendManualTarget(
+  targets: BackendReviewTargets,
+  symbol: ScanFaceSymbol,
+  index: number,
+): BackendReviewTargets {
+  const currentTargets = targets.manualTargets[symbol]
+  if (currentTargets === undefined) {
+    return targets
+  }
+
+  const nextTargets = currentTargets.filter((targetIndex) => targetIndex !== index)
+  if (nextTargets.length === currentTargets.length) {
+    return targets
+  }
+
+  const manualTargets = { ...targets.manualTargets }
+  if (nextTargets.length === 0) {
+    delete manualTargets[symbol]
+  } else {
+    manualTargets[symbol] = nextTargets
+  }
+
+  return { ...targets, manualTargets }
+}
+
+function backendReviewTargetsFromSessionResult(result: ScanSessionResult): BackendReviewTargets {
+  const manualTargets: BackendReviewTargets['manualTargets'] = {}
+
+  for (const target of result.manualTargets) {
+    manualTargets[target.face] = target.stickers
+  }
+
+  return {
+    manualTargets,
+    rescanFaces: result.rescanFaces,
+  }
+}
+
+function firstBackendReviewFace(targets: BackendReviewTargets): ScanFaceSymbol | undefined {
+  return targets.rescanFaces[0] ?? scanFaceOrder.find(({ symbol }) => isBackendReviewFace(targets, symbol))?.symbol
+}
+
+function scanSessionMessage(
+  t: ReturnType<typeof useTranslation>['t'],
+  result: ScanSessionResult,
+): string {
+  if (result.message !== undefined && result.message.length > 0) {
+    return result.message
+  }
+
+  switch (result.status) {
+    case 'needs_rescan_face':
+      return t('scan.messages.sessionNeedsRescan')
+    case 'needs_manual_confirmation':
+      return t('scan.messages.sessionNeedsManualConfirmation')
+    case 'state_ambiguous':
+    case 'orientation_ambiguous':
+      return t('scan.messages.sessionAmbiguous')
+    case 'invalid_cube_state':
+      return t('scan.messages.sessionInvalidCubeState')
+    case 'vision_unavailable':
+    case 'vision_error':
+      return t('scan.messages.sessionVisionUnavailable')
+    default:
+      return t('scan.messages.sessionRejected')
+  }
+}
+
+function nextUnconfirmedFaceIndex(
+  drafts: ScanFaceDrafts,
+  currentFaceIndex: number,
+): number | undefined {
+  for (let offset = 1; offset <= scanFaceOrder.length; offset += 1) {
+    const nextIndex = (currentFaceIndex + offset) % scanFaceOrder.length
+    const face = scanFaceOrder[nextIndex]
+
+    if (!drafts[face.symbol].confirmed) {
+      return nextIndex
+    }
+  }
+
+  return undefined
+}
+
+function scanCaptureMetadata(capture: CapturedScanImage): ScanCaptureMetadata {
+  return {
+    capturedAt: capture.capturedAt,
+    height: capture.height,
+    source: capture.source,
+    width: capture.width,
+  }
 }
 
 function isGuideFallbackAnalysis(analysis: AnalyzeScanFaceResponse): boolean {

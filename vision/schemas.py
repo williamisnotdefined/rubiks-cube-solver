@@ -27,6 +27,29 @@ class ScanColorAlternative(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
 
 
+class ColorProbabilities(BaseModel):
+    U: float = Field(ge=0.0, le=1.0)
+    R: float = Field(ge=0.0, le=1.0)
+    F: float = Field(ge=0.0, le=1.0)
+    D: float = Field(ge=0.0, le=1.0)
+    L: float = Field(ge=0.0, le=1.0)
+    B: float = Field(ge=0.0, le=1.0)
+
+
+class StickerQuality(BaseModel):
+    colorVariance: float = Field(ge=0.0)
+    glareRatio: float = Field(ge=0.0, le=1.0)
+    shadowRatio: float = Field(ge=0.0, le=1.0)
+    margin: float = Field(ge=0.0, le=1.0)
+
+
+class ImageQuality(BaseModel):
+    blurScore: float = Field(ge=0.0)
+    meanLuminance: float = Field(ge=0.0, le=255.0)
+    glareRatio: float = Field(ge=0.0, le=1.0)
+    shadowRatio: float = Field(ge=0.0, le=1.0)
+
+
 class AnalyzedSticker(BaseModel):
     index: int = Field(ge=0, le=8)
     symbol: ScanFaceSymbol
@@ -34,6 +57,8 @@ class AnalyzedSticker(BaseModel):
     rgb: RgbColor
     polygon: list[Point]
     alternatives: list[ScanColorAlternative]
+    probabilities: ColorProbabilities | None = None
+    quality: StickerQuality | None = None
 
 
 class AnalyzeScanFaceRequest(BaseModel):
@@ -54,7 +79,34 @@ class AnalyzeScanFaceResponse(BaseModel):
     faceConfidence: float = Field(default=0.0, ge=0.0, le=1.0)
     detectionMode: str | None = None
     imageSize: ImageSize | None = None
+    imageQuality: ImageQuality | None = None
     faceQuad: list[Point] = Field(default_factory=list)
     stickers: list[AnalyzedSticker] = Field(default_factory=list)
     qualityWarnings: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+
+
+class ScanSessionFaceRequest(BaseModel):
+    symbol: ScanFaceSymbol
+    expectedTop: ScanFaceSymbol | None = None
+    image: str
+    manualOverrides: dict[int, ScanFaceSymbol] = Field(default_factory=dict)
+    clientRotation: int | None = None
+
+
+class AnalyzeScanSessionRequest(BaseModel):
+    faces: list[ScanSessionFaceRequest]
+
+
+class AnalyzedSessionFace(BaseModel):
+    symbol: ScanFaceSymbol
+    expectedTop: ScanFaceSymbol | None = None
+    analysis: AnalyzeScanFaceResponse
+
+
+class AnalyzeScanSessionResponse(BaseModel):
+    ok: bool
+    status: str
+    message: str | None = None
+    faces: list[AnalyzedSessionFace] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)

@@ -3,7 +3,12 @@ import { useTranslation } from 'react-i18next'
 
 type CameraStreamState =
   | { status: 'idle' | 'loading' }
-  | { status: 'ready'; stream: MediaStream }
+  | {
+      capabilities?: MediaTrackCapabilities
+      settings?: MediaTrackSettings
+      status: 'ready'
+      stream: MediaStream
+    }
   | { status: 'error'; message: string }
 
 export function useCameraStream(active: boolean): CameraStreamState {
@@ -32,13 +37,20 @@ export function useCameraStream(active: boolean): CameraStreamState {
           audio: false,
           video: {
             facingMode: { ideal: 'environment' },
-            height: { ideal: 720 },
-            width: { ideal: 1280 },
+            height: { ideal: 1080 },
+            width: { ideal: 1920 },
           },
         })
 
         if (!cancelled) {
-          setState({ status: 'ready', stream })
+          const [videoTrack] = stream.getVideoTracks()
+
+          setState({
+            capabilities: videoTrack?.getCapabilities?.(),
+            settings: videoTrack?.getSettings(),
+            status: 'ready',
+            stream,
+          })
         }
       } catch {
         if (!cancelled) {
