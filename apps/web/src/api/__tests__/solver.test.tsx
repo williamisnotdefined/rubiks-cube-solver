@@ -55,6 +55,8 @@ describe('solver API operations', () => {
       ok: true,
       visionCnnAvailable: false,
       visionCnnReason: 'cnn_model_not_configured',
+      visionFaceDetectorAvailable: false,
+      visionFaceDetectorReason: 'face_detector_model_not_configured',
       visionOk: true,
     }
     const fetchMock = mockApiSuccess(health)
@@ -177,6 +179,14 @@ describe('solver API operations', () => {
       rescanFaces: [],
       solve: successPayload,
       status: 'accepted',
+      timings: {
+        earlyQualityGateElapsedMs: 1,
+        inferenceElapsedMs: 2,
+        qualityGateElapsedMs: 1,
+        solveElapsedMs: 3,
+        totalElapsedMs: 12,
+        visionElapsedMs: 5,
+      },
     }
     const fetchMock = mockApiSuccess(payload)
 
@@ -208,6 +218,11 @@ describe('solver API operations', () => {
       ok: false,
       rescanFaces: ['F'],
       status: 'needs_rescan_face',
+      timings: {
+        earlyQualityGateElapsedMs: 1,
+        totalElapsedMs: 8,
+        visionElapsedMs: 7,
+      },
     }
     mockApiError(payload)
 
@@ -277,6 +292,7 @@ describe('solver React Query hooks', () => {
       generatedTwoPhaseReady: true,
       ok: true,
       visionCnnAvailable: true,
+      visionFaceDetectorAvailable: true,
       visionOk: true,
     })
     const { result } = renderHookWithProviders(() => useGetHealth())
@@ -286,6 +302,7 @@ describe('solver React Query hooks', () => {
       generatedTwoPhaseReady: true,
       ok: true,
       visionCnnAvailable: true,
+      visionFaceDetectorAvailable: true,
       visionOk: true,
     })
   })

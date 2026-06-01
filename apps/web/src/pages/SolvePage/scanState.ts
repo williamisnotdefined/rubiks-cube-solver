@@ -37,13 +37,24 @@ export type ScanCaptureMetadata = {
   width: number
 }
 
+export type RejectedScanCaptureReason = 'empty_stickers' | 'guide_fallback'
+
+export type RejectedScanCapture = {
+  analysis: AnalyzeScanFaceResponse
+  capture: ScanCaptureMetadata
+  photoDataUrl: string
+  reason: RejectedScanCaptureReason
+}
+
 export type ScanFaces = Partial<Record<ScanFaceSymbol, ConfirmedScanFace>>
 
 export type ScanFaceStatus = 'pending' | 'draft' | 'confirmed' | 'invalid' | 'needsReview'
 
 export type ScanFaceDraft = ConfirmedScanFace & {
   analysis?: AnalyzeScanFaceResponse
+  centerOverrideConfirmed?: boolean
   confirmed: boolean
+  lastRejectedCapture?: RejectedScanCapture
 }
 
 export type ScanFaceDrafts = Record<ScanFaceSymbol, ScanFaceDraft>
@@ -238,7 +249,11 @@ export function scanSessionFacesFromDrafts(
 
     const manualOverrides: Partial<Record<number, ScanFaceSymbol>> = {}
     for (const [index, sticker] of draft.stickers.entries()) {
-      if (index !== 4 && sticker.source === 'manual' && sticker.symbol !== undefined) {
+      if (
+        sticker.symbol !== undefined &&
+        ((index !== 4 && sticker.source === 'manual') ||
+          (index === 4 && draft.centerOverrideConfirmed === true))
+      ) {
         manualOverrides[index] = sticker.symbol
       }
     }
@@ -307,11 +322,14 @@ export function clearScanFaceDraft(
 export function confirmScanFaceDraft(
   drafts: ScanFaceDrafts,
   symbol: ScanFaceSymbol,
+  options: { centerOverrideConfirmed?: boolean } = {},
 ): ScanFaceDrafts {
   return {
     ...drafts,
     [symbol]: {
       ...drafts[symbol],
+      centerOverrideConfirmed:
+        options.centerOverrideConfirmed ?? drafts[symbol].centerOverrideConfirmed,
       confirmed: true,
     },
   }
@@ -361,6 +379,32 @@ export function replaceScanSticker(
   })
 }
 
+export function scanStickersFromAnalysis(
+  analysis: AnalyzeScanFaceResponse,
+  centerSymbol: ScanFaceSymbol,
+): ScanSticker[] {
+  const stickers = createEmptyScanStickers(centerSymbol)
+
+  for (const analyzedSticker of analysis.stickers) {
+    if (analyzedSticker.index < 0 || analyzedSticker.index > 8) {
+      continue
+    }
+
+    stickers[analyzedSticker.index] = {
+      alternatives: analyzedSticker.alternatives,
+      confidence:
+        analyzedSticker.index === 4
+          ? analysis.detectedCenterConfidence || analysis.confidence
+          : analyzedSticker.confidence,
+      rgb: analyzedSticker.rgb,
+      source: analyzedSticker.index === 4 ? 'center' : 'detected',
+      symbol: analyzedSticker.index === 4 ? centerSymbol : analyzedSticker.symbol,
+    }
+  }
+
+  return stickers
+}
+
 export function confirmedFaceCount(faces: ScanFaces): number {
   return scanFaceOrder.filter(({ symbol }) => faces[symbol] !== undefined).length
 }
@@ -377,6 +421,7 @@ function hasScanFaceDraftContent(draft: ScanFaceDraft): boolean {
   return (
     draft.photoDataUrl !== undefined ||
     draft.analysis !== undefined ||
+    draft.lastRejectedCapture !== undefined ||
     draft.stickers.some((sticker, index) => index !== 4 && sticker.symbol !== undefined)
   )
 }

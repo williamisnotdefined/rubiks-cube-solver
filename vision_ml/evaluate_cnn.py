@@ -6,17 +6,19 @@ from pathlib import Path
 
 import numpy as np
 
+from .coco_colors import load_coco_color_patch_examples
 from .data import DEFAULT_PATCH_SIZE, SYMBOLS, load_patch_examples
 from .model import TorchNotAvailableError, create_sticker_cnn, require_torch
 
 
 def evaluate_cnn(
     checkpoint_path: str | Path,
-    dataset_path: str | Path,
-    image_root: str | Path,
+    dataset_path: str | Path | None,
+    image_root: str | Path | None,
     split: str | None = "validation",
     output_path: str | Path | None = None,
     patch_size: int = DEFAULT_PATCH_SIZE,
+    coco_zip: str | Path | None = None,
 ) -> dict[str, object]:
     torch, _nn = require_torch()
     checkpoint = torch.load(checkpoint_path, map_location="cpu")
@@ -24,9 +26,7 @@ def evaluate_cnn(
     model.load_state_dict(checkpoint["model_state_dict"])
     model.eval()
 
-    examples = load_patch_examples(dataset_path, image_root=image_root, split=split, patch_size=patch_size)
-    if not examples and split is not None:
-        examples = load_patch_examples(dataset_path, image_root=image_root, split=None, patch_size=patch_size)
+    examples = load_evaluation_examples(dataset_path, image_root, coco_zip, split, patch_size)
     if not examples:
         raise ValueError("vision dataset did not produce any evaluation examples")
 
@@ -39,6 +39,27 @@ def evaluate_cnn(
     if output_path is not None:
         Path(output_path).write_text(json.dumps(report, indent=2), encoding="utf-8")
     return report
+
+
+def load_evaluation_examples(
+    dataset_path: str | Path | None,
+    image_root: str | Path | None,
+    coco_zip: str | Path | None,
+    split: str | None,
+    patch_size: int,
+):
+    if coco_zip is not None:
+        if dataset_path is not None:
+            raise ValueError("provide either --dataset or --coco-zip, not both")
+        return load_coco_color_patch_examples(coco_zip, split=split, patch_size=patch_size)
+
+    if dataset_path is None or image_root is None:
+        raise ValueError("vision dataset evaluation requires dataset_path and image_root")
+
+    examples = load_patch_examples(dataset_path, image_root=image_root, split=split, patch_size=patch_size)
+    if not examples and split is not None:
+        examples = load_patch_examples(dataset_path, image_root=image_root, split=None, patch_size=patch_size)
+    return examples
 
 
 def evaluation_report_from_probabilities(
@@ -76,11 +97,17 @@ def evaluation_report_from_probabilities(
 def main() -> None:
     parser = argparse.ArgumentParser(description="Evaluate a trained sticker CNN checkpoint.")
     parser.add_argument("--checkpoint", required=True, type=Path)
-    parser.add_argument("--dataset", required=True, type=Path)
-    parser.add_argument("--image-root", required=True, type=Path)
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--dataset", type=Path)
+    source.add_argument("--coco-zip", type=Path)
+    parser.add_argument("--image-root", type=Path)
     parser.add_argument("--split", default="validation")
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--patch-size", default=DEFAULT_PATCH_SIZE, type=int)
     args = parser.parse_args()
+
+    if args.dataset is not None and args.image_root is None:
+        parser.error("--image-root is required with --dataset")
 
     try:
         report = evaluate_cnn(
@@ -89,6 +116,8 @@ def main() -> None:
             image_root=args.image_root,
             split=args.split,
             output_path=args.output,
+            patch_size=args.patch_size,
+            coco_zip=args.coco_zip,
         )
     except TorchNotAvailableError as error:
         raise SystemExit(str(error)) from error

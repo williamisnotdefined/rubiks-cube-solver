@@ -135,6 +135,33 @@ describe('scan state helpers', () => {
     )
   })
 
+  it('includes explicit center overrides in scan session payloads', () => {
+    const drafts = createInitialScanFaceDrafts()
+    const confirmedDrafts = scanSymbols.reduce((currentDrafts, symbol) => {
+      const nextDrafts = {
+        ...currentDrafts,
+        [symbol]: {
+          ...currentDrafts[symbol],
+          photoDataUrl: `data:image/jpeg;base64,${symbol}`,
+          stickers: filledDetectedStickers(symbol),
+        },
+      }
+
+      return confirmScanFaceDraft(nextDrafts, symbol, {
+        centerOverrideConfirmed: symbol === 'D',
+      })
+    }, drafts)
+
+    expect(scanSessionFacesFromDrafts(confirmedDrafts)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          manualOverrides: { 4: 'D' },
+          symbol: 'D',
+        }),
+      ]),
+    )
+  })
+
   it('balances detected low-confidence stickers before building the solve payload', () => {
     const faces = Object.fromEntries(
       scanSymbols.map((symbol) => [symbol, { symbol, stickers: filledStickers(symbol) }]),

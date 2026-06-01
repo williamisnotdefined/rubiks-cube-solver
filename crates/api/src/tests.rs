@@ -378,7 +378,9 @@ async fn health_route_reports_vision_cnn_status() {
             axum::Json(serde_json::json!({
                 "ok": true,
                 "cnnAvailable": false,
-                "cnnReason": "cnn_model_not_configured"
+                "cnnReason": "cnn_model_not_configured",
+                "faceDetectorAvailable": false,
+                "faceDetectorReason": "face_detector_model_not_configured"
             }))
         }),
     );
@@ -413,6 +415,11 @@ async fn health_route_reports_vision_cnn_status() {
     assert_eq!(response["visionOk"], true);
     assert_eq!(response["visionCnnAvailable"], false);
     assert_eq!(response["visionCnnReason"], "cnn_model_not_configured");
+    assert_eq!(response["visionFaceDetectorAvailable"], false);
+    assert_eq!(
+        response["visionFaceDetectorReason"],
+        "face_detector_model_not_configured"
+    );
 }
 
 #[tokio::test]
@@ -509,6 +516,102 @@ async fn solve_scan_session_reports_unavailable_vision_service() {
     assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
     assert!(!response.ok);
     assert_eq!(response.status, "vision_unavailable");
+}
+
+#[tokio::test]
+async fn solve_scan_session_rescans_obvious_glare_before_inference() {
+    let mut scan = solved_scan_session_analysis();
+    scan.faces[0]
+        .analysis
+        .image_quality
+        .as_mut()
+        .expect("image quality should exist")
+        .glare_ratio = 0.50;
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("vision listener should bind");
+    let addr = listener
+        .local_addr()
+        .expect("vision addr should be available");
+    let vision_app = axum::Router::new().route(
+        "/analyze-session",
+        axum::routing::post(move || {
+            let scan = scan.clone();
+            async move { axum::Json(scan) }
+        }),
+    );
+    let vision_server = tokio::spawn(async move {
+        axum::serve(listener, vision_app)
+            .await
+            .expect("vision server should run")
+    });
+    let state = ApiState::without_generated_solver().with_vision_url(format!("http://{addr}"));
+
+    let (status, response) =
+        solve_scan_session_request(&state, solved_scan_session_request()).await;
+
+    vision_server.abort();
+    assert_eq!(status, StatusCode::OK);
+    assert!(!response.ok);
+    assert_eq!(response.status, "needs_rescan_face");
+    assert_eq!(response.rescan_faces, vec!["U"]);
+    assert!(response.solve.is_none());
+    let inference = response
+        .inference
+        .as_ref()
+        .expect("early quality gate should return inference-shaped metadata");
+    assert!(inference.candidate_facelets.is_none());
+    assert_eq!(inference.quality_reasons, vec!["image_glare:U"]);
+    let timings = response
+        .timings
+        .as_ref()
+        .expect("timings should be reported");
+    assert!(timings.vision_elapsed_ms.is_some());
+    assert!(timings.early_quality_gate_elapsed_ms.is_some());
+    assert!(timings.inference_elapsed_ms.is_none());
+    assert!(timings.solve_elapsed_ms.is_none());
+}
+
+#[tokio::test]
+async fn solve_scan_session_accepts_explicit_center_override() {
+    let mut scan = solved_scan_session_analysis();
+    scan.ok = false;
+    scan.status = "partial_failure".to_owned();
+    scan.message = Some("One or more faces need to be rescanned.".to_owned());
+    scan.faces[0].analysis.ok = false;
+    scan.faces[0].analysis.status = "center_mismatch".to_owned();
+    scan.faces[0].analysis.center_mismatch = true;
+    scan.faces[0].analysis.detected_center = Some("R".to_owned());
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("vision listener should bind");
+    let addr = listener
+        .local_addr()
+        .expect("vision addr should be available");
+    let vision_app = axum::Router::new().route(
+        "/analyze-session",
+        axum::routing::post(move || {
+            let scan = scan.clone();
+            async move { axum::Json(scan) }
+        }),
+    );
+    let vision_server = tokio::spawn(async move {
+        axum::serve(listener, vision_app)
+            .await
+            .expect("vision server should run")
+    });
+    let state = ApiState::without_generated_solver().with_vision_url(format!("http://{addr}"));
+    let mut request = solved_scan_session_request();
+    request.faces[0].manual_overrides.insert(4, "U".to_owned());
+
+    let (status, response) = solve_scan_session_request(&state, request).await;
+
+    vision_server.abort();
+    assert_eq!(status, StatusCode::OK);
+    assert!(response.ok);
+    assert_eq!(response.status, "accepted");
+    assert!(response.solve.is_some());
+    assert!(response.rescan_faces.is_empty());
 }
 
 #[test]
@@ -638,6 +741,54 @@ fn scan_quality_gate_rescans_blurry_face() {
 }
 
 #[test]
+fn scan_obvious_quality_gate_rescans_glare_without_inference() {
+    let mut scan = solved_scan_session_analysis();
+    scan.faces[0]
+        .analysis
+        .image_quality
+        .as_mut()
+        .expect("image quality should exist")
+        .glare_ratio = 0.50;
+
+    let decision = crate::scan_quality_gate::evaluate_obvious_scan_quality(&scan)
+        .expect("obvious glare should be rejected before inference");
+
+    assert_eq!(
+        decision.status,
+        cube_engine::ScanInferenceStatus::NeedsRescanFace
+    );
+    assert_eq!(decision.rescan_faces, vec![Facelet::U]);
+    assert_eq!(decision.quality_reasons, vec!["image_glare:U"]);
+    assert!(decision.manual_targets.is_empty());
+}
+
+#[test]
+fn scan_quality_gate_allows_explicit_center_override() {
+    let mut scan = solved_scan_session_analysis();
+    scan.faces[0].analysis.ok = false;
+    scan.faces[0].analysis.status = "center_mismatch".to_owned();
+    scan.faces[0].analysis.center_mismatch = true;
+    scan.faces[0].analysis.detected_center = Some("R".to_owned());
+    let inference = inference_for_scan_session(&scan);
+    let mut request = solved_scan_session_request();
+    request.faces[0].manual_overrides.insert(4, "U".to_owned());
+    let overrides = crate::scan_quality_gate::ScanQualityOverrides::from_request(&request);
+
+    let early_decision =
+        crate::scan_quality_gate::evaluate_obvious_scan_quality_with_overrides(&scan, &overrides);
+    let decision = crate::scan_quality_gate::evaluate_scan_quality_with_overrides(
+        &scan, &inference, &overrides,
+    );
+
+    assert!(early_decision.is_none());
+    assert_eq!(decision.status, cube_engine::ScanInferenceStatus::Accepted);
+    assert!(decision.rescan_faces.is_empty());
+    assert!(!decision
+        .quality_reasons
+        .contains(&"center_mismatch:U".to_owned()));
+}
+
+#[test]
 fn scan_quality_gate_requests_manual_for_few_ambiguous_stickers() {
     let mut scan = solved_scan_session_analysis();
     make_sticker_ambiguous(&mut scan, 0, 0);
@@ -679,6 +830,13 @@ fn scan_session_response_preserves_inference_fields() {
         "ok": false,
         "status": "needs_manual_confirmation",
         "message": "Confirm the highlighted stickers before solving.",
+        "timings": {
+            "totalElapsedMs": 12,
+            "visionElapsedMs": 8,
+            "earlyQualityGateElapsedMs": 1,
+            "inferenceElapsedMs": 2,
+            "qualityGateElapsedMs": 1
+        },
         "inference": {
             "status": "needs_manual_confirmation",
             "margin": 0.4,
@@ -701,6 +859,12 @@ fn scan_session_response_preserves_inference_fields() {
     assert_eq!(inference.margin, Some(0.4));
     assert_eq!(inference.manual_targets[0].face, "U");
     assert_eq!(inference.quality_reasons, vec!["sticker_ambiguous:U:0"]);
+    let timings = response
+        .timings
+        .as_ref()
+        .expect("timings should be present");
+    assert_eq!(timings.total_elapsed_ms, 12);
+    assert_eq!(timings.vision_elapsed_ms, Some(8));
 
     let serialized = serde_json::to_value(response).expect("response should serialize");
     assert_eq!(

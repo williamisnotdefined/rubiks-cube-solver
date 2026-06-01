@@ -28,10 +28,13 @@ def test_cnn_health_reports_optional_status() -> None:
 
 def test_health_endpoint_reports_unconfigured_cnn(monkeypatch) -> None:
     monkeypatch.delenv("RUBIKS_VISION_CNN_MODEL", raising=False)
+    monkeypatch.delenv("RUBIKS_VISION_FACE_DETECTOR_MODEL", raising=False)
     import vision.cnn as cnn_module
+    import vision.face_detector as face_detector_module
     from vision.app import health
 
     monkeypatch.setattr(cnn_module, "_DEFAULT_CNN", None)
+    monkeypatch.setattr(face_detector_module, "_DEFAULT_FACE_DETECTOR", None)
 
     response = health()
 
@@ -39,6 +42,9 @@ def test_health_endpoint_reports_unconfigured_cnn(monkeypatch) -> None:
     assert response.cnnAvailable is False
     assert response.cnnConfigured is False
     assert response.cnnReason == "cnn_model_not_configured"
+    assert response.faceDetectorAvailable is False
+    assert response.faceDetectorConfigured is False
+    assert response.faceDetectorReason == "face_detector_model_not_configured"
 
 
 def test_probability_rows_normalize_logits() -> None:

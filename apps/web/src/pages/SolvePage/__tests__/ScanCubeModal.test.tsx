@@ -10,6 +10,7 @@ import { useSolveSettingsStore } from '../solveSettingsStore'
 const apiMocks = vi.hoisted(() => ({
   analyzeReset: vi.fn(),
   analyzeMutateAsync: vi.fn(),
+  cameraStream: {} as MediaStream,
   solveSessionMutateAsync: vi.fn(),
 }))
 
@@ -30,7 +31,7 @@ vi.mock('@api/scan', async () => {
 })
 
 vi.mock('../hooks/useCameraStream', () => ({
-  useCameraStream: () => ({ status: 'ready', stream: {} }),
+  useCameraStream: () => ({ status: 'ready', stream: apiMocks.cameraStream }),
 }))
 
 vi.mock('../scanCapture', () => ({
@@ -78,6 +79,7 @@ describe('ScanCubeModal', () => {
         apiReady
         solving={false}
         visionCnnAvailable
+        visionFaceDetectorAvailable
         visionOk
         onClose={vi.fn()}
         onSolve={vi.fn()}
@@ -85,6 +87,7 @@ describe('ScanCubeModal', () => {
     )
 
     expect(screen.getByText('CNN evidence active')).toBeInTheDocument()
+    expect(screen.getByText('Face detector active')).toBeInTheDocument()
 
     rerender(
       <ScanCubeModal
@@ -92,6 +95,8 @@ describe('ScanCubeModal', () => {
         solving={false}
         visionCnnAvailable={false}
         visionCnnReason="cnn_model_not_configured"
+        visionFaceDetectorAvailable={false}
+        visionFaceDetectorReason="face_detector_model_not_configured"
         visionOk
         onClose={vi.fn()}
         onSolve={vi.fn()}
@@ -99,6 +104,7 @@ describe('ScanCubeModal', () => {
     )
 
     expect(screen.getByText('Color-only fallback: cnn_model_not_configured')).toBeInTheDocument()
+    expect(screen.getByText('Geometry fallback: face_detector_model_not_configured')).toBeInTheDocument()
 
     rerender(
       <ScanCubeModal
@@ -110,7 +116,7 @@ describe('ScanCubeModal', () => {
       />,
     )
 
-    expect(screen.getByText('Vision status unavailable')).toBeInTheDocument()
+    expect(screen.getAllByText('Vision status unavailable')).toHaveLength(2)
   })
 
   it('hides local scan export unless explicitly enabled', () => {
@@ -148,9 +154,10 @@ describe('ScanCubeModal', () => {
     expect(screen.getByRole('button', { name: 'Export scan session' })).toBeEnabled()
   })
 
-  it('blocks confirming a face when the captured center is a different color', async () => {
+  it('asks before confirming a face when the captured center is a different color', async () => {
     const user = userEvent.setup()
     apiMocks.analyzeMutateAsync.mockResolvedValue(scanAnalysisResponse({ centerMismatch: true }))
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
 
     render(
       <ScanCubeModal
@@ -164,7 +171,17 @@ describe('ScanCubeModal', () => {
     await user.click(screen.getByRole('button', { name: 'Take photo' }))
 
     expect(await screen.findByText(/Center looks White.*expects Green/)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Confirm face' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Confirm face' })).toBeEnabled()
+
+    await user.click(screen.getByRole('button', { name: 'Confirm face' }))
+
+    expect(confirm).toHaveBeenCalledWith(expect.stringMatching(/Are you sure this is the expected face\?/))
+    expect(screen.getByRole('heading', { name: 'Green face' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Confirm face' }))
+
+    expect(await screen.findByRole('heading', { name: 'Red face' })).toBeInTheDocument()
+    confirm.mockRestore()
   })
 
   it('clears the current photo while keeping carousel navigation visible', async () => {
@@ -258,7 +275,7 @@ describe('ScanCubeModal', () => {
     expect(screen.getByTestId('scan-sticker-0')).toHaveAccessibleName(/Red/)
   })
 
-  it('disables solving when a confirmed face is cleared', async () => {
+  it('explains why a scan session is not ready to solve', async () => {
     const user = userEvent.setup()
     apiMocks.analyzeMutateAsync.mockImplementation(
       async ({ expectedCenter }: { expectedCenter: ScanFaceSymbol }) =>
@@ -281,7 +298,12 @@ describe('ScanCubeModal', () => {
     await user.click(screen.getByRole('button', { name: /Go to Green face/ }))
     await user.click(screen.getByRole('button', { name: 'Clear photo' }))
 
-    expect(screen.getByRole('button', { name: 'Solve scanned cube' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Solve scanned cube' })).toBeEnabled()
+
+    await user.click(screen.getByRole('button', { name: 'Solve scanned cube' }))
+
+    expect(screen.getByText('Confirm these faces before solving: F.')).toBeInTheDocument()
+    expect(apiMocks.solveSessionMutateAsync).not.toHaveBeenCalled()
   })
 
   it('submits the full scan session and closes on accepted solve', async () => {
@@ -352,6 +374,36 @@ describe('ScanCubeModal', () => {
       'aria-current',
       'step',
     )
+  })
+
+  it('explains glare quality reasons from scan session rejects', async () => {
+    const user = userEvent.setup()
+    apiMocks.solveSessionMutateAsync.mockResolvedValue(
+      scanSessionRejected({
+        message: 'One or more faces need to be rescanned.',
+        qualityReasons: ['image_glare:F', 'image_glare:R'],
+        rescanFaces: ['F', 'R'],
+        status: 'needs_rescan_face',
+      }),
+    )
+    apiMocks.analyzeMutateAsync.mockImplementation(
+      async ({ expectedCenter }: { expectedCenter: ScanFaceSymbol }) =>
+        scanAnalysisResponse({ symbol: expectedCenter }),
+    )
+
+    render(
+      <ScanCubeModal
+        apiReady
+        solving={false}
+        onClose={vi.fn()}
+        onSolve={vi.fn()}
+      />,
+    )
+
+    await confirmAllFaces(user)
+    await user.click(screen.getByRole('button', { name: 'Solve scanned cube' }))
+
+    expect(await screen.findByText('Too much glare on faces F, R. Reduce reflections and rescan those faces.')).toBeInTheDocument()
   })
 
   it('highlights backend manual confirmation targets', async () => {
@@ -429,7 +481,42 @@ describe('ScanCubeModal', () => {
     expect(screen.getByRole('heading', { name: 'Red face' })).toBeInTheDocument()
   })
 
+  it('reattaches the camera stream when the active face changes', async () => {
+    const user = userEvent.setup()
+    const play = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(HTMLMediaElement.prototype, 'play', {
+      configurable: true,
+      value: play,
+    })
+    Object.defineProperty(HTMLMediaElement.prototype, 'srcObject', {
+      configurable: true,
+      value: null,
+      writable: true,
+    })
+
+    const { container } = render(
+      <ScanCubeModal
+        apiReady
+        solving={false}
+        onClose={vi.fn()}
+        onSolve={vi.fn()}
+      />,
+    )
+    const greenVideo = container.querySelector('video')
+
+    await waitFor(() => expect(greenVideo?.srcObject).toBe(apiMocks.cameraStream))
+    const initialPlayCalls = play.mock.calls.length
+
+    await user.click(screen.getByRole('button', { name: /Go to Red face/ }))
+    const redVideo = container.querySelector('video')
+
+    expect(redVideo).not.toBe(greenVideo)
+    await waitFor(() => expect(redVideo?.srcObject).toBe(apiMocks.cameraStream))
+    await waitFor(() => expect(play.mock.calls.length).toBeGreaterThan(initialPlayCalls))
+  })
+
   it('does not enter review when the final photo only uses guide fallback', async () => {
+    vi.stubEnv('VITE_ENABLE_SCAN_EXPORT', 'true')
     const user = userEvent.setup()
     apiMocks.analyzeMutateAsync.mockResolvedValue(
       scanAnalysisResponse({ detectionMode: 'guide_fallback' }),
@@ -449,6 +536,7 @@ describe('ScanCubeModal', () => {
     expect(await screen.findByText(/Still looking for the cube face/)).toBeInTheDocument()
     expect(screen.queryByAltText('Captured cube face')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Confirm face' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Export scan session' })).toBeEnabled()
   })
 
   it('shows an error when the final camera frame cannot be captured', async () => {
@@ -587,13 +675,17 @@ function scanSessionAccepted(): ScanSessionResult {
 function scanSessionRejected({
   manualTargets = [],
   message,
+  qualityReasons = [],
   rescanFaces = [],
   status,
 }: Pick<ScanSessionResult, 'status'> &
-  Partial<Pick<ScanSessionResult, 'manualTargets' | 'message' | 'rescanFaces'>>): ScanSessionResult {
+  Partial<Pick<ScanSessionResult, 'manualTargets' | 'message' | 'rescanFaces'>> & {
+    qualityReasons?: string[]
+  }): ScanSessionResult {
   return {
     inference: {
       manualTargets,
+      qualityReasons,
       rescanFaces,
       stateConfidence: 0.4,
       status,

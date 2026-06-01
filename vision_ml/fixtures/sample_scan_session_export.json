@@ -8,6 +8,7 @@
       "symbol": "F",
       "expectedTop": "U",
       "confirmed": true,
+      "centerOverrideConfirmed": true,
       "photoDataUrl": "data:image/jpeg;base64,synthetic",
       "capture": {
         "capturedAt": 123,
@@ -26,7 +27,22 @@
         { "index": 7, "symbol": "F", "confidence": 1.0, "source": "detected" },
         { "index": 8, "symbol": "F", "confidence": 1.0, "source": "detected" }
       ],
-      "manualOverrides": {},
+      "manualOverrides": { "4": "F" },
+      "lastRejectedCapture": {
+        "reason": "guide_fallback",
+        "photoDataUrl": "data:image/jpeg;base64,rejected",
+        "capture": {
+          "capturedAt": 122,
+          "height": 720,
+          "source": "canvas",
+          "width": 720
+        },
+        "analysis": {
+          "ok": false,
+          "status": "detected",
+          "detectionMode": "guide_fallback"
+        }
+      },
       "analysis": {
         "ok": true,
         "status": "detected"

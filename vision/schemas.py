@@ -11,6 +11,9 @@ class VisionHealthResponse(BaseModel):
     cnnAvailable: bool = False
     cnnConfigured: bool = False
     cnnReason: str | None = None
+    faceDetectorAvailable: bool = False
+    faceDetectorConfigured: bool = False
+    faceDetectorReason: str | None = None
 
 
 class RgbColor(BaseModel):

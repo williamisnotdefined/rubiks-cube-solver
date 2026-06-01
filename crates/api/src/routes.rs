@@ -27,6 +27,10 @@ struct VisionHealthResponse {
     cnn_available: bool,
     #[serde(rename = "cnnReason", default)]
     cnn_reason: Option<String>,
+    #[serde(rename = "faceDetectorAvailable", default)]
+    face_detector_available: bool,
+    #[serde(rename = "faceDetectorReason", default)]
+    face_detector_reason: Option<String>,
 }
 
 pub fn api_router(state: ApiState) -> Router {
@@ -73,15 +77,24 @@ fn allowed_web_origin(origin: &HeaderValue) -> bool {
 
 async fn health(State(state): State<ApiState>) -> Json<HealthResponse> {
     let vision_health = request_vision_health(&state).await;
+    let vision_ok = vision_health.as_ref().is_some_and(|health| health.ok);
+    let vision_cnn_available = vision_health
+        .as_ref()
+        .is_some_and(|health| health.cnn_available);
+    let vision_face_detector_available = vision_health
+        .as_ref()
+        .is_some_and(|health| health.face_detector_available);
 
     Json(HealthResponse {
         ok: true,
         generated_two_phase_ready: state.generated_solver_ready(),
-        vision_ok: vision_health.as_ref().is_some_and(|health| health.ok),
-        vision_cnn_available: vision_health
+        vision_ok,
+        vision_cnn_available,
+        vision_cnn_reason: vision_health
             .as_ref()
-            .is_some_and(|health| health.cnn_available),
-        vision_cnn_reason: vision_health.and_then(|health| health.cnn_reason),
+            .and_then(|health| health.cnn_reason.clone()),
+        vision_face_detector_available,
+        vision_face_detector_reason: vision_health.and_then(|health| health.face_detector_reason),
     })
 }
 

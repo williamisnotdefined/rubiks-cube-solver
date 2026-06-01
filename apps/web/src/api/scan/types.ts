@@ -137,10 +137,20 @@ export type ScanSessionInference = {
   qualityReasons?: string[]
 }
 
+export type ScanSessionTimings = {
+  totalElapsedMs: number
+  visionElapsedMs?: number
+  earlyQualityGateElapsedMs?: number
+  inferenceElapsedMs?: number
+  qualityGateElapsedMs?: number
+  solveElapsedMs?: number
+}
+
 export type ScanSessionResult = {
   ok: boolean
   status: ScanSessionStatus
   message?: string
+  timings?: ScanSessionTimings
   scan?: AnalyzeScanSessionResponse
   solve?: SolveResult
   inference?: ScanSessionInference

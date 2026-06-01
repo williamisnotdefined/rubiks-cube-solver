@@ -24,6 +24,14 @@ vision_ml/outputs/
 vision_ml/runs/
 vision_ml/checkpoints/
 vision_ml/local-images/
+# Local scanner captures, downloaded datasets, and model artifacts may contain private images.
+rubiks-scan-session-*.json
+rubiks-scan-dataset-*.json
+*.coco.zip
+images.zip
+labels.zip
+*.pt
+*.onnx
 *.log
 .env
 .env.*

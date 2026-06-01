@@ -13,6 +13,13 @@ pub struct HealthResponse {
     pub vision_cnn_available: bool,
     #[serde(rename = "visionCnnReason", skip_serializing_if = "Option::is_none")]
     pub vision_cnn_reason: Option<String>,
+    #[serde(rename = "visionFaceDetectorAvailable")]
+    pub vision_face_detector_available: bool,
+    #[serde(
+        rename = "visionFaceDetectorReason",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub vision_face_detector_reason: Option<String>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
@@ -115,6 +122,8 @@ pub struct ScanSessionResponse {
     pub status: String,
     pub message: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub timings: Option<ScanSessionTimingsResponse>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub scan: Option<AnalyzeScanSessionResponse>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub solve: Option<SolveResponse>,
@@ -124,6 +133,42 @@ pub struct ScanSessionResponse {
     pub rescan_faces: Vec<String>,
     #[serde(rename = "manualTargets", default)]
     pub manual_targets: Vec<ScanSessionManualTargetResponse>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct ScanSessionTimingsResponse {
+    #[serde(rename = "totalElapsedMs")]
+    pub total_elapsed_ms: u128,
+    #[serde(
+        rename = "visionElapsedMs",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub vision_elapsed_ms: Option<u128>,
+    #[serde(
+        rename = "earlyQualityGateElapsedMs",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub early_quality_gate_elapsed_ms: Option<u128>,
+    #[serde(
+        rename = "inferenceElapsedMs",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub inference_elapsed_ms: Option<u128>,
+    #[serde(
+        rename = "qualityGateElapsedMs",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub quality_gate_elapsed_ms: Option<u128>,
+    #[serde(
+        rename = "solveElapsedMs",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub solve_elapsed_ms: Option<u128>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

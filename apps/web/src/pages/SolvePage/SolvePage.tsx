@@ -218,6 +218,8 @@ export function SolvePage() {
             strategyId={strategyId}
             visionCnnAvailable={healthQuery.data?.visionCnnAvailable}
             visionCnnReason={healthQuery.data?.visionCnnReason}
+            visionFaceDetectorAvailable={healthQuery.data?.visionFaceDetectorAvailable}
+            visionFaceDetectorReason={healthQuery.data?.visionFaceDetectorReason}
             visionOk={healthQuery.data?.visionOk}
             onClose={() => setScanModalOpen(false)}
             onSolve={handleScanSolve}

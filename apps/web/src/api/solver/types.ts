@@ -15,6 +15,8 @@ export type HealthResponse = {
   visionOk?: boolean
   visionCnnAvailable?: boolean
   visionCnnReason?: string
+  visionFaceDetectorAvailable?: boolean
+  visionFaceDetectorReason?: string
 }
 
 export type SolveLimits = {

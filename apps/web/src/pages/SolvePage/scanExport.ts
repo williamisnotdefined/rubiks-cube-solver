@@ -3,6 +3,7 @@ import type { ScanFaceSymbol } from '@api/solver/types'
 import {
   expectedTopForScanFace,
   scanFaceOrder,
+  type RejectedScanCapture,
   type ScanCaptureMetadata,
   type ScanFaceDrafts,
   type ScanSticker,
@@ -23,8 +24,10 @@ export type ScanSessionExportFace = {
   symbol: ScanFaceSymbol
   expectedTop: ScanFaceSymbol
   confirmed: boolean
+  centerOverrideConfirmed?: boolean
   photoDataUrl?: string
   capture?: ScanCaptureMetadata
+  lastRejectedCapture?: RejectedScanCapture
   stickers: ScanSessionExportSticker[]
   manualOverrides: Partial<Record<number, ScanFaceSymbol>>
   analysis?: AnalyzeScanFaceResponse
@@ -52,7 +55,9 @@ export function scanExportEnabled(): boolean {
 }
 
 export function hasExportableScanSession(drafts: ScanFaceDrafts): boolean {
-  return scanFaceOrder.some(({ symbol }) => drafts[symbol].photoDataUrl !== undefined)
+  return scanFaceOrder.some(
+    ({ symbol }) => drafts[symbol].photoDataUrl !== undefined || drafts[symbol].lastRejectedCapture !== undefined,
+  )
 }
 
 export function buildScanSessionExport({
@@ -93,9 +98,11 @@ function exportFace(symbol: ScanFaceSymbol, drafts: ScanFaceDrafts): ScanSession
   return {
     analysis: draft.analysis,
     capture: draft.capture,
+    centerOverrideConfirmed: draft.centerOverrideConfirmed,
     confirmed: draft.confirmed,
     expectedTop: expectedTopForScanFace(symbol),
-    manualOverrides: manualOverridesFromStickers(draft.stickers),
+    lastRejectedCapture: draft.lastRejectedCapture,
+    manualOverrides: manualOverridesFromDraft(draft),
     photoDataUrl: draft.photoDataUrl,
     stickers: draft.stickers.map((sticker, index) => ({
       alternatives: sticker.alternatives,
@@ -109,13 +116,19 @@ function exportFace(symbol: ScanFaceSymbol, drafts: ScanFaceDrafts): ScanSession
   }
 }
 
-function manualOverridesFromStickers(stickers: readonly ScanSticker[]): Partial<Record<number, ScanFaceSymbol>> {
+function manualOverridesFromDraft(
+  draft: ScanFaceDrafts[ScanFaceSymbol],
+): Partial<Record<number, ScanFaceSymbol>> {
   const overrides: Partial<Record<number, ScanFaceSymbol>> = {}
 
-  for (const [index, sticker] of stickers.entries()) {
+  for (const [index, sticker] of draft.stickers.entries()) {
     if (index !== 4 && sticker.source === 'manual' && sticker.symbol !== undefined) {
       overrides[index] = sticker.symbol
     }
+  }
+
+  if (draft.centerOverrideConfirmed === true && draft.stickers[4]?.symbol !== undefined) {
+    overrides[4] = draft.stickers[4].symbol
   }
 
   return overrides

@@ -2,6 +2,7 @@ use cube_engine::{Facelet, ScanInferenceResult, ScanInferenceStatus};
 
 use crate::response::{
     AnalyzeScanSessionResponse, AnalyzedStickerResponse, ScanSessionManualTargetResponse,
+    ScanSessionRequest,
 };
 
 const MIN_BLUR_SCORE: f64 = 18.0;
@@ -25,9 +26,42 @@ pub(crate) struct ScanQualityGateDecision {
     pub(crate) manual_targets: Vec<ScanSessionManualTargetResponse>,
 }
 
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub(crate) struct ScanQualityOverrides {
+    center_mismatch_faces: Vec<String>,
+}
+
+impl ScanQualityOverrides {
+    pub(crate) fn from_request(request: &ScanSessionRequest) -> Self {
+        let center_mismatch_faces = request
+            .faces
+            .iter()
+            .filter(|face| face.manual_overrides.get(&4) == Some(&face.symbol))
+            .map(|face| face.symbol.clone())
+            .collect();
+
+        Self {
+            center_mismatch_faces,
+        }
+    }
+
+    pub(crate) fn center_mismatch_overridden(&self, symbol: &str) -> bool {
+        self.center_mismatch_faces.iter().any(|face| face == symbol)
+    }
+}
+
+#[cfg(test)]
 pub(crate) fn evaluate_scan_quality(
     scan: &AnalyzeScanSessionResponse,
     inference: &ScanInferenceResult,
+) -> ScanQualityGateDecision {
+    evaluate_scan_quality_with_overrides(scan, inference, &ScanQualityOverrides::default())
+}
+
+pub(crate) fn evaluate_scan_quality_with_overrides(
+    scan: &AnalyzeScanSessionResponse,
+    inference: &ScanInferenceResult,
+    overrides: &ScanQualityOverrides,
 ) -> ScanQualityGateDecision {
     let mut quality_reasons = Vec::new();
     let mut rescan_faces = inference.rescan_faces.clone();
@@ -41,7 +75,7 @@ pub(crate) fn evaluate_scan_quality(
         let mut face_requires_rescan = false;
         let mut ambiguous_stickers = Vec::new();
 
-        if face.analysis.center_mismatch {
+        if face.analysis.center_mismatch && !overrides.center_mismatch_overridden(&face.symbol) {
             quality_reasons.push(format!("center_mismatch:{}", face.symbol));
             face_requires_rescan = true;
         }
@@ -169,6 +203,91 @@ pub(crate) fn evaluate_scan_quality(
         rescan_faces,
         manual_targets,
     }
+}
+
+#[cfg(test)]
+pub(crate) fn evaluate_obvious_scan_quality(
+    scan: &AnalyzeScanSessionResponse,
+) -> Option<ScanQualityGateDecision> {
+    evaluate_obvious_scan_quality_with_overrides(scan, &ScanQualityOverrides::default())
+}
+
+pub(crate) fn evaluate_obvious_scan_quality_with_overrides(
+    scan: &AnalyzeScanSessionResponse,
+    overrides: &ScanQualityOverrides,
+) -> Option<ScanQualityGateDecision> {
+    let mut quality_reasons = Vec::new();
+    let mut rescan_faces = Vec::new();
+
+    for face in &scan.faces {
+        let Some(facelet) = facelet_from_str(&face.symbol) else {
+            continue;
+        };
+        let mut face_requires_rescan = false;
+
+        if face.analysis.center_mismatch && !overrides.center_mismatch_overridden(&face.symbol) {
+            quality_reasons.push(format!("center_mismatch:{}", face.symbol));
+            face_requires_rescan = true;
+        }
+
+        if face.analysis.face_confidence < MIN_FACE_CONFIDENCE {
+            quality_reasons.push(format!("low_face_confidence:{}", face.symbol));
+            face_requires_rescan = true;
+        }
+
+        match &face.analysis.image_quality {
+            Some(quality) => {
+                if quality.blur_score < MIN_BLUR_SCORE {
+                    quality_reasons.push(format!("image_blurry:{}", face.symbol));
+                    face_requires_rescan = true;
+                }
+                if quality.glare_ratio > MAX_IMAGE_GLARE_RATIO {
+                    quality_reasons.push(format!("image_glare:{}", face.symbol));
+                    face_requires_rescan = true;
+                }
+                if quality.shadow_ratio > MAX_IMAGE_SHADOW_RATIO {
+                    quality_reasons.push(format!("image_shadow:{}", face.symbol));
+                    face_requires_rescan = true;
+                }
+            }
+            None => {
+                quality_reasons.push(format!("image_quality_missing:{}", face.symbol));
+                face_requires_rescan = true;
+            }
+        }
+
+        if face
+            .analysis
+            .warnings
+            .iter()
+            .any(|warning| warning == "cnn_disagreement" || warning == "opencv_cnn_disagreement")
+        {
+            quality_reasons.push(format!("opencv_cnn_disagreement:{}", face.symbol));
+            face_requires_rescan = true;
+        }
+
+        for sticker in &face.analysis.stickers {
+            if sticker.index != 4 && sticker_requires_rescan(sticker) {
+                quality_reasons.push(format!("sticker_quality:{}:{}", face.symbol, sticker.index));
+                face_requires_rescan = true;
+            }
+        }
+
+        if face_requires_rescan && !rescan_faces.contains(&facelet) {
+            rescan_faces.push(facelet);
+        }
+    }
+
+    if rescan_faces.is_empty() {
+        return None;
+    }
+
+    Some(ScanQualityGateDecision {
+        status: ScanInferenceStatus::NeedsRescanFace,
+        quality_reasons,
+        rescan_faces,
+        manual_targets: Vec::new(),
+    })
 }
 
 fn sticker_requires_rescan(sticker: &AnalyzedStickerResponse) -> bool {

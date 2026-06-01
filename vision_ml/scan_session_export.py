@@ -36,6 +36,13 @@ class ScanExportCapture(BaseModel):
     width: int = Field(ge=1)
 
 
+class ScanRejectedCapture(BaseModel):
+    reason: Literal["empty_stickers", "guide_fallback"]
+    photoDataUrl: str = Field(min_length=1)
+    capture: ScanExportCapture
+    analysis: dict[str, Any]
+
+
 class ScanExportSticker(BaseModel):
     index: int = Field(ge=0, le=8)
     symbol: str | None = None
@@ -54,9 +61,11 @@ class ScanSessionExportFace(BaseModel):
     symbol: str
     expectedTop: str
     confirmed: bool = False
+    centerOverrideConfirmed: bool = False
     photoDataUrl: str | None = None
     imagePath: str | None = None
     capture: ScanExportCapture | None = None
+    lastRejectedCapture: ScanRejectedCapture | None = None
     stickers: list[ScanExportSticker] = Field(min_length=9, max_length=9)
     manualOverrides: dict[int, str] = Field(default_factory=dict)
     analysis: dict[str, Any] | None = None

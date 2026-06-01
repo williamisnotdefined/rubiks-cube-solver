@@ -22,11 +22,13 @@ import {
   countScanSymbols,
   createEmptyScanStickers,
   createInitialScanFaceDrafts,
+  isScanFaceComplete,
   lowConfidenceCount,
   replaceScanFaceDraftSticker,
   scanFaceOrder,
   scanFaceStatusFromDraft,
   scanFacesFromDrafts,
+  scanStickersFromAnalysis,
   scanSessionFacesFromDrafts,
   scanFacesToPayload,
   scanSymbolDetails,
@@ -64,6 +66,8 @@ type ScanCubeModalProps = {
   strategyId?: string
   visionCnnAvailable?: boolean
   visionCnnReason?: string
+  visionFaceDetectorAvailable?: boolean
+  visionFaceDetectorReason?: string
   visionOk?: boolean
   onClose: () => void
   onSolve: (faces: ScanFacesPayload) => Promise<SolveResult | undefined>
@@ -89,6 +93,8 @@ export function ScanCubeModal({
   strategyId,
   visionCnnAvailable,
   visionCnnReason,
+  visionFaceDetectorAvailable,
+  visionFaceDetectorReason,
   visionOk,
   onClose,
   onSolve,
@@ -119,12 +125,18 @@ export function ScanCubeModal({
   const confirmedFaces = useMemo(() => scanFacesFromDrafts(drafts), [drafts])
   const completePayload = scanFacesToPayload(confirmedFaces)
   const sessionFaces = scanSessionFacesFromDrafts(drafts)
+  const scanSessionReadiness = scanSessionReadinessMessage(
+    t,
+    drafts,
+    apiReady,
+    solveDisabledReason,
+  )
   const draftValidation = validateScanFaceDraft(confirmedFaces, currentFace.symbol, stickers)
   const draftValidationMessage = scanFaceDraftValidationMessage(t, draftValidation)
   const centerValidation = scanAnalysis?.centerMismatch
     ? centerMismatchMessage(t, scanAnalysis)
     : undefined
-  const faceValidation = centerValidation ?? draftValidationMessage
+  const faceValidation = draftValidationMessage
   const previewFaces: ScanFaces = {
     ...confirmedFaces,
     [currentFace.symbol]: { symbol: currentFace.symbol, stickers },
@@ -180,15 +192,16 @@ export function ScanCubeModal({
   const reviewTargetIndexes = backendReviewTargets.manualTargets[currentFace.symbol] ?? []
   const exportEnabled = scanExportEnabled()
   const canExportScanSession = hasExportableScanSession(drafts)
+  const cameraStream = camera.status === 'ready' ? camera.stream : undefined
 
   useEffect(() => {
-    if (camera.status !== 'ready' || videoRef.current === null) {
+    if (cameraStream === undefined || videoRef.current === null) {
       return
     }
 
-    videoRef.current.srcObject = camera.stream
+    videoRef.current.srcObject = cameraStream
     void videoRef.current.play().catch(() => undefined)
-  }, [camera])
+  }, [cameraStream, currentFaceIndex, photoDataUrl])
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -221,7 +234,7 @@ export function ScanCubeModal({
     setCapturing(true)
     clearBackendReviewForFace(currentFace.symbol)
     setLastSessionResult(undefined)
-    setCurrentDraft({ analysis: undefined })
+    setCurrentDraft({ analysis: undefined, centerOverrideConfirmed: false, lastRejectedCapture: undefined })
     setMessage(source === 'auto' ? t('scan.messages.autoCapturing') : t('scan.messages.capturingPhoto'))
 
     try {
@@ -231,6 +244,7 @@ export function ScanCubeModal({
         return
       }
 
+      const captureMetadata = scanCaptureMetadata(capture)
       setMessage(t('scan.messages.analyzingFace'))
 
       const analysis = await analyzeScanFace.mutateAsync({
@@ -241,9 +255,17 @@ export function ScanCubeModal({
       setCurrentDraft({ analysis })
 
       if (analysis.stickers.length === 0 || isGuideFallbackAnalysis(analysis)) {
+        const rejectedReason = isGuideFallbackAnalysis(analysis) ? 'guide_fallback' : 'empty_stickers'
         setCurrentDraft({
           capture: undefined,
+          centerOverrideConfirmed: false,
           confirmed: false,
+          lastRejectedCapture: {
+            analysis,
+            capture: captureMetadata,
+            photoDataUrl: capture.photoDataUrl,
+            reason: rejectedReason,
+          },
           photoDataUrl: undefined,
           stickers: createEmptyScanStickers(currentFace.symbol),
         })
@@ -257,8 +279,10 @@ export function ScanCubeModal({
 
       const nextStickers = scanStickersFromAnalysis(analysis, currentFace.symbol)
       setCurrentDraft({
-        capture: scanCaptureMetadata(capture),
+        capture: captureMetadata,
+        centerOverrideConfirmed: false,
         confirmed: false,
+        lastRejectedCapture: undefined,
         photoDataUrl: capture.photoDataUrl,
         stickers: nextStickers,
       })
@@ -354,17 +378,26 @@ export function ScanCubeModal({
   }
 
   function handleConfirmFace() {
-    if (centerValidation !== undefined) {
-      setMessage(centerValidation)
-      return
-    }
-
     if (draftValidationMessage !== undefined) {
       setMessage(draftValidationMessage)
       return
     }
 
-    const nextDrafts = confirmScanFaceDraft(drafts, currentFace.symbol)
+    const centerOverrideConfirmed = centerValidation !== undefined
+    if (centerOverrideConfirmed && currentDraft.centerOverrideConfirmed !== true) {
+      const confirmed = window.confirm(
+        `${centerValidation} ${t('scan.messages.centerMismatchConfirmQuestion')}`,
+      )
+      if (!confirmed) {
+        setMessage(centerValidation)
+        return
+      }
+    }
+
+    const nextDrafts = confirmScanFaceDraft(drafts, currentFace.symbol, {
+      centerOverrideConfirmed:
+        centerOverrideConfirmed || currentDraft.centerOverrideConfirmed === true,
+    })
     const nextFaceIndex = nextUnconfirmedFaceIndex(nextDrafts, currentFaceIndex)
     setDrafts(nextDrafts)
     clearBackendReviewForFace(currentFace.symbol)
@@ -381,6 +414,11 @@ export function ScanCubeModal({
   }
 
   async function handleSolveScan() {
+    if (scanSessionReadiness !== undefined) {
+      setMessage(scanSessionReadiness)
+      return
+    }
+
     const faces = sessionFaces
     if (faces === undefined) {
       setMessage(t('scan.messages.confirmAllFaces'))
@@ -537,6 +575,14 @@ export function ScanCubeModal({
             <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
               {scanCnnStatusMessage(t, visionOk, visionCnnAvailable, visionCnnReason)}
             </p>
+            <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
+              {scanFaceDetectorStatusMessage(
+                t,
+                visionOk,
+                visionFaceDetectorAvailable,
+                visionFaceDetectorReason,
+              )}
+            </p>
           </div>
           <Button className="min-h-10 px-4 py-2" type="button" variant="secondary" onClick={onClose}>
             {t('common.close')}
@@ -667,14 +713,13 @@ export function ScanCubeModal({
               {message ??
                 solveDisabledReason ??
                 scannerMessage ??
+                scanSessionReadiness ??
                 t('scan.editor.selectSquareHint')}
             </p>
             <Button
               aria-label={solving || sessionSolving ? t('common.loading') : undefined}
               type="button"
-              disabled={
-                sessionFaces === undefined || !apiReady || solving || sessionSolving || solveDisabledReason !== undefined
-              }
+              disabled={solving || sessionSolving}
               onClick={handleSolveScan}
             >
               {solving || sessionSolving ? <Loader3x3 decorative className="size-8" registerDelayMs={150} /> : t('scan.actions.solveScannedCube')}
@@ -791,6 +836,11 @@ function scanSessionMessage(
   t: ReturnType<typeof useTranslation>['t'],
   result: ScanSessionResult,
 ): string {
+  const qualityMessage = scanSessionQualityMessage(t, result)
+  if (qualityMessage !== undefined) {
+    return qualityMessage
+  }
+
   if (result.message !== undefined && result.message.length > 0) {
     return result.message
   }
@@ -813,6 +863,96 @@ function scanSessionMessage(
   }
 }
 
+function scanSessionReadinessMessage(
+  t: ReturnType<typeof useTranslation>['t'],
+  drafts: ScanFaceDrafts,
+  apiReady: boolean,
+  solveDisabledReason: string | undefined,
+): string | undefined {
+  if (!apiReady) {
+    return t('scan.messages.apiNotReady')
+  }
+
+  if (solveDisabledReason !== undefined) {
+    return solveDisabledReason
+  }
+
+  const unconfirmedFaces: ScanFaceSymbol[] = []
+  const missingPhotoFaces: ScanFaceSymbol[] = []
+  const incompleteStickerFaces: ScanFaceSymbol[] = []
+
+  for (const { symbol } of scanFaceOrder) {
+    const draft = drafts[symbol]
+
+    if (!draft.confirmed) {
+      unconfirmedFaces.push(symbol)
+      continue
+    }
+
+    if (draft.photoDataUrl === undefined) {
+      missingPhotoFaces.push(symbol)
+      continue
+    }
+
+    if (!isScanFaceComplete(draft.stickers)) {
+      incompleteStickerFaces.push(symbol)
+    }
+  }
+
+  if (unconfirmedFaces.length > 0) {
+    return t('scan.messages.sessionMissingConfirmedFaces', {
+      faces: unconfirmedFaces.join(', '),
+    })
+  }
+
+  if (missingPhotoFaces.length > 0) {
+    return t('scan.messages.sessionMissingPhotos', {
+      faces: missingPhotoFaces.join(', '),
+    })
+  }
+
+  if (incompleteStickerFaces.length > 0) {
+    return t('scan.messages.sessionIncompleteStickers', {
+      faces: incompleteStickerFaces.join(', '),
+    })
+  }
+
+  return undefined
+}
+
+function scanSessionQualityMessage(
+  t: ReturnType<typeof useTranslation>['t'],
+  result: ScanSessionResult,
+): string | undefined {
+  if (result.status !== 'needs_rescan_face') {
+    return undefined
+  }
+
+  const reasons = result.inference?.qualityReasons ?? []
+  const glareFaces = qualityReasonFaces(reasons, 'image_glare')
+  if (glareFaces.length > 0) {
+    return t('scan.messages.sessionGlareRescan', { faces: glareFaces.join(', ') })
+  }
+
+  const blurryFaces = qualityReasonFaces(reasons, 'image_blurry')
+  if (blurryFaces.length > 0) {
+    return t('scan.messages.sessionBlurRescan', { faces: blurryFaces.join(', ') })
+  }
+
+  const shadowFaces = qualityReasonFaces(reasons, 'image_shadow')
+  if (shadowFaces.length > 0) {
+    return t('scan.messages.sessionShadowRescan', { faces: shadowFaces.join(', ') })
+  }
+
+  return undefined
+}
+
+function qualityReasonFaces(reasons: readonly string[], reasonKind: string): ScanFaceSymbol[] {
+  return scanFaceOrder
+    .map(({ symbol }) => symbol)
+    .filter((symbol) => reasons.includes(`${reasonKind}:${symbol}`))
+}
+
 function scanCnnStatusMessage(
   t: ReturnType<typeof useTranslation>['t'],
   visionOk: boolean | undefined,
@@ -829,6 +969,25 @@ function scanCnnStatusMessage(
 
   return t('scan.modal.colorFallbackActive', {
     reason: visionCnnReason ?? t('scan.modal.cnnReasonUnknown'),
+  })
+}
+
+function scanFaceDetectorStatusMessage(
+  t: ReturnType<typeof useTranslation>['t'],
+  visionOk: boolean | undefined,
+  visionFaceDetectorAvailable: boolean | undefined,
+  visionFaceDetectorReason: string | undefined,
+): string {
+  if (visionOk === false) {
+    return t('scan.modal.visionStatusUnavailable')
+  }
+
+  if (visionFaceDetectorAvailable === true) {
+    return t('scan.modal.faceDetectorActive')
+  }
+
+  return t('scan.modal.faceDetectorFallbackActive', {
+    reason: visionFaceDetectorReason ?? t('scan.modal.faceDetectorReasonUnknown'),
   })
 }
 
@@ -954,30 +1113,4 @@ function knownCenterReferencesFromFaces(faces: ScanFaces): Partial<Record<ScanFa
   }
 
   return references
-}
-
-function scanStickersFromAnalysis(
-  analysis: AnalyzeScanFaceResponse,
-  centerSymbol: ScanFaceSymbol,
-): ScanSticker[] {
-  const stickers = createEmptyScanStickers(centerSymbol)
-
-  for (const analyzedSticker of analysis.stickers) {
-    if (analyzedSticker.index < 0 || analyzedSticker.index > 8) {
-      continue
-    }
-
-    stickers[analyzedSticker.index] = {
-      alternatives: analyzedSticker.alternatives,
-      confidence:
-        analyzedSticker.index === 4
-          ? analysis.detectedCenterConfidence || analysis.confidence
-          : analyzedSticker.confidence,
-      rgb: analyzedSticker.rgb,
-      source: analyzedSticker.index === 4 ? 'center' : 'detected',
-      symbol: analyzedSticker.index === 4 ? centerSymbol : analyzedSticker.symbol,
-    }
-  }
-
-  return stickers
 }

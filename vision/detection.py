@@ -17,6 +17,7 @@ from .color import (
     sample_sticker_rgb,
 )
 from .cnn import VisionCnn, get_default_cnn
+from .face_detector import VisionFaceDetector, get_default_face_detector
 from .schemas import (
     AnalyzeScanFaceRequest,
     AnalyzeScanFaceResponse,
@@ -44,7 +45,11 @@ MIN_FALLBACK_GRID_CONFIDENCE = 0.36
 GUIDE_FALLBACK_MAX_CONFIDENCE = 0.62
 
 
-def analyze_face(request: AnalyzeScanFaceRequest, cnn: VisionCnn | None = None) -> AnalyzeScanFaceResponse:
+def analyze_face(
+    request: AnalyzeScanFaceRequest,
+    cnn: VisionCnn | None = None,
+    face_detector: VisionFaceDetector | None = None,
+) -> AnalyzeScanFaceResponse:
     if request.expectedCenter not in SCAN_SYMBOLS:
         return failure("invalid_image", "expectedCenter must be one of U, R, F, D, L, B")
 
@@ -55,7 +60,7 @@ def analyze_face(request: AnalyzeScanFaceRequest, cnn: VisionCnn | None = None) 
     image = resize_for_processing(image)
     height, width = image.shape[:2]
     image_quality, quality_warnings = image_quality_metrics(image)
-    quad, detection_warnings, detection_mode, face_confidence = detect_face_quad(image)
+    quad, detection_warnings, detection_mode, face_confidence = detect_face_quad(image, face_detector)
     if quad is None:
         warnings = quality_warnings + detection_warnings
         return AnalyzeScanFaceResponse(
@@ -201,7 +206,10 @@ def resize_for_processing(image: np.ndarray) -> np.ndarray:
     return cv2.resize(image, (int(width * scale), int(height * scale)), interpolation=cv2.INTER_AREA)
 
 
-def detect_face_quad(image: np.ndarray) -> tuple[np.ndarray | None, list[str], str, float]:
+def detect_face_quad(
+    image: np.ndarray,
+    face_detector: VisionFaceDetector | None = None,
+) -> tuple[np.ndarray | None, list[str], str, float]:
     warnings: list[str] = []
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8)).apply(gray)
@@ -237,6 +245,14 @@ def detect_face_quad(image: np.ndarray) -> tuple[np.ndarray | None, list[str], s
     sticker_quad, sticker_confidence = detect_sticker_grid_quad(image)
     if sticker_quad is not None and sticker_confidence >= MIN_STICKER_GRID_CONFIDENCE:
         return sticker_quad, warnings, "sticker_grid", sticker_confidence
+
+    face_detector = face_detector or get_default_face_detector()
+    face_detection = face_detector.detect(image)
+    if face_detection is not None:
+        warnings.append("face_detector_used")
+        return face_detection.quad, warnings, "face_detector", face_detection.confidence
+    if face_detector.model_configured and not face_detector.available:
+        warnings.append("face_detector_unavailable")
 
     fallback_quad = centered_fallback_quad(width, height)
     fallback_confidence = min(

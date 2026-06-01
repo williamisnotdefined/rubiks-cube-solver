@@ -33,7 +33,7 @@ const goodFaceConfidence = 0.72
 const stableFrameTarget = 6
 const maxQuadMovement = 0.018
 const criticalQualityWarnings = new Set(['image_blurry', 'image_too_dark', 'image_too_bright'])
-const autoCaptureDetectionModes = new Set(['contour', 'sticker_grid'])
+const autoCaptureDetectionModes = new Set(['contour', 'sticker_grid', 'face_detector'])
 
 export function useLiveScanPreview({
   enabled,

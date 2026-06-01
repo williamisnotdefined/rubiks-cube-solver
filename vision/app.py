@@ -4,6 +4,7 @@ from fastapi import FastAPI
 
 from .cnn import cnn_health
 from .detection import analyze_face
+from .face_detector import face_detector_health
 from .schemas import (
     AnalyzeScanFaceRequest,
     AnalyzeScanFaceResponse,
@@ -19,7 +20,7 @@ app = FastAPI(title="Rubik's Cube Vision Service")
 
 @app.get("/health", response_model=VisionHealthResponse)
 def health() -> VisionHealthResponse:
-    return VisionHealthResponse(ok=True, **cnn_health())
+    return VisionHealthResponse(ok=True, **cnn_health(), **face_detector_health())
 
 
 @app.post("/analyze-face", response_model=AnalyzeScanFaceResponse)
