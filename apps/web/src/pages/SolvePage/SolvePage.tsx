@@ -218,8 +218,6 @@ export function SolvePage() {
             strategyId={strategyId}
             visionCnnAvailable={healthQuery.data?.visionCnnAvailable}
             visionCnnReason={healthQuery.data?.visionCnnReason}
-            visionFaceDetectorAvailable={healthQuery.data?.visionFaceDetectorAvailable}
-            visionFaceDetectorReason={healthQuery.data?.visionFaceDetectorReason}
             visionTileDetectorAvailable={healthQuery.data?.visionTileDetectorAvailable}
             visionTileDetectorReason={healthQuery.data?.visionTileDetectorReason}
             visionOk={healthQuery.data?.visionOk}

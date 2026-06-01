@@ -13,34 +13,31 @@
       "analyzing": "Analyzing",
       "autoScanOff": "Auto scan off",
       "autoScanOn": "Auto scan on",
-      "clearPhoto": "Clear photo",
+      "clearPhoto": "Clear face",
       "confirmAnyway": "Confirm anyway",
       "confirmFace": "Confirm face",
       "exportSession": "Export scan session",
       "nextFace": "Next face",
       "previousFace": "Previous face",
-      "retakePhoto": "Retake photo",
+      "retakePhoto": "Scan again",
       "solveReviewedColors": "Solve reviewed colors",
       "solveScannedCube": "Solve scanned cube",
-      "takePhoto": "Take photo",
+      "takePhoto": "Scan face",
       "updateFace": "Update face"
     },
     "camera": {
-      "capturedFaceAlt": "Captured cube face",
+      "capturedFaceAlt": "Recognized cube face",
       "errorManualFallback": "{{message}} You can still fill the grid manually.",
-      "gridConfidence": "grid {{confidence}}%",
       "holdSteady": "hold steady {{count}}/{{target}}",
       "lookingForCube": "looking for cube",
       "modes": {
-        "contour": "contour",
-        "face_detector": "face detector",
-        "guide_fallback": "guide fallback",
         "rejected": "rejected",
-        "sticker_grid": "sticker grid",
+        "reviewed_stickers": "reviewed colors",
         "tile_detector": "sticker detector"
       },
       "opening": "Opening camera",
       "statusWithConfidence": "{{mode}} {{confidence}}%",
+      "stickerConfidence": "stickers {{confidence}}%",
       "stickersFound": "{{count}}/9 stickers found",
       "stickersReady": "{{count}}/9 stickers ready",
       "temporalCollecting": "consensus {{count}}/{{target}}",
@@ -87,32 +84,32 @@
     },
     "faces": {
       "B": {
-        "instruction": "Capture the blue face with the white face at the top of the camera view.",
+        "instruction": "Show the blue face with the white face at the top of the camera view.",
         "label": "Blue face",
         "top": "White"
       },
       "D": {
-        "instruction": "Capture the yellow face with the green face at the top of the camera view.",
+        "instruction": "Show the yellow face with the green face at the top of the camera view.",
         "label": "Yellow face",
         "top": "Green"
       },
       "F": {
-        "instruction": "Capture the green face with the white face at the top of the camera view.",
+        "instruction": "Show the green face with the white face at the top of the camera view.",
         "label": "Green face",
         "top": "White"
       },
       "L": {
-        "instruction": "Capture the orange face with the white face at the top of the camera view.",
+        "instruction": "Show the orange face with the white face at the top of the camera view.",
         "label": "Orange face",
         "top": "White"
       },
       "R": {
-        "instruction": "Capture the red face with the white face at the top of the camera view.",
+        "instruction": "Show the red face with the white face at the top of the camera view.",
         "label": "Red face",
         "top": "White"
       },
       "U": {
-        "instruction": "Capture the white face with the green face at the top of the camera view.",
+        "instruction": "Show the white face with the green face at the top of the camera view.",
         "label": "White face",
         "top": "Green"
       }
@@ -129,7 +126,7 @@
       "lookingKeepVisible": "Looking for cube face. Keep the cube fully visible.",
       "partialGrid": "{{count}}/9 stickers found. Show one flat face.",
       "scanFailed": "Live scan analysis failed.",
-      "stableCapturing": "Cube face is stable. Capturing photo...",
+      "stableCapturing": "All stickers are stable. Review the colors.",
       "tooBright": "Too much glare. Reduce bright reflections.",
       "tooDark": "Too dark. Add more light."
     },
@@ -140,20 +137,19 @@
       "apiNotReady": "The API is not ready yet.",
       "autoCaptured": "Captured automatically. Review the colors before confirming this face.",
       "autoCapturing": "Auto-capturing stable face...",
-      "autoPaused": "Auto scan paused. Use Take photo when the face is visible.",
+      "autoPaused": "Auto scan paused. Turn it on when the face is visible.",
       "cameraFrameFailed": "Could not read a camera frame. Try again.",
       "cameraNotReady": "Camera is not ready yet.",
       "captured": "Photo captured. Review the colors before confirming this face.",
       "capturingPhoto": "Capturing photo...",
       "centerMismatchFallback": "Captured center does not match this scan step. Retake the photo.",
       "centerMismatchConfirmQuestion": "Are you sure this is the expected face?",
-      "centerMismatchWithColors": "Center looks {{detectedColor}}{{confidence}}, but this step expects {{expectedColor}}. Rotate to the expected face and retake the photo before confirming.",
+      "centerMismatchWithColors": "Center looks {{detectedColor}}{{confidence}}, but this step expects {{expectedColor}}. Rotate to the expected face before confirming.",
       "confirmAllFaces": "Confirm all six faces and make sure each color appears exactly 9 times.",
       "confidenceSuffix": " ({{confidence}}% confidence)",
-      "detectedUncertain": "{{count}} detected colors are uncertain. Review the highlighted squares or retake the photo.",
+      "detectedUncertain": "{{count}} detected colors are uncertain. Review the highlighted squares or clear the face to scan again.",
       "exportedSession": "Exported {{filename}} for local accuracy evaluation.",
-      "exportRequiresPhoto": "Take at least one photo before exporting the scan session.",
-      "faceOutlineWeak": "The face outline was weak; keep the cube flat inside the guide.",
+      "exportRequiresPhoto": "Recognize at least one face before exporting the scan session.",
       "faceNeedsReview": "Review this face before solving.",
       "faceUpdated": "Face updated. Review the other faces or solve when ready.",
       "genericRejected": "The scanned cube was rejected. Review the confirmed colors.",
@@ -168,7 +164,7 @@
       "sessionInvalidCubeState": "The scan does not describe a valid cube. Review the faces or use the reviewed-color fallback after checking every sticker.",
       "sessionIncompleteStickers": "Complete all 9 stickers on faces {{faces}} before solving.",
       "sessionMissingConfirmedFaces": "Confirm these faces before solving: {{faces}}.",
-      "sessionMissingPhotos": "Take a photo for these faces before solving: {{faces}}.",
+      "sessionMissingPhotos": "Recognize these faces before solving: {{faces}}.",
       "sessionNeedsManualConfirmation": "Confirm the highlighted stickers before solving.",
       "sessionNeedsRescan": "One or more faces need to be rescanned.",
       "sessionRejected": "The scan session was rejected. Review the faces before solving.",
@@ -176,19 +172,17 @@
       "sessionVisionUnavailable": "The vision service could not complete the session. You can retry or use the reviewed-color fallback.",
       "solveFailed": "The scan solve request failed.",
       "submittingSession": "Checking the full scan with cube constraints...",
-      "stillLooking": "Still looking for the cube face. Keep the full face visible and let auto scan try again."
+      "stillLooking": "Still looking for the cube face. Keep the full face visible and let auto scan try again.",
+      "liveReviewReady": "9 stickers recognized. Review the colors, correct any square if needed, then confirm this face."
     },
     "modal": {
       "cnnEvidenceActive": "CNN evidence active",
       "cnnReasonUnknown": "not configured",
       "colorFallbackActive": "Color-only fallback: {{reason}}",
       "confirmed": "{{count}} confirmed",
-      "description": "Capture one face at a time with the requested top color. The solution uses the colors you confirm.",
+      "description": "Show one face at a time with the requested top color. The solution uses the colors you confirm.",
       "dismiss": "Dismiss scan cube",
       "expectedCenter": "Expected center: {{color}}",
-      "faceDetectorActive": "Face detector active",
-      "faceDetectorFallbackActive": "Geometry fallback: {{reason}}",
-      "faceDetectorReasonUnknown": "not configured",
       "faceProgress": "Face {{current}} of {{total}}",
       "keepAtTop": "Keep at top: {{color}}",
       "tileDetectorActive": "Sticker detector active",
@@ -210,15 +204,11 @@
       "confirmAllNineColors": "Confirm all 9 colors before continuing."
     },
     "warnings": {
-      "face_detection_rejected": "Face detection was rejected. Keep the face flat and centered.",
-      "face_detector_rejected": "Face detector proposal was rejected. Keep one cube face flat and visible.",
       "tile_detector_rejected": "Sticker detector proposal was rejected. Keep the cube face flat and visible.",
       "image_blurry": "Image is blurry. Hold the cube steady.",
       "image_too_bright": "Too much glare. Reduce bright reflections.",
       "image_too_dark": "Too dark. Add more light.",
-      "low_confidence_sticker": "One or more stickers are uncertain. Review the highlighted squares.",
-      "using_center_guide_fallback": "Keep the cube fully visible inside the guide.",
-      "weak_face_contour": "The face outline is weak. Keep the cube flat inside the guide."
+      "low_confidence_sticker": "One or more stickers are uncertain. Review the highlighted squares."
     }
   },
   "solve": {

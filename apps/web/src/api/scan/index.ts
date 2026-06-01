@@ -11,7 +11,6 @@ export type {
   ScanColorAlternative,
   ScanColorProbabilities,
   ScanDetectionBox,
-  ScanGridDetection,
   ScanImageQuality,
   ScanSessionFaceRequest,
   ScanSessionManualTarget,

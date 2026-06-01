@@ -26,7 +26,6 @@ def evaluate_scan_session_exports(exports: list[ScanSessionExport]) -> dict[str,
     status_counts: Counter[str] = Counter()
     quality_reasons: Counter[str] = Counter()
     detection_modes: Counter[str] = Counter()
-    grid_statuses: Counter[str] = Counter()
     face_totals: Counter[str] = Counter()
     face_correct: Counter[str] = Counter()
     sticker_totals: Counter[str] = Counter()
@@ -66,17 +65,11 @@ def evaluate_scan_session_exports(exports: list[ScanSessionExport]) -> dict[str,
     temporal_agreement_count = 0
     bbox_stability_total = 0.0
     bbox_stability_count = 0
-    grid_confidence_total = 0.0
-    grid_confidence_count = 0
     face_confidence_total = 0.0
     face_confidence_count = 0
     center_mismatch_count = 0
     rescan_face_count = 0
     manual_target_sticker_count = 0
-    detector_review_disagreements = 0
-    grid_sticker_overrides = 0
-    center_grid_mismatch = 0
-    review_used_grid_detections = 0
 
     for export in exports:
         result = effective_session_result(export)
@@ -140,12 +133,6 @@ def evaluate_scan_session_exports(exports: list[ScanSessionExport]) -> dict[str,
                     elif status != "not_run":
                         temporal_ready_rejected += 1
 
-            grid_metrics = detector_review_metrics(face)
-            detector_review_disagreements += grid_metrics["detectorReviewDisagreements"]
-            grid_sticker_overrides += grid_metrics["gridStickerOverrides"]
-            center_grid_mismatch += grid_metrics["centerGridMismatch"]
-            review_used_grid_detections += grid_metrics["reviewUsedGridDetections"]
-
         if session_manual_override_stickers > 0:
             manual_override_sessions += 1
         if session_has_temporal:
@@ -153,13 +140,7 @@ def evaluate_scan_session_exports(exports: list[ScanSessionExport]) -> dict[str,
 
         for telemetry in analysis_telemetry(export, result):
             mode = value_at(telemetry, "detectionMode") or "unknown"
-            grid_status = value_at(telemetry, "gridStatus") or "unknown"
             detection_modes[str(mode)] += 1
-            grid_statuses[str(grid_status)] += 1
-            grid_confidence = number_at(telemetry, "gridConfidence")
-            if grid_confidence is not None:
-                grid_confidence_total += grid_confidence
-                grid_confidence_count += 1
             face_confidence = number_at(telemetry, "faceConfidence")
             if face_confidence is not None:
                 face_confidence_total += face_confidence
@@ -272,14 +253,8 @@ def evaluate_scan_session_exports(exports: list[ScanSessionExport]) -> dict[str,
         "averageTemporalAgreement": ratio_float(temporal_agreement_total, temporal_agreement_count),
         "averageBboxStability": ratio_float(bbox_stability_total, bbox_stability_count),
         "detectionModeCounts": dict(sorted(detection_modes.items())),
-        "gridStatusCounts": dict(sorted(grid_statuses.items())),
-        "averageGridConfidence": ratio_float(grid_confidence_total, grid_confidence_count),
         "averageFaceConfidence": ratio_float(face_confidence_total, face_confidence_count),
         "centerMismatchCount": center_mismatch_count,
-        "detectorReviewDisagreements": detector_review_disagreements,
-        "gridStickerOverrides": grid_sticker_overrides,
-        "centerGridMismatch": center_grid_mismatch,
-        "reviewUsedGridDetections": review_used_grid_detections,
         "rescanFaceCount": rescan_face_count,
         "manualTargetStickerCount": manual_target_sticker_count,
         "qualityReasons": dict(sorted(quality_reasons.items())),
@@ -479,77 +454,6 @@ def manual_target_stickers(manual_targets: list[Any]) -> int:
         if isinstance(stickers, list):
             total += len(stickers)
     return total
-
-
-def detector_review_metrics(face: Any) -> dict[str, int]:
-    grid_symbols = grid_detection_symbols(value_at(face, "analysis"))
-    if not grid_symbols:
-        return {
-            "centerGridMismatch": 0,
-            "detectorReviewDisagreements": 0,
-            "gridStickerOverrides": 0,
-            "reviewUsedGridDetections": 0,
-        }
-
-    analysis_symbols = analysis_sticker_symbols(value_at(face, "analysis"))
-    review_symbols = review_sticker_symbols(face)
-    metrics = {
-        "centerGridMismatch": 0,
-        "detectorReviewDisagreements": 0,
-        "gridStickerOverrides": 0,
-        "reviewUsedGridDetections": 0,
-    }
-    for index, grid_symbol in grid_symbols.items():
-        review_symbol = review_symbols.get(index)
-        analysis_symbol = analysis_symbols.get(index)
-        if review_symbol == grid_symbol:
-            metrics["reviewUsedGridDetections"] += 1
-            if analysis_symbol is not None and analysis_symbol != grid_symbol:
-                metrics["gridStickerOverrides"] += 1
-        else:
-            metrics["detectorReviewDisagreements"] += 1
-        if index == 4 and grid_symbol != value_at(face, "symbol"):
-            metrics["centerGridMismatch"] += 1
-    return metrics
-
-
-def grid_detection_symbols(analysis: Any) -> dict[int, str]:
-    detections = value_at(analysis, "gridDetections", [])
-    if not isinstance(detections, list):
-        return {}
-    symbols: dict[int, str] = {}
-    for detection in detections:
-        symbol = value_at(detection, "symbol")
-        index = value_at(detection, "index")
-        if isinstance(symbol, str) and isinstance(index, int):
-            symbols[index] = symbol
-    return symbols
-
-
-def analysis_sticker_symbols(analysis: Any) -> dict[int, str]:
-    stickers = value_at(analysis, "stickers", [])
-    if not isinstance(stickers, list):
-        return {}
-    symbols: dict[int, str] = {}
-    for sticker in stickers:
-        symbol = value_at(sticker, "symbol")
-        index = value_at(sticker, "index")
-        if isinstance(symbol, str) and isinstance(index, int):
-            symbols[index] = symbol
-    return symbols
-
-
-def review_sticker_symbols(face: Any) -> dict[int, str]:
-    stickers = value_at(face, "stickers", [])
-    if not isinstance(stickers, list):
-        return {}
-    symbols: dict[int, str] = {}
-    for sticker in stickers:
-        symbol = value_at(sticker, "symbol")
-        index = value_at(sticker, "index")
-        if isinstance(symbol, str) and isinstance(index, int):
-            symbols[index] = symbol
-    return symbols
 
 
 def result_list(result: dict[str, Any] | None, key: str) -> list[Any]:

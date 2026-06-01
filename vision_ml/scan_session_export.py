@@ -37,7 +37,7 @@ class ScanExportCapture(BaseModel):
 
 
 class ScanRejectedCapture(BaseModel):
-    reason: Literal["empty_stickers", "guide_fallback"]
+    reason: Literal["empty_stickers", "partial_tiles"]
     photoDataUrl: str = Field(min_length=1)
     capture: ScanExportCapture
     analysis: dict[str, Any]

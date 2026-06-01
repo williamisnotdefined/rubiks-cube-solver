@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AnalyzeScanFaceResponse, ScanSessionResult } from '@api/scan'
 import type { ScanFaceSymbol, SolveResult } from '@api/solver/types'
-import { captureScanImage, captureScanPreviewImage, type CapturedScanImage } from '../scanCapture'
 import { ScanCubeModal } from '../ScanCubeModal'
+import { scanFaceOrder } from '../scanState'
 import { useSolveSettingsStore } from '../solveSettingsStore'
 
 const apiMocks = vi.hoisted(() => ({
@@ -12,6 +12,22 @@ const apiMocks = vi.hoisted(() => ({
   analyzeMutateAsync: vi.fn(),
   cameraStream: {} as MediaStream,
   solveSessionMutateAsync: vi.fn(),
+}))
+
+const liveScanMocks = vi.hoisted(() => ({
+  acknowledgeAutoFill: vi.fn(),
+  autoFillAcknowledged: false,
+  autoRecognize: false,
+  analysisOverrides: undefined as
+    | {
+        centerMismatch?: boolean
+        detectedCenter?: ScanFaceSymbol
+        detectionMode?: AnalyzeScanFaceResponse['detectionMode']
+        stickerSymbol?: ScanFaceSymbol
+        tileSymbols?: string
+      }
+    | undefined,
+  resetAutoFill: vi.fn(),
 }))
 
 vi.mock('@api/scan', async () => {
@@ -34,13 +50,151 @@ vi.mock('../hooks/useCameraStream', () => ({
   useCameraStream: () => ({ status: 'ready', stream: apiMocks.cameraStream }),
 }))
 
-vi.mock('../scanCapture', () => ({
-  captureScanImage: vi.fn(),
-  captureScanPreviewImage: vi.fn(),
-}))
+vi.mock('../hooks/useLiveScanPreview', () => {
+  function buildCapturedScanImage() {
+    return {
+      capturedAt: 123,
+      height: 1280,
+      photoDataUrl: 'data:image/jpeg;base64,scan',
+      source: 'canvas' as const,
+      width: 1280,
+    }
+  }
 
-const captureScanImageMock = vi.mocked(captureScanImage)
-const captureScanPreviewImageMock = vi.mocked(captureScanPreviewImage)
+  function buildScanAnalysisResponse({
+    centerMismatch = false,
+    detectedCenter,
+    detectionMode = 'tile_detector',
+    stickerSymbol,
+    symbol,
+    tileSymbols,
+  }: {
+    centerMismatch?: boolean
+    detectedCenter?: ScanFaceSymbol
+    detectionMode?: AnalyzeScanFaceResponse['detectionMode']
+    stickerSymbol?: ScanFaceSymbol
+    symbol: ScanFaceSymbol
+    tileSymbols?: string
+  }): AnalyzeScanFaceResponse {
+    const effectiveTileSymbols = tileSymbols ?? symbol.repeat(9)
+    const effectiveDetectedCenter = detectedCenter ?? (centerMismatch ? 'U' : symbol)
+    const effectiveCenterMismatch = centerMismatch || effectiveDetectedCenter !== symbol
+    const tileDetections = [...effectiveTileSymbols].map((tileSymbol, index) => ({
+      bbox: { height: 0.18, width: 0.18, x: 0.2 + (index % 3) * 0.25, y: 0.2 + Math.floor(index / 3) * 0.25 },
+      confidence: 0.9,
+      symbol: tileSymbol as ScanFaceSymbol,
+    }))
+
+    return {
+      centerMismatch: effectiveCenterMismatch,
+      confidence: effectiveCenterMismatch ? 0.8 : 1,
+      detectedCenterConfidence: effectiveCenterMismatch ? 0.8 : 1,
+      detectedCenter: effectiveDetectedCenter,
+      detectionMode,
+      expectedCenter: symbol,
+      faceConfidence: 1,
+      imageSize: { width: 640, height: 640 },
+      message: effectiveCenterMismatch ? 'Captured center does not match the expected face.' : undefined,
+      ok: !effectiveCenterMismatch,
+      status: effectiveCenterMismatch ? 'center_mismatch' : 'detected',
+      qualityWarnings: [],
+      stickers: Array.from({ length: 9 }, (_, index) => ({
+        alternatives: [],
+        confidence: 1,
+        index,
+        polygon: [],
+        rgb: { r: 205, g: 210, b: 218 },
+        symbol: stickerSymbol ?? symbol,
+      })),
+      tileDetections,
+      warnings: [],
+    }
+  }
+
+  function buildEmptyLiveScanState() {
+      return {
+      acknowledgeAutoFill: () => {
+        liveScanMocks.autoFillAcknowledged = true
+        liveScanMocks.acknowledgeAutoFill()
+      },
+      latestAnalysis: undefined,
+      latestCapture: undefined,
+      message: 'Looking for cube face.',
+      resetAutoFill: liveScanMocks.resetAutoFill,
+      shouldAutoFill: false,
+      stableFrameCount: 0,
+      status: 'searching',
+      temporalConsensus: {
+        bboxStability: 0,
+        faceConfidence: 0,
+        framesRejected: 0,
+        framesSeen: 0,
+        framesUsed: 0,
+        rejectReasons: [],
+        status: 'empty',
+        stickers: [],
+        temporalAgreement: 0,
+        tileConfidence: 0,
+      },
+    }
+  }
+
+  return {
+    useLiveScanPreview: ({ expectedCenter }: { expectedCenter: ScanFaceSymbol }) => {
+      if (!liveScanMocks.autoRecognize) {
+        return buildEmptyLiveScanState()
+      }
+
+      const analysis = buildScanAnalysisResponse({
+        ...liveScanMocks.analysisOverrides,
+        symbol: expectedCenter,
+      })
+      const stickers = analysis.tileDetections?.map((detection, index) => ({
+        agreement: 1,
+        alternatives: [],
+        confidence: detection.confidence,
+        framesUsed: 6,
+        index,
+        margin: 1,
+        symbol: detection.symbol,
+      })) ?? []
+      const canAutoFill = analysis.detectionMode === 'tile_detector' && !analysis.centerMismatch && stickers.length === 9
+
+      return {
+        acknowledgeAutoFill: () => {
+          liveScanMocks.autoFillAcknowledged = true
+          liveScanMocks.acknowledgeAutoFill()
+        },
+        latestAnalysis: analysis,
+        latestCapture: buildCapturedScanImage(),
+        message: canAutoFill
+          ? '9 stickers recognized. Review the colors, correct any square if needed, then confirm this face.'
+          : analysis.centerMismatch
+            ? 'Detected another center color. Rotate to the expected face.'
+            : 'Looking for cube face.',
+        resetAutoFill: () => {
+          liveScanMocks.autoFillAcknowledged = false
+          liveScanMocks.resetAutoFill()
+        },
+        shouldAutoFill: canAutoFill && !liveScanMocks.autoFillAcknowledged,
+        stableFrameCount: 6,
+        status: canAutoFill ? 'holding_steady' : 'searching',
+        temporalConsensus: {
+          bboxStability: 0.92,
+          faceConfidence: analysis.faceConfidence,
+          framesRejected: 0,
+          framesSeen: 6,
+          framesUsed: 6,
+          rejectReasons: [],
+          status: canAutoFill ? 'ready' : analysis.centerMismatch ? 'center_mismatch' : 'collecting',
+          stickers,
+          temporalAgreement: 1,
+          tileConfidence: 0.9,
+        },
+      }
+    },
+  }
+})
 
 describe('ScanCubeModal', () => {
   beforeEach(() => {
@@ -48,10 +202,11 @@ describe('ScanCubeModal', () => {
     apiMocks.analyzeReset.mockReset()
     apiMocks.solveSessionMutateAsync.mockReset()
     apiMocks.solveSessionMutateAsync.mockResolvedValue(scanSessionAccepted())
-    captureScanImageMock.mockReset()
-    captureScanImageMock.mockResolvedValue(capturedScanImage())
-    captureScanPreviewImageMock.mockReset()
-    captureScanPreviewImageMock.mockReturnValue(undefined)
+    liveScanMocks.acknowledgeAutoFill.mockClear()
+    liveScanMocks.autoFillAcknowledged = false
+    liveScanMocks.autoRecognize = false
+    liveScanMocks.analysisOverrides = undefined
+    liveScanMocks.resetAutoFill.mockClear()
     useSolveSettingsStore.getState().resetSolveSettings()
     Object.defineProperty(HTMLMediaElement.prototype, 'play', {
       configurable: true,
@@ -79,7 +234,6 @@ describe('ScanCubeModal', () => {
         apiReady
         solving={false}
         visionCnnAvailable
-        visionFaceDetectorAvailable
         visionTileDetectorAvailable
         visionOk
         onClose={vi.fn()}
@@ -88,7 +242,6 @@ describe('ScanCubeModal', () => {
     )
 
     expect(screen.getByText('CNN evidence active')).toBeInTheDocument()
-    expect(screen.getByText('Face detector active')).toBeInTheDocument()
     expect(screen.getByText('Sticker detector active')).toBeInTheDocument()
 
     rerender(
@@ -97,8 +250,6 @@ describe('ScanCubeModal', () => {
         solving={false}
         visionCnnAvailable={false}
         visionCnnReason="cnn_model_not_configured"
-        visionFaceDetectorAvailable={false}
-        visionFaceDetectorReason="face_detector_model_not_configured"
         visionTileDetectorAvailable={false}
         visionTileDetectorReason="tile_detector_model_not_configured"
         visionOk
@@ -108,7 +259,6 @@ describe('ScanCubeModal', () => {
     )
 
     expect(screen.getByText('Color-only fallback: cnn_model_not_configured')).toBeInTheDocument()
-    expect(screen.getByText('Geometry fallback: face_detector_model_not_configured')).toBeInTheDocument()
     expect(screen.getByText('Sticker detector fallback: tile_detector_model_not_configured')).toBeInTheDocument()
 
     rerender(
@@ -121,7 +271,7 @@ describe('ScanCubeModal', () => {
       />,
     )
 
-    expect(screen.getAllByText('Vision status unavailable')).toHaveLength(3)
+    expect(screen.getAllByText('Vision status unavailable')).toHaveLength(2)
   })
 
   it('hides local scan export unless explicitly enabled', () => {
@@ -137,12 +287,10 @@ describe('ScanCubeModal', () => {
     expect(screen.queryByRole('button', { name: 'Export scan session' })).not.toBeInTheDocument()
   })
 
-  it('enables local scan export after a photo when configured', async () => {
+  it('enables local scan export after live recognition when configured', async () => {
     vi.stubEnv('VITE_ENABLE_SCAN_EXPORT', 'true')
-    const user = userEvent.setup()
-    apiMocks.analyzeMutateAsync.mockResolvedValue(scanAnalysisResponse())
 
-    render(
+    const { rerender } = render(
       <ScanCubeModal
         apiReady
         solving={false}
@@ -153,18 +301,24 @@ describe('ScanCubeModal', () => {
 
     expect(screen.getByRole('button', { name: 'Export scan session' })).toBeDisabled()
 
-    await user.click(screen.getByRole('button', { name: 'Take photo' }))
-    await screen.findByAltText('Captured cube face')
+    liveScanMocks.autoRecognize = true
+    rerender(
+      <ScanCubeModal
+        apiReady
+        solving={false}
+        onClose={vi.fn()}
+        onSolve={vi.fn()}
+      />,
+    )
+
+    await screen.findByText(/9 stickers recognized/)
 
     expect(screen.getByRole('button', { name: 'Export scan session' })).toBeEnabled()
   })
 
-  it('shows a modal before confirming a face when the captured center is a different color', async () => {
-    const user = userEvent.setup()
-    apiMocks.analyzeMutateAsync.mockResolvedValue(scanAnalysisResponse({ centerMismatch: true }))
-    const confirm = vi.spyOn(window, 'confirm').mockImplementation(() => {
-      throw new Error('window.confirm should not be called')
-    })
+  it('does not fill the review grid when the detected center is a different color', () => {
+    liveScanMocks.autoRecognize = true
+    liveScanMocks.analysisOverrides = { centerMismatch: true }
 
     render(
       <ScanCubeModal
@@ -175,38 +329,15 @@ describe('ScanCubeModal', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: 'Take photo' }))
-
-    expect(await screen.findByText(/Center looks W \/ White.*expects G \/ Green/)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Confirm face' })).toBeEnabled()
-
-    await user.click(screen.getByRole('button', { name: 'Confirm face' }))
-
-    expect(confirm).not.toHaveBeenCalled()
-    const firstDialog = await screen.findByRole('dialog', { name: 'Confirm expected face' })
-    expect(within(firstDialog).getByText(/Center looks W \/ White.*expects G \/ Green/)).toBeInTheDocument()
-    expect(within(firstDialog).getByText('Are you sure this is the expected face?')).toBeInTheDocument()
-
-    await user.click(within(firstDialog).getByRole('button', { name: 'Cancel' }))
-
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog', { name: 'Confirm expected face' })).not.toBeInTheDocument()
-    })
-    expect(screen.getByRole('heading', { name: 'Green face' })).toBeInTheDocument()
-
-    await user.click(screen.getByRole('button', { name: 'Confirm face' }))
-    const secondDialog = await screen.findByRole('dialog', { name: 'Confirm expected face' })
-    await user.click(within(secondDialog).getByRole('button', { name: 'Confirm anyway' }))
-
-    expect(await screen.findByRole('heading', { name: 'Red face' })).toBeInTheDocument()
-    confirm.mockRestore()
+    expect(screen.getByRole('button', { name: 'Confirm face' })).toBeDisabled()
+    expect(screen.getByTestId('scan-sticker-4')).toHaveAccessibleName(/Green/)
+    expect(screen.queryByText(/9 stickers recognized/)).not.toBeInTheDocument()
   })
 
-  it('clears the current photo while keeping carousel navigation visible', async () => {
+  it('clears the current live review while keeping carousel navigation visible', async () => {
     const user = userEvent.setup()
-    apiMocks.analyzeMutateAsync.mockResolvedValue(scanAnalysisResponse())
 
-    render(
+    const { rerender } = render(
       <ScanCubeModal
         apiReady
         solving={false}
@@ -216,33 +347,35 @@ describe('ScanCubeModal', () => {
     )
 
     expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Clear photo' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Clear face' })).toBeDisabled()
 
-    await user.click(screen.getByRole('button', { name: 'Take photo' }))
+    liveScanMocks.autoRecognize = true
+    rerender(
+      <ScanCubeModal
+        apiReady
+        solving={false}
+        onClose={vi.fn()}
+        onSolve={vi.fn()}
+      />,
+    )
 
-    expect(await screen.findByAltText('Captured cube face')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Clear photo' })).toBeEnabled()
+    await screen.findByText(/9 stickers recognized/)
+    expect(screen.getByRole('button', { name: 'Clear face' })).toBeEnabled()
     expect(screen.getByRole('button', { name: 'Confirm face' })).toBeEnabled()
 
-    await user.click(screen.getByRole('button', { name: 'Clear photo' }))
+    liveScanMocks.autoRecognize = false
+    await user.click(screen.getByRole('button', { name: 'Clear face' }))
 
-    await waitFor(() => {
-      expect(screen.queryByAltText('Captured cube face')).not.toBeInTheDocument()
-    })
     expect(screen.getByRole('button', { name: 'Confirm face' })).toBeDisabled()
-    expect(apiMocks.analyzeReset).toHaveBeenCalled()
+    expect(liveScanMocks.resetAutoFill).toHaveBeenCalled()
   })
 
   it('fills the review grid from sticker detector boxes when sampled stickers disagree', async () => {
-    const user = userEvent.setup()
-    apiMocks.analyzeMutateAsync.mockResolvedValue(
-      scanAnalysisResponse({
-        detectedCenter: 'B',
-        gridSymbols: 'LRRFBBRFD',
-        stickerSymbol: 'R',
-        symbol: 'F',
-      }),
-    )
+    liveScanMocks.autoRecognize = true
+    liveScanMocks.analysisOverrides = {
+      stickerSymbol: 'R',
+      tileSymbols: 'LRRFFFFFD',
+    }
 
     render(
       <ScanCubeModal
@@ -253,21 +386,16 @@ describe('ScanCubeModal', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: 'Take photo' }))
-    await screen.findByAltText('Captured cube face')
+    await screen.findByText(/9 stickers recognized/)
 
     expect(screen.getByTestId('scan-sticker-0')).toHaveAccessibleName(/Orange/)
     expect(screen.getByTestId('scan-sticker-1')).toHaveAccessibleName(/Red/)
-    expect(screen.getByTestId('scan-sticker-4')).toHaveAccessibleName(/Blue/)
-    expect(screen.getByText(/Center looks B \/ Blue/)).toBeInTheDocument()
+    expect(screen.getByTestId('scan-sticker-4')).toHaveAccessibleName(/Green/)
   })
 
   it('keeps a confirmed face available when navigating away and back', async () => {
     const user = userEvent.setup()
-    apiMocks.analyzeMutateAsync.mockImplementation(
-      async ({ expectedCenter }: { expectedCenter: ScanFaceSymbol }) =>
-        scanAnalysisResponse({ symbol: expectedCenter }),
-    )
+    liveScanMocks.autoRecognize = true
 
     render(
       <ScanCubeModal
@@ -278,8 +406,7 @@ describe('ScanCubeModal', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: 'Take photo' }))
-    await screen.findByAltText('Captured cube face')
+    await screen.findByText(/9 stickers recognized/)
     await user.click(screen.getByRole('button', { name: 'Confirm face' }))
 
     expect(await screen.findByRole('heading', { name: 'Red face' })).toBeInTheDocument()
@@ -287,16 +414,13 @@ describe('ScanCubeModal', () => {
     await user.click(screen.getByRole('button', { name: 'Previous' }))
 
     expect(await screen.findByRole('heading', { name: 'Green face' })).toBeInTheDocument()
-    expect(screen.getByAltText('Captured cube face')).toBeInTheDocument()
+    expect(screen.getByTestId('scan-sticker-0')).toHaveAccessibleName(/Green/)
     expect(screen.getByRole('button', { name: 'Update face' })).toBeEnabled()
   })
 
   it('persists manual edits when revisiting a confirmed face', async () => {
     const user = userEvent.setup()
-    apiMocks.analyzeMutateAsync.mockImplementation(
-      async ({ expectedCenter }: { expectedCenter: ScanFaceSymbol }) =>
-        scanAnalysisResponse({ symbol: expectedCenter }),
-    )
+    liveScanMocks.autoRecognize = true
 
     render(
       <ScanCubeModal
@@ -307,8 +431,7 @@ describe('ScanCubeModal', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: 'Take photo' }))
-    await screen.findByAltText('Captured cube face')
+    await screen.findByText(/9 stickers recognized/)
     await user.click(screen.getByRole('button', { name: 'Confirm face' }))
     await user.click(screen.getByRole('button', { name: 'Previous' }))
     await user.click(screen.getByTestId('scan-sticker-0'))
@@ -324,10 +447,7 @@ describe('ScanCubeModal', () => {
 
   it('explains why a scan session is not ready to solve', async () => {
     const user = userEvent.setup()
-    apiMocks.analyzeMutateAsync.mockImplementation(
-      async ({ expectedCenter }: { expectedCenter: ScanFaceSymbol }) =>
-        scanAnalysisResponse({ symbol: expectedCenter }),
-    )
+    liveScanMocks.autoRecognize = true
 
     render(
       <ScanCubeModal
@@ -343,7 +463,8 @@ describe('ScanCubeModal', () => {
     expect(screen.getByRole('button', { name: 'Solve scanned cube' })).toBeEnabled()
 
     await user.click(screen.getByRole('button', { name: /Go to Green face/ }))
-    await user.click(screen.getByRole('button', { name: 'Clear photo' }))
+    liveScanMocks.autoRecognize = false
+    await user.click(screen.getByRole('button', { name: 'Clear face' }))
 
     expect(screen.getByRole('button', { name: 'Solve scanned cube' })).toBeEnabled()
 
@@ -357,10 +478,7 @@ describe('ScanCubeModal', () => {
     const user = userEvent.setup()
     const onClose = vi.fn()
     const onSessionAccepted = vi.fn()
-    apiMocks.analyzeMutateAsync.mockImplementation(
-      async ({ expectedCenter }: { expectedCenter: ScanFaceSymbol }) =>
-        scanAnalysisResponse({ symbol: expectedCenter }),
-    )
+    liveScanMocks.autoRecognize = true
 
     render(
       <ScanCubeModal
@@ -379,8 +497,13 @@ describe('ScanCubeModal', () => {
     expect(apiMocks.solveSessionMutateAsync).toHaveBeenCalledWith(
       expect.objectContaining({
         faces: expect.arrayContaining([
-          expect.objectContaining({ expectedTop: 'U', image: 'data:image/jpeg;base64,scan', symbol: 'F' }),
-          expect.objectContaining({ expectedTop: 'F', image: 'data:image/jpeg;base64,scan', symbol: 'U' }),
+          expect.objectContaining({
+            expectedTop: 'U',
+            image: 'data:image/jpeg;base64,scan',
+            reviewedStickers: expect.any(Array),
+            symbol: 'F',
+          }),
+          expect.objectContaining({ expectedTop: 'F', reviewedStickers: expect.any(Array), symbol: 'U' }),
         ]),
         maxDepth: 30,
       }),
@@ -391,6 +514,7 @@ describe('ScanCubeModal', () => {
 
   it('navigates to backend rescan targets', async () => {
     const user = userEvent.setup()
+    liveScanMocks.autoRecognize = true
     apiMocks.solveSessionMutateAsync.mockResolvedValue(
       scanSessionRejected({
         message: undefined,
@@ -398,11 +522,6 @@ describe('ScanCubeModal', () => {
         status: 'needs_rescan_face',
       }),
     )
-    apiMocks.analyzeMutateAsync.mockImplementation(
-      async ({ expectedCenter }: { expectedCenter: ScanFaceSymbol }) =>
-        scanAnalysisResponse({ symbol: expectedCenter }),
-    )
-
     render(
       <ScanCubeModal
         apiReady
@@ -425,6 +544,7 @@ describe('ScanCubeModal', () => {
 
   it('explains glare quality reasons from scan session rejects', async () => {
     const user = userEvent.setup()
+    liveScanMocks.autoRecognize = true
     apiMocks.solveSessionMutateAsync.mockResolvedValue(
       scanSessionRejected({
         message: 'One or more faces need to be rescanned.',
@@ -433,11 +553,6 @@ describe('ScanCubeModal', () => {
         status: 'needs_rescan_face',
       }),
     )
-    apiMocks.analyzeMutateAsync.mockImplementation(
-      async ({ expectedCenter }: { expectedCenter: ScanFaceSymbol }) =>
-        scanAnalysisResponse({ symbol: expectedCenter }),
-    )
-
     render(
       <ScanCubeModal
         apiReady
@@ -455,6 +570,7 @@ describe('ScanCubeModal', () => {
 
   it('highlights backend manual confirmation targets', async () => {
     const user = userEvent.setup()
+    liveScanMocks.autoRecognize = true
     apiMocks.solveSessionMutateAsync.mockResolvedValue(
       scanSessionRejected({
         manualTargets: [{ face: 'R', stickers: [0, 2] }],
@@ -462,11 +578,6 @@ describe('ScanCubeModal', () => {
         status: 'needs_manual_confirmation',
       }),
     )
-    apiMocks.analyzeMutateAsync.mockImplementation(
-      async ({ expectedCenter }: { expectedCenter: ScanFaceSymbol }) =>
-        scanAnalysisResponse({ symbol: expectedCenter }),
-    )
-
     render(
       <ScanCubeModal
         apiReady
@@ -487,14 +598,10 @@ describe('ScanCubeModal', () => {
   it('keeps ambiguous scan sessions open for review', async () => {
     const user = userEvent.setup()
     const onClose = vi.fn()
+    liveScanMocks.autoRecognize = true
     apiMocks.solveSessionMutateAsync.mockResolvedValue(
       scanSessionRejected({ message: undefined, status: 'state_ambiguous' }),
     )
-    apiMocks.analyzeMutateAsync.mockImplementation(
-      async ({ expectedCenter }: { expectedCenter: ScanFaceSymbol }) =>
-        scanAnalysisResponse({ symbol: expectedCenter }),
-    )
-
     render(
       <ScanCubeModal
         apiReady
@@ -562,12 +669,10 @@ describe('ScanCubeModal', () => {
     await waitFor(() => expect(play.mock.calls.length).toBeGreaterThan(initialPlayCalls))
   })
 
-  it('does not enter review when the final photo only uses guide fallback', async () => {
+  it('does not enter review when live analysis uses an unsupported mode', () => {
     vi.stubEnv('VITE_ENABLE_SCAN_EXPORT', 'true')
-    const user = userEvent.setup()
-    apiMocks.analyzeMutateAsync.mockResolvedValue(
-      scanAnalysisResponse({ detectionMode: 'guide_fallback' }),
-    )
+    liveScanMocks.autoRecognize = true
+    liveScanMocks.analysisOverrides = { detectionMode: 'legacy_geometry' }
 
     render(
       <ScanCubeModal
@@ -578,18 +683,12 @@ describe('ScanCubeModal', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: 'Take photo' }))
-
-    expect(await screen.findByText(/Still looking for the cube face/)).toBeInTheDocument()
-    expect(screen.queryByAltText('Captured cube face')).not.toBeInTheDocument()
+    expect(screen.getByText('Looking for cube face.')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Confirm face' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Export scan session' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Export scan session' })).toBeDisabled()
   })
 
-  it('shows an error when the final camera frame cannot be captured', async () => {
-    const user = userEvent.setup()
-    captureScanImageMock.mockResolvedValue(undefined)
-
+  it('does not show a manual photo button', () => {
     render(
       <ScanCubeModal
         apiReady
@@ -599,23 +698,18 @@ describe('ScanCubeModal', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: 'Take photo' }))
-
-    expect(await screen.findByText('Could not read a camera frame. Try again.')).toBeInTheDocument()
-    expect(apiMocks.analyzeMutateAsync).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button', { name: 'Take photo' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Retake photo' })).not.toBeInTheDocument()
   })
 
   it('opens solve settings and retries a completed scan after limit failure', async () => {
     const user = userEvent.setup()
     const onClose = vi.fn()
+    liveScanMocks.autoRecognize = true
     const onSolve = vi
       .fn()
       .mockResolvedValueOnce(scanSolveFailure())
       .mockResolvedValueOnce(scanSolveSuccess())
-    apiMocks.analyzeMutateAsync.mockImplementation(
-      async ({ expectedCenter }: { expectedCenter: ScanFaceSymbol }) =>
-        scanAnalysisResponse({ symbol: expectedCenter }),
-    )
 
     render(
       <ScanCubeModal
@@ -647,79 +741,13 @@ describe('ScanCubeModal', () => {
 
 async function confirmAllFaces(user: ReturnType<typeof userEvent.setup>) {
   for (let faceIndex = 0; faceIndex < 6; faceIndex += 1) {
-    await user.click(screen.getByRole('button', { name: 'Take photo' }))
-    await screen.findByAltText('Captured cube face')
+    await screen.findByRole('heading', { name: scanFaceOrder[faceIndex].label })
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Confirm face' })).toBeEnabled())
     await user.click(screen.getByRole('button', { name: 'Confirm face' }))
 
     if (faceIndex < 5) {
-      await waitFor(() => expect(screen.getByRole('button', { name: 'Take photo' })).toBeEnabled())
+      await screen.findByRole('heading', { name: scanFaceOrder[faceIndex + 1].label })
     }
-  }
-}
-
-function scanAnalysisResponse({
-  centerMismatch = false,
-  detectionMode = 'contour',
-  detectedCenter,
-  gridSymbols,
-  stickerSymbol,
-  symbol = 'F',
-}: {
-  centerMismatch?: boolean
-  detectedCenter?: ScanFaceSymbol
-  detectionMode?: AnalyzeScanFaceResponse['detectionMode']
-  gridSymbols?: string
-  stickerSymbol?: ScanFaceSymbol
-  symbol?: ScanFaceSymbol
-} = {}): AnalyzeScanFaceResponse {
-  const effectiveDetectedCenter = detectedCenter ?? (centerMismatch ? 'U' : symbol)
-  const effectiveCenterMismatch = centerMismatch || effectiveDetectedCenter !== symbol
-  const gridDetections = gridSymbols === undefined ? [] : [...gridSymbols].map((gridSymbol, index) => ({
-    bbox: { height: 0.18, width: 0.18, x: 0.2 + (index % 3) * 0.25, y: 0.2 + Math.floor(index / 3) * 0.25 },
-    column: index % 3,
-    confidence: 0.9,
-    index,
-    row: Math.floor(index / 3),
-    symbol: gridSymbol as ScanFaceSymbol,
-  }))
-
-  return {
-    centerMismatch: effectiveCenterMismatch,
-    confidence: effectiveCenterMismatch ? 0.8 : 1,
-    detectedCenterConfidence: effectiveCenterMismatch ? 0.8 : 1,
-    detectedCenter: effectiveDetectedCenter,
-    detectionMode: gridSymbols === undefined ? detectionMode : 'tile_detector',
-    expectedCenter: symbol,
-    faceConfidence: 1,
-    faceQuad: [],
-    gridConfidence: gridSymbols === undefined ? 0 : 0.84,
-    gridDetections,
-    gridStatus: gridSymbols === undefined ? 'not_found' : 'ready',
-    imageSize: { width: 640, height: 640 },
-    message: effectiveCenterMismatch ? 'Captured center does not match the expected face.' : undefined,
-    ok: !effectiveCenterMismatch,
-    status: effectiveCenterMismatch ? 'center_mismatch' : 'detected',
-    qualityWarnings: [],
-    stickers: Array.from({ length: 9 }, (_, index) => ({
-      alternatives: [],
-      confidence: 1,
-      index,
-      polygon: [],
-      rgb: { r: 205, g: 210, b: 218 },
-      symbol: stickerSymbol ?? symbol,
-    })),
-    tileDetections: [],
-    warnings: [],
-  }
-}
-
-function capturedScanImage(): CapturedScanImage {
-  return {
-    capturedAt: 123,
-    height: 1280,
-    photoDataUrl: 'data:image/jpeg;base64,scan',
-    source: 'canvas',
-    width: 1280,
   }
 }
 

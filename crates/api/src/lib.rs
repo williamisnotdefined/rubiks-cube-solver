@@ -15,7 +15,8 @@ pub use config::{
 pub use response::{
     AnalyzeScanFaceRequest, AnalyzeScanFaceResponse, AnalyzeScanSessionResponse, HealthResponse,
     ScanFacesRequest, ScanSessionFaceRequest, ScanSessionInferenceResponse, ScanSessionRequest,
-    ScanSessionResponse, SolveNotationRequest, SolveResponse, SolveScanRequest, StrategyResponse,
+    ScanSessionResponse, ScanSessionReviewedStickerRequest, SolveNotationRequest, SolveResponse,
+    SolveScanRequest, StrategyResponse,
 };
 pub use routes::{api_router, api_router_with_web_dist};
 pub use scan_analysis::{analyze_scan_face_request, solve_scan_session_request};

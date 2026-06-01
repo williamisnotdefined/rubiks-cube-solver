@@ -46,10 +46,10 @@ def analyze_session(request: AnalyzeScanSessionRequest) -> AnalyzeScanSessionRes
         )
         warnings.extend(analysis.warnings)
 
-        if len(analysis.stickers) == 9:
-            known_centers[face_request.symbol] = analysis.stickers[4].rgb
+        if len(analysis.tileDetections) >= 9:
+            known_centers.pop(face_request.symbol, None)
 
-    partial_failure = any(not face.analysis.ok or len(face.analysis.stickers) != 9 for face in faces)
+    partial_failure = any(not face.analysis.ok or len(face.analysis.tileDetections) < 9 for face in faces)
 
     return AnalyzeScanSessionResponse(
         ok=not partial_failure,

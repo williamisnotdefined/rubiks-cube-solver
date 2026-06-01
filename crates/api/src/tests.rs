@@ -9,7 +9,8 @@ use crate::response::unverified_solution_response_from_parts;
 use crate::{
     api_router, api_router_with_web_dist, solve_notation_request, solve_scan_request,
     solve_scan_session_request, AnalyzeScanFaceRequest, ApiState, ScanFacesRequest,
-    ScanSessionFaceRequest, ScanSessionRequest, SolveNotationRequest, SolveScanRequest,
+    ScanSessionFaceRequest, ScanSessionRequest, ScanSessionReviewedStickerRequest,
+    SolveNotationRequest, SolveScanRequest,
     DEFAULT_API_NODES, MAX_API_DEPTH, MAX_API_NODES, MAX_NOTATION_BYTES,
 };
 
@@ -379,8 +380,6 @@ async fn health_route_reports_vision_cnn_status() {
                 "ok": true,
                 "cnnAvailable": false,
                 "cnnReason": "cnn_model_not_configured",
-                "faceDetectorAvailable": false,
-                "faceDetectorReason": "face_detector_model_not_configured",
                 "tileDetectorAvailable": false,
                 "tileDetectorReason": "tile_detector_model_not_configured"
             }))
@@ -417,11 +416,6 @@ async fn health_route_reports_vision_cnn_status() {
     assert_eq!(response["visionOk"], true);
     assert_eq!(response["visionCnnAvailable"], false);
     assert_eq!(response["visionCnnReason"], "cnn_model_not_configured");
-    assert_eq!(response["visionFaceDetectorAvailable"], false);
-    assert_eq!(
-        response["visionFaceDetectorReason"],
-        "face_detector_model_not_configured"
-    );
     assert_eq!(response["visionTileDetectorAvailable"], false);
     assert_eq!(
         response["visionTileDetectorReason"],
@@ -517,8 +511,11 @@ async fn solve_scan_session_route_rejects_incomplete_session() {
 async fn solve_scan_session_reports_unavailable_vision_service() {
     let state = ApiState::without_generated_solver().with_vision_url("http://127.0.0.1:9");
 
-    let (status, response) =
-        solve_scan_session_request(&state, solved_scan_session_request()).await;
+    let (status, response) = solve_scan_session_request(
+        &state,
+        solved_scan_session_request_without_reviewed_stickers(),
+    )
+    .await;
 
     assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
     assert!(!response.ok);
@@ -554,8 +551,11 @@ async fn solve_scan_session_rescans_obvious_glare_before_inference() {
     });
     let state = ApiState::without_generated_solver().with_vision_url(format!("http://{addr}"));
 
-    let (status, response) =
-        solve_scan_session_request(&state, solved_scan_session_request()).await;
+    let (status, response) = solve_scan_session_request(
+        &state,
+        solved_scan_session_request_without_reviewed_stickers(),
+    )
+    .await;
 
     vision_server.abort();
     assert_eq!(status, StatusCode::OK);
@@ -633,7 +633,7 @@ fn analyze_scan_face_response_preserves_vision_v2_fields() {
         "confidence": 0.9,
         "detectedCenterConfidence": 0.9,
         "faceConfidence": 0.8,
-        "detectionMode": "contour",
+        "detectionMode": "tile_detector",
         "imageSize": { "width": 640, "height": 640 },
         "imageQuality": {
             "blurScore": 128.0,
@@ -641,7 +641,6 @@ fn analyze_scan_face_response_preserves_vision_v2_fields() {
             "glareRatio": 0.02,
             "shadowRatio": 0.03
         },
-        "faceQuad": [],
         "stickers": [{
             "index": 0,
             "symbol": "F",
@@ -989,8 +988,9 @@ fn solved_scan_session_request() -> ScanSessionRequest {
             .map(|symbol| ScanSessionFaceRequest {
                 symbol: symbol.to_owned(),
                 expected_top: None,
-                image: "data:image/jpeg;base64,AAAA".to_owned(),
+                image: Some("data:image/jpeg;base64,AAAA".to_owned()),
                 manual_overrides: Default::default(),
+                reviewed_stickers: reviewed_stickers(symbol),
                 client_rotation: Some(0),
             })
             .collect(),
@@ -998,6 +998,25 @@ fn solved_scan_session_request() -> ScanSessionRequest {
         max_nodes: Some(1_000),
         strategy_id: "bounded-ida-star".to_owned(),
     }
+}
+
+fn solved_scan_session_request_without_reviewed_stickers() -> ScanSessionRequest {
+    let mut request = solved_scan_session_request();
+    for face in &mut request.faces {
+        face.reviewed_stickers.clear();
+    }
+    request
+}
+
+fn reviewed_stickers(symbol: &str) -> Vec<ScanSessionReviewedStickerRequest> {
+    (0..9)
+        .map(|index| ScanSessionReviewedStickerRequest {
+            index,
+            symbol: symbol.to_owned(),
+            confidence: Some(1.0),
+            source: Some(if index == 4 { "center" } else { "detected" }.to_owned()),
+        })
+        .collect()
 }
 
 fn solved_scan_session_analysis() -> crate::AnalyzeScanSessionResponse {
@@ -1034,7 +1053,7 @@ fn analyzed_session_face(symbol: &str) -> serde_json::Value {
             "confidence": 0.98,
             "detectedCenterConfidence": 0.98,
             "faceConfidence": 0.98,
-            "detectionMode": "contour",
+            "detectionMode": "tile_detector",
             "imageSize": { "width": 640, "height": 640 },
             "imageQuality": {
                 "blurScore": 128.0,
@@ -1042,7 +1061,6 @@ fn analyzed_session_face(symbol: &str) -> serde_json::Value {
                 "glareRatio": 0.02,
                 "shadowRatio": 0.03
             },
-            "faceQuad": [],
             "stickers": stickers,
             "qualityWarnings": [],
             "warnings": []

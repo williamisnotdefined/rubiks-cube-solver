@@ -2,7 +2,7 @@ import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AnalyzeScanFaceResponse } from '@api/scan'
 import { captureScanPreviewImage, type CapturedScanImage } from '../../scanCapture'
-import { averageQuadMovement, useLiveScanPreview } from '../useLiveScanPreview'
+import { useLiveScanPreview } from '../useLiveScanPreview'
 
 const apiMocks = vi.hoisted(() => ({
   analyzeMutateAsync: vi.fn(),
@@ -38,7 +38,7 @@ describe('useLiveScanPreview', () => {
     vi.useRealTimers()
   })
 
-  it('requests preview frames and auto-captures after stable tracking', async () => {
+  it('requests preview frames and auto-fills review after stable sticker tracking', async () => {
     apiMocks.analyzeMutateAsync.mockResolvedValue(stableAnalysis())
     const videoRef = { current: document.createElement('video') }
     const knownCenters = {}
@@ -58,7 +58,8 @@ describe('useLiveScanPreview', () => {
       })
     }
 
-    expect(result.current.shouldAutoCapture).toBe(true)
+    expect(result.current.shouldAutoFill).toBe(true)
+    expect(result.current.latestCapture?.photoDataUrl).toBe('data:image/jpeg;base64,preview')
     expect(result.current.status).toBe('holding_steady')
     expect(result.current.stableFrameCount).toBe(6)
     expect(result.current.temporalConsensus.status).toBe('ready')
@@ -66,7 +67,7 @@ describe('useLiveScanPreview', () => {
     expect(apiMocks.analyzeMutateAsync).toHaveBeenCalledTimes(6)
   })
 
-  it('does not auto-capture center mismatches', async () => {
+  it('does not auto-fill center mismatches', async () => {
     apiMocks.analyzeMutateAsync.mockResolvedValue(stableAnalysis({ centerMismatch: true }))
     const videoRef = { current: document.createElement('video') }
     const knownCenters = {}
@@ -86,13 +87,13 @@ describe('useLiveScanPreview', () => {
       })
     }
 
-    expect(result.current.shouldAutoCapture).toBe(false)
+    expect(result.current.shouldAutoFill).toBe(false)
     expect(result.current.message).toBe('Detected another center color. Rotate to the expected face.')
   })
 
-  it('does not track or auto-capture guide fallback analysis', async () => {
+  it('does not track or auto-fill unsupported analysis modes', async () => {
     apiMocks.analyzeMutateAsync.mockResolvedValue(
-      stableAnalysis({ detectionMode: 'guide_fallback', faceConfidence: 0.9 }),
+      stableAnalysis({ detectionMode: 'legacy_geometry', faceConfidence: 0.9 }),
     )
     const videoRef = { current: document.createElement('video') }
     const knownCenters = {}
@@ -112,14 +113,14 @@ describe('useLiveScanPreview', () => {
       })
     }
 
-    expect(result.current.shouldAutoCapture).toBe(false)
+    expect(result.current.shouldAutoFill).toBe(false)
     expect(result.current.status).toBe('searching')
     expect(result.current.stableFrameCount).toBe(0)
-    expect(result.current.message).toBe('Looking for cube face. Keep the cube fully visible.')
+    expect(result.current.message).toBe('Looking for cube face.')
   })
 
-  it('does not auto-capture contour-only analysis', async () => {
-    apiMocks.analyzeMutateAsync.mockResolvedValue(stableAnalysis({ detectionMode: 'contour' }))
+  it('does not auto-fill non-tile analysis', async () => {
+    apiMocks.analyzeMutateAsync.mockResolvedValue(stableAnalysis({ detectionMode: 'legacy_mode' }))
     const videoRef = { current: document.createElement('video') }
 
     const { result } = renderHook(() =>
@@ -137,28 +138,10 @@ describe('useLiveScanPreview', () => {
       })
     }
 
-    expect(result.current.shouldAutoCapture).toBe(false)
+    expect(result.current.shouldAutoFill).toBe(false)
     expect(result.current.stableFrameCount).toBe(0)
   })
 
-  it('measures normalized quad movement', () => {
-    expect(
-      averageQuadMovement(
-        [
-          { x: 0.1, y: 0.1 },
-          { x: 0.9, y: 0.1 },
-          { x: 0.9, y: 0.9 },
-          { x: 0.1, y: 0.9 },
-        ],
-        [
-          { x: 0.11, y: 0.1 },
-          { x: 0.91, y: 0.1 },
-          { x: 0.91, y: 0.9 },
-          { x: 0.11, y: 0.9 },
-        ],
-      ),
-    ).toBeCloseTo(0.01)
-  })
 })
 
 function stableAnalysis({
@@ -166,7 +149,7 @@ function stableAnalysis({
   detectionMode = 'tile_detector',
   faceConfidence = 0.9,
 } = {}): AnalyzeScanFaceResponse {
-  const gridDetections = detectionMode === 'tile_detector' ? stableGridDetections() : []
+  const tileDetections = detectionMode === 'tile_detector' ? stableTileDetections() : []
 
   return {
     centerMismatch,
@@ -176,15 +159,6 @@ function stableAnalysis({
     detectionMode,
     expectedCenter: 'U',
     faceConfidence,
-    faceQuad: [
-      { x: 0.1, y: 0.1 },
-      { x: 0.9, y: 0.1 },
-      { x: 0.9, y: 0.9 },
-      { x: 0.1, y: 0.9 },
-    ],
-    gridConfidence: detectionMode === 'tile_detector' ? 0.8 : 0,
-    gridDetections,
-    gridStatus: detectionMode === 'tile_detector' ? 'ready' : 'not_found',
     imageSize: { width: 480, height: 480 },
     ok: !centerMismatch,
     qualityWarnings: [],
@@ -197,16 +171,12 @@ function stableAnalysis({
       rgb: { b: 40, g: 160, r: 40 },
       symbol: index === 4 ? 'U' : 'F',
     })),
-    tileDetections: gridDetections.map((detection) => ({
-      bbox: detection.bbox!,
-      confidence: detection.confidence,
-      symbol: detection.symbol!,
-    })),
+    tileDetections,
     warnings: [],
   }
 }
 
-function stableGridDetections(): NonNullable<AnalyzeScanFaceResponse['gridDetections']> {
+function stableTileDetections(): NonNullable<AnalyzeScanFaceResponse['tileDetections']> {
   return Array.from({ length: 9 }, (_, index) => {
     const row = Math.floor(index / 3)
     const column = index % 3
@@ -218,10 +188,7 @@ function stableGridDetections(): NonNullable<AnalyzeScanFaceResponse['gridDetect
         x: 0.25 + column * 0.25,
         y: 0.25 + row * 0.25,
       },
-      column,
       confidence: 0.9,
-      index,
-      row,
       symbol: index === 4 ? 'U' : 'F',
     }
   })

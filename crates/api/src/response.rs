@@ -13,13 +13,6 @@ pub struct HealthResponse {
     pub vision_cnn_available: bool,
     #[serde(rename = "visionCnnReason", skip_serializing_if = "Option::is_none")]
     pub vision_cnn_reason: Option<String>,
-    #[serde(rename = "visionFaceDetectorAvailable")]
-    pub vision_face_detector_available: bool,
-    #[serde(
-        rename = "visionFaceDetectorReason",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub vision_face_detector_reason: Option<String>,
     #[serde(rename = "visionTileDetectorAvailable")]
     pub vision_tile_detector_available: bool,
     #[serde(
@@ -92,7 +85,7 @@ pub struct SolveScanRequest {
     pub strategy_id: String,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ScanSessionRequest {
     pub faces: Vec<ScanSessionFaceRequest>,
     #[serde(rename = "maxDepth", default = "default_max_depth")]
@@ -103,7 +96,7 @@ pub struct ScanSessionRequest {
     pub strategy_id: String,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ScanSessionFaceRequest {
     pub symbol: String,
     #[serde(
@@ -112,15 +105,28 @@ pub struct ScanSessionFaceRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub expected_top: Option<String>,
-    pub image: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub image: Option<String>,
     #[serde(rename = "manualOverrides", default)]
     pub manual_overrides: HashMap<usize, String>,
+    #[serde(rename = "reviewedStickers", default)]
+    pub reviewed_stickers: Vec<ScanSessionReviewedStickerRequest>,
     #[serde(
         rename = "clientRotation",
         default,
         skip_serializing_if = "Option::is_none"
     )]
     pub client_rotation: Option<u16>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct ScanSessionReviewedStickerRequest {
+    pub index: usize,
+    pub symbol: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub confidence: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -277,18 +283,6 @@ pub struct ScanTileDetectionResponse {
     pub bbox: DetectionBoxResponse,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub struct ScanGridDetectionResponse {
-    pub index: usize,
-    pub row: usize,
-    pub column: usize,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub symbol: Option<String>,
-    pub confidence: f64,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub bbox: Option<DetectionBoxResponse>,
-}
-
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct ImageSizeResponse {
     pub width: usize,
@@ -380,17 +374,9 @@ pub struct AnalyzeScanFaceResponse {
         skip_serializing_if = "Option::is_none"
     )]
     pub image_quality: Option<ImageQualityResponse>,
-    #[serde(rename = "faceQuad")]
-    pub face_quad: Vec<PointResponse>,
     pub stickers: Vec<AnalyzedStickerResponse>,
     #[serde(rename = "tileDetections", default)]
     pub tile_detections: Vec<ScanTileDetectionResponse>,
-    #[serde(rename = "gridDetections", default)]
-    pub grid_detections: Vec<ScanGridDetectionResponse>,
-    #[serde(rename = "gridConfidence", default)]
-    pub grid_confidence: f64,
-    #[serde(rename = "gridStatus", default)]
-    pub grid_status: String,
     #[serde(rename = "qualityWarnings", default)]
     pub quality_warnings: Vec<String>,
     pub warnings: Vec<String>,

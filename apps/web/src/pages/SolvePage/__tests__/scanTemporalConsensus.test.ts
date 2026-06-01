@@ -41,30 +41,30 @@ describe('scanTemporalConsensus', () => {
     expect(consensus.rejectReasons).toContain('center_mismatch')
   })
 
-  it('rejects unsupported fallback and contour modes', () => {
+  it('rejects unsupported non-tile modes', () => {
     const consensus = buildTemporalFaceConsensus(
-      temporalFrames(6, { analysis: { detectionMode: 'guide_fallback' } }),
+      temporalFrames(6, { analysis: { detectionMode: 'legacy_geometry' } }),
     )
 
     expect(consensus.status).toBe('collecting')
     expect(consensus.framesUsed).toBe(0)
     expect(consensus.rejectReasons).toContain('unsupported_detection_mode')
 
-    const contourConsensus = buildTemporalFaceConsensus(
-      temporalFrames(6, { analysis: { detectionMode: 'contour' } }),
+    const legacyConsensus = buildTemporalFaceConsensus(
+      temporalFrames(6, { analysis: { detectionMode: 'legacy_mode' } }),
     )
 
-    expect(contourConsensus.framesUsed).toBe(0)
-    expect(contourConsensus.rejectReasons).toContain('unsupported_detection_mode')
+    expect(legacyConsensus.framesUsed).toBe(0)
+    expect(legacyConsensus.rejectReasons).toContain('unsupported_detection_mode')
   })
 
-  it('reports partial grid when ready grid evidence is missing', () => {
+  it('reports partial tiles when 9 YOLO stickers are missing', () => {
     const consensus = buildTemporalFaceConsensus(
-      temporalFrames(6, { analysis: { gridDetections: [], gridStatus: 'partial' } }),
+      temporalFrames(6, { analysis: { tileDetections: [] } }),
     )
 
-    expect(consensus.status).toBe('partial_grid')
-    expect(consensus.rejectReasons).toContain('grid_partial')
+    expect(consensus.status).toBe('partial_tiles')
+    expect(consensus.rejectReasons).toContain('insufficient_tile_detections')
   })
 
   it('reports color disagreement when stickers flicker across frames', () => {
@@ -92,7 +92,7 @@ describe('scanTemporalConsensus', () => {
     expect(consensus.rejectReasons).toContain('bbox_unstable')
   })
 
-  it('uses sticker probabilities ahead of symbol fallback', () => {
+  it('uses tile detector symbols and ignores analysis sticker probabilities', () => {
     const frames = temporalFrames(6, {
       analysis: {
         stickers: scanAnalysis().stickers.map((sticker) =>
@@ -109,8 +109,8 @@ describe('scanTemporalConsensus', () => {
 
     const consensus = buildTemporalFaceConsensus(frames)
 
-    expect(consensus.stickers[0].symbol).toBe('R')
-    expect(consensus.stickers[0].confidence).toBeGreaterThan(0.8)
+    expect(consensus.stickers[0].symbol).toBe('F')
+    expect(consensus.stickers[0].confidence).toBeGreaterThan(0.5)
   })
 
   it('drops old frames and caps the buffer size', () => {
@@ -158,7 +158,7 @@ function scanAnalysis(
 ): AnalyzeScanFaceResponse {
   const boxShift = options.boxShift ?? 0
   const nonCenterSymbol = options.nonCenterSymbol ?? 'F'
-  const gridDetections = options.gridDetections ?? stableGridDetections(boxShift, nonCenterSymbol)
+  const tileDetections = options.tileDetections ?? stableTileDetections(boxShift, nonCenterSymbol)
   const stickers =
     options.stickers ??
     Array.from({ length: 9 }, (_, index) => ({
@@ -178,25 +178,21 @@ function scanAnalysis(
     detectionMode: 'tile_detector',
     expectedCenter: 'U',
     faceConfidence: 0.88,
-    faceQuad: [],
-    gridConfidence: 0.8,
-    gridDetections,
-    gridStatus: 'ready',
     imageSize: { height: 480, width: 480 },
     ok: true,
     qualityWarnings: [],
     status: 'detected',
     stickers,
-    tileDetections: [],
+    tileDetections,
     warnings: [],
     ...options,
   }
 }
 
-function stableGridDetections(
+function stableTileDetections(
   boxShift: number,
   nonCenterSymbol: ScanFaceSymbol,
-): NonNullable<AnalyzeScanFaceResponse['gridDetections']> {
+): NonNullable<AnalyzeScanFaceResponse['tileDetections']> {
   return Array.from({ length: 9 }, (_, index) => {
     const row = Math.floor(index / 3)
     const column = index % 3
@@ -208,10 +204,7 @@ function stableGridDetections(
         x: 0.25 + column * 0.25 + boxShift,
         y: 0.25 + row * 0.25,
       },
-      column,
       confidence: 0.9,
-      index,
-      row,
       symbol: index === 4 ? 'U' : nonCenterSymbol,
     }
   })

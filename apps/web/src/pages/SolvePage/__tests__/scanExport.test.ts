@@ -72,9 +72,9 @@ describe('scan export helpers', () => {
     drafts.F.captureMode = 'auto'
     drafts.F.autoCapture = {
       detectionMode: 'tile_detector',
-      gridDetections: 9,
       stableFrameCount: 6,
       temporalAgreement: 0.92,
+      tileDetections: 9,
       triggeredAt: '2026-01-02T03:04:05.000Z',
     }
     drafts.F.temporalConsensus = {
@@ -83,11 +83,11 @@ describe('scan export helpers', () => {
       framesRejected: 1,
       framesSeen: 7,
       framesUsed: 6,
-      gridConfidence: 0.78,
       rejectReasons: [],
       status: 'ready',
       stickers: [],
       temporalAgreement: 0.92,
+      tileConfidence: 0.78,
     }
 
     const exportData = buildScanSessionExport({
@@ -129,7 +129,7 @@ describe('scan export helpers', () => {
           width: 720,
         },
         photoDataUrl: 'data:image/jpeg;base64,rejected',
-        reason: 'guide_fallback',
+        reason: 'partial_tiles',
       },
       photoDataUrl: undefined,
     })
@@ -169,7 +169,7 @@ function withRejectedCapture(drafts: ScanFaceDrafts): ScanFaceDrafts {
           width: 720,
         },
         photoDataUrl: 'data:image/jpeg;base64,rejected',
-        reason: 'guide_fallback',
+        reason: 'partial_tiles',
       },
     },
   }
@@ -180,15 +180,14 @@ function scanAnalysisResponse(): AnalyzeScanFaceResponse {
     centerMismatch: false,
     confidence: 0.2,
     detectedCenterConfidence: 0,
-    detectionMode: 'guide_fallback',
+    detectionMode: 'tile_detector',
     expectedCenter: 'F' as const,
     faceConfidence: 0.2,
-    faceQuad: [],
     imageSize: { width: 720, height: 720 },
     ok: false,
     qualityWarnings: [],
     status: 'detected',
     stickers: [],
-    warnings: ['using_center_guide_fallback'],
+    warnings: ['tile_detector_partial'],
   }
 }

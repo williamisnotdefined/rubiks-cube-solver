@@ -61,7 +61,7 @@ describe('useTemporalScanConsensus', () => {
 })
 
 function scanAnalysis(): AnalyzeScanFaceResponse {
-  const gridDetections = Array.from({ length: 9 }, (_, index) => {
+  const tileDetections = Array.from({ length: 9 }, (_, index) => {
     const row = Math.floor(index / 3)
     const column = index % 3
 
@@ -72,10 +72,7 @@ function scanAnalysis(): AnalyzeScanFaceResponse {
         x: 0.25 + column * 0.25,
         y: 0.25 + row * 0.25,
       },
-      column,
       confidence: 0.9,
-      index,
-      row,
       symbol: (index === 4 ? 'U' : 'F') as ScanFaceSymbol,
     }
   })
@@ -88,10 +85,6 @@ function scanAnalysis(): AnalyzeScanFaceResponse {
     detectionMode: 'tile_detector',
     expectedCenter: 'U',
     faceConfidence: 0.88,
-    faceQuad: [],
-    gridConfidence: 0.8,
-    gridDetections,
-    gridStatus: 'ready',
     imageSize: { height: 480, width: 480 },
     ok: true,
     qualityWarnings: [],
@@ -104,7 +97,7 @@ function scanAnalysis(): AnalyzeScanFaceResponse {
       rgb: { b: 40, g: 160, r: 40 },
       symbol: index === 4 ? 'U' : 'F',
     })),
-    tileDetections: [],
+    tileDetections,
     warnings: [],
   }
 }

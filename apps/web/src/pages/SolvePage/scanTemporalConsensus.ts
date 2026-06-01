@@ -1,5 +1,9 @@
 import type { AnalyzeScanFaceResponse, ScanColorAlternative, ScanDetectionBox } from '@api/scan'
 import type { ScanFaceSymbol } from '@api/solver/types'
+import {
+  assignTileDetectionsToReviewGrid,
+  type IndexedScanTileDetection,
+} from './scanTileDetections'
 
 export type TemporalScanFrame = {
   analysis: AnalyzeScanFaceResponse
@@ -22,7 +26,7 @@ export type TemporalFaceConsensusStatus =
   | 'empty'
   | 'collecting'
   | 'unstable'
-  | 'partial_grid'
+  | 'partial_tiles'
   | 'color_disagreement'
   | 'center_mismatch'
   | 'ready'
@@ -33,11 +37,11 @@ export type TemporalFaceConsensus = {
   framesRejected: number
   framesSeen: number
   framesUsed: number
-  gridConfidence: number
   rejectReasons: string[]
   status: TemporalFaceConsensusStatus
   stickers: TemporalStickerConsensus[]
   temporalAgreement: number
+  tileConfidence: number
 }
 
 export type TemporalConsensusOptions = {
@@ -49,11 +53,11 @@ export type TemporalConsensusOptions = {
   minFaceAgreement: number
   minFaceConfidence: number
   minFrames: number
-  minGridConfidence: number
-  minGridDetections: number
   minStickerAgreement: number
   minStickerConfidence: number
   minStickerMargin: number
+  minTileConfidence: number
+  minTileDetections: number
 }
 
 export const defaultTemporalConsensusOptions = {
@@ -65,16 +69,29 @@ export const defaultTemporalConsensusOptions = {
   minFaceAgreement: 0.84,
   minFaceConfidence: 0.5,
   minFrames: 6,
-  minGridConfidence: 0.62,
-  minGridDetections: 8,
   minStickerAgreement: 0.75,
   minStickerConfidence: 0.62,
   minStickerMargin: 0.12,
+  minTileConfidence: 0.62,
+  minTileDetections: 9,
 } as const satisfies TemporalConsensusOptions
 
-const scanSymbols = ['U', 'R', 'F', 'D', 'L', 'B'] as const satisfies readonly ScanFaceSymbol[]
-const acceptedDetectionModes = new Set(['tile_detector', 'sticker_grid'])
+const acceptedDetectionModes = new Set(['tile_detector'])
 const criticalQualityWarnings = new Set(['image_blurry', 'image_too_dark', 'image_too_bright'])
+
+export function tileAssignmentFromAnalysis(
+  analysis: AnalyzeScanFaceResponse,
+): IndexedScanTileDetection[] | undefined {
+  return assignTileDetectionsToReviewGrid(analysis.tileDetections)
+}
+
+export function hasCompleteTileDetections(
+  analysis: AnalyzeScanFaceResponse,
+  expectedCenter: ScanFaceSymbol,
+): boolean {
+  const assignedTiles = tileAssignmentFromAnalysis(analysis)
+  return assignedTiles !== undefined && assignedTiles[4]?.symbol === expectedCenter
+}
 
 export function addTemporalScanFrame(
   buffer: readonly TemporalScanFrame[],
@@ -95,14 +112,18 @@ export function buildTemporalFaceConsensus(
     return emptyTemporalConsensus('empty')
   }
 
-  const frameEvaluations = buffer.map((frame) => ({ frame, reasons: temporalFrameRejectReasons(frame, options) }))
-  const usableFrames = frameEvaluations
-    .filter(({ reasons }) => reasons.length === 0)
-    .map(({ frame }) => frame)
+  const frameEvaluations = buffer.map((frame) => ({
+    assignedTiles: tileAssignmentFromAnalysis(frame.analysis),
+    frame,
+    reasons: temporalFrameRejectReasons(frame, options),
+  }))
+  const usableFrames = frameEvaluations.filter(({ reasons }) => reasons.length === 0)
   const rejectReasons = uniqueReasons(frameEvaluations.flatMap(({ reasons }) => reasons))
   const framesRejected = buffer.length - usableFrames.length
-  const averageGridConfidence = average(usableFrames.map(({ analysis }) => analysis.gridConfidence ?? 0))
-  const averageFaceConfidence = average(usableFrames.map(({ analysis }) => analysis.faceConfidence))
+  const averageTileConfidence = average(
+    usableFrames.map(({ assignedTiles }) => average((assignedTiles ?? []).map((tile) => tile.confidence))),
+  )
+  const averageFaceConfidence = average(usableFrames.map(({ frame }) => frame.analysis.faceConfidence))
 
   if (rejectReasons.includes('center_mismatch') && usableFrames.length === 0) {
     return {
@@ -110,20 +131,20 @@ export function buildTemporalFaceConsensus(
       faceConfidence: averageFaceConfidence,
       framesRejected,
       framesSeen: buffer.length,
-      gridConfidence: averageGridConfidence,
       rejectReasons,
+      tileConfidence: averageTileConfidence,
     }
   }
 
   if (usableFrames.length < options.minFrames) {
     return {
-      ...emptyTemporalConsensus(rejectReasons.includes('grid_partial') ? 'partial_grid' : 'collecting'),
+      ...emptyTemporalConsensus(rejectReasons.includes('insufficient_tile_detections') ? 'partial_tiles' : 'collecting'),
       faceConfidence: averageFaceConfidence,
       framesRejected,
       framesSeen: buffer.length,
       framesUsed: usableFrames.length,
-      gridConfidence: averageGridConfidence,
       rejectReasons,
+      tileConfidence: averageTileConfidence,
     }
   }
 
@@ -138,7 +159,6 @@ export function buildTemporalFaceConsensus(
     framesRejected,
     framesSeen: buffer.length,
     framesUsed: usableFrames.length,
-    gridConfidence: averageGridConfidence,
     rejectReasons: status === 'unstable' ? uniqueReasons([...rejectReasons, 'bbox_unstable']) : rejectReasons,
     status,
     stickers: stickers.map((sticker) => ({
@@ -146,6 +166,7 @@ export function buildTemporalFaceConsensus(
       bboxStability: bboxStats.stickerStability[sticker.index],
     })),
     temporalAgreement,
+    tileConfidence: averageTileConfidence,
   }
 }
 
@@ -159,33 +180,25 @@ function temporalFrameRejectReasons(
 ): string[] {
   const { analysis, expectedCenter } = frame
   const reasons: string[] = []
+  const assignedTiles = tileAssignmentFromAnalysis(analysis)
 
   if (!analysis.ok) {
     reasons.push('analysis_not_ok')
   }
-  if (analysis.centerMismatch) {
-    reasons.push('center_mismatch')
-  }
-  if (analysis.stickers[4]?.symbol !== undefined && analysis.stickers[4].symbol !== expectedCenter) {
-    reasons.push('center_mismatch')
-  }
   if (!acceptedDetectionModes.has(analysis.detectionMode ?? '')) {
     reasons.push('unsupported_detection_mode')
   }
-  if (analysis.gridStatus !== 'ready') {
-    reasons.push('grid_partial')
+  if (assignedTiles === undefined || assignedTiles.length < options.minTileDetections) {
+    reasons.push('insufficient_tile_detections')
   }
-  if ((analysis.gridDetections?.length ?? 0) < options.minGridDetections) {
-    reasons.push('insufficient_grid_detections')
+  if (assignedTiles !== undefined && average(assignedTiles.map((tile) => tile.confidence)) < options.minTileConfidence) {
+    reasons.push('low_tile_confidence')
   }
-  if ((analysis.gridConfidence ?? 0) < options.minGridConfidence) {
-    reasons.push('low_grid_confidence')
+  if (analysis.centerMismatch || (assignedTiles !== undefined && assignedTiles[4]?.symbol !== expectedCenter)) {
+    reasons.push('center_mismatch')
   }
   if (analysis.faceConfidence < options.minFaceConfidence) {
     reasons.push('low_face_confidence')
-  }
-  if (analysis.stickers.length !== 9) {
-    reasons.push('incomplete_stickers')
   }
   if ([...(analysis.qualityWarnings ?? []), ...(analysis.warnings ?? [])].some((warning) => criticalQualityWarnings.has(warning))) {
     reasons.push('critical_quality_warning')
@@ -194,27 +207,21 @@ function temporalFrameRejectReasons(
   return uniqueReasons(reasons)
 }
 
-function stickerConsensus(index: number, frames: readonly TemporalScanFrame[]): TemporalStickerConsensus {
+function stickerConsensus(
+  index: number,
+  frames: readonly { assignedTiles: IndexedScanTileDetection[] | undefined; frame: TemporalScanFrame }[],
+): TemporalStickerConsensus {
   const scores = new Map<ScanFaceSymbol, number>()
   const frameVotes: ScanFaceSymbol[] = []
 
-  for (const frame of frames) {
-    const sticker = frame.analysis.stickers.find((candidate) => candidate.index === index)
-    const gridDetection = frame.analysis.gridDetections?.find((candidate) => candidate.index === index)
-    const evidence = stickerEvidence(sticker, gridDetection?.symbol)
-    const frameWeight = (frame.analysis.gridConfidence ?? 0) * frame.analysis.faceConfidence * (sticker?.confidence ?? gridDetection?.confidence ?? 0.5)
-    const frameScores = new Map<ScanFaceSymbol, number>()
-
-    for (const [symbol, score] of evidence) {
-      const weightedScore = score * Math.max(0.01, frameWeight)
-      scores.set(symbol, (scores.get(symbol) ?? 0) + weightedScore)
-      frameScores.set(symbol, weightedScore)
+  for (const { assignedTiles } of frames) {
+    const tile = assignedTiles?.[index]
+    if (tile === undefined) {
+      continue
     }
 
-    const vote = sortedScores(frameScores)[0]?.[0]
-    if (vote !== undefined) {
-      frameVotes.push(vote)
-    }
+    scores.set(tile.symbol, (scores.get(tile.symbol) ?? 0) + tile.confidence)
+    frameVotes.push(tile.symbol)
   }
 
   const sorted = sortedScores(scores)
@@ -231,36 +238,11 @@ function stickerConsensus(index: number, frames: readonly TemporalScanFrame[]): 
     agreement,
     alternatives,
     confidence: totalScore > 0 ? winnerScore / totalScore : 0,
-    framesUsed: frames.length,
+    framesUsed: frameVotes.length,
     index,
     margin: totalScore > 0 ? (winnerScore - runnerUpScore) / totalScore : 0,
     symbol: winner,
   }
-}
-
-function stickerEvidence(
-  sticker: AnalyzeScanFaceResponse['stickers'][number] | undefined,
-  gridSymbol: ScanFaceSymbol | undefined,
-): Map<ScanFaceSymbol, number> {
-  const evidence = new Map<ScanFaceSymbol, number>()
-  if (sticker?.probabilities !== undefined) {
-    for (const symbol of scanSymbols) {
-      evidence.set(symbol, sticker.probabilities[symbol] ?? 0)
-    }
-    return evidence
-  }
-
-  if (sticker?.symbol !== undefined) {
-    evidence.set(sticker.symbol, Math.max(evidence.get(sticker.symbol) ?? 0, sticker.confidence))
-  }
-  for (const alternative of sticker?.alternatives ?? []) {
-    evidence.set(alternative.symbol, Math.max(evidence.get(alternative.symbol) ?? 0, alternative.confidence))
-  }
-  if (gridSymbol !== undefined) {
-    evidence.set(gridSymbol, Math.max(evidence.get(gridSymbol) ?? 0, 0.55))
-  }
-
-  return evidence
 }
 
 function temporalConsensusStatus(
@@ -270,7 +252,7 @@ function temporalConsensusStatus(
   options: TemporalConsensusOptions,
 ): TemporalFaceConsensusStatus {
   if (stickers.some((sticker) => sticker.symbol === undefined)) {
-    return 'partial_grid'
+    return 'partial_tiles'
   }
   if (
     stickers.some(
@@ -303,13 +285,16 @@ type BboxStability = {
   stickerStability: Partial<Record<number, number>>
 }
 
-function bboxStability(frames: readonly TemporalScanFrame[], options: TemporalConsensusOptions): BboxStability {
+function bboxStability(
+  frames: readonly { assignedTiles: IndexedScanTileDetection[] | undefined; frame: TemporalScanFrame }[],
+  options: TemporalConsensusOptions,
+): BboxStability {
   const movements: number[] = []
   const stickerStability: Partial<Record<number, number>> = {}
 
   for (let index = 0; index < 9; index += 1) {
     const boxes = frames
-      .map((frame) => frame.analysis.gridDetections?.find((detection) => detection.index === index)?.bbox)
+      .map(({ assignedTiles }) => assignedTiles?.[index]?.bbox)
       .filter((bbox): bbox is ScanDetectionBox => bbox !== undefined)
     if (boxes.length < 2) {
       continue
@@ -319,7 +304,7 @@ function bboxStability(frames: readonly TemporalScanFrame[], options: TemporalCo
     stickerStability[index] = 1 - clamp01(movement / options.maxStickerBboxMovement)
   }
 
-  if (movements.length < options.minGridDetections) {
+  if (movements.length < options.minTileDetections) {
     return {
       hasEnoughBoxes: false,
       maxMovement: 0,
@@ -352,11 +337,11 @@ function emptyTemporalConsensus(status: TemporalFaceConsensusStatus): TemporalFa
     framesRejected: 0,
     framesSeen: 0,
     framesUsed: 0,
-    gridConfidence: 0,
     rejectReasons: [],
     status,
     stickers: [],
     temporalAgreement: 0,
+    tileConfidence: 0,
   }
 }
 

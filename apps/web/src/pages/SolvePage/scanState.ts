@@ -39,12 +39,11 @@ export type ScanCaptureMode = 'manual' | 'auto'
 export type ScanAutoCaptureMetadata = {
   detectionMode?: string | null
   faceConfidence?: number
-  gridConfidence?: number
-  gridDetections: number
-  gridStatus?: string
   stableFrameCount: number
   temporalAgreement?: number
   bboxStability?: number
+  tileConfidence?: number
+  tileDetections: number
   triggeredAt: string
 }
 
@@ -55,7 +54,7 @@ export type ScanCaptureMetadata = {
   width: number
 }
 
-export type RejectedScanCaptureReason = 'empty_stickers' | 'guide_fallback'
+export type RejectedScanCaptureReason = 'empty_stickers' | 'partial_tiles'
 
 export type RejectedScanCapture = {
   analysis: AnalyzeScanFaceResponse
@@ -154,6 +153,7 @@ export const scanSymbolDetails: Record<
 }
 
 const lowConfidenceThreshold = 0.3
+const detectedOverwriteConfidenceMargin = 0.03
 
 export function createEmptyScanStickers(centerSymbol: ScanFaceSymbol): ScanSticker[] {
   return Array.from({ length: 9 }, (_, index) =>
@@ -264,7 +264,7 @@ export function scanSessionFacesFromDrafts(
 
   for (const { symbol } of scanFaceOrder) {
     const draft = drafts[symbol]
-    if (!draft.confirmed || draft.photoDataUrl === undefined || !isScanFaceComplete(draft.stickers)) {
+    if (!draft.confirmed || !isScanFaceComplete(draft.stickers)) {
       return undefined
     }
 
@@ -283,6 +283,12 @@ export function scanSessionFacesFromDrafts(
       expectedTop: expectedTopForScanFace(symbol),
       image: draft.photoDataUrl,
       manualOverrides: Object.keys(manualOverrides).length > 0 ? manualOverrides : undefined,
+      reviewedStickers: draft.stickers.map((sticker, index) => ({
+        confidence: sticker.confidence,
+        index,
+        source: sticker.source,
+        symbol: sticker.symbol as ScanFaceSymbol,
+      })),
       symbol,
     })
   }
@@ -400,30 +406,33 @@ export function replaceScanSticker(
   })
 }
 
-export function scanStickersFromAnalysis(
-  analysis: AnalyzeScanFaceResponse,
+export function scanStickersFromTemporalConsensus(
+  consensus: TemporalFaceConsensus,
   centerSymbol: ScanFaceSymbol,
+  analysis?: AnalyzeScanFaceResponse,
 ): ScanSticker[] {
   const stickers = createEmptyScanStickers(centerSymbol)
-  const analyzedStickersByIndex = new Map(analysis.stickers.map((sticker) => [sticker.index, sticker]))
-  const gridDetectionsByIndex = new Map((analysis.gridDetections ?? []).map((detection) => [detection.index, detection]))
+  const analyzedStickersByIndex = new Map(analysis?.stickers.map((sticker) => [sticker.index, sticker]))
 
-  for (let index = 0; index < 9; index += 1) {
-    const analyzedSticker = analyzedStickersByIndex.get(index)
-    const gridDetection = gridDetectionsByIndex.get(index)
-    if (analyzedSticker === undefined && gridDetection === undefined) {
+  for (const consensusSticker of consensus.stickers) {
+    if (consensusSticker.index < 0 || consensusSticker.index > 8 || consensusSticker.symbol === undefined) {
       continue
     }
 
-    const symbol = gridDetection?.symbol ?? analyzedSticker?.symbol
-    stickers[index] = {
-      alternatives: scanStickerAlternativesFromAnalysis(analyzedSticker, gridDetection?.symbol),
-      confidence:
-        gridDetection?.confidence ??
-        (index === 4 ? analysis.detectedCenterConfidence || analysis.confidence : analyzedSticker?.confidence) ??
-        0,
+    const analyzedSticker = analyzedStickersByIndex.get(consensusSticker.index)
+    const symbol = consensusSticker.index === 4 ? centerSymbol : consensusSticker.symbol
+    const alternatives = consensusSticker.alternatives
+      .filter((alternative) => alternative.symbol !== symbol)
+      .map((alternative) => ({
+        confidence: alternative.confidence,
+        symbol: alternative.symbol,
+      }))
+
+    stickers[consensusSticker.index] = {
+      alternatives: alternatives.length > 0 ? alternatives : undefined,
+      confidence: consensusSticker.index === 4 ? 1 : consensusSticker.confidence,
       rgb: analyzedSticker?.rgb,
-      source: index === 4 ? 'center' : 'detected',
+      source: consensusSticker.index === 4 ? 'center' : 'detected',
       symbol,
     }
   }
@@ -431,26 +440,32 @@ export function scanStickersFromAnalysis(
   return stickers
 }
 
-function scanStickerAlternativesFromAnalysis(
-  analyzedSticker: AnalyzeScanFaceResponse['stickers'][number] | undefined,
-  gridSymbol: ScanFaceSymbol | undefined,
-): ScanStickerAlternative[] | undefined {
-  const alternatives = new Map<ScanFaceSymbol, number>()
-  if (gridSymbol !== undefined) {
-    alternatives.set(gridSymbol, Math.max(alternatives.get(gridSymbol) ?? 0, 1))
-  }
-  if (analyzedSticker?.symbol !== undefined) {
-    alternatives.set(analyzedSticker.symbol, Math.max(alternatives.get(analyzedSticker.symbol) ?? 0, analyzedSticker.confidence))
-  }
-  for (const alternative of analyzedSticker?.alternatives ?? []) {
-    alternatives.set(alternative.symbol, Math.max(alternatives.get(alternative.symbol) ?? 0, alternative.confidence))
-  }
-  if (alternatives.size === 0) {
-    return undefined
-  }
-  return [...alternatives.entries()]
-    .map(([symbol, confidence]) => ({ confidence, symbol }))
-    .sort((left, right) => right.confidence - left.confidence)
+export function mergeLiveDetectedScanStickers(
+  currentStickers: readonly ScanSticker[],
+  incomingStickers: readonly ScanSticker[],
+): ScanSticker[] {
+  return Array.from({ length: 9 }, (_, index) => {
+    const current = currentStickers[index] ?? { confidence: 0, source: 'empty' as const }
+    const incoming = incomingStickers[index]
+
+    if (incoming === undefined || incoming.symbol === undefined || incoming.source === 'empty') {
+      return current
+    }
+
+    if (current.source === 'manual' || current.source === 'center') {
+      return current
+    }
+
+    if (current.symbol === undefined || current.source === 'empty') {
+      return incoming
+    }
+
+    if (incoming.confidence >= current.confidence + detectedOverwriteConfidenceMargin) {
+      return incoming
+    }
+
+    return current
+  })
 }
 
 export function confirmedFaceCount(faces: ScanFaces): number {

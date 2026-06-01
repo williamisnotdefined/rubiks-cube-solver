@@ -1,7 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  useAnalyzeScanFace,
   useSolveScanSession,
   type AnalyzeScanFaceResponse,
   type RgbColor,
@@ -10,7 +9,7 @@ import {
 import type { ScanFaceSymbol, ScanFacesPayload, SolveResult } from '@api/solver/types'
 import { Button } from '@components/Button'
 import { Loader3x3 } from '@components/Loader3x3'
-import { captureScanImage, type CapturedScanImage } from './scanCapture'
+import type { CapturedScanImage } from './scanCapture'
 import { ScanCameraFrame } from './ScanCameraFrame'
 import { ScanFaceCarousel } from './ScanFaceCarousel'
 import { ScanFaceColorEditor } from './ScanFaceColorEditor'
@@ -20,15 +19,15 @@ import {
   confirmScanFaceDraft,
   confirmedDraftCount,
   countScanSymbols,
-  createEmptyScanStickers,
   createInitialScanFaceDrafts,
   isScanFaceComplete,
   lowConfidenceCount,
+  mergeLiveDetectedScanStickers,
   replaceScanFaceDraftSticker,
   scanFaceOrder,
   scanFaceStatusFromDraft,
   scanFacesFromDrafts,
-  scanStickersFromAnalysis,
+  scanStickersFromTemporalConsensus,
   scanSessionFacesFromDrafts,
   scanFacesToPayload,
   scanSymbolDetails,
@@ -58,7 +57,7 @@ import {
   hasExportableScanSession,
   scanExportEnabled,
 } from './scanExport'
-import type { TemporalFaceConsensus } from './scanTemporalConsensus'
+import { isTemporalConsensusReady, type TemporalFaceConsensus } from './scanTemporalConsensus'
 
 type ScanCubeModalProps = {
   apiReady: boolean
@@ -69,8 +68,6 @@ type ScanCubeModalProps = {
   strategyId?: string
   visionCnnAvailable?: boolean
   visionCnnReason?: string
-  visionFaceDetectorAvailable?: boolean
-  visionFaceDetectorReason?: string
   visionTileDetectorAvailable?: boolean
   visionTileDetectorReason?: string
   visionOk?: boolean
@@ -103,8 +100,6 @@ export function ScanCubeModal({
   strategyId,
   visionCnnAvailable,
   visionCnnReason,
-  visionFaceDetectorAvailable,
-  visionFaceDetectorReason,
   visionTileDetectorAvailable,
   visionTileDetectorReason,
   visionOk,
@@ -115,9 +110,7 @@ export function ScanCubeModal({
   const { t } = useTranslation()
   const titleId = useId()
   const videoRef = useRef<HTMLVideoElement | null>(null)
-  const takePhotoRef = useRef<((source?: 'auto' | 'manual') => Promise<void>) | undefined>(undefined)
   const camera = useCameraStream(true)
-  const analyzeScanFace = useAnalyzeScanFace()
   const solveScanSession = useSolveScanSession()
   const [drafts, setDrafts] = useState(() => createInitialScanFaceDrafts())
   const [currentFaceIndex, setCurrentFaceIndex] = useState(0)
@@ -127,7 +120,6 @@ export function ScanCubeModal({
   const photoDataUrl = currentDraft.photoDataUrl
   const scanAnalysis = currentDraft.analysis
   const [autoScanEnabled, setAutoScanEnabled] = useState(true)
-  const [capturing, setCapturing] = useState(false)
   const [backendReviewTargets, setBackendReviewTargets] = useState<BackendReviewTargets>(() =>
     emptyBackendReviewTargets(),
   )
@@ -174,31 +166,30 @@ export function ScanCubeModal({
   )
   const knownCenters = useMemo(() => knownCenterReferencesFromFaces(confirmedFaces), [confirmedFaces])
   const liveScan = useLiveScanPreview({
-    enabled: autoScanEnabled && photoDataUrl === undefined && camera.status === 'ready' && !capturing,
+    enabled: autoScanEnabled && camera.status === 'ready',
     expectedCenter: currentFace.symbol,
     knownCenters,
     videoRef,
   })
   const {
+    acknowledgeAutoFill,
     latestAnalysis: liveAnalysis,
+    latestCapture: liveCapture,
     message: liveMessage,
-    resetAutoCapture: resetLiveAutoCapture,
-    shouldAutoCapture,
+    resetAutoFill: resetLiveAutoFill,
+    shouldAutoFill,
     stableFrameCount: liveStableFrameCount,
     status: liveStatus,
     temporalConsensus: liveTemporalConsensus,
   } = liveScan
-  const cameraAnalysis = photoDataUrl === undefined ? liveAnalysis : scanAnalysis
-  const liveDetectedAnalysis =
-    photoDataUrl === undefined && cameraAnalysis?.detectionMode === 'guide_fallback'
-      ? undefined
-      : cameraAnalysis
+  const cameraAnalysis = liveAnalysis ?? scanAnalysis
+  const hasReviewContent = currentDraftHasReviewContent(currentDraft)
   const scannerMessage =
-    photoDataUrl === undefined
-      ? autoScanEnabled
+    hasReviewContent
+      ? faceValidation ?? t('scan.messages.liveReviewReady')
+      : autoScanEnabled
         ? liveMessage
         : t('scan.messages.autoPaused')
-      : faceValidation
   const canClearPhoto =
     photoDataUrl !== undefined ||
     scanAnalysis !== undefined ||
@@ -216,7 +207,7 @@ export function ScanCubeModal({
 
     videoRef.current.srcObject = cameraStream
     void videoRef.current.play().catch(() => undefined)
-  }, [cameraStream, currentFaceIndex, photoDataUrl])
+  }, [cameraStream, currentFaceIndex])
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -236,135 +227,67 @@ export function ScanCubeModal({
   }, [centerMismatchConfirmation, onClose])
 
   useEffect(() => {
-    if (!shouldAutoCapture || capturing || photoDataUrl !== undefined) {
+    if (
+      !shouldAutoFill ||
+      liveAnalysis === undefined ||
+      liveCapture === undefined ||
+      !isTemporalConsensusReady(liveTemporalConsensus) ||
+      !canApplyLiveAutofill(currentDraft)
+    ) {
       return
     }
 
-    resetLiveAutoCapture()
-    void takePhotoRef.current?.('auto')
-  }, [capturing, photoDataUrl, resetLiveAutoCapture, shouldAutoCapture])
+    acknowledgeAutoFill()
+    const nextStickers = scanStickersFromTemporalConsensus(
+      liveTemporalConsensus,
+      currentFace.symbol,
+      liveAnalysis,
+    )
+    const uncertain = lowConfidenceCount(nextStickers)
 
-  async function handleTakePhoto(source: 'auto' | 'manual' = 'manual') {
-    if (videoRef.current === null || camera.status !== 'ready') {
-      setMessage(t('scan.messages.cameraNotReady'))
-      return
-    }
-
-    const temporalConsensusSnapshot = liveTemporalConsensus.framesSeen > 0 ? liveTemporalConsensus : undefined
-    resetLiveAutoCapture()
-    setCapturing(true)
-    clearBackendReviewForFace(currentFace.symbol)
-    setCenterMismatchConfirmation(undefined)
-    setLastSessionResult(undefined)
-    setCurrentDraft({
-      analysis: undefined,
-      autoCapture: undefined,
-      captureMode: undefined,
-      centerOverrideConfirmed: false,
-      lastRejectedCapture: undefined,
-      temporalConsensus: undefined,
-    })
-    setMessage(source === 'auto' ? t('scan.messages.autoCapturing') : t('scan.messages.capturingPhoto'))
-
-    try {
-      const capture = await captureScanImage(videoRef.current, camera.stream)
-      if (capture === undefined) {
-        setMessage(t('scan.messages.cameraFrameFailed'))
-        return
+    setDrafts((currentDrafts) => {
+      const draft = currentDrafts[currentFace.symbol]
+      if (!canApplyLiveAutofill(draft)) {
+        return currentDrafts
       }
 
-      const captureMetadata = scanCaptureMetadata(capture)
-      setMessage(t('scan.messages.analyzingFace'))
+      const mergedStickers = mergeLiveDetectedScanStickers(draft.stickers, nextStickers)
 
-      const analysis = await analyzeScanFace.mutateAsync({
-        expectedCenter: currentFace.symbol,
-        image: capture.photoDataUrl,
-        knownCenters,
-      })
-      setCurrentDraft({ analysis })
-      const captureMode = source
-      const autoCapture = source === 'auto' ? scanAutoCaptureMetadata(temporalConsensusSnapshot, analysis) : undefined
-
-      if (analysis.stickers.length === 0 || isGuideFallbackAnalysis(analysis)) {
-        const rejectedReason = isGuideFallbackAnalysis(analysis) ? 'guide_fallback' : 'empty_stickers'
-        setCurrentDraft({
-          autoCapture,
-          capture: undefined,
-          captureMode,
+      return {
+        ...currentDrafts,
+        [currentFace.symbol]: {
+          ...draft,
+          analysis: liveAnalysis,
+          autoCapture: scanAutoCaptureMetadata(liveTemporalConsensus, liveAnalysis),
+          capture: scanCaptureMetadata(liveCapture),
+          captureMode: 'auto',
           centerOverrideConfirmed: false,
           confirmed: false,
-          lastRejectedCapture: {
-            analysis,
-            capture: captureMetadata,
-            photoDataUrl: capture.photoDataUrl,
-            reason: rejectedReason,
-          },
-          photoDataUrl: undefined,
-          stickers: createEmptyScanStickers(currentFace.symbol),
-          temporalConsensus: temporalConsensusSnapshot,
-        })
-        setMessage(
-          isGuideFallbackAnalysis(analysis)
-            ? t('scan.messages.stillLooking')
-            : scanAnalysisMessage(t, analysis) ?? t('scan.messages.manualDetectionFailed'),
-        )
-        return
+          lastRejectedCapture: undefined,
+          photoDataUrl: liveCapture.photoDataUrl,
+          stickers: mergedStickers,
+          temporalConsensus: liveTemporalConsensus,
+        },
       }
-
-      const nextStickers = scanStickersFromAnalysis(analysis, currentFace.symbol)
-      setCurrentDraft({
-        autoCapture,
-        capture: captureMetadata,
-        captureMode,
-        centerOverrideConfirmed: false,
-        confirmed: false,
-        lastRejectedCapture: undefined,
-        photoDataUrl: capture.photoDataUrl,
-        stickers: nextStickers,
-        temporalConsensus: temporalConsensusSnapshot,
-      })
-      const uncertain = lowConfidenceCount(nextStickers)
-      const centerMessage = analysis.centerMismatch ? centerMismatchMessage(t, analysis) : undefined
-      const qualityMessage = scanQualityMessage(t, analysis)
-      const captureMessage =
-        source === 'auto'
-          ? t('scan.messages.autoCaptured')
-          : t('scan.messages.captured')
-      const detectionMessage =
-        uncertain > 0
-          ? t('scan.messages.detectedUncertain', { count: uncertain })
-          : captureMessage
-      setMessage(
-        [centerMessage, qualityMessage, detectionMessage].filter(Boolean).join(' '),
-      )
-    } catch (error) {
-      setCurrentDraft({
-        analysis: undefined,
-        autoCapture: undefined,
-        capture: undefined,
-        captureMode: undefined,
-        confirmed: false,
-        photoDataUrl: undefined,
-        stickers: createEmptyScanStickers(currentFace.symbol),
-        temporalConsensus: undefined,
-      })
-      setMessage(error instanceof Error ? error.message : t('scan.messages.analysisFailed'))
-    } finally {
-      setCapturing(false)
-    }
-  }
-
-  takePhotoRef.current = handleTakePhoto
-
-  function setCurrentDraft(patch: Partial<ScanFaceDraft>) {
-    setDrafts((currentDrafts) => ({
-      ...currentDrafts,
-      [currentFace.symbol]: {
-        ...currentDrafts[currentFace.symbol],
-        ...patch,
-      },
-    }))
-  }
+    })
+    setBackendReviewTargets((targets) => removeBackendReviewFace(targets, currentFace.symbol))
+    setCenterMismatchConfirmation(undefined)
+    setLastSessionResult(undefined)
+    setMessage(
+      uncertain > 0
+        ? t('scan.messages.detectedUncertain', { count: uncertain })
+        : t('scan.messages.liveReviewReady'),
+    )
+  }, [
+    acknowledgeAutoFill,
+    currentDraft,
+    currentFace.symbol,
+    liveAnalysis,
+    liveCapture,
+    liveTemporalConsensus,
+    shouldAutoFill,
+    t,
+  ])
 
   function handleFaceIndexChange(index: number) {
     if (index < 0 || index >= scanFaceOrder.length || index === currentFaceIndex) {
@@ -374,8 +297,7 @@ export function ScanCubeModal({
     setCurrentFaceIndex(index)
     setCenterMismatchConfirmation(undefined)
     setMessage(undefined)
-    resetLiveAutoCapture()
-    analyzeScanFace.reset()
+    resetLiveAutoFill()
   }
 
   function handleStickerColorChange(index: number, symbol: ScanSticker['symbol']) {
@@ -401,13 +323,12 @@ export function ScanCubeModal({
     setCenterMismatchConfirmation(undefined)
     setLastSessionResult(undefined)
     setMessage(undefined)
-    resetLiveAutoCapture()
-    analyzeScanFace.reset()
+    resetLiveAutoFill()
   }
 
   function handleAutoScanToggle() {
     setAutoScanEnabled((enabled) => !enabled)
-    resetLiveAutoCapture()
+    resetLiveAutoFill()
     setMessage(undefined)
   }
 
@@ -635,14 +556,6 @@ export function ScanCubeModal({
                 visionTileDetectorReason,
               )}
             </p>
-            <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
-              {scanFaceDetectorStatusMessage(
-                t,
-                visionOk,
-                visionFaceDetectorAvailable,
-                visionFaceDetectorReason,
-              )}
-            </p>
           </div>
           <Button className="min-h-10 px-4 py-2" type="button" variant="secondary" onClick={onClose}>
             {t('common.close')}
@@ -687,17 +600,9 @@ export function ScanCubeModal({
             <ScanCameraFrame
               cameraMessage={camera.status === 'error' ? camera.message : undefined}
               cameraStatus={camera.status}
-              centerMismatch={liveDetectedAnalysis?.centerMismatch}
               detectionMode={cameraAnalysis?.detectionMode}
-              faceQuad={liveDetectedAnalysis?.faceQuad}
-              faceConfidence={cameraAnalysis?.faceConfidence}
-              gridConfidence={cameraAnalysis?.gridConfidence}
-              gridDetections={cameraAnalysis?.gridDetections}
-              gridStatus={cameraAnalysis?.gridStatus}
-              photoDataUrl={photoDataUrl}
               stableFrameCount={liveStableFrameCount}
-              stickerPolygons={liveDetectedAnalysis?.stickers}
-              temporalConsensus={photoDataUrl === undefined ? liveTemporalConsensus : currentDraft.temporalConsensus}
+              temporalConsensus={liveTemporalConsensus.framesSeen > 0 ? liveTemporalConsensus : currentDraft.temporalConsensus}
               tileDetections={cameraAnalysis?.tileDetections}
               trackingStatus={liveStatus}
               videoRef={videoRef}
@@ -709,7 +614,7 @@ export function ScanCubeModal({
                 type="button"
                 variant="ghost"
                 aria-pressed={autoScanEnabled}
-                disabled={photoDataUrl !== undefined || capturing || camera.status !== 'ready'}
+                disabled={camera.status !== 'ready'}
                 onClick={handleAutoScanToggle}
               >
                 {autoScanEnabled ? t('scan.actions.autoScanOn') : t('scan.actions.autoScanOff')}
@@ -717,21 +622,8 @@ export function ScanCubeModal({
               <Button
                 className="min-h-10 px-4 py-2"
                 type="button"
-                variant="secondary"
-                disabled={camera.status !== 'ready' || capturing}
-                onClick={() => void handleTakePhoto('manual')}
-              >
-                {capturing
-                  ? t('scan.actions.analyzing')
-                  : photoDataUrl === undefined
-                    ? t('scan.actions.takePhoto')
-                    : t('scan.actions.retakePhoto')}
-              </Button>
-              <Button
-                className="min-h-10 px-4 py-2"
-                type="button"
                 variant="ghost"
-                disabled={!canClearPhoto || capturing}
+                disabled={!canClearPhoto}
                 onClick={handleClearPhoto}
               >
                 {t('scan.actions.clearPhoto')}
@@ -895,6 +787,18 @@ function isSolveLimitsFailure(result: SolveResult | undefined): result is SolveL
     result?.ok === false &&
     (result.status === 'not_found_within_limits' || result.status === 'invalid_limits')
   )
+}
+
+function currentDraftHasReviewContent(draft: ScanFaceDraft): boolean {
+  return (
+    draft.photoDataUrl !== undefined ||
+    draft.analysis !== undefined ||
+    draft.stickers.some((sticker, index) => index !== 4 && sticker.symbol !== undefined)
+  )
+}
+
+function canApplyLiveAutofill(draft: ScanFaceDraft): boolean {
+  return !draft.confirmed
 }
 
 function emptyBackendReviewTargets(): BackendReviewTargets {
@@ -1104,25 +1008,6 @@ function scanCnnStatusMessage(
   })
 }
 
-function scanFaceDetectorStatusMessage(
-  t: ReturnType<typeof useTranslation>['t'],
-  visionOk: boolean | undefined,
-  visionFaceDetectorAvailable: boolean | undefined,
-  visionFaceDetectorReason: string | undefined,
-): string {
-  if (visionOk === false) {
-    return t('scan.modal.visionStatusUnavailable')
-  }
-
-  if (visionFaceDetectorAvailable === true) {
-    return t('scan.modal.faceDetectorActive')
-  }
-
-  return t('scan.modal.faceDetectorFallbackActive', {
-    reason: visionFaceDetectorReason ?? t('scan.modal.faceDetectorReasonUnknown'),
-  })
-}
-
 function scanTileDetectorStatusMessage(
   t: ReturnType<typeof useTranslation>['t'],
   visionOk: boolean | undefined,
@@ -1175,17 +1060,12 @@ function scanAutoCaptureMetadata(
     bboxStability: consensus?.bboxStability,
     detectionMode: analysis.detectionMode,
     faceConfidence: analysis.faceConfidence,
-    gridConfidence: analysis.gridConfidence,
-    gridDetections: analysis.gridDetections?.length ?? 0,
-    gridStatus: analysis.gridStatus,
     stableFrameCount: consensus?.framesUsed ?? 0,
     temporalAgreement: consensus?.temporalAgreement,
+    tileConfidence: consensus?.tileConfidence,
+    tileDetections: analysis.tileDetections?.filter((detection) => detection.symbol !== 'face').length ?? 0,
     triggeredAt: new Date().toISOString(),
   }
-}
-
-function isGuideFallbackAnalysis(analysis: AnalyzeScanFaceResponse): boolean {
-  return analysis.detectionMode === 'guide_fallback' || analysis.detectionMode === 'rejected'
 }
 
 function centerMismatchMessage(
@@ -1210,64 +1090,6 @@ function centerMismatchMessage(
     detectedColor: `${scanColorCode(detectedSymbol)} / ${scanColorLabel(t, detectedSymbol)}`,
     expectedColor: `${scanColorCode(expectedSymbol)} / ${scanColorLabel(t, expectedSymbol)}`,
   })
-}
-
-function scanQualityMessage(
-  t: ReturnType<typeof useTranslation>['t'],
-  analysis: AnalyzeScanFaceResponse,
-): string | undefined {
-  const warnings = new Set([...(analysis.qualityWarnings ?? []), ...(analysis.warnings ?? [])])
-  const messages: string[] = []
-
-  if (analysis.detectionMode === 'guide_fallback') {
-    messages.push(t('scan.messages.faceOutlineWeak'))
-  }
-
-  if (analysis.faceConfidence > 0 && analysis.faceConfidence < 0.55) {
-    messages.push(t('scan.messages.lowConfidence'))
-  }
-
-  if (warnings.has('image_blurry')) {
-    messages.push(t('scan.messages.qualityBlurry'))
-  }
-
-  if (warnings.has('image_too_dark')) {
-    messages.push(t('scan.messages.qualityDark'))
-  }
-
-  if (warnings.has('image_too_bright')) {
-    messages.push(t('scan.messages.qualityBright'))
-  }
-
-  if (messages.length > 0) {
-    return messages.join(' ')
-  }
-
-  return analysis.status === 'low_confidence' ? t('scan.messages.lowConfidence') : undefined
-}
-
-function scanAnalysisMessage(
-  t: ReturnType<typeof useTranslation>['t'],
-  analysis: AnalyzeScanFaceResponse,
-): string | undefined {
-  if (analysis.centerMismatch) {
-    return centerMismatchMessage(t, analysis)
-  }
-
-  const qualityMessage = scanQualityMessage(t, analysis)
-  if (qualityMessage !== undefined) {
-    return qualityMessage
-  }
-
-  if (analysis.status === 'face_not_found') {
-    return t('scan.messages.manualDetectionFailed')
-  }
-
-  if (analysis.status === 'invalid_image') {
-    return t('scan.messages.analysisFailed')
-  }
-
-  return undefined
 }
 
 function knownCenterReferencesFromFaces(faces: ScanFaces): Partial<Record<ScanFaceSymbol, RgbColor>> {

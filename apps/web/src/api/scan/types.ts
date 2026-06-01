@@ -24,15 +24,6 @@ export type ScanTileDetection = {
   bbox: ScanDetectionBox
 }
 
-export type ScanGridDetection = {
-  index: number
-  row: number
-  column: number
-  symbol?: ScanFaceSymbol
-  confidence: number
-  bbox?: ScanDetectionBox
-}
-
 export type ScanColorAlternative = {
   symbol: ScanFaceSymbol
   confidence: number
@@ -84,18 +75,14 @@ export type AnalyzeScanFaceResponse = {
   confidence: number
   detectedCenterConfidence: number
   faceConfidence: number
-  detectionMode?: 'contour' | 'guide_fallback' | 'rejected' | string | null
+  detectionMode?: 'tile_detector' | 'reviewed_stickers' | 'rejected' | string | null
   imageSize?: {
     width: number
     height: number
   }
   imageQuality?: ScanImageQuality
-  faceQuad: ScanAnalysisPoint[]
   stickers: AnalyzedScanSticker[]
   tileDetections?: ScanTileDetection[]
-  gridDetections?: ScanGridDetection[]
-  gridConfidence?: number
-  gridStatus?: 'not_found' | 'partial' | 'ready' | string
   qualityWarnings: string[]
   warnings: string[]
 }
@@ -106,11 +93,19 @@ export type AnalyzeScanFaceVariables = {
   knownCenters: Partial<Record<ScanFaceSymbol, RgbColor>>
 }
 
+export type ScanSessionReviewedSticker = {
+  index: number
+  symbol: ScanFaceSymbol
+  confidence?: number
+  source?: 'detected' | 'manual' | 'center' | string
+}
+
 export type ScanSessionFaceRequest = {
   symbol: ScanFaceSymbol
   expectedTop?: ScanFaceSymbol
-  image: string
+  image?: string
   manualOverrides?: Partial<Record<number, ScanFaceSymbol>>
+  reviewedStickers?: ScanSessionReviewedSticker[]
   clientRotation?: 0 | 90 | 180 | 270
 }
 

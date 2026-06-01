@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import type { AnalyzeScanFaceResponse } from '@api/scan'
 import {
   clearScanFaceDraft,
   confirmScanFaceDraft,
   confirmedDraftCount,
   createEmptyScanStickers,
   createInitialScanFaceDrafts,
+  mergeLiveDetectedScanStickers,
   replaceScanSticker,
   replaceScanFaceDraftSticker,
   scanFaceStatusFromDraft,
   scanFacesFromDrafts,
-  scanStickersFromAnalysis,
+  scanStickersFromTemporalConsensus,
   scanSessionFacesFromDrafts,
   scanFacesToPayload,
   scanSymbols,
@@ -126,6 +126,9 @@ describe('scan state helpers', () => {
           expectedTop: 'U',
           image: 'data:image/jpeg;base64,F',
           manualOverrides: { 0: 'R' },
+          reviewedStickers: expect.arrayContaining([
+            expect.objectContaining({ index: 0, source: 'manual', symbol: 'R' }),
+          ]),
           symbol: 'F',
         }),
         expect.objectContaining({
@@ -231,12 +234,51 @@ describe('scan state helpers', () => {
     expect(next[0].alternatives).toBeUndefined()
   })
 
-  it('uses grid detections for review stickers when analysis stickers disagree', () => {
-    const stickers = scanStickersFromAnalysis(analysisWithGridDisagreement(), 'F')
+  it('fills review stickers from live temporal consensus', () => {
+    const stickers = scanStickersFromTemporalConsensus(
+      {
+        bboxStability: 0.9,
+        faceConfidence: 0.88,
+        framesRejected: 0,
+        framesSeen: 6,
+        framesUsed: 6,
+        rejectReasons: [],
+        status: 'ready',
+        stickers: [...'FFFFFFFFF'].map((symbol, index) => ({
+          agreement: 1,
+          alternatives: [{ confidence: 0.2, symbol: 'R' }],
+          confidence: 0.91,
+          framesUsed: 6,
+          index,
+          margin: 0.7,
+          symbol: symbol as (typeof scanSymbols)[number],
+        })),
+        temporalAgreement: 1,
+        tileConfidence: 0.91,
+      },
+      'F',
+    )
 
-    expect(stickers.map((sticker) => sticker.symbol).join('')).toBe('LRRFBBRFD')
-    expect(stickers[4]).toMatchObject({ confidence: 0.91, source: 'center', symbol: 'B' })
-    expect(validateScanFaceDraft({}, 'F', stickers)).toEqual({ key: 'centerColorMismatch' })
+    expect(stickers.map((sticker) => sticker.symbol).join('')).toBe('FFFFFFFFF')
+    expect(stickers[0]).toMatchObject({ source: 'detected', symbol: 'F' })
+    expect(stickers[4]).toMatchObject({ confidence: 1, source: 'center', symbol: 'F' })
+  })
+
+  it('only overwrites AI stickers when the incoming confidence is meaningfully higher', () => {
+    const current = createEmptyScanStickers('F')
+    current[0] = { confidence: 0.8, source: 'detected', symbol: 'R' }
+    current[1] = { confidence: 1, source: 'manual', symbol: 'U' }
+    current[2] = { confidence: 0.88, source: 'detected', symbol: 'B' }
+    const incoming = createEmptyScanStickers('F')
+    incoming[0] = { confidence: 0.84, source: 'detected', symbol: 'F' }
+    incoming[1] = { confidence: 0.99, source: 'detected', symbol: 'R' }
+    incoming[2] = { confidence: 0.89, source: 'detected', symbol: 'L' }
+
+    const merged = mergeLiveDetectedScanStickers(current, incoming)
+
+    expect(merged[0]).toMatchObject({ confidence: 0.84, source: 'detected', symbol: 'F' })
+    expect(merged[1]).toMatchObject({ source: 'manual', symbol: 'U' })
+    expect(merged[2]).toMatchObject({ confidence: 0.88, source: 'detected', symbol: 'B' })
   })
 })
 
@@ -277,43 +319,4 @@ function detectedStickersWithAlternative(
     source: index === 4 ? 'center' : 'detected',
     symbol: detectedSymbol,
   }))
-}
-
-function analysisWithGridDisagreement(): AnalyzeScanFaceResponse {
-  const gridSymbols = [...'LRRFBBRFD'] as (typeof scanSymbols)[number][]
-
-  return {
-    centerMismatch: true,
-    confidence: 0.91,
-    detectedCenter: 'B',
-    detectedCenterConfidence: 0.91,
-    detectionMode: 'tile_detector',
-    expectedCenter: 'F',
-    faceConfidence: 0.9,
-    faceQuad: [],
-    gridConfidence: 0.84,
-    gridDetections: gridSymbols.map((symbol, index) => ({
-      bbox: { height: 0.18, width: 0.18, x: 0.2 + (index % 3) * 0.25, y: 0.2 + Math.floor(index / 3) * 0.25 },
-      column: index % 3,
-      confidence: index === 4 ? 0.91 : 0.86,
-      index,
-      row: Math.floor(index / 3),
-      symbol,
-    })),
-    gridStatus: 'ready',
-    imageSize: { height: 480, width: 480 },
-    ok: false,
-    qualityWarnings: [],
-    status: 'center_mismatch',
-    stickers: Array.from({ length: 9 }, (_, index) => ({
-      alternatives: [],
-      confidence: 0.8,
-      index,
-      polygon: [],
-      rgb: { b: 40, g: 40, r: 220 },
-      symbol: 'R' as const,
-    })),
-    tileDetections: [],
-    warnings: [],
-  }
 }

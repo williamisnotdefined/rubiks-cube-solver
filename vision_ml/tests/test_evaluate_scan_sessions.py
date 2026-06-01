@@ -45,14 +45,14 @@ def test_evaluator_prefers_replay_result_candidate_facelets() -> None:
 def test_evaluator_reports_temporal_consensus_metrics_and_wrong_accepts() -> None:
     data = scan_export(wrong_label=True)
     data["faces"][0]["captureMode"] = "auto"
-    data["faces"][0]["autoCapture"] = {"stableFrameCount": 6, "gridDetections": 9, "triggeredAt": "2026-01-02T03:04:05.000Z"}
+    data["faces"][0]["autoCapture"] = {"stableFrameCount": 6, "tileDetections": 9, "triggeredAt": "2026-01-02T03:04:05.000Z"}
     data["faces"][0]["temporalConsensus"] = {
         "bboxStability": 0.91,
         "faceConfidence": 0.8,
         "framesRejected": 1,
         "framesSeen": 7,
         "framesUsed": 6,
-        "gridConfidence": 0.78,
+        "tileConfidence": 0.78,
         "rejectReasons": [],
         "status": "ready",
         "stickers": [],
@@ -73,32 +73,6 @@ def test_evaluator_reports_temporal_consensus_metrics_and_wrong_accepts() -> Non
     assert report["averageTemporalAgreement"] == 0.94
     assert report["averageBboxStability"] == 0.91
     assert [case["reason"] for case in report["hardCases"][:2]] == ["wrong_accept", "temporal_ready_wrong"]
-
-
-def test_evaluator_counts_review_stickers_that_follow_grid_detections() -> None:
-    data = scan_export(wrong_label=False)
-    grid_symbols = list("UFDLUBDFL")
-    data["faces"][0]["stickers"] = [
-        {"index": index, "symbol": symbol, "confidence": 0.9, "source": "center" if index == 4 else "detected"}
-        for index, symbol in enumerate(grid_symbols)
-    ]
-    data["faces"][0]["analysis"] = {
-        "gridDetections": [
-            {"index": index, "row": index // 3, "column": index % 3, "symbol": symbol, "confidence": 0.9}
-            for index, symbol in enumerate(grid_symbols)
-        ],
-        "stickers": [
-            {"index": index, "symbol": "R", "confidence": 0.8}
-            for index in range(9)
-        ],
-    }
-    export = validate_scan_session_export(data)
-
-    report = evaluate_scan_session_exports([export])
-
-    assert report["reviewUsedGridDetections"] == 9
-    assert report["gridStickerOverrides"] == 9
-    assert report["detectorReviewDisagreements"] == 0
 
 
 def test_cli_writes_report_and_fails_on_wrong_accept(tmp_path: Path) -> None:

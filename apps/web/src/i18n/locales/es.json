@@ -13,7 +13,7 @@
       "analyzing": "Analizando",
       "autoScanOff": "Autoescaneo apagado",
       "autoScanOn": "Autoescaneo encendido",
-      "clearPhoto": "Limpiar foto",
+      "clearPhoto": "Limpiar cara",
       "confirmAnyway": "Confirmar de todos modos",
       "confirmFace": "Confirmar cara",
       "exportSession": "Exportar sesión de escaneo",
@@ -28,19 +28,16 @@
     "camera": {
       "capturedFaceAlt": "Cara del cubo capturada",
       "errorManualFallback": "{{message}} Aún puedes completar la cuadrícula manualmente.",
-      "gridConfidence": "cuadrícula {{confidence}}%",
       "holdSteady": "mantén firme {{count}}/{{target}}",
       "lookingForCube": "buscando el cubo",
       "modes": {
-        "contour": "contorno",
-        "face_detector": "detector de cara",
-        "guide_fallback": "guía",
         "rejected": "rechazado",
-        "sticker_grid": "cuadrícula de stickers",
+        "reviewed_stickers": "colores revisados",
         "tile_detector": "detector de stickers"
       },
       "opening": "Abriendo cámara",
       "statusWithConfidence": "{{mode}} {{confidence}}%",
+      "stickerConfidence": "stickers {{confidence}}%",
       "stickersFound": "{{count}}/9 stickers encontrados",
       "stickersReady": "{{count}}/9 stickers listos",
       "temporalCollecting": "consenso {{count}}/{{target}}",
@@ -87,32 +84,32 @@
     },
     "faces": {
       "B": {
-        "instruction": "Captura la cara azul con la cara blanca en la parte superior de la vista de la cámara.",
+        "instruction": "Muestra la cara azul con la cara blanca en la parte superior de la vista de la cámara.",
         "label": "Cara azul",
         "top": "Blanco"
       },
       "D": {
-        "instruction": "Captura la cara amarilla con la cara verde en la parte superior de la vista de la cámara.",
+        "instruction": "Muestra la cara amarilla con la cara verde en la parte superior de la vista de la cámara.",
         "label": "Cara amarilla",
         "top": "Verde"
       },
       "F": {
-        "instruction": "Captura la cara verde con la cara blanca en la parte superior de la vista de la cámara.",
+        "instruction": "Muestra la cara verde con la cara blanca en la parte superior de la vista de la cámara.",
         "label": "Cara verde",
         "top": "Blanco"
       },
       "L": {
-        "instruction": "Captura la cara naranja con la cara blanca en la parte superior de la vista de la cámara.",
+        "instruction": "Muestra la cara naranja con la cara blanca en la parte superior de la vista de la cámara.",
         "label": "Cara naranja",
         "top": "Blanco"
       },
       "R": {
-        "instruction": "Captura la cara roja con la cara blanca en la parte superior de la vista de la cámara.",
+        "instruction": "Muestra la cara roja con la cara blanca en la parte superior de la vista de la cámara.",
         "label": "Cara roja",
         "top": "Blanco"
       },
       "U": {
-        "instruction": "Captura la cara blanca con la cara verde en la parte superior de la vista de la cámara.",
+        "instruction": "Muestra la cara blanca con la cara verde en la parte superior de la vista de la cámara.",
         "label": "Cara blanca",
         "top": "Verde"
       }
@@ -129,7 +126,7 @@
       "lookingKeepVisible": "Buscando la cara del cubo. Mantén todo el cubo visible.",
       "partialGrid": "{{count}}/9 stickers encontrados. Muestra una cara plana.",
       "scanFailed": "Falló el análisis en vivo.",
-      "stableCapturing": "La cara está estable. Capturando foto...",
+      "stableCapturing": "Todos los stickers están estables. Revisa los colores.",
       "tooBright": "Hay demasiado brillo. Reduce reflejos fuertes.",
       "tooDark": "Está demasiado oscuro. Agrega más luz."
     },
@@ -140,20 +137,19 @@
       "apiNotReady": "La API aún no está lista.",
       "autoCaptured": "Capturada automáticamente. Revisa los colores antes de confirmar esta cara.",
       "autoCapturing": "Capturando automáticamente la cara estable...",
-      "autoPaused": "Autoescaneo en pausa. Usa Tomar foto cuando la cara esté visible.",
+      "autoPaused": "Autoescaneo en pausa. Vuelve a encenderlo cuando la cara esté visible.",
       "cameraFrameFailed": "No se pudo leer un cuadro de la cámara. Intenta de nuevo.",
       "cameraNotReady": "La cámara aún no está lista.",
       "captured": "Foto capturada. Revisa los colores antes de confirmar esta cara.",
       "capturingPhoto": "Capturando foto...",
       "centerMismatchFallback": "El centro capturado no coincide con este paso. Repite la foto.",
       "centerMismatchConfirmQuestion": "¿Seguro que esta es la cara esperada?",
-      "centerMismatchWithColors": "El centro parece {{detectedColor}}{{confidence}}, pero este paso espera {{expectedColor}}. Gira a la cara esperada y repite la foto antes de confirmar.",
+      "centerMismatchWithColors": "El centro parece {{detectedColor}}{{confidence}}, pero este paso espera {{expectedColor}}. Gira a la cara esperada antes de confirmar.",
       "confirmAllFaces": "Confirma las seis caras y asegúrate de que cada color aparezca exactamente 9 veces.",
       "confidenceSuffix": " ({{confidence}}% de confianza)",
-      "detectedUncertain": "{{count}} colores detectados son inciertos. Revisa los cuadros resaltados o repite la foto.",
+      "detectedUncertain": "{{count}} colores detectados son inciertos. Revisa los cuadros resaltados o limpia la cara para escanear de nuevo.",
       "exportedSession": "Se exportó {{filename}} para evaluación local de precisión.",
-      "exportRequiresPhoto": "Toma al menos una foto antes de exportar la sesión de escaneo.",
-      "faceOutlineWeak": "El contorno de la cara es débil; mantén el cubo plano dentro de la guía.",
+      "exportRequiresPhoto": "Reconoce al menos una cara antes de exportar la sesión de escaneo.",
       "faceNeedsReview": "Revisa esta cara antes de resolver.",
       "faceUpdated": "Cara actualizada. Revisa las otras caras o resuelve cuando quieras.",
       "genericRejected": "El cubo escaneado fue rechazado. Revisa los colores confirmados.",
@@ -168,7 +164,7 @@
       "sessionInvalidCubeState": "El escaneo no describe un cubo válido. Revisa las caras o usa el respaldo de colores revisados después de verificar cada sticker.",
       "sessionIncompleteStickers": "Completa los 9 stickers en las caras {{faces}} antes de resolver.",
       "sessionMissingConfirmedFaces": "Confirma estas caras antes de resolver: {{faces}}.",
-      "sessionMissingPhotos": "Toma una foto de estas caras antes de resolver: {{faces}}.",
+      "sessionMissingPhotos": "Reconoce estas caras antes de resolver: {{faces}}.",
       "sessionNeedsManualConfirmation": "Confirma los stickers resaltados antes de resolver.",
       "sessionNeedsRescan": "Una o más caras deben escanearse de nuevo.",
       "sessionRejected": "La sesión de escaneo fue rechazada. Revisa las caras antes de resolver.",
@@ -176,19 +172,17 @@
       "sessionVisionUnavailable": "El servicio de visión no pudo completar la sesión. Puedes reintentar o usar el respaldo de colores revisados.",
       "solveFailed": "Falló la solicitud para resolver el escaneo.",
       "submittingSession": "Verificando el escaneo completo con restricciones del cubo...",
-      "stillLooking": "Aún buscando la cara del cubo. Mantén toda la cara visible y deja que el autoescaneo intente de nuevo."
+      "stillLooking": "Aún buscando la cara del cubo. Mantén toda la cara visible y deja que el autoescaneo intente de nuevo.",
+      "liveReviewReady": "9 stickers reconocidos. Revisa los colores, corrige cualquier cuadro si hace falta y confirma esta cara."
     },
     "modal": {
       "cnnEvidenceActive": "Evidencia CNN activa",
       "cnnReasonUnknown": "no configurada",
       "colorFallbackActive": "Respaldo solo por color: {{reason}}",
       "confirmed": "{{count}} confirmadas",
-      "description": "Captura una cara a la vez con el color superior solicitado. La solución usa los colores que confirmes.",
+      "description": "Muestra una cara a la vez con el color superior solicitado. La solución usa los colores que confirmes.",
       "dismiss": "Cerrar escaneo del cubo",
       "expectedCenter": "Centro esperado: {{color}}",
-      "faceDetectorActive": "Detector de cara activo",
-      "faceDetectorFallbackActive": "Respaldo geométrico: {{reason}}",
-      "faceDetectorReasonUnknown": "no configurado",
       "faceProgress": "Cara {{current}} de {{total}}",
       "keepAtTop": "Mantén arriba: {{color}}",
       "tileDetectorActive": "Detector de stickers activo",
@@ -210,15 +204,11 @@
       "confirmAllNineColors": "Confirma los 9 colores antes de continuar."
     },
     "warnings": {
-      "face_detection_rejected": "La detección de la cara fue rechazada. Mantén la cara plana y centrada.",
-      "face_detector_rejected": "Se rechazó la propuesta del detector. Mantén una cara del cubo plana y visible.",
       "tile_detector_rejected": "Se rechazó la propuesta del detector de stickers. Mantén la cara del cubo plana y visible.",
       "image_blurry": "La imagen está borrosa. Mantén firme el cubo.",
       "image_too_bright": "Hay demasiado brillo. Reduce reflejos fuertes.",
       "image_too_dark": "Está demasiado oscuro. Agrega más luz.",
-      "low_confidence_sticker": "Uno o más stickers son inciertos. Revisa los cuadros resaltados.",
-      "using_center_guide_fallback": "Mantén todo el cubo visible dentro de la guía.",
-      "weak_face_contour": "El contorno de la cara es débil. Mantén el cubo plano dentro de la guía."
+      "low_confidence_sticker": "Uno o más stickers son inciertos. Revisa los cuadros resaltados."
     }
   },
   "solve": {

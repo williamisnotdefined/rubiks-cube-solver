@@ -16,7 +16,7 @@ def test_loads_sample_scan_session_export_fixture() -> None:
     assert export.faces[0].centerOverrideConfirmed is True
     assert export.faces[0].manualOverrides[4] == "F"
     assert export.faces[0].lastRejectedCapture is not None
-    assert export.faces[0].lastRejectedCapture.reason == "guide_fallback"
+    assert export.faces[0].lastRejectedCapture.reason == "partial_tiles"
     assert export.faces[0].stickers[4].symbol == "F"
 
 

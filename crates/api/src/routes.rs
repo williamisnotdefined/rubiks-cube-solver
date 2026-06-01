@@ -27,10 +27,6 @@ struct VisionHealthResponse {
     cnn_available: bool,
     #[serde(rename = "cnnReason", default)]
     cnn_reason: Option<String>,
-    #[serde(rename = "faceDetectorAvailable", default)]
-    face_detector_available: bool,
-    #[serde(rename = "faceDetectorReason", default)]
-    face_detector_reason: Option<String>,
     #[serde(rename = "tileDetectorAvailable", default)]
     tile_detector_available: bool,
     #[serde(rename = "tileDetectorReason", default)]
@@ -85,9 +81,6 @@ async fn health(State(state): State<ApiState>) -> Json<HealthResponse> {
     let vision_cnn_available = vision_health
         .as_ref()
         .is_some_and(|health| health.cnn_available);
-    let vision_face_detector_available = vision_health
-        .as_ref()
-        .is_some_and(|health| health.face_detector_available);
     let vision_tile_detector_available = vision_health
         .as_ref()
         .is_some_and(|health| health.tile_detector_available);
@@ -100,10 +93,6 @@ async fn health(State(state): State<ApiState>) -> Json<HealthResponse> {
         vision_cnn_reason: vision_health
             .as_ref()
             .and_then(|health| health.cnn_reason.clone()),
-        vision_face_detector_available,
-        vision_face_detector_reason: vision_health
-            .as_ref()
-            .and_then(|health| health.face_detector_reason.clone()),
         vision_tile_detector_available,
         vision_tile_detector_reason: vision_health.and_then(|health| health.tile_detector_reason),
     })
