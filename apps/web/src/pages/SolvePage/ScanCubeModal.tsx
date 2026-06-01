@@ -89,6 +89,11 @@ type BackendReviewTargets = {
   rescanFaces: ScanFaceSymbol[]
 }
 
+type CenterMismatchConfirmation = {
+  faceSymbol: ScanFaceSymbol
+  message: string
+}
+
 export function ScanCubeModal({
   apiReady,
   maxDepth = 30,
@@ -126,6 +131,8 @@ export function ScanCubeModal({
   const [backendReviewTargets, setBackendReviewTargets] = useState<BackendReviewTargets>(() =>
     emptyBackendReviewTargets(),
   )
+  const [centerMismatchConfirmation, setCenterMismatchConfirmation] =
+    useState<CenterMismatchConfirmation | undefined>()
   const [limitsFailureResult, setLimitsFailureResult] = useState<SolveLimitsFailure | undefined>()
   const [lastSessionResult, setLastSessionResult] = useState<ScanSessionResult | undefined>()
   const [message, setMessage] = useState<string | undefined>()
@@ -214,6 +221,11 @@ export function ScanCubeModal({
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
+        if (centerMismatchConfirmation !== undefined) {
+          setCenterMismatchConfirmation(undefined)
+          return
+        }
+
         onClose()
       }
     }
@@ -221,7 +233,7 @@ export function ScanCubeModal({
     document.addEventListener('keydown', handleKeyDown)
 
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [onClose])
+  }, [centerMismatchConfirmation, onClose])
 
   useEffect(() => {
     if (!shouldAutoCapture || capturing || photoDataUrl !== undefined) {
@@ -242,6 +254,7 @@ export function ScanCubeModal({
     resetLiveAutoCapture()
     setCapturing(true)
     clearBackendReviewForFace(currentFace.symbol)
+    setCenterMismatchConfirmation(undefined)
     setLastSessionResult(undefined)
     setCurrentDraft({
       analysis: undefined,
@@ -359,6 +372,7 @@ export function ScanCubeModal({
     }
 
     setCurrentFaceIndex(index)
+    setCenterMismatchConfirmation(undefined)
     setMessage(undefined)
     resetLiveAutoCapture()
     analyzeScanFace.reset()
@@ -384,6 +398,7 @@ export function ScanCubeModal({
   function handleClearPhoto() {
     setDrafts((currentDrafts) => clearScanFaceDraft(currentDrafts, currentFace.symbol))
     clearBackendReviewForFace(currentFace.symbol)
+    setCenterMismatchConfirmation(undefined)
     setLastSessionResult(undefined)
     setMessage(undefined)
     resetLiveAutoCapture()
@@ -412,15 +427,25 @@ export function ScanCubeModal({
 
     const centerOverrideConfirmed = centerValidation !== undefined
     if (centerOverrideConfirmed && currentDraft.centerOverrideConfirmed !== true) {
-      const confirmed = window.confirm(
-        `${centerValidation} ${t('scan.messages.centerMismatchConfirmQuestion')}`,
-      )
-      if (!confirmed) {
-        setMessage(centerValidation)
-        return
-      }
+      setCenterMismatchConfirmation({ faceSymbol: currentFace.symbol, message: centerValidation })
+      setMessage(centerValidation)
+      return
     }
 
+    confirmCurrentFace(centerOverrideConfirmed)
+  }
+
+  function handleConfirmCenterMismatch() {
+    if (centerMismatchConfirmation?.faceSymbol !== currentFace.symbol) {
+      setCenterMismatchConfirmation(undefined)
+      return
+    }
+
+    setCenterMismatchConfirmation(undefined)
+    confirmCurrentFace(true)
+  }
+
+  function confirmCurrentFace(centerOverrideConfirmed: boolean) {
     const nextDrafts = confirmScanFaceDraft(drafts, currentFace.symbol, {
       centerOverrideConfirmed:
         centerOverrideConfirmed || currentDraft.centerOverrideConfirmed === true,
@@ -798,6 +823,69 @@ export function ScanCubeModal({
           onRetry={handleRetrySolveScan}
         />
       )}
+      {centerMismatchConfirmation === undefined ? null : (
+        <CenterMismatchConfirmationModal
+          message={centerMismatchConfirmation.message}
+          onCancel={() => setCenterMismatchConfirmation(undefined)}
+          onConfirm={handleConfirmCenterMismatch}
+        />
+      )}
+    </div>
+  )
+}
+
+type CenterMismatchConfirmationModalProps = {
+  message: string
+  onCancel: () => void
+  onConfirm: () => void
+}
+
+function CenterMismatchConfirmationModal({
+  message,
+  onCancel,
+  onConfirm,
+}: CenterMismatchConfirmationModalProps) {
+  const { t } = useTranslation()
+  const titleId = useId()
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center px-3 py-6 sm:px-6">
+      <button
+        aria-label={t('scan.centerMismatch.dismiss')}
+        className="absolute inset-0 bg-[#070707]/85"
+        type="button"
+        onClick={onCancel}
+      />
+      <section
+        aria-labelledby={titleId}
+        aria-modal="true"
+        className="relative grid w-full max-w-lg gap-5 border border-[#3a3a3a] bg-[#101010] p-4 text-left text-[#f7f7f7] shadow-2xl sm:p-6"
+        role="dialog"
+      >
+        <div className="grid gap-2">
+          <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
+            {t('scan.centerMismatch.kicker')}
+          </p>
+          <h2 className="text-lg font-extrabold uppercase tracking-[0.16em]" id={titleId}>
+            {t('scan.centerMismatch.title')}
+          </h2>
+          <p className="text-sm font-semibold leading-relaxed text-[#a8a8a8]">
+            {message}
+          </p>
+          <p className="text-sm font-extrabold leading-relaxed text-[#f7f7f7]">
+            {t('scan.messages.centerMismatchConfirmQuestion')}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button className="min-h-10 px-4 py-2" type="button" variant="secondary" onClick={onCancel}>
+            {t('common.cancel')}
+          </Button>
+          <Button className="min-h-10 px-4 py-2" type="button" onClick={onConfirm}>
+            {t('scan.actions.confirmAnyway')}
+          </Button>
+        </div>
+      </section>
     </div>
   )
 }

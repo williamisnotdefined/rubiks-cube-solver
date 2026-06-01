@@ -1,6 +1,7 @@
 {
   "common": {
     "applyAndRetry": "Aplicar y reintentar",
+    "cancel": "Cancelar",
     "close": "Cerrar",
     "loading": "Cargando"
   },
@@ -13,6 +14,7 @@
       "autoScanOff": "Autoescaneo apagado",
       "autoScanOn": "Autoescaneo encendido",
       "clearPhoto": "Limpiar foto",
+      "confirmAnyway": "Confirmar de todos modos",
       "confirmFace": "Confirmar cara",
       "exportSession": "Exportar sesión de escaneo",
       "nextFace": "Cara siguiente",
@@ -64,6 +66,11 @@
       "L": "Naranja",
       "R": "Rojo",
       "U": "Blanco"
+    },
+    "centerMismatch": {
+      "dismiss": "Cerrar confirmación del centro",
+      "kicker": "Centro diferente",
+      "title": "Confirmar cara esperada"
     },
     "editor": {
       "colorCount": "Conteo de colores",

@@ -159,10 +159,12 @@ describe('ScanCubeModal', () => {
     expect(screen.getByRole('button', { name: 'Export scan session' })).toBeEnabled()
   })
 
-  it('asks before confirming a face when the captured center is a different color', async () => {
+  it('shows a modal before confirming a face when the captured center is a different color', async () => {
     const user = userEvent.setup()
     apiMocks.analyzeMutateAsync.mockResolvedValue(scanAnalysisResponse({ centerMismatch: true }))
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
+    const confirm = vi.spyOn(window, 'confirm').mockImplementation(() => {
+      throw new Error('window.confirm should not be called')
+    })
 
     render(
       <ScanCubeModal
@@ -180,10 +182,21 @@ describe('ScanCubeModal', () => {
 
     await user.click(screen.getByRole('button', { name: 'Confirm face' }))
 
-    expect(confirm).toHaveBeenCalledWith(expect.stringMatching(/Are you sure this is the expected face\?/))
+    expect(confirm).not.toHaveBeenCalled()
+    const firstDialog = await screen.findByRole('dialog', { name: 'Confirm expected face' })
+    expect(within(firstDialog).getByText(/Center looks W \/ White.*expects G \/ Green/)).toBeInTheDocument()
+    expect(within(firstDialog).getByText('Are you sure this is the expected face?')).toBeInTheDocument()
+
+    await user.click(within(firstDialog).getByRole('button', { name: 'Cancel' }))
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Confirm expected face' })).not.toBeInTheDocument()
+    })
     expect(screen.getByRole('heading', { name: 'Green face' })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Confirm face' }))
+    const secondDialog = await screen.findByRole('dialog', { name: 'Confirm expected face' })
+    await user.click(within(secondDialog).getByRole('button', { name: 'Confirm anyway' }))
 
     expect(await screen.findByRole('heading', { name: 'Red face' })).toBeInTheDocument()
     confirm.mockRestore()
