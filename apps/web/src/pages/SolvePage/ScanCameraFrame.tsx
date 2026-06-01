@@ -1,9 +1,18 @@
 import { memo, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { ScanAnalysisPoint } from '@api/scan'
+import type { ScanAnalysisPoint, ScanDetectionBox, ScanGridDetection, ScanTileDetection } from '@api/scan'
 import type { LiveScanPreviewStatus } from './hooks/useLiveScanPreview'
+import type { TemporalFaceConsensus } from './scanTemporalConsensus'
+import { scanSymbolDetails } from './scanState'
 
 type ScanCameraStatus = 'idle' | 'loading' | 'ready' | 'error'
+
+type OverlayStickerBox = {
+  bbox: ScanDetectionBox
+  confidence: number
+  key: string
+  symbol?: ScanGridDetection['symbol'] | ScanTileDetection['symbol']
+}
 
 type ScanCameraFrameProps = {
   cameraMessage?: string
@@ -12,6 +21,9 @@ type ScanCameraFrameProps = {
   detectionMode?: string | null
   faceQuad?: readonly ScanAnalysisPoint[]
   faceConfidence?: number
+  gridConfidence?: number
+  gridDetections?: readonly ScanGridDetection[]
+  gridStatus?: string
   photoDataUrl?: string
   stableFrameCount?: number
   stickerPolygons?: readonly {
@@ -19,6 +31,8 @@ type ScanCameraFrameProps = {
     index: number
     polygon: readonly ScanAnalysisPoint[]
   }[]
+  temporalConsensus?: TemporalFaceConsensus
+  tileDetections?: readonly ScanTileDetection[]
   trackingStatus?: LiveScanPreviewStatus
   videoRef: RefObject<HTMLVideoElement | null>
 }
@@ -30,14 +44,21 @@ export const ScanCameraFrame = memo(function ScanCameraFrame({
   detectionMode,
   faceQuad = [],
   faceConfidence,
+  gridConfidence,
+  gridDetections = [],
+  gridStatus,
   photoDataUrl,
   stableFrameCount = 0,
   stickerPolygons = [],
+  temporalConsensus,
+  tileDetections = [],
   trackingStatus = 'idle',
   videoRef,
 }: ScanCameraFrameProps) {
   const { t } = useTranslation()
-  const hasDetectedFace = faceQuad.length === 4
+  const stickerBoxes = stickerOverlayBoxes(gridDetections, tileDetections)
+  const showDerivedFaceGrid = stickerBoxes.length === 0
+  const hasDetectedFace = showDerivedFaceGrid && faceQuad.length === 4
   const detectionStroke = centerMismatch
     ? '#ef4444'
     : trackingStatus === 'holding_steady'
@@ -48,10 +69,13 @@ export const ScanCameraFrame = memo(function ScanCameraFrame({
   const statusLabel = cameraStatusLabel({
     detectionMode,
     faceConfidence,
+    gridDetections,
+    gridStatus,
     stableFrameCount,
     t,
     trackingStatus,
   })
+  const temporalStatusLabel = temporalConsensusLabel(temporalConsensus, t)
 
   return (
     <div className="relative aspect-square w-full max-w-[32rem] justify-self-center overflow-hidden border border-[#2b2b2b] bg-[#070707]">
@@ -64,7 +88,7 @@ export const ScanCameraFrame = memo(function ScanCameraFrame({
       {photoDataUrl === undefined ? null : (
         <img className="block size-full object-cover" src={photoDataUrl} alt={t('scan.camera.capturedFaceAlt')} />
       )}
-      {hasDetectedFace || stickerPolygons.length > 0 ? (
+      {hasDetectedFace || (showDerivedFaceGrid && stickerPolygons.length > 0) || stickerBoxes.length > 0 ? (
         <svg className="pointer-events-none absolute inset-0 size-full" viewBox="0 0 100 100">
           {hasDetectedFace ? (
             <polygon
@@ -75,18 +99,46 @@ export const ScanCameraFrame = memo(function ScanCameraFrame({
               strokeWidth={trackingStatus === 'holding_steady' ? '0.9' : '0.7'}
             />
           ) : null}
-          {stickerPolygons
-            .filter((sticker) => sticker.polygon.length >= 3)
-            .map((sticker) => (
-              <polygon
-                fill="none"
-                key={sticker.index}
-                points={svgPoints(sticker.polygon)}
-                stroke={sticker.confidence < 0.3 ? '#fbbf24' : detectionStroke}
-                strokeOpacity="0.85"
-                strokeWidth="0.45"
+          {showDerivedFaceGrid
+            ? stickerPolygons
+                .filter((sticker) => sticker.polygon.length >= 3)
+                .map((sticker) => (
+                  <polygon
+                    fill="none"
+                    key={sticker.index}
+                    points={svgPoints(sticker.polygon)}
+                    stroke={sticker.confidence < 0.3 ? '#fbbf24' : detectionStroke}
+                    strokeOpacity="0.85"
+                    strokeWidth="0.45"
+                  />
+                ))
+            : null}
+          {stickerBoxes.map((detection) => (
+            <g key={detection.key}>
+              <rect
+                fill={scanBoxFill(detection.symbol)}
+                fillOpacity="0.1"
+                height={detection.bbox.height * 100}
+                stroke={scanBoxStroke(detection.symbol)}
+                strokeOpacity={gridStatus === 'ready' ? '0.95' : '0.72'}
+                strokeWidth={gridStatus === 'ready' ? '0.65' : '0.45'}
+                width={detection.bbox.width * 100}
+                x={(detection.bbox.x - detection.bbox.width / 2) * 100}
+                y={(detection.bbox.y - detection.bbox.height / 2) * 100}
               />
-            ))}
+              <text
+                fill="#f7f7f7"
+                fontSize="3.1"
+                fontWeight="800"
+                stroke="#070707"
+                strokeWidth="0.25"
+                x={(detection.bbox.x - detection.bbox.width / 2) * 100 + 1}
+                y={(detection.bbox.y - detection.bbox.height / 2) * 100 + 4}
+              >
+                {detection.symbol} {Math.round(detection.confidence * 100)}
+              </text>
+            </g>
+          ))}
         </svg>
       ) : null}
       {statusLabel === undefined ? null : (
@@ -94,11 +146,14 @@ export const ScanCameraFrame = memo(function ScanCameraFrame({
           {statusLabel}
         </div>
       )}
-      {hasDetectedFace ? null : (
-        <div className="pointer-events-none absolute left-1/2 top-1/2 grid aspect-square w-[72%] -translate-x-1/2 -translate-y-1/2 grid-cols-3 grid-rows-3 gap-1 border border-dashed border-[#f7f7f7]/30 p-1">
-          {Array.from({ length: 9 }, (_, index) => (
-            <div className="border border-dashed border-[#f7f7f7]/20" key={index} />
-          ))}
+      {temporalStatusLabel === undefined ? null : (
+        <div className="absolute right-2 top-2 border border-[#2b2b2b] bg-[#070707]/80 px-2 py-1 text-[0.65rem] font-extrabold uppercase tracking-[0.12em] text-[#f7f7f7]">
+          {temporalStatusLabel}
+        </div>
+      )}
+      {gridConfidence === undefined || gridConfidence <= 0 ? null : (
+        <div className="absolute bottom-2 left-2 border border-[#2b2b2b] bg-[#070707]/80 px-2 py-1 text-[0.65rem] font-extrabold uppercase tracking-[0.12em] text-[#f7f7f7]">
+          {t('scan.camera.gridConfidence', { confidence: Math.round(gridConfidence * 100) })}
         </div>
       )}
       {cameraStatus === 'loading' ? (
@@ -119,15 +174,89 @@ function svgPoints(points: readonly ScanAnalysisPoint[]): string {
   return points.map((point) => `${point.x * 100},${point.y * 100}`).join(' ')
 }
 
+function temporalConsensusLabel(
+  consensus: TemporalFaceConsensus | undefined,
+  t: ReturnType<typeof useTranslation>['t'],
+): string | undefined {
+  if (consensus === undefined || consensus.framesSeen === 0) {
+    return undefined
+  }
+
+  if (consensus.status === 'ready') {
+    return t('scan.camera.temporalReady', {
+      agreement: Math.round(consensus.temporalAgreement * 100),
+      count: consensus.framesUsed,
+    })
+  }
+
+  if (consensus.status === 'unstable') {
+    return t('scan.camera.temporalUnstable', { count: consensus.framesUsed })
+  }
+
+  if (consensus.status === 'color_disagreement') {
+    return t('scan.camera.temporalColorDisagreement', { count: consensus.framesUsed })
+  }
+
+  return t('scan.camera.temporalCollecting', {
+    count: consensus.framesUsed,
+    target: 6,
+  })
+}
+
+function stickerOverlayBoxes(
+  gridDetections: readonly ScanGridDetection[],
+  tileDetections: readonly ScanTileDetection[],
+): OverlayStickerBox[] {
+  if (gridDetections.length > 0) {
+    return gridDetections
+      .filter((detection) => detection.bbox !== undefined)
+      .map((detection) => ({
+        bbox: detection.bbox as ScanDetectionBox,
+        confidence: detection.confidence,
+        key: `grid-${detection.index}`,
+        symbol: detection.symbol,
+      }))
+  }
+
+  return tileDetections
+    .filter((detection) => detection.symbol !== 'face')
+    .map((detection, index) => ({
+      bbox: detection.bbox,
+      confidence: detection.confidence,
+      key: `tile-${index}-${detection.symbol}`,
+      symbol: detection.symbol,
+    }))
+}
+
+function scanBoxStroke(symbol: ScanGridDetection['symbol'] | ScanTileDetection['symbol']): string {
+  if (symbol === undefined || symbol === 'face') {
+    return '#f7f7f7'
+  }
+
+  return scanSymbolDetails[symbol].background
+}
+
+function scanBoxFill(symbol: ScanGridDetection['symbol'] | ScanTileDetection['symbol']): string {
+  if (symbol === undefined || symbol === 'face') {
+    return '#f7f7f7'
+  }
+
+  return scanSymbolDetails[symbol].background
+}
+
 function cameraStatusLabel({
   detectionMode,
   faceConfidence,
+  gridDetections,
+  gridStatus,
   stableFrameCount,
   t,
   trackingStatus,
 }: {
   detectionMode?: string | null
   faceConfidence?: number
+  gridDetections: readonly ScanGridDetection[]
+  gridStatus?: string
   stableFrameCount: number
   t: ReturnType<typeof useTranslation>['t']
   trackingStatus: LiveScanPreviewStatus
@@ -138,6 +267,12 @@ function cameraStatusLabel({
 
   if (trackingStatus === 'tracking') {
     return t('scan.camera.tracking', { count: stableFrameCount, target: 6 })
+  }
+
+  if (gridDetections.length > 0) {
+    return t(gridStatus === 'ready' ? 'scan.camera.stickersReady' : 'scan.camera.stickersFound', {
+      count: gridDetections.length,
+    })
   }
 
   if (detectionMode == null) {

@@ -7,7 +7,9 @@ import pytest
 cv2 = pytest.importorskip("cv2")
 np = pytest.importorskip("numpy")
 
-from vision.detection import analyze_face
+from vision.detection import analyze_face, detect_face_quad_with_detector_roi, detect_face_quad_with_tile_detector_grid
+from vision.face_detector import FaceDetection
+from vision.tile_detector import TileDetection
 from vision.schemas import AnalyzeScanFaceRequest
 
 
@@ -127,6 +129,111 @@ def test_merges_optional_cnn_probabilities_when_available() -> None:
     assert response.stickers[0].probabilities.B > 0.4
 
 
+def test_rejects_face_detector_bbox_without_grid_evidence() -> None:
+    image = np.full((720, 720, 3), 180, dtype=np.uint8)
+    response = analyze_face(
+        AnalyzeScanFaceRequest(expectedCenter="U", image=encode_image(image)),
+        face_detector=FakeFaceDetector([[180, 180], [540, 180], [540, 540], [180, 540]]),
+    )
+
+    assert not response.ok
+    assert response.status == "face_not_found"
+    assert response.detectionMode == "rejected"
+    assert "face_detector_rejected" in response.warnings
+
+
+def test_face_detector_roi_still_requires_sticker_grid() -> None:
+    image = synthetic_face(["L", "U", "D", "R", "F", "F", "R", "U", "F"])
+
+    quad, confidence = detect_face_quad_with_detector_roi(
+        image,
+        FakeFaceDetector([[70, 70], [650, 70], [650, 650], [70, 650]]),
+    )
+
+    assert quad is not None
+    assert confidence > 0.42
+
+
+def test_tile_detector_grid_returns_quad_for_detected_stickers() -> None:
+    image = synthetic_face(["L", "U", "D", "R", "F", "F", "R", "U", "F"])
+
+    quad, confidence = detect_face_quad_with_tile_detector_grid(
+        image,
+        FakeTileDetector(),
+        expected_center="F",
+    )
+
+    assert quad is not None
+    assert confidence > 0.44
+
+
+def test_analyze_face_exposes_tile_and_grid_detections() -> None:
+    image = synthetic_face(["L", "U", "D", "R", "F", "F", "R", "U", "F"])
+
+    response = analyze_face(
+        AnalyzeScanFaceRequest(expectedCenter="F", image=encode_image(image)),
+        tile_detector=FakeTileDetector(),
+    )
+
+    assert response.ok
+    assert response.detectionMode == "tile_detector"
+    assert response.gridStatus == "ready"
+    assert response.gridConfidence > 0.44
+    assert len(response.tileDetections) == 9
+    assert len(response.gridDetections) == 9
+    assert response.gridDetections[4].symbol == "F"
+
+
+def test_analyze_face_uses_tile_grid_symbols_for_review_stickers() -> None:
+    detector_symbols = ["L", "R", "R", "F", "B", "B", "R", "F", "D"]
+    image = synthetic_face(["R"] * 9)
+
+    response = analyze_face(
+        AnalyzeScanFaceRequest(expectedCenter="B", image=encode_image(image)),
+        tile_detector=FakeTileDetector(symbols=detector_symbols),
+    )
+
+    assert response.ok
+    assert response.detectionMode == "tile_detector"
+    grid_symbols_by_index = {detection.index: detection.symbol for detection in response.gridDetections}
+    assert [sticker.symbol for sticker in response.stickers] == [grid_symbols_by_index[index] for index in range(9)]
+    assert response.stickers[4].symbol == "B"
+    bbox = response.gridDetections[0].bbox
+    assert bbox is not None
+    assert response.stickers[0].polygon[0].x == pytest.approx(bbox.x - bbox.width / 2)
+    assert response.stickers[0].polygon[0].y == pytest.approx(bbox.y - bbox.height / 2)
+    assert "detector_color_disagreement_0" in response.warnings
+
+
+def test_tile_detector_grid_keeps_wrong_center_as_sticker_evidence() -> None:
+    image = synthetic_face(["L", "U", "D", "R", "F", "F", "R", "U", "F"])
+
+    quad, confidence = detect_face_quad_with_tile_detector_grid(
+        image,
+        FakeTileDetector(center_symbol="R"),
+        expected_center="F",
+    )
+
+    assert quad is not None
+    assert confidence > 0.44
+
+
+def test_wrong_tile_center_reports_mismatch_without_contour_fallback() -> None:
+    image = synthetic_face(["L", "U", "D", "R", "F", "F", "R", "U", "F"])
+
+    response = analyze_face(
+        AnalyzeScanFaceRequest(expectedCenter="F", image=encode_image(image)),
+        tile_detector=FakeTileDetector(center_symbol="R"),
+    )
+
+    assert not response.ok
+    assert response.status == "center_mismatch"
+    assert response.detectionMode == "tile_detector"
+    assert response.detectedCenter == "R"
+    assert response.gridStatus == "ready"
+    assert len(response.gridDetections) == 9
+
+
 def synthetic_face(
     symbols: list[str],
     color_overrides: dict[int, tuple[int, int, int]] | None = None,
@@ -186,3 +293,43 @@ class FakeCnn:
             {"U": 0.01, "R": 0.01, "F": 0.01, "D": 0.01, "L": 0.01, "B": 0.95}
             for _index in range(9)
         ]
+
+
+class FakeFaceDetector:
+    model_configured = True
+    available = True
+
+    def __init__(self, quad: list[list[float]]) -> None:
+        self.quad = np.array(quad, dtype=np.float32)
+
+    def detect(self, _image_bgr: np.ndarray) -> FaceDetection:
+        return FaceDetection(quad=self.quad, confidence=0.82)
+
+
+class FakeTileDetector:
+    model_configured = True
+    available = True
+
+    def __init__(self, center_symbol: str = "F", symbols: list[str] | None = None) -> None:
+        self.center_symbol = center_symbol
+        self.symbols = symbols
+
+    def detect(self, _image_bgr: np.ndarray) -> list[TileDetection]:
+        detections = []
+        symbols = self.symbols or ["L", "U", "D", "R", self.center_symbol, "F", "R", "U", "F"]
+        for index, symbol in enumerate(symbols):
+            row = index // 3
+            column = index % 3
+            detections.append(
+                TileDetection(
+                    symbol=symbol,
+                    confidence=0.9,
+                    bbox=(
+                        (155 + column * 160) / 720,
+                        (155 + row * 160) / 720,
+                        110 / 720,
+                        110 / 720,
+                    ),
+                )
+            )
+        return detections

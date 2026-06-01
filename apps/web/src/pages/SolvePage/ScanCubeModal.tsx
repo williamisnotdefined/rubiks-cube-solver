@@ -36,6 +36,7 @@ import {
   validateScanFaceDraft,
   type ScanFaceDraft,
   type ScanFaceDrafts,
+  type ScanAutoCaptureMetadata,
   type ScanCaptureMetadata,
   type ScanFaces,
   type ScanSticker,
@@ -56,6 +57,7 @@ import {
   hasExportableScanSession,
   scanExportEnabled,
 } from './scanExport'
+import type { TemporalFaceConsensus } from './scanTemporalConsensus'
 
 type ScanCubeModalProps = {
   apiReady: boolean
@@ -68,6 +70,8 @@ type ScanCubeModalProps = {
   visionCnnReason?: string
   visionFaceDetectorAvailable?: boolean
   visionFaceDetectorReason?: string
+  visionTileDetectorAvailable?: boolean
+  visionTileDetectorReason?: string
   visionOk?: boolean
   onClose: () => void
   onSolve: (faces: ScanFacesPayload) => Promise<SolveResult | undefined>
@@ -95,6 +99,8 @@ export function ScanCubeModal({
   visionCnnReason,
   visionFaceDetectorAvailable,
   visionFaceDetectorReason,
+  visionTileDetectorAvailable,
+  visionTileDetectorReason,
   visionOk,
   onClose,
   onSolve,
@@ -172,6 +178,7 @@ export function ScanCubeModal({
     shouldAutoCapture,
     stableFrameCount: liveStableFrameCount,
     status: liveStatus,
+    temporalConsensus: liveTemporalConsensus,
   } = liveScan
   const cameraAnalysis = photoDataUrl === undefined ? liveAnalysis : scanAnalysis
   const liveDetectedAnalysis =
@@ -230,11 +237,19 @@ export function ScanCubeModal({
       return
     }
 
+    const temporalConsensusSnapshot = liveTemporalConsensus.framesSeen > 0 ? liveTemporalConsensus : undefined
     resetLiveAutoCapture()
     setCapturing(true)
     clearBackendReviewForFace(currentFace.symbol)
     setLastSessionResult(undefined)
-    setCurrentDraft({ analysis: undefined, centerOverrideConfirmed: false, lastRejectedCapture: undefined })
+    setCurrentDraft({
+      analysis: undefined,
+      autoCapture: undefined,
+      captureMode: undefined,
+      centerOverrideConfirmed: false,
+      lastRejectedCapture: undefined,
+      temporalConsensus: undefined,
+    })
     setMessage(source === 'auto' ? t('scan.messages.autoCapturing') : t('scan.messages.capturingPhoto'))
 
     try {
@@ -253,11 +268,15 @@ export function ScanCubeModal({
         knownCenters,
       })
       setCurrentDraft({ analysis })
+      const captureMode = source
+      const autoCapture = source === 'auto' ? scanAutoCaptureMetadata(temporalConsensusSnapshot, analysis) : undefined
 
       if (analysis.stickers.length === 0 || isGuideFallbackAnalysis(analysis)) {
         const rejectedReason = isGuideFallbackAnalysis(analysis) ? 'guide_fallback' : 'empty_stickers'
         setCurrentDraft({
+          autoCapture,
           capture: undefined,
+          captureMode,
           centerOverrideConfirmed: false,
           confirmed: false,
           lastRejectedCapture: {
@@ -268,6 +287,7 @@ export function ScanCubeModal({
           },
           photoDataUrl: undefined,
           stickers: createEmptyScanStickers(currentFace.symbol),
+          temporalConsensus: temporalConsensusSnapshot,
         })
         setMessage(
           isGuideFallbackAnalysis(analysis)
@@ -279,12 +299,15 @@ export function ScanCubeModal({
 
       const nextStickers = scanStickersFromAnalysis(analysis, currentFace.symbol)
       setCurrentDraft({
+        autoCapture,
         capture: captureMetadata,
+        captureMode,
         centerOverrideConfirmed: false,
         confirmed: false,
         lastRejectedCapture: undefined,
         photoDataUrl: capture.photoDataUrl,
         stickers: nextStickers,
+        temporalConsensus: temporalConsensusSnapshot,
       })
       const uncertain = lowConfidenceCount(nextStickers)
       const centerMessage = analysis.centerMismatch ? centerMismatchMessage(t, analysis) : undefined
@@ -303,10 +326,13 @@ export function ScanCubeModal({
     } catch (error) {
       setCurrentDraft({
         analysis: undefined,
+        autoCapture: undefined,
         capture: undefined,
+        captureMode: undefined,
         confirmed: false,
         photoDataUrl: undefined,
         stickers: createEmptyScanStickers(currentFace.symbol),
+        temporalConsensus: undefined,
       })
       setMessage(error instanceof Error ? error.message : t('scan.messages.analysisFailed'))
     } finally {
@@ -576,6 +602,14 @@ export function ScanCubeModal({
               {scanCnnStatusMessage(t, visionOk, visionCnnAvailable, visionCnnReason)}
             </p>
             <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
+              {scanTileDetectorStatusMessage(
+                t,
+                visionOk,
+                visionTileDetectorAvailable,
+                visionTileDetectorReason,
+              )}
+            </p>
+            <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
               {scanFaceDetectorStatusMessage(
                 t,
                 visionOk,
@@ -631,9 +665,14 @@ export function ScanCubeModal({
               detectionMode={cameraAnalysis?.detectionMode}
               faceQuad={liveDetectedAnalysis?.faceQuad}
               faceConfidence={cameraAnalysis?.faceConfidence}
+              gridConfidence={cameraAnalysis?.gridConfidence}
+              gridDetections={cameraAnalysis?.gridDetections}
+              gridStatus={cameraAnalysis?.gridStatus}
               photoDataUrl={photoDataUrl}
               stableFrameCount={liveStableFrameCount}
               stickerPolygons={liveDetectedAnalysis?.stickers}
+              temporalConsensus={photoDataUrl === undefined ? liveTemporalConsensus : currentDraft.temporalConsensus}
+              tileDetections={cameraAnalysis?.tileDetections}
               trackingStatus={liveStatus}
               videoRef={videoRef}
             />
@@ -991,6 +1030,25 @@ function scanFaceDetectorStatusMessage(
   })
 }
 
+function scanTileDetectorStatusMessage(
+  t: ReturnType<typeof useTranslation>['t'],
+  visionOk: boolean | undefined,
+  visionTileDetectorAvailable: boolean | undefined,
+  visionTileDetectorReason: string | undefined,
+): string {
+  if (visionOk === false) {
+    return t('scan.modal.visionStatusUnavailable')
+  }
+
+  if (visionTileDetectorAvailable === true) {
+    return t('scan.modal.tileDetectorActive')
+  }
+
+  return t('scan.modal.tileDetectorFallbackActive', {
+    reason: visionTileDetectorReason ?? t('scan.modal.tileDetectorReasonUnknown'),
+  })
+}
+
 function nextUnconfirmedFaceIndex(
   drafts: ScanFaceDrafts,
   currentFaceIndex: number,
@@ -1013,6 +1071,23 @@ function scanCaptureMetadata(capture: CapturedScanImage): ScanCaptureMetadata {
     height: capture.height,
     source: capture.source,
     width: capture.width,
+  }
+}
+
+function scanAutoCaptureMetadata(
+  consensus: TemporalFaceConsensus | undefined,
+  analysis: AnalyzeScanFaceResponse,
+): ScanAutoCaptureMetadata {
+  return {
+    bboxStability: consensus?.bboxStability,
+    detectionMode: analysis.detectionMode,
+    faceConfidence: analysis.faceConfidence,
+    gridConfidence: analysis.gridConfidence,
+    gridDetections: analysis.gridDetections?.length ?? 0,
+    gridStatus: analysis.gridStatus,
+    stableFrameCount: consensus?.framesUsed ?? 0,
+    temporalAgreement: consensus?.temporalAgreement,
+    triggeredAt: new Date().toISOString(),
   }
 }
 

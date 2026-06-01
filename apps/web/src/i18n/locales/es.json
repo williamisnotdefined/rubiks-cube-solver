@@ -26,6 +26,7 @@
     "camera": {
       "capturedFaceAlt": "Cara del cubo capturada",
       "errorManualFallback": "{{message}} Aún puedes completar la cuadrícula manualmente.",
+      "gridConfidence": "cuadrícula {{confidence}}%",
       "holdSteady": "mantén firme {{count}}/{{target}}",
       "lookingForCube": "buscando el cubo",
       "modes": {
@@ -33,10 +34,17 @@
         "face_detector": "detector de cara",
         "guide_fallback": "guía",
         "rejected": "rechazado",
-        "sticker_grid": "cuadrícula de stickers"
+        "sticker_grid": "cuadrícula de stickers",
+        "tile_detector": "detector de stickers"
       },
       "opening": "Abriendo cámara",
       "statusWithConfidence": "{{mode}} {{confidence}}%",
+      "stickersFound": "{{count}}/9 stickers encontrados",
+      "stickersReady": "{{count}}/9 stickers listos",
+      "temporalCollecting": "consenso {{count}}/{{target}}",
+      "temporalColorDisagreement": "color inestable {{count}} frames",
+      "temporalReady": "consenso {{agreement}}% {{count}} frames",
+      "temporalUnstable": "geometría inestable {{count}} frames",
       "tracking": "rastreando {{count}}/{{target}}"
     },
     "carousel": {
@@ -106,10 +114,13 @@
       "cameraDenied": "Se denegó el permiso de la cámara o no se encontró ninguna cámara.",
       "cameraUnavailable": "El acceso a la cámara no está disponible en este navegador.",
       "centerMismatch": "Se detectó otro color central. Gira a la cara esperada.",
+      "detectingStickers": "Detectando stickers: {{count}}/9 encontrados.",
       "faceDetected": "Cara detectada. Mantén firme.",
+      "gridReady": "{{count}}/9 stickers fijados. Mantén firme.",
       "imageBlurry": "La imagen está borrosa. Mantén firme el cubo.",
       "looking": "Buscando la cara del cubo.",
       "lookingKeepVisible": "Buscando la cara del cubo. Mantén todo el cubo visible.",
+      "partialGrid": "{{count}}/9 stickers encontrados. Muestra una cara plana.",
       "scanFailed": "Falló el análisis en vivo.",
       "stableCapturing": "La cara está estable. Capturando foto...",
       "tooBright": "Hay demasiado brillo. Reduce reflejos fuertes.",
@@ -173,6 +184,9 @@
       "faceDetectorReasonUnknown": "no configurado",
       "faceProgress": "Cara {{current}} de {{total}}",
       "keepAtTop": "Mantén arriba: {{color}}",
+      "tileDetectorActive": "Detector de stickers activo",
+      "tileDetectorFallbackActive": "Respaldo del detector de stickers: {{reason}}",
+      "tileDetectorReasonUnknown": "no configurado",
       "title": "Escanear cubo",
       "visionStatusUnavailable": "Estado de visión no disponible"
     },
@@ -190,6 +204,8 @@
     },
     "warnings": {
       "face_detection_rejected": "La detección de la cara fue rechazada. Mantén la cara plana y centrada.",
+      "face_detector_rejected": "Se rechazó la propuesta del detector. Mantén una cara del cubo plana y visible.",
+      "tile_detector_rejected": "Se rechazó la propuesta del detector de stickers. Mantén la cara del cubo plana y visible.",
       "image_blurry": "La imagen está borrosa. Mantén firme el cubo.",
       "image_too_bright": "Hay demasiado brillo. Reduce reflejos fuertes.",
       "image_too_dark": "Está demasiado oscuro. Agrega más luz.",

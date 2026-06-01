@@ -61,6 +61,8 @@ describe('useLiveScanPreview', () => {
     expect(result.current.shouldAutoCapture).toBe(true)
     expect(result.current.status).toBe('holding_steady')
     expect(result.current.stableFrameCount).toBe(6)
+    expect(result.current.temporalConsensus.status).toBe('ready')
+    expect(result.current.temporalConsensus.framesUsed).toBe(6)
     expect(apiMocks.analyzeMutateAsync).toHaveBeenCalledTimes(6)
   })
 
@@ -116,6 +118,29 @@ describe('useLiveScanPreview', () => {
     expect(result.current.message).toBe('Looking for cube face. Keep the cube fully visible.')
   })
 
+  it('does not auto-capture contour-only analysis', async () => {
+    apiMocks.analyzeMutateAsync.mockResolvedValue(stableAnalysis({ detectionMode: 'contour' }))
+    const videoRef = { current: document.createElement('video') }
+
+    const { result } = renderHook(() =>
+      useLiveScanPreview({
+        enabled: true,
+        expectedCenter: 'U',
+        knownCenters: {},
+        videoRef,
+      }),
+    )
+
+    for (let frame = 0; frame < 8; frame += 1) {
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(320)
+      })
+    }
+
+    expect(result.current.shouldAutoCapture).toBe(false)
+    expect(result.current.stableFrameCount).toBe(0)
+  })
+
   it('measures normalized quad movement', () => {
     expect(
       averageQuadMovement(
@@ -138,9 +163,11 @@ describe('useLiveScanPreview', () => {
 
 function stableAnalysis({
   centerMismatch = false,
-  detectionMode = 'contour',
+  detectionMode = 'tile_detector',
   faceConfidence = 0.9,
 } = {}): AnalyzeScanFaceResponse {
+  const gridDetections = detectionMode === 'tile_detector' ? stableGridDetections() : []
+
   return {
     centerMismatch,
     confidence: 1,
@@ -155,13 +182,49 @@ function stableAnalysis({
       { x: 0.9, y: 0.9 },
       { x: 0.1, y: 0.9 },
     ],
+    gridConfidence: detectionMode === 'tile_detector' ? 0.8 : 0,
+    gridDetections,
+    gridStatus: detectionMode === 'tile_detector' ? 'ready' : 'not_found',
     imageSize: { width: 480, height: 480 },
     ok: !centerMismatch,
     qualityWarnings: [],
     status: centerMismatch ? 'center_mismatch' : 'detected',
-    stickers: [],
+    stickers: Array.from({ length: 9 }, (_, index) => ({
+      alternatives: [],
+      confidence: 0.92,
+      index,
+      polygon: [],
+      rgb: { b: 40, g: 160, r: 40 },
+      symbol: index === 4 ? 'U' : 'F',
+    })),
+    tileDetections: gridDetections.map((detection) => ({
+      bbox: detection.bbox!,
+      confidence: detection.confidence,
+      symbol: detection.symbol!,
+    })),
     warnings: [],
   }
+}
+
+function stableGridDetections(): NonNullable<AnalyzeScanFaceResponse['gridDetections']> {
+  return Array.from({ length: 9 }, (_, index) => {
+    const row = Math.floor(index / 3)
+    const column = index % 3
+
+    return {
+      bbox: {
+        height: 0.18,
+        width: 0.18,
+        x: 0.25 + column * 0.25,
+        y: 0.25 + row * 0.25,
+      },
+      column,
+      confidence: 0.9,
+      index,
+      row,
+      symbol: index === 4 ? 'U' : 'F',
+    }
+  })
 }
 
 function capturedPreviewImage(): CapturedScanImage {

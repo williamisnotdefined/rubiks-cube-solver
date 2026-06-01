@@ -17,6 +17,8 @@ export type HealthResponse = {
   visionCnnReason?: string
   visionFaceDetectorAvailable?: boolean
   visionFaceDetectorReason?: string
+  visionTileDetectorAvailable?: boolean
+  visionTileDetectorReason?: string
 }
 
 export type SolveLimits = {

@@ -5,6 +5,10 @@ opencv-python-headless>=4.10
 torch>=2.4
 onnx>=1.16
 onnxscript>=0.5
+huggingface_hub>=0.24
+
+# Optional local training/export for the sticker detector:
+# ultralytics>=8.3
 
 # Optional for loading exported models in the Vision runtime:
 # onnxruntime>=1.18

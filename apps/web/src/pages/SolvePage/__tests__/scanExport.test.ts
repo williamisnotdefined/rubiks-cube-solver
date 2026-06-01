@@ -65,6 +65,41 @@ describe('scan export helpers', () => {
     })
   })
 
+  it('exports optional temporal consensus and auto-capture metadata', () => {
+    const drafts = withCapturedFace(createInitialScanFaceDrafts())
+    drafts.F.captureMode = 'auto'
+    drafts.F.autoCapture = {
+      detectionMode: 'tile_detector',
+      gridDetections: 9,
+      stableFrameCount: 6,
+      temporalAgreement: 0.92,
+      triggeredAt: '2026-01-02T03:04:05.000Z',
+    }
+    drafts.F.temporalConsensus = {
+      bboxStability: 0.88,
+      faceConfidence: 0.8,
+      framesRejected: 1,
+      framesSeen: 7,
+      framesUsed: 6,
+      gridConfidence: 0.78,
+      rejectReasons: [],
+      status: 'ready',
+      stickers: [],
+      temporalAgreement: 0.92,
+    }
+
+    const exportData = buildScanSessionExport({
+      drafts,
+      now: new Date('2026-01-02T03:04:05.000Z'),
+    })
+
+    expect(exportData.faces.find((face) => face.symbol === 'F')).toMatchObject({
+      autoCapture: expect.objectContaining({ stableFrameCount: 6, temporalAgreement: 0.92 }),
+      captureMode: 'auto',
+      temporalConsensus: expect.objectContaining({ framesUsed: 6, status: 'ready' }),
+    })
+  })
+
   it('requires at least one captured photo before export', () => {
     const drafts = createInitialScanFaceDrafts()
 

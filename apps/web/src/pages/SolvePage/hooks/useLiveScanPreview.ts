@@ -3,13 +3,23 @@ import { useTranslation } from 'react-i18next'
 import {
   useAnalyzeScanFace,
   type AnalyzeScanFaceResponse,
+  type ScanDetectionBox,
   type RgbColor,
   type ScanAnalysisPoint,
 } from '@api/scan'
 import type { ScanFaceSymbol } from '@api/solver/types'
 import { captureScanPreviewImage } from '../scanCapture'
+import { useTemporalScanConsensus } from './useTemporalScanConsensus'
+import type { TemporalFaceConsensus } from '../scanTemporalConsensus'
 
-export type LiveScanPreviewStatus = 'idle' | 'searching' | 'tracking' | 'holding_steady' | 'error'
+export type LiveScanPreviewStatus =
+  | 'idle'
+  | 'searching'
+  | 'detecting_stickers'
+  | 'partial_grid'
+  | 'tracking'
+  | 'holding_steady'
+  | 'error'
 
 type UseLiveScanPreviewOptions = {
   enabled: boolean
@@ -25,15 +35,19 @@ type UseLiveScanPreviewResult = {
   shouldAutoCapture: boolean
   stableFrameCount: number
   status: LiveScanPreviewStatus
+  temporalConsensus: TemporalFaceConsensus
 }
 
 const previewIntervalMs = 320
 const minFaceConfidence = 0.5
 const goodFaceConfidence = 0.72
+const minTileGridConfidence = 0.62
+const minTileGridDetections = 8
 const stableFrameTarget = 6
 const maxQuadMovement = 0.018
+const maxGridMovement = 0.025
 const criticalQualityWarnings = new Set(['image_blurry', 'image_too_dark', 'image_too_bright'])
-const autoCaptureDetectionModes = new Set(['contour', 'sticker_grid', 'face_detector'])
+const autoCaptureDetectionModes = new Set(['tile_detector', 'sticker_grid'])
 
 export function useLiveScanPreview({
   enabled,
@@ -43,6 +57,11 @@ export function useLiveScanPreview({
 }: UseLiveScanPreviewOptions): UseLiveScanPreviewResult {
   const { t } = useTranslation()
   const { mutateAsync } = useAnalyzeScanFace()
+  const {
+    recordAnalysis: recordTemporalAnalysis,
+    resetTemporalConsensus,
+    temporalConsensus,
+  } = useTemporalScanConsensus({ enabled, expectedCenter })
   const previousAnalysisRef = useRef<AnalyzeScanFaceResponse | undefined>(undefined)
   const stableFrameCountRef = useRef(0)
   const autoCaptureFiredRef = useRef(false)
@@ -66,7 +85,8 @@ export function useLiveScanPreview({
     setShouldAutoCapture(false)
     setStableFrameCount(0)
     setStatus(enabled ? 'searching' : 'idle')
-  }, [enabled, t])
+    resetTemporalConsensus()
+  }, [enabled, resetTemporalConsensus, t])
 
   useEffect(() => {
     resetTracking()
@@ -128,7 +148,7 @@ export function useLiveScanPreview({
           return
         }
 
-        updateTracking(analysis)
+        updateTracking(analysis, capture.capturedAt)
       } catch (error) {
         if (!cancelled) {
           setStatus('error')
@@ -141,15 +161,17 @@ export function useLiveScanPreview({
       }
     }
 
-    function updateTracking(analysis: AnalyzeScanFaceResponse) {
+    function updateTracking(analysis: AnalyzeScanFaceResponse, capturedAt: number) {
       const previousAnalysis = previousAnalysisRef.current
+      recordTemporalAnalysis(analysis, capturedAt)
       const canAutoCaptureCurrent = isAutoCaptureReadyAnalysis(analysis)
       const previousCanAutoCapture =
         previousAnalysis !== undefined && isAutoCaptureReadyAnalysis(previousAnalysis)
       const movement =
-        previousAnalysis === undefined ? Number.POSITIVE_INFINITY : averageQuadMovement(previousAnalysis.faceQuad, analysis.faceQuad)
+        previousAnalysis === undefined ? Number.POSITIVE_INFINITY : averageAnalysisMovement(previousAnalysis, analysis)
+      const maxMovement = (analysis.gridDetections?.length ?? 0) > 0 ? maxGridMovement : maxQuadMovement
       const nextStableFrameCount = canAutoCaptureCurrent
-        ? previousCanAutoCapture && movement <= maxQuadMovement
+        ? previousCanAutoCapture && movement <= maxMovement
           ? stableFrameCountRef.current + 1
           : 1
         : 0
@@ -182,7 +204,7 @@ export function useLiveScanPreview({
         window.clearTimeout(timeoutId)
       }
     }
-  }, [enabled, expectedCenter, knownCenters, mutateAsync, t, videoRef])
+  }, [enabled, expectedCenter, knownCenters, mutateAsync, recordTemporalAnalysis, t, videoRef])
 
   return {
     latestAnalysis,
@@ -191,6 +213,7 @@ export function useLiveScanPreview({
     shouldAutoCapture,
     stableFrameCount,
     status,
+    temporalConsensus,
   }
 }
 
@@ -204,6 +227,14 @@ function liveStatusFromAnalysis(
 
   if (isTrackableAnalysis(analysis)) {
     return 'tracking'
+  }
+
+  if ((analysis.gridDetections?.length ?? 0) >= 6 || analysis.gridStatus === 'partial') {
+    return 'partial_grid'
+  }
+
+  if ((analysis.tileDetections?.length ?? 0) > 0) {
+    return 'detecting_stickers'
   }
 
   return 'searching'
@@ -227,7 +258,23 @@ function liveScanMessage(
     return warningMessage
   }
 
+  const gridCount = analysis.gridDetections?.length ?? 0
+
+  if (status === 'partial_grid') {
+    return t('scan.live.partialGrid', { count: gridCount })
+  }
+
+  if (status === 'detecting_stickers') {
+    return t('scan.live.detectingStickers', {
+      count: Math.min(9, analysis.tileDetections?.filter((detection) => detection.symbol !== 'face').length ?? 0),
+    })
+  }
+
   if (status === 'tracking') {
+    if (gridCount > 0) {
+      return t('scan.live.gridReady', { count: gridCount })
+    }
+
     return t('scan.live.faceDetected')
   }
 
@@ -260,6 +307,14 @@ function qualityWarningMessage(
 }
 
 function isTrackableAnalysis(analysis: AnalyzeScanFaceResponse): boolean {
+  if (
+    analysis.detectionMode === 'tile_detector' &&
+    analysis.gridStatus === 'ready' &&
+    (analysis.gridDetections?.length ?? 0) >= minTileGridDetections
+  ) {
+    return true
+  }
+
   return (
     analysis.faceQuad.length === 4 &&
     analysis.faceConfidence >= minFaceConfidence &&
@@ -268,12 +323,72 @@ function isTrackableAnalysis(analysis: AnalyzeScanFaceResponse): boolean {
 }
 
 function isAutoCaptureReadyAnalysis(analysis: AnalyzeScanFaceResponse): boolean {
+  if (analysis.detectionMode === 'tile_detector') {
+    return (
+      isTrackableAnalysis(analysis) &&
+      (analysis.gridConfidence ?? 0) >= minTileGridConfidence &&
+      !analysis.centerMismatch &&
+      !hasCriticalQualityWarning(analysis)
+    )
+  }
+
   return (
     isTrackableAnalysis(analysis) &&
     analysis.faceConfidence >= goodFaceConfidence &&
     !analysis.centerMismatch &&
     !hasCriticalQualityWarning(analysis)
   )
+}
+
+function averageAnalysisMovement(
+  previousAnalysis: AnalyzeScanFaceResponse,
+  nextAnalysis: AnalyzeScanFaceResponse,
+): number {
+  const gridMovement = averageGridMovement(previousAnalysis, nextAnalysis)
+
+  if (Number.isFinite(gridMovement)) {
+    return gridMovement
+  }
+
+  return averageQuadMovement(previousAnalysis.faceQuad, nextAnalysis.faceQuad)
+}
+
+function averageGridMovement(
+  previousAnalysis: AnalyzeScanFaceResponse,
+  nextAnalysis: AnalyzeScanFaceResponse,
+): number {
+  const previousBoxes = gridBoxesByIndex(previousAnalysis)
+  const nextBoxes = gridBoxesByIndex(nextAnalysis)
+  const sharedIndexes = [...previousBoxes.keys()].filter((index) => nextBoxes.has(index))
+
+  if (sharedIndexes.length < minTileGridDetections) {
+    return Number.POSITIVE_INFINITY
+  }
+
+  const total = sharedIndexes.reduce((sum, index) => {
+    const previousBox = previousBoxes.get(index)
+    const nextBox = nextBoxes.get(index)
+
+    if (previousBox === undefined || nextBox === undefined) {
+      return sum
+    }
+
+    return sum + boxMovement(previousBox, nextBox)
+  }, 0)
+
+  return total / sharedIndexes.length
+}
+
+function gridBoxesByIndex(analysis: AnalyzeScanFaceResponse): Map<number, ScanDetectionBox> {
+  return new Map(
+    (analysis.gridDetections ?? [])
+      .filter((detection) => detection.bbox !== undefined)
+      .map((detection) => [detection.index, detection.bbox as ScanDetectionBox]),
+  )
+}
+
+function boxMovement(previousBox: ScanDetectionBox, nextBox: ScanDetectionBox): number {
+  return Math.hypot(previousBox.x - nextBox.x, previousBox.y - nextBox.y)
 }
 
 function hasCriticalQualityWarning(analysis: AnalyzeScanFaceResponse): boolean {

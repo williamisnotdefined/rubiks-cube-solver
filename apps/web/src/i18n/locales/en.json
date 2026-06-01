@@ -26,6 +26,7 @@
     "camera": {
       "capturedFaceAlt": "Captured cube face",
       "errorManualFallback": "{{message}} You can still fill the grid manually.",
+      "gridConfidence": "grid {{confidence}}%",
       "holdSteady": "hold steady {{count}}/{{target}}",
       "lookingForCube": "looking for cube",
       "modes": {
@@ -33,10 +34,17 @@
         "face_detector": "face detector",
         "guide_fallback": "guide fallback",
         "rejected": "rejected",
-        "sticker_grid": "sticker grid"
+        "sticker_grid": "sticker grid",
+        "tile_detector": "sticker detector"
       },
       "opening": "Opening camera",
       "statusWithConfidence": "{{mode}} {{confidence}}%",
+      "stickersFound": "{{count}}/9 stickers found",
+      "stickersReady": "{{count}}/9 stickers ready",
+      "temporalCollecting": "consensus {{count}}/{{target}}",
+      "temporalColorDisagreement": "color unstable {{count}} frames",
+      "temporalReady": "consensus {{agreement}}% {{count}} frames",
+      "temporalUnstable": "geometry unstable {{count}} frames",
       "tracking": "tracking {{count}}/{{target}}"
     },
     "carousel": {
@@ -106,10 +114,13 @@
       "cameraDenied": "Camera permission was denied or no camera was found.",
       "cameraUnavailable": "Camera access is not available in this browser.",
       "centerMismatch": "Detected another center color. Rotate to the expected face.",
+      "detectingStickers": "Detecting stickers: {{count}}/9 found.",
       "faceDetected": "Face detected. Hold steady.",
+      "gridReady": "{{count}}/9 stickers locked. Hold steady.",
       "imageBlurry": "Image is blurry. Hold the cube steady.",
       "looking": "Looking for cube face.",
       "lookingKeepVisible": "Looking for cube face. Keep the cube fully visible.",
+      "partialGrid": "{{count}}/9 stickers found. Show one flat face.",
       "scanFailed": "Live scan analysis failed.",
       "stableCapturing": "Cube face is stable. Capturing photo...",
       "tooBright": "Too much glare. Reduce bright reflections.",
@@ -173,6 +184,9 @@
       "faceDetectorReasonUnknown": "not configured",
       "faceProgress": "Face {{current}} of {{total}}",
       "keepAtTop": "Keep at top: {{color}}",
+      "tileDetectorActive": "Sticker detector active",
+      "tileDetectorFallbackActive": "Sticker detector fallback: {{reason}}",
+      "tileDetectorReasonUnknown": "not configured",
       "title": "Scan cube",
       "visionStatusUnavailable": "Vision status unavailable"
     },
@@ -190,6 +204,8 @@
     },
     "warnings": {
       "face_detection_rejected": "Face detection was rejected. Keep the face flat and centered.",
+      "face_detector_rejected": "Face detector proposal was rejected. Keep one cube face flat and visible.",
+      "tile_detector_rejected": "Sticker detector proposal was rejected. Keep the cube face flat and visible.",
       "image_blurry": "Image is blurry. Hold the cube steady.",
       "image_too_bright": "Too much glare. Reduce bright reflections.",
       "image_too_dark": "Too dark. Add more light.",

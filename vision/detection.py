@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import binascii
 import math
+from dataclasses import dataclass
 
 import cv2
 import numpy as np
@@ -15,18 +16,24 @@ from .color import (
     neutral_white_likelihood,
     normalize_face_lighting,
     sample_sticker_rgb,
+    trimmed_patch_rgb,
 )
 from .cnn import VisionCnn, get_default_cnn
 from .face_detector import VisionFaceDetector, get_default_face_detector
+from .tile_detector import TileDetection, VisionTileDetector, get_default_tile_detector
 from .schemas import (
     AnalyzeScanFaceRequest,
     AnalyzeScanFaceResponse,
     AnalyzedSticker,
     ColorProbabilities,
+    DetectionBox,
     ImageSize,
     ImageQuality,
     Point,
     RgbColor,
+    ScanColorAlternative,
+    ScanGridDetection,
+    ScanTileDetection,
     StickerQuality,
 )
 
@@ -39,16 +46,44 @@ CENTER_MISMATCH_WITHOUT_REFERENCE_CONFIDENCE = 0.45
 LOW_CONFIDENCE = 0.3
 LOW_FACE_CONFIDENCE = 0.55
 MIN_CONTOUR_FACE_CONFIDENCE = 0.34
+MAX_CONTOUR_FACE_AREA_RATIO = 0.58
+MIN_CONTOUR_GRID_CONFIDENCE = 0.46
 MIN_STICKER_GRID_CANDIDATES = 5
 MIN_STICKER_GRID_CONFIDENCE = 0.56
+MIN_FACE_DETECTOR_ROI_GRID_CONFIDENCE = 0.42
+MIN_TILE_DETECTOR_GRID_CONFIDENCE = 0.44
+MIN_TILE_DETECTOR_GRID_CELLS = 6
 MIN_FALLBACK_GRID_CONFIDENCE = 0.36
 GUIDE_FALLBACK_MAX_CONFIDENCE = 0.62
+
+
+TileCandidate = tuple[np.ndarray, float, float, str, float, tuple[float, float, float, float]]
+
+
+@dataclass(frozen=True)
+class TileGridDetection:
+    index: int
+    row: int
+    column: int
+    symbol: str
+    confidence: float
+    bbox: tuple[float, float, float, float]
+
+
+@dataclass(frozen=True)
+class TileGridAnalysis:
+    detections: list[TileDetection]
+    grid_detections: list[TileGridDetection]
+    quad: np.ndarray | None
+    confidence: float
+    status: str
 
 
 def analyze_face(
     request: AnalyzeScanFaceRequest,
     cnn: VisionCnn | None = None,
     face_detector: VisionFaceDetector | None = None,
+    tile_detector: VisionTileDetector | None = None,
 ) -> AnalyzeScanFaceResponse:
     if request.expectedCenter not in SCAN_SYMBOLS:
         return failure("invalid_image", "expectedCenter must be one of U, R, F, D, L, B")
@@ -60,7 +95,15 @@ def analyze_face(
     image = resize_for_processing(image)
     height, width = image.shape[:2]
     image_quality, quality_warnings = image_quality_metrics(image)
-    quad, detection_warnings, detection_mode, face_confidence = detect_face_quad(image, face_detector)
+    tile_detector = tile_detector or get_default_tile_detector()
+    tile_grid_analysis = analyze_tile_detector_grid(image, tile_detector, request.expectedCenter)
+    quad, detection_warnings, detection_mode, face_confidence = detect_face_quad(
+        image,
+        face_detector,
+        tile_detector,
+        request.expectedCenter,
+        tile_grid_analysis,
+    )
     if quad is None:
         warnings = quality_warnings + detection_warnings
         return AnalyzeScanFaceResponse(
@@ -72,6 +115,10 @@ def analyze_face(
             detectionMode=detection_mode,
             imageSize=ImageSize(width=width, height=height),
             imageQuality=image_quality,
+            tileDetections=tile_detection_responses(tile_grid_analysis.detections),
+            gridDetections=grid_detection_responses(tile_grid_analysis.grid_detections),
+            gridConfidence=tile_grid_analysis.confidence,
+            gridStatus=tile_grid_analysis.status,
             qualityWarnings=warnings,
             warnings=warnings,
         )
@@ -81,16 +128,20 @@ def analyze_face(
     warped_normalized = normalize_face_lighting(warped_for_color)
     stickers = []
     warnings = quality_warnings + detection_warnings
+    grid_detections_by_index = {detection.index: detection for detection in tile_grid_analysis.grid_detections}
+    center_grid_detection = grid_detections_by_index.get(4)
     center_rgb = sample_sticker_rgb(warped_for_color, 1, 1)
-    center_classified = classify_rgb(center_rgb, request.knownCenters)
+    color_center_classified = classify_rgb(center_rgb, request.knownCenters)
+    center_symbol = center_grid_detection.symbol if center_grid_detection is not None else color_center_classified.symbol
+    center_confidence = center_grid_detection.confidence if center_grid_detection is not None else color_center_classified.confidence
     center_mismatch_confidence = (
         CENTER_MISMATCH_CONFIDENCE
         if request.expectedCenter in request.knownCenters
         else CENTER_MISMATCH_WITHOUT_REFERENCE_CONFIDENCE
     )
     center_mismatch = (
-        center_classified.symbol != request.expectedCenter
-        and center_classified.confidence >= center_mismatch_confidence
+        center_symbol != request.expectedCenter
+        and center_confidence >= center_mismatch_confidence
         and not expected_center_still_plausible(center_rgb, request.expectedCenter)
     )
     effective_known_centers = dict(request.knownCenters)
@@ -107,7 +158,8 @@ def analyze_face(
     for index in range(9):
         row = index // 3
         column = index % 3
-        rgb = sample_sticker_rgb(warped_for_color, row, column)
+        grid_detection = grid_detections_by_index.get(index)
+        rgb = sample_detection_bbox_rgb(image, grid_detection.bbox) if grid_detection is not None else sample_sticker_rgb(warped_for_color, row, column)
         estimated = estimate_color_probabilities(rgb, effective_known_centers)
         if estimated.margin < 0.08:
             normalized_rgb = sample_sticker_rgb(warped_normalized, row, column)
@@ -115,23 +167,35 @@ def analyze_face(
             if normalized_estimated.margin > estimated.margin:
                 rgb = normalized_rgb
                 estimated = normalized_estimated
+        color_estimated = estimated
+        if grid_detection is not None:
+            if grid_detection.symbol != color_estimated.symbol:
+                warnings.append(f"detector_color_disagreement_{index}")
+            estimated = estimated_color_from_probabilities(
+                weighted_combined_probabilities(
+                    estimated.probabilities,
+                    probabilities_from_symbol(grid_detection.symbol, grid_detection.confidence),
+                    0.42,
+                )
+            )
         if cnn_probabilities is not None and index < len(cnn_probabilities):
             estimated = estimated_color_from_probabilities(
                 combined_probabilities(estimated.probabilities, cnn_probabilities[index])
             )
-        sticker_confidence = min(estimated.confidence, face_confidence)
+        sticker_symbol = grid_detection.symbol if grid_detection is not None else estimated.symbol
+        sticker_confidence = min(max(grid_detection.confidence, estimated.confidence) if grid_detection is not None else estimated.confidence, face_confidence)
         if index != 4 and sticker_confidence < LOW_CONFIDENCE:
             warnings.append(f"low_confidence_sticker_{index}")
         stickers.append(
             AnalyzedSticker(
                 index=index,
-                symbol=request.expectedCenter if index == 4 else estimated.symbol,
+                symbol=sticker_symbol,
                 confidence=1.0 if index == 4 else sticker_confidence,
                 rgb=rgb,
-                polygon=sticker_polygon(ordered_quad, row, column, width, height),
-                alternatives=estimated.alternatives,
-                probabilities=ColorProbabilities(**estimated.probabilities),
-                quality=sticker_quality_metrics(warped_for_color, row, column, estimated.margin),
+                polygon=(bbox_polygon(grid_detection.bbox) if grid_detection is not None else sticker_polygon(ordered_quad, row, column, width, height)),
+                alternatives=sticker_alternatives(sticker_symbol, estimated, grid_detection),
+                probabilities=ColorProbabilities(**probabilities_with_primary_symbol(estimated.probabilities, sticker_symbol, sticker_confidence)),
+                quality=(sticker_bbox_quality_metrics(image, grid_detection.bbox, estimated.margin) if grid_detection is not None else sticker_quality_metrics(warped_for_color, row, column, estimated.margin)),
             )
         )
 
@@ -153,16 +217,20 @@ def analyze_face(
             else None
         ),
         centerMismatch=center_mismatch,
-        detectedCenter=center_classified.symbol,
+        detectedCenter=center_symbol,
         expectedCenter=request.expectedCenter,
-        confidence=center_classified.confidence,
-        detectedCenterConfidence=center_classified.confidence,
+        confidence=center_confidence,
+        detectedCenterConfidence=center_confidence,
         faceConfidence=face_confidence,
         detectionMode=detection_mode,
         imageSize=ImageSize(width=width, height=height),
         imageQuality=image_quality,
         faceQuad=normalize_polygon(ordered_quad, width, height),
         stickers=stickers,
+        tileDetections=tile_detection_responses(tile_grid_analysis.detections),
+        gridDetections=grid_detection_responses(tile_grid_analysis.grid_detections),
+        gridConfidence=tile_grid_analysis.confidence,
+        gridStatus=tile_grid_analysis.status,
         qualityWarnings=warnings,
         warnings=warnings,
     )
@@ -172,10 +240,25 @@ def combined_probabilities(
     color_probabilities: dict[str, float],
     cnn_probabilities: dict[str, float],
 ) -> dict[str, float]:
+    return weighted_combined_probabilities(color_probabilities, cnn_probabilities, 0.55)
+
+
+def weighted_combined_probabilities(
+    left_probabilities: dict[str, float],
+    right_probabilities: dict[str, float],
+    left_weight: float,
+) -> dict[str, float]:
+    right_weight = 1.0 - left_weight
     return {
-        symbol: color_probabilities.get(symbol, 0.0) * 0.55 + cnn_probabilities.get(symbol, 0.0) * 0.45
+        symbol: left_probabilities.get(symbol, 0.0) * left_weight + right_probabilities.get(symbol, 0.0) * right_weight
         for symbol in SCAN_SYMBOLS
     }
+
+
+def probabilities_from_symbol(symbol: str, confidence: float) -> dict[str, float]:
+    clipped_confidence = clip01(confidence)
+    remaining = (1.0 - clipped_confidence) / max(1, len(SCAN_SYMBOLS) - 1)
+    return {candidate: clipped_confidence if candidate == symbol else remaining for candidate in SCAN_SYMBOLS}
 
 
 def decode_image(image: str) -> np.ndarray | None:
@@ -209,8 +292,25 @@ def resize_for_processing(image: np.ndarray) -> np.ndarray:
 def detect_face_quad(
     image: np.ndarray,
     face_detector: VisionFaceDetector | None = None,
+    tile_detector: VisionTileDetector | None = None,
+    expected_center: str | None = None,
+    tile_grid_analysis: TileGridAnalysis | None = None,
 ) -> tuple[np.ndarray | None, list[str], str, float]:
     warnings: list[str] = []
+    tile_detector = tile_detector or get_default_tile_detector()
+    tile_grid_analysis = tile_grid_analysis or analyze_tile_detector_grid(image, tile_detector, expected_center)
+    if tile_grid_analysis.quad is not None and tile_grid_analysis.confidence >= MIN_TILE_DETECTOR_GRID_CONFIDENCE:
+        warnings.append("tile_detector_used")
+        return tile_grid_analysis.quad, warnings, "tile_detector", tile_grid_analysis.confidence
+    if tile_detector.model_configured and not tile_detector.available:
+        warnings.append("tile_detector_unavailable")
+    elif tile_detector.model_configured:
+        warnings.append("tile_detector_rejected")
+
+    sticker_quad, sticker_confidence = detect_sticker_grid_quad(image)
+    if sticker_quad is not None and sticker_confidence >= MIN_STICKER_GRID_CONFIDENCE:
+        return sticker_quad, warnings, "sticker_grid", sticker_confidence
+
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8)).apply(gray)
     blurred = cv2.GaussianBlur(clahe, (5, 5), 0)
@@ -232,27 +332,31 @@ def detect_face_quad(
             continue
 
         quad = approx.reshape(4, 2).astype(np.float32)
-        score = contour_face_confidence(image, order_points(quad), area)
-        candidates.append((score, quad))
+        ordered_quad = order_points(quad)
+        score = contour_face_confidence(image, ordered_quad, area)
+        grid_confidence = grid_evidence_confidence(image, ordered_quad)
+        candidates.append((score, quad, area / float(width * height), grid_confidence))
 
     if candidates:
         candidates.sort(key=lambda item: item[0], reverse=True)
-        score, quad = candidates[0]
-        if score >= MIN_CONTOUR_FACE_CONFIDENCE:
+        score, quad, area_ratio, grid_confidence = candidates[0]
+        if (
+            score >= MIN_CONTOUR_FACE_CONFIDENCE
+            and area_ratio <= MAX_CONTOUR_FACE_AREA_RATIO
+            and grid_confidence >= MIN_CONTOUR_GRID_CONFIDENCE
+        ):
             return quad, warnings, "contour", score
         warnings.append("weak_face_contour")
 
-    sticker_quad, sticker_confidence = detect_sticker_grid_quad(image)
-    if sticker_quad is not None and sticker_confidence >= MIN_STICKER_GRID_CONFIDENCE:
-        return sticker_quad, warnings, "sticker_grid", sticker_confidence
-
     face_detector = face_detector or get_default_face_detector()
-    face_detection = face_detector.detect(image)
-    if face_detection is not None:
+    detector_quad, detector_confidence = detect_face_quad_with_detector_roi(image, face_detector)
+    if detector_quad is not None:
         warnings.append("face_detector_used")
-        return face_detection.quad, warnings, "face_detector", face_detection.confidence
+        return detector_quad, warnings, "face_detector", detector_confidence
     if face_detector.model_configured and not face_detector.available:
         warnings.append("face_detector_unavailable")
+    elif face_detector.model_configured:
+        warnings.append("face_detector_rejected")
 
     fallback_quad = centered_fallback_quad(width, height)
     fallback_confidence = min(
@@ -265,6 +369,241 @@ def detect_face_quad(
 
     warnings.append("face_detection_rejected")
     return None, warnings, "rejected", 0.0
+
+
+def detect_face_quad_with_tile_detector_grid(
+    image: np.ndarray,
+    tile_detector: VisionTileDetector,
+    expected_center: str | None = None,
+) -> tuple[np.ndarray | None, float]:
+    analysis = analyze_tile_detector_grid(image, tile_detector, expected_center)
+    return analysis.quad, analysis.confidence
+
+
+def analyze_tile_detector_grid(
+    image: np.ndarray,
+    tile_detector: VisionTileDetector,
+    expected_center: str | None = None,
+) -> TileGridAnalysis:
+    detections = [detection for detection in tile_detector.detect(image) if detection.symbol != "face"]
+    if len(detections) < MIN_STICKER_GRID_CANDIDATES:
+        return TileGridAnalysis(detections=detections, grid_detections=[], quad=None, confidence=0.0, status="not_found")
+
+    candidates = tile_detections_to_candidates(detections, image.shape[1], image.shape[0])
+    best_quad: np.ndarray | None = None
+    best_confidence = 0.0
+    best_grid_detections: list[TileGridDetection] = []
+    best_status = "not_found"
+    for cluster in tile_detection_candidate_clusters(candidates):
+        quad, confidence, grid_detections, status = tile_detection_grid_candidate_quad(image, cluster, expected_center)
+        if quad is not None and confidence > best_confidence:
+            best_quad = quad
+            best_confidence = confidence
+            best_grid_detections = grid_detections
+            best_status = status
+
+    if best_quad is None or best_confidence < MIN_TILE_DETECTOR_GRID_CONFIDENCE:
+        return TileGridAnalysis(
+            detections=detections,
+            grid_detections=best_grid_detections,
+            quad=None,
+            confidence=best_confidence,
+            status=best_status if best_grid_detections else "not_found",
+        )
+
+    return TileGridAnalysis(
+        detections=detections,
+        grid_detections=best_grid_detections,
+        quad=best_quad,
+        confidence=best_confidence,
+        status=best_status,
+    )
+
+
+def tile_detections_to_candidates(
+    detections: list[TileDetection],
+    width: int,
+    height: int,
+) -> list[TileCandidate]:
+    candidates = []
+    for detection in detections:
+        x, y, bbox_width, bbox_height = detection.bbox
+        center = np.array([x * width, y * height], dtype=np.float32)
+        box_width = bbox_width * width
+        box_height = bbox_height * height
+        area = box_width * box_height
+        if area <= 0:
+            continue
+        candidates.append((center, float(area), float((box_width + box_height) / 2.0), detection.symbol, detection.confidence, detection.bbox))
+    return candidates
+
+
+def tile_detection_candidate_clusters(
+    candidates: list[TileCandidate],
+) -> list[list[TileCandidate]]:
+    base_candidates = [(center, area, side) for center, area, side, _symbol, _confidence, _bbox in candidates]
+    base_clusters = sticker_candidate_clusters(base_candidates)
+    clusters = []
+    for base_cluster in base_clusters:
+        cluster_indexes = []
+        for base_center, _base_area, _base_side in base_cluster:
+            for index, (center, _area, _side, _symbol, _confidence, _bbox) in enumerate(candidates):
+                if np.array_equal(base_center, center):
+                    cluster_indexes.append(index)
+                    break
+        clusters.append([candidates[index] for index in cluster_indexes])
+    return clusters
+
+
+def tile_detection_grid_candidate_quad(
+    image: np.ndarray,
+    cluster: list[TileCandidate],
+    expected_center: str | None,
+) -> tuple[np.ndarray | None, float, list[TileGridDetection], str]:
+    base_cluster = [(center, area, side) for center, area, side, _symbol, _confidence, _bbox in cluster]
+    if len(base_cluster) < MIN_STICKER_GRID_CANDIDATES:
+        return None, 0.0, [], "not_found"
+
+    centers = np.array([candidate[0] for candidate in base_cluster], dtype=np.float32)
+    axes = sticker_grid_axes(centers)
+    if axes is None:
+        return None, 0.0, [], "not_found"
+
+    mean, u_axis, v_axis = axes
+    relative = centers - mean
+    u_values = relative @ u_axis
+    v_values = relative @ v_axis
+    u_range = float(np.max(u_values) - np.min(u_values))
+    v_range = float(np.max(v_values) - np.min(v_values))
+    if u_range < 24.0 or v_range < 24.0:
+        return None, 0.0, [], "not_found"
+
+    u_norm = (u_values - np.min(u_values)) / u_range
+    v_norm = (v_values - np.min(v_values)) / v_range
+    regularity_score, unique_cells, row_count, column_count, u_indexes, v_indexes = sticker_grid_regularity(
+        u_norm,
+        v_norm,
+    )
+    if unique_cells < MIN_TILE_DETECTOR_GRID_CELLS or row_count < 2 or column_count < 2:
+        return None, 0.0, [], "not_found"
+
+    symbols = [candidate[3] for candidate in cluster]
+    confidences = [candidate[4] for candidate in cluster]
+    center_symbols = [
+        symbol
+        for symbol, u_index, v_index in zip(symbols, u_indexes, v_indexes, strict=False)
+        if int(u_index) == 1 and int(v_index) == 1
+    ]
+    quad = sticker_grid_homography_quad(centers, u_indexes, v_indexes)
+    if quad is None:
+        return None, 0.0, [], "partial"
+
+    ordered_quad = order_points(quad)
+    grid_score = grid_evidence_confidence(image, ordered_quad)
+    center_score = 1.0 if expected_center is not None and expected_center in center_symbols else 0.72
+    detection_score = float(np.mean(confidences)) if confidences else 0.0
+    cell_score = clip01(unique_cells / 9.0)
+    confidence = clip01(
+        regularity_score * 0.32
+        + grid_score * 0.18
+        + detection_score * 0.22
+        + cell_score * 0.18
+        + center_score * 0.10
+    )
+    status = "ready" if unique_cells >= 8 else "partial"
+    return ordered_quad, confidence, grid_detections_from_cluster(cluster, u_indexes, v_indexes), status
+
+
+def grid_detections_from_cluster(
+    cluster: list[TileCandidate],
+    u_indexes: np.ndarray,
+    v_indexes: np.ndarray,
+) -> list[TileGridDetection]:
+    detections_by_index: dict[int, TileGridDetection] = {}
+
+    for candidate, u_index, v_index in zip(cluster, u_indexes, v_indexes, strict=False):
+        _center, _area, _side, symbol, confidence, bbox = candidate
+        row = int(v_index)
+        column = int(u_index)
+        index = row * 3 + column
+        detection = TileGridDetection(
+            index=index,
+            row=row,
+            column=column,
+            symbol=symbol,
+            confidence=confidence,
+            bbox=bbox,
+        )
+        existing = detections_by_index.get(index)
+        if existing is None or detection.confidence > existing.confidence:
+            detections_by_index[index] = detection
+
+    return [detections_by_index[index] for index in sorted(detections_by_index)]
+
+
+def tile_detection_responses(detections: list[TileDetection]) -> list[ScanTileDetection]:
+    return [
+        ScanTileDetection(
+            symbol=detection.symbol,
+            confidence=detection.confidence,
+            bbox=detection_box_response(detection.bbox),
+        )
+        for detection in detections
+    ]
+
+
+def grid_detection_responses(detections: list[TileGridDetection]) -> list[ScanGridDetection]:
+    return [
+        ScanGridDetection(
+            index=detection.index,
+            row=detection.row,
+            column=detection.column,
+            symbol=detection.symbol,
+            confidence=detection.confidence,
+            bbox=detection_box_response(detection.bbox),
+        )
+        for detection in detections
+    ]
+
+
+def detection_box_response(bbox: tuple[float, float, float, float]) -> DetectionBox:
+    x, y, width, height = bbox
+    return DetectionBox(x=x, y=y, width=width, height=height)
+
+
+def detect_face_quad_with_detector_roi(
+    image: np.ndarray,
+    face_detector: VisionFaceDetector,
+) -> tuple[np.ndarray | None, float]:
+    face_detection = face_detector.detect(image)
+    if face_detection is None:
+        return None, 0.0
+
+    roi = crop_roi_from_quad(image, face_detection.quad)
+    if roi is None:
+        return None, 0.0
+
+    crop, offset = roi
+    quad, grid_confidence = detect_sticker_grid_quad(crop)
+    if quad is None or grid_confidence < MIN_FACE_DETECTOR_ROI_GRID_CONFIDENCE:
+        return None, 0.0
+
+    mapped_quad = quad + np.array(offset, dtype=np.float32)
+    confidence = clip01(face_detection.confidence * 0.28 + grid_confidence * 0.72)
+    return mapped_quad, confidence
+
+
+def crop_roi_from_quad(image: np.ndarray, quad: np.ndarray) -> tuple[np.ndarray, tuple[int, int]] | None:
+    height, width = image.shape[:2]
+    x0 = max(0, int(np.floor(np.min(quad[:, 0]))))
+    y0 = max(0, int(np.floor(np.min(quad[:, 1]))))
+    x1 = min(width, int(np.ceil(np.max(quad[:, 0]))))
+    y1 = min(height, int(np.ceil(np.max(quad[:, 1]))))
+
+    if x1 - x0 < 40 or y1 - y0 < 40:
+        return None
+
+    return image[y0:y1, x0:x1], (x0, y0)
 
 
 def image_quality_metrics(image: np.ndarray) -> tuple[ImageQuality, list[str]]:
@@ -314,6 +653,87 @@ def sticker_quality_metrics(warped_bgr: np.ndarray, row: int, column: int, margi
         shadowRatio=float(np.mean(value < 35)),
         margin=clip01(margin),
     )
+
+
+def sticker_bbox_quality_metrics(image: np.ndarray, bbox: tuple[float, float, float, float], margin: float) -> StickerQuality:
+    patch = crop_bbox_patch(image, bbox, padding=0.54)
+    if patch is None:
+        return StickerQuality(colorVariance=0.0, glareRatio=0.0, shadowRatio=0.0, margin=clip01(margin))
+
+    rgb = cv2.cvtColor(patch, cv2.COLOR_BGR2RGB)
+    hsv = cv2.cvtColor(patch, cv2.COLOR_BGR2HSV)
+    saturation = hsv[:, :, 1]
+    value = hsv[:, :, 2]
+    return StickerQuality(
+        colorVariance=float(np.mean(np.std(rgb.reshape(-1, 3), axis=0)) / 255.0),
+        glareRatio=float(np.mean((value > 245) & (saturation < 60))),
+        shadowRatio=float(np.mean(value < 35)),
+        margin=clip01(margin),
+    )
+
+
+def sample_detection_bbox_rgb(image: np.ndarray, bbox: tuple[float, float, float, float]) -> RgbColor:
+    patch = crop_bbox_patch(image, bbox, padding=0.36)
+    if patch is None:
+        return RgbColor(r=0, g=0, b=0)
+    return trimmed_patch_rgb(patch)
+
+
+def crop_bbox_patch(image: np.ndarray, bbox: tuple[float, float, float, float], padding: float) -> np.ndarray | None:
+    height, width = image.shape[:2]
+    x, y, bbox_width, bbox_height = bbox
+    half_width = bbox_width * width * padding
+    half_height = bbox_height * height * padding
+    center_x = x * width
+    center_y = y * height
+    x0 = max(0, int(round(center_x - half_width)))
+    y0 = max(0, int(round(center_y - half_height)))
+    x1 = min(width, int(round(center_x + half_width)))
+    y1 = min(height, int(round(center_y + half_height)))
+    if x1 <= x0 or y1 <= y0:
+        return None
+    return image[y0:y1, x0:x1]
+
+
+def bbox_polygon(bbox: tuple[float, float, float, float]) -> list[Point]:
+    x, y, width, height = bbox
+    half_width = width / 2.0
+    half_height = height / 2.0
+    return [
+        Point(x=clip01(x - half_width), y=clip01(y - half_height)),
+        Point(x=clip01(x + half_width), y=clip01(y - half_height)),
+        Point(x=clip01(x + half_width), y=clip01(y + half_height)),
+        Point(x=clip01(x - half_width), y=clip01(y + half_height)),
+    ]
+
+
+def sticker_alternatives(
+    primary_symbol: str,
+    estimated: object,
+    grid_detection: TileGridDetection | None,
+) -> list[ScanColorAlternative]:
+    alternatives: dict[str, float] = {}
+    if grid_detection is not None:
+        alternatives[grid_detection.symbol] = grid_detection.confidence
+    if hasattr(estimated, "symbol") and hasattr(estimated, "confidence"):
+        alternatives[str(estimated.symbol)] = max(alternatives.get(str(estimated.symbol), 0.0), float(estimated.confidence))
+    for alternative in getattr(estimated, "alternatives", []):
+        alternatives[alternative.symbol] = max(alternatives.get(alternative.symbol, 0.0), alternative.confidence)
+    alternatives[primary_symbol] = max(alternatives.get(primary_symbol, 0.0), 1.0 if grid_detection is None else grid_detection.confidence)
+    return [
+        ScanColorAlternative(symbol=symbol, confidence=clip01(confidence))
+        for symbol, confidence in sorted(alternatives.items(), key=lambda item: item[1], reverse=True)[:3]
+    ]
+
+
+def probabilities_with_primary_symbol(
+    probabilities: dict[str, float],
+    primary_symbol: str,
+    confidence: float,
+) -> dict[str, float]:
+    current = dict(probabilities)
+    current[primary_symbol] = max(current.get(primary_symbol, 0.0), clip01(confidence))
+    return current
 
 
 def contour_face_confidence(image: np.ndarray, quad: np.ndarray, area: float) -> float:

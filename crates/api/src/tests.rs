@@ -380,7 +380,9 @@ async fn health_route_reports_vision_cnn_status() {
                 "cnnAvailable": false,
                 "cnnReason": "cnn_model_not_configured",
                 "faceDetectorAvailable": false,
-                "faceDetectorReason": "face_detector_model_not_configured"
+                "faceDetectorReason": "face_detector_model_not_configured",
+                "tileDetectorAvailable": false,
+                "tileDetectorReason": "tile_detector_model_not_configured"
             }))
         }),
     );
@@ -419,6 +421,11 @@ async fn health_route_reports_vision_cnn_status() {
     assert_eq!(
         response["visionFaceDetectorReason"],
         "face_detector_model_not_configured"
+    );
+    assert_eq!(response["visionTileDetectorAvailable"], false);
+    assert_eq!(
+        response["visionTileDetectorReason"],
+        "tile_detector_model_not_configured"
     );
 }
 

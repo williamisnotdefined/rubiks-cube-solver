@@ -57,6 +57,8 @@ describe('solver API operations', () => {
       visionCnnReason: 'cnn_model_not_configured',
       visionFaceDetectorAvailable: false,
       visionFaceDetectorReason: 'face_detector_model_not_configured',
+      visionTileDetectorAvailable: false,
+      visionTileDetectorReason: 'tile_detector_model_not_configured',
       visionOk: true,
     }
     const fetchMock = mockApiSuccess(health)
@@ -293,6 +295,7 @@ describe('solver React Query hooks', () => {
       ok: true,
       visionCnnAvailable: true,
       visionFaceDetectorAvailable: true,
+      visionTileDetectorAvailable: true,
       visionOk: true,
     })
     const { result } = renderHookWithProviders(() => useGetHealth())
@@ -303,6 +306,7 @@ describe('solver React Query hooks', () => {
       ok: true,
       visionCnnAvailable: true,
       visionFaceDetectorAvailable: true,
+      visionTileDetectorAvailable: true,
       visionOk: true,
     })
   })

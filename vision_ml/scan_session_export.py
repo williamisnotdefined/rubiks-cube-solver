@@ -60,6 +60,9 @@ class ScanExportSticker(BaseModel):
 class ScanSessionExportFace(BaseModel):
     symbol: str
     expectedTop: str
+    captureMode: Literal["manual", "auto"] | None = None
+    autoCapture: dict[str, Any] | None = None
+    review: dict[str, Any] | None = None
     confirmed: bool = False
     centerOverrideConfirmed: bool = False
     photoDataUrl: str | None = None
@@ -69,6 +72,7 @@ class ScanSessionExportFace(BaseModel):
     stickers: list[ScanExportSticker] = Field(min_length=9, max_length=9)
     manualOverrides: dict[int, str] = Field(default_factory=dict)
     analysis: dict[str, Any] | None = None
+    temporalConsensus: dict[str, Any] | None = None
 
     @field_validator("symbol", "expectedTop")
     @classmethod
@@ -128,6 +132,9 @@ class ScanSessionExport(BaseModel):
     complete: bool = False
     faces: list[ScanSessionExportFace] = Field(min_length=1, max_length=6)
     sessionResult: dict[str, Any] | None = None
+    originalSessionResult: dict[str, Any] | None = None
+    replayResult: dict[str, Any] | None = None
+    replayMetadata: dict[str, Any] | None = None
     label: ScanSessionExportLabel | None = None
 
     @model_validator(mode="after")

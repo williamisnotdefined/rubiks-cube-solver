@@ -20,6 +20,13 @@ pub struct HealthResponse {
         skip_serializing_if = "Option::is_none"
     )]
     pub vision_face_detector_reason: Option<String>,
+    #[serde(rename = "visionTileDetectorAvailable")]
+    pub vision_tile_detector_available: bool,
+    #[serde(
+        rename = "visionTileDetectorReason",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub vision_tile_detector_reason: Option<String>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
@@ -255,6 +262,33 @@ pub struct PointResponse {
     pub y: f64,
 }
 
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct DetectionBoxResponse {
+    pub x: f64,
+    pub y: f64,
+    pub width: f64,
+    pub height: f64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct ScanTileDetectionResponse {
+    pub symbol: String,
+    pub confidence: f64,
+    pub bbox: DetectionBoxResponse,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct ScanGridDetectionResponse {
+    pub index: usize,
+    pub row: usize,
+    pub column: usize,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub symbol: Option<String>,
+    pub confidence: f64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bbox: Option<DetectionBoxResponse>,
+}
+
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct ImageSizeResponse {
     pub width: usize,
@@ -349,6 +383,14 @@ pub struct AnalyzeScanFaceResponse {
     #[serde(rename = "faceQuad")]
     pub face_quad: Vec<PointResponse>,
     pub stickers: Vec<AnalyzedStickerResponse>,
+    #[serde(rename = "tileDetections", default)]
+    pub tile_detections: Vec<ScanTileDetectionResponse>,
+    #[serde(rename = "gridDetections", default)]
+    pub grid_detections: Vec<ScanGridDetectionResponse>,
+    #[serde(rename = "gridConfidence", default)]
+    pub grid_confidence: f64,
+    #[serde(rename = "gridStatus", default)]
+    pub grid_status: String,
     #[serde(rename = "qualityWarnings", default)]
     pub quality_warnings: Vec<String>,
     pub warnings: Vec<String>,

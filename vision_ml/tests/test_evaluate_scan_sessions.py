@@ -21,24 +21,109 @@ def test_evaluates_wrong_accepted_session_with_labels() -> None:
     assert report["correctStickers"] == 53
     assert report["confusionMatrix"]["R"]["F"] == 1
     assert report["qualityReasons"] == {"low_sticker_confidence": 1}
+    assert report["hardCases"][0]["reason"] == "wrong_accept"
+    assert report["hardCases"][1]["reason"] == "wrong_sticker"
+
+
+def test_evaluator_prefers_replay_result_candidate_facelets() -> None:
+    data = scan_export(wrong_label=False)
+    data["sessionResult"] = {"ok": False, "status": "needs_rescan_face"}
+    data["replayResult"] = {
+        "ok": True,
+        "status": "accepted",
+        "inference": {"candidateFacelets": "R" + canonical_label_facelets()[1:]},
+    }
+    export = validate_scan_session_export(data)
+
+    report = evaluate_scan_session_exports([export])
+
+    assert report["statusCounts"] == {"accepted": 1}
+    assert report["wrongAccepts"] == 1
+    assert report["candidateWrongAccepts"] == 1
+
+
+def test_evaluator_reports_temporal_consensus_metrics_and_wrong_accepts() -> None:
+    data = scan_export(wrong_label=True)
+    data["faces"][0]["captureMode"] = "auto"
+    data["faces"][0]["autoCapture"] = {"stableFrameCount": 6, "gridDetections": 9, "triggeredAt": "2026-01-02T03:04:05.000Z"}
+    data["faces"][0]["temporalConsensus"] = {
+        "bboxStability": 0.91,
+        "faceConfidence": 0.8,
+        "framesRejected": 1,
+        "framesSeen": 7,
+        "framesUsed": 6,
+        "gridConfidence": 0.78,
+        "rejectReasons": [],
+        "status": "ready",
+        "stickers": [],
+        "temporalAgreement": 0.94,
+    }
+    export = validate_scan_session_export(data)
+
+    report = evaluate_scan_session_exports([export])
+
+    assert report["autoCapturedFaces"] == 1
+    assert report["temporalSessions"] == 1
+    assert report["temporalFaces"] == 1
+    assert report["temporalReadyFaces"] == 1
+    assert report["temporalWrongAccepts"] == 1
+    assert report["autoCaptureWrongAccepts"] == 1
+    assert report["averageTemporalFramesUsed"] == 6
+    assert report["averageTemporalFramesRejected"] == 1
+    assert report["averageTemporalAgreement"] == 0.94
+    assert report["averageBboxStability"] == 0.91
+    assert [case["reason"] for case in report["hardCases"][:2]] == ["wrong_accept", "temporal_ready_wrong"]
+
+
+def test_evaluator_counts_review_stickers_that_follow_grid_detections() -> None:
+    data = scan_export(wrong_label=False)
+    grid_symbols = list("UFDLUBDFL")
+    data["faces"][0]["stickers"] = [
+        {"index": index, "symbol": symbol, "confidence": 0.9, "source": "center" if index == 4 else "detected"}
+        for index, symbol in enumerate(grid_symbols)
+    ]
+    data["faces"][0]["analysis"] = {
+        "gridDetections": [
+            {"index": index, "row": index // 3, "column": index % 3, "symbol": symbol, "confidence": 0.9}
+            for index, symbol in enumerate(grid_symbols)
+        ],
+        "stickers": [
+            {"index": index, "symbol": "R", "confidence": 0.8}
+            for index in range(9)
+        ],
+    }
+    export = validate_scan_session_export(data)
+
+    report = evaluate_scan_session_exports([export])
+
+    assert report["reviewUsedGridDetections"] == 9
+    assert report["gridStickerOverrides"] == 9
+    assert report["detectorReviewDisagreements"] == 0
 
 
 def test_cli_writes_report_and_fails_on_wrong_accept(tmp_path: Path) -> None:
     export_path = tmp_path / "scan.json"
     report_path = tmp_path / "report.json"
+    hard_cases_path = tmp_path / "hard-cases.json"
     export_path.write_text(json.dumps(scan_export(wrong_label=True)), encoding="utf-8")
 
     exit_code = run(
         argparse.Namespace(
             fail_on_wrong_accept=True,
+            hard_cases_output=hard_cases_path,
             input=export_path,
+            max_manual_correction_rate=None,
+            max_wrong_accepts=None,
+            min_sticker_accuracy=None,
             output=report_path,
             require_complete=False,
+            require_labeled_sessions=None,
         )
     )
 
     assert exit_code == 1
     assert json.loads(report_path.read_text(encoding="utf-8"))["wrongAccepts"] == 1
+    assert json.loads(hard_cases_path.read_text(encoding="utf-8"))[0]["reason"] == "wrong_accept"
 
 
 def test_cli_can_require_complete_sessions(tmp_path: Path) -> None:
@@ -51,9 +136,14 @@ def test_cli_can_require_complete_sessions(tmp_path: Path) -> None:
     exit_code = run(
         argparse.Namespace(
             fail_on_wrong_accept=False,
+            hard_cases_output=None,
             input=export_path,
+            max_manual_correction_rate=None,
+            max_wrong_accepts=None,
+            min_sticker_accuracy=None,
             output=None,
             require_complete=True,
+            require_labeled_sessions=None,
         )
     )
 
@@ -79,6 +169,10 @@ def scan_export(wrong_label: bool) -> dict:
         },
         "label": {"faces": labels},
     }
+
+
+def canonical_label_facelets() -> str:
+    return "".join(symbol * 9 for symbol in CANONICAL_FACE_ORDER)
 
 
 def scan_face(symbol: str) -> dict:

@@ -1,6 +1,7 @@
 import type { AnalyzeScanFaceResponse, ScanSessionFaceRequest } from '@api/scan'
 import type { ScanFaceSymbol, ScanFacesPayload } from '@api/solver/types'
 import type { ScanCaptureSource } from './scanCapture'
+import type { TemporalFaceConsensus } from './scanTemporalConsensus'
 
 export type RgbColor = {
   r: number
@@ -24,10 +25,27 @@ export type ScanSticker = {
 }
 
 export type ConfirmedScanFace = {
+  autoCapture?: ScanAutoCaptureMetadata
   capture?: ScanCaptureMetadata
+  captureMode?: ScanCaptureMode
   symbol: ScanFaceSymbol
   stickers: ScanSticker[]
+  temporalConsensus?: TemporalFaceConsensus
   photoDataUrl?: string
+}
+
+export type ScanCaptureMode = 'manual' | 'auto'
+
+export type ScanAutoCaptureMetadata = {
+  detectionMode?: string | null
+  faceConfidence?: number
+  gridConfidence?: number
+  gridDetections: number
+  gridStatus?: string
+  stableFrameCount: number
+  temporalAgreement?: number
+  bboxStability?: number
+  triggeredAt: string
 }
 
 export type ScanCaptureMetadata = {
@@ -226,10 +244,13 @@ export function scanFacesFromDrafts(drafts: ScanFaceDrafts): ScanFaces {
     }
 
     faces[symbol] = {
+      autoCapture: draft.autoCapture,
       capture: draft.capture,
+      captureMode: draft.captureMode,
       photoDataUrl: draft.photoDataUrl,
       stickers: draft.stickers,
       symbol,
+      temporalConsensus: draft.temporalConsensus,
     }
   }
 
@@ -384,25 +405,52 @@ export function scanStickersFromAnalysis(
   centerSymbol: ScanFaceSymbol,
 ): ScanSticker[] {
   const stickers = createEmptyScanStickers(centerSymbol)
+  const analyzedStickersByIndex = new Map(analysis.stickers.map((sticker) => [sticker.index, sticker]))
+  const gridDetectionsByIndex = new Map((analysis.gridDetections ?? []).map((detection) => [detection.index, detection]))
 
-  for (const analyzedSticker of analysis.stickers) {
-    if (analyzedSticker.index < 0 || analyzedSticker.index > 8) {
+  for (let index = 0; index < 9; index += 1) {
+    const analyzedSticker = analyzedStickersByIndex.get(index)
+    const gridDetection = gridDetectionsByIndex.get(index)
+    if (analyzedSticker === undefined && gridDetection === undefined) {
       continue
     }
 
-    stickers[analyzedSticker.index] = {
-      alternatives: analyzedSticker.alternatives,
+    const symbol = gridDetection?.symbol ?? analyzedSticker?.symbol
+    stickers[index] = {
+      alternatives: scanStickerAlternativesFromAnalysis(analyzedSticker, gridDetection?.symbol),
       confidence:
-        analyzedSticker.index === 4
-          ? analysis.detectedCenterConfidence || analysis.confidence
-          : analyzedSticker.confidence,
-      rgb: analyzedSticker.rgb,
-      source: analyzedSticker.index === 4 ? 'center' : 'detected',
-      symbol: analyzedSticker.index === 4 ? centerSymbol : analyzedSticker.symbol,
+        gridDetection?.confidence ??
+        (index === 4 ? analysis.detectedCenterConfidence || analysis.confidence : analyzedSticker?.confidence) ??
+        0,
+      rgb: analyzedSticker?.rgb,
+      source: index === 4 ? 'center' : 'detected',
+      symbol,
     }
   }
 
   return stickers
+}
+
+function scanStickerAlternativesFromAnalysis(
+  analyzedSticker: AnalyzeScanFaceResponse['stickers'][number] | undefined,
+  gridSymbol: ScanFaceSymbol | undefined,
+): ScanStickerAlternative[] | undefined {
+  const alternatives = new Map<ScanFaceSymbol, number>()
+  if (gridSymbol !== undefined) {
+    alternatives.set(gridSymbol, Math.max(alternatives.get(gridSymbol) ?? 0, 1))
+  }
+  if (analyzedSticker?.symbol !== undefined) {
+    alternatives.set(analyzedSticker.symbol, Math.max(alternatives.get(analyzedSticker.symbol) ?? 0, analyzedSticker.confidence))
+  }
+  for (const alternative of analyzedSticker?.alternatives ?? []) {
+    alternatives.set(alternative.symbol, Math.max(alternatives.get(alternative.symbol) ?? 0, alternative.confidence))
+  }
+  if (alternatives.size === 0) {
+    return undefined
+  }
+  return [...alternatives.entries()]
+    .map(([symbol, confidence]) => ({ confidence, symbol }))
+    .sort((left, right) => right.confidence - left.confidence)
 }
 
 export function confirmedFaceCount(faces: ScanFaces): number {

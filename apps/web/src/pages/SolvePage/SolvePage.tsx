@@ -220,6 +220,8 @@ export function SolvePage() {
             visionCnnReason={healthQuery.data?.visionCnnReason}
             visionFaceDetectorAvailable={healthQuery.data?.visionFaceDetectorAvailable}
             visionFaceDetectorReason={healthQuery.data?.visionFaceDetectorReason}
+            visionTileDetectorAvailable={healthQuery.data?.visionTileDetectorAvailable}
+            visionTileDetectorReason={healthQuery.data?.visionTileDetectorReason}
             visionOk={healthQuery.data?.visionOk}
             onClose={() => setScanModalOpen(false)}
             onSolve={handleScanSolve}

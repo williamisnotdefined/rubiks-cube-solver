@@ -80,6 +80,7 @@ describe('ScanCubeModal', () => {
         solving={false}
         visionCnnAvailable
         visionFaceDetectorAvailable
+        visionTileDetectorAvailable
         visionOk
         onClose={vi.fn()}
         onSolve={vi.fn()}
@@ -88,6 +89,7 @@ describe('ScanCubeModal', () => {
 
     expect(screen.getByText('CNN evidence active')).toBeInTheDocument()
     expect(screen.getByText('Face detector active')).toBeInTheDocument()
+    expect(screen.getByText('Sticker detector active')).toBeInTheDocument()
 
     rerender(
       <ScanCubeModal
@@ -97,6 +99,8 @@ describe('ScanCubeModal', () => {
         visionCnnReason="cnn_model_not_configured"
         visionFaceDetectorAvailable={false}
         visionFaceDetectorReason="face_detector_model_not_configured"
+        visionTileDetectorAvailable={false}
+        visionTileDetectorReason="tile_detector_model_not_configured"
         visionOk
         onClose={vi.fn()}
         onSolve={vi.fn()}
@@ -105,6 +109,7 @@ describe('ScanCubeModal', () => {
 
     expect(screen.getByText('Color-only fallback: cnn_model_not_configured')).toBeInTheDocument()
     expect(screen.getByText('Geometry fallback: face_detector_model_not_configured')).toBeInTheDocument()
+    expect(screen.getByText('Sticker detector fallback: tile_detector_model_not_configured')).toBeInTheDocument()
 
     rerender(
       <ScanCubeModal
@@ -116,7 +121,7 @@ describe('ScanCubeModal', () => {
       />,
     )
 
-    expect(screen.getAllByText('Vision status unavailable')).toHaveLength(2)
+    expect(screen.getAllByText('Vision status unavailable')).toHaveLength(3)
   })
 
   it('hides local scan export unless explicitly enabled', () => {
@@ -213,6 +218,35 @@ describe('ScanCubeModal', () => {
     })
     expect(screen.getByRole('button', { name: 'Confirm face' })).toBeDisabled()
     expect(apiMocks.analyzeReset).toHaveBeenCalled()
+  })
+
+  it('fills the review grid from sticker detector boxes when sampled stickers disagree', async () => {
+    const user = userEvent.setup()
+    apiMocks.analyzeMutateAsync.mockResolvedValue(
+      scanAnalysisResponse({
+        detectedCenter: 'B',
+        gridSymbols: 'LRRFBBRFD',
+        stickerSymbol: 'R',
+        symbol: 'F',
+      }),
+    )
+
+    render(
+      <ScanCubeModal
+        apiReady
+        solving={false}
+        onClose={vi.fn()}
+        onSolve={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Take photo' }))
+    await screen.findByAltText('Captured cube face')
+
+    expect(screen.getByTestId('scan-sticker-0')).toHaveAccessibleName(/Orange/)
+    expect(screen.getByTestId('scan-sticker-1')).toHaveAccessibleName(/Red/)
+    expect(screen.getByTestId('scan-sticker-4')).toHaveAccessibleName(/Blue/)
+    expect(screen.getByText(/Center looks Blue/)).toBeInTheDocument()
   })
 
   it('keeps a confirmed face available when navigating away and back', async () => {
@@ -613,25 +647,45 @@ async function confirmAllFaces(user: ReturnType<typeof userEvent.setup>) {
 function scanAnalysisResponse({
   centerMismatch = false,
   detectionMode = 'contour',
+  detectedCenter,
+  gridSymbols,
+  stickerSymbol,
   symbol = 'F',
 }: {
   centerMismatch?: boolean
+  detectedCenter?: ScanFaceSymbol
   detectionMode?: AnalyzeScanFaceResponse['detectionMode']
+  gridSymbols?: string
+  stickerSymbol?: ScanFaceSymbol
   symbol?: ScanFaceSymbol
 } = {}): AnalyzeScanFaceResponse {
+  const effectiveDetectedCenter = detectedCenter ?? (centerMismatch ? 'U' : symbol)
+  const effectiveCenterMismatch = centerMismatch || effectiveDetectedCenter !== symbol
+  const gridDetections = gridSymbols === undefined ? [] : [...gridSymbols].map((gridSymbol, index) => ({
+    bbox: { height: 0.18, width: 0.18, x: 0.2 + (index % 3) * 0.25, y: 0.2 + Math.floor(index / 3) * 0.25 },
+    column: index % 3,
+    confidence: 0.9,
+    index,
+    row: Math.floor(index / 3),
+    symbol: gridSymbol as ScanFaceSymbol,
+  }))
+
   return {
-    centerMismatch,
-    confidence: centerMismatch ? 0.8 : 1,
-    detectedCenterConfidence: centerMismatch ? 0.8 : 1,
-    detectedCenter: centerMismatch ? 'U' : symbol,
-    detectionMode,
+    centerMismatch: effectiveCenterMismatch,
+    confidence: effectiveCenterMismatch ? 0.8 : 1,
+    detectedCenterConfidence: effectiveCenterMismatch ? 0.8 : 1,
+    detectedCenter: effectiveDetectedCenter,
+    detectionMode: gridSymbols === undefined ? detectionMode : 'tile_detector',
     expectedCenter: symbol,
     faceConfidence: 1,
     faceQuad: [],
+    gridConfidence: gridSymbols === undefined ? 0 : 0.84,
+    gridDetections,
+    gridStatus: gridSymbols === undefined ? 'not_found' : 'ready',
     imageSize: { width: 640, height: 640 },
-    message: centerMismatch ? 'Captured center does not match the expected face.' : undefined,
-    ok: !centerMismatch,
-    status: centerMismatch ? 'center_mismatch' : 'detected',
+    message: effectiveCenterMismatch ? 'Captured center does not match the expected face.' : undefined,
+    ok: !effectiveCenterMismatch,
+    status: effectiveCenterMismatch ? 'center_mismatch' : 'detected',
     qualityWarnings: [],
     stickers: Array.from({ length: 9 }, (_, index) => ({
       alternatives: [],
@@ -639,8 +693,9 @@ function scanAnalysisResponse({
       index,
       polygon: [],
       rgb: { r: 205, g: 210, b: 218 },
-      symbol,
+      symbol: stickerSymbol ?? symbol,
     })),
+    tileDetections: [],
     warnings: [],
   }
 }

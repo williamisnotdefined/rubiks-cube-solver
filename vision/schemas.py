@@ -14,6 +14,9 @@ class VisionHealthResponse(BaseModel):
     faceDetectorAvailable: bool = False
     faceDetectorConfigured: bool = False
     faceDetectorReason: str | None = None
+    tileDetectorAvailable: bool = False
+    tileDetectorConfigured: bool = False
+    tileDetectorReason: str | None = None
 
 
 class RgbColor(BaseModel):
@@ -30,6 +33,28 @@ class ImageSize(BaseModel):
 class Point(BaseModel):
     x: float = Field(ge=0.0, le=1.0)
     y: float = Field(ge=0.0, le=1.0)
+
+
+class DetectionBox(BaseModel):
+    x: float = Field(ge=0.0, le=1.0)
+    y: float = Field(ge=0.0, le=1.0)
+    width: float = Field(ge=0.0, le=1.0)
+    height: float = Field(ge=0.0, le=1.0)
+
+
+class ScanTileDetection(BaseModel):
+    symbol: ScanFaceSymbol
+    confidence: float = Field(ge=0.0, le=1.0)
+    bbox: DetectionBox
+
+
+class ScanGridDetection(BaseModel):
+    index: int = Field(ge=0, le=8)
+    row: int = Field(ge=0, le=2)
+    column: int = Field(ge=0, le=2)
+    symbol: ScanFaceSymbol | None = None
+    confidence: float = Field(ge=0.0, le=1.0)
+    bbox: DetectionBox | None = None
 
 
 class ScanColorAlternative(BaseModel):
@@ -92,6 +117,10 @@ class AnalyzeScanFaceResponse(BaseModel):
     imageQuality: ImageQuality | None = None
     faceQuad: list[Point] = Field(default_factory=list)
     stickers: list[AnalyzedSticker] = Field(default_factory=list)
+    tileDetections: list[ScanTileDetection] = Field(default_factory=list)
+    gridDetections: list[ScanGridDetection] = Field(default_factory=list)
+    gridConfidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    gridStatus: str = "not_found"
     qualityWarnings: list[str] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
 

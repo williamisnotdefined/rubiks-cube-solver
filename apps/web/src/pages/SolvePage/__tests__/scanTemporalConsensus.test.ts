@@ -1,0 +1,218 @@
+import { describe, expect, it } from 'vitest'
+import type { AnalyzeScanFaceResponse } from '@api/scan'
+import type { ScanFaceSymbol } from '@api/solver/types'
+import {
+  addTemporalScanFrame,
+  buildTemporalFaceConsensus,
+  defaultTemporalConsensusOptions,
+  isTemporalConsensusReady,
+  type TemporalScanFrame,
+} from '../scanTemporalConsensus'
+
+describe('scanTemporalConsensus', () => {
+  it('returns ready consensus for stable repeated sticker frames', () => {
+    const frames = temporalFrames(6)
+
+    const consensus = buildTemporalFaceConsensus(frames)
+
+    expect(consensus.status).toBe('ready')
+    expect(isTemporalConsensusReady(consensus)).toBe(true)
+    expect(consensus.framesSeen).toBe(6)
+    expect(consensus.framesUsed).toBe(6)
+    expect(consensus.temporalAgreement).toBe(1)
+    expect(consensus.stickers).toHaveLength(9)
+    expect(consensus.stickers[4]).toMatchObject({ symbol: 'U', agreement: 1 })
+  })
+
+  it('collects until the minimum frame count is reached', () => {
+    const consensus = buildTemporalFaceConsensus(temporalFrames(5))
+
+    expect(consensus.status).toBe('collecting')
+    expect(consensus.framesUsed).toBe(5)
+  })
+
+  it('rejects center mismatches before consensus can become ready', () => {
+    const consensus = buildTemporalFaceConsensus(
+      temporalFrames(6, { analysis: { centerMismatch: true, ok: false } }),
+    )
+
+    expect(consensus.status).toBe('center_mismatch')
+    expect(consensus.framesUsed).toBe(0)
+    expect(consensus.rejectReasons).toContain('center_mismatch')
+  })
+
+  it('rejects unsupported fallback and contour modes', () => {
+    const consensus = buildTemporalFaceConsensus(
+      temporalFrames(6, { analysis: { detectionMode: 'guide_fallback' } }),
+    )
+
+    expect(consensus.status).toBe('collecting')
+    expect(consensus.framesUsed).toBe(0)
+    expect(consensus.rejectReasons).toContain('unsupported_detection_mode')
+
+    const contourConsensus = buildTemporalFaceConsensus(
+      temporalFrames(6, { analysis: { detectionMode: 'contour' } }),
+    )
+
+    expect(contourConsensus.framesUsed).toBe(0)
+    expect(contourConsensus.rejectReasons).toContain('unsupported_detection_mode')
+  })
+
+  it('reports partial grid when ready grid evidence is missing', () => {
+    const consensus = buildTemporalFaceConsensus(
+      temporalFrames(6, { analysis: { gridDetections: [], gridStatus: 'partial' } }),
+    )
+
+    expect(consensus.status).toBe('partial_grid')
+    expect(consensus.rejectReasons).toContain('grid_partial')
+  })
+
+  it('reports color disagreement when stickers flicker across frames', () => {
+    const frames = temporalFrames(6).map((frame, index) =>
+      index % 2 === 0
+        ? frame
+        : {
+            ...frame,
+            analysis: scanAnalysis({ nonCenterSymbol: 'R' }),
+          },
+    )
+
+    const consensus = buildTemporalFaceConsensus(frames)
+
+    expect(consensus.status).toBe('color_disagreement')
+    expect(consensus.stickers[0].agreement).toBeCloseTo(0.5)
+  })
+
+  it('reports unstable when sticker boxes move too much', () => {
+    const frames = temporalFrames(6, { boxShiftPerFrame: 0.05 })
+
+    const consensus = buildTemporalFaceConsensus(frames)
+
+    expect(consensus.status).toBe('unstable')
+    expect(consensus.rejectReasons).toContain('bbox_unstable')
+  })
+
+  it('uses sticker probabilities ahead of symbol fallback', () => {
+    const frames = temporalFrames(6, {
+      analysis: {
+        stickers: scanAnalysis().stickers.map((sticker) =>
+          sticker.index === 0
+            ? {
+                ...sticker,
+                probabilities: { B: 0.01, D: 0.01, F: 0.1, L: 0.01, R: 0.85, U: 0.02 },
+                symbol: 'F',
+              }
+            : sticker,
+        ),
+      },
+    })
+
+    const consensus = buildTemporalFaceConsensus(frames)
+
+    expect(consensus.stickers[0].symbol).toBe('R')
+    expect(consensus.stickers[0].confidence).toBeGreaterThan(0.8)
+  })
+
+  it('drops old frames and caps the buffer size', () => {
+    let buffer: TemporalScanFrame[] = []
+    for (let index = 0; index < 16; index += 1) {
+      buffer = addTemporalScanFrame(buffer, temporalFrame(index * 320))
+    }
+
+    expect(buffer.length).toBeLessThanOrEqual(defaultTemporalConsensusOptions.maxFrames)
+    expect(buffer[0].capturedAt).toBeGreaterThanOrEqual(15 * 320 - defaultTemporalConsensusOptions.maxFrameAgeMs)
+  })
+})
+
+function temporalFrames(
+  count: number,
+  options: {
+    analysis?: Partial<AnalyzeScanFaceResponse>
+    boxShiftPerFrame?: number
+  } = {},
+): TemporalScanFrame[] {
+  return Array.from({ length: count }, (_, index) =>
+    temporalFrame(index * 320, {
+      analysis: options.analysis,
+      boxShift: (options.boxShiftPerFrame ?? 0) * index,
+    }),
+  )
+}
+
+function temporalFrame(
+  capturedAt: number,
+  options: { analysis?: Partial<AnalyzeScanFaceResponse>; boxShift?: number } = {},
+): TemporalScanFrame {
+  return {
+    analysis: scanAnalysis({ ...options.analysis, boxShift: options.boxShift }),
+    capturedAt,
+    expectedCenter: 'U',
+  }
+}
+
+function scanAnalysis(
+  options: Partial<AnalyzeScanFaceResponse> & {
+    boxShift?: number
+    nonCenterSymbol?: ScanFaceSymbol
+  } = {},
+): AnalyzeScanFaceResponse {
+  const boxShift = options.boxShift ?? 0
+  const nonCenterSymbol = options.nonCenterSymbol ?? 'F'
+  const gridDetections = options.gridDetections ?? stableGridDetections(boxShift, nonCenterSymbol)
+  const stickers =
+    options.stickers ??
+    Array.from({ length: 9 }, (_, index) => ({
+      alternatives: [],
+      confidence: 0.92,
+      index,
+      polygon: [],
+      rgb: { b: 40, g: 160, r: 40 },
+      symbol: index === 4 ? 'U' : nonCenterSymbol,
+    }))
+
+  return {
+    centerMismatch: false,
+    confidence: 0.9,
+    detectedCenter: 'U',
+    detectedCenterConfidence: 0.9,
+    detectionMode: 'tile_detector',
+    expectedCenter: 'U',
+    faceConfidence: 0.88,
+    faceQuad: [],
+    gridConfidence: 0.8,
+    gridDetections,
+    gridStatus: 'ready',
+    imageSize: { height: 480, width: 480 },
+    ok: true,
+    qualityWarnings: [],
+    status: 'detected',
+    stickers,
+    tileDetections: [],
+    warnings: [],
+    ...options,
+  }
+}
+
+function stableGridDetections(
+  boxShift: number,
+  nonCenterSymbol: ScanFaceSymbol,
+): NonNullable<AnalyzeScanFaceResponse['gridDetections']> {
+  return Array.from({ length: 9 }, (_, index) => {
+    const row = Math.floor(index / 3)
+    const column = index % 3
+
+    return {
+      bbox: {
+        height: 0.18,
+        width: 0.18,
+        x: 0.25 + column * 0.25 + boxShift,
+        y: 0.25 + row * 0.25,
+      },
+      column,
+      confidence: 0.9,
+      index,
+      row,
+      symbol: index === 4 ? 'U' : nonCenterSymbol,
+    }
+  })
+}

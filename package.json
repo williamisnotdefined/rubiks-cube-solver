@@ -7,7 +7,7 @@
   ],
   "scripts": {
     "dev": "npm run pruning:native && concurrently -k -n api,vision,web -c blue,magenta,green \"npm run api:dev\" \"npm run vision:dev\" \"npm run web:dev\"",
-    "dev:scan-ml": "RUBIKS_VISION_CNN_MODEL=vision_ml/local-models/sticker-cnn.onnx RUBIKS_VISION_FACE_DETECTOR_MODEL=vision_ml/local-models/face-detector.onnx RUBIKS_VISION_FACE_DETECTOR_INPUT_SIZE=224 VITE_ENABLE_SCAN_EXPORT=true npm run dev",
+    "dev:scan-ml": "RUBIKS_VISION_CNN_MODEL=vision_ml/local-models/sticker-cnn.onnx RUBIKS_VISION_FACE_DETECTOR_MODEL=vision_ml/local-models/face-detector.onnx RUBIKS_VISION_FACE_DETECTOR_INPUT_SIZE=224 RUBIKS_VISION_TILE_DETECTOR_MODEL=vision_ml/local-models/tile-detector.onnx RUBIKS_VISION_TILE_DETECTOR_INPUT_SIZE=640 VITE_ENABLE_SCAN_EXPORT=true npm run dev",
     "web:dev": "npm run dev -w @rubiks-cube-solver/web",
     "api:dev": "cargo run -p rubiks-cube-solver-api",
     "api:dev:watch": "if command -v cargo-watch >/dev/null 2>&1; then cargo watch -x \"run -p rubiks-cube-solver-api\"; else cargo run -p rubiks-cube-solver-api; fi",
@@ -17,6 +17,9 @@
     "vision:start": "if [ -x .venv/bin/python ]; then .venv/bin/python -m uvicorn vision.app:app --host 127.0.0.1 --port ${RUBIKS_VISION_PORT:-8790}; else python -m uvicorn vision.app:app --host 127.0.0.1 --port ${RUBIKS_VISION_PORT:-8790}; fi",
     "vision:test": "if [ -x .venv/bin/python ]; then .venv/bin/python -m pytest vision; else python -m pytest vision; fi",
     "vision-ml:test": "if [ -x .venv/bin/python ]; then .venv/bin/python -m pytest vision_ml; else python -m pytest vision_ml; fi",
+    "scan:label": "if [ -x .venv/bin/python ]; then .venv/bin/python -m vision_ml.label_scan_session; else python -m vision_ml.label_scan_session; fi",
+    "scan:replay": "if [ -x .venv/bin/python ]; then .venv/bin/python -m vision_ml.replay_scan_sessions --input vision_ml/outputs/local-sessions --output vision_ml/outputs/replay/latest --mode raw; else python -m vision_ml.replay_scan_sessions --input vision_ml/outputs/local-sessions --output vision_ml/outputs/replay/latest --mode raw; fi",
+    "scan:evaluate": "if [ -x .venv/bin/python ]; then .venv/bin/python -m vision_ml.evaluate_scan_sessions --input vision_ml/outputs/replay/latest --output vision_ml/outputs/reports/latest.json --hard-cases-output vision_ml/outputs/reports/latest-hard-cases.json --fail-on-wrong-accept; else python -m vision_ml.evaluate_scan_sessions --input vision_ml/outputs/replay/latest --output vision_ml/outputs/reports/latest.json --hard-cases-output vision_ml/outputs/reports/latest-hard-cases.json --fail-on-wrong-accept; fi",
     "api:test": "cargo test -p rubiks-cube-solver-api",
     "build": "npm run build -w @rubiks-cube-solver/web",
     "build:api": "cargo build -p rubiks-cube-solver-api --release",

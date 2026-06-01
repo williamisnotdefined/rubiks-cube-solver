@@ -11,6 +11,28 @@ export type ScanAnalysisPoint = {
   y: number
 }
 
+export type ScanDetectionBox = {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+export type ScanTileDetection = {
+  symbol: ScanFaceSymbol | 'face'
+  confidence: number
+  bbox: ScanDetectionBox
+}
+
+export type ScanGridDetection = {
+  index: number
+  row: number
+  column: number
+  symbol?: ScanFaceSymbol
+  confidence: number
+  bbox?: ScanDetectionBox
+}
+
 export type ScanColorAlternative = {
   symbol: ScanFaceSymbol
   confidence: number
@@ -70,6 +92,10 @@ export type AnalyzeScanFaceResponse = {
   imageQuality?: ScanImageQuality
   faceQuad: ScanAnalysisPoint[]
   stickers: AnalyzedScanSticker[]
+  tileDetections?: ScanTileDetection[]
+  gridDetections?: ScanGridDetection[]
+  gridConfidence?: number
+  gridStatus?: 'not_found' | 'partial' | 'ready' | string
   qualityWarnings: string[]
   warnings: string[]
 }

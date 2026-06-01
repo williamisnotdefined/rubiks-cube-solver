@@ -4,10 +4,12 @@ import {
   expectedTopForScanFace,
   scanFaceOrder,
   type RejectedScanCapture,
+  type ScanAutoCaptureMetadata,
   type ScanCaptureMetadata,
   type ScanFaceDrafts,
   type ScanSticker,
 } from './scanState'
+import type { TemporalFaceConsensus } from './scanTemporalConsensus'
 
 export const scanSessionExportSchemaVersion = 'scan-session-export-v1'
 
@@ -23,6 +25,8 @@ export type ScanSessionExportSticker = {
 export type ScanSessionExportFace = {
   symbol: ScanFaceSymbol
   expectedTop: ScanFaceSymbol
+  autoCapture?: ScanAutoCaptureMetadata
+  captureMode?: 'manual' | 'auto'
   confirmed: boolean
   centerOverrideConfirmed?: boolean
   photoDataUrl?: string
@@ -31,6 +35,7 @@ export type ScanSessionExportFace = {
   stickers: ScanSessionExportSticker[]
   manualOverrides: Partial<Record<number, ScanFaceSymbol>>
   analysis?: AnalyzeScanFaceResponse
+  temporalConsensus?: TemporalFaceConsensus
 }
 
 export type ScanSessionExportLabel = {
@@ -97,7 +102,9 @@ function exportFace(symbol: ScanFaceSymbol, drafts: ScanFaceDrafts): ScanSession
   const draft = drafts[symbol]
   return {
     analysis: draft.analysis,
+    autoCapture: draft.autoCapture,
     capture: draft.capture,
+    captureMode: draft.captureMode,
     centerOverrideConfirmed: draft.centerOverrideConfirmed,
     confirmed: draft.confirmed,
     expectedTop: expectedTopForScanFace(symbol),
@@ -113,6 +120,7 @@ function exportFace(symbol: ScanFaceSymbol, drafts: ScanFaceDrafts): ScanSession
       symbol: sticker.symbol,
     })),
     symbol,
+    temporalConsensus: draft.temporalConsensus,
   }
 }
 

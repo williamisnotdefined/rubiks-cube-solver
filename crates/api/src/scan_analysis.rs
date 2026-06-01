@@ -640,6 +640,10 @@ fn error_response(status: &str, message: String) -> AnalyzeScanFaceResponse {
         image_quality: None,
         face_quad: Vec::new(),
         stickers: Vec::new(),
+        tile_detections: Vec::new(),
+        grid_detections: Vec::new(),
+        grid_confidence: 0.0,
+        grid_status: String::new(),
         quality_warnings: Vec::new(),
         warnings: Vec::new(),
     }

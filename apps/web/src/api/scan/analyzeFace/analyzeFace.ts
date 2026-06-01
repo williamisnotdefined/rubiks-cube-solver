@@ -26,7 +26,11 @@ export async function analyzeScanFace({
     faceConfidence: 0,
     detectionMode: 'rejected',
     faceQuad: [],
+    gridConfidence: 0,
+    gridDetections: [],
+    gridStatus: 'not_found',
     stickers: [],
+    tileDetections: [],
     qualityWarnings: [],
     warnings: [],
   }

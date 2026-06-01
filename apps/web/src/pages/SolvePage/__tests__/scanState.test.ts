@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { AnalyzeScanFaceResponse } from '@api/scan'
 import {
   clearScanFaceDraft,
   confirmScanFaceDraft,
@@ -9,6 +10,7 @@ import {
   replaceScanFaceDraftSticker,
   scanFaceStatusFromDraft,
   scanFacesFromDrafts,
+  scanStickersFromAnalysis,
   scanSessionFacesFromDrafts,
   scanFacesToPayload,
   scanSymbols,
@@ -228,6 +230,14 @@ describe('scan state helpers', () => {
     expect(next[0]).toMatchObject({ symbol: 'R', source: 'manual' })
     expect(next[0].alternatives).toBeUndefined()
   })
+
+  it('uses grid detections for review stickers when analysis stickers disagree', () => {
+    const stickers = scanStickersFromAnalysis(analysisWithGridDisagreement(), 'F')
+
+    expect(stickers.map((sticker) => sticker.symbol).join('')).toBe('LRRFBBRFD')
+    expect(stickers[4]).toMatchObject({ confidence: 0.91, source: 'center', symbol: 'B' })
+    expect(validateScanFaceDraft({}, 'F', stickers)).toEqual({ key: 'centerColorMismatch' })
+  })
 })
 
 function filledStickers(symbol: (typeof scanSymbols)[number]): ScanSticker[] {
@@ -267,4 +277,43 @@ function detectedStickersWithAlternative(
     source: index === 4 ? 'center' : 'detected',
     symbol: detectedSymbol,
   }))
+}
+
+function analysisWithGridDisagreement(): AnalyzeScanFaceResponse {
+  const gridSymbols = [...'LRRFBBRFD'] as (typeof scanSymbols)[number][]
+
+  return {
+    centerMismatch: true,
+    confidence: 0.91,
+    detectedCenter: 'B',
+    detectedCenterConfidence: 0.91,
+    detectionMode: 'tile_detector',
+    expectedCenter: 'F',
+    faceConfidence: 0.9,
+    faceQuad: [],
+    gridConfidence: 0.84,
+    gridDetections: gridSymbols.map((symbol, index) => ({
+      bbox: { height: 0.18, width: 0.18, x: 0.2 + (index % 3) * 0.25, y: 0.2 + Math.floor(index / 3) * 0.25 },
+      column: index % 3,
+      confidence: index === 4 ? 0.91 : 0.86,
+      index,
+      row: Math.floor(index / 3),
+      symbol,
+    })),
+    gridStatus: 'ready',
+    imageSize: { height: 480, width: 480 },
+    ok: false,
+    qualityWarnings: [],
+    status: 'center_mismatch',
+    stickers: Array.from({ length: 9 }, (_, index) => ({
+      alternatives: [],
+      confidence: 0.8,
+      index,
+      polygon: [],
+      rgb: { b: 40, g: 40, r: 220 },
+      symbol: 'R' as const,
+    })),
+    tileDetections: [],
+    warnings: [],
+  }
 }

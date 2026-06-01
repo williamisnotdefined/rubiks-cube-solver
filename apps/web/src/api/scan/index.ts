@@ -10,10 +10,13 @@ export type {
   ScanAnalysisPoint,
   ScanColorAlternative,
   ScanColorProbabilities,
+  ScanDetectionBox,
+  ScanGridDetection,
   ScanImageQuality,
   ScanSessionFaceRequest,
   ScanSessionManualTarget,
   ScanSessionResult,
   ScanStickerQuality,
+  ScanTileDetection,
   SolveScanSessionVariables,
 } from './types'
