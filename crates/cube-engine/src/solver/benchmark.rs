@@ -68,7 +68,7 @@ mod tests {
         let report = run_real_scramble_benchmark(SolverConfig::with_strategy(
             0,
             Some(1),
-            SolverStrategy::TwoPhaseBaseline,
+            SolverStrategy::BoundedIdaStar,
         ))
         .expect("benchmark report should run");
 

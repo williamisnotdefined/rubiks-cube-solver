@@ -123,7 +123,7 @@
     },
     {
       "name": "solver-search",
-      "description": "Use when adding or changing BFS, IDDFS, IDA*, heuristics, pruning, or pattern database code.",
+      "description": "Use when adding or changing IDA*, generated two-phase search, heuristics, pruning, or pattern database code.",
       "canonicalPath": "ai/skills/solver-search.md",
       "references": [
         "ai/rules/solver-search-rules.md",

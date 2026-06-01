@@ -9,7 +9,7 @@ The project is method-agnostic. Generated two-phase search is a current classica
 ## Current Status
 
 - Rust workspace scaffolded.
-- `cube-engine` contains cubie state, moves, notation parsing, scrambles, validation, BFS, IDDFS, generated two-phase search, and quality reporting.
+- `cube-engine` contains cubie state, moves, notation parsing, scrambles, validation, bounded IDA*, generated two-phase search, solver datasets, and quality reporting.
 - AI knowledge routing is managed from canonical files under `ai/`.
 
 ## Quick Start
@@ -309,30 +309,32 @@ Production defaults:
 
 ## Dataset Generation
 
-`cube-engine` owns deterministic dataset generation. Examples are JSONL records with fixed field order and schema version `1`:
+`cube-engine` owns deterministic solver-labeled dataset generation. Examples are JSONL records with fixed field order and schema version `1`:
 
 ```json
-{"schema_version":1,"state":"cp=...;co=...;ep=...;eo=...","scramble":"R U","scramble_depth":2,"verified_solution":"U' R'","verified_solution_length":2,"best_move":"U'","label_source":"reversible_scramble_inverse_replay_verified","split":"train"}
+{"schema_version":1,"state":"cp=...;co=...;ep=...;eo=...","scramble":"R U","scramble_depth":2,"verified_solution":"U' R'","verified_solution_length":2,"best_move":"U'","label_source":"generated_two_phase_quality_solver_replay_verified","split":"train"}
 ```
 
 - `state` is the stable serialized `CubieState` string and is validated before writing.
 - `scramble_depth` is the generated scramble length, not an optimal-distance claim.
-- `verified_solution` is the replay-verified inverse of the documented reversible scramble.
-- `verified_solution_length` is the length of that replay-verified solution.
+- `verified_solution` is the replay-verified solution returned by the configured generated two-phase solver mode.
+- `verified_solution_length` is the length of that replay-verified solution, not an optimal-distance claim.
 - `best_move` is the first move of `verified_solution`, or `null` for solved examples.
 - `split` is assigned from a stable hash of `state` into `train`, `validation`, or `test`.
 
-Generate the committed small fixture with:
+Generate a local smoke dataset with:
 
 ```bash
-cargo run --quiet -p cube-engine --bin generate_dataset -- --seed 0 --count 12 --output datasets/fixtures/small.jsonl
+npm run dataset:solver
 ```
 
 Generate larger local datasets under the ignored `datasets/generated/` path, for example:
 
 ```bash
-cargo run --quiet -p cube-engine --bin generate_dataset -- --seed 42 --count 10000 --output datasets/generated/train.jsonl --max-scramble-depth 20
+npm run dataset:solver:1k
 ```
+
+The committed `datasets/fixtures/small.jsonl` remains a tiny ML smoke fixture with legacy reversible-scramble labels. It is kept for fast deterministic tests, not as the preferred generator path for new training data.
 
 ## ML Value Baseline
 
@@ -360,7 +362,7 @@ The CLI prints a JSON report and writes `metrics.json` plus `value_outputs.tsv` 
 
 If PyTorch is unavailable, the CLI exits successfully with an explicit dependency-fallback report so smoke verification still records label metrics; install `ml/requirements.txt` to train the PyTorch MLP.
 
-The target label is `verified_solution_length`: the length of the replay-verified inverse scramble stored in the dataset. It is useful for a reproducible value-model smoke baseline, but it is not an optimal-distance label and must not be described as God's Number evidence or a 20-move guarantee. The direct `reversible_scramble_depth` baseline can score perfectly on the small fixture because the fixture labels come from reversible scramble inverses; that is evidence of label consistency, not optimal solving.
+The target label is `verified_solution_length`: the length of the replay-verified solution stored in the dataset. It is useful for a reproducible value-model smoke baseline, but it is not an optimal-distance label and must not be described as God's Number evidence or a 20-move guarantee. The direct `reversible_scramble_depth` baseline can score perfectly on the small fixture because that committed fixture uses reversible scramble inverses; that is evidence of label consistency, not optimal solving.
 
 The report includes MAE, RMSE, bucket accuracy, metrics by depth bucket, and inference time per state for the ML value model or dependency fallback. Its `classical_baseline_comparison` section also includes direct fixture baselines for `reversible_scramble_depth` and `constant_train_mean`, each with MAE, RMSE, bucket accuracy, and depth-bucket metrics derived from `datasets/fixtures/small.jsonl`.
 

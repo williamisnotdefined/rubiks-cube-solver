@@ -15,9 +15,7 @@ pub(super) fn table_status_for_success(strategy: SolverStrategy) -> QualityTable
         | SolverStrategy::OptimalBoundedCornerPdb
         | SolverStrategy::OptimalBoundedPdb16
         | SolverStrategy::ShortSolutionPortfolio => QualityTableStatus::Available,
-        SolverStrategy::BoundedIdaStar
-        | SolverStrategy::TwoPhaseBaseline
-        | SolverStrategy::OptimalIdaStarOrientationPdb => QualityTableStatus::NotRequired,
+        SolverStrategy::BoundedIdaStar => QualityTableStatus::NotRequired,
     }
 }
 

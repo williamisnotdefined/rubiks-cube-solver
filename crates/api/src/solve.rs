@@ -143,8 +143,6 @@ fn solve_prepared_cube(
             solve_generated_cube(state, max_depth, max_nodes, strategy, cube, visual_state)
         }
         SolverStrategy::BoundedIdaStar
-        | SolverStrategy::TwoPhaseBaseline
-        | SolverStrategy::OptimalIdaStarOrientationPdb
         | SolverStrategy::OptimalBoundedCornerPdb
         | SolverStrategy::OptimalBoundedPdb16
         | SolverStrategy::ShortSolutionPortfolio => {
@@ -290,8 +288,6 @@ fn solve_generated_cube(
         SolverStrategy::GeneratedTwoPhaseQuality => solver.solve_quality(&cube, budget),
         SolverStrategy::GeneratedTwoPhaseMultiprobe => solver.solve_multiprobe(&cube, budget),
         SolverStrategy::BoundedIdaStar
-        | SolverStrategy::TwoPhaseBaseline
-        | SolverStrategy::OptimalIdaStarOrientationPdb
         | SolverStrategy::OptimalBoundedCornerPdb
         | SolverStrategy::OptimalBoundedPdb16
         | SolverStrategy::ShortSolutionPortfolio => {

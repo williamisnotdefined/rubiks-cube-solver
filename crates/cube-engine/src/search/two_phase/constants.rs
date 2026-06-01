@@ -1,9 +1,6 @@
 use crate::cube::cubies::Edge;
 use crate::cube::moves::{Move, FACE_MOVES};
 
-pub(super) const TINY_PHASE1_DEPTH1_FIXTURE: &str =
-    include_str!("../../../tests/fixtures/pruning_tables/tiny_phase1_depth1.txt");
-
 pub(super) const PHASE2_MOVES: [Move; 10] = [
     Move::U,
     Move::U2,

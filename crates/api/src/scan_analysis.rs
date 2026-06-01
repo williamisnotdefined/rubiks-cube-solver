@@ -437,9 +437,9 @@ fn rescan_faces_from_session(
         .iter()
         .filter(|face| {
             face.analysis.stickers.len() != 9
-                || (!face.analysis.ok
-                    && !(face.analysis.center_mismatch
-                        && overrides.center_mismatch_overridden(&face.symbol)))
+                || !(face.analysis.ok
+                    || face.analysis.center_mismatch
+                        && overrides.center_mismatch_overridden(&face.symbol))
         })
         .map(|face| face.symbol.clone())
         .collect()

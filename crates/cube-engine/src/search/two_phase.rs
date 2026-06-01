@@ -1,5 +1,4 @@
 mod artifacts;
-mod baseline;
 mod budget;
 mod candidates;
 mod constants;
@@ -14,7 +13,6 @@ mod solver;
 mod tables;
 
 pub use artifacts::GeneratedPruningTableArtifact;
-pub use baseline::solve_two_phase_baseline;
 pub use errors::GeneratedTwoPhaseError;
 pub use metrics::{GeneratedTwoPhaseMetrics, GeneratedTwoPhaseSearchResult};
 pub use solver::{

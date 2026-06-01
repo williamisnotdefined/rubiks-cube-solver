@@ -164,8 +164,6 @@ fn run_generated_real_scramble_row(
         SolverStrategy::GeneratedTwoPhaseQuality => solver.solve_quality(&cube, budget),
         SolverStrategy::GeneratedTwoPhaseMultiprobe => solver.solve_multiprobe(&cube, budget),
         SolverStrategy::BoundedIdaStar
-        | SolverStrategy::TwoPhaseBaseline
-        | SolverStrategy::OptimalIdaStarOrientationPdb
         | SolverStrategy::OptimalBoundedCornerPdb
         | SolverStrategy::OptimalBoundedPdb16
         | SolverStrategy::ShortSolutionPortfolio => unreachable!(

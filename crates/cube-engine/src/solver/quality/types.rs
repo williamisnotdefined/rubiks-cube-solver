@@ -73,21 +73,15 @@ pub struct QualityFixture {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum QualitySolverSelection {
     DefaultBoundedIdaStar,
-    ExplicitTwoPhaseBaseline,
     GeneratedTwoPhase,
 }
 
 impl QualitySolverSelection {
-    pub const ALL: [Self; 3] = [
-        Self::DefaultBoundedIdaStar,
-        Self::ExplicitTwoPhaseBaseline,
-        Self::GeneratedTwoPhase,
-    ];
+    pub const ALL: [Self; 2] = [Self::DefaultBoundedIdaStar, Self::GeneratedTwoPhase];
 
     pub const fn label(self) -> &'static str {
         match self {
             Self::DefaultBoundedIdaStar => "default-bounded-ida-star",
-            Self::ExplicitTwoPhaseBaseline => "explicit-two-phase-baseline",
             Self::GeneratedTwoPhase => "generated-two-phase",
         }
     }
@@ -95,7 +89,6 @@ impl QualitySolverSelection {
     pub const fn strategy(self) -> SolverStrategy {
         match self {
             Self::DefaultBoundedIdaStar => SolverStrategy::BoundedIdaStar,
-            Self::ExplicitTwoPhaseBaseline => SolverStrategy::TwoPhaseBaseline,
             Self::GeneratedTwoPhase => SolverStrategy::GeneratedTwoPhase,
         }
     }
@@ -103,9 +96,6 @@ impl QualitySolverSelection {
     pub fn config(self, max_depth: usize, max_nodes: Option<usize>) -> SolverConfig {
         match self {
             Self::DefaultBoundedIdaStar => SolverConfig::with_limits(max_depth, max_nodes),
-            Self::ExplicitTwoPhaseBaseline => {
-                SolverConfig::with_strategy(max_depth, max_nodes, SolverStrategy::TwoPhaseBaseline)
-            }
             Self::GeneratedTwoPhase => {
                 SolverConfig::with_strategy(max_depth, max_nodes, SolverStrategy::GeneratedTwoPhase)
                     .with_pruning_table_dir(QUALITY_REPORT_PRUNING_TABLE_DIR)
@@ -117,25 +107,22 @@ impl QualitySolverSelection {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct QualityFixtureExpectations {
     pub default_bounded_ida_star: QualityExpectation,
-    pub explicit_two_phase_baseline: QualityExpectation,
     pub generated_two_phase: QualityExpectation,
 }
 
 impl QualityFixtureExpectations {
     pub const fn new(
         default_bounded_ida_star: QualityExpectation,
-        explicit_two_phase_baseline: QualityExpectation,
         generated_two_phase: QualityExpectation,
     ) -> Self {
         Self {
             default_bounded_ida_star,
-            explicit_two_phase_baseline,
             generated_two_phase,
         }
     }
 
     pub const fn same(expectation: QualityExpectation) -> Self {
-        Self::new(expectation, expectation, expectation)
+        Self::new(expectation, expectation)
     }
 
     pub const fn for_selection(
@@ -144,7 +131,6 @@ impl QualityFixtureExpectations {
     ) -> QualityExpectation {
         match solver_selection {
             QualitySolverSelection::DefaultBoundedIdaStar => self.default_bounded_ida_star,
-            QualitySolverSelection::ExplicitTwoPhaseBaseline => self.explicit_two_phase_baseline,
             QualitySolverSelection::GeneratedTwoPhase => self.generated_two_phase,
         }
     }

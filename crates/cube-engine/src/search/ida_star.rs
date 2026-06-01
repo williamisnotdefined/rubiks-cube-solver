@@ -26,25 +26,6 @@ struct ThresholdSearchContext<'a> {
     explored_nodes: &'a mut usize,
 }
 
-pub fn solve_ida_star(start: &Cube, max_depth: usize) -> Option<SearchSolution> {
-    let heuristic = ZeroHeuristic;
-    solve_ida_star_with_heuristic(start, max_depth, &heuristic)
-}
-
-pub fn solve_ida_star_with_heuristic<H>(
-    start: &Cube,
-    max_depth: usize,
-    heuristic: &H,
-) -> Option<SearchSolution>
-where
-    H: Heuristic,
-{
-    match solve_ida_star_bounded_with_heuristic(start, SearchBudget::new(max_depth), heuristic) {
-        SearchOutcome::Found(solution) => Some(solution),
-        SearchOutcome::NotFoundWithinLimits { .. } => None,
-    }
-}
-
 pub fn solve_ida_star_bounded(start: &Cube, budget: SearchBudget) -> SearchOutcome {
     let heuristic = ZeroHeuristic;
     solve_ida_star_bounded_with_heuristic(start, budget, &heuristic)
@@ -243,9 +224,7 @@ fn solution_solves(start: &Cube, moves: &[Move]) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        should_skip_move, solve_ida_star, solve_ida_star_bounded, solve_ida_star_with_heuristic,
-    };
+    use super::{should_skip_move, solve_ida_star_bounded, solve_ida_star_bounded_with_heuristic};
     use crate::cube::moves::FACE_MOVES;
     use crate::cube::{Cube, Move};
     use crate::search::{
@@ -255,7 +234,10 @@ mod tests {
 
     #[test]
     fn solved_cube_returns_empty_solution() {
-        let solution = solve_ida_star(&Cube::solved(), 0).expect("solved cube should solve");
+        let solution = found_solution(solve_ida_star_bounded(
+            &Cube::solved(),
+            SearchBudget::new(0),
+        ));
 
         assert!(solution.is_empty());
         assert_eq!(solution.explored_nodes(), 1);
@@ -264,7 +246,7 @@ mod tests {
     #[test]
     fn one_move_scramble_solves() {
         let cube = scrambled(&[Move::R]);
-        let solution = solve_ida_star(&cube, 1).expect("one-move scramble should solve");
+        let solution = found_solution(solve_ida_star_bounded(&cube, SearchBudget::new(1)));
 
         assert_solution_solves(cube, solution.moves());
     }
@@ -272,7 +254,7 @@ mod tests {
     #[test]
     fn two_move_scramble_solves() {
         let cube = scrambled(&[Move::R, Move::U]);
-        let solution = solve_ida_star(&cube, 2).expect("two-move scramble should solve");
+        let solution = found_solution(solve_ida_star_bounded(&cube, SearchBudget::new(2)));
 
         assert_solution_solves(cube, solution.moves());
     }
@@ -281,13 +263,18 @@ mod tests {
     fn insufficient_depth_returns_none() {
         let cube = scrambled(&[Move::R, Move::U]);
 
-        assert_eq!(solve_ida_star(&cube, 1), None);
+        match solve_ida_star_bounded(&cube, SearchBudget::new(1)) {
+            SearchOutcome::Found(_) => panic!("two-move scramble should exceed depth one"),
+            SearchOutcome::NotFoundWithinLimits { explored_nodes } => {
+                assert!(explored_nodes > 0);
+            }
+        }
     }
 
     #[test]
     fn ida_star_reports_explored_nodes() {
         let cube = scrambled(&[Move::R, Move::U]);
-        let solution = solve_ida_star(&cube, 2).expect("two-move scramble should solve");
+        let solution = found_solution(solve_ida_star_bounded(&cube, SearchBudget::new(2)));
 
         assert!(solution.explored_nodes() > 0);
     }
@@ -352,7 +339,7 @@ mod tests {
     #[test]
     fn solution_uses_face_moves_only() {
         let cube = scrambled(&[Move::R, Move::U]);
-        let solution = solve_ida_star(&cube, 2).expect("two-move scramble should solve");
+        let solution = found_solution(solve_ida_star_bounded(&cube, SearchBudget::new(2)));
 
         assert!(solution
             .moves()
@@ -364,8 +351,11 @@ mod tests {
     fn heuristic_guided_solution_uses_face_moves_only() {
         let cube = scrambled(&[Move::R, Move::U]);
         let heuristic = MaxHeuristic::new(MisplacedCubiesHeuristic, CornerOrientationHeuristic);
-        let solution = solve_ida_star_with_heuristic(&cube, 2, &heuristic)
-            .expect("two-move scramble should solve");
+        let solution = found_solution(solve_ida_star_bounded_with_heuristic(
+            &cube,
+            SearchBudget::new(2),
+            &heuristic,
+        ));
 
         assert!(solution
             .moves()
@@ -376,7 +366,7 @@ mod tests {
     #[test]
     fn solution_preserves_valid_state_when_applied() {
         let mut cube = scrambled(&[Move::R, Move::U]);
-        let solution = solve_ida_star(&cube, 2).expect("two-move scramble should solve");
+        let solution = found_solution(solve_ida_star_bounded(&cube, SearchBudget::new(2)));
 
         solution.apply_to(&mut cube);
 
@@ -391,8 +381,11 @@ mod tests {
             MisplacedCubiesHeuristic,
             MaxHeuristic::new(CornerOrientationHeuristic, EdgeOrientationHeuristic),
         );
-        let solution = solve_ida_star_with_heuristic(&cube, 2, &heuristic)
-            .expect("two-move scramble should solve");
+        let solution = found_solution(solve_ida_star_bounded_with_heuristic(
+            &cube,
+            SearchBudget::new(2),
+            &heuristic,
+        ));
 
         assert_solution_solves(cube, solution.moves());
     }
@@ -403,46 +396,40 @@ mod tests {
 
         assert_solution_solves(
             cube.clone(),
-            solve_ida_star_with_heuristic(&cube, 1, &ZeroHeuristic)
-                .expect("zero heuristic should solve")
-                .moves(),
+            found_solution(solve_ida_star_bounded_with_heuristic(
+                &cube,
+                SearchBudget::new(1),
+                &ZeroHeuristic,
+            ))
+            .moves(),
         );
         assert_solution_solves(
             cube.clone(),
-            solve_ida_star_with_heuristic(&cube, 1, &MisplacedCubiesHeuristic)
-                .expect("misplaced-cubies heuristic should solve")
-                .moves(),
+            found_solution(solve_ida_star_bounded_with_heuristic(
+                &cube,
+                SearchBudget::new(1),
+                &MisplacedCubiesHeuristic,
+            ))
+            .moves(),
         );
         assert_solution_solves(
             cube.clone(),
-            solve_ida_star_with_heuristic(&cube, 1, &CornerOrientationHeuristic)
-                .expect("corner-orientation heuristic should solve")
-                .moves(),
+            found_solution(solve_ida_star_bounded_with_heuristic(
+                &cube,
+                SearchBudget::new(1),
+                &CornerOrientationHeuristic,
+            ))
+            .moves(),
         );
         assert_solution_solves(
             cube.clone(),
-            solve_ida_star_with_heuristic(&cube, 1, &EdgeOrientationHeuristic)
-                .expect("edge-orientation heuristic should solve")
-                .moves(),
+            found_solution(solve_ida_star_bounded_with_heuristic(
+                &cube,
+                SearchBudget::new(1),
+                &EdgeOrientationHeuristic,
+            ))
+            .moves(),
         );
-    }
-
-    #[test]
-    fn root_export_solves_shallow_scramble() {
-        let cube = scrambled(&[Move::R]);
-        let solution = crate::solve_ida_star(&cube, 1).expect("one-move scramble should solve");
-
-        assert_solution_solves(cube, solution.moves());
-    }
-
-    #[test]
-    fn root_export_solves_with_heuristic() {
-        let cube = scrambled(&[Move::R]);
-        let heuristic = MisplacedCubiesHeuristic;
-        let solution = crate::solve_ida_star_with_heuristic(&cube, 1, &heuristic)
-            .expect("one-move scramble should solve");
-
-        assert_solution_solves(cube, solution.moves());
     }
 
     #[test]
@@ -468,5 +455,14 @@ mod tests {
         cube.apply_moves(solution);
 
         assert!(cube.is_solved());
+    }
+
+    fn found_solution(outcome: SearchOutcome) -> crate::search::SearchSolution {
+        match outcome {
+            SearchOutcome::Found(solution) => solution,
+            SearchOutcome::NotFoundWithinLimits { .. } => {
+                panic!("expected bounded IDA* to find a solution")
+            }
+        }
     }
 }

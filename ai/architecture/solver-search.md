@@ -4,10 +4,8 @@ Search builds on top of a correct cube engine.
 
 ## Planned Layers
 
-- BFS for shallow correctness checks and baseline behavior.
-- IDDFS for bounded depth exploration.
-- A* for heuristic search concepts and validation.
-- IDA* as the main memory-efficient optimal search path.
+- Bounded IDA* for depth-limited deterministic search.
+- Generated two-phase search for the current classical solver path.
 - Pattern databases for fast admissible lower bounds.
 - Learned value heuristics only after deterministic search and datasets exist.
 

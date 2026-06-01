@@ -46,7 +46,6 @@ pub fn quality_fixtures() -> Result<Vec<QualityFixture>, QualityReportError> {
         )
         .with_solver_expectations(QualityFixtureExpectations::new(
             QualityExpectation::RequiredSuccess,
-            QualityExpectation::ExpectedNotFoundWithinLimits,
             QualityExpectation::RequiredSuccess,
         )),
         QualityFixtureSpec::new(
@@ -60,7 +59,6 @@ pub fn quality_fixtures() -> Result<Vec<QualityFixture>, QualityReportError> {
         )
         .with_solver_expectations(QualityFixtureExpectations::new(
             QualityExpectation::RequiredSuccess,
-            QualityExpectation::ExpectedNotFoundWithinLimits,
             QualityExpectation::RequiredSuccess,
         )),
         QualityFixtureSpec::new(
@@ -74,7 +72,6 @@ pub fn quality_fixtures() -> Result<Vec<QualityFixture>, QualityReportError> {
         )
         .with_solver_expectations(QualityFixtureExpectations::new(
             QualityExpectation::RequiredSuccess,
-            QualityExpectation::ExpectedNotFoundWithinLimits,
             QualityExpectation::RequiredSuccess,
         )),
         QualityFixtureSpec::new(
@@ -106,7 +103,6 @@ pub fn quality_fixtures() -> Result<Vec<QualityFixture>, QualityReportError> {
         )
         .with_solver_expectations(QualityFixtureExpectations::new(
             QualityExpectation::ExpectedNotFoundWithinLimits,
-            QualityExpectation::ExpectedNotFoundWithinLimits,
             QualityExpectation::RequiredSuccess,
         )),
         QualityFixtureSpec::new(
@@ -119,7 +115,6 @@ pub fn quality_fixtures() -> Result<Vec<QualityFixture>, QualityReportError> {
             Some(1_000_000),
         )
         .with_solver_expectations(QualityFixtureExpectations::new(
-            QualityExpectation::ExpectedNotFoundWithinLimits,
             QualityExpectation::ExpectedNotFoundWithinLimits,
             QualityExpectation::RequiredSuccess,
         )),
@@ -134,7 +129,6 @@ pub fn quality_fixtures() -> Result<Vec<QualityFixture>, QualityReportError> {
         )
         .with_solver_expectations(QualityFixtureExpectations::new(
             QualityExpectation::ExpectedNotFoundWithinLimits,
-            QualityExpectation::ExpectedNotFoundWithinLimits,
             QualityExpectation::RequiredSuccess,
         )),
         QualityFixtureSpec::new(
@@ -147,7 +141,6 @@ pub fn quality_fixtures() -> Result<Vec<QualityFixture>, QualityReportError> {
             Some(1_000_000),
         )
         .with_solver_expectations(QualityFixtureExpectations::new(
-            QualityExpectation::ExpectedNotFoundWithinLimits,
             QualityExpectation::ExpectedNotFoundWithinLimits,
             QualityExpectation::RequiredSuccess,
         )),

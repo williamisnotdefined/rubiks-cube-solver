@@ -1,6 +1,6 @@
 ---
 name: "solver-search"
-description: "Use when adding or changing BFS, IDDFS, IDA*, heuristics, pruning, or pattern database code."
+description: "Use when adding or changing IDA*, generated two-phase search, heuristics, pruning, or pattern database code."
 ---
 
 Generated from `ai/registry.json`. Do not edit manually.
@@ -23,7 +23,7 @@ This file is compiled from canonical AI knowledge files. Edit canonical files un
 
 # Solver Search
 
-Use this skill when adding or changing BFS, IDDFS, IDA*, heuristics, pruning, or pattern database code.
+Use this skill when adding or changing IDA*, generated two-phase search, heuristics, pruning, or pattern database code.
 
 ## Goal
 
@@ -69,7 +69,7 @@ Rules for search, heuristics, and pattern database work.
 
 - Keep search algorithms in `crates/cube-engine/src/search` unless a later crate boundary is introduced.
 - Keep heuristics explicit about admissibility.
-- Prefer IDDFS and IDA* for bounded memory search after move tables are correct.
+- Prefer bounded IDA* and generated two-phase paths after move tables are correct.
 - Prune inverse moves and repeated same-axis branches where correctness allows it.
 - Measure node counts and depth limits for non-trivial search changes.
 
@@ -177,10 +177,8 @@ Search builds on top of a correct cube engine.
 
 ## Planned Layers
 
-- BFS for shallow correctness checks and baseline behavior.
-- IDDFS for bounded depth exploration.
-- A* for heuristic search concepts and validation.
-- IDA* as the main memory-efficient optimal search path.
+- Bounded IDA* for depth-limited deterministic search.
+- Generated two-phase search for the current classical solver path.
 - Pattern databases for fast admissible lower bounds.
 - Learned value heuristics only after deterministic search and datasets exist.
 

@@ -6,7 +6,7 @@ Rules for search, heuristics, and pattern database work.
 
 - Keep search algorithms in `crates/cube-engine/src/search` unless a later crate boundary is introduced.
 - Keep heuristics explicit about admissibility.
-- Prefer IDDFS and IDA* for bounded memory search after move tables are correct.
+- Prefer bounded IDA* and generated two-phase paths after move tables are correct.
 - Prune inverse moves and repeated same-axis branches where correctness allows it.
 - Measure node counts and depth limits for non-trivial search changes.
 

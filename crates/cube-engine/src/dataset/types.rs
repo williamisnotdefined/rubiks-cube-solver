@@ -1,35 +1,11 @@
 use crate::cube::Move;
 
 pub const DATASET_SCHEMA_VERSION: u32 = 1;
-pub const DEFAULT_MAX_SCRAMBLE_DEPTH: usize = 12;
-pub const REVERSIBLE_SCRAMBLE_LABEL_SOURCE: &str = "reversible_scramble_inverse_replay_verified";
 pub const SOLVER_VERIFIED_LABEL_SOURCE: &str = "generated_two_phase_solver_replay_verified";
 pub const SOLVER_QUALITY_VERIFIED_LABEL_SOURCE: &str =
     "generated_two_phase_quality_solver_replay_verified";
 pub const SOLVER_MULTIPROBE_VERIFIED_LABEL_SOURCE: &str =
     "generated_two_phase_multiprobe_solver_replay_verified";
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct DatasetGenerationConfig {
-    pub seed: u64,
-    pub count: usize,
-    pub max_scramble_depth: usize,
-}
-
-impl DatasetGenerationConfig {
-    pub const fn new(seed: u64, count: usize) -> Self {
-        Self {
-            seed,
-            count,
-            max_scramble_depth: DEFAULT_MAX_SCRAMBLE_DEPTH,
-        }
-    }
-
-    pub const fn with_max_scramble_depth(mut self, max_scramble_depth: usize) -> Self {
-        self.max_scramble_depth = max_scramble_depth;
-        self
-    }
-}
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum DatasetSplit {

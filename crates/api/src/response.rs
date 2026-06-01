@@ -525,9 +525,7 @@ fn generated_table_status(strategy: SolverStrategy) -> &'static str {
         | SolverStrategy::OptimalBoundedCornerPdb
         | SolverStrategy::OptimalBoundedPdb16
         | SolverStrategy::ShortSolutionPortfolio => "available",
-        SolverStrategy::BoundedIdaStar
-        | SolverStrategy::TwoPhaseBaseline
-        | SolverStrategy::OptimalIdaStarOrientationPdb => "not_required",
+        SolverStrategy::BoundedIdaStar => "not_required",
     }
 }
 

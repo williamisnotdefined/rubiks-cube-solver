@@ -90,14 +90,6 @@ fn solver_quality_report_fixtures_cover_valid_shared_catalog_inputs() {
         assert_eq!(
             fixture
                 .solver_expectations
-                .for_selection(QualitySolverSelection::ExplicitTwoPhaseBaseline),
-            QualityExpectation::ExpectedNotFoundWithinLimits,
-            "{}",
-            fixture.id
-        );
-        assert_eq!(
-            fixture
-                .solver_expectations
                 .for_selection(QualitySolverSelection::GeneratedTwoPhase),
             QualityExpectation::RequiredSuccess,
             "{}",
@@ -129,10 +121,6 @@ fn solver_quality_report_includes_each_solver_selection_for_each_fixture() {
         assert!(report.rows().iter().any(|row| {
             row.fixture_id == fixture.id
                 && row.solver_selection == QualitySolverSelection::DefaultBoundedIdaStar
-        }));
-        assert!(report.rows().iter().any(|row| {
-            row.fixture_id == fixture.id
-                && row.solver_selection == QualitySolverSelection::ExplicitTwoPhaseBaseline
         }));
         assert!(report.rows().iter().any(|row| {
             row.fixture_id == fixture.id
@@ -748,7 +736,6 @@ fn solver_quality_report_markdown_has_stable_headers_and_local_timing_note() {
     assert!(markdown.contains("local and non-deterministic"));
     assert!(markdown.contains("| selection | rows | success | generated_tables_unavailable | generated_tables_corrupt_or_incompatible | expected_not_found_within_limits | unexpected_regression | replay_verified_successes | solution_len_range | explored_nodes_total |"));
     assert!(markdown.contains("| default-bounded-ida-star |"));
-    assert!(markdown.contains("| explicit-two-phase-baseline |"));
     assert!(markdown.contains(&format!(
         "| generated-two-phase | {} | 0 | {} | 0 | 0 | 0 | 0 | - | 0 |",
         fixtures.len(),
@@ -761,10 +748,8 @@ fn solver_quality_report_markdown_has_stable_headers_and_local_timing_note() {
     assert!(markdown.contains("mid_depth"));
     assert!(markdown.contains("required_success"));
     assert!(markdown.contains("default-bounded-ida-star"));
-    assert!(markdown.contains("explicit-two-phase-baseline"));
     assert!(markdown.contains("generated-two-phase"));
     assert!(markdown.contains("bounded-ida-star"));
-    assert!(markdown.contains("two-phase-baseline"));
     assert!(markdown.contains("| true |"));
     assert!(markdown.contains("generated_tables_unavailable"));
     assert!(markdown.contains("unavailable"));
@@ -801,11 +786,6 @@ fn solver_quality_report_rows_are_emitted_in_fixture_then_solver_order() {
     assert_eq!(rows[1].fixture_id, "solved-facelets");
     assert_eq!(
         rows[1].solver_selection,
-        QualitySolverSelection::ExplicitTwoPhaseBaseline
-    );
-    assert_eq!(rows[2].fixture_id, "solved-facelets");
-    assert_eq!(
-        rows[2].solver_selection,
         QualitySolverSelection::GeneratedTwoPhase
     );
     assert_eq!(report.hybrid_rows()[0].fixture_id, "solved-facelets");

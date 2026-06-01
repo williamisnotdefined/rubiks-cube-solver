@@ -29,9 +29,8 @@ pub use scan_inference::{
     SCAN_FACE_COUNT, SCAN_STICKERS_PER_FACE,
 };
 pub use search::{
-    corner_pattern_coordinate, corner_pattern_database_path, depth_limited_search, solve_bfs,
-    solve_ida_star, solve_ida_star_bounded, solve_ida_star_bounded_with_heuristic,
-    solve_ida_star_with_heuristic, solve_iddfs, CornerOrientationHeuristic,
+    corner_pattern_coordinate, corner_pattern_database_path, solve_ida_star_bounded,
+    solve_ida_star_bounded_with_heuristic, CornerOrientationHeuristic,
     CornerOrientationPatternDatabaseHeuristic, CornerPatternDatabase, CornerPatternDatabaseError,
     CornerPatternDatabaseHeuristic, EdgeOrientationHeuristic,
     EdgeOrientationPatternDatabaseHeuristic, GeneratedPruningTableArtifact, GeneratedTwoPhaseError,

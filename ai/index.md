@@ -55,7 +55,7 @@ Each skill entry should include:
 - `repository-engineering-guidelines`: repository-wide engineering standards, workspace commands, AI knowledge maintenance, and final verification.
 - `rust-module-refactor`: Rust file splitting, module facades, visibility, and behavior-preserving refactor workflow.
 - `cube-engine`: Rust cube representation, moves, notation, scrambles, and cube validation.
-- `solver-search`: BFS, IDDFS, IDA*, heuristics, pruning, and pattern database work.
+- `solver-search`: IDA*, generated two-phase search, heuristics, pruning, and pattern database work.
 - `api-boundary`: Axum HTTP API, API validation, generated solver loading, solve-status contracts, and web API-client behavior.
 - `frontend-visualization`: web UI, 3D visualization, playback, and frontend-to-API boundary.
 - `frontend-componentization`: React component extraction, page composition, and frontend file ownership in `apps/web`.

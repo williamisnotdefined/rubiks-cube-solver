@@ -1,6 +1,6 @@
 # Solver Search
 
-Use this skill when adding or changing BFS, IDDFS, IDA*, heuristics, pruning, or pattern database code.
+Use this skill when adding or changing IDA*, generated two-phase search, heuristics, pruning, or pattern database code.
 
 ## Goal
 

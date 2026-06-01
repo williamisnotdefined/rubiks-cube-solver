@@ -58,7 +58,7 @@ Environment notes for this run:
 | Phase 5, Frontend Web | React/Vite app receives a scramble, selects solver strategy and limits, displays solution metrics, caps the cube at 350px, and calls the API. | `npm run build`, `npm run lint -w @rubiks-cube-solver/web`, `npm run test:e2e`. |
 | Phase 6, E2E Validation | Playwright covers notation-only input, replay-verified successes, and invalid-notation failure modes, with native generated artifacts ignored locally. | `npm run test:e2e`. |
 | Phase 7, Classical Solver Quality | Pruning-table generation, generated two-phase quality rows, fixture validation, replay verification, and quality report metadata. | `cargo run --quiet -p cube-engine --bin generate_pruning_tables -- --output crates/cube-engine/pruning-tables --phase1-max-depth 8 --phase2-max-depth 10`, `cargo run --quiet -p cube-engine --bin solver_quality_report`. |
-| Phase 8, Datasets | Deterministic Rust dataset generation helpers and committed `datasets/fixtures/small.jsonl` with replay-verified inverse-scramble labels. | `cargo test`, `python -m pytest ml`, ML smoke command using `datasets/fixtures/small.jsonl`. |
+| Phase 8, Datasets | Deterministic Rust solver-labeled dataset generation and committed `datasets/fixtures/small.jsonl` for fast ML smoke coverage. | `cargo test`, `python -m pytest ml`, ML smoke command using `datasets/fixtures/small.jsonl`. |
 | Phase 9, Machine Learning | Python value baseline consumes cubie serialization and writes ignored local metrics/value outputs; it is not a solver dependency. | `python -m pytest ml`, `python -m ml.train_value_baseline --dataset datasets/fixtures/small.jsonl --epochs 1 --seed 0 --output ml/outputs/value-baseline --inference-repeats 1`. |
 | Phase 10, Hybrid Search | Native quality report appends hybrid move-ordering rows from local value outputs only for move ordering. | `cargo run --quiet -p cube-engine --bin solver_quality_report -- --hybrid-value-outputs ml/outputs/value-baseline/value_outputs.tsv`. |
 
@@ -78,7 +78,7 @@ Committed durable evidence lives in this report, `README.md`, source tests, comm
 - Rust remains the source of truth for cube parsing, conversion, validation, solving, and replay verification.
 - The frontend is an input, display, strategy-selection, and API controller only.
 - Generated pruning tables are optional local artifacts. Missing or corrupt artifacts produce structured unavailable/corrupt outcomes.
-- ML labels are replay-verified inverse scramble lengths, not optimal-distance labels.
+- ML labels are replay-verified solution lengths, not optimal-distance labels; the committed small fixture still uses legacy inverse-scramble labels for smoke coverage.
 - ML value outputs are isolated to native hybrid move ordering and do not validate states, prune branches, replace replay verification, or change Rust API/web defaults.
 - Solver strategy names are implementation details; the product target is the shortest replay-verified solution found within explicit limits.
 - The solver quality report and generated two-phase path do not claim optimality, `<=16`, or a 20-move guarantee.
