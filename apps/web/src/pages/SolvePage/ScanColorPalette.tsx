@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import type { ScanFaceSymbol } from '@api/solver/types'
+import { scanColorCode } from './scanColorSymbols'
 import { scanSymbolDetails, scanSymbols } from './scanState'
 import { scanColorLabel } from './scanTranslations'
 
@@ -30,11 +31,13 @@ export function ScanColorPalette({ selectedSymbol, onSelect }: ScanColorPaletteP
                 color: details.foreground,
               }}
               type="button"
+              aria-label={scanColorLabel(t, symbol)}
               aria-pressed={selected}
+              title={scanColorLabel(t, symbol)}
               key={symbol}
               onClick={() => onSelect(symbol)}
             >
-              {scanColorLabel(t, symbol)}
+              {scanColorCode(symbol)}
             </button>
           )
         })}

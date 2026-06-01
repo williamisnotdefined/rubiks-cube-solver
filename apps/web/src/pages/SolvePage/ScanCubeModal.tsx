@@ -48,6 +48,7 @@ import {
   scanFaceLabel,
   scanFaceTopLabel,
 } from './scanTranslations'
+import { scanColorCode } from './scanColorSymbols'
 import { solveErrorDetail, solveErrorMessage } from './solveMessages'
 import { useCameraStream } from './hooks/useCameraStream'
 import { useLiveScanPreview } from './hooks/useLiveScanPreview'
@@ -940,19 +941,19 @@ function scanSessionReadinessMessage(
 
   if (unconfirmedFaces.length > 0) {
     return t('scan.messages.sessionMissingConfirmedFaces', {
-      faces: unconfirmedFaces.join(', '),
+      faces: scanColorCodes(unconfirmedFaces),
     })
   }
 
   if (missingPhotoFaces.length > 0) {
     return t('scan.messages.sessionMissingPhotos', {
-      faces: missingPhotoFaces.join(', '),
+      faces: scanColorCodes(missingPhotoFaces),
     })
   }
 
   if (incompleteStickerFaces.length > 0) {
     return t('scan.messages.sessionIncompleteStickers', {
-      faces: incompleteStickerFaces.join(', '),
+      faces: scanColorCodes(incompleteStickerFaces),
     })
   }
 
@@ -970,17 +971,17 @@ function scanSessionQualityMessage(
   const reasons = result.inference?.qualityReasons ?? []
   const glareFaces = qualityReasonFaces(reasons, 'image_glare')
   if (glareFaces.length > 0) {
-    return t('scan.messages.sessionGlareRescan', { faces: glareFaces.join(', ') })
+    return t('scan.messages.sessionGlareRescan', { faces: scanColorCodes(glareFaces) })
   }
 
   const blurryFaces = qualityReasonFaces(reasons, 'image_blurry')
   if (blurryFaces.length > 0) {
-    return t('scan.messages.sessionBlurRescan', { faces: blurryFaces.join(', ') })
+    return t('scan.messages.sessionBlurRescan', { faces: scanColorCodes(blurryFaces) })
   }
 
   const shadowFaces = qualityReasonFaces(reasons, 'image_shadow')
   if (shadowFaces.length > 0) {
-    return t('scan.messages.sessionShadowRescan', { faces: shadowFaces.join(', ') })
+    return t('scan.messages.sessionShadowRescan', { faces: scanColorCodes(shadowFaces) })
   }
 
   return undefined
@@ -990,6 +991,10 @@ function qualityReasonFaces(reasons: readonly string[], reasonKind: string): Sca
   return scanFaceOrder
     .map(({ symbol }) => symbol)
     .filter((symbol) => reasons.includes(`${reasonKind}:${symbol}`))
+}
+
+function scanColorCodes(symbols: readonly ScanFaceSymbol[]): string {
+  return symbols.map((symbol) => scanColorCode(symbol)).join(', ')
 }
 
 function scanCnnStatusMessage(
@@ -1114,8 +1119,8 @@ function centerMismatchMessage(
 
   return t('scan.messages.centerMismatchWithColors', {
     confidence,
-    detectedColor: scanColorLabel(t, detectedSymbol),
-    expectedColor: scanColorLabel(t, expectedSymbol),
+    detectedColor: `${scanColorCode(detectedSymbol)} / ${scanColorLabel(t, detectedSymbol)}`,
+    expectedColor: `${scanColorCode(expectedSymbol)} / ${scanColorLabel(t, expectedSymbol)}`,
   })
 }
 

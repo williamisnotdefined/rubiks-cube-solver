@@ -11,6 +11,15 @@ from .scan_session_export import CANONICAL_FACE_ORDER, ScanSessionExport, load_s
 
 CONFUSION_COLUMNS = (*CANONICAL_FACE_ORDER, "missing")
 LOW_CONFIDENCE_HARD_CASE = 0.45
+COLOR_SYMBOLS = ("W", "R", "G", "Y", "O", "B")
+FACE_TO_COLOR_SYMBOL = {
+    "B": "B",
+    "D": "Y",
+    "F": "G",
+    "L": "O",
+    "R": "R",
+    "U": "W",
+}
 
 
 def evaluate_scan_session_exports(exports: list[ScanSessionExport]) -> dict[str, Any]:
@@ -275,6 +284,7 @@ def evaluate_scan_session_exports(exports: list[ScanSessionExport]) -> dict[str,
         "manualTargetStickerCount": manual_target_sticker_count,
         "qualityReasons": dict(sorted(quality_reasons.items())),
         "confusionMatrix": confusion,
+        "colorConfusionMatrix": color_confusion_matrix(confusion),
         "hardCases": sorted_hard_cases(hard_cases),
     }
     return report
@@ -607,6 +617,22 @@ def accuracy_by_key(correct: Counter[str], totals: Counter[str]) -> dict[str, di
         }
         for key, total in sorted(totals.items())
     }
+
+
+def color_confusion_matrix(confusion: dict[str, dict[str, int]]) -> dict[str, dict[str, int]]:
+    color_confusion = {
+        expected: {predicted: 0 for predicted in (*COLOR_SYMBOLS, "missing")}
+        for expected in COLOR_SYMBOLS
+    }
+    for expected_face, predicted_faces in confusion.items():
+        expected_color = FACE_TO_COLOR_SYMBOL.get(expected_face)
+        if expected_color is None:
+            continue
+        for predicted_face, count in predicted_faces.items():
+            predicted_color = "missing" if predicted_face == "missing" else FACE_TO_COLOR_SYMBOL.get(predicted_face)
+            if predicted_color is not None:
+                color_confusion[expected_color][predicted_color] += count
+    return color_confusion
 
 
 def value_at(value: Any, key: str, default: Any = None) -> Any:

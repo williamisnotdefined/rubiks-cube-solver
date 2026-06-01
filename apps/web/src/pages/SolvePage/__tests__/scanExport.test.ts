@@ -40,12 +40,14 @@ describe('scan export helpers', () => {
     })
     expect(exportData.faces).toHaveLength(6)
     expect(exportData.faces.find((face) => face.symbol === 'F')).toMatchObject({
+      colorSymbol: 'G',
       confirmed: true,
       expectedTop: 'U',
+      expectedTopColorSymbol: 'W',
       manualOverrides: { 0: 'R' },
       photoDataUrl: 'data:image/jpeg;base64,scan',
       stickers: expect.arrayContaining([
-        expect.objectContaining({ index: 0, source: 'manual', symbol: 'R' }),
+        expect.objectContaining({ colorSymbol: 'R', index: 0, source: 'manual', symbol: 'R' }),
       ]),
     })
     expect(exportData.sessionResult?.status).toBe('needs_manual_confirmation')

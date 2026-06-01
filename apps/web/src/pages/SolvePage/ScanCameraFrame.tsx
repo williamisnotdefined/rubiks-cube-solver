@@ -2,6 +2,7 @@ import { memo, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ScanAnalysisPoint, ScanDetectionBox, ScanGridDetection, ScanTileDetection } from '@api/scan'
 import type { LiveScanPreviewStatus } from './hooks/useLiveScanPreview'
+import { scanColorCode } from './scanColorSymbols'
 import type { TemporalFaceConsensus } from './scanTemporalConsensus'
 import { scanSymbolDetails } from './scanState'
 
@@ -135,7 +136,7 @@ export const ScanCameraFrame = memo(function ScanCameraFrame({
                 x={(detection.bbox.x - detection.bbox.width / 2) * 100 + 1}
                 y={(detection.bbox.y - detection.bbox.height / 2) * 100 + 4}
               >
-                {detection.symbol} {Math.round(detection.confidence * 100)}
+                {scanBoxLabel(detection.symbol)} {Math.round(detection.confidence * 100)}
               </text>
             </g>
           ))}
@@ -242,6 +243,14 @@ function scanBoxFill(symbol: ScanGridDetection['symbol'] | ScanTileDetection['sy
   }
 
   return scanSymbolDetails[symbol].background
+}
+
+function scanBoxLabel(symbol: ScanGridDetection['symbol'] | ScanTileDetection['symbol']): string {
+  if (symbol === undefined || symbol === 'face') {
+    return '?'
+  }
+
+  return scanColorCode(symbol)
 }
 
 function cameraStatusLabel({

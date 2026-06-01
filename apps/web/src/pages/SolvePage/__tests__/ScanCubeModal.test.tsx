@@ -175,7 +175,7 @@ describe('ScanCubeModal', () => {
 
     await user.click(screen.getByRole('button', { name: 'Take photo' }))
 
-    expect(await screen.findByText(/Center looks White.*expects Green/)).toBeInTheDocument()
+    expect(await screen.findByText(/Center looks W \/ White.*expects G \/ Green/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Confirm face' })).toBeEnabled()
 
     await user.click(screen.getByRole('button', { name: 'Confirm face' }))
@@ -246,7 +246,7 @@ describe('ScanCubeModal', () => {
     expect(screen.getByTestId('scan-sticker-0')).toHaveAccessibleName(/Orange/)
     expect(screen.getByTestId('scan-sticker-1')).toHaveAccessibleName(/Red/)
     expect(screen.getByTestId('scan-sticker-4')).toHaveAccessibleName(/Blue/)
-    expect(screen.getByText(/Center looks Blue/)).toBeInTheDocument()
+    expect(screen.getByText(/Center looks B \/ Blue/)).toBeInTheDocument()
   })
 
   it('keeps a confirmed face available when navigating away and back', async () => {
@@ -336,7 +336,7 @@ describe('ScanCubeModal', () => {
 
     await user.click(screen.getByRole('button', { name: 'Solve scanned cube' }))
 
-    expect(screen.getByText('Confirm these faces before solving: F.')).toBeInTheDocument()
+    expect(screen.getByText('Confirm these faces before solving: G.')).toBeInTheDocument()
     expect(apiMocks.solveSessionMutateAsync).not.toHaveBeenCalled()
   })
 
@@ -437,7 +437,7 @@ describe('ScanCubeModal', () => {
     await confirmAllFaces(user)
     await user.click(screen.getByRole('button', { name: 'Solve scanned cube' }))
 
-    expect(await screen.findByText('Too much glare on faces F, R. Reduce reflections and rescan those faces.')).toBeInTheDocument()
+    expect(await screen.findByText('Too much glare on faces G, R. Reduce reflections and rescan those faces.')).toBeInTheDocument()
   })
 
   it('highlights backend manual confirmation targets', async () => {

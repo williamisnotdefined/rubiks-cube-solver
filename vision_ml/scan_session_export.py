@@ -46,6 +46,7 @@ class ScanRejectedCapture(BaseModel):
 class ScanExportSticker(BaseModel):
     index: int = Field(ge=0, le=8)
     symbol: str | None = None
+    colorSymbol: str | None = None
     confidence: float = Field(ge=0.0, le=1.0)
     source: Literal["empty", "detected", "manual", "center"]
     rgb: ScanExportRgb | None = None
@@ -59,7 +60,9 @@ class ScanExportSticker(BaseModel):
 
 class ScanSessionExportFace(BaseModel):
     symbol: str
+    colorSymbol: str | None = None
     expectedTop: str
+    expectedTopColorSymbol: str | None = None
     captureMode: Literal["manual", "auto"] | None = None
     autoCapture: dict[str, Any] | None = None
     review: dict[str, Any] | None = None

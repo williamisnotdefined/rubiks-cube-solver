@@ -55,7 +55,7 @@ describe('ScanCameraFrame', () => {
       />,
     )
 
-    expect(screen.getByText('F 90')).toBeInTheDocument()
+    expect(screen.getByText('G 90')).toBeInTheDocument()
     expect(screen.getByText('1/9 stickers found')).toBeInTheDocument()
     expect(screen.getByText('grid 81%')).toBeInTheDocument()
     expect(screen.getByText('consensus 93% 6 frames')).toBeInTheDocument()

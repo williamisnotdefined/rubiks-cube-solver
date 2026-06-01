@@ -8,6 +8,7 @@ import {
   scanSymbolDetails,
   type ScanFaceStatus,
 } from './scanState'
+import { scanColorCode } from './scanColorSymbols'
 import { scanFaceLabel } from './scanTranslations'
 
 type ScanFaceCarouselProps = {
@@ -91,7 +92,7 @@ export function ScanFaceCarousel({
                     className="size-3 border border-[#2b2b2b]"
                     style={{ backgroundColor: details.background }}
                   />
-                  {symbol}
+                  {scanColorCode(symbol)}
                 </span>
                 <span className="truncate text-[0.62rem] tracking-[0.12em]">{statusLabel}</span>
               </button>

@@ -1,5 +1,6 @@
 import type { TFunction } from 'i18next'
 import type { ScanFaceSymbol } from '@api/solver/types'
+import { scanColorCode } from './scanColorSymbols'
 import type { ScanFaceDraftValidation } from './scanState'
 
 export function scanColorLabel(t: TFunction, symbol: ScanFaceSymbol): string {
@@ -7,7 +8,8 @@ export function scanColorLabel(t: TFunction, symbol: ScanFaceSymbol): string {
 }
 
 export function scanColorInitial(t: TFunction, symbol: ScanFaceSymbol): string {
-  return scanColorLabel(t, symbol).slice(0, 1)
+  void t
+  return scanColorCode(symbol)
 }
 
 export function scanFaceLabel(t: TFunction, symbol: ScanFaceSymbol): string {

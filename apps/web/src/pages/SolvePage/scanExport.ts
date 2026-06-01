@@ -9,6 +9,7 @@ import {
   type ScanFaceDrafts,
   type ScanSticker,
 } from './scanState'
+import { scanColorCode, type ScanColorSymbol } from './scanColorSymbols'
 import type { TemporalFaceConsensus } from './scanTemporalConsensus'
 
 export const scanSessionExportSchemaVersion = 'scan-session-export-v1'
@@ -16,6 +17,7 @@ export const scanSessionExportSchemaVersion = 'scan-session-export-v1'
 export type ScanSessionExportSticker = {
   index: number
   symbol?: ScanFaceSymbol
+  colorSymbol?: ScanColorSymbol
   confidence: number
   source: ScanSticker['source']
   rgb?: ScanSticker['rgb']
@@ -24,7 +26,9 @@ export type ScanSessionExportSticker = {
 
 export type ScanSessionExportFace = {
   symbol: ScanFaceSymbol
+  colorSymbol: ScanColorSymbol
   expectedTop: ScanFaceSymbol
+  expectedTopColorSymbol: ScanColorSymbol
   autoCapture?: ScanAutoCaptureMetadata
   captureMode?: 'manual' | 'auto'
   confirmed: boolean
@@ -118,8 +122,11 @@ function exportFace(symbol: ScanFaceSymbol, drafts: ScanFaceDrafts): ScanSession
       rgb: sticker.rgb,
       source: sticker.source,
       symbol: sticker.symbol,
+      colorSymbol: sticker.symbol === undefined ? undefined : scanColorCode(sticker.symbol),
     })),
     symbol,
+    colorSymbol: scanColorCode(symbol),
+    expectedTopColorSymbol: scanColorCode(expectedTopForScanFace(symbol)),
     temporalConsensus: draft.temporalConsensus,
   }
 }
