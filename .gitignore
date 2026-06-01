@@ -32,6 +32,7 @@ images.zip
 labels.zip
 *.pt
 *.onnx
+*.onnx.data
 *.log
 .env
 .env.*

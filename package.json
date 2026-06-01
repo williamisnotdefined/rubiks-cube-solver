@@ -7,6 +7,7 @@
   ],
   "scripts": {
     "dev": "npm run pruning:native && concurrently -k -n api,vision,web -c blue,magenta,green \"npm run api:dev\" \"npm run vision:dev\" \"npm run web:dev\"",
+    "dev:scan-ml": "RUBIKS_VISION_CNN_MODEL=vision_ml/local-models/sticker-cnn.onnx RUBIKS_VISION_FACE_DETECTOR_MODEL=vision_ml/local-models/face-detector.onnx RUBIKS_VISION_FACE_DETECTOR_INPUT_SIZE=224 VITE_ENABLE_SCAN_EXPORT=true npm run dev",
     "web:dev": "npm run dev -w @rubiks-cube-solver/web",
     "api:dev": "cargo run -p rubiks-cube-solver-api",
     "api:dev:watch": "if command -v cargo-watch >/dev/null 2>&1; then cargo watch -x \"run -p rubiks-cube-solver-api\"; else cargo run -p rubiks-cube-solver-api; fi",
