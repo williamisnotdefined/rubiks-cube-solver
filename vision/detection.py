@@ -37,7 +37,12 @@ def analyze_face(
     height, width = image.shape[:2]
     image_quality, quality_warnings = image_quality_metrics(image)
     tile_detector = tile_detector or get_default_tile_detector()
-    tile_detections = [detection for detection in tile_detector.detect(image) if detection.symbol != "face"]
+    raw_detections = tile_detector.detect(image)
+    face_detection = best_face_detection(raw_detections)
+    tile_detections = grounded_tile_detections(
+        [detection for detection in raw_detections if detection.symbol != "face"],
+        face_detection,
+    )
     average_tile_confidence = float(np.mean([detection.confidence for detection in tile_detections])) if tile_detections else 0.0
 
     if len(tile_detections) < 9:
@@ -95,6 +100,41 @@ def ordered_tile_detections(detections: list[TileDetection]) -> list[TileDetecti
         rows.append(sorted(row, key=lambda detection: detection.bbox[0]))
 
     return [detection for row in rows for detection in row]
+
+
+def best_face_detection(detections: list[TileDetection]) -> TileDetection | None:
+    faces = [detection for detection in detections if detection.symbol == "face"]
+    return max(faces, key=lambda detection: detection.confidence, default=None)
+
+
+def grounded_tile_detections(
+    detections: list[TileDetection],
+    face_detection: TileDetection | None,
+) -> list[TileDetection]:
+    if face_detection is None:
+        return detections
+
+    return [detection for detection in detections if bbox_center_inside(detection.bbox, face_detection.bbox)]
+
+
+def bbox_center_inside(
+    bbox: tuple[float, float, float, float],
+    container: tuple[float, float, float, float],
+    margin: float = 0.02,
+) -> bool:
+    x, y, _width, _height = bbox
+    x0, y0, x1, y1 = bbox_xyxy(container)
+    return x0 - margin <= x <= x1 + margin and y0 - margin <= y <= y1 + margin
+
+
+def bbox_xyxy(bbox: tuple[float, float, float, float]) -> tuple[float, float, float, float]:
+    x, y, width, height = bbox
+    return (
+        max(0.0, x - width / 2.0),
+        max(0.0, y - height / 2.0),
+        min(1.0, x + width / 2.0),
+        min(1.0, y + height / 2.0),
+    )
 
 
 def decode_image(image: str) -> np.ndarray | None:

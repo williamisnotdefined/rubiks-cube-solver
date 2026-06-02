@@ -5,6 +5,7 @@ import type { LiveScanPreviewStatus } from './hooks/useLiveScanPreview'
 import { scanColorCode } from './scanColorSymbols'
 import type { TemporalFaceConsensus } from './scanTemporalConsensus'
 import { scanSymbolDetails } from './scanState'
+import { validStickerTileDetections } from './scanTileDetections'
 
 type ScanCameraStatus = 'idle' | 'loading' | 'ready' | 'error'
 
@@ -145,8 +146,7 @@ function temporalConsensusLabel(
 }
 
 function stickerOverlayBoxes(tileDetections: readonly ScanTileDetection[]): OverlayStickerBox[] {
-  return tileDetections
-    .filter((detection) => detection.symbol !== 'face')
+  return validStickerTileDetections(tileDetections)
     .map((detection, index) => ({
       bbox: detection.bbox,
       confidence: detection.confidence,

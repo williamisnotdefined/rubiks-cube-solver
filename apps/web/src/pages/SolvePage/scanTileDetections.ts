@@ -16,7 +16,7 @@ type AssignTileDetectionsOptions = {
 }
 
 const scanSymbols = ['U', 'R', 'F', 'D', 'L', 'B'] as const satisfies readonly ScanFaceSymbol[]
-const defaultMinConfidence = 0.35
+const defaultMinConfidence = 0.5
 const defaultMaxCandidates = 13
 
 export function validStickerTileDetections(

@@ -12,7 +12,8 @@ import numpy as np
 DEFAULT_TILE_DETECTOR_INPUT_SIZE = 640
 DEFAULT_TILE_DETECTOR_CONFIDENCE = 0.28
 DEFAULT_TILE_DETECTOR_IOU = 0.45
-TILE_DETECTOR_CLASS_SYMBOLS = ("face", "U", "R", "F", "D", "L", "B")
+DEFAULT_TILE_DETECTOR_CLASS_SYMBOLS = ("face", "U", "R", "F", "D", "L", "B")
+TILE_DETECTOR_CLASS_SYMBOLS = DEFAULT_TILE_DETECTOR_CLASS_SYMBOLS
 
 
 @dataclass(frozen=True)
@@ -31,11 +32,13 @@ class VisionTileDetector:
         input_size: int = DEFAULT_TILE_DETECTOR_INPUT_SIZE,
         confidence_threshold: float = DEFAULT_TILE_DETECTOR_CONFIDENCE,
         iou_threshold: float = DEFAULT_TILE_DETECTOR_IOU,
+        class_symbols: tuple[str, ...] = DEFAULT_TILE_DETECTOR_CLASS_SYMBOLS,
     ) -> None:
         self.model_path = Path(model_path) if model_path is not None else None
         self.input_size = input_size
         self.confidence_threshold = confidence_threshold
         self.iou_threshold = iou_threshold
+        self.class_symbols = class_symbols
         self.unavailable_reason: str | None = None
         self._session = session
         self._input_name = input_name
@@ -90,6 +93,7 @@ class VisionTileDetector:
             input_size=self.input_size,
             confidence_threshold=self.confidence_threshold,
             iou_threshold=self.iou_threshold,
+            class_symbols=self.class_symbols,
         )
 
 
@@ -101,9 +105,15 @@ def get_default_tile_detector() -> VisionTileDetector:
 
     if _DEFAULT_TILE_DETECTOR is None:
         input_size = int(os.environ.get("RUBIKS_VISION_TILE_DETECTOR_INPUT_SIZE", DEFAULT_TILE_DETECTOR_INPUT_SIZE))
+        confidence_threshold = float(
+            os.environ.get("RUBIKS_VISION_TILE_DETECTOR_CONFIDENCE", DEFAULT_TILE_DETECTOR_CONFIDENCE)
+        )
+        class_symbols = tile_detector_class_symbols_from_env()
         _DEFAULT_TILE_DETECTOR = VisionTileDetector(
             os.environ.get("RUBIKS_VISION_TILE_DETECTOR_MODEL"),
             input_size=input_size,
+            confidence_threshold=confidence_threshold,
+            class_symbols=class_symbols,
         )
 
     return _DEFAULT_TILE_DETECTOR
@@ -126,6 +136,15 @@ def first_input_name(session: Any) -> str | None:
     return getattr(inputs[0], "name", None)
 
 
+def tile_detector_class_symbols_from_env() -> tuple[str, ...]:
+    value = os.environ.get("RUBIKS_VISION_TILE_DETECTOR_CLASS_SYMBOLS")
+    if value is None:
+        return DEFAULT_TILE_DETECTOR_CLASS_SYMBOLS
+
+    symbols = tuple(symbol.strip() for symbol in value.split(",") if symbol.strip())
+    return symbols or DEFAULT_TILE_DETECTOR_CLASS_SYMBOLS
+
+
 def tile_detector_input(image_bgr: np.ndarray, input_size: int) -> np.ndarray:
     resized = cv2.resize(image_bgr, (input_size, input_size), interpolation=cv2.INTER_AREA)
     rgb = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
@@ -137,14 +156,15 @@ def detections_from_output(
     input_size: int = DEFAULT_TILE_DETECTOR_INPUT_SIZE,
     confidence_threshold: float = DEFAULT_TILE_DETECTOR_CONFIDENCE,
     iou_threshold: float = DEFAULT_TILE_DETECTOR_IOU,
+    class_symbols: tuple[str, ...] = DEFAULT_TILE_DETECTOR_CLASS_SYMBOLS,
 ) -> list[TileDetection]:
-    rows = yolo_rows_from_output(output)
+    rows = yolo_rows_from_output(output, class_symbol_count=len(class_symbols))
     if rows is None or rows.shape[1] < 5:
         return []
 
     detections: list[TileDetection] = []
-    class_scores = rows[:, 4:]
-    if class_scores.shape[1] != len(TILE_DETECTOR_CLASS_SYMBOLS):
+    class_scores = rows[:, 4 : 4 + len(class_symbols)]
+    if class_scores.shape[1] != len(class_symbols):
         return []
 
     class_indexes = np.argmax(class_scores, axis=1)
@@ -158,7 +178,7 @@ def detections_from_output(
             continue
         detections.append(
             TileDetection(
-                symbol=TILE_DETECTOR_CLASS_SYMBOLS[int(class_index)],
+                symbol=class_symbols[int(class_index)],
                 confidence=confidence,
                 bbox=bbox,
             )
@@ -167,16 +187,17 @@ def detections_from_output(
     return non_max_suppression(detections, iou_threshold=iou_threshold)
 
 
-def yolo_rows_from_output(output: Any) -> np.ndarray | None:
+def yolo_rows_from_output(output: Any, class_symbol_count: int = len(DEFAULT_TILE_DETECTOR_CLASS_SYMBOLS)) -> np.ndarray | None:
     array = np.asarray(output, dtype=np.float32)
     if array.ndim == 3 and array.shape[0] == 1:
         array = array[0]
     if array.ndim != 2:
         return None
 
-    if array.shape[0] == len(TILE_DETECTOR_CLASS_SYMBOLS) + 4:
+    supported_widths = {class_symbol_count + 4, class_symbol_count + 5}
+    if array.shape[0] in supported_widths:
         array = array.T
-    if array.shape[1] != len(TILE_DETECTOR_CLASS_SYMBOLS) + 4:
+    if array.shape[1] not in supported_widths:
         return None
     return array
 

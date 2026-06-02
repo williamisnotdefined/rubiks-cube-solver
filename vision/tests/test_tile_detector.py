@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+import vision.tile_detector as tile_detector_module
 
 np = pytest.importorskip("numpy")
 
@@ -8,6 +9,8 @@ from vision.tile_detector import (
     TileDetection,
     VisionTileDetector,
     detections_from_output,
+    get_default_tile_detector,
+    tile_detector_class_symbols_from_env,
     tile_detector_health,
     tile_detector_input,
 )
@@ -32,6 +35,22 @@ def test_tile_detector_health_reports_optional_status() -> None:
     }
 
 
+def test_default_tile_detector_reads_confidence_threshold(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(tile_detector_module, "_DEFAULT_TILE_DETECTOR", None)
+    monkeypatch.delenv("RUBIKS_VISION_TILE_DETECTOR_MODEL", raising=False)
+    monkeypatch.setenv("RUBIKS_VISION_TILE_DETECTOR_CONFIDENCE", "0.5")
+
+    detector = get_default_tile_detector()
+
+    assert detector.confidence_threshold == pytest.approx(0.5)
+
+
+def test_tile_detector_class_symbols_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("RUBIKS_VISION_TILE_DETECTOR_CLASS_SYMBOLS", "B,F,L,R,U,D,face,face")
+
+    assert tile_detector_class_symbols_from_env() == ("B", "F", "L", "R", "U", "D", "face", "face")
+
+
 def test_tile_detector_input_has_stable_shape() -> None:
     image = np.zeros((80, 120, 3), dtype=np.uint8)
 
@@ -51,6 +70,22 @@ def test_detections_from_yolo_output_supports_channel_first_shape() -> None:
     detections = detections_from_output(output, input_size=640, confidence_threshold=0.5)
 
     assert detections == [TileDetection(symbol="F", confidence=pytest.approx(0.91), bbox=pytest.approx((0.5, 0.5, 0.25, 0.25)))]
+
+
+def test_detections_from_yolo_output_supports_obb_shape_and_class_map() -> None:
+    output = np.zeros((1, 13, 1), dtype=np.float32)
+    output[0, 0:4, 0] = [320, 320, 160, 160]
+    output[0, 4 + 4, 0] = 0.91
+    output[0, 12, 0] = 0.3
+
+    detections = detections_from_output(
+        output,
+        input_size=640,
+        confidence_threshold=0.5,
+        class_symbols=("B", "F", "L", "R", "U", "D", "face", "face"),
+    )
+
+    assert detections == [TileDetection(symbol="U", confidence=pytest.approx(0.91), bbox=pytest.approx((0.5, 0.5, 0.25, 0.25)))]
 
 
 def test_tile_detector_converts_session_output_to_detections() -> None:

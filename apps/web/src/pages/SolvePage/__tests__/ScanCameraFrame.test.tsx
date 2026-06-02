@@ -39,4 +39,24 @@ describe('ScanCameraFrame', () => {
     expect(container.querySelector('polygon')).not.toBeInTheDocument()
     expect(container.querySelector('.grid-cols-3')).not.toBeInTheDocument()
   })
+
+  it('hides low-confidence sticker detection boxes', () => {
+    render(
+      <ScanCameraFrame
+        cameraStatus="ready"
+        detectionMode="tile_detector"
+        tileDetections={[
+          {
+            bbox: { height: 0.18, width: 0.18, x: 0.25, y: 0.25 },
+            confidence: 0.39,
+            symbol: 'F',
+          },
+        ]}
+        videoRef={{ current: null }}
+      />,
+    )
+
+    expect(screen.queryByText('G 39')).not.toBeInTheDocument()
+    expect(screen.queryByText('1/9 stickers found')).not.toBeInTheDocument()
+  })
 })

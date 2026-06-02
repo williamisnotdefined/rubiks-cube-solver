@@ -133,6 +133,18 @@ def test_analyze_face_exposes_raw_tile_detections() -> None:
     assert response.tileDetections[4].symbol == "F"
 
 
+def test_analyze_face_filters_tiles_outside_detected_face() -> None:
+    image = synthetic_face(["L", "U", "D", "R", "F", "F", "R", "U", "F"])
+    response = analyze_face(
+        AnalyzeScanFaceRequest(expectedCenter="F", image=encode_image(image)),
+        tile_detector=FakeTileDetector(include_face=True, extra_tiles=[TileDetection(symbol="U", confidence=0.99, bbox=(0.08, 0.08, 0.1, 0.1))]),
+    )
+
+    assert response.ok
+    assert len(response.tileDetections) == 9
+    assert all(tile.bbox.x > 0.1 and tile.bbox.y > 0.1 for tile in response.tileDetections)
+
+
 def test_analyze_face_returns_tile_symbols_without_projected_stickers() -> None:
     detector_symbols = ["L", "R", "R", "F", "B", "B", "R", "F", "D"]
     image = synthetic_face(["R"] * 9)
@@ -217,12 +229,22 @@ class FakeTileDetector:
     model_configured = True
     available = True
 
-    def __init__(self, center_symbol: str = "F", symbols: list[str] | None = None) -> None:
+    def __init__(
+        self,
+        center_symbol: str = "F",
+        symbols: list[str] | None = None,
+        include_face: bool = False,
+        extra_tiles: list[TileDetection] | None = None,
+    ) -> None:
         self.center_symbol = center_symbol
         self.symbols = symbols
+        self.include_face = include_face
+        self.extra_tiles = extra_tiles or []
 
     def detect(self, _image_bgr: np.ndarray) -> list[TileDetection]:
         detections = []
+        if self.include_face:
+            detections.append(TileDetection(symbol="face", confidence=0.95, bbox=(0.5, 0.5, 0.78, 0.78)))
         symbols = self.symbols or ["L", "U", "D", "R", self.center_symbol, "F", "R", "U", "F"]
         for index, symbol in enumerate(symbols):
             row = index // 3
@@ -239,4 +261,4 @@ class FakeTileDetector:
                     ),
                 )
             )
-        return detections
+        return [*detections, *self.extra_tiles]
