@@ -5,18 +5,23 @@ import type { RubiksCubeElement } from '@houstonp/rubiks-cube/view'
 const cubeElementName = 'rubiks-cube'
 
 type CubeStageProps = {
+  active: boolean
   cubeRef: RefObject<RubiksCubeElement | null>
   onReady: () => void
 }
 
-export function CubeStage({ cubeRef, onReady }: CubeStageProps) {
+export function CubeStage({ active, cubeRef, onReady }: CubeStageProps) {
   const { t } = useTranslation()
   const [registered, setRegistered] = useState(
     () => customElements.get(cubeElementName) !== undefined,
   )
 
   useEffect(() => {
-    let active = true
+    if (!active) {
+      return undefined
+    }
+
+    let mounted = true
 
     async function registerCubeElement() {
       if (!customElements.get(cubeElementName)) {
@@ -26,7 +31,7 @@ export function CubeStage({ cubeRef, onReady }: CubeStageProps) {
         }
       }
 
-      if (active) {
+      if (mounted) {
         setRegistered(true)
         onReady()
       }
@@ -35,16 +40,16 @@ export function CubeStage({ cubeRef, onReady }: CubeStageProps) {
     void registerCubeElement()
 
     return () => {
-      active = false
+      mounted = false
     }
-  }, [onReady])
+  }, [active, onReady])
 
   return (
     <section
       className="cube-stage aspect-square w-[min(280px,calc(100vw-24px))] overflow-hidden border border-[#2b2b2b] bg-[#101010]"
       aria-label={t('cube.visualization')}
     >
-      {registered ? (
+      {active && registered ? (
         <rubiks-cube
           className="block size-full brightness-[0.78] saturate-[0.9] contrast-[0.96]"
           ref={cubeRef}

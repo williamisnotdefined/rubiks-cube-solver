@@ -91,6 +91,7 @@ export type AnalyzeScanFaceVariables = {
   expectedCenter: ScanFaceSymbol
   image: string
   knownCenters: Partial<Record<ScanFaceSymbol, RgbColor>>
+  signal?: AbortSignal
 }
 
 export type ScanSessionReviewedSticker = {

@@ -16,6 +16,7 @@ import {
   scramblePlaceholder,
 } from './constants'
 import { useCubeVisualization } from './hooks/useCubeVisualization'
+import { usePageActivity } from './hooks/usePageActivity'
 import { useSolveSettingsStore } from './solveSettingsStore'
 import { preferredStrategyId } from './strategy'
 import {
@@ -30,6 +31,7 @@ export function SolvePage() {
   const healthQuery = useGetHealth()
   const strategiesQuery = useGetStrategies({ enabled: healthQuery.data?.ok === true })
   const solveMutation = useSolveNotation()
+  const cubeActive = usePageActivity()
   const [cubeReadyRevision, markCubeReady] = useReducer(
     (revision: number) => revision + 1,
     0,
@@ -63,7 +65,13 @@ export function SolvePage() {
         )
       : visibleSolutionMoves.join(' ')
 
-  useCubeVisualization(cubeRef, visualizationNotation, cubeReadyRevision, visualizationState)
+  useCubeVisualization(
+    cubeRef,
+    visualizationNotation,
+    cubeReadyRevision,
+    visualizationState,
+    cubeActive,
+  )
 
   const strategyOptions = strategiesQuery.data ?? []
   const apiReady = healthQuery.data?.ok === true && strategiesQuery.isSuccess
@@ -155,7 +163,11 @@ export function SolvePage() {
   return (
     <main className="app-shell min-h-screen w-full bg-[#070707] px-3 py-4 text-[#f7f7f7] sm:px-5 sm:py-6">
       <section className="mx-auto grid w-full max-w-4xl content-start justify-items-center gap-4">
-        <CubeStage cubeRef={cubeRef} onReady={markCubeReady} />
+        <CubeStage
+          active={cubeActive}
+          cubeRef={cubeRef}
+          onReady={markCubeReady}
+        />
         <SolveForm
           notation={notation}
           maxMovesInput={maxMovesInput}

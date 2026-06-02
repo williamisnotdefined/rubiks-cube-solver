@@ -20,17 +20,19 @@ function createFakeCube(): FakeCube {
 
 function HookHarness({
   cube,
+  enabled = true,
   notation,
   revision = 0,
   visualState,
 }: {
   cube: FakeCube | null
+  enabled?: boolean
   notation: string
   revision?: number
   visualState?: string
 }) {
   const cubeRef = useRef(cube as unknown as RubiksCubeElement | null)
-  useCubeVisualization(cubeRef, notation, revision, visualState)
+  useCubeVisualization(cubeRef, notation, revision, visualState, enabled)
 
   return null
 }
@@ -112,6 +114,17 @@ describe('useCubeVisualization', () => {
     const cube = createFakeCube()
 
     render(<HookHarness cube={cube} notation="R Q" />)
+    await runVisualizationSync()
+
+    expect(cube.reset).not.toHaveBeenCalled()
+    expect(cube.move).not.toHaveBeenCalled()
+  })
+
+  it('does not schedule visualization work while disabled', async () => {
+    vi.useFakeTimers()
+    const cube = createFakeCube()
+
+    render(<HookHarness cube={cube} enabled={false} notation="R" />)
     await runVisualizationSync()
 
     expect(cube.reset).not.toHaveBeenCalled()

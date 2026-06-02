@@ -143,12 +143,14 @@ describe('solver API operations', () => {
       warnings: [],
     }
     const fetchMock = mockApiSuccess(payload)
+    const controller = new AbortController()
 
     await expect(
       analyzeScanFace({
         expectedCenter: 'U',
         image: 'data:image/jpeg;base64,scan',
         knownCenters: { U: { r: 205, g: 210, b: 218 } },
+        signal: controller.signal,
       }),
     ).resolves.toEqual(payload)
     expect(fetchMock).toHaveBeenCalledWith(
@@ -159,6 +161,7 @@ describe('solver API operations', () => {
           image: 'data:image/jpeg;base64,scan',
           knownCenters: { U: { r: 205, g: 210, b: 218 } },
         }),
+        signal: controller.signal,
       }),
     )
   })

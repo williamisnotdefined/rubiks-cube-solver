@@ -5,11 +5,14 @@ export async function analyzeScanFace({
   expectedCenter,
   image,
   knownCenters,
+  signal,
 }: AnalyzeScanFaceVariables): Promise<AnalyzeScanFaceResponse> {
   const result = await postJsonResponse<AnalyzeScanFaceResponse>('/scan/analyze-face', {
     expectedCenter,
     image,
     knownCenters,
+  }, {
+    signal,
   })
 
   if (result.payload !== undefined) {

@@ -44,7 +44,7 @@ type UseLiveScanPreviewResult = {
   temporalConsensus: TemporalFaceConsensus
 }
 
-const previewIntervalMs = 320
+const previewIntervalMs = 750
 const minFaceConfidence = 0.5
 const goodFaceConfidence = 0.72
 const minTileConfidence = 0.62
@@ -110,6 +110,7 @@ export function useLiveScanPreview({
     }
 
     let cancelled = false
+    let abortController: AbortController | undefined
     let timeoutId: number | undefined
 
     function scheduleNextPreview() {
@@ -144,11 +145,14 @@ export function useLiveScanPreview({
         return
       }
 
+      abortController = new AbortController()
+
       try {
         const analysis = await mutateAsync({
           expectedCenter,
           image: capture.photoDataUrl,
           knownCenters,
+          signal: abortController.signal,
         })
 
         if (cancelled) {
@@ -157,11 +161,12 @@ export function useLiveScanPreview({
 
         updateTracking(analysis, capture)
       } catch (error) {
-        if (!cancelled) {
+        if (!cancelled && !isAbortError(error)) {
           setStatus('error')
           setMessage(error instanceof Error ? error.message : t('scan.live.scanFailed'))
         }
       } finally {
+        abortController = undefined
         if (!cancelled) {
           scheduleNextPreview()
         }
@@ -212,6 +217,7 @@ export function useLiveScanPreview({
       if (timeoutId !== undefined) {
         window.clearTimeout(timeoutId)
       }
+      abortController?.abort()
     }
   }, [enabled, expectedCenter, knownCenters, mutateAsync, recordTemporalAnalysis, t, videoRef])
 
@@ -226,6 +232,15 @@ export function useLiveScanPreview({
     status,
     temporalConsensus,
   }
+}
+
+function isAbortError(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'name' in error &&
+    (error as { name?: unknown }).name === 'AbortError'
+  )
 }
 
 function liveStatusFromAnalysis(

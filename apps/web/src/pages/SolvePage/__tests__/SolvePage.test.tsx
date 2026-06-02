@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { SolveResult } from '@api/solver/types'
 import { SolvePage } from '../SolvePage'
 import { useCubeVisualization } from '../hooks/useCubeVisualization'
+import { usePageActivity } from '../hooks/usePageActivity'
 import { useSolveSettingsStore } from '../solveSettingsStore'
 
 const scramblePlaceholder =
@@ -88,12 +89,18 @@ vi.mock('../CubeStage', async () => {
   const { useEffect } = await vi.importActual<typeof import('react')>('react')
 
   return {
-    CubeStage: ({ onReady }: { onReady: () => void }) => {
+    CubeStage: ({ active, onReady }: { active: boolean; onReady: () => void }) => {
       useEffect(() => {
-        onReady()
-      }, [onReady])
+        if (active) {
+          onReady()
+        }
+      }, [active, onReady])
 
-      return <section aria-label="Cube visualization" data-testid="cube-stage" />
+      return (
+        <section aria-label="Cube visualization" data-testid="cube-stage">
+          {active ? <div data-testid="cube-stage-enabled" /> : null}
+        </section>
+      )
     },
   }
 })
@@ -102,7 +109,12 @@ vi.mock('../hooks/useCubeVisualization', () => ({
   useCubeVisualization: vi.fn(),
 }))
 
+vi.mock('../hooks/usePageActivity', () => ({
+  usePageActivity: vi.fn(),
+}))
+
 const useCubeVisualizationMock = vi.mocked(useCubeVisualization)
+const usePageActivityMock = vi.mocked(usePageActivity)
 
 describe('SolvePage', () => {
   beforeEach(() => {
@@ -113,6 +125,7 @@ describe('SolvePage', () => {
     apiMocks.scanSessionSolveResult = scanSuccessResult()
     apiMocks.solveData = undefined
     apiMocks.solveError = null
+    usePageActivityMock.mockReturnValue(true)
     useSolveSettingsStore.getState().resetSolveSettings()
     useCubeVisualizationMock.mockClear()
   })
@@ -124,8 +137,31 @@ describe('SolvePage', () => {
 
     expect(input).toHaveValue('')
     expect(input).toHaveAttribute('placeholder', scramblePlaceholder)
+    expect(screen.getByTestId('cube-stage-enabled')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Solve' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Scan cube with camera' })).toBeInTheDocument()
+    expect(useCubeVisualizationMock).toHaveBeenLastCalledWith(
+      expect.anything(),
+      '',
+      expect.any(Number),
+      undefined,
+      true,
+    )
+  })
+
+  it('keeps the cube visualization unmounted and unsynced while the page is inactive', () => {
+    usePageActivityMock.mockReturnValue(false)
+
+    render(<SolvePage />)
+
+    expect(screen.queryByTestId('cube-stage-enabled')).not.toBeInTheDocument()
+    expect(useCubeVisualizationMock).toHaveBeenLastCalledWith(
+      expect.anything(),
+      '',
+      expect.any(Number),
+      undefined,
+      false,
+    )
   })
 
   it('keeps the scramble field on its own row and limits plus submit on the next row', () => {
@@ -236,6 +272,7 @@ describe('SolvePage', () => {
       'R',
       expect.any(Number),
       visualState,
+      true,
     )
   })
 

@@ -72,15 +72,17 @@ export async function apiJsonResponse<TResponse>(
   }
 }
 
-export function postJson<TResponse>(path: string, body: unknown) {
+export function postJson<TResponse>(path: string, body: unknown, options: RequestInit = {}) {
   return apiRequest<TResponse>(path, {
+    ...options,
     body: JSON.stringify(body),
     method: 'POST',
   })
 }
 
-export function postJsonResponse<TResponse>(path: string, body: unknown) {
+export function postJsonResponse<TResponse>(path: string, body: unknown, options: RequestInit = {}) {
   return apiJsonResponse<TResponse>(path, {
+    ...options,
     body: JSON.stringify(body),
     method: 'POST',
   })

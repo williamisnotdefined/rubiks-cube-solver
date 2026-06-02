@@ -27,6 +27,7 @@ const liveScanMocks = vi.hoisted(() => ({
         tileSymbols?: string
       }
     | undefined,
+  enabledValues: [] as boolean[],
   resetAutoFill: vi.fn(),
 }))
 
@@ -126,7 +127,10 @@ vi.mock('../hooks/useLiveScanPreview', () => {
       latestAnalysis: undefined,
       latestCapture: undefined,
       message: 'Looking for cube face.',
-      resetAutoFill: liveScanMocks.resetAutoFill,
+      resetAutoFill: () => {
+        liveScanMocks.autoFillAcknowledged = false
+        liveScanMocks.resetAutoFill()
+      },
       shouldAutoFill: false,
       stableFrameCount: 0,
       status: 'searching',
@@ -146,8 +150,10 @@ vi.mock('../hooks/useLiveScanPreview', () => {
   }
 
   return {
-    useLiveScanPreview: ({ expectedCenter }: { expectedCenter: ScanFaceSymbol }) => {
-      if (!liveScanMocks.autoRecognize) {
+    useLiveScanPreview: ({ enabled, expectedCenter }: { enabled: boolean; expectedCenter: ScanFaceSymbol }) => {
+      liveScanMocks.enabledValues.push(enabled)
+
+      if (!enabled || !liveScanMocks.autoRecognize) {
         return buildEmptyLiveScanState()
       }
 
@@ -214,10 +220,15 @@ describe('ScanCubeModal', () => {
     liveScanMocks.autoFillAcknowledged = false
     liveScanMocks.autoRecognize = false
     liveScanMocks.analysisOverrides = undefined
+    liveScanMocks.enabledValues = []
     liveScanMocks.resetAutoFill.mockClear()
     Object.defineProperty(HTMLMediaElement.prototype, 'play', {
       configurable: true,
       value: vi.fn().mockResolvedValue(undefined),
+    })
+    Object.defineProperty(HTMLMediaElement.prototype, 'pause', {
+      configurable: true,
+      value: vi.fn(),
     })
   })
 
@@ -326,6 +337,21 @@ describe('ScanCubeModal', () => {
 
     expect(screen.getByRole('button', { name: 'Confirm face' })).toBeDisabled()
     expect(liveScanMocks.resetAutoFill).toHaveBeenCalled()
+  })
+
+  it('pauses live preview after auto recognition fills the current face', async () => {
+    liveScanMocks.autoRecognize = true
+
+    render(
+      <ScanCubeModal
+        apiReady
+        solving={false}
+        onClose={vi.fn()}
+      />,
+    )
+
+    await screen.findByText(/9 stickers recognized/)
+    await waitFor(() => expect(liveScanMocks.enabledValues).toContain(false))
   })
 
   it('fills the review grid from sticker detector boxes when sampled stickers disagree', async () => {
@@ -640,6 +666,7 @@ describe('ScanCubeModal', () => {
     const redVideo = container.querySelector('video')
 
     expect(redVideo).not.toBe(greenVideo)
+    await waitFor(() => expect(greenVideo?.srcObject).toBeNull())
     await waitFor(() => expect(redVideo?.srcObject).toBe(apiMocks.cameraStream))
     await waitFor(() => expect(play.mock.calls.length).toBeGreaterThan(initialPlayCalls))
   })

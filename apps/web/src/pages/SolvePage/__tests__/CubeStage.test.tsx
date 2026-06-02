@@ -16,10 +16,33 @@ vi.mock('@houstonp/rubiks-cube/view', () => ({
 }))
 
 describe('CubeStage', () => {
+  it('keeps the cube custom element unmounted while inactive', () => {
+    register.mockClear()
+    const onReady = vi.fn()
+
+    render(
+      <CubeStage
+        active={false}
+        cubeRef={createRef()}
+        onReady={onReady}
+      />,
+    )
+
+    expect(screen.getByLabelText('Cube visualization').querySelector('rubiks-cube')).toBeNull()
+    expect(register).not.toHaveBeenCalled()
+    expect(onReady).not.toHaveBeenCalled()
+  })
+
   it('registers and renders the cube custom element', async () => {
     const onReady = vi.fn()
 
-    render(<CubeStage cubeRef={createRef()} onReady={onReady} />)
+    render(
+      <CubeStage
+        active
+        cubeRef={createRef()}
+        onReady={onReady}
+      />,
+    )
 
     await waitFor(() => expect(screen.getByLabelText('Cube visualization')).toContainHTML('rubiks-cube'))
     await waitFor(() => expect(onReady).toHaveBeenCalled())
@@ -29,10 +52,50 @@ describe('CubeStage', () => {
     register.mockClear()
     const onReady = vi.fn()
 
-    render(<CubeStage cubeRef={createRef()} onReady={onReady} />)
+    render(
+      <CubeStage
+        active
+        cubeRef={createRef()}
+        onReady={onReady}
+      />,
+    )
 
     await waitFor(() => expect(screen.getByLabelText('Cube visualization')).toContainHTML('rubiks-cube'))
     expect(register).not.toHaveBeenCalled()
     expect(onReady).toHaveBeenCalled()
+  })
+
+  it('removes and restores the cube custom element when activity changes', async () => {
+    const onReady = vi.fn()
+    const { rerender } = render(
+      <CubeStage
+        active
+        cubeRef={createRef()}
+        onReady={onReady}
+      />,
+    )
+
+    await waitFor(() => expect(screen.getByLabelText('Cube visualization')).toContainHTML('rubiks-cube'))
+
+    rerender(
+      <CubeStage
+        active={false}
+        cubeRef={createRef()}
+        onReady={onReady}
+      />,
+    )
+
+    expect(screen.getByLabelText('Cube visualization').querySelector('rubiks-cube')).toBeNull()
+
+    rerender(
+      <CubeStage
+        active
+        cubeRef={createRef()}
+        onReady={onReady}
+      />,
+    )
+
+    await waitFor(() => expect(screen.getByLabelText('Cube visualization')).toContainHTML('rubiks-cube'))
+    expect(onReady).toHaveBeenCalledTimes(2)
   })
 })

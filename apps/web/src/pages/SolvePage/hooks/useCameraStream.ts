@@ -33,7 +33,7 @@ export function useCameraStream(active: boolean): CameraStreamState {
       setState({ status: 'loading' })
 
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
+        const nextStream = await navigator.mediaDevices.getUserMedia({
           audio: false,
           video: {
             facingMode: { ideal: 'environment' },
@@ -41,17 +41,21 @@ export function useCameraStream(active: boolean): CameraStreamState {
             width: { ideal: 1920 },
           },
         })
+        stream = nextStream
 
-        if (!cancelled) {
-          const [videoTrack] = stream.getVideoTracks()
-
-          setState({
-            capabilities: videoTrack?.getCapabilities?.(),
-            settings: videoTrack?.getSettings(),
-            status: 'ready',
-            stream,
-          })
+        if (cancelled) {
+          stopMediaStream(nextStream)
+          return
         }
+
+        const [videoTrack] = nextStream.getVideoTracks()
+
+        setState({
+          capabilities: videoTrack?.getCapabilities?.(),
+          settings: videoTrack?.getSettings(),
+          status: 'ready',
+          stream: nextStream,
+        })
       } catch {
         if (!cancelled) {
           setState({
@@ -66,9 +70,13 @@ export function useCameraStream(active: boolean): CameraStreamState {
 
     return () => {
       cancelled = true
-      stream?.getTracks().forEach((track) => track.stop())
+      stopMediaStream(stream)
     }
   }, [active, t])
 
   return state
+}
+
+function stopMediaStream(stream: MediaStream | undefined) {
+  stream?.getTracks().forEach((track) => track.stop())
 }

@@ -151,8 +151,11 @@ export function ScanCubeModal({
     [backendReviewTargets, confirmedFaces, drafts],
   )
   const knownCenters = useMemo(() => knownCenterReferencesFromFaces(confirmedFaces), [confirmedFaces])
+  const hasReviewCaptureContent =
+    photoDataUrl !== undefined || stickers.some((sticker, index) => index !== 4 && sticker.symbol !== undefined)
+  const hasReviewContent = currentDraftHasReviewContent(currentDraft)
   const liveScan = useLiveScanPreview({
-    enabled: autoScanEnabled && camera.status === 'ready' && !capturing,
+    enabled: autoScanEnabled && camera.status === 'ready' && !capturing && !hasReviewCaptureContent,
     expectedCenter: currentFace.symbol,
     knownCenters,
     videoRef,
@@ -171,7 +174,6 @@ export function ScanCubeModal({
   const cameraAnalysis = liveAnalysis
   const cameraTemporalConsensus =
     liveTemporalConsensus.framesSeen > 0 ? liveTemporalConsensus : undefined
-  const hasReviewContent = currentDraftHasReviewContent(currentDraft)
   const scannerMessage =
     hasReviewContent
       ? faceValidation ?? t('scan.messages.liveReviewReady')
@@ -187,12 +189,25 @@ export function ScanCubeModal({
   const cameraStream = camera.status === 'ready' ? camera.stream : undefined
 
   useEffect(() => {
-    if (cameraStream === undefined || videoRef.current === null) {
+    const video = videoRef.current
+
+    if (cameraStream === undefined || video === null) {
       return
     }
 
-    videoRef.current.srcObject = cameraStream
-    void videoRef.current.play().catch(() => undefined)
+    video.srcObject = cameraStream
+    void video.play().catch(() => undefined)
+
+    return () => {
+      if (video.srcObject === cameraStream) {
+        try {
+          video.pause()
+        } catch {
+          // Some test environments do not implement media playback controls.
+        }
+        video.srcObject = null
+      }
+    }
   }, [cameraStream, currentFaceIndex])
 
   useEffect(() => {

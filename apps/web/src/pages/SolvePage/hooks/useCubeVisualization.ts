@@ -33,6 +33,7 @@ export function useCubeVisualization(
   notation: string,
   readyRevision: number,
   visualState?: string,
+  enabled = true,
 ) {
   const visualMovesRef = useRef<Movement[]>([])
   const visualStateRef = useRef<string | undefined>(undefined)
@@ -40,6 +41,11 @@ export function useCubeVisualization(
   const visualHasSyncedRef = useRef(false)
 
   useEffect(() => {
+    if (!enabled) {
+      visualSyncIdRef.current += 1
+      return undefined
+    }
+
     const syncId = visualSyncIdRef.current + 1
     visualSyncIdRef.current = syncId
     const parsed = parseVisualizationNotation(notation)
@@ -64,8 +70,11 @@ export function useCubeVisualization(
       })
     }, 0)
 
-    return () => window.clearTimeout(timeout)
-  }, [cubeRef, notation, readyRevision, visualState])
+    return () => {
+      visualSyncIdRef.current += 1
+      window.clearTimeout(timeout)
+    }
+  }, [cubeRef, enabled, notation, readyRevision, visualState])
 }
 
 function parseVisualizationNotation(input: string): VisualizationNotationParseResult {

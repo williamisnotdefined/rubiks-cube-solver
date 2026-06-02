@@ -24,6 +24,7 @@ vi.mock('../../scanCapture', () => ({
 }))
 
 const captureScanPreviewImageMock = vi.mocked(captureScanPreviewImage)
+const previewIntervalMs = 750
 
 describe('useLiveScanPreview', () => {
   beforeEach(() => {
@@ -54,7 +55,7 @@ describe('useLiveScanPreview', () => {
 
     for (let frame = 0; frame < 6; frame += 1) {
       await act(async () => {
-        await vi.advanceTimersByTimeAsync(320)
+        await vi.advanceTimersByTimeAsync(previewIntervalMs)
       })
     }
 
@@ -65,6 +66,37 @@ describe('useLiveScanPreview', () => {
     expect(result.current.temporalConsensus.status).toBe('ready')
     expect(result.current.temporalConsensus.framesUsed).toBe(6)
     expect(apiMocks.analyzeMutateAsync).toHaveBeenCalledTimes(6)
+  })
+
+  it('aborts the in-flight preview analysis when unmounted', async () => {
+    let previewSignal: AbortSignal | undefined
+    apiMocks.analyzeMutateAsync.mockImplementation(({ signal }: { signal?: AbortSignal }) => {
+      previewSignal = signal
+      return new Promise<AnalyzeScanFaceResponse>(() => {
+        // Keep the request pending until cleanup aborts it.
+      })
+    })
+    const videoRef = { current: document.createElement('video') }
+    const knownCenters = {}
+
+    const { unmount } = renderHook(() =>
+      useLiveScanPreview({
+        enabled: true,
+        expectedCenter: 'U',
+        knownCenters,
+        videoRef,
+      }),
+    )
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(previewIntervalMs)
+    })
+
+    expect(previewSignal?.aborted).toBe(false)
+
+    unmount()
+
+    expect(previewSignal?.aborted).toBe(true)
   })
 
   it('does not auto-fill center mismatches', async () => {
@@ -83,7 +115,7 @@ describe('useLiveScanPreview', () => {
 
     for (let frame = 0; frame < 5; frame += 1) {
       await act(async () => {
-        await vi.advanceTimersByTimeAsync(320)
+        await vi.advanceTimersByTimeAsync(previewIntervalMs)
       })
     }
 
@@ -109,7 +141,7 @@ describe('useLiveScanPreview', () => {
 
     for (let frame = 0; frame < 8; frame += 1) {
       await act(async () => {
-        await vi.advanceTimersByTimeAsync(320)
+        await vi.advanceTimersByTimeAsync(previewIntervalMs)
       })
     }
 
@@ -134,7 +166,7 @@ describe('useLiveScanPreview', () => {
 
     for (let frame = 0; frame < 8; frame += 1) {
       await act(async () => {
-        await vi.advanceTimersByTimeAsync(320)
+        await vi.advanceTimersByTimeAsync(previewIntervalMs)
       })
     }
 

@@ -47,6 +47,27 @@ describe('api client', () => {
     expect(init?.method).toBe('POST')
   })
 
+  it('passes request options through POST helpers', async () => {
+    const controller = new AbortController()
+    const fetchMock = vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+      }),
+    )
+
+    await postJsonResponse('/scan/analyze-face', { image: 'scan' }, {
+      headers: { 'x-scan-preview': '1' },
+      signal: controller.signal,
+    })
+    const [, init] = fetchMock.mock.calls[0]
+
+    expect(init?.signal).toBe(controller.signal)
+    expect(new Headers(init?.headers).get('x-scan-preview')).toBe('1')
+    expect(init?.body).toBe(JSON.stringify({ image: 'scan' }))
+    expect(init?.method).toBe('POST')
+  })
+
   it('throws ApiRequestError with payload messages for non-ok responses', async () => {
     vi.mocked(fetch).mockResolvedValue(
       new Response(JSON.stringify({ message: ['Invalid', 'Scramble'] }), {
