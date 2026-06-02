@@ -49,4 +49,34 @@ describe('TimerPage', () => {
 
     expect(within(screen.getByRole('table')).getByText('+2')).toBeInTheDocument()
   })
+
+  it('switches WCA events and stores the selected event on the solve', async () => {
+    const user = userEvent.setup()
+    render(<TimerPage />)
+
+    await user.selectOptions(screen.getByLabelText('Event'), 'pyraminx')
+
+    await waitFor(() => expect(screen.getAllByText(/Pyraminx/).length).toBeGreaterThan(0))
+
+    fireEvent.keyDown(window, { code: 'Space', key: ' ' })
+    fireEvent.keyUp(window, { code: 'Space', key: ' ' })
+    await waitFor(() => expect(screen.getByText('Solving')).toBeInTheDocument())
+    fireEvent.keyDown(window, { code: 'KeyA', key: 'a' })
+    await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument())
+
+    const solve = useTimerStore.getState().sessions[0]?.solves.at(-1)
+
+    expect(solve?.eventId).toBe('pyraminx')
+  })
+
+  it('renders multiline MBLD scrambles', async () => {
+    const user = userEvent.setup()
+    render(<TimerPage />)
+
+    await user.selectOptions(screen.getByLabelText('Event'), '333mbld')
+
+    expect(
+      await screen.findByText((content) => content.includes('1. ') && content.includes('5. ')),
+    ).toBeInTheDocument()
+  })
 })

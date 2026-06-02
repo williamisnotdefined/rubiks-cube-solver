@@ -1,4 +1,15 @@
-export type ScrambleGeneratorId = 'threeByThreeRandomMove'
+export type ScrambleGeneratorId =
+  | 'bigCubeRandomMove'
+  | 'clockWcaLike'
+  | 'megaminxWcaLike'
+  | 'multiBlindThreeByThree'
+  | 'pyraminxRandomMove'
+  | 'skewbRandomMove'
+  | 'squareOneRandomMove'
+  | 'threeByThreeRandomMove'
+  | 'twoByTwoRandomMove'
+
+export type ScrambleQuality = 'officialRandomState' | 'wcaLike'
 
 export type ScrambleEvent = {
   defaultLength: number
@@ -6,6 +17,8 @@ export type ScrambleEvent = {
   group: string
   id: string
   label: string
+  puzzle: string
+  quality: ScrambleQuality
 }
 
 export type GeneratedScramble = {
