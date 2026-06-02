@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AnalyzeScanFaceResponse, ScanSessionResult } from '@api/scan'
@@ -6,7 +6,6 @@ import type { ScanFaceSymbol, SolveResult } from '@api/solver/types'
 import { ScanCubeModal } from '../ScanCubeModal'
 import { captureScanImage } from '../scanCapture'
 import { scanFaceOrder } from '../scanState'
-import { useSolveSettingsStore } from '../solveSettingsStore'
 
 const apiMocks = vi.hoisted(() => ({
   analyzeReset: vi.fn(),
@@ -216,7 +215,6 @@ describe('ScanCubeModal', () => {
     liveScanMocks.autoRecognize = false
     liveScanMocks.analysisOverrides = undefined
     liveScanMocks.resetAutoFill.mockClear()
-    useSolveSettingsStore.getState().resetSolveSettings()
     Object.defineProperty(HTMLMediaElement.prototype, 'play', {
       configurable: true,
       value: vi.fn().mockResolvedValue(undefined),
@@ -229,7 +227,6 @@ describe('ScanCubeModal', () => {
         apiReady
         solving
         onClose={vi.fn()}
-        onSolve={vi.fn()}
       />,
     )
 
@@ -246,7 +243,6 @@ describe('ScanCubeModal', () => {
         visionTileDetectorAvailable
         visionOk
         onClose={vi.fn()}
-        onSolve={vi.fn()}
       />,
     )
 
@@ -263,7 +259,6 @@ describe('ScanCubeModal', () => {
         visionTileDetectorReason="tile_detector_model_not_configured"
         visionOk
         onClose={vi.fn()}
-        onSolve={vi.fn()}
       />,
     )
 
@@ -276,7 +271,6 @@ describe('ScanCubeModal', () => {
         solving={false}
         visionOk={false}
         onClose={vi.fn()}
-        onSolve={vi.fn()}
       />,
     )
 
@@ -289,7 +283,6 @@ describe('ScanCubeModal', () => {
         apiReady
         solving={false}
         onClose={vi.fn()}
-        onSolve={vi.fn()}
       />,
     )
 
@@ -304,7 +297,6 @@ describe('ScanCubeModal', () => {
         apiReady
         solving={false}
         onClose={vi.fn()}
-        onSolve={vi.fn()}
       />,
     )
 
@@ -316,7 +308,6 @@ describe('ScanCubeModal', () => {
         apiReady
         solving={false}
         onClose={vi.fn()}
-        onSolve={vi.fn()}
       />,
     )
 
@@ -334,7 +325,6 @@ describe('ScanCubeModal', () => {
         apiReady
         solving={false}
         onClose={vi.fn()}
-        onSolve={vi.fn()}
       />,
     )
 
@@ -351,7 +341,6 @@ describe('ScanCubeModal', () => {
         apiReady
         solving={false}
         onClose={vi.fn()}
-        onSolve={vi.fn()}
       />,
     )
 
@@ -364,7 +353,6 @@ describe('ScanCubeModal', () => {
         apiReady
         solving={false}
         onClose={vi.fn()}
-        onSolve={vi.fn()}
       />,
     )
 
@@ -391,7 +379,6 @@ describe('ScanCubeModal', () => {
         apiReady
         solving={false}
         onClose={vi.fn()}
-        onSolve={vi.fn()}
       />,
     )
 
@@ -411,7 +398,6 @@ describe('ScanCubeModal', () => {
         apiReady
         solving={false}
         onClose={vi.fn()}
-        onSolve={vi.fn()}
       />,
     )
 
@@ -436,7 +422,6 @@ describe('ScanCubeModal', () => {
         apiReady
         solving={false}
         onClose={vi.fn()}
-        onSolve={vi.fn()}
       />,
     )
 
@@ -463,7 +448,6 @@ describe('ScanCubeModal', () => {
         apiReady
         solving={false}
         onClose={vi.fn()}
-        onSolve={vi.fn()}
       />,
     )
 
@@ -486,7 +470,7 @@ describe('ScanCubeModal', () => {
   it('submits the full scan session and closes on accepted solve', async () => {
     const user = userEvent.setup()
     const onClose = vi.fn()
-    const onSessionAccepted = vi.fn()
+    const onSessionSolveResult = vi.fn()
     liveScanMocks.autoRecognize = true
 
     render(
@@ -494,8 +478,7 @@ describe('ScanCubeModal', () => {
         apiReady
         solving={false}
         onClose={onClose}
-        onSolve={vi.fn()}
-        onSessionAccepted={onSessionAccepted}
+        onSessionSolveResult={onSessionSolveResult}
       />,
     )
 
@@ -517,7 +500,35 @@ describe('ScanCubeModal', () => {
         maxDepth: 30,
       }),
     )
-    expect(onSessionAccepted).toHaveBeenCalledWith(expect.objectContaining({ ok: true, status: 'success' }))
+    expect(onSessionSolveResult).toHaveBeenCalledWith(expect.objectContaining({ ok: true, status: 'success' }))
+    expect(onClose).toHaveBeenCalled()
+  })
+
+  it('closes and returns terminal scan solve failures to the page', async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+    const onSessionSolveResult = vi.fn()
+    liveScanMocks.autoRecognize = true
+    apiMocks.solveSessionMutateAsync.mockResolvedValue({
+      ...scanSessionAccepted(),
+      ok: false,
+      solve: scanSolveFailure(),
+      status: 'api_error',
+    })
+
+    render(
+      <ScanCubeModal
+        apiReady
+        solving={false}
+        onClose={onClose}
+        onSessionSolveResult={onSessionSolveResult}
+      />,
+    )
+
+    await confirmAllFaces(user)
+    await user.click(screen.getByRole('button', { name: 'Solve scanned cube' }))
+
+    await waitFor(() => expect(onSessionSolveResult).toHaveBeenCalledWith(scanSolveFailure()))
     expect(onClose).toHaveBeenCalled()
   })
 
@@ -536,7 +547,6 @@ describe('ScanCubeModal', () => {
         apiReady
         solving={false}
         onClose={vi.fn()}
-        onSolve={vi.fn()}
       />,
     )
 
@@ -567,7 +577,6 @@ describe('ScanCubeModal', () => {
         apiReady
         solving={false}
         onClose={vi.fn()}
-        onSolve={vi.fn()}
       />,
     )
 
@@ -592,7 +601,6 @@ describe('ScanCubeModal', () => {
         apiReady
         solving={false}
         onClose={vi.fn()}
-        onSolve={vi.fn()}
       />,
     )
 
@@ -616,7 +624,6 @@ describe('ScanCubeModal', () => {
         apiReady
         solving={false}
         onClose={onClose}
-        onSolve={vi.fn()}
       />,
     )
 
@@ -635,7 +642,6 @@ describe('ScanCubeModal', () => {
         apiReady
         solving={false}
         onClose={vi.fn()}
-        onSolve={vi.fn()}
       />,
     )
 
@@ -662,7 +668,6 @@ describe('ScanCubeModal', () => {
         apiReady
         solving={false}
         onClose={vi.fn()}
-        onSolve={vi.fn()}
       />,
     )
     const greenVideo = container.querySelector('video')
@@ -688,7 +693,6 @@ describe('ScanCubeModal', () => {
         apiReady
         solving={false}
         onClose={vi.fn()}
-        onSolve={vi.fn()}
       />,
     )
 
@@ -706,7 +710,6 @@ describe('ScanCubeModal', () => {
         apiReady
         solving={false}
         onClose={vi.fn()}
-        onSolve={vi.fn()}
       />,
     )
 
@@ -729,41 +732,6 @@ describe('ScanCubeModal', () => {
     expect(screen.getByRole('button', { name: 'Scan again' })).toBeEnabled()
   })
 
-  it('opens solve settings and retries a completed scan after limit failure', async () => {
-    const user = userEvent.setup()
-    const onClose = vi.fn()
-    liveScanMocks.autoRecognize = true
-    const onSolve = vi
-      .fn()
-      .mockResolvedValueOnce(scanSolveFailure())
-      .mockResolvedValueOnce(scanSolveSuccess())
-
-    render(
-      <ScanCubeModal
-        apiReady
-        solving={false}
-        onClose={onClose}
-        onSolve={onSolve}
-      />,
-    )
-
-    await confirmAllFaces(user)
-    await user.click(screen.getByRole('button', { name: 'Solve reviewed colors' }))
-
-    const retryDialog = await screen.findByRole('dialog', { name: 'Adjust solve limits' })
-    await user.clear(within(retryDialog).getByLabelText('Max moves'))
-    await user.type(within(retryDialog).getByLabelText('Max moves'), '30')
-    await user.selectOptions(within(retryDialog).getByLabelText('Max nodes (M)'), '25')
-    await user.click(within(retryDialog).getByRole('button', { name: 'Apply and retry' }))
-
-    await waitFor(() => expect(onSolve).toHaveBeenCalledTimes(2))
-    expect(onSolve).toHaveBeenNthCalledWith(2, onSolve.mock.calls[0]?.[0])
-    expect(useSolveSettingsStore.getState()).toMatchObject({
-      maxMovesInput: '30',
-      maxNodesMillionInput: '25',
-    })
-    expect(onClose).toHaveBeenCalled()
-  })
 })
 
 async function confirmAllFaces(user: ReturnType<typeof userEvent.setup>) {

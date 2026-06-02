@@ -1,8 +1,8 @@
 import { useReducer, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { RubiksCubeElement } from '@houstonp/rubiks-cube/view'
-import { useGetHealth, useGetStrategies, useSolveNotation, useSolveScan } from '@api/solver'
-import type { ScanFacesPayload, SolveResult as ApiSolveResult } from '@api/solver/types'
+import { useGetHealth, useGetStrategies, useSolveNotation } from '@api/solver'
+import type { SolveResult as ApiSolveResult } from '@api/solver/types'
 import { waitForPaint } from '@core/timing/waitForPaint'
 import { CubeStage } from './CubeStage'
 import { ScanCubeModal } from './ScanCubeModal'
@@ -30,7 +30,6 @@ export function SolvePage() {
   const healthQuery = useGetHealth()
   const strategiesQuery = useGetStrategies({ enabled: healthQuery.data?.ok === true })
   const solveMutation = useSolveNotation()
-  const scanMutation = useSolveScan()
   const [cubeReadyRevision, markCubeReady] = useReducer(
     (revision: number) => revision + 1,
     0,
@@ -46,9 +45,8 @@ export function SolvePage() {
   const [scanModalOpen, setScanModalOpen] = useState(false)
   const [activeSolveSource, setActiveSolveSource] = useState<'notation' | 'scan'>('notation')
   const [scanSessionSolveResult, setScanSessionSolveResult] = useState<ApiSolveResult | undefined>()
-  const activeSolveResult =
-    activeSolveSource === 'scan' ? scanSessionSolveResult ?? scanMutation.data : solveMutation.data
-  const activeSolveError = activeSolveSource === 'scan' ? scanMutation.error : solveMutation.error
+  const activeSolveResult = activeSolveSource === 'scan' ? scanSessionSolveResult : solveMutation.data
+  const activeSolveError = activeSolveSource === 'scan' ? null : solveMutation.error
   const successResult =
     activeSolveResult?.status === 'success' ? activeSolveResult : undefined
   const visibleSolutionStep = clampSolutionStep(
@@ -69,7 +67,7 @@ export function SolvePage() {
 
   const strategyOptions = strategiesQuery.data ?? []
   const apiReady = healthQuery.data?.ok === true && strategiesQuery.isSuccess
-  const solving = solveMutation.isPending || scanMutation.isPending
+  const solving = solveMutation.isPending
   const buttonLoading = !apiReady || solving
   const strategyId = preferredStrategyId(strategyOptions)
   const maxMoves = Number(maxMovesInput)
@@ -103,7 +101,6 @@ export function SolvePage() {
 
     setSolutionStep(0)
     setActiveSolveSource('notation')
-    scanMutation.reset()
     setScanSessionSolveResult(undefined)
 
     try {
@@ -126,7 +123,6 @@ export function SolvePage() {
     setSolutionStep(0)
     setActiveSolveSource('notation')
     solveMutation.reset()
-    scanMutation.reset()
     setScanSessionSolveResult(undefined)
   }
 
@@ -149,30 +145,10 @@ export function SolvePage() {
     resetSolveResult()
   }
 
-  async function handleScanSolve(faces: ScanFacesPayload) {
+  function handleScanSessionSolveResult(solve: ApiSolveResult) {
     setSolutionStep(0)
     setActiveSolveSource('scan')
     solveMutation.reset()
-    setScanSessionSolveResult(undefined)
-
-    const solvePromise = scanMutation.mutateAsync({
-      faces,
-      limits: {
-        maxDepth: maxMoves,
-        maxNodes,
-        strategyId,
-      },
-    })
-    await waitForPaint()
-
-    return solvePromise
-  }
-
-  function handleScanSessionAccepted(solve: ApiSolveResult) {
-    setSolutionStep(0)
-    setActiveSolveSource('scan')
-    solveMutation.reset()
-    scanMutation.reset()
     setScanSessionSolveResult(solve)
   }
 
@@ -214,7 +190,7 @@ export function SolvePage() {
             maxDepth={maxMoves}
             maxNodes={maxNodes}
             solveDisabledReason={localValidationMessage}
-            solving={scanMutation.isPending}
+            solving={solveMutation.isPending}
             strategyId={strategyId}
             visionCnnAvailable={healthQuery.data?.visionCnnAvailable}
             visionCnnReason={healthQuery.data?.visionCnnReason}
@@ -222,8 +198,7 @@ export function SolvePage() {
             visionTileDetectorReason={healthQuery.data?.visionTileDetectorReason}
             visionOk={healthQuery.data?.visionOk}
             onClose={() => setScanModalOpen(false)}
-            onSolve={handleScanSolve}
-            onSessionAccepted={handleScanSessionAccepted}
+            onSessionSolveResult={handleScanSessionSolveResult}
           />
         ) : null}
       </section>

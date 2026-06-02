@@ -31,7 +31,7 @@
     "live:start": "npm run tunnel:run:prod",
     "tunnel:check:prod": "node scripts/check-port.mjs api ${RUBIKS_API_ADDR:-127.0.0.1:3001} && node scripts/check-port.mjs vision 127.0.0.1:${RUBIKS_VISION_PORT:-8790}",
     "tunnel:run:prod": "npm run tunnel:check:prod && npm run pruning:native && npm run build && npm run build:api && RUBIKS_VISION_TILE_DETECTOR_MODEL=vision_ml/local-models/tile-detector.onnx RUBIKS_VISION_TILE_DETECTOR_INPUT_SIZE=640 RUBIKS_VISION_TILE_DETECTOR_CONFIDENCE=0.5 concurrently -k -n api,vision,tunnel -c blue,magenta,green \"npm run start\" \"npm run vision:start\" \"npm run live:tunnel\"",
-    "tunnel:run:dev": "npm run pruning:native && RUBIKS_VISION_TILE_DETECTOR_MODEL=vision_ml/local-models/tile-detector.onnx RUBIKS_VISION_TILE_DETECTOR_INPUT_SIZE=640 RUBIKS_VISION_TILE_DETECTOR_CONFIDENCE=0.5 VITE_ENABLE_SCAN_EXPORT=true concurrently -k -n api,vision,web,tunnel -c blue,magenta,green,cyan \"npm run api:dev:watch\" \"npm run vision:dev\" \"npm run web:dev\" \"npm run live:tunnel\"",
+    "tunnel:run:dev": "npm run pruning:native && RUBIKS_VISION_TILE_DETECTOR_MODEL=vision_ml/local-models/tile-detector.onnx RUBIKS_VISION_TILE_DETECTOR_INPUT_SIZE=640 RUBIKS_VISION_TILE_DETECTOR_CONFIDENCE=0.5 concurrently -k -n api,vision,web,tunnel -c blue,magenta,green,cyan \"npm run api:dev:watch\" \"npm run vision:dev\" \"npm run web:dev\" \"npm run live:tunnel\"",
     "tunnel:run:dev:scan-ml": "RUBIKS_VISION_TILE_DETECTOR_MODEL=vision_ml/local-models/tile-detector.onnx RUBIKS_VISION_TILE_DETECTOR_INPUT_SIZE=640 RUBIKS_VISION_TILE_DETECTOR_CONFIDENCE=0.5 VITE_ENABLE_SCAN_EXPORT=true npm run tunnel:run:dev",
     "ai:check": "node scripts/ai/sync-routes.mjs --check",
     "ai:sync": "node scripts/ai/sync-routes.mjs",

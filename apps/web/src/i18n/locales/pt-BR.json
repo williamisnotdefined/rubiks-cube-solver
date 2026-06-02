@@ -1,6 +1,5 @@
 {
   "common": {
-    "applyAndRetry": "Aplicar e tentar de novo",
     "cancel": "Cancelar",
     "close": "Fechar",
     "loading": "Carregando"
@@ -20,7 +19,6 @@
       "nextFace": "Próxima face",
       "previousFace": "Face anterior",
       "retakePhoto": "Tirar de novo",
-      "solveReviewedColors": "Resolver cores revisadas",
       "solveScannedCube": "Resolver cubo escaneado",
       "takePhoto": "Tirar foto",
       "updateFace": "Atualizar face"
@@ -161,7 +159,7 @@
       "sessionAmbiguous": "O backend encontrou mais de um estado válido para o cubo. Revise os adesivos destacados ou escaneie novamente as faces incertas.",
       "sessionBlurRescan": "A imagem está borrada nas faces {{faces}}. Segure o cubo firme e escaneie essas faces de novo.",
       "sessionGlareRescan": "Há brilho demais nas faces {{faces}}. Reduza os reflexos e escaneie essas faces de novo.",
-      "sessionInvalidCubeState": "O scan não descreve um cubo válido. Revise as faces ou use o fallback de cores revisadas depois de verificar cada adesivo.",
+      "sessionInvalidCubeState": "O scan não descreve um cubo válido. Revise as faces e escaneie novamente os adesivos incertos.",
       "sessionIncompleteStickers": "Complete os 9 adesivos nas faces {{faces}} antes de resolver.",
       "sessionMissingConfirmedFaces": "Confirme estas faces antes de resolver: {{faces}}.",
       "sessionMissingPhotos": "Reconheça estas faces antes de resolver: {{faces}}.",
@@ -169,7 +167,7 @@
       "sessionNeedsRescan": "Uma ou mais faces precisam ser escaneadas novamente.",
       "sessionRejected": "A sessão de scan foi rejeitada. Revise as faces antes de resolver.",
       "sessionShadowRescan": "Há sombra demais nas faces {{faces}}. Use uma luz mais uniforme e escaneie essas faces de novo.",
-      "sessionVisionUnavailable": "O serviço de visão não conseguiu concluir a sessão. Tente de novo ou use o fallback de cores revisadas.",
+      "sessionVisionUnavailable": "O serviço de visão não conseguiu concluir a sessão. Tente de novo quando o serviço estiver disponível.",
       "solveFailed": "A requisição para resolver o scan falhou.",
       "submittingSession": "Verificando o scan completo com as restrições do cubo...",
       "stillLooking": "Ainda procurando a face do cubo. Mantenha a face inteira visível e deixe o auto scan tentar de novo.",
@@ -190,13 +188,6 @@
       "tileDetectorReasonUnknown": "não configurado",
       "title": "Escanear cubo",
       "visionStatusUnavailable": "Status da visão indisponível"
-    },
-    "settings": {
-      "dismiss": "Fechar ajustes da solução",
-      "hint": "Esses valores também atualizam os controles de solução da página.",
-      "intro": "{{message}}. Aumente os limites e tente de novo sem escanear o cubo novamente.",
-      "kicker": "O scan precisa de mais orçamento",
-      "title": "Ajustar limites da solução"
     },
     "validation": {
       "centerColorMismatch": "A cor central deve corresponder à face escaneada.",

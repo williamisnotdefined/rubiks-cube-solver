@@ -1,6 +1,5 @@
 {
   "common": {
-    "applyAndRetry": "Apply and retry",
     "cancel": "Cancel",
     "close": "Close",
     "loading": "Loading"
@@ -20,7 +19,6 @@
       "nextFace": "Next face",
       "previousFace": "Previous face",
       "retakePhoto": "Scan again",
-      "solveReviewedColors": "Solve reviewed colors",
       "solveScannedCube": "Solve scanned cube",
       "takePhoto": "Scan face",
       "updateFace": "Update face"
@@ -161,7 +159,7 @@
       "sessionAmbiguous": "The backend found more than one valid cube state. Review the highlighted stickers or rescan unclear faces.",
       "sessionBlurRescan": "Image is blurry on faces {{faces}}. Hold the cube steady and rescan those faces.",
       "sessionGlareRescan": "Too much glare on faces {{faces}}. Reduce reflections and rescan those faces.",
-      "sessionInvalidCubeState": "The scan does not describe a valid cube. Review the faces or use the reviewed-color fallback after checking every sticker.",
+      "sessionInvalidCubeState": "The scan does not describe a valid cube. Review the faces and rescan unclear stickers.",
       "sessionIncompleteStickers": "Complete all 9 stickers on faces {{faces}} before solving.",
       "sessionMissingConfirmedFaces": "Confirm these faces before solving: {{faces}}.",
       "sessionMissingPhotos": "Recognize these faces before solving: {{faces}}.",
@@ -169,7 +167,7 @@
       "sessionNeedsRescan": "One or more faces need to be rescanned.",
       "sessionRejected": "The scan session was rejected. Review the faces before solving.",
       "sessionShadowRescan": "Too much shadow on faces {{faces}}. Add more even light and rescan those faces.",
-      "sessionVisionUnavailable": "The vision service could not complete the session. You can retry or use the reviewed-color fallback.",
+      "sessionVisionUnavailable": "The vision service could not complete the session. Retry after the vision service is available.",
       "solveFailed": "The scan solve request failed.",
       "submittingSession": "Checking the full scan with cube constraints...",
       "stillLooking": "Still looking for the cube face. Keep the full face visible and let auto scan try again.",
@@ -190,13 +188,6 @@
       "tileDetectorReasonUnknown": "not configured",
       "title": "Scan cube",
       "visionStatusUnavailable": "Vision status unavailable"
-    },
-    "settings": {
-      "dismiss": "Dismiss solve settings",
-      "hint": "These values also update the solve controls on the page.",
-      "intro": "{{message}}. Increase the limits and retry without scanning the cube again.",
-      "kicker": "Scan solve needs more budget",
-      "title": "Adjust solve limits"
     },
     "validation": {
       "centerColorMismatch": "The center color must match the face being scanned.",

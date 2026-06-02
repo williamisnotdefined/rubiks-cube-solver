@@ -7,14 +7,13 @@ import {
   type RgbColor,
   type ScanSessionResult,
 } from '@api/scan'
-import type { ScanFaceSymbol, ScanFacesPayload, SolveResult } from '@api/solver/types'
+import type { ScanFaceSymbol, SolveResult } from '@api/solver/types'
 import { Button } from '@components/Button'
 import { Loader3x3 } from '@components/Loader3x3'
 import { captureScanImage, type CapturedScanImage } from './scanCapture'
 import { ScanCameraFrame } from './ScanCameraFrame'
 import { ScanFaceCarousel } from './ScanFaceCarousel'
 import { ScanFaceColorEditor } from './ScanFaceColorEditor'
-import { ScanSolveSettingsModal } from './ScanSolveSettingsModal'
 import {
   clearScanFaceDraft,
   confirmScanFaceDraft,
@@ -32,7 +31,6 @@ import {
   scanStickersFromAnalysis,
   scanStickersFromTemporalConsensus,
   scanSessionFacesFromDrafts,
-  scanFacesToPayload,
   scanSymbolDetails,
   scanSymbols,
   validateScanFaceDraft,
@@ -51,7 +49,6 @@ import {
   scanFaceTopLabel,
 } from './scanTranslations'
 import { scanColorCode } from './scanColorSymbols'
-import { solveErrorDetail, solveErrorMessage } from './solveMessages'
 import { useCameraStream } from './hooks/useCameraStream'
 import { useLiveScanPreview } from './hooks/useLiveScanPreview'
 import {
@@ -75,13 +72,7 @@ type ScanCubeModalProps = {
   visionTileDetectorReason?: string
   visionOk?: boolean
   onClose: () => void
-  onSolve: (faces: ScanFacesPayload) => Promise<SolveResult | undefined>
-  onSessionAccepted?: (solve: SolveResult) => void
-}
-
-type SolveFailure = Exclude<SolveResult, { ok: true }>
-type SolveLimitsFailure = SolveFailure & {
-  status: 'not_found_within_limits' | 'invalid_limits'
+  onSessionSolveResult?: (solve: SolveResult) => void
 }
 
 type BackendReviewTargets = {
@@ -107,8 +98,7 @@ export function ScanCubeModal({
   visionTileDetectorReason,
   visionOk,
   onClose,
-  onSolve,
-  onSessionAccepted,
+  onSessionSolveResult,
 }: ScanCubeModalProps) {
   const { t } = useTranslation()
   const titleId = useId()
@@ -130,11 +120,9 @@ export function ScanCubeModal({
   )
   const [centerMismatchConfirmation, setCenterMismatchConfirmation] =
     useState<CenterMismatchConfirmation | undefined>()
-  const [limitsFailureResult, setLimitsFailureResult] = useState<SolveLimitsFailure | undefined>()
   const [lastSessionResult, setLastSessionResult] = useState<ScanSessionResult | undefined>()
   const [message, setMessage] = useState<string | undefined>()
   const confirmedFaces = useMemo(() => scanFacesFromDrafts(drafts), [drafts])
-  const completePayload = scanFacesToPayload(confirmedFaces)
   const sessionFaces = scanSessionFacesFromDrafts(drafts)
   const scanSessionReadiness = scanSessionReadinessMessage(
     t,
@@ -531,7 +519,6 @@ export function ScanCubeModal({
     }
 
     try {
-      setLimitsFailureResult(undefined)
       setMessage(t('scan.messages.submittingSession'))
       const result = await solveScanSession.mutateAsync({
         faces,
@@ -547,75 +534,9 @@ export function ScanCubeModal({
     }
   }
 
-  async function handleFallbackSolveScan() {
-    const payload = scanFacesToPayload(confirmedFaces)
-    if (payload === undefined) {
-      setMessage(t('scan.messages.confirmAllFaces'))
-      return
-    }
-
-    if (!apiReady) {
-      setMessage(t('scan.messages.apiNotReady'))
-      return
-    }
-
-    if (solveDisabledReason !== undefined) {
-      setMessage(solveDisabledReason)
-      return
-    }
-
-    await solveScanPayload(payload)
-  }
-
-  async function handleRetrySolveScan() {
-    const payload = scanFacesToPayload(confirmedFaces)
-    if (payload === undefined) {
-      setLimitsFailureResult(undefined)
-      setMessage(t('scan.messages.confirmAllFaces'))
-      return
-    }
-
-    if (!apiReady) {
-      setMessage(t('scan.messages.apiNotReady'))
-      return
-    }
-
-    if (solveDisabledReason !== undefined) {
-      setMessage(solveDisabledReason)
-      return
-    }
-
-    await solveScanPayload(payload)
-  }
-
-  async function solveScanPayload(payload: ScanFacesPayload) {
-    try {
-      setLimitsFailureResult(undefined)
-      const result = await onSolve(payload)
-      if (result?.ok) {
-        onClose()
-        return
-      }
-
-      if (isSolveLimitsFailure(result)) {
-        setLimitsFailureResult(result)
-        setMessage(solveErrorMessage(result, t))
-        return
-      }
-
-      setMessage(
-        result === undefined
-          ? t('scan.messages.genericRejected')
-          : solveErrorDetail(result, t) ?? solveErrorMessage(result, t),
-      )
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : t('scan.messages.solveFailed'))
-    }
-  }
-
   function handleScanSessionResult(result: ScanSessionResult) {
-    if (result.ok && result.solve?.ok) {
-      onSessionAccepted?.(result.solve)
+    if (result.solve !== undefined) {
+      onSessionSolveResult?.(result.solve)
       onClose()
       return
     }
@@ -816,17 +737,6 @@ export function ScanCubeModal({
             >
               {solving || sessionSolving ? <Loader3x3 decorative className="size-8" registerDelayMs={150} /> : t('scan.actions.solveScannedCube')}
             </Button>
-            <Button
-              className="min-h-10 px-4 py-2"
-              type="button"
-              variant="ghost"
-              disabled={
-                completePayload === undefined || !apiReady || solving || sessionSolving || solveDisabledReason !== undefined
-              }
-              onClick={handleFallbackSolveScan}
-            >
-              {t('scan.actions.solveReviewedColors')}
-            </Button>
             {exportEnabled ? (
               <Button
                 className="min-h-10 px-4 py-2"
@@ -842,14 +752,6 @@ export function ScanCubeModal({
         </div>
         </ScanFaceCarousel>
       </section>
-      {limitsFailureResult === undefined ? null : (
-        <ScanSolveSettingsModal
-          result={limitsFailureResult}
-          solving={solving}
-          onClose={() => setLimitsFailureResult(undefined)}
-          onRetry={handleRetrySolveScan}
-        />
-      )}
       {centerMismatchConfirmation === undefined ? null : (
         <CenterMismatchConfirmationModal
           message={centerMismatchConfirmation.message}
@@ -914,13 +816,6 @@ function CenterMismatchConfirmationModal({
         </div>
       </section>
     </div>
-  )
-}
-
-function isSolveLimitsFailure(result: SolveResult | undefined): result is SolveLimitsFailure {
-  return (
-    result?.ok === false &&
-    (result.status === 'not_found_within_limits' || result.status === 'invalid_limits')
   )
 }
 

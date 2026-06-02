@@ -2,7 +2,6 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { SolveResult } from '@api/solver/types'
-import { ScanSolveSettingsModal } from '../ScanSolveSettingsModal'
 import { SolvePage } from '../SolvePage'
 import { useCubeVisualization } from '../hooks/useCubeVisualization'
 import { useSolveSettingsStore } from '../solveSettingsStore'
@@ -14,18 +13,9 @@ const apiMocks = vi.hoisted(() => ({
   isPending: false,
   mutateAsync: vi.fn(),
   reset: vi.fn(),
-  scanError: null as Error | null,
-  scanIsPending: false,
-  scanMutateAsync: vi.fn(),
-  scanReset: vi.fn(),
-  scanSolveData: undefined as unknown,
+  scanSessionSolveResult: undefined as SolveResult | undefined,
   solveData: undefined as unknown,
   solveError: null as Error | null,
-}))
-
-const scanApiMocks = vi.hoisted(() => ({
-  analyzeMutateAsync: vi.fn(),
-  analyzeReset: vi.fn(),
 }))
 
 type SolveFailure = Exclude<SolveResult, { ok: true }>
@@ -64,39 +54,18 @@ vi.mock('@api/solver', () => ({
     mutateAsync: apiMocks.mutateAsync,
     reset: apiMocks.reset,
   }),
-  useSolveScan: () => ({
-    data: apiMocks.scanSolveData,
-    error: apiMocks.scanError,
-    isPending: apiMocks.scanIsPending,
-    mutateAsync: apiMocks.scanMutateAsync,
-    reset: apiMocks.scanReset,
-  }),
-}))
-
-vi.mock('@api/scan', () => ({
-  useAnalyzeScanFace: () => ({
-    mutateAsync: scanApiMocks.analyzeMutateAsync,
-    reset: scanApiMocks.analyzeReset,
-  }),
 }))
 
 vi.mock('../ScanCubeModal', () => ({
   ScanCubeModal: ({
     apiReady,
     onClose,
-    onSolve,
+    onSessionSolveResult,
     solving,
   }: {
     apiReady: boolean
     onClose: () => void
-    onSolve: (faces: {
-      U: string
-      R: string
-      F: string
-      D: string
-      L: string
-      B: string
-    }) => Promise<unknown>
+    onSessionSolveResult: (solve: SolveResult) => void
     solving: boolean
   }) => (
     <section aria-label="Scan cube" role="dialog">
@@ -105,14 +74,8 @@ vi.mock('../ScanCubeModal', () => ({
         type="button"
         disabled={!apiReady || solving}
         onClick={() => {
-          void onSolve({
-            U: 'UUUUUUUUU',
-            R: 'RRRRRRRRR',
-            F: 'FFFFFFFFF',
-            D: 'DDDDDDDDD',
-            L: 'LLLLLLLLL',
-            B: 'BBBBBBBBB',
-          }).then(() => onClose())
+          onSessionSolveResult(apiMocks.scanSessionSolveResult as SolveResult)
+          onClose()
         }}
       >
         Solve scanned cube
@@ -147,16 +110,9 @@ describe('SolvePage', () => {
     apiMocks.mutateAsync.mockClear()
     apiMocks.mutateAsync.mockResolvedValue(undefined)
     apiMocks.reset.mockClear()
-    apiMocks.scanError = null
-    apiMocks.scanIsPending = false
-    apiMocks.scanMutateAsync.mockClear()
-    apiMocks.scanMutateAsync.mockResolvedValue(undefined)
-    apiMocks.scanReset.mockClear()
-    apiMocks.scanSolveData = undefined
+    apiMocks.scanSessionSolveResult = scanSuccessResult()
     apiMocks.solveData = undefined
     apiMocks.solveError = null
-    scanApiMocks.analyzeMutateAsync.mockClear()
-    scanApiMocks.analyzeReset.mockClear()
     useSolveSettingsStore.getState().resetSolveSettings()
     useCubeVisualizationMock.mockClear()
   })
@@ -264,34 +220,12 @@ describe('SolvePage', () => {
   it('drives playback and cube state from a successful scan solve result', async () => {
     const user = userEvent.setup()
     const visualState = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB'
-    const scanResult = {
-      elapsedMs: 12,
-      exploredNodes: 42,
-      generatedTableStatus: 'available',
-      length: 2,
-      maxDepth: 2,
-      maxNodes: 10_000_000,
-      moves: ['R', 'U'],
-      ok: true,
-      replayVerified: true,
-      solverMode: 'generated_two_phase_quality',
-      status: 'success',
-      strategyId: 'generated-two-phase-quality',
-      strategyLabel: 'Generated two-phase quality solver',
-      visualState,
-    }
-    apiMocks.scanMutateAsync.mockImplementation(async () => {
-      apiMocks.scanSolveData = scanResult
+    apiMocks.scanSessionSolveResult = scanSuccessResult(visualState)
 
-      return scanResult
-    })
-
-    const { rerender } = render(<SolvePage />)
+    render(<SolvePage />)
     await user.click(screen.getByRole('button', { name: 'Scan cube with camera' }))
     await user.click(screen.getByRole('button', { name: 'Solve scanned cube' }))
-    await waitFor(() => expect(apiMocks.scanMutateAsync).toHaveBeenCalled())
 
-    rerender(<SolvePage />)
     expect(screen.getByLabelText('Solution step')).toHaveValue('0')
 
     await user.click(screen.getByRole('button', { name: 'Next move' }))
@@ -305,27 +239,34 @@ describe('SolvePage', () => {
     )
   })
 
-  it('syncs retry modal settings back to the page controls', async () => {
+  it('renders terminal scan solve failures on the page', async () => {
     const user = userEvent.setup()
-    render(
-      <>
-        <SolvePage />
-        <ScanSolveSettingsModal
-          result={limitFailure}
-          solving={false}
-          onClose={vi.fn()}
-          onRetry={vi.fn()}
-        />
-      </>,
-    )
+    apiMocks.scanSessionSolveResult = limitFailure
+    render(<SolvePage />)
 
-    const dialog = screen.getByRole('dialog', { name: 'Adjust solve limits' })
-    await user.clear(within(dialog).getByLabelText('Max moves'))
-    await user.type(within(dialog).getByLabelText('Max moves'), '30')
-    await user.selectOptions(within(dialog).getByLabelText('Max nodes (M)'), '25')
+    await user.click(screen.getByRole('button', { name: 'Scan cube with camera' }))
+    await user.click(screen.getByRole('button', { name: 'Solve scanned cube' }))
 
-    const limitsRow = screen.getByTestId('limits-row')
-    expect(within(limitsRow).getByLabelText('Max moves')).toHaveValue(30)
-    expect(within(limitsRow).getByLabelText('Max nodes (M)')).toHaveValue('25')
+    expect(screen.queryByRole('dialog', { name: 'Scan cube' })).not.toBeInTheDocument()
+    expect(screen.getByText('No solution within the configured limits')).toBeInTheDocument()
   })
 })
+
+function scanSuccessResult(visualState?: string): SolveResult {
+  return {
+    elapsedMs: 12,
+    exploredNodes: 42,
+    generatedTableStatus: 'available',
+    length: 2,
+    maxDepth: 2,
+    maxNodes: 10_000_000,
+    moves: ['R', 'U'],
+    ok: true,
+    replayVerified: true,
+    solverMode: 'generated_two_phase_quality',
+    status: 'success',
+    strategyId: 'generated-two-phase-quality',
+    strategyLabel: 'Generated two-phase quality solver',
+    visualState,
+  }
+}
