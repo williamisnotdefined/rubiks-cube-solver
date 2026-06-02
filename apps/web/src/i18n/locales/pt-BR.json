@@ -7,6 +7,11 @@
   "cube": {
     "visualization": "Visualização do cubo"
   },
+  "navigation": {
+    "primary": "Navegação principal",
+    "solve": "Resolver",
+    "timer": "Timer"
+  },
   "scan": {
     "actions": {
       "analyzing": "Analisando",
@@ -322,6 +327,61 @@
       "required": "{{label}} é obrigatório",
       "wholeNumber": "{{label}} deve ser um número inteiro",
       "withinLimit": "{{label}} deve ser {{limit}} ou menos"
+    }
+  },
+  "timer": {
+    "displayLabel": "Timer de speedsolve",
+    "instructions": {
+      "space": "Espaço ou toque: segure, solte para iniciar, pressione para parar."
+    },
+    "inspection": {
+      "title": "Inspeção WCA"
+    },
+    "penalty": {
+      "dnf": "DNF",
+      "label": "Controles de penalidade",
+      "latest": "Penalidade do último solve",
+      "ok": "OK",
+      "plus2": "+2"
+    },
+    "scramble": {
+      "copied": "Copiado",
+      "copy": "Copiar scramble",
+      "event": "Evento",
+      "next": "Próximo scramble",
+      "title": "Scramble"
+    },
+    "session": {
+      "defaultName": "Sessão padrão",
+      "solveCount": "{{count}} solves"
+    },
+    "settings": {
+      "inspection": "Inspeção",
+      "label": "Configurações do timer",
+      "milliseconds": "Milissegundos"
+    },
+    "solves": {
+      "actions": "Ações",
+      "delete": "Apagar",
+      "empty": "Nenhum solve ainda",
+      "label": "Solves",
+      "penalty": "Penalidade",
+      "scramble": "Scramble",
+      "time": "Tempo"
+    },
+    "stats": {
+      "ao12": "ao12",
+      "ao5": "ao5",
+      "best": "Melhor",
+      "mean": "Média"
+    },
+    "status": {
+      "holding": "Segurando",
+      "idle": "Pronto para preparar",
+      "inspection": "Inspeção",
+      "ready": "Pronto",
+      "running": "Resolvendo",
+      "stopped": "Parado"
     }
   }
 }

@@ -7,6 +7,11 @@
   "cube": {
     "visualization": "Cube visualization"
   },
+  "navigation": {
+    "primary": "Primary navigation",
+    "solve": "Solve",
+    "timer": "Timer"
+  },
   "scan": {
     "actions": {
       "analyzing": "Analyzing",
@@ -322,6 +327,61 @@
       "required": "{{label}} is required",
       "wholeNumber": "{{label}} must be a whole number",
       "withinLimit": "{{label}} must be {{limit}} or less"
+    }
+  },
+  "timer": {
+    "displayLabel": "Speedsolve timer",
+    "instructions": {
+      "space": "Space or touch: hold, release to start, press to stop."
+    },
+    "inspection": {
+      "title": "WCA inspection"
+    },
+    "penalty": {
+      "dnf": "DNF",
+      "label": "Penalty controls",
+      "latest": "Latest solve penalty",
+      "ok": "OK",
+      "plus2": "+2"
+    },
+    "scramble": {
+      "copied": "Copied",
+      "copy": "Copy scramble",
+      "event": "Event",
+      "next": "Next scramble",
+      "title": "Scramble"
+    },
+    "session": {
+      "defaultName": "Default Session",
+      "solveCount": "{{count}} solves"
+    },
+    "settings": {
+      "inspection": "Inspection",
+      "label": "Timer settings",
+      "milliseconds": "Milliseconds"
+    },
+    "solves": {
+      "actions": "Actions",
+      "delete": "Delete",
+      "empty": "No solves yet",
+      "label": "Solves",
+      "penalty": "Penalty",
+      "scramble": "Scramble",
+      "time": "Time"
+    },
+    "stats": {
+      "ao12": "ao12",
+      "ao5": "ao5",
+      "best": "Best",
+      "mean": "Mean"
+    },
+    "status": {
+      "holding": "Holding",
+      "idle": "Ready to hold",
+      "inspection": "Inspection",
+      "ready": "Ready",
+      "running": "Solving",
+      "stopped": "Stopped"
     }
   }
 }
