@@ -33,6 +33,8 @@ npm run vision:install
 python -m pip install -r ml/requirements.txt
 ```
 
+Install `vision_ml/requirements.txt` only when training, exporting, or evaluating scanner models locally. It includes heavier training/export dependencies that are not required for the live Vision service.
+
 Start the full local stack (API, optional vision service, and web dev server):
 
 ```bash
@@ -66,6 +68,28 @@ When Rust is installed:
 ```bash
 cargo test
 ```
+
+## Python, Vision, And ML Boundaries
+
+The repository currently has three Python areas with different ownership. They are intentionally separate so runtime scanner dependencies, scanner training tooling, and solver ML experiments do not blur together.
+
+| Path | Role | Used by default runtime? | Notes |
+| --- | --- | --- | --- |
+| `ml/` | Solver ML value baseline. | No | Consumes Rust-generated solver datasets and writes local value artifacts for hybrid move-ordering experiments. It is not a product solver dependency. |
+| `vision/` | Runtime Vision service. | Yes, when scanner flows are enabled | FastAPI/OpenCV service proxied by the Rust API for `/scan/analyze-face` and `/analyze-session`. |
+| `vision_ml/` | Scanner training, datasets, replay/evaluation, and ONNX export. | No, except for local model artifact paths | Generates and validates scanner artifacts such as `vision_ml/local-models/tile-detector.onnx`; the live service receives those paths through environment variables. |
+
+Current scanner path:
+
+```txt
+Web scanner -> Rust API -> Python vision service -> optional YOLO ONNX tile detector
+```
+
+The active live scanner model path is the tile detector configured by `RUBIKS_VISION_TILE_DETECTOR_MODEL`, usually `vision_ml/local-models/tile-detector.onnx` for local runs. The `vision_ml` package is not imported by normal `vision` request handling; it prepares datasets, labels, replay reports, training runs, and exported models.
+
+The sticker CNN and face detector code paths are optional or experimental. They are kept for research and smoke coverage, but the current live scanner path uses the YOLO tile detector for visible sticker localization and color classification.
+
+Do not commit private camera images, downloaded datasets, generated YOLO datasets, training runs, checkpoints, `.pt` files, `.onnx` files, or local `outputs/` directories. These paths are intentionally ignored so scanner experiments can run locally without becoming repository artifacts.
 
 ## Product Validation Gate
 
@@ -223,16 +247,47 @@ The default web-facing contract is move-notation solves via `POST /solve-notatio
 
 ### Vision Service Integration
 
-Scan analysis is handled by the optional Rust-proxied vision service.
+Scan analysis is handled by the optional Rust-proxied Vision service in `vision/`.
 
 - API defaults to `http://127.0.0.1:8790` for scan analysis (`RUBIKS_VISION_URL` overrides this).
-- Start the service with:
+- The Vision service exposes `/analyze-face` for live face preview and `/analyze-session` for full scan-session analysis.
+- The Rust API proxies scanner calls through `/scan/analyze-face`, `/scan/solve-session`, and related scan routes.
+- The active live scanner path uses the optional YOLO tile detector when `RUBIKS_VISION_TILE_DETECTOR_MODEL` points to an exported ONNX model.
+- The default local detector path used by scanner scripts is `vision_ml/local-models/tile-detector.onnx`.
+- The sticker CNN (`RUBIKS_VISION_CNN_MODEL`) and face detector (`RUBIKS_VISION_FACE_DETECTOR_MODEL`) are optional or experimental and are not the current live scanner path.
+
+Install and run the runtime Vision service with:
 
 ```bash
+npm run vision:install
 npm run vision:dev
 ```
 
-- The canonical scanner workflow and tests are documented in `vision/README.md`.
+Run the Vision service tests with:
+
+```bash
+npm run vision:test
+```
+
+Run the full local stack with the current scanner detector environment configured:
+
+```bash
+npm run dev:scan-ml
+```
+
+Scanner training and evaluation tooling lives in `vision_ml/`. Use it to label sessions, replay scans, evaluate scanner quality, generate YOLO datasets, train/export local ONNX models, and keep private image artifacts out of git.
+
+Useful scanner tooling commands:
+
+```bash
+npm run vision-ml:test
+npm run scan:label
+npm run scan:replay
+npm run scan:evaluate
+npm run scan:tile-yolo-dataset
+```
+
+`vision/README.md` documents the runtime service. `vision_ml/README.md` and `vision_ml/SCANNER_YOLO_RUNBOOK.md` document scanner datasets, model quality expectations, Roboflow/YOLO conversion, ONNX export, and artifact handling.
 
 ## Troubleshooting
 
