@@ -277,45 +277,6 @@ describe('ScanCubeModal', () => {
     expect(screen.getAllByText('Vision status unavailable')).toHaveLength(2)
   })
 
-  it('hides local scan export unless explicitly enabled', () => {
-    render(
-      <ScanCubeModal
-        apiReady
-        solving={false}
-        onClose={vi.fn()}
-      />,
-    )
-
-    expect(screen.queryByRole('button', { name: 'Export scan session' })).not.toBeInTheDocument()
-  })
-
-  it('enables local scan export after live recognition when configured', async () => {
-    vi.stubEnv('VITE_ENABLE_SCAN_EXPORT', 'true')
-
-    const { rerender } = render(
-      <ScanCubeModal
-        apiReady
-        solving={false}
-        onClose={vi.fn()}
-      />,
-    )
-
-    expect(screen.getByRole('button', { name: 'Export scan session' })).toBeDisabled()
-
-    liveScanMocks.autoRecognize = true
-    rerender(
-      <ScanCubeModal
-        apiReady
-        solving={false}
-        onClose={vi.fn()}
-      />,
-    )
-
-    await screen.findByText(/9 stickers recognized/)
-
-    expect(screen.getByRole('button', { name: 'Export scan session' })).toBeEnabled()
-  })
-
   it('does not fill the review grid when the detected center is a different color', () => {
     liveScanMocks.autoRecognize = true
     liveScanMocks.analysisOverrides = { centerMismatch: true }
@@ -684,7 +645,6 @@ describe('ScanCubeModal', () => {
   })
 
   it('does not enter review when live analysis uses an unsupported mode', () => {
-    vi.stubEnv('VITE_ENABLE_SCAN_EXPORT', 'true')
     liveScanMocks.autoRecognize = true
     liveScanMocks.analysisOverrides = { detectionMode: 'legacy_geometry' }
 
@@ -698,7 +658,6 @@ describe('ScanCubeModal', () => {
 
     expect(screen.getByText('Looking for cube face.')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Confirm face' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Export scan session' })).toBeDisabled()
   })
 
   it('fills the review grid from a manual photo capture', async () => {

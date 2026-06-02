@@ -51,12 +51,6 @@ import {
 import { scanColorCode } from './scanColorSymbols'
 import { useCameraStream } from './hooks/useCameraStream'
 import { useLiveScanPreview } from './hooks/useLiveScanPreview'
-import {
-  buildScanSessionExport,
-  downloadScanSessionExport,
-  hasExportableScanSession,
-  scanExportEnabled,
-} from './scanExport'
 import { isTemporalConsensusReady, type TemporalFaceConsensus } from './scanTemporalConsensus'
 
 type ScanCubeModalProps = {
@@ -120,7 +114,6 @@ export function ScanCubeModal({
   )
   const [centerMismatchConfirmation, setCenterMismatchConfirmation] =
     useState<CenterMismatchConfirmation | undefined>()
-  const [lastSessionResult, setLastSessionResult] = useState<ScanSessionResult | undefined>()
   const [message, setMessage] = useState<string | undefined>()
   const confirmedFaces = useMemo(() => scanFacesFromDrafts(drafts), [drafts])
   const sessionFaces = scanSessionFacesFromDrafts(drafts)
@@ -191,8 +184,6 @@ export function ScanCubeModal({
     stickers.some((sticker, index) => index !== 4 && sticker.symbol !== undefined)
   const sessionSolving = solveScanSession.isPending
   const reviewTargetIndexes = backendReviewTargets.manualTargets[currentFace.symbol] ?? []
-  const exportEnabled = scanExportEnabled()
-  const canExportScanSession = hasExportableScanSession(drafts)
   const cameraStream = camera.status === 'ready' ? camera.stream : undefined
 
   useEffect(() => {
@@ -269,7 +260,6 @@ export function ScanCubeModal({
     })
     setBackendReviewTargets((targets) => removeBackendReviewFace(targets, currentFace.symbol))
     setCenterMismatchConfirmation(undefined)
-    setLastSessionResult(undefined)
     setMessage(
       uncertain > 0
         ? t('scan.messages.detectedUncertain', { count: uncertain })
@@ -299,7 +289,6 @@ export function ScanCubeModal({
     setCapturing(true)
     clearBackendReviewForFace(currentFace.symbol)
     setCenterMismatchConfirmation(undefined)
-    setLastSessionResult(undefined)
     setCurrentDraft({
       analysis: undefined,
       autoCapture: undefined,
@@ -423,14 +412,12 @@ export function ScanCubeModal({
       ),
     )
     clearBackendManualTarget(currentFace.symbol, index)
-    setLastSessionResult(undefined)
   }
 
   function handleClearPhoto() {
     setDrafts((currentDrafts) => clearScanFaceDraft(currentDrafts, currentFace.symbol))
     clearBackendReviewForFace(currentFace.symbol)
     setCenterMismatchConfirmation(undefined)
-    setLastSessionResult(undefined)
     setMessage(undefined)
     resetLiveAutoFill()
     analyzeScanFace.reset()
@@ -484,7 +471,6 @@ export function ScanCubeModal({
     const nextFaceIndex = nextUnconfirmedFaceIndex(nextDrafts, currentFaceIndex)
     setDrafts(nextDrafts)
     clearBackendReviewForFace(currentFace.symbol)
-    setLastSessionResult(undefined)
 
     if (nextFaceIndex !== undefined) {
       handleFaceIndexChange(nextFaceIndex)
@@ -527,7 +513,6 @@ export function ScanCubeModal({
         strategyId,
       })
 
-      setLastSessionResult(result)
       handleScanSessionResult(result)
     } catch (error) {
       setMessage(error instanceof Error ? error.message : t('scan.messages.solveFailed'))
@@ -552,18 +537,6 @@ export function ScanCubeModal({
     }
 
     setMessage(scanSessionMessage(t, result))
-  }
-
-  function handleExportScanSession() {
-    if (!canExportScanSession) {
-      setMessage(t('scan.messages.exportRequiresPhoto'))
-      return
-    }
-
-    const filename = downloadScanSessionExport(
-      buildScanSessionExport({ drafts, sessionResult: lastSessionResult }),
-    )
-    setMessage(t('scan.messages.exportedSession', { filename }))
   }
 
   return (
@@ -737,17 +710,6 @@ export function ScanCubeModal({
             >
               {solving || sessionSolving ? <Loader3x3 decorative className="size-8" registerDelayMs={150} /> : t('scan.actions.solveScannedCube')}
             </Button>
-            {exportEnabled ? (
-              <Button
-                className="min-h-10 px-4 py-2"
-                type="button"
-                variant="ghost"
-                disabled={!canExportScanSession}
-                onClick={handleExportScanSession}
-              >
-                {t('scan.actions.exportSession')}
-              </Button>
-            ) : null}
           </div>
         </div>
         </ScanFaceCarousel>

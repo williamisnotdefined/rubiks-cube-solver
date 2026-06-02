@@ -194,7 +194,6 @@ Runtime environment variables used by `npm run dev:scan-ml`:
 RUBIKS_VISION_TILE_DETECTOR_MODEL=vision_ml/local-models/tile-detector.onnx
 RUBIKS_VISION_TILE_DETECTOR_INPUT_SIZE=640
 RUBIKS_VISION_TILE_DETECTOR_CONFIDENCE=0.5
-VITE_ENABLE_SCAN_EXPORT=true
 ```
 
 If you run services manually, make sure the Vision service sees the same detector variables.
@@ -429,7 +428,7 @@ Use this guidance:
 
 The Roboflow baseline is a starting point. The strongest next step is collecting local webcam examples from the real scanner UI.
 
-Use scanner exports:
+If you already have archived scan-session JSON files, place them in the local session folder:
 
 ```bash
 mkdir -p vision_ml/outputs/local-sessions

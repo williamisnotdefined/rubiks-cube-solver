@@ -1,31 +1,43 @@
+# Rust
 target/
 crates/wasm/pkg/
+
+# Node / frontend
 node_modules/
-.roadrunner/
 dist/
 coverage/
 storybook-static/
 playwright-report/
 test-results/
 blob-report/
+
+# Local tooling
+.roadrunner/
+
 # Generated pruning tables are local artifacts; commit only tiny fixtures.
 crates/cube-engine/pruning-tables/
 apps/web/public/generated-pruning-tables/
+
 # Generated datasets are local artifacts; commit only small fixtures.
 datasets/generated/
+
+# Python
 __pycache__/
 .venv/
 *.py[cod]
 .pytest_cache/
+
+# ML outputs
 ml/outputs/
 ml/runs/
 ml/checkpoints/
 vision_ml/outputs/
 vision_ml/runs/
 vision_ml/checkpoints/
+
+# Local scanner captures, downloaded datasets, and model artifacts may contain private images.
 vision_ml/local-images/
 vision_ml/references/
-# Local scanner captures, downloaded datasets, and model artifacts may contain private images.
 archive/
 archive.zip
 rubiks-scan-session-*.json
@@ -36,8 +48,14 @@ labels.zip
 *.pt
 *.onnx
 *.onnx.data
+
+# Logs
 *.log
+
+# Environment
 .env
 .env.*
 !.env.example
+
+# OS
 .DS_Store

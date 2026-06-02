@@ -104,7 +104,7 @@ The current generated YOLO images and labels were not deleted. They are local ig
 | `vision_ml/outputs/tile-yolo-local/labels/` | 11 YOLO labels in `train` and the same 11 in `validation`, including `face` boxes plus sticker boxes. |
 | `vision_ml/outputs/tile-yolo-local-stickers/images/` | 11 generated images in `train` and the same 11 in `validation`. |
 | `vision_ml/outputs/tile-yolo-local-stickers/labels/` | 11 YOLO labels in `train` and the same 11 in `validation`, sticker boxes only. |
-| `vision_ml/outputs/local-sessions/` | The scan session JSON exports used to regenerate the YOLO images and labels. |
+| `vision_ml/outputs/local-sessions/` | Local scan session JSON artifacts used to regenerate the YOLO images and labels. |
 
 These folders are ignored by git because they can contain private webcam frames. If they are missing, regenerate the sticker-only dataset with:
 
@@ -199,7 +199,7 @@ npm run dev
 
 Use the reference as a guide, not as a final dependency. It may detect some local frames better than our smoke model, but it still needs validation against our webcam, cube, UI crop, and required 9-sticker consensus behavior.
 
-Keep source scan exports in the ignored local session folder:
+Keep any archived scan-session JSON artifacts in the ignored local session folder:
 
 ```bash
 mkdir -p vision_ml/outputs/local-sessions
