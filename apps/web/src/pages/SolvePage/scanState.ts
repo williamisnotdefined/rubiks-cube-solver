@@ -1,6 +1,7 @@
 import type { AnalyzeScanFaceResponse, ScanSessionFaceRequest } from '@api/scan'
 import type { ScanFaceSymbol, ScanFacesPayload } from '@api/solver/types'
 import type { ScanCaptureSource } from './scanCapture'
+import { assignTileDetectionsToReviewGrid } from './scanTileDetections'
 import type { TemporalFaceConsensus } from './scanTemporalConsensus'
 
 export type RgbColor = {
@@ -406,6 +407,38 @@ export function replaceScanSticker(
   })
 }
 
+export function scanStickersFromAnalysis(
+  analysis: AnalyzeScanFaceResponse,
+  centerSymbol: ScanFaceSymbol,
+): ScanSticker[] {
+  const stickers = createEmptyScanStickers(centerSymbol)
+  const analyzedStickersByIndex = new Map(analysis.stickers.map((sticker) => [sticker.index, sticker]))
+  const assignedTiles = assignTileDetectionsToReviewGrid(analysis.tileDetections)
+
+  for (let index = 0; index < 9; index += 1) {
+    const analyzedSticker = analyzedStickersByIndex.get(index)
+    const assignedTile = assignedTiles?.[index]
+    const symbol = index === 4 ? centerSymbol : assignedTile?.symbol ?? analyzedSticker?.symbol
+
+    if (symbol === undefined) {
+      continue
+    }
+
+    stickers[index] = {
+      alternatives: scanStickerAlternativesFromAnalysis(analyzedSticker, assignedTile?.symbol),
+      confidence:
+        index === 4
+          ? 1
+          : assignedTile?.confidence ?? analyzedSticker?.confidence ?? 0,
+      rgb: analyzedSticker?.rgb,
+      source: index === 4 ? 'center' : 'detected',
+      symbol,
+    }
+  }
+
+  return stickers
+}
+
 export function scanStickersFromTemporalConsensus(
   consensus: TemporalFaceConsensus,
   centerSymbol: ScanFaceSymbol,
@@ -438,6 +471,39 @@ export function scanStickersFromTemporalConsensus(
   }
 
   return stickers
+}
+
+function scanStickerAlternativesFromAnalysis(
+  analyzedSticker: AnalyzeScanFaceResponse['stickers'][number] | undefined,
+  tileSymbol: ScanFaceSymbol | undefined,
+): ScanStickerAlternative[] | undefined {
+  const alternatives = new Map<ScanFaceSymbol, number>()
+
+  if (tileSymbol !== undefined) {
+    alternatives.set(tileSymbol, 1)
+  }
+
+  if (analyzedSticker?.symbol !== undefined) {
+    alternatives.set(
+      analyzedSticker.symbol,
+      Math.max(alternatives.get(analyzedSticker.symbol) ?? 0, analyzedSticker.confidence),
+    )
+  }
+
+  for (const alternative of analyzedSticker?.alternatives ?? []) {
+    alternatives.set(
+      alternative.symbol,
+      Math.max(alternatives.get(alternative.symbol) ?? 0, alternative.confidence),
+    )
+  }
+
+  if (alternatives.size === 0) {
+    return undefined
+  }
+
+  return [...alternatives.entries()]
+    .map(([symbol, confidence]) => ({ confidence, symbol }))
+    .sort((left, right) => right.confidence - left.confidence)
 }
 
 export function mergeLiveDetectedScanStickers(

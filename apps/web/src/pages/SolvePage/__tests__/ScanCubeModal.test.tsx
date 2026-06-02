@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AnalyzeScanFaceResponse, ScanSessionResult } from '@api/scan'
 import type { ScanFaceSymbol, SolveResult } from '@api/solver/types'
 import { ScanCubeModal } from '../ScanCubeModal'
+import { captureScanImage } from '../scanCapture'
 import { scanFaceOrder } from '../scanState'
 import { useSolveSettingsStore } from '../solveSettingsStore'
 
@@ -45,6 +46,12 @@ vi.mock('@api/scan', async () => {
     }),
   }
 })
+
+vi.mock('../scanCapture', () => ({
+  captureScanImage: vi.fn(),
+}))
+
+const captureScanImageMock = vi.mocked(captureScanImage)
 
 vi.mock('../hooks/useCameraStream', () => ({
   useCameraStream: () => ({ status: 'ready', stream: apiMocks.cameraStream }),
@@ -202,6 +209,8 @@ describe('ScanCubeModal', () => {
     apiMocks.analyzeReset.mockReset()
     apiMocks.solveSessionMutateAsync.mockReset()
     apiMocks.solveSessionMutateAsync.mockResolvedValue(scanSessionAccepted())
+    captureScanImageMock.mockReset()
+    captureScanImageMock.mockResolvedValue(capturedScanImage())
     liveScanMocks.acknowledgeAutoFill.mockClear()
     liveScanMocks.autoFillAcknowledged = false
     liveScanMocks.autoRecognize = false
@@ -688,7 +697,10 @@ describe('ScanCubeModal', () => {
     expect(screen.getByRole('button', { name: 'Export scan session' })).toBeDisabled()
   })
 
-  it('does not show a manual photo button', () => {
+  it('fills the review grid from a manual photo capture', async () => {
+    const user = userEvent.setup()
+    apiMocks.analyzeMutateAsync.mockResolvedValue(scanAnalysisResponse({ symbol: 'F' }))
+
     render(
       <ScanCubeModal
         apiReady
@@ -698,8 +710,23 @@ describe('ScanCubeModal', () => {
       />,
     )
 
-    expect(screen.queryByRole('button', { name: 'Take photo' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Retake photo' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Scan face' }))
+
+    await waitFor(() => {
+      expect(apiMocks.analyzeMutateAsync).toHaveBeenCalledWith({
+        expectedCenter: 'F',
+        image: 'data:image/jpeg;base64,manual-scan',
+        knownCenters: {},
+      })
+    })
+    expect(captureScanImageMock).toHaveBeenCalledWith(expect.any(HTMLVideoElement), apiMocks.cameraStream)
+    expect(await screen.findByText(/Photo captured/)).toBeInTheDocument()
+    expect(screen.getByTestId('scan-sticker-0')).toHaveAccessibleName(/Green/)
+    expect(screen.getByTestId('scan-sticker-4')).toHaveAccessibleName(/Green/)
+    expect(screen.queryByText('9/9 stickers ready')).not.toBeInTheDocument()
+    expect(screen.queryByText('stickers 90%')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Confirm face' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Scan again' })).toBeEnabled()
   })
 
   it('opens solve settings and retries a completed scan after limit failure', async () => {
@@ -748,6 +775,61 @@ async function confirmAllFaces(user: ReturnType<typeof userEvent.setup>) {
     if (faceIndex < 5) {
       await screen.findByRole('heading', { name: scanFaceOrder[faceIndex + 1].label })
     }
+  }
+}
+
+function capturedScanImage() {
+  return {
+    capturedAt: 456,
+    height: 1280,
+    photoDataUrl: 'data:image/jpeg;base64,manual-scan',
+    source: 'canvas' as const,
+    width: 1280,
+  }
+}
+
+function scanAnalysisResponse({
+  centerMismatch = false,
+  symbol,
+  tileSymbols = symbol.repeat(9),
+}: {
+  centerMismatch?: boolean
+  symbol: ScanFaceSymbol
+  tileSymbols?: string
+}): AnalyzeScanFaceResponse {
+  const detectedCenter = centerMismatch ? 'U' : symbol
+
+  return {
+    centerMismatch,
+    confidence: centerMismatch ? 0.8 : 1,
+    detectedCenter,
+    detectedCenterConfidence: centerMismatch ? 0.8 : 1,
+    detectionMode: 'tile_detector',
+    expectedCenter: symbol,
+    faceConfidence: 1,
+    imageSize: { width: 1280, height: 1280 },
+    ok: !centerMismatch,
+    qualityWarnings: [],
+    status: centerMismatch ? 'center_mismatch' : 'detected',
+    stickers: [...tileSymbols].map((tileSymbol, index) => ({
+      alternatives: [],
+      confidence: 0.9,
+      index,
+      polygon: [],
+      rgb: { r: 20, g: 180, b: 90 },
+      symbol: tileSymbol as ScanFaceSymbol,
+    })),
+    tileDetections: [...tileSymbols].map((tileSymbol, index) => ({
+      bbox: {
+        height: 0.18,
+        width: 0.18,
+        x: 0.2 + (index % 3) * 0.25,
+        y: 0.2 + Math.floor(index / 3) * 0.25,
+      },
+      confidence: 0.9,
+      symbol: tileSymbol as ScanFaceSymbol,
+    })),
+    warnings: [],
   }
 }
 
