@@ -1069,7 +1069,7 @@ fn validate_reviewed_stickers(
             .reviewed_stickers
             .iter()
             .find(|sticker| sticker.index == 4)
-            .map_or(true, |sticker| sticker.symbol != face.symbol)
+            .is_none_or(|sticker| sticker.symbol != face.symbol)
     {
         return Some("center sticker must match face symbol".to_owned());
     }

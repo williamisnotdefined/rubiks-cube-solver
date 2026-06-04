@@ -207,7 +207,7 @@ fn solve_cube2_puzzle_request(
         &mut request.limits,
         &request.metric,
     ) {
-        return (StatusCode::BAD_REQUEST, response);
+        return (StatusCode::BAD_REQUEST, *response);
     }
 
     let algorithm = match Cube2Algorithm::parse(&request.input.value) {
@@ -415,9 +415,9 @@ fn validate_puzzle_solve_notation_limits(
     notation: &str,
     limits: &mut PuzzleSolveLimitsRequest,
     metric: &str,
-) -> Result<(), PuzzleSolveResponse> {
+) -> Result<(), Box<PuzzleSolveResponse>> {
     if limits.max_depth > MAX_API_DEPTH {
-        return Err(puzzle_solve_error_response(
+        return Err(Box::new(puzzle_solve_error_response(
             Some(puzzle.id),
             puzzle.slug,
             strategy_id,
@@ -429,11 +429,11 @@ fn validate_puzzle_solve_notation_limits(
                 "maxDepth {} exceeds API limit {}",
                 limits.max_depth, MAX_API_DEPTH
             ),
-        ));
+        )));
     }
 
     if notation.len() > MAX_NOTATION_BYTES {
-        return Err(puzzle_solve_error_response(
+        return Err(Box::new(puzzle_solve_error_response(
             Some(puzzle.id),
             puzzle.slug,
             strategy_id,
@@ -446,12 +446,12 @@ fn validate_puzzle_solve_notation_limits(
                 notation.len(),
                 MAX_NOTATION_BYTES
             ),
-        ));
+        )));
     }
 
     let max_nodes = limits.max_nodes.unwrap_or(DEFAULT_API_NODES);
     if max_nodes > MAX_API_NODES {
-        return Err(puzzle_solve_error_response(
+        return Err(Box::new(puzzle_solve_error_response(
             Some(puzzle.id),
             puzzle.slug,
             strategy_id,
@@ -460,7 +460,7 @@ fn validate_puzzle_solve_notation_limits(
             "invalid_limits",
             "max_nodes_exceeds_limit",
             format!("maxNodes {max_nodes} exceeds API limit {MAX_API_NODES}"),
-        ));
+        )));
     }
 
     limits.max_nodes = Some(max_nodes);
