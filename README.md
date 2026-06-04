@@ -231,10 +231,16 @@ Defaults:
 API endpoints:
 
 - `GET /health`
+- `GET /puzzles`
+- `GET /puzzles/:puzzleSlug`
+- `GET /puzzles/:puzzleSlug/strategies`
+- `POST /puzzles/:puzzleSlug/solve` with `{ "input": { "kind": "notation", "value": "R U R'" }, "strategyId": "cube2-pdb-ida-star", "limits": { "maxDepth": 14, "maxNodes": 1000000 }, "metric": "htm" }`
 - `GET /strategies`
 - `POST /solve-notation` with `{ "moves": "R2 D2 F'", "strategyId": "generated-two-phase-quality", "maxDepth": 30, "maxNodes": 10000000 }`
 - `POST /solve-scan` with `{"faces": {"U":"UUURRR...", "R":"...", ...}, "strategyId": "generated-two-phase-quality", "maxDepth": 30, "maxNodes": 10000000 }`
 - `POST /scan/analyze-face` with `{ "expectedCenter": "R", "image": "<base64-png>", "knownCenters": { ... } }`
+- `POST /scan/solve-session` for 3x3 scan sessions.
+- `POST /puzzles/:puzzleSlug/scan/solve-session` for puzzle-scoped scan sessions such as `cube-2x2x2`.
 - If `maxNodes` is omitted, the API uses `10000000`; the request cap is `25000000`.
 - `strategyId` must be one of the IDs returned by `GET /strategies`.
 - Experimental: `strategyId="generated-two-phase-multiprobe"` spends budget on forward and inverse `<=16` move-order probes before falling back to deeper generated two-phase quality.
@@ -243,7 +249,32 @@ API endpoints:
 - Experimental: `strategyId="short-solution-portfolio"` tries bounded PDB16 and generated `<=16` probes before falling back to generated two-phase quality.
 
 Every successful API solve includes `replayVerified=true`.
-The default web-facing contract is move-notation solves via `POST /solve-notation`; facelet/Kociemba strings are not used by the main product input form. Scan-based input uses the additional `/solve-scan` and `/scan/analyze-face` endpoints.
+The default web-facing contract is now puzzle-aware move-notation solving through `POST /puzzles/:puzzleSlug/solve`, while the legacy 3x3 `POST /solve-notation` route remains available for compatibility. Facelet/Kociemba strings are not used by the main product input form. Scan-based input uses the additional `/solve-scan`, `/scan/analyze-face`, `/scan/solve-session`, and puzzle-scoped scan-session endpoints.
+
+### Multi-Puzzle And 2x2 Support
+
+The many-cubes track is documented in `docs/many-cubes-plan.md` and `roadmap-many-cubes.md`. The current implementation keeps `cube/3x3x3` stable and adds experimental `cube/2x2x2` support through the same Rust/API/frontend boundary.
+
+Current puzzle IDs and slugs:
+
+- `cube/3x3x3` -> `cube-3x3x3`, stable.
+- `cube/2x2x2` -> `cube-2x2x2`, experimental.
+- Pyraminx, Clock, Skewb, NxNxN cubes, Square-1, and Megaminx are registered as planned metadata only.
+
+2x2 support includes a puzzle-specific Rust state, move model, notation parser, replay verification, dedicated bounded IDA*, in-memory PDB-backed IDA*, puzzle registry metadata, puzzle-aware API solving, 2x2 scan-session handling, web selection, visualization, and inverse-solution playback.
+
+2x2 strategy IDs:
+
+- `cube2-bounded-ida-star`
+- `cube2-pdb-ida-star`
+
+The initial 2x2 API defaults are conservative and experimental: HTM metric, `maxDepth=14`, `maxNodes=1000000`, depth cap `20`, and node cap `10000000`. The implementation verifies returned solutions by replay and does not claim optimality, a God's Number proof, or a universal short-solution guarantee.
+
+Run the dedicated 2x2 quality report with:
+
+```bash
+npm run solver:bench:2x2
+```
 
 ### Vision Service Integration
 
