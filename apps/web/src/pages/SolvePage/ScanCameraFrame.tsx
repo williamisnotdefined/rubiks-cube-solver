@@ -197,6 +197,7 @@ function cameraStatusLabel({
   if (stickerCount > 0) {
     return t(stickerCount >= targetStickerCount ? 'scan.camera.stickersReady' : 'scan.camera.stickersFound', {
       count: Math.min(targetStickerCount, stickerCount),
+      total: targetStickerCount,
     })
   }
 

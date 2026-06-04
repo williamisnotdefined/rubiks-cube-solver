@@ -41,8 +41,8 @@
       "opening": "Opening camera",
       "statusWithConfidence": "{{mode}} {{confidence}}%",
       "stickerConfidence": "stickers {{confidence}}%",
-      "stickersFound": "{{count}}/9 stickers found",
-      "stickersReady": "{{count}}/9 stickers ready",
+      "stickersFound": "{{count}}/{{total}} stickers found",
+      "stickersReady": "{{count}}/{{total}} stickers ready",
       "temporalCollecting": "consensus {{count}}/{{target}}",
       "temporalColorDisagreement": "color unstable {{count}} frames",
       "temporalReady": "consensus {{agreement}}% {{count}} frames",
@@ -117,13 +117,45 @@
         "top": "Green"
       }
     },
+    "faces2": {
+      "B": {
+        "instruction": "Show the back side. Keep the same up side at the top of the camera view.",
+        "label": "Back side",
+        "top": "Up"
+      },
+      "D": {
+        "instruction": "Show the down side with the front side at the top of the camera view.",
+        "label": "Down side",
+        "top": "Front"
+      },
+      "F": {
+        "instruction": "Pick a front side first. Keep the chosen up side at the top of the camera view.",
+        "label": "Front side",
+        "top": "Up"
+      },
+      "L": {
+        "instruction": "Show the left side. Keep the same up side at the top of the camera view.",
+        "label": "Left side",
+        "top": "Up"
+      },
+      "R": {
+        "instruction": "Show the right side. Keep the same up side at the top of the camera view.",
+        "label": "Right side",
+        "top": "Up"
+      },
+      "U": {
+        "instruction": "Show the up side with the front side at the top of the camera view.",
+        "label": "Up side",
+        "top": "Front"
+      }
+    },
     "live": {
       "cameraDenied": "Camera permission was denied or no camera was found.",
       "cameraUnavailable": "Camera access is not available in this browser.",
       "centerMismatch": "Detected another center color. Rotate to the expected face.",
-      "detectingStickers": "Detecting stickers: {{count}}/9 found.",
+      "detectingStickers": "Detecting stickers: {{count}}/{{total}} found.",
       "faceDetected": "Face detected. Hold steady.",
-      "gridReady": "{{count}}/9 stickers locked. Hold steady.",
+      "gridReady": "{{count}}/{{total}} stickers locked. Hold steady.",
       "imageBlurry": "Image is blurry. Hold the cube steady.",
       "looking": "Looking for cube face.",
       "lookingKeepVisible": "Looking for cube face. Keep the cube fully visible.",
@@ -174,7 +206,7 @@
       "solveFailed": "The scan solve request failed.",
       "submittingSession": "Checking the full scan with cube constraints...",
       "stillLooking": "Still looking for the cube face. Keep the full face visible and let auto scan try again.",
-      "liveReviewReady": "9 stickers recognized. Review the colors, correct any square if needed, then confirm this face."
+      "liveReviewReady": "{{count}} stickers recognized. Review the colors, correct any square if needed, then confirm this face."
     },
     "modal": {
       "cnnEvidenceActive": "CNN evidence active",

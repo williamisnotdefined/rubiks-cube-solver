@@ -429,6 +429,51 @@ describe('scan state helpers', () => {
     expect(merged.every((sticker) => sticker.symbol === 'F')).toBe(true)
   })
 
+  it('builds a 2x2 solve payload without center stickers', () => {
+    const faces = Object.fromEntries(
+      scanSymbols.map((symbol) => [symbol, { symbol, stickers: filledStickers2x2(symbol) }]),
+    ) as ScanFaces
+    faces.U = { symbol: 'U', stickers: stickersFromSymbols('FRBL') }
+    faces.R = { symbol: 'R', stickers: stickersFromSymbols('URRR') }
+    faces.F = { symbol: 'F', stickers: stickersFromSymbols('UFFF') }
+    faces.L = { symbol: 'L', stickers: stickersFromSymbols('ULLL') }
+    faces.B = { symbol: 'B', stickers: stickersFromSymbols('UBBB') }
+
+    expect(scanFacesToPayload(faces, 4)).toEqual({
+      U: 'LBRF',
+      R: 'URRR',
+      F: 'UFFF',
+      D: 'DDDD',
+      L: 'ULLL',
+      B: 'UBBB',
+    })
+  })
+
+  it('orients 2x2 reviewed stickers before building a scan session payload', () => {
+    const drafts = createInitialScanFaceDrafts(4)
+    const confirmedDrafts = scanSymbols.reduce((currentDrafts, symbol) => {
+      const nextDrafts = {
+        ...currentDrafts,
+        [symbol]: {
+          ...currentDrafts[symbol],
+          stickers: stickersFromSymbols(symbol === 'U' ? 'FRBL' : symbol.repeat(4)),
+        },
+      }
+
+      return confirmScanFaceDraft(nextDrafts, symbol)
+    }, drafts)
+
+    const sessionFaces = scanSessionFacesFromDrafts(confirmedDrafts, 4)
+    const topFace = sessionFaces?.find((face) => face.symbol === 'U')
+
+    expect(topFace?.reviewedStickers).toEqual([
+      expect.objectContaining({ index: 0, symbol: 'L' }),
+      expect.objectContaining({ index: 1, symbol: 'B' }),
+      expect.objectContaining({ index: 2, symbol: 'R' }),
+      expect.objectContaining({ index: 3, symbol: 'F' }),
+    ])
+  })
+
   it('returns no scan session when any draft is unconfirmed or incomplete', () => {
     const drafts = createInitialScanFaceDrafts()
 
@@ -445,6 +490,14 @@ function filledStickers(symbol: (typeof scanSymbols)[number]): ScanSticker[] {
     symbol,
     confidence: 1,
     source: index === 4 ? 'center' : 'manual',
+  }))
+}
+
+function filledStickers2x2(symbol: (typeof scanSymbols)[number]): ScanSticker[] {
+  return Array.from({ length: 4 }, () => ({
+    symbol,
+    confidence: 1,
+    source: 'manual',
   }))
 }
 

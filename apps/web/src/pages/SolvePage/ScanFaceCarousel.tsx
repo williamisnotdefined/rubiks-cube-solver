@@ -15,6 +15,7 @@ type ScanFaceCarouselProps = {
   children: ReactNode
   currentFaceIndex: number
   faceStatuses: readonly ScanFaceStatus[]
+  stickersPerFace?: number
   onFaceIndexChange: (index: number) => void
 }
 
@@ -30,6 +31,7 @@ export function ScanFaceCarousel({
   children,
   currentFaceIndex,
   faceStatuses,
+  stickersPerFace,
   onFaceIndexChange,
 }: ScanFaceCarouselProps) {
   const { t } = useTranslation()
@@ -72,7 +74,7 @@ export function ScanFaceCarousel({
             const active = index === currentFaceIndex
             const status = faceStatuses[index] ?? 'pending'
             const details = scanSymbolDetails[symbol]
-            const label = scanFaceLabel(t, symbol)
+            const label = scanFaceLabel(t, symbol, stickersPerFace)
             const statusLabel = scanFaceStatusLabel(t, status)
 
             return (
@@ -134,7 +136,7 @@ export function ScanFaceCarousel({
                 children
               ) : (
                 <div className="grid min-h-80 place-items-center border border-app-border bg-app-surface p-6 text-center text-sm font-semibold text-app-muted">
-                  {scanFaceLabel(t, symbol)}
+                  {scanFaceLabel(t, symbol, stickersPerFace)}
                 </div>
               )}
             </div>

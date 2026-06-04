@@ -100,6 +100,8 @@ type FlexibleStickerAssignment = {
   index: number
 }
 
+type ScanSessionReviewedSticker = NonNullable<ScanSessionFaceRequest['reviewedStickers']>[number]
+
 export const scanFaceOrder = [
   {
     symbol: 'F',
@@ -272,14 +274,15 @@ export function scanSessionFacesFromDrafts(
     }
 
     const centerIndex = scanCenterIndex(stickersPerFace)
+    const reviewedStickers = orientScanFaceReviewedStickers(symbol, draft.stickers)
     const manualOverrides: Partial<Record<number, ScanFaceSymbol>> = {}
-    for (const [index, sticker] of draft.stickers.entries()) {
+    for (const sticker of reviewedStickers) {
       if (
         sticker.symbol !== undefined &&
-        ((centerIndex === undefined || index !== centerIndex) && sticker.source === 'manual' ||
-          (centerIndex !== undefined && index === centerIndex && draft.centerOverrideConfirmed === true))
+        ((centerIndex === undefined || sticker.index !== centerIndex) && sticker.source === 'manual' ||
+          (centerIndex !== undefined && sticker.index === centerIndex && draft.centerOverrideConfirmed === true))
       ) {
-        manualOverrides[index] = sticker.symbol
+        manualOverrides[sticker.index] = sticker.symbol
       }
     }
 
@@ -287,12 +290,7 @@ export function scanSessionFacesFromDrafts(
       expectedTop: expectedTopForScanFace(symbol),
       image: draft.photoDataUrl,
       manualOverrides: Object.keys(manualOverrides).length > 0 ? manualOverrides : undefined,
-      reviewedStickers: draft.stickers.map((sticker, index) => ({
-        confidence: sticker.confidence,
-        index,
-        source: sticker.source,
-        symbol: sticker.symbol as ScanFaceSymbol,
-      })),
+      reviewedStickers,
       symbol,
     })
   }
@@ -738,11 +736,31 @@ function orientScanFaceSymbols(
   return faceSymbols.slice()
 }
 
+function orientScanFaceReviewedStickers(
+  symbol: ScanFaceSymbol,
+  stickers: readonly ScanSticker[],
+): ScanSessionReviewedSticker[] {
+  return orientScanFaceItems(symbol, stickers).map((sticker, index) => ({
+    confidence: sticker.confidence,
+    index,
+    source: sticker.source,
+    symbol: sticker.symbol as ScanFaceSymbol,
+  }))
+}
+
+function orientScanFaceItems<T>(symbol: ScanFaceSymbol, items: readonly T[]): T[] {
+  if (symbol === 'U') {
+    return rotateFaceSymbols180(items)
+  }
+
+  return items.slice()
+}
+
 export function expectedTopForScanFace(symbol: ScanFaceSymbol): ScanFaceSymbol {
   return symbol === 'U' || symbol === 'D' ? 'F' : 'U'
 }
 
-function rotateFaceSymbols180(faceSymbols: readonly ScanFaceSymbol[]): ScanFaceSymbol[] {
+function rotateFaceSymbols180<T>(faceSymbols: readonly T[]): T[] {
   if (faceSymbols.length === scan2StickersPerFace) {
     return [
       faceSymbols[3],

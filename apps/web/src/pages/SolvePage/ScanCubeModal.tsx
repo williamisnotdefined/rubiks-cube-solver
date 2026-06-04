@@ -185,7 +185,7 @@ export function ScanCubeModal({
     liveTemporalConsensus.framesSeen > 0 ? liveTemporalConsensus : undefined
   const scannerMessage =
     hasReviewContent
-      ? faceValidation ?? t('scan.messages.liveReviewReady')
+      ? faceValidation ?? t('scan.messages.liveReviewReady', { count: stickersPerFace })
       : autoScanEnabled
         ? liveMessage
         : t('scan.messages.autoPaused')
@@ -290,7 +290,7 @@ export function ScanCubeModal({
     setMessage(
       uncertain > 0
         ? t('scan.messages.detectedUncertain', { count: uncertain })
-        : t('scan.messages.liveReviewReady'),
+        : t('scan.messages.liveReviewReady', { count: stickersPerFace }),
     )
   }, [
     acknowledgeAutoFill,
@@ -582,6 +582,7 @@ export function ScanCubeModal({
         <ScanFaceCarousel
           currentFaceIndex={currentFaceIndex}
           faceStatuses={faceStatuses}
+          stickersPerFace={stickersPerFace}
           onFaceIndexChange={handleFaceIndexChange}
         >
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
@@ -594,9 +595,9 @@ export function ScanCubeModal({
                     total: scanFaceOrder.length,
                   })}
                 </p>
-                <h3 className="mt-1 text-xl font-extrabold">{scanFaceLabel(t, currentFace.symbol)}</h3>
+                <h3 className="mt-1 text-xl font-extrabold">{scanFaceLabel(t, currentFace.symbol, stickersPerFace)}</h3>
                 <p className="mt-1 text-sm font-semibold leading-relaxed text-app-muted">
-                  {scanFaceInstruction(t, currentFace.symbol)}
+                  {scanFaceInstruction(t, currentFace.symbol, stickersPerFace)}
                 </p>
                 {centerIndex !== undefined ? (
                   <>
@@ -607,7 +608,7 @@ export function ScanCubeModal({
                     </p>
                     <p className="mt-1 text-xs font-extrabold uppercase tracking-[0.16em] text-app-text">
                       {t('scan.modal.keepAtTop', {
-                        color: scanFaceTopLabel(t, currentFace.symbol),
+                        color: scanFaceTopLabel(t, currentFace.symbol, stickersPerFace),
                       })}
                     </p>
                   </>

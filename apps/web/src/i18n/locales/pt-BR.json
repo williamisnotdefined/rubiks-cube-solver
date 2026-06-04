@@ -41,8 +41,8 @@
       "opening": "Abrindo câmera",
       "statusWithConfidence": "{{mode}} {{confidence}}%",
       "stickerConfidence": "adesivos {{confidence}}%",
-      "stickersFound": "{{count}}/9 adesivos encontrados",
-      "stickersReady": "{{count}}/9 adesivos prontos",
+      "stickersFound": "{{count}}/{{total}} adesivos encontrados",
+      "stickersReady": "{{count}}/{{total}} adesivos prontos",
       "temporalCollecting": "consenso {{count}}/{{target}}",
       "temporalColorDisagreement": "cor instável {{count}} frames",
       "temporalReady": "consenso {{agreement}}% {{count}} frames",
@@ -117,13 +117,45 @@
         "top": "Verde"
       }
     },
+    "faces2": {
+      "B": {
+        "instruction": "Mostre o lado de trás. Mantenha o mesmo lado de cima no topo da visão da câmera.",
+        "label": "Lado de trás",
+        "top": "Cima"
+      },
+      "D": {
+        "instruction": "Mostre o lado de baixo com o lado da frente no topo da visão da câmera.",
+        "label": "Lado de baixo",
+        "top": "Frente"
+      },
+      "F": {
+        "instruction": "Escolha primeiro um lado da frente. Mantenha o lado escolhido como cima no topo da visão da câmera.",
+        "label": "Lado da frente",
+        "top": "Cima"
+      },
+      "L": {
+        "instruction": "Mostre o lado esquerdo. Mantenha o mesmo lado de cima no topo da visão da câmera.",
+        "label": "Lado esquerdo",
+        "top": "Cima"
+      },
+      "R": {
+        "instruction": "Mostre o lado direito. Mantenha o mesmo lado de cima no topo da visão da câmera.",
+        "label": "Lado direito",
+        "top": "Cima"
+      },
+      "U": {
+        "instruction": "Mostre o lado de cima com o lado da frente no topo da visão da câmera.",
+        "label": "Lado de cima",
+        "top": "Frente"
+      }
+    },
     "live": {
       "cameraDenied": "A permissão da câmera foi negada ou nenhuma câmera foi encontrada.",
       "cameraUnavailable": "O acesso à câmera não está disponível neste navegador.",
       "centerMismatch": "Outra cor central foi detectada. Gire para a face esperada.",
-      "detectingStickers": "Detectando adesivos: {{count}}/9 encontrados.",
+      "detectingStickers": "Detectando adesivos: {{count}}/{{total}} encontrados.",
       "faceDetected": "Face detectada. Segure firme.",
-      "gridReady": "{{count}}/9 adesivos travados. Segure firme.",
+      "gridReady": "{{count}}/{{total}} adesivos travados. Segure firme.",
       "imageBlurry": "A imagem está borrada. Segure o cubo firme.",
       "looking": "Procurando a face do cubo.",
       "lookingKeepVisible": "Procurando a face do cubo. Mantenha o cubo inteiro visível.",
@@ -174,7 +206,7 @@
       "solveFailed": "A requisição para resolver o scan falhou.",
       "submittingSession": "Verificando o scan completo com as restrições do cubo...",
       "stillLooking": "Ainda procurando a face do cubo. Mantenha a face inteira visível e deixe o auto scan tentar de novo.",
-      "liveReviewReady": "9 adesivos reconhecidos. Revise as cores, corrija qualquer quadrado se necessário e confirme esta face."
+      "liveReviewReady": "{{count}} adesivos reconhecidos. Revise as cores, corrija qualquer quadrado se necessário e confirme esta face."
     },
     "modal": {
       "cnnEvidenceActive": "Evidência CNN ativa",

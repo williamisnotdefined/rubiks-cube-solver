@@ -41,8 +41,8 @@
       "opening": "Abriendo cámara",
       "statusWithConfidence": "{{mode}} {{confidence}}%",
       "stickerConfidence": "stickers {{confidence}}%",
-      "stickersFound": "{{count}}/9 stickers encontrados",
-      "stickersReady": "{{count}}/9 stickers listos",
+      "stickersFound": "{{count}}/{{total}} stickers encontrados",
+      "stickersReady": "{{count}}/{{total}} stickers listos",
       "temporalCollecting": "consenso {{count}}/{{target}}",
       "temporalColorDisagreement": "color inestable {{count}} frames",
       "temporalReady": "consenso {{agreement}}% {{count}} frames",
@@ -117,13 +117,45 @@
         "top": "Verde"
       }
     },
+    "faces2": {
+      "B": {
+        "instruction": "Muestra el lado trasero. Mantén el mismo lado superior en la parte superior de la vista de la cámara.",
+        "label": "Lado trasero",
+        "top": "Arriba"
+      },
+      "D": {
+        "instruction": "Muestra el lado inferior con el lado frontal en la parte superior de la vista de la cámara.",
+        "label": "Lado inferior",
+        "top": "Frente"
+      },
+      "F": {
+        "instruction": "Elige primero un lado frontal. Mantén el lado elegido como superior en la parte superior de la vista de la cámara.",
+        "label": "Lado frontal",
+        "top": "Arriba"
+      },
+      "L": {
+        "instruction": "Muestra el lado izquierdo. Mantén el mismo lado superior en la parte superior de la vista de la cámara.",
+        "label": "Lado izquierdo",
+        "top": "Arriba"
+      },
+      "R": {
+        "instruction": "Muestra el lado derecho. Mantén el mismo lado superior en la parte superior de la vista de la cámara.",
+        "label": "Lado derecho",
+        "top": "Arriba"
+      },
+      "U": {
+        "instruction": "Muestra el lado superior con el lado frontal en la parte superior de la vista de la cámara.",
+        "label": "Lado superior",
+        "top": "Frente"
+      }
+    },
     "live": {
       "cameraDenied": "Se denegó el permiso de la cámara o no se encontró ninguna cámara.",
       "cameraUnavailable": "El acceso a la cámara no está disponible en este navegador.",
       "centerMismatch": "Se detectó otro color central. Gira a la cara esperada.",
-      "detectingStickers": "Detectando stickers: {{count}}/9 encontrados.",
+      "detectingStickers": "Detectando stickers: {{count}}/{{total}} encontrados.",
       "faceDetected": "Cara detectada. Mantén firme.",
-      "gridReady": "{{count}}/9 stickers fijados. Mantén firme.",
+      "gridReady": "{{count}}/{{total}} stickers fijados. Mantén firme.",
       "imageBlurry": "La imagen está borrosa. Mantén firme el cubo.",
       "looking": "Buscando la cara del cubo.",
       "lookingKeepVisible": "Buscando la cara del cubo. Mantén todo el cubo visible.",
@@ -174,7 +206,7 @@
       "solveFailed": "Falló la solicitud para resolver el escaneo.",
       "submittingSession": "Verificando el escaneo completo con restricciones del cubo...",
       "stillLooking": "Aún buscando la cara del cubo. Mantén toda la cara visible y deja que el autoescaneo intente de nuevo.",
-      "liveReviewReady": "9 stickers reconocidos. Revisa los colores, corrige cualquier cuadro si hace falta y confirma esta cara."
+      "liveReviewReady": "{{count}} stickers reconocidos. Revisa los colores, corrige cualquier cuadro si hace falta y confirma esta cara."
     },
     "modal": {
       "cnnEvidenceActive": "Evidencia CNN activa",

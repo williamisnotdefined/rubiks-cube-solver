@@ -298,11 +298,12 @@ function liveScanMessage(
     const targetTileCount = gridSize * gridSize
     return t('scan.live.detectingStickers', {
       count: Math.min(targetTileCount, validStickerTileDetections(analysis.tileDetections).length),
+      total: targetTileCount,
     })
   }
 
   if (status === 'tracking') {
-    return t('scan.live.gridReady', { count: gridSize * gridSize })
+    return t('scan.live.gridReady', { count: gridSize * gridSize, total: gridSize * gridSize })
   }
 
   return t('scan.live.looking')

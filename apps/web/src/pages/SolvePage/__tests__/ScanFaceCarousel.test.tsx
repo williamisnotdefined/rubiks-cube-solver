@@ -50,6 +50,26 @@ describe('ScanFaceCarousel', () => {
     expect(onFaceIndexChange).toHaveBeenCalledWith(2)
   })
 
+  it('uses positional face labels for 2x2 scans', () => {
+    render(
+      <ScanFaceCarousel
+        currentFaceIndex={0}
+        faceStatuses={['pending', 'pending', 'pending', 'pending', 'pending', 'pending']}
+        stickersPerFace={4}
+        onFaceIndexChange={vi.fn()}
+      >
+        <p>active face content</p>
+      </ScanFaceCarousel>,
+    )
+
+    expect(screen.getByRole('button', { name: /Go to Front side, pending/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Go to Right side, pending/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Go to Back side, pending/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Go to Left side, pending/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Go to Up side, pending/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Go to Down side, pending/ })).toBeInTheDocument()
+  })
+
   it('forwards Embla selection changes and unregisters the handler', () => {
     const onFaceIndexChange = vi.fn()
     const { unmount } = render(
