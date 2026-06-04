@@ -225,7 +225,7 @@ describe('SolvePage', () => {
     expect(screen.getByRole('button', { name: 'Scan cube with camera' })).toBeInTheDocument()
     expect(screen.getByLabelText('Puzzle')).toHaveValue('cube-3x3x3')
     expect(screen.getByTestId('cube-stage')).toHaveAttribute('data-cube-type', 'Three')
-    expect(screen.getByLabelText('Strategy')).toHaveValue('generated-two-phase-quality')
+    expect(screen.queryByLabelText('Strategy')).not.toBeInTheDocument()
     expect(useCubeVisualizationMock).toHaveBeenLastCalledWith(
       expect.anything(),
       '',
@@ -262,7 +262,7 @@ describe('SolvePage', () => {
     expect(within(limitsRow).getByLabelText('Max nodes (M)')).toBeInTheDocument()
     expect(within(limitsRow).getByRole('button', { name: 'Solve' })).toBeInTheDocument()
     expect(screen.getByLabelText('Puzzle')).toBeInTheDocument()
-    expect(screen.getByLabelText('Strategy')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Strategy')).not.toBeInTheDocument()
   })
 
   it('disables puzzle options that are not implemented yet', () => {
@@ -306,13 +306,12 @@ describe('SolvePage', () => {
     })
   })
 
-  it('selects 2x2 strategies and disables 3x3-only scan', async () => {
+  it('selects 2x2 puzzle settings and disables 3x3-only scan', async () => {
     const user = userEvent.setup()
     render(<SolvePage />)
 
     await user.selectOptions(screen.getByLabelText('Puzzle'), 'cube-2x2x2')
 
-    await waitFor(() => expect(screen.getByLabelText('Strategy')).toHaveValue('cube2-pdb-ida-star'))
     expect(screen.getByLabelText('Scramble')).toHaveAttribute('placeholder', 'R U F')
     expect(screen.getByRole('button', { name: 'Scan cube with camera' })).toBeDisabled()
     expect(screen.getByTestId('cube-stage')).toHaveAttribute('data-cube-type', 'Two')
@@ -344,24 +343,6 @@ describe('SolvePage', () => {
           strategyId: 'cube2-pdb-ida-star',
         },
       })
-    })
-  })
-
-  it('uses an explicitly selected 2x2 strategy', async () => {
-    const user = userEvent.setup()
-    render(<SolvePage />)
-
-    await user.selectOptions(screen.getByLabelText('Puzzle'), 'cube-2x2x2')
-    await user.selectOptions(screen.getByLabelText('Strategy'), 'cube2-bounded-ida-star')
-    await user.type(screen.getByLabelText('Scramble'), 'R U F')
-    await user.click(screen.getByRole('button', { name: 'Solve' }))
-
-    await waitFor(() => {
-      expect(apiMocks.mutateAsync).toHaveBeenCalledWith(
-        expect.objectContaining({
-          limits: expect.objectContaining({ strategyId: 'cube2-bounded-ida-star' }),
-        }),
-      )
     })
   })
 

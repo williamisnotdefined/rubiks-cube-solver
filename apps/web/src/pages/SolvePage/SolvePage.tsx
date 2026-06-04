@@ -52,7 +52,6 @@ export function SolvePage() {
     0,
   )
   const [notation, setNotation] = useState(defaultNotation)
-  const [selectedStrategyId, setSelectedStrategyId] = useState<string | undefined>()
   const maxMovesInput = useSolveSettingsStore((state) => state.maxMovesInput)
   const maxNodesMillionInput = useSolveSettingsStore((state) => state.maxNodesMillionInput)
   const setMaxMovesInput = useSolveSettingsStore((state) => state.setMaxMovesInput)
@@ -100,10 +99,7 @@ export function SolvePage() {
 
   const strategyOptions = strategiesQuery.data ?? []
   const puzzleOptions = puzzlesQuery.data ?? []
-  const computedStrategyId = preferredStrategyId(strategyOptions, selectedPuzzle)
-  const strategyId = strategyOptions.some((strategy) => strategy.id === selectedStrategyId)
-    ? selectedStrategyId ?? computedStrategyId
-    : computedStrategyId
+  const strategyId = preferredStrategyId(strategyOptions, selectedPuzzle)
   const scanAvailable = selectedPuzzle?.scannerSupported === true
   const activeScramblePlaceholder =
     selectedPuzzleSlug === 'cube-2x2x2' ? 'R U F' : scramblePlaceholder
@@ -184,12 +180,6 @@ export function SolvePage() {
 
   function handlePuzzleChange(nextPuzzleSlug: string) {
     setSelectedPuzzleSlug(nextPuzzleSlug)
-    setSelectedStrategyId(undefined)
-    resetSolveResult()
-  }
-
-  function handleStrategyChange(nextStrategyId: string) {
-    setSelectedStrategyId(nextStrategyId)
     resetSolveResult()
   }
 
@@ -239,8 +229,6 @@ export function SolvePage() {
           notation={notation}
           puzzleOptions={puzzleOptions}
           selectedPuzzleSlug={selectedPuzzleSlug}
-          selectedStrategyId={strategyId}
-          strategyOptions={strategyOptions}
           maxMovesInput={maxMovesInput}
           maxNodesMillionInput={maxNodesMillionInput}
           buttonLoading={buttonLoading}
@@ -252,7 +240,6 @@ export function SolvePage() {
           onScanClick={handleScanClick}
           onNotationChange={handleNotationChange}
           onPuzzleChange={handlePuzzleChange}
-          onStrategyChange={handleStrategyChange}
           onMaxMovesChange={handleMaxMovesChange}
           onMaxNodesMillionChange={handleMaxNodesMillionChange}
           onSubmit={handleSubmit}

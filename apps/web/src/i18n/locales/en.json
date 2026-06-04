@@ -316,7 +316,6 @@
       "scanCube": "Scan cube with camera",
       "scanUnavailableForPuzzle": "Camera scan is available for 3x3 only right now.",
       "scramble": "Scramble",
-      "strategy": "Strategy",
       "solve": "Solve"
     },
     "playback": {

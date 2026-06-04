@@ -5,15 +5,13 @@ import { Button } from '@components/Button'
 import { Field } from '@components/Field'
 import { SelectInput, TextInput } from '@components/FormControls'
 import { Loader3x3 } from '@components/Loader3x3'
-import type { PuzzleDefinition, PuzzleStrategyOption } from '@api/solver/types'
+import type { PuzzleDefinition } from '@api/solver/types'
 import { maxMovesLimit, maxNodesMillionOptions } from './constants'
 
 type SolveFormProps = {
   notation: string
   puzzleOptions: readonly PuzzleDefinition[]
   selectedPuzzleSlug: string
-  selectedStrategyId: string
-  strategyOptions: readonly PuzzleStrategyOption[]
   maxMovesInput: string
   maxNodesMillionInput: string
   buttonLoading: boolean
@@ -25,7 +23,6 @@ type SolveFormProps = {
   onScanClick: () => void
   onNotationChange: (notation: string) => void
   onPuzzleChange: (puzzleSlug: string) => void
-  onStrategyChange: (strategyId: string) => void
   onMaxMovesChange: (maxMoves: string) => void
   onMaxNodesMillionChange: (maxNodesMillion: string) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
@@ -35,8 +32,6 @@ export function SolveForm({
   notation,
   puzzleOptions,
   selectedPuzzleSlug,
-  selectedStrategyId,
-  strategyOptions,
   maxMovesInput,
   maxNodesMillionInput,
   buttonLoading,
@@ -48,7 +43,6 @@ export function SolveForm({
   onScanClick,
   onNotationChange,
   onPuzzleChange,
-  onStrategyChange,
   onMaxMovesChange,
   onMaxNodesMillionChange,
   onSubmit,
@@ -61,7 +55,7 @@ export function SolveForm({
       data-testid="solve-form"
       onSubmit={onSubmit}
     >
-      <div className="grid gap-3 sm:grid-cols-2" data-testid="puzzle-row">
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,14rem)]" data-testid="puzzle-row">
         <Field className="field-puzzle" label={t('solve.form.puzzle')}>
           <SelectInput
             className="puzzle-input"
@@ -75,20 +69,6 @@ export function SolveForm({
                 value={puzzle.slug}
               >
                 {puzzle.label}
-              </option>
-            ))}
-          </SelectInput>
-        </Field>
-        <Field className="field-strategy" label={t('solve.form.strategy')}>
-          <SelectInput
-            className="strategy-input"
-            disabled={strategyOptions.length === 0}
-            value={selectedStrategyId}
-            onChange={(event) => onStrategyChange(event.target.value)}
-          >
-            {strategyOptions.map((strategy) => (
-              <option key={strategy.id} value={strategy.id}>
-                {strategy.label}
               </option>
             ))}
           </SelectInput>
