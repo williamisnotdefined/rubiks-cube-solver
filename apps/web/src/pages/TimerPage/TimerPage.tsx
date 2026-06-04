@@ -45,8 +45,8 @@ export function TimerPage() {
   const setSelectedEventId = useTimerSettingsStore((state) => state.setSelectedEventId)
   const setShowMilliseconds = useTimerSettingsStore((state) => state.setShowMilliseconds)
   const showMilliseconds = useTimerSettingsStore((state) => state.showMilliseconds)
-  const activeSession = sessions.find((session) => session.id === activeSessionId) ?? sessions[0]
-  const solves = activeSession?.solves ?? []
+  const activeSession = sessions.find((session) => session.id === activeSessionId) ?? sessions[0]!
+  const solves = activeSession.solves
   const lastSolve = solves.at(-1)
   const event = scrambleEventById(selectedEventId)
   const stats = timerStats(solves)
@@ -112,7 +112,7 @@ export function TimerPage() {
       <section className="mx-auto grid w-full max-w-5xl content-start gap-4">
         <SessionSummary
           eventLabel={event.label}
-          sessionName={activeSession?.name ?? t('timer.session.defaultName')}
+          sessionName={activeSession.name}
           solveCount={solves.length}
         />
         <ScrambleViewer eventLabel={generatedScramble.event.label} scramble={generatedScramble.scramble} />

@@ -39,7 +39,6 @@ import {
   type ScanAutoCaptureMetadata,
   type ScanCaptureMetadata,
   type ScanFaces,
-  type ScanSticker,
 } from './scanState'
 import {
   scanColorLabel,
@@ -413,11 +412,7 @@ export function ScanCubeModal({
     analyzeScanFace.reset()
   }
 
-  function handleStickerColorChange(index: number, symbol: ScanSticker['symbol']) {
-    if (symbol === undefined) {
-      return
-    }
-
+  function handleStickerColorChange(index: number, symbol: ScanFaceSymbol) {
     setDrafts((currentDrafts) =>
       replaceScanFaceDraftSticker(
         currentDrafts,
@@ -453,11 +448,6 @@ export function ScanCubeModal({
   }
 
   function handleConfirmFace() {
-    if (draftValidationMessage !== undefined) {
-      setMessage(draftValidationMessage)
-      return
-    }
-
     const centerOverrideConfirmed = centerValidation !== undefined
     if (centerOverrideConfirmed && currentDraft.centerOverrideConfirmed !== true) {
       setCenterMismatchConfirmation({ faceSymbol: currentFace.symbol, message: centerValidation })
@@ -469,11 +459,6 @@ export function ScanCubeModal({
   }
 
   function handleConfirmCenterMismatch() {
-    if (centerMismatchConfirmation?.faceSymbol !== currentFace.symbol) {
-      setCenterMismatchConfirmation(undefined)
-      return
-    }
-
     setCenterMismatchConfirmation(undefined)
     confirmCurrentFace(true)
   }
@@ -503,21 +488,7 @@ export function ScanCubeModal({
       return
     }
 
-    const faces = sessionFaces
-    if (faces === undefined) {
-      setMessage(t('scan.messages.confirmAllFaces'))
-      return
-    }
-
-    if (!apiReady) {
-      setMessage(t('scan.messages.apiNotReady'))
-      return
-    }
-
-    if (solveDisabledReason !== undefined) {
-      setMessage(solveDisabledReason)
-      return
-    }
+    const faces = sessionFaces!
 
     try {
       setMessage(t('scan.messages.submittingSession'))
@@ -546,9 +517,7 @@ export function ScanCubeModal({
     const targetFace = firstBackendReviewFace(nextTargets)
     if (targetFace !== undefined) {
       const targetIndex = scanFaceOrder.findIndex(({ symbol }) => symbol === targetFace)
-      if (targetIndex !== -1) {
-        setCurrentFaceIndex(targetIndex)
-      }
+      setCurrentFaceIndex(targetIndex)
     }
 
     setMessage(scanSessionMessage(t, result))
@@ -711,11 +680,7 @@ export function ScanCubeModal({
               </div>
             </div>
             <p className="min-h-10 text-sm font-semibold leading-relaxed text-[#a8a8a8]" aria-live="polite">
-              {message ??
-                solveDisabledReason ??
-                scannerMessage ??
-                scanSessionReadiness ??
-                t('scan.editor.selectSquareHint')}
+              {message ?? solveDisabledReason ?? scannerMessage}
             </p>
             <Button
               aria-label={solving || sessionSolving ? t('common.loading') : undefined}
@@ -918,7 +883,6 @@ function scanSessionReadinessMessage(
 
   const unconfirmedFaces: ScanFaceSymbol[] = []
   const missingPhotoFaces: ScanFaceSymbol[] = []
-  const incompleteStickerFaces: ScanFaceSymbol[] = []
 
   for (const { symbol } of scanFaceOrder) {
     const draft = drafts[symbol]
@@ -930,11 +894,6 @@ function scanSessionReadinessMessage(
 
     if (draft.photoDataUrl === undefined) {
       missingPhotoFaces.push(symbol)
-      continue
-    }
-
-    if (!isScanFaceComplete(draft.stickers)) {
-      incompleteStickerFaces.push(symbol)
     }
   }
 
@@ -947,12 +906,6 @@ function scanSessionReadinessMessage(
   if (missingPhotoFaces.length > 0) {
     return t('scan.messages.sessionMissingPhotos', {
       faces: scanColorCodes(missingPhotoFaces),
-    })
-  }
-
-  if (incompleteStickerFaces.length > 0) {
-    return t('scan.messages.sessionIncompleteStickers', {
-      faces: scanColorCodes(incompleteStickerFaces),
     })
   }
 
@@ -1060,17 +1013,17 @@ function scanCaptureMetadata(capture: CapturedScanImage): ScanCaptureMetadata {
 }
 
 function scanAutoCaptureMetadata(
-  consensus: TemporalFaceConsensus | undefined,
+  consensus: TemporalFaceConsensus,
   analysis: AnalyzeScanFaceResponse,
 ): ScanAutoCaptureMetadata {
   return {
-    bboxStability: consensus?.bboxStability,
+    bboxStability: consensus.bboxStability,
     detectionMode: analysis.detectionMode,
     faceConfidence: analysis.faceConfidence,
-    stableFrameCount: consensus?.framesUsed ?? 0,
-    temporalAgreement: consensus?.temporalAgreement,
-    tileConfidence: consensus?.tileConfidence,
-    tileDetections: analysis.tileDetections?.filter((detection) => detection.symbol !== 'face').length ?? 0,
+    stableFrameCount: consensus.framesUsed,
+    temporalAgreement: consensus.temporalAgreement,
+    tileConfidence: consensus.tileConfidence,
+    tileDetections: analysis.tileDetections!.filter((detection) => detection.symbol !== 'face').length,
     triggeredAt: new Date().toISOString(),
   }
 }
@@ -1109,7 +1062,7 @@ function scanQualityMessage(
   t: ReturnType<typeof useTranslation>['t'],
   analysis: AnalyzeScanFaceResponse,
 ): string | undefined {
-  const warnings = new Set([...(analysis.qualityWarnings ?? []), ...(analysis.warnings ?? [])])
+  const warnings = new Set([...analysis.qualityWarnings, ...analysis.warnings])
   const messages: string[] = []
 
   if (analysis.faceConfidence > 0 && analysis.faceConfidence < 0.55) {

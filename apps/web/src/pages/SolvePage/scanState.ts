@@ -201,7 +201,7 @@ export function validateScanFaceDraft(
   const counts = countScanSymbols(nextFaces)
   const overflowSymbol = scanSymbols.find((scanSymbol) => counts[scanSymbol] > 9)
 
-  if (overflowSymbol !== undefined && balancedScanFaceSymbols(nextFaces, false) === undefined) {
+  if (overflowSymbol !== undefined && balancedScanFaceSymbols(nextFaces) === undefined) {
     return { key: 'colorAppearsMoreThanNine', values: { symbol: overflowSymbol } }
   }
 
@@ -215,7 +215,7 @@ export function scanFacesToPayload(faces: ScanFaces): ScanFacesPayload | undefin
 
   const balancedFaces = exactScanCounts(faces)
     ? scanFaceSymbolsFromFaces(faces)
-    : balancedScanFaceSymbols(faces, true)
+    : balancedScanFaceSymbols(faces)
 
   if (balancedFaces === undefined) {
     return undefined
@@ -225,11 +225,7 @@ export function scanFacesToPayload(faces: ScanFaces): ScanFacesPayload | undefin
 
   for (const { symbol } of scanFaceOrder) {
     const faceSymbols = balancedFaces[symbol]
-    if (faceSymbols === undefined) {
-      return undefined
-    }
-
-    payload[symbol] = orientScanFaceSymbols(symbol, faceSymbols).join('')
+    payload[symbol] = orientScanFaceSymbols(symbol, faceSymbols!).join('')
   }
 
   return payload
@@ -429,7 +425,7 @@ export function scanStickersFromAnalysis(
       confidence:
         index === 4
           ? 1
-          : assignedTile?.confidence ?? analyzedSticker?.confidence ?? 0,
+          : assignedTile?.confidence ?? analyzedSticker!.confidence,
       rgb: analyzedSticker?.rgb,
       source: index === 4 ? 'center' : 'detected',
       symbol,
@@ -569,26 +565,17 @@ function exactScanCounts(faces: ScanFaces): boolean {
 
 function scanFaceSymbolsFromFaces(
   faces: ScanFaces,
-): Partial<Record<ScanFaceSymbol, ScanFaceSymbol[]>> | undefined {
+): Partial<Record<ScanFaceSymbol, ScanFaceSymbol[]>> {
   const faceSymbols: Partial<Record<ScanFaceSymbol, ScanFaceSymbol[]>> = {}
 
   for (const face of Object.values(faces)) {
-    if (face === undefined || !isScanFaceComplete(face.stickers)) {
-      return undefined
-    }
-
-    faceSymbols[face.symbol] = face.stickers
-      .map((sticker) => sticker.symbol)
-      .filter((symbol): symbol is ScanFaceSymbol => symbol !== undefined)
+    faceSymbols[face!.symbol] = face!.stickers.map((sticker) => sticker.symbol as ScanFaceSymbol)
   }
 
   return faceSymbols
 }
 
-function balancedScanFaceSymbols(
-  faces: ScanFaces,
-  requireExactCounts: boolean,
-): Partial<Record<ScanFaceSymbol, ScanFaceSymbol[]>> | undefined {
+function balancedScanFaceSymbols(faces: ScanFaces): Partial<Record<ScanFaceSymbol, ScanFaceSymbol[]>> | undefined {
   const assignments: Partial<Record<ScanFaceSymbol, ScanFaceSymbol[]>> = {}
   const quotas = Object.fromEntries(scanSymbols.map((symbol) => [symbol, 9])) as Record<
     ScanFaceSymbol,
@@ -597,30 +584,20 @@ function balancedScanFaceSymbols(
   const flexibleStickers: FlexibleStickerAssignment[] = []
 
   for (const face of Object.values(faces)) {
-    if (face === undefined || !isScanFaceComplete(face.stickers)) {
-      if (requireExactCounts) {
-        return undefined
-      }
+    const completedFace = face!
+    assignments[completedFace.symbol] = Array.from({ length: 9 }, () => completedFace.symbol)
 
-      continue
-    }
-
-    assignments[face.symbol] = Array.from({ length: 9 }, () => face.symbol)
-
-    for (const [index, sticker] of face.stickers.entries()) {
-      if (sticker.symbol === undefined) {
-        return undefined
-      }
-
+    for (const [index, sticker] of completedFace.stickers.entries()) {
       if (sticker.source === 'manual' || sticker.source === 'center') {
-        quotas[sticker.symbol] -= 1
-        assignments[face.symbol]![index] = sticker.symbol
+        const symbol = sticker.symbol!
+        quotas[symbol] -= 1
+        assignments[completedFace.symbol]![index] = symbol
         continue
       }
 
       flexibleStickers.push({
         candidates: scanStickerCandidates(sticker),
-        faceSymbol: face.symbol,
+        faceSymbol: completedFace.symbol,
         index,
       })
     }
@@ -633,7 +610,6 @@ function balancedScanFaceSymbols(
   const flexibleSymbols = assignFlexibleStickerSymbols(
     flexibleStickers,
     quotas,
-    requireExactCounts,
   )
   if (flexibleSymbols === undefined) {
     return undefined
@@ -650,9 +626,7 @@ function balancedScanFaceSymbols(
 function scanStickerCandidates(sticker: ScanSticker): StickerCandidate[] {
   const scores = new Map<ScanFaceSymbol, number>()
 
-  if (sticker.symbol !== undefined) {
-    scores.set(sticker.symbol, sticker.confidence + 0.04)
-  }
+  scores.set(sticker.symbol!, sticker.confidence + 0.04)
 
   for (const alternative of sticker.alternatives ?? []) {
     scores.set(alternative.symbol, Math.max(scores.get(alternative.symbol) ?? 0, alternative.confidence))
@@ -666,16 +640,10 @@ function scanStickerCandidates(sticker: ScanSticker): StickerCandidate[] {
 function assignFlexibleStickerSymbols(
   stickers: readonly FlexibleStickerAssignment[],
   quotas: Record<ScanFaceSymbol, number>,
-  requireExactCounts: boolean,
 ): ScanFaceSymbol[] | undefined {
   const memo = new Map<string, number | undefined>()
   const choices = new Map<string, ScanFaceSymbol>()
   const initialQuotas = scanSymbols.map((symbol) => quotas[symbol])
-  const totalCapacity = initialQuotas.reduce((sum, quota) => sum + quota, 0)
-
-  if (totalCapacity < stickers.length || (requireExactCounts && totalCapacity !== stickers.length)) {
-    return undefined
-  }
 
   function bestScore(index: number, remainingQuotas: readonly number[]): number | undefined {
     const key = assignmentMemoKey(index, remainingQuotas)
@@ -684,20 +652,9 @@ function assignFlexibleStickerSymbols(
       return cached
     }
 
-    const remainingStickerCount = stickers.length - index
-    const remainingCapacity = remainingQuotas.reduce((sum, quota) => sum + quota, 0)
-    if (
-      remainingCapacity < remainingStickerCount ||
-      (requireExactCounts && remainingCapacity !== remainingStickerCount)
-    ) {
-      memo.set(key, undefined)
-      return undefined
-    }
-
     if (index === stickers.length) {
-      const score = !requireExactCounts || remainingCapacity === 0 ? 0 : undefined
-      memo.set(key, score)
-      return score
+      memo.set(key, 0)
+      return 0
     }
 
     let best: number | undefined
@@ -737,10 +694,7 @@ function assignFlexibleStickerSymbols(
   const assignedSymbols: ScanFaceSymbol[] = []
   const remainingQuotas = initialQuotas.slice()
   for (let index = 0; index < stickers.length; index += 1) {
-    const symbol = choices.get(assignmentMemoKey(index, remainingQuotas))
-    if (symbol === undefined) {
-      return undefined
-    }
+    const symbol = choices.get(assignmentMemoKey(index, remainingQuotas))!
 
     assignedSymbols.push(symbol)
     remainingQuotas[scanSymbols.indexOf(symbol)] -= 1

@@ -121,7 +121,7 @@ export function buildTemporalFaceConsensus(
   const rejectReasons = uniqueReasons(frameEvaluations.flatMap(({ reasons }) => reasons))
   const framesRejected = buffer.length - usableFrames.length
   const averageTileConfidence = average(
-    usableFrames.map(({ assignedTiles }) => average((assignedTiles ?? []).map((tile) => tile.confidence))),
+    usableFrames.map(({ assignedTiles }) => average(assignedTiles!.map((tile) => tile.confidence))),
   )
   const averageFaceConfidence = average(usableFrames.map(({ frame }) => frame.analysis.faceConfidence))
 
@@ -200,7 +200,7 @@ function temporalFrameRejectReasons(
   if (analysis.faceConfidence < options.minFaceConfidence) {
     reasons.push('low_face_confidence')
   }
-  if ([...(analysis.qualityWarnings ?? []), ...(analysis.warnings ?? [])].some((warning) => criticalQualityWarnings.has(warning))) {
+  if ([...analysis.qualityWarnings, ...analysis.warnings].some((warning) => criticalQualityWarnings.has(warning))) {
     reasons.push('critical_quality_warning')
   }
 
@@ -215,32 +215,29 @@ function stickerConsensus(
   const frameVotes: ScanFaceSymbol[] = []
 
   for (const { assignedTiles } of frames) {
-    const tile = assignedTiles?.[index]
-    if (tile === undefined) {
-      continue
-    }
+    const tile = assignedTiles![index]
 
     scores.set(tile.symbol, (scores.get(tile.symbol) ?? 0) + tile.confidence)
     frameVotes.push(tile.symbol)
   }
 
   const sorted = sortedScores(scores)
-  const [winner, winnerScore = 0] = sorted[0] ?? []
+  const [winner, winnerScore] = sorted[0]!
   const runnerUpScore = sorted[1]?.[1] ?? 0
   const totalScore = sorted.reduce((sum, [, score]) => sum + score, 0)
-  const agreement = winner === undefined ? 0 : frameVotes.filter((vote) => vote === winner).length / frames.length
+  const agreement = frameVotes.filter((vote) => vote === winner).length / frames.length
   const alternatives = sorted.slice(1, 3).map(([symbol, score]) => ({
-    confidence: totalScore > 0 ? score / totalScore : 0,
+    confidence: score / totalScore,
     symbol,
   }))
 
   return {
     agreement,
     alternatives,
-    confidence: totalScore > 0 ? winnerScore / totalScore : 0,
+    confidence: winnerScore / totalScore,
     framesUsed: frameVotes.length,
     index,
-    margin: totalScore > 0 ? (winnerScore - runnerUpScore) / totalScore : 0,
+    margin: (winnerScore - runnerUpScore) / totalScore,
     symbol: winner,
   }
 }
@@ -251,9 +248,6 @@ function temporalConsensusStatus(
   bboxStats: BboxStability,
   options: TemporalConsensusOptions,
 ): TemporalFaceConsensusStatus {
-  if (stickers.some((sticker) => sticker.symbol === undefined)) {
-    return 'partial_tiles'
-  }
   if (
     stickers.some(
       (sticker) =>

@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
+import type { AnalyzeScanFaceResponse } from '@api/scan'
 import {
   clearScanFaceDraft,
   confirmScanFaceDraft,
   confirmedDraftCount,
+  countScanSymbols,
   createEmptyScanStickers,
   createInitialScanFaceDrafts,
   mergeLiveDetectedScanStickers,
@@ -10,6 +12,7 @@ import {
   replaceScanFaceDraftSticker,
   scanFaceStatusFromDraft,
   scanFacesFromDrafts,
+  scanStickersFromAnalysis,
   scanStickersFromTemporalConsensus,
   scanSessionFacesFromDrafts,
   scanFacesToPayload,
@@ -64,6 +67,26 @@ describe('scan state helpers', () => {
     })
   })
 
+  it('reports center mismatches and confirmed drafts that need review', () => {
+    const wrongCenter = filledStickers('R')
+    wrongCenter[4] = { confidence: 1, source: 'center', symbol: 'U' }
+
+    expect(validateScanFaceDraft({}, 'R', wrongCenter)).toEqual({ key: 'centerColorMismatch' })
+    expect(
+      scanFaceStatusFromDraft(
+        { confirmed: true, stickers: wrongCenter, symbol: 'R' },
+        { key: 'centerColorMismatch' },
+      ),
+    ).toBe('invalid')
+
+    const lowConfidence = filledDetectedStickers('F')
+    lowConfidence[0] = { confidence: 0.12, source: 'detected', symbol: 'F' }
+
+    expect(scanFaceStatusFromDraft({ confirmed: true, stickers: lowConfidence, symbol: 'F' })).toBe(
+      'needsReview',
+    )
+  })
+
   it('blocks partial color counts above nine', () => {
     const confirmedFaces: ScanFaces = {
       U: { symbol: 'U', stickers: filledStickers('U') },
@@ -102,6 +125,13 @@ describe('scan state helpers', () => {
     })
 
     expect(scanFacesToPayload({ ...faces, B: undefined })).toBeUndefined()
+  })
+
+  it('ignores undefined faces while counting scan colors', () => {
+    expect(countScanSymbols({ U: undefined, R: { symbol: 'R', stickers: filledStickers('R') } })).toMatchObject({
+      R: 9,
+      U: 0,
+    })
   })
 
   it('builds a scan session payload from confirmed photo drafts', () => {
@@ -234,6 +264,55 @@ describe('scan state helpers', () => {
     expect(next[0].alternatives).toBeUndefined()
   })
 
+  it('keeps edited center stickers as center-sourced overrides', () => {
+    const next = replaceScanSticker(createEmptyScanStickers('U'), 4, 'R')
+
+    expect(next[4]).toMatchObject({ confidence: 1, source: 'center', symbol: 'R' })
+  })
+
+  it('fills review stickers from sparse analysis results', () => {
+    const stickers = scanStickersFromAnalysis(
+      scanAnalysis({
+        stickers: [analyzedSticker(0, 'R', 0.62, [{ confidence: 0.41, symbol: 'F' }])],
+        tileDetections: undefined,
+      }),
+      'U',
+    )
+
+    expect(stickers[0]).toMatchObject({
+      alternatives: [
+        { confidence: 0.62, symbol: 'R' },
+        { confidence: 0.41, symbol: 'F' },
+      ],
+      confidence: 0.62,
+      source: 'detected',
+      symbol: 'R',
+    })
+    expect(stickers[2]).toMatchObject({ confidence: 0, source: 'empty' })
+    expect(stickers[4]).toMatchObject({ confidence: 1, source: 'center', symbol: 'U' })
+  })
+
+  it('prefers assigned detector tiles while preserving analysis alternatives', () => {
+    const stickers = scanStickersFromAnalysis(
+      scanAnalysis({
+        stickers: [analyzedSticker(0, 'R', 0.62, [{ confidence: 0.55, symbol: 'B' }])],
+        tileDetections: tileDetections('F'),
+      }),
+      'F',
+    )
+
+    expect(stickers[0]).toMatchObject({
+      alternatives: [
+        { confidence: 1, symbol: 'F' },
+        { confidence: 0.62, symbol: 'R' },
+        { confidence: 0.55, symbol: 'B' },
+      ],
+      confidence: 0.9,
+      source: 'detected',
+      symbol: 'F',
+    })
+  })
+
   it('fills review stickers from live temporal consensus', () => {
     const stickers = scanStickersFromTemporalConsensus(
       {
@@ -264,6 +343,47 @@ describe('scan state helpers', () => {
     expect(stickers[4]).toMatchObject({ confidence: 1, source: 'center', symbol: 'F' })
   })
 
+  it('ignores invalid temporal consensus stickers and removes duplicate alternatives', () => {
+    const stickers = scanStickersFromTemporalConsensus(
+      {
+        bboxStability: 0.9,
+        faceConfidence: 0.88,
+        framesRejected: 0,
+        framesSeen: 6,
+        framesUsed: 6,
+        rejectReasons: [],
+        status: 'ready',
+        stickers: [
+          { agreement: 1, alternatives: [], confidence: 0.9, framesUsed: 6, index: -1, margin: 1, symbol: 'R' },
+          { agreement: 1, alternatives: [], confidence: 0.9, framesUsed: 6, index: 9, margin: 1, symbol: 'R' },
+          { agreement: 1, alternatives: [], confidence: 0.9, framesUsed: 6, index: 0, margin: 1, symbol: undefined },
+          {
+            agreement: 1,
+            alternatives: [
+              { confidence: 0.7, symbol: 'F' },
+              { confidence: 0.2, symbol: 'R' },
+            ],
+            confidence: 0.9,
+            framesUsed: 6,
+            index: 1,
+            margin: 1,
+            symbol: 'F',
+          },
+        ],
+        temporalAgreement: 1,
+        tileConfidence: 0.91,
+      },
+      'F',
+    )
+
+    expect(stickers[0]).toMatchObject({ source: 'empty' })
+    expect(stickers[1]).toMatchObject({
+      alternatives: [{ confidence: 0.2, symbol: 'R' }],
+      source: 'detected',
+      symbol: 'F',
+    })
+  })
+
   it('only overwrites AI stickers when the incoming confidence is meaningfully higher', () => {
     const current = createEmptyScanStickers('F')
     current[0] = { confidence: 0.8, source: 'detected', symbol: 'R' }
@@ -279,6 +399,30 @@ describe('scan state helpers', () => {
     expect(merged[0]).toMatchObject({ confidence: 0.84, source: 'detected', symbol: 'F' })
     expect(merged[1]).toMatchObject({ source: 'manual', symbol: 'U' })
     expect(merged[2]).toMatchObject({ confidence: 0.88, source: 'detected', symbol: 'B' })
+  })
+
+  it('keeps empty incoming live stickers and fills missing current stickers', () => {
+    const incoming: ScanSticker[] = [
+      { confidence: 0, source: 'empty' },
+      { confidence: 0.8, source: 'detected' },
+      { confidence: 0.9, source: 'detected', symbol: 'B' },
+    ]
+
+    const merged = mergeLiveDetectedScanStickers([], incoming)
+
+    expect(merged[0]).toMatchObject({ confidence: 0, source: 'empty' })
+    expect(merged[1]).toMatchObject({ confidence: 0, source: 'empty' })
+    expect(merged[2]).toMatchObject({ confidence: 0.9, source: 'detected', symbol: 'B' })
+  })
+
+  it('returns no scan session when any draft is unconfirmed or incomplete', () => {
+    const drafts = createInitialScanFaceDrafts()
+
+    expect(scanSessionFacesFromDrafts(drafts)).toBeUndefined()
+
+    const incompleteConfirmed = confirmScanFaceDraft(drafts, 'F')
+
+    expect(scanSessionFacesFromDrafts(incompleteConfirmed)).toBeUndefined()
   })
 })
 
@@ -318,5 +462,56 @@ function detectedStickersWithAlternative(
     confidence: 0.18,
     source: index === 4 ? 'center' : 'detected',
     symbol: detectedSymbol,
+  }))
+}
+
+function analyzedSticker(
+  index: number,
+  symbol: (typeof scanSymbols)[number],
+  confidence: number,
+  alternatives: AnalyzeScanFaceResponse['stickers'][number]['alternatives'] = [],
+): AnalyzeScanFaceResponse['stickers'][number] {
+  return {
+    alternatives,
+    confidence,
+    index,
+    polygon: [],
+    rgb: { b: 30, g: 140, r: 50 },
+    symbol,
+  }
+}
+
+function scanAnalysis(
+  overrides: Partial<AnalyzeScanFaceResponse> = {},
+): AnalyzeScanFaceResponse {
+  return {
+    centerMismatch: false,
+    confidence: 1,
+    detectedCenter: 'F',
+    detectedCenterConfidence: 1,
+    detectionMode: 'tile_detector',
+    expectedCenter: 'F',
+    faceConfidence: 1,
+    imageSize: { height: 480, width: 480 },
+    ok: true,
+    qualityWarnings: [],
+    status: 'detected',
+    stickers: [],
+    tileDetections: [],
+    warnings: [],
+    ...overrides,
+  }
+}
+
+function tileDetections(symbol: (typeof scanSymbols)[number]): AnalyzeScanFaceResponse['tileDetections'] {
+  return Array.from({ length: 9 }, (_, index) => ({
+    bbox: {
+      height: 0.18,
+      width: 0.18,
+      x: 0.25 + (index % 3) * 0.25,
+      y: 0.25 + Math.floor(index / 3) * 0.25,
+    },
+    confidence: 0.9,
+    symbol,
   }))
 }

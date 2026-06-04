@@ -5,7 +5,8 @@
     "loading": "Loading"
   },
   "cube": {
-    "visualization": "Cube visualization"
+    "visualization": "Cube visualization",
+    "visualizationUnavailable": "Visualization is not available for this puzzle yet."
   },
   "navigation": {
     "primary": "Primary navigation",
@@ -238,6 +239,10 @@
           "label": "tables not required",
           "meaning": "This strategy does not require generated pruning tables."
         },
+        "not_applicable": {
+          "label": "tables not applicable",
+          "meaning": "This puzzle strategy does not use generated 3x3 pruning-table artifacts."
+        },
         "unavailable": {
           "label": "tables unavailable",
           "meaning": "The required pruning tables were not available on the API server."
@@ -274,9 +279,14 @@
         "max_nodes_exceeds_limit": "Max nodes exceeds the API safety limit.",
         "missing_corner": "The scanned cube is missing a corner piece.",
         "missing_edge": "The scanned cube is missing an edge piece.",
+        "node_limit_exceeded": "The solver stopped after reaching the configured node cap.",
         "notation_too_large": "The scramble notation is too large.",
+        "strategy_puzzle_mismatch": "The selected solver strategy does not belong to this puzzle.",
         "unknown_corner_stickers": "The scanned cube contains an unknown corner color combination.",
         "unknown_edge_stickers": "The scanned cube contains an unknown edge color combination.",
+        "unsupported_input_kind": "This puzzle input type is not supported by the solve endpoint.",
+        "unsupported_metric": "This move metric is not supported by the solve endpoint.",
+        "unsupported_puzzle": "This puzzle is not supported by the solve endpoint yet.",
         "unsupported_strategy": "The selected solver strategy is not supported by this API.",
         "unverified_solution": "The solver returned a solution that failed replay verification."
       },
@@ -287,8 +297,14 @@
         "invalid_input": "Invalid cube state",
         "invalid_limits": "Solver limits exceed API safety caps",
         "invalid_notation": "Invalid scramble",
+        "node_limit_exceeded": "Node limit exceeded",
         "not_found_within_limits": "No solution within the configured limits",
         "request_too_large": "Solve request is too large",
+        "strategy_puzzle_mismatch": "Strategy does not match puzzle",
+        "unknown_puzzle": "Unknown puzzle",
+        "unsupported_input_kind": "Unsupported puzzle input",
+        "unsupported_metric": "Unsupported move metric",
+        "unsupported_puzzle": "Unsupported puzzle",
         "unsupported_strategy": "Unsupported solver strategy",
         "unverified_solution": "Solver solution failed replay verification"
       }
@@ -296,8 +312,11 @@
     "form": {
       "maxMoves": "Max moves",
       "maxNodesMillion": "Max nodes (M)",
+      "puzzle": "Puzzle",
       "scanCube": "Scan cube with camera",
+      "scanUnavailableForPuzzle": "Camera scan is available for 3x3 only right now.",
       "scramble": "Scramble",
+      "strategy": "Strategy",
       "solve": "Solve"
     },
     "playback": {
@@ -319,6 +338,8 @@
       "generated-two-phase": "Generated two-phase solver",
       "generated-two-phase-multiprobe": "Generated two-phase multiprobe solver",
       "generated-two-phase-quality": "Generated two-phase quality solver",
+      "cube2-bounded-ida-star": "2x2 bounded IDA*",
+      "cube2-pdb-ida-star": "2x2 PDB IDA*",
       "meaningDefault": "The deterministic backend solver strategy used for this request. It is search logic, not generative AI.",
       "meaningGeneratedTwoPhase": "The strategy used. Generated does not mean generative AI; this is a two-phase solver backed by pre-generated pruning tables. Quality modes try shorter solution depths before falling back to the configured maximum."
     },

@@ -1,8 +1,9 @@
 use std::path::PathBuf;
 use std::time::Duration;
 
-use axum::extract::{DefaultBodyLimit, State};
+use axum::extract::{DefaultBodyLimit, Path, State};
 use axum::http::{header::CONTENT_TYPE, HeaderValue, Method, StatusCode};
+use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use cube_engine::SolverStrategy;
@@ -10,9 +11,14 @@ use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::services::{ServeDir, ServeFile};
 
 use crate::config::{MAX_JSON_BODY_BYTES, MAX_SCAN_SESSION_BODY_BYTES};
+use crate::puzzle::{
+    list_puzzles_response, puzzle_response_by_slug, puzzle_strategy_responses_by_slug,
+    solve_puzzle_request,
+};
 use crate::response::{
-    AnalyzeScanFaceRequest, AnalyzeScanFaceResponse, HealthResponse, ScanSessionRequest,
-    ScanSessionResponse, SolveNotationRequest, SolveResponse, SolveScanRequest, StrategyResponse,
+    AnalyzeScanFaceRequest, AnalyzeScanFaceResponse, HealthResponse, PuzzleSolveRequest,
+    PuzzleSolveResponse, ScanSessionRequest, ScanSessionResponse, SolveNotationRequest,
+    SolveResponse, SolveScanRequest, StrategyResponse,
 };
 use crate::scan_analysis::{analyze_scan_face_request, solve_scan_session_request};
 use crate::solve::{solve_notation_request, solve_scan_request};
@@ -36,6 +42,10 @@ struct VisionHealthResponse {
 pub fn api_router(state: ApiState) -> Router {
     Router::new()
         .route("/health", get(health))
+        .route("/puzzles", get(puzzles))
+        .route("/puzzles/:puzzle_slug", get(puzzle_detail))
+        .route("/puzzles/:puzzle_slug/strategies", get(puzzle_strategies))
+        .route("/puzzles/:puzzle_slug/solve", post(solve_puzzle))
         .route("/strategies", get(strategies))
         .route("/scan/analyze-face", post(analyze_scan_face))
         .route(
@@ -126,6 +136,34 @@ async fn strategies() -> Json<Vec<StrategyResponse>> {
             })
             .collect(),
     )
+}
+
+async fn puzzles() -> Json<Vec<crate::PuzzleResponse>> {
+    Json(list_puzzles_response())
+}
+
+async fn puzzle_detail(Path(puzzle_slug): Path<String>) -> Response {
+    match puzzle_response_by_slug(&puzzle_slug) {
+        Ok(response) => Json(response).into_response(),
+        Err(response) => (StatusCode::NOT_FOUND, Json(response)).into_response(),
+    }
+}
+
+async fn puzzle_strategies(Path(puzzle_slug): Path<String>) -> Response {
+    match puzzle_strategy_responses_by_slug(&puzzle_slug) {
+        Ok(response) => Json(response).into_response(),
+        Err(response) => (StatusCode::NOT_FOUND, Json(response)).into_response(),
+    }
+}
+
+async fn solve_puzzle(
+    State(state): State<ApiState>,
+    Path(puzzle_slug): Path<String>,
+    Json(request): Json<PuzzleSolveRequest>,
+) -> (StatusCode, Json<PuzzleSolveResponse>) {
+    let (status, response) = solve_puzzle_request(&state, &puzzle_slug, request);
+
+    (status, Json(response))
 }
 
 async fn solve_notation(

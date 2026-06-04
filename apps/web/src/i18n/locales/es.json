@@ -5,7 +5,8 @@
     "loading": "Cargando"
   },
   "cube": {
-    "visualization": "Visualización del cubo"
+    "visualization": "Visualización del cubo",
+    "visualizationUnavailable": "La visualización aún no está disponible para este puzzle."
   },
   "navigation": {
     "primary": "Navegación principal",
@@ -238,6 +239,10 @@
           "label": "tablas no requeridas",
           "meaning": "Esta estrategia no requiere tablas de poda generadas."
         },
+        "not_applicable": {
+          "label": "tablas no aplicables",
+          "meaning": "Esta estrategia de puzzle no usa artefactos de tablas de poda 3x3 generadas."
+        },
         "unavailable": {
           "label": "tablas no disponibles",
           "meaning": "Las tablas de poda requeridas no estaban disponibles en el servidor de la API."
@@ -274,9 +279,14 @@
         "max_nodes_exceeds_limit": "El máximo de nodos excede el límite de seguridad de la API.",
         "missing_corner": "Falta una pieza de esquina en el cubo escaneado.",
         "missing_edge": "Falta una pieza de arista en el cubo escaneado.",
+        "node_limit_exceeded": "El solver se detuvo tras alcanzar el límite de nodos configurado.",
         "notation_too_large": "La notación de la mezcla es demasiado grande.",
+        "strategy_puzzle_mismatch": "La estrategia de solver seleccionada no pertenece a este puzzle.",
         "unknown_corner_stickers": "El cubo escaneado contiene una combinación desconocida de colores de esquina.",
         "unknown_edge_stickers": "El cubo escaneado contiene una combinación desconocida de colores de arista.",
+        "unsupported_input_kind": "Este tipo de entrada de puzzle no es compatible con el endpoint de solve.",
+        "unsupported_metric": "Esta métrica de movimiento no es compatible con el endpoint de solve.",
+        "unsupported_puzzle": "Este puzzle aún no es compatible con el endpoint de solve.",
         "unsupported_strategy": "La estrategia de solver seleccionada no es compatible con esta API.",
         "unverified_solution": "El solver devolvió una solución que falló la verificación por replay."
       },
@@ -287,8 +297,14 @@
         "invalid_input": "Estado del cubo inválido",
         "invalid_limits": "Los límites del solver exceden los topes de seguridad de la API",
         "invalid_notation": "Mezcla inválida",
+        "node_limit_exceeded": "Límite de nodos excedido",
         "not_found_within_limits": "No hay solución dentro de los límites configurados",
         "request_too_large": "La solicitud de solución es demasiado grande",
+        "strategy_puzzle_mismatch": "La estrategia no coincide con el puzzle",
+        "unknown_puzzle": "Puzzle desconocido",
+        "unsupported_input_kind": "Entrada de puzzle no compatible",
+        "unsupported_metric": "Métrica de movimiento no compatible",
+        "unsupported_puzzle": "Puzzle no compatible",
         "unsupported_strategy": "Estrategia de solver no compatible",
         "unverified_solution": "La solución del solver falló la verificación por replay"
       }
@@ -296,8 +312,11 @@
     "form": {
       "maxMoves": "Máx. movimientos",
       "maxNodesMillion": "Máx. nodos (M)",
+      "puzzle": "Puzzle",
       "scanCube": "Escanear cubo con cámara",
+      "scanUnavailableForPuzzle": "El escaneo con cámara solo está disponible para 3x3 por ahora.",
       "scramble": "Mezcla",
+      "strategy": "Estrategia",
       "solve": "Resolver"
     },
     "playback": {
@@ -319,6 +338,8 @@
       "generated-two-phase": "Solver two-phase generado",
       "generated-two-phase-multiprobe": "Solver two-phase generado multiprobe",
       "generated-two-phase-quality": "Solver two-phase generado de calidad",
+      "cube2-bounded-ida-star": "2x2 IDA* limitado",
+      "cube2-pdb-ida-star": "2x2 PDB IDA*",
       "meaningDefault": "La estrategia determinística del backend usada para esta solicitud. Es lógica de búsqueda, no IA generativa.",
       "meaningGeneratedTwoPhase": "La estrategia usada. Generado no significa IA generativa; es un solver two-phase respaldado por tablas de poda pregeneradas. Los modos de calidad intentan profundidades de solución más cortas antes de volver al máximo configurado."
     },

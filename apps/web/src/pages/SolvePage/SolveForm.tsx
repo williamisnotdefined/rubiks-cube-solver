@@ -5,19 +5,27 @@ import { Button } from '@components/Button'
 import { Field } from '@components/Field'
 import { SelectInput, TextInput } from '@components/FormControls'
 import { Loader3x3 } from '@components/Loader3x3'
+import type { PuzzleDefinition, PuzzleStrategyOption } from '@api/solver/types'
 import { maxMovesLimit, maxNodesMillionOptions } from './constants'
 
 type SolveFormProps = {
   notation: string
+  puzzleOptions: readonly PuzzleDefinition[]
+  selectedPuzzleSlug: string
+  selectedStrategyId: string
+  strategyOptions: readonly PuzzleStrategyOption[]
   maxMovesInput: string
   maxNodesMillionInput: string
   buttonLoading: boolean
   disabled: boolean
   maxMovesInvalid?: boolean
   maxNodesInvalid?: boolean
+  scanAvailable: boolean
   scramblePlaceholder: string
   onScanClick: () => void
   onNotationChange: (notation: string) => void
+  onPuzzleChange: (puzzleSlug: string) => void
+  onStrategyChange: (strategyId: string) => void
   onMaxMovesChange: (maxMoves: string) => void
   onMaxNodesMillionChange: (maxNodesMillion: string) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
@@ -25,15 +33,22 @@ type SolveFormProps = {
 
 export function SolveForm({
   notation,
+  puzzleOptions,
+  selectedPuzzleSlug,
+  selectedStrategyId,
+  strategyOptions,
   maxMovesInput,
   maxNodesMillionInput,
   buttonLoading,
   disabled,
   maxMovesInvalid = false,
   maxNodesInvalid = false,
+  scanAvailable,
   scramblePlaceholder,
   onScanClick,
   onNotationChange,
+  onPuzzleChange,
+  onStrategyChange,
   onMaxMovesChange,
   onMaxNodesMillionChange,
   onSubmit,
@@ -46,6 +61,35 @@ export function SolveForm({
       data-testid="solve-form"
       onSubmit={onSubmit}
     >
+      <div className="grid gap-3 sm:grid-cols-2" data-testid="puzzle-row">
+        <Field className="field-puzzle" label={t('solve.form.puzzle')}>
+          <SelectInput
+            className="puzzle-input"
+            value={selectedPuzzleSlug}
+            onChange={(event) => onPuzzleChange(event.target.value)}
+          >
+            {puzzleOptions.map((puzzle) => (
+              <option key={puzzle.slug} value={puzzle.slug}>
+                {puzzle.label}
+              </option>
+            ))}
+          </SelectInput>
+        </Field>
+        <Field className="field-strategy" label={t('solve.form.strategy')}>
+          <SelectInput
+            className="strategy-input"
+            disabled={strategyOptions.length === 0}
+            value={selectedStrategyId}
+            onChange={(event) => onStrategyChange(event.target.value)}
+          >
+            {strategyOptions.map((strategy) => (
+              <option key={strategy.id} value={strategy.id}>
+                {strategy.label}
+              </option>
+            ))}
+          </SelectInput>
+        </Field>
+      </div>
       <div data-testid="scramble-row">
         <Field className="field-primary" label={t('solve.form.scramble')}>
           <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
@@ -60,6 +104,8 @@ export function SolveForm({
             <Button
               aria-label={t('solve.form.scanCube')}
               className="aspect-square min-h-0 w-12 px-0 py-0"
+              disabled={!scanAvailable}
+              title={scanAvailable ? undefined : t('solve.form.scanUnavailableForPuzzle')}
               type="button"
               variant="secondary"
               onClick={onScanClick}

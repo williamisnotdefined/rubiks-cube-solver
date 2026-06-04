@@ -1,7 +1,12 @@
 import { useReducer, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { RubiksCubeElement } from '@houstonp/rubiks-cube/view'
-import { useGetHealth, useGetStrategies, useSolveNotation } from '@api/solver'
+import {
+  useGetHealth,
+  useGetPuzzleStrategies,
+  useGetPuzzles,
+  useSolvePuzzleNotation,
+} from '@api/solver'
 import type { SolveResult as ApiSolveResult } from '@api/solver/types'
 import { waitForPaint } from '@core/timing/waitForPaint'
 import { CubeStage } from './CubeStage'
@@ -25,18 +30,28 @@ import {
   validationErrorMessage,
 } from './validation'
 
+const defaultPuzzleSlug = 'cube-3x3x3'
+const cube3VisualizationKind = 'cube3-facelets-v1'
+
 export function SolvePage() {
   const { t } = useTranslation()
   const cubeRef = useRef<RubiksCubeElement | null>(null)
   const healthQuery = useGetHealth()
-  const strategiesQuery = useGetStrategies({ enabled: healthQuery.data?.ok === true })
-  const solveMutation = useSolveNotation()
+  const puzzlesQuery = useGetPuzzles({ enabled: healthQuery.data?.ok === true })
+  const [selectedPuzzleSlug, setSelectedPuzzleSlug] = useState(defaultPuzzleSlug)
+  const selectedPuzzle = puzzleBySlug(puzzlesQuery.data, selectedPuzzleSlug)
+  const strategiesQuery = useGetPuzzleStrategies({
+    enabled: healthQuery.data?.ok === true && selectedPuzzle !== undefined,
+    puzzleSlug: selectedPuzzleSlug,
+  })
+  const solveMutation = useSolvePuzzleNotation()
   const cubeActive = usePageActivity()
   const [cubeReadyRevision, markCubeReady] = useReducer(
     (revision: number) => revision + 1,
     0,
   )
   const [notation, setNotation] = useState(defaultNotation)
+  const [selectedStrategyId, setSelectedStrategyId] = useState<string | undefined>()
   const maxMovesInput = useSolveSettingsStore((state) => state.maxMovesInput)
   const maxNodesMillionInput = useSolveSettingsStore((state) => state.maxNodesMillionInput)
   const setMaxMovesInput = useSolveSettingsStore((state) => state.setMaxMovesInput)
@@ -57,27 +72,42 @@ export function SolvePage() {
   )
   const visibleSolutionMoves = successResult?.moves.slice(0, visibleSolutionStep) ?? []
   const visualizationState = successResult?.visualState
+  const visualizationSupported =
+    selectedPuzzle?.supportedVisualizations.includes(cube3VisualizationKind) === true
   const visualizationNotation =
-    visualizationState === undefined
+    visualizationState === undefined && visualizationSupported
       ? notationWithSolutionPrefix(
           notation,
           activeSolveSource === 'notation' ? visibleSolutionMoves : [],
         )
-      : visibleSolutionMoves.join(' ')
+      : visualizationSupported
+        ? visibleSolutionMoves.join(' ')
+        : ''
 
   useCubeVisualization(
     cubeRef,
     visualizationNotation,
     cubeReadyRevision,
-    visualizationState,
-    cubeActive,
+    visualizationSupported ? visualizationState : undefined,
+    cubeActive && visualizationSupported,
   )
 
   const strategyOptions = strategiesQuery.data ?? []
-  const apiReady = healthQuery.data?.ok === true && strategiesQuery.isSuccess
+  const puzzleOptions = puzzlesQuery.data ?? []
+  const computedStrategyId = preferredStrategyId(strategyOptions, selectedPuzzle)
+  const strategyId = strategyOptions.some((strategy) => strategy.id === selectedStrategyId)
+    ? selectedStrategyId ?? computedStrategyId
+    : computedStrategyId
+  const scanAvailable = selectedPuzzle?.scannerSupported === true
+  const activeScramblePlaceholder =
+    selectedPuzzleSlug === 'cube-2x2x2' ? 'R U F' : scramblePlaceholder
+  const apiReady =
+    healthQuery.data?.ok === true &&
+    puzzlesQuery.isSuccess &&
+    strategiesQuery.isSuccess &&
+    selectedPuzzle !== undefined
   const solving = solveMutation.isPending
   const buttonLoading = !apiReady || solving
-  const strategyId = preferredStrategyId(strategyOptions)
   const maxMoves = Number(maxMovesInput)
   const maxNodesMillion = Number(maxNodesMillionInput)
   const maxNodes = maxNodesMillion * nodesPerMillion
@@ -98,6 +128,8 @@ export function SolvePage() {
     !apiReady ||
     solving ||
     notation.trim().length === 0 ||
+    strategyOptions.length === 0 ||
+    strategyId.length === 0 ||
     localValidationMessage !== undefined
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -114,6 +146,7 @@ export function SolvePage() {
     try {
       const solvePromise = solveMutation.mutateAsync({
         notation: notation.trim(),
+        puzzleSlug: selectedPuzzleSlug,
         limits: {
           maxDepth: maxMoves,
           maxNodes,
@@ -135,11 +168,22 @@ export function SolvePage() {
   }
 
   function handleSolutionStepChange(nextStep: number) {
-    setSolutionStep(clampSolutionStep(nextStep, successResult?.moves.length ?? 0))
+    setSolutionStep(clampSolutionStep(nextStep, successResult!.moves.length))
   }
 
   function handleNotationChange(nextNotation: string) {
     setNotation(nextNotation)
+    resetSolveResult()
+  }
+
+  function handlePuzzleChange(nextPuzzleSlug: string) {
+    setSelectedPuzzleSlug(nextPuzzleSlug)
+    setSelectedStrategyId(undefined)
+    resetSolveResult()
+  }
+
+  function handleStrategyChange(nextStrategyId: string) {
+    setSelectedStrategyId(nextStrategyId)
     resetSolveResult()
   }
 
@@ -160,25 +204,47 @@ export function SolvePage() {
     setScanSessionSolveResult(solve)
   }
 
+  function handleScanClick() {
+    if (scanAvailable) {
+      setScanModalOpen(true)
+    }
+  }
+
   return (
     <main className="app-shell min-h-screen w-full bg-[#070707] px-3 py-4 text-[#f7f7f7] sm:px-5 sm:py-6">
       <section className="mx-auto grid w-full max-w-4xl content-start justify-items-center gap-4">
-        <CubeStage
-          active={cubeActive}
-          cubeRef={cubeRef}
-          onReady={markCubeReady}
-        />
+        {visualizationSupported ? (
+          <CubeStage
+            active={cubeActive}
+            cubeRef={cubeRef}
+            onReady={markCubeReady}
+          />
+        ) : (
+          <section
+            className="cube-stage flex aspect-square w-[min(280px,calc(100vw-24px))] items-center justify-center border border-[#2b2b2b] bg-[#101010] px-5 text-center text-sm font-semibold text-[#a8a8a8]"
+            aria-label={t('cube.visualizationUnavailable')}
+          >
+            {t('cube.visualizationUnavailable')}
+          </section>
+        )}
         <SolveForm
           notation={notation}
+          puzzleOptions={puzzleOptions}
+          selectedPuzzleSlug={selectedPuzzleSlug}
+          selectedStrategyId={strategyId}
+          strategyOptions={strategyOptions}
           maxMovesInput={maxMovesInput}
           maxNodesMillionInput={maxNodesMillionInput}
           buttonLoading={buttonLoading}
           disabled={disabled}
           maxMovesInvalid={maxMovesValidation !== undefined}
           maxNodesInvalid={maxNodesValidation !== undefined}
-          scramblePlaceholder={scramblePlaceholder}
-          onScanClick={() => setScanModalOpen(true)}
+          scanAvailable={scanAvailable}
+          scramblePlaceholder={activeScramblePlaceholder}
+          onScanClick={handleScanClick}
           onNotationChange={handleNotationChange}
+          onPuzzleChange={handlePuzzleChange}
+          onStrategyChange={handleStrategyChange}
           onMaxMovesChange={handleMaxMovesChange}
           onMaxNodesMillionChange={handleMaxNodesMillionChange}
           onSubmit={handleSubmit}
@@ -189,14 +255,14 @@ export function SolvePage() {
           solving={solving}
           localValidationMessage={localValidationMessage}
         />
-        {successResult !== undefined ? (
+        {successResult !== undefined && visualizationSupported ? (
           <SolutionPlayback
-            moves={successResult?.moves ?? []}
+            moves={successResult.moves}
             step={visibleSolutionStep}
             onStepChange={handleSolutionStepChange}
           />
         ) : null}
-        {scanModalOpen ? (
+        {scanModalOpen && scanAvailable ? (
           <ScanCubeModal
             apiReady={apiReady}
             maxDepth={maxMoves}
@@ -216,6 +282,13 @@ export function SolvePage() {
       </section>
     </main>
   )
+}
+
+function puzzleBySlug<TPuzzle extends { slug: string }>(
+  puzzles: readonly TPuzzle[] | undefined,
+  slug: string,
+): TPuzzle | undefined {
+  return puzzles?.find((puzzle) => puzzle.slug === slug)
 }
 
 function notationWithSolutionPrefix(

@@ -61,6 +61,36 @@ describe('SolveResult', () => {
     expect(within(dialog).getByText(/does not mean generative AI/)).toBeInTheDocument()
   })
 
+  it('shows non-generated solver details and closes them with Escape', async () => {
+    const user = userEvent.setup()
+    render(
+      <SolveResult
+        error={null}
+        result={{
+          ...successResult,
+          generatedTableStatus: 'not_applicable',
+          maxNodes: undefined,
+          replayVerified: false,
+          strategyId: 'cube2-pdb-ida-star',
+          strategyLabel: '2x2 PDB IDA*',
+        }}
+        solving={false}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'see more' }))
+
+    const dialog = screen.getByRole('dialog', { name: 'Solver details' })
+    expect(within(dialog).getByText('2x2 PDB IDA*')).toBeInTheDocument()
+    expect(within(dialog).getByText('replay not verified')).toBeInTheDocument()
+    expect(within(dialog).getByText(/The deterministic backend solver strategy/)).toBeInTheDocument()
+    expect(within(dialog).getByText(/no configured node cap/)).toBeInTheDocument()
+
+    await user.keyboard('{Escape}')
+
+    expect(screen.queryByRole('dialog', { name: 'Solver details' })).not.toBeInTheDocument()
+  })
+
   it('renders solved states with no moves', () => {
     render(
       <SolveResult error={null} result={{ ...successResult, length: 0, moves: [] }} solving={false} />,

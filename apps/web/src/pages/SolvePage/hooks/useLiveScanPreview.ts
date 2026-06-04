@@ -52,6 +52,12 @@ const minTileDetections = 9
 const stableFrameTarget = 6
 const maxTileMovement = 0.025
 const criticalQualityWarnings = new Set(['image_blurry', 'image_too_dark', 'image_too_bright'])
+const qualityWarningMessages = [
+  ['image_blurry', 'scan.live.imageBlurry'],
+  ['image_too_dark', 'scan.live.tooDark'],
+  ['image_too_bright', 'scan.live.tooBright'],
+  ['tile_detector_partial', 'scan.live.lookingKeepVisible'],
+] as const
 
 export function useLiveScanPreview({
   enabled,
@@ -111,7 +117,7 @@ export function useLiveScanPreview({
 
     let cancelled = false
     let abortController: AbortController | undefined
-    let timeoutId: number | undefined
+    let timeoutId: number
 
     function scheduleNextPreview() {
       timeoutId = window.setTimeout(() => {
@@ -214,9 +220,7 @@ export function useLiveScanPreview({
 
     return () => {
       cancelled = true
-      if (timeoutId !== undefined) {
-        window.clearTimeout(timeoutId)
-      }
+      window.clearTimeout(timeoutId)
       abortController?.abort()
     }
   }, [enabled, expectedCenter, knownCenters, mutateAsync, recordTemporalAnalysis, t, videoRef])
@@ -298,25 +302,10 @@ function qualityWarningMessage(
   analysis: AnalyzeScanFaceResponse,
   t: ReturnType<typeof useTranslation>['t'],
 ): string | undefined {
-  const warnings = new Set([...(analysis.qualityWarnings ?? []), ...(analysis.warnings ?? [])])
+  const warnings = new Set([...analysis.qualityWarnings, ...analysis.warnings])
+  const matchedWarning = qualityWarningMessages.find(([warning]) => warnings.has(warning))
 
-  if (warnings.has('image_blurry')) {
-    return t('scan.live.imageBlurry')
-  }
-
-  if (warnings.has('image_too_dark')) {
-    return t('scan.live.tooDark')
-  }
-
-  if (warnings.has('image_too_bright')) {
-    return t('scan.live.tooBright')
-  }
-
-  if (warnings.has('tile_detector_partial')) {
-    return t('scan.live.lookingKeepVisible')
-  }
-
-  return undefined
+  return matchedWarning === undefined ? undefined : t(matchedWarning[1])
 }
 
 function isTrackableAnalysis(analysis: AnalyzeScanFaceResponse, expectedCenter: ScanFaceSymbol): boolean {
@@ -362,16 +351,10 @@ function averageTileMovement(
     return Number.POSITIVE_INFINITY
   }
 
-  const total = sharedIndexes.reduce((sum, index) => {
-    const previousBox = previousBoxes.get(index)
-    const nextBox = nextBoxes.get(index)
-
-    if (previousBox === undefined || nextBox === undefined) {
-      return sum
-    }
-
-    return sum + boxMovement(previousBox, nextBox)
-  }, 0)
+  const total = sharedIndexes.reduce(
+    (sum, index) => sum + boxMovement(previousBoxes.get(index)!, nextBoxes.get(index)!),
+    0,
+  )
 
   return total / sharedIndexes.length
 }
@@ -386,14 +369,12 @@ function boxMovement(previousBox: ScanDetectionBox, nextBox: ScanDetectionBox): 
 }
 
 function hasCriticalQualityWarning(analysis: AnalyzeScanFaceResponse): boolean {
-  return [...(analysis.qualityWarnings ?? []), ...(analysis.warnings ?? [])].some((warning) =>
+  return [...analysis.qualityWarnings, ...analysis.warnings].some((warning) =>
     criticalQualityWarnings.has(warning),
   )
 }
 
 function averageTileConfidence(analysis: AnalyzeScanFaceResponse): number {
-  const assignedTiles = tileAssignmentFromAnalysis(analysis)
-  return assignedTiles === undefined
-    ? 0
-    : assignedTiles.reduce((sum, tile) => sum + tile.confidence, 0) / assignedTiles.length
+  const assignedTiles = tileAssignmentFromAnalysis(analysis)!
+  return assignedTiles.reduce((sum, tile) => sum + tile.confidence, 0) / assignedTiles.length
 }

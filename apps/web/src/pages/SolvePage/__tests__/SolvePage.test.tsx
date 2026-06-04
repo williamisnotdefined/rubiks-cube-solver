@@ -37,18 +37,77 @@ const limitFailure: SolveFailure = {
 
 vi.mock('@api/solver', () => ({
   useGetHealth: () => ({ data: { generatedTwoPhaseReady: true, ok: true } }),
-  useGetStrategies: () => ({
+  useGetPuzzles: () => ({
     data: [
       {
-        id: 'generated-two-phase-quality',
-        label: 'Generated two-phase quality solver',
-        solverMode: 'generated_two_phase_quality',
-        statusText: 'ready',
+        defaultMetric: 'htm',
+        defaultStrategyId: 'generated-two-phase-quality',
+        family: 'cube',
+        id: 'cube/3x3x3',
+        label: '3x3x3 Cube',
+        scannerSupported: true,
+        slug: 'cube-3x3x3',
+        status: 'stable',
+        strategyIds: ['generated-two-phase-quality'],
+        supportedInputs: ['notation'],
+        supportedVisualizations: ['cube3-facelets-v1'],
+      },
+      {
+        defaultMetric: 'htm',
+        defaultStrategyId: 'cube2-pdb-ida-star',
+        family: 'cube',
+        id: 'cube/2x2x2',
+        label: '2x2x2 Cube',
+        scannerSupported: false,
+        slug: 'cube-2x2x2',
+        status: 'experimental',
+        strategyIds: ['cube2-bounded-ida-star', 'cube2-pdb-ida-star'],
+        supportedInputs: ['notation'],
+        supportedVisualizations: ['none'],
       },
     ],
     isSuccess: true,
   }),
-  useSolveNotation: () => ({
+  useGetPuzzleStrategies: ({ puzzleSlug }: { puzzleSlug: string }) => ({
+    data:
+      puzzleSlug === 'cube-2x2x2'
+        ? [
+            {
+              defaultMetric: 'htm',
+              id: 'cube2-bounded-ida-star',
+              label: '2x2 bounded IDA*',
+              puzzleId: 'cube/2x2x2',
+              solverMode: 'cube2_bounded_ida_star',
+              statusText: 'experimental',
+              supportedInputs: ['notation'],
+              supportedMetrics: ['htm'],
+            },
+            {
+              defaultMetric: 'htm',
+              id: 'cube2-pdb-ida-star',
+              label: '2x2 PDB IDA*',
+              puzzleId: 'cube/2x2x2',
+              solverMode: 'cube2_pdb_ida_star',
+              statusText: 'experimental',
+              supportedInputs: ['notation'],
+              supportedMetrics: ['htm'],
+            },
+          ]
+        : [
+            {
+              defaultMetric: 'htm',
+              id: 'generated-two-phase-quality',
+              label: 'Generated two-phase quality solver',
+              puzzleId: 'cube/3x3x3',
+              solverMode: 'generated_two_phase_quality',
+              statusText: 'ready',
+              supportedInputs: ['notation'],
+              supportedMetrics: ['htm'],
+            },
+          ],
+    isSuccess: true,
+  }),
+  useSolvePuzzleNotation: () => ({
     data: apiMocks.solveData,
     error: apiMocks.solveError,
     isPending: apiMocks.isPending,
@@ -140,6 +199,8 @@ describe('SolvePage', () => {
     expect(screen.getByTestId('cube-stage-enabled')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Solve' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Scan cube with camera' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Puzzle')).toHaveValue('cube-3x3x3')
+    expect(screen.getByLabelText('Strategy')).toHaveValue('generated-two-phase-quality')
     expect(useCubeVisualizationMock).toHaveBeenLastCalledWith(
       expect.anything(),
       '',
@@ -175,6 +236,8 @@ describe('SolvePage', () => {
     expect(within(limitsRow).getByLabelText('Max moves')).toBeInTheDocument()
     expect(within(limitsRow).getByLabelText('Max nodes (M)')).toBeInTheDocument()
     expect(within(limitsRow).getByRole('button', { name: 'Solve' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Puzzle')).toBeInTheDocument()
+    expect(screen.getByLabelText('Strategy')).toBeInTheDocument()
   })
 
   it('opens the scan modal from the camera button', async () => {
@@ -200,12 +263,72 @@ describe('SolvePage', () => {
     await waitFor(() => {
       expect(apiMocks.mutateAsync).toHaveBeenCalledWith({
         notation: 'R U',
+        puzzleSlug: 'cube-3x3x3',
         limits: {
           maxDepth: 2,
           maxNodes: 15_000_000,
           strategyId: 'generated-two-phase-quality',
         },
       })
+    })
+  })
+
+  it('selects 2x2 strategies and disables 3x3-only scan and visualization', async () => {
+    const user = userEvent.setup()
+    render(<SolvePage />)
+
+    await user.selectOptions(screen.getByLabelText('Puzzle'), 'cube-2x2x2')
+
+    await waitFor(() => expect(screen.getByLabelText('Strategy')).toHaveValue('cube2-pdb-ida-star'))
+    expect(screen.getByLabelText('Scramble')).toHaveAttribute('placeholder', 'R U F')
+    expect(screen.getByRole('button', { name: 'Scan cube with camera' })).toBeDisabled()
+    expect(screen.queryByTestId('cube-stage')).not.toBeInTheDocument()
+    expect(screen.getByText('Visualization is not available for this puzzle yet.')).toBeInTheDocument()
+    expect(useCubeVisualizationMock).toHaveBeenLastCalledWith(
+      expect.anything(),
+      '',
+      expect.any(Number),
+      undefined,
+      false,
+    )
+  })
+
+  it('submits 2x2 notation with the puzzle-aware strategy', async () => {
+    const user = userEvent.setup()
+    render(<SolvePage />)
+
+    await user.selectOptions(screen.getByLabelText('Puzzle'), 'cube-2x2x2')
+    await user.type(screen.getByLabelText('Scramble'), 'R U F')
+    await user.click(screen.getByRole('button', { name: 'Solve' }))
+
+    await waitFor(() => {
+      expect(apiMocks.mutateAsync).toHaveBeenCalledWith({
+        notation: 'R U F',
+        puzzleSlug: 'cube-2x2x2',
+        limits: {
+          maxDepth: 20,
+          maxNodes: 10_000_000,
+          strategyId: 'cube2-pdb-ida-star',
+        },
+      })
+    })
+  })
+
+  it('uses an explicitly selected 2x2 strategy', async () => {
+    const user = userEvent.setup()
+    render(<SolvePage />)
+
+    await user.selectOptions(screen.getByLabelText('Puzzle'), 'cube-2x2x2')
+    await user.selectOptions(screen.getByLabelText('Strategy'), 'cube2-bounded-ida-star')
+    await user.type(screen.getByLabelText('Scramble'), 'R U F')
+    await user.click(screen.getByRole('button', { name: 'Solve' }))
+
+    await waitFor(() => {
+      expect(apiMocks.mutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          limits: expect.objectContaining({ strategyId: 'cube2-bounded-ida-star' }),
+        }),
+      )
     })
   })
 

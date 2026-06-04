@@ -1,12 +1,38 @@
 export type SolverStrategyId = string
+export type PuzzleSlug = string
 
 export type ScanFaceSymbol = 'U' | 'R' | 'F' | 'D' | 'L' | 'B'
+
+export type PuzzleStatus = 'stable' | 'experimental' | 'planned' | 'disabled'
+export type PuzzleInputKind = 'notation' | 'facelets3x3' | 'scan3x3'
+export type PuzzleVisualizationKind = 'cube3-facelets-v1' | 'none'
+
+export type PuzzleDefinition = {
+  id: string
+  slug: PuzzleSlug
+  label: string
+  family: string
+  status: PuzzleStatus
+  defaultMetric: 'htm'
+  supportedInputs: PuzzleInputKind[]
+  supportedVisualizations: PuzzleVisualizationKind[]
+  defaultStrategyId?: SolverStrategyId
+  strategyIds: SolverStrategyId[]
+  scannerSupported: boolean
+}
 
 export type SolverStrategyOption = {
   id: SolverStrategyId
   label: string
   solverMode: string
   statusText: string
+}
+
+export type PuzzleStrategyOption = SolverStrategyOption & {
+  puzzleId: string
+  defaultMetric: 'htm'
+  supportedMetrics: 'htm'[]
+  supportedInputs: PuzzleInputKind[]
 }
 
 export type HealthResponse = {
@@ -27,6 +53,7 @@ export type SolveLimits = {
 
 export type GeneratedTableStatus =
   | 'not_required'
+  | 'not_applicable'
   | 'available'
   | 'unavailable'
   | 'corrupt_or_incompatible'
@@ -38,6 +65,10 @@ export type SolveMetadata = {
   strategyLabel: string
   solverMode: string
   generatedTableStatus: GeneratedTableStatus
+  puzzleId?: string
+  puzzleSlug?: PuzzleSlug
+  metric?: 'htm'
+  visualStateKind?: PuzzleVisualizationKind
   visualState?: string
 }
 
@@ -61,6 +92,12 @@ export type SolveFailureResult = SolveMetadata & {
     | 'request_too_large'
     | 'generated_tables_unavailable'
     | 'generated_tables_corrupt'
+    | 'node_limit_exceeded'
+    | 'strategy_puzzle_mismatch'
+    | 'unsupported_input_kind'
+    | 'unsupported_metric'
+    | 'unsupported_puzzle'
+    | 'unknown_puzzle'
     | 'unverified_solution'
     | 'api_error'
   ok: false
@@ -78,6 +115,9 @@ export type ApiSolveResponse = {
   strategyLabel: string
   solverMode: string
   generatedTableStatus: GeneratedTableStatus
+  puzzleId?: string
+  puzzleSlug?: PuzzleSlug
+  metric?: 'htm'
   maxDepth: number
   maxNodes?: number
   moves: string[]
@@ -85,14 +125,23 @@ export type ApiSolveResponse = {
   exploredNodes?: number
   elapsedMs?: number
   replayVerified?: boolean
-  visualState?: string
+  visualState?: string | ApiVisualStateResponse | null
   errorKind?: string
   message?: string
+}
+
+export type ApiVisualStateResponse = {
+  kind: PuzzleVisualizationKind
+  value: string
 }
 
 export type SolveNotationVariables = {
   notation: string
   limits: SolveLimits
+}
+
+export type SolvePuzzleNotationVariables = SolveNotationVariables & {
+  puzzleSlug: PuzzleSlug
 }
 
 export type ScanFacesPayload = Record<ScanFaceSymbol, string>

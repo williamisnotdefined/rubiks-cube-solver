@@ -88,15 +88,41 @@ describe('useLiveScanPreview', () => {
       }),
     )
 
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(previewIntervalMs)
-    })
+    await advancePreviewFrames(6)
 
     expect(previewSignal?.aborted).toBe(false)
 
     unmount()
 
     expect(previewSignal?.aborted).toBe(true)
+  })
+
+  it('ignores preview responses that resolve after unmount', async () => {
+    let resolveAnalysis: ((analysis: AnalyzeScanFaceResponse) => void) | undefined
+    apiMocks.analyzeMutateAsync.mockImplementation(
+      () => new Promise<AnalyzeScanFaceResponse>((resolve) => {
+        resolveAnalysis = resolve
+      }),
+    )
+    const videoRef = { current: document.createElement('video') }
+    const { result, unmount } = renderHook(() =>
+      useLiveScanPreview({
+        enabled: true,
+        expectedCenter: 'U',
+        knownCenters: {},
+        videoRef,
+      }),
+    )
+
+    await advancePreviewFrames(6)
+
+    unmount()
+    await act(async () => {
+      resolveAnalysis?.(stableAnalysis())
+      await vi.advanceTimersByTimeAsync(0)
+    })
+
+    expect(result.current.shouldAutoFill).toBe(false)
   })
 
   it('does not auto-fill center mismatches', async () => {
@@ -151,6 +177,52 @@ describe('useLiveScanPreview', () => {
     expect(result.current.message).toBe('Looking for cube face.')
   })
 
+  it('reports partial tile detector progress before tracking', async () => {
+    apiMocks.analyzeMutateAsync.mockResolvedValue(
+      stableAnalysis({ tileDetections: stableTileDetections().slice(0, 3) }),
+    )
+    const videoRef = { current: document.createElement('video') }
+    const knownCenters = {}
+
+    const { result } = renderHook(() =>
+      useLiveScanPreview({
+        enabled: true,
+        expectedCenter: 'U',
+        knownCenters,
+        videoRef,
+      }),
+    )
+
+    await advancePreviewFrames(1)
+
+    expect(result.current.shouldAutoFill).toBe(false)
+    expect(result.current.status).toBe('detecting_stickers')
+    expect(result.current.message).toBe('Detecting stickers: 3/9 found.')
+  })
+
+  it('shows quality warnings before tracking messages', async () => {
+    apiMocks.analyzeMutateAsync.mockResolvedValue(
+      stableAnalysis({ qualityWarnings: ['image_blurry'] }),
+    )
+    const videoRef = { current: document.createElement('video') }
+    const knownCenters = {}
+
+    const { result } = renderHook(() =>
+      useLiveScanPreview({
+        enabled: true,
+        expectedCenter: 'U',
+        knownCenters,
+        videoRef,
+      }),
+    )
+
+    await advancePreviewFrames(1)
+
+    expect(result.current.shouldAutoFill).toBe(false)
+    expect(result.current.status).toBe('tracking')
+    expect(result.current.message).toBe('Image is blurry. Hold the cube steady.')
+  })
+
   it('does not auto-fill non-tile analysis', async () => {
     apiMocks.analyzeMutateAsync.mockResolvedValue(stableAnalysis({ detectionMode: 'legacy_mode' }))
     const videoRef = { current: document.createElement('video') }
@@ -174,14 +246,189 @@ describe('useLiveScanPreview', () => {
     expect(result.current.stableFrameCount).toBe(0)
   })
 
+  it('stays idle and resets auto-fill when disabled', () => {
+    const videoRef = { current: document.createElement('video') }
+
+    const { result } = renderHook(() =>
+      useLiveScanPreview({
+        enabled: false,
+        expectedCenter: 'U',
+        knownCenters: {},
+        videoRef,
+      }),
+    )
+
+    expect(result.current.status).toBe('idle')
+    expect(result.current.shouldAutoFill).toBe(false)
+    expect(captureScanPreviewImageMock).not.toHaveBeenCalled()
+  })
+
+  it('waits when the document is hidden', async () => {
+    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden')
+    const videoRef = { current: document.createElement('video') }
+
+    const { result } = renderHook(() =>
+      useLiveScanPreview({
+        enabled: true,
+        expectedCenter: 'U',
+        knownCenters: {},
+        videoRef,
+      }),
+    )
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(previewIntervalMs)
+    })
+
+    expect(result.current.status).toBe('searching')
+    expect(captureScanPreviewImageMock).not.toHaveBeenCalled()
+    expect(apiMocks.analyzeMutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('waits when no video or no preview capture is available', async () => {
+    const { result, rerender } = renderHook(
+      ({ current }: { current: HTMLVideoElement | null }) =>
+        useLiveScanPreview({
+          enabled: true,
+          expectedCenter: 'U',
+          knownCenters: {},
+          videoRef: { current },
+        }),
+      { initialProps: { current: null as HTMLVideoElement | null } },
+    )
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(previewIntervalMs)
+    })
+    expect(result.current.status).toBe('searching')
+
+    captureScanPreviewImageMock.mockReturnValue(undefined)
+    rerender({ current: document.createElement('video') })
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(previewIntervalMs)
+    })
+
+    expect(result.current.status).toBe('searching')
+    expect(apiMocks.analyzeMutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('allows auto-fill acknowledgement and reset', async () => {
+    apiMocks.analyzeMutateAsync.mockResolvedValue(stableAnalysis())
+    const videoRef = { current: document.createElement('video') }
+    const { result } = renderHook(() =>
+      useLiveScanPreview({
+        enabled: true,
+        expectedCenter: 'U',
+        knownCenters: {},
+        videoRef,
+      }),
+    )
+
+    for (let frame = 0; frame < 6; frame += 1) {
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(previewIntervalMs)
+      })
+    }
+    expect(result.current.shouldAutoFill).toBe(true)
+
+    act(() => result.current.acknowledgeAutoFill())
+    expect(result.current.shouldAutoFill).toBe(false)
+
+    act(() => result.current.resetAutoFill())
+    expect(result.current.shouldAutoFill).toBe(false)
+  })
+
+  it('handles preview analysis errors without auto-fill', async () => {
+    apiMocks.analyzeMutateAsync.mockImplementation(() => {
+      throw new Error('preview failed')
+    })
+    const videoRef = { current: document.createElement('video') }
+    const { result } = renderHook(() =>
+      useLiveScanPreview({
+        enabled: true,
+        expectedCenter: 'U',
+        knownCenters: {},
+        videoRef,
+      }),
+    )
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(previewIntervalMs)
+    })
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0)
+    })
+
+    expect(apiMocks.analyzeMutateAsync).toHaveBeenCalled()
+    expect(result.current.shouldAutoFill).toBe(false)
+    expect(result.current.status).toBe('searching')
+  })
+
+  it('uses a fallback message for non-error preview analysis failures', async () => {
+    apiMocks.analyzeMutateAsync.mockRejectedValue('preview failed')
+    const videoRef = { current: document.createElement('video') }
+    const { result } = renderHook(() =>
+      useLiveScanPreview({
+        enabled: true,
+        expectedCenter: 'U',
+        knownCenters: {},
+        videoRef,
+      }),
+    )
+
+    await advancePreviewFrames(1)
+
+    expect(apiMocks.analyzeMutateAsync).toHaveBeenCalled()
+    expect(result.current.shouldAutoFill).toBe(false)
+  })
+
+  it('ignores abort errors from preview analysis', async () => {
+    apiMocks.analyzeMutateAsync.mockRejectedValue(Object.assign(new Error('aborted'), { name: 'AbortError' }))
+    const videoRef = { current: document.createElement('video') }
+    const { result } = renderHook(() =>
+      useLiveScanPreview({
+        enabled: true,
+        expectedCenter: 'U',
+        knownCenters: {},
+        videoRef,
+      }),
+    )
+
+    await advancePreviewFrames(1)
+
+    expect(apiMocks.analyzeMutateAsync).toHaveBeenCalled()
+    expect(result.current.status).toBe('searching')
+  })
+
 })
+
+async function advancePreviewFrames(count: number) {
+  for (let frame = 0; frame < count; frame += 1) {
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(previewIntervalMs)
+    })
+  }
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(0)
+  })
+}
 
 function stableAnalysis({
   centerMismatch = false,
   detectionMode = 'tile_detector',
   faceConfidence = 0.9,
+  qualityWarnings = [],
+  tileDetections,
+  warnings = [],
+}: {
+  centerMismatch?: boolean
+  detectionMode?: AnalyzeScanFaceResponse['detectionMode']
+  faceConfidence?: number
+  qualityWarnings?: string[]
+  tileDetections?: NonNullable<AnalyzeScanFaceResponse['tileDetections']>
+  warnings?: string[]
 } = {}): AnalyzeScanFaceResponse {
-  const tileDetections = detectionMode === 'tile_detector' ? stableTileDetections() : []
+  const effectiveTileDetections = tileDetections ?? (detectionMode === 'tile_detector' ? stableTileDetections() : [])
 
   return {
     centerMismatch,
@@ -193,7 +440,7 @@ function stableAnalysis({
     faceConfidence,
     imageSize: { width: 480, height: 480 },
     ok: !centerMismatch,
-    qualityWarnings: [],
+    qualityWarnings,
     status: centerMismatch ? 'center_mismatch' : 'detected',
     stickers: Array.from({ length: 9 }, (_, index) => ({
       alternatives: [],
@@ -203,8 +450,8 @@ function stableAnalysis({
       rgb: { b: 40, g: 160, r: 40 },
       symbol: index === 4 ? 'U' : 'F',
     })),
-    tileDetections,
-    warnings: [],
+    tileDetections: effectiveTileDetections,
+    warnings,
   }
 }
 

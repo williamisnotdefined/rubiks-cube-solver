@@ -5,7 +5,8 @@
     "loading": "Carregando"
   },
   "cube": {
-    "visualization": "Visualização do cubo"
+    "visualization": "Visualização do cubo",
+    "visualizationUnavailable": "A visualização ainda não está disponível para este puzzle."
   },
   "navigation": {
     "primary": "Navegação principal",
@@ -238,6 +239,10 @@
           "label": "tabelas não necessárias",
           "meaning": "Esta estratégia não exige tabelas de poda geradas."
         },
+        "not_applicable": {
+          "label": "tabelas não aplicáveis",
+          "meaning": "Esta estratégia de puzzle não usa artefatos de tabelas de poda 3x3 geradas."
+        },
         "unavailable": {
           "label": "tabelas indisponíveis",
           "meaning": "As tabelas de poda exigidas não estavam disponíveis no servidor da API."
@@ -274,9 +279,14 @@
         "max_nodes_exceeds_limit": "O máximo de nós excede o limite de segurança da API.",
         "missing_corner": "Falta uma peça de canto no cubo escaneado.",
         "missing_edge": "Falta uma peça de aresta no cubo escaneado.",
+        "node_limit_exceeded": "O solver parou após atingir o limite de nós configurado.",
         "notation_too_large": "A notação do embaralhamento é grande demais.",
+        "strategy_puzzle_mismatch": "A estratégia de solver selecionada não pertence a este puzzle.",
         "unknown_corner_stickers": "O cubo escaneado contém uma combinação desconhecida de cores de canto.",
         "unknown_edge_stickers": "O cubo escaneado contém uma combinação desconhecida de cores de aresta.",
+        "unsupported_input_kind": "Este tipo de entrada de puzzle não é suportado pelo endpoint de solve.",
+        "unsupported_metric": "Esta métrica de movimento não é suportada pelo endpoint de solve.",
+        "unsupported_puzzle": "Este puzzle ainda não é suportado pelo endpoint de solve.",
         "unsupported_strategy": "A estratégia de solver selecionada não é suportada por esta API.",
         "unverified_solution": "O solver retornou uma solução que falhou na verificação por replay."
       },
@@ -287,8 +297,14 @@
         "invalid_input": "Estado do cubo inválido",
         "invalid_limits": "Os limites do solver excedem os limites de segurança da API",
         "invalid_notation": "Embaralhamento inválido",
+        "node_limit_exceeded": "Limite de nós excedido",
         "not_found_within_limits": "Nenhuma solução dentro dos limites configurados",
         "request_too_large": "A requisição de solução é grande demais",
+        "strategy_puzzle_mismatch": "Estratégia não corresponde ao puzzle",
+        "unknown_puzzle": "Puzzle desconhecido",
+        "unsupported_input_kind": "Entrada de puzzle não suportada",
+        "unsupported_metric": "Métrica de movimento não suportada",
+        "unsupported_puzzle": "Puzzle não suportado",
         "unsupported_strategy": "Estratégia de solver não suportada",
         "unverified_solution": "A solução do solver falhou na verificação por replay"
       }
@@ -296,8 +312,11 @@
     "form": {
       "maxMoves": "Máx. movimentos",
       "maxNodesMillion": "Máx. nós (M)",
+      "puzzle": "Puzzle",
       "scanCube": "Escanear cubo com a câmera",
+      "scanUnavailableForPuzzle": "O scan por câmera está disponível apenas para 3x3 por enquanto.",
       "scramble": "Embaralhamento",
+      "strategy": "Estratégia",
       "solve": "Resolver"
     },
     "playback": {
@@ -319,6 +338,8 @@
       "generated-two-phase": "Solver two-phase gerado",
       "generated-two-phase-multiprobe": "Solver two-phase gerado multiprobe",
       "generated-two-phase-quality": "Solver two-phase gerado de qualidade",
+      "cube2-bounded-ida-star": "2x2 IDA* limitado",
+      "cube2-pdb-ida-star": "2x2 PDB IDA*",
       "meaningDefault": "A estratégia determinística do backend usada nesta requisição. É lógica de busca, não IA generativa.",
       "meaningGeneratedTwoPhase": "A estratégia usada. Gerado não significa IA generativa; é um solver two-phase apoiado por tabelas de poda pré-geradas. Modos de qualidade tentam soluções mais curtas antes de cair no máximo configurado."
     },

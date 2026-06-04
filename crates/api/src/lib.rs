@@ -1,5 +1,6 @@
 mod config;
 mod error_kind;
+mod puzzle;
 mod response;
 mod routes;
 mod scan_analysis;
@@ -12,11 +13,17 @@ pub use config::{
     DEFAULT_WEB_DIST_DIR, MAX_API_DEPTH, MAX_API_NODES, MAX_JSON_BODY_BYTES, MAX_NOTATION_BYTES,
     MAX_SCAN_IMAGE_BYTES, MAX_SCAN_SESSION_BODY_BYTES,
 };
+pub use puzzle::{
+    list_puzzles_response, puzzle_response_by_slug, puzzle_strategy_responses_by_slug,
+    solve_puzzle_request,
+};
 pub use response::{
     AnalyzeScanFaceRequest, AnalyzeScanFaceResponse, AnalyzeScanSessionResponse, HealthResponse,
-    ScanFacesRequest, ScanSessionFaceRequest, ScanSessionInferenceResponse, ScanSessionRequest,
-    ScanSessionResponse, ScanSessionReviewedStickerRequest, SolveNotationRequest, SolveResponse,
-    SolveScanRequest, StrategyResponse,
+    PuzzleApiErrorResponse, PuzzleResponse, PuzzleSolveInputRequest, PuzzleSolveLimitsRequest,
+    PuzzleSolveRequest, PuzzleSolveResponse, PuzzleStrategyResponse, ScanFacesRequest,
+    ScanSessionFaceRequest, ScanSessionInferenceResponse, ScanSessionRequest, ScanSessionResponse,
+    ScanSessionReviewedStickerRequest, SolveNotationRequest, SolveResponse, SolveScanRequest,
+    StrategyResponse, VisualStateResponse,
 };
 pub use routes::{api_router, api_router_with_web_dist};
 pub use scan_analysis::{analyze_scan_face_request, solve_scan_session_request};

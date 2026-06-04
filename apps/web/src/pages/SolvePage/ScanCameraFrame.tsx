@@ -1,6 +1,7 @@
 import { memo, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ScanDetectionBox, ScanTileDetection } from '@api/scan'
+import type { ScanFaceSymbol } from '@api/solver/types'
 import type { LiveScanPreviewStatus } from './hooks/useLiveScanPreview'
 import { scanColorCode } from './scanColorSymbols'
 import type { TemporalFaceConsensus } from './scanTemporalConsensus'
@@ -13,7 +14,7 @@ type OverlayStickerBox = {
   bbox: ScanDetectionBox
   confidence: number
   key: string
-  symbol: ScanTileDetection['symbol']
+  symbol: ScanFaceSymbol
 }
 
 type ScanCameraFrameProps = {
@@ -151,31 +152,19 @@ function stickerOverlayBoxes(tileDetections: readonly ScanTileDetection[]): Over
       bbox: detection.bbox,
       confidence: detection.confidence,
       key: `tile-${index}-${detection.symbol}`,
-      symbol: detection.symbol,
+      symbol: detection.symbol as ScanFaceSymbol,
     }))
 }
 
-function scanBoxStroke(symbol: ScanTileDetection['symbol']): string {
-  if (symbol === 'face') {
-    return '#f7f7f7'
-  }
-
+function scanBoxStroke(symbol: ScanFaceSymbol): string {
   return scanSymbolDetails[symbol].background
 }
 
-function scanBoxFill(symbol: ScanTileDetection['symbol']): string {
-  if (symbol === 'face') {
-    return '#f7f7f7'
-  }
-
+function scanBoxFill(symbol: ScanFaceSymbol): string {
   return scanSymbolDetails[symbol].background
 }
 
-function scanBoxLabel(symbol: ScanTileDetection['symbol']): string {
-  if (symbol === 'face') {
-    return '?'
-  }
-
+function scanBoxLabel(symbol: ScanFaceSymbol): string {
   return scanColorCode(symbol)
 }
 

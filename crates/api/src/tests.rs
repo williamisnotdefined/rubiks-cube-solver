@@ -7,11 +7,13 @@ use tower::ServiceExt;
 
 use crate::response::unverified_solution_response_from_parts;
 use crate::{
-    api_router, api_router_with_web_dist, solve_notation_request, solve_scan_request,
-    solve_scan_session_request, AnalyzeScanFaceRequest, ApiState, ScanFacesRequest,
+    api_router, api_router_with_web_dist, solve_notation_request, solve_puzzle_request,
+    solve_scan_request, solve_scan_session_request, AnalyzeScanFaceRequest, ApiState,
+    PuzzleApiErrorResponse, PuzzleResponse, PuzzleSolveInputRequest, PuzzleSolveLimitsRequest,
+    PuzzleSolveRequest, PuzzleSolveResponse, PuzzleStrategyResponse, ScanFacesRequest,
     ScanSessionFaceRequest, ScanSessionRequest, ScanSessionReviewedStickerRequest,
-    SolveNotationRequest, SolveScanRequest,
-    DEFAULT_API_NODES, MAX_API_DEPTH, MAX_API_NODES, MAX_NOTATION_BYTES,
+    SolveNotationRequest, SolveScanRequest, DEFAULT_API_NODES, MAX_API_DEPTH, MAX_API_NODES,
+    MAX_NOTATION_BYTES,
 };
 
 #[test]
@@ -188,6 +190,504 @@ fn strategy_metadata_includes_quality_solver() {
     assert_eq!(corner_metadata.solver_mode, "optimal_bounded_corner_pdb");
     assert_eq!(portfolio_metadata.id, "short-solution-portfolio");
     assert_eq!(portfolio_metadata.solver_mode, "short_solution_portfolio");
+}
+
+#[tokio::test]
+async fn puzzles_route_lists_current_and_experimental_puzzles() {
+    let app = api_router(ApiState::without_generated_solver());
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/puzzles")
+                .body(Body::empty())
+                .expect("request should build"),
+        )
+        .await
+        .expect("request should complete");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let puzzles: Vec<PuzzleResponse> = response_json(response).await;
+    let cube3 = puzzles
+        .iter()
+        .find(|puzzle| puzzle.slug == "cube-3x3x3")
+        .expect("3x3 puzzle should be listed");
+    let cube2 = puzzles
+        .iter()
+        .find(|puzzle| puzzle.slug == "cube-2x2x2")
+        .expect("2x2 puzzle should be listed");
+
+    assert_eq!(cube3.id, "cube/3x3x3");
+    assert_eq!(cube3.status, "stable");
+    assert_eq!(
+        cube3.default_strategy_id.as_deref(),
+        Some("generated-two-phase")
+    );
+    assert!(cube3.strategy_ids.contains(&"bounded-ida-star".to_owned()));
+    assert_eq!(cube2.id, "cube/2x2x2");
+    assert_eq!(cube2.status, "experimental");
+    assert_eq!(
+        cube2.default_strategy_id.as_deref(),
+        Some("cube2-pdb-ida-star")
+    );
+    assert_eq!(
+        cube2.strategy_ids,
+        vec!["cube2-bounded-ida-star", "cube2-pdb-ida-star"]
+    );
+}
+
+#[tokio::test]
+async fn puzzle_detail_route_returns_3x3_metadata() {
+    let app = api_router(ApiState::without_generated_solver());
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/puzzles/cube-3x3x3")
+                .body(Body::empty())
+                .expect("request should build"),
+        )
+        .await
+        .expect("request should complete");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let puzzle: PuzzleResponse = response_json(response).await;
+
+    assert_eq!(puzzle.id, "cube/3x3x3");
+    assert_eq!(puzzle.slug, "cube-3x3x3");
+    assert_eq!(puzzle.family, "cube");
+    assert_eq!(puzzle.default_metric, "htm");
+    assert_eq!(
+        puzzle.supported_inputs,
+        vec!["notation", "facelets3x3", "scan3x3"]
+    );
+    assert_eq!(puzzle.supported_visualizations, vec!["cube3-facelets-v1"]);
+    assert!(puzzle.scanner_supported);
+}
+
+#[tokio::test]
+async fn puzzle_strategies_route_scopes_3x3_strategies() {
+    let app = api_router(ApiState::without_generated_solver());
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/puzzles/cube-3x3x3/strategies")
+                .body(Body::empty())
+                .expect("request should build"),
+        )
+        .await
+        .expect("request should complete");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let strategies: Vec<PuzzleStrategyResponse> = response_json(response).await;
+
+    assert_eq!(strategies.len(), SolverStrategy::ALL.len());
+    assert!(strategies
+        .iter()
+        .all(|strategy| strategy.puzzle_id == "cube/3x3x3"));
+    assert!(strategies
+        .iter()
+        .any(|strategy| strategy.id == "bounded-ida-star"));
+    assert!(strategies
+        .iter()
+        .all(|strategy| strategy.default_metric == "htm"));
+}
+
+#[tokio::test]
+async fn experimental_2x2_strategy_route_returns_2x2_strategies() {
+    let app = api_router(ApiState::without_generated_solver());
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/puzzles/cube-2x2x2/strategies")
+                .body(Body::empty())
+                .expect("request should build"),
+        )
+        .await
+        .expect("request should complete");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let strategies: Vec<PuzzleStrategyResponse> = response_json(response).await;
+
+    assert_eq!(strategies.len(), 2);
+    assert!(strategies
+        .iter()
+        .all(|strategy| strategy.puzzle_id == "cube/2x2x2"));
+    assert!(strategies
+        .iter()
+        .any(|strategy| strategy.id == "cube2-bounded-ida-star"));
+    assert!(strategies
+        .iter()
+        .any(|strategy| strategy.id == "cube2-pdb-ida-star"));
+}
+
+#[tokio::test]
+async fn legacy_strategies_route_preserves_3x3_contract() {
+    let app = api_router(ApiState::without_generated_solver());
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/strategies")
+                .body(Body::empty())
+                .expect("request should build"),
+        )
+        .await
+        .expect("request should complete");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let strategies: Vec<serde_json::Value> = response_json(response).await;
+
+    assert_eq!(strategies.len(), SolverStrategy::ALL.len());
+    assert!(strategies
+        .iter()
+        .any(|strategy| strategy["id"] == "bounded-ida-star"));
+    assert!(strategies
+        .iter()
+        .all(|strategy| strategy["puzzleId"].is_null()));
+}
+
+#[tokio::test]
+async fn puzzle_detail_route_reports_unknown_puzzle() {
+    let app = api_router(ApiState::without_generated_solver());
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/puzzles/cube-4x4x4")
+                .body(Body::empty())
+                .expect("request should build"),
+        )
+        .await
+        .expect("request should complete");
+
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+    let error: PuzzleApiErrorResponse = response_json(response).await;
+
+    assert!(!error.ok);
+    assert_eq!(error.status, "unknown_puzzle");
+    assert_eq!(error.error_kind, "unknown_puzzle");
+}
+
+#[tokio::test]
+async fn puzzle_aware_solve_route_solves_3x3_notation() {
+    let app = api_router(ApiState::without_generated_solver());
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/puzzles/cube-3x3x3/solve")
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    serde_json::json!({
+                        "input": { "kind": "notation", "value": "F" },
+                        "strategyId": "bounded-ida-star",
+                        "limits": { "maxDepth": 1, "maxNodes": 1000 },
+                        "metric": "htm"
+                    })
+                    .to_string(),
+                ))
+                .expect("request should build"),
+        )
+        .await
+        .expect("request should complete");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let response: PuzzleSolveResponse = response_json(response).await;
+
+    assert!(response.ok);
+    assert_eq!(response.status, "success");
+    assert_eq!(response.puzzle_id.as_deref(), Some("cube/3x3x3"));
+    assert_eq!(response.puzzle_slug, "cube-3x3x3");
+    assert_eq!(response.strategy_id, "bounded-ida-star");
+    assert_eq!(response.metric, "htm");
+    assert_eq!(response.moves, vec!["F'"]);
+    assert_eq!(response.replay_verified, Some(true));
+    assert_eq!(
+        response
+            .visual_state
+            .as_ref()
+            .map(|state| state.kind.as_str()),
+        Some("cube3-facelets-v1")
+    );
+}
+
+#[test]
+fn puzzle_aware_solve_request_solves_2x2_with_default_strategy() {
+    let mut request = puzzle_notation_request("F", "cube2-pdb-ida-star", 1, Some(1_000));
+    request.strategy_id = None;
+
+    let (status, response) =
+        solve_puzzle_request(&ApiState::without_generated_solver(), "cube-2x2x2", request);
+
+    assert_eq!(status, StatusCode::OK);
+    assert!(response.ok);
+    assert_eq!(response.status, "success");
+    assert_eq!(response.puzzle_id.as_deref(), Some("cube/2x2x2"));
+    assert_eq!(response.strategy_id, "cube2-pdb-ida-star");
+    assert_eq!(response.solver_mode, "cube2_pdb_ida_star");
+    assert_eq!(response.generated_table_status, "not_applicable");
+    assert_eq!(response.moves, vec!["F'"]);
+    assert_eq!(response.replay_verified, Some(true));
+    assert!(response.visual_state.is_none());
+}
+
+#[tokio::test]
+async fn puzzle_aware_solve_route_solves_2x2_notation_with_pdb_strategy() {
+    let app = api_router(ApiState::without_generated_solver());
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/puzzles/cube-2x2x2/solve")
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    serde_json::json!({
+                        "input": { "kind": "notation", "value": "R U F" },
+                        "strategyId": "cube2-pdb-ida-star",
+                        "limits": { "maxDepth": 3, "maxNodes": 1000 },
+                        "metric": "htm"
+                    })
+                    .to_string(),
+                ))
+                .expect("request should build"),
+        )
+        .await
+        .expect("request should complete");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let response: PuzzleSolveResponse = response_json(response).await;
+
+    assert!(response.ok);
+    assert_eq!(response.status, "success");
+    assert_eq!(response.puzzle_id.as_deref(), Some("cube/2x2x2"));
+    assert_eq!(response.puzzle_slug, "cube-2x2x2");
+    assert_eq!(response.strategy_id, "cube2-pdb-ida-star");
+    assert_eq!(response.metric, "htm");
+    assert_eq!(response.length, Some(3));
+    assert_eq!(response.replay_verified, Some(true));
+    assert!(response.visual_state.is_none());
+}
+
+#[test]
+fn puzzle_aware_solve_request_solves_2x2_with_baseline_strategy() {
+    let request = puzzle_notation_request("F", "cube2-bounded-ida-star", 1, Some(1_000));
+
+    let (status, response) =
+        solve_puzzle_request(&ApiState::without_generated_solver(), "cube-2x2x2", request);
+
+    assert_eq!(status, StatusCode::OK);
+    assert!(response.ok);
+    assert_eq!(response.strategy_id, "cube2-bounded-ida-star");
+    assert_eq!(response.solver_mode, "cube2_bounded_ida_star");
+    assert_eq!(response.moves, vec!["F'"]);
+    assert_eq!(response.replay_verified, Some(true));
+}
+
+#[test]
+fn puzzle_aware_solve_request_reports_2x2_depth_limit() {
+    let request = puzzle_notation_request("R U F", "cube2-pdb-ida-star", 2, Some(1_000));
+
+    let (status, response) =
+        solve_puzzle_request(&ApiState::without_generated_solver(), "cube-2x2x2", request);
+
+    assert_eq!(status, StatusCode::OK);
+    assert!(!response.ok);
+    assert_eq!(response.status, "not_found_within_limits");
+    assert_eq!(response.error_kind, None);
+    assert!(response.explored_nodes.is_some());
+}
+
+#[test]
+fn puzzle_aware_solve_request_reports_2x2_node_limit() {
+    let request = puzzle_notation_request("R U F", "cube2-pdb-ida-star", 3, Some(1));
+
+    let (status, response) =
+        solve_puzzle_request(&ApiState::without_generated_solver(), "cube-2x2x2", request);
+
+    assert_eq!(status, StatusCode::OK);
+    assert!(!response.ok);
+    assert_eq!(response.status, "node_limit_exceeded");
+    assert_eq!(response.error_kind.as_deref(), Some("node_limit_exceeded"));
+    assert_eq!(response.explored_nodes, Some(1));
+}
+
+#[test]
+fn puzzle_aware_solve_request_reports_2x2_invalid_notation() {
+    let request = puzzle_notation_request("R Q", "cube2-pdb-ida-star", 3, Some(1_000));
+
+    let (status, response) =
+        solve_puzzle_request(&ApiState::without_generated_solver(), "cube-2x2x2", request);
+
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert!(!response.ok);
+    assert_eq!(response.status, "invalid_notation");
+    assert_eq!(
+        response.error_kind.as_deref(),
+        Some("invalid_move_notation")
+    );
+}
+
+#[test]
+fn puzzle_aware_solve_request_rejects_3x3_strategy_for_2x2() {
+    let request = puzzle_notation_request("", "bounded-ida-star", 0, Some(1_000));
+
+    let (status, response) =
+        solve_puzzle_request(&ApiState::without_generated_solver(), "cube-2x2x2", request);
+
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert!(!response.ok);
+    assert_eq!(response.status, "strategy_puzzle_mismatch");
+    assert_eq!(
+        response.error_kind.as_deref(),
+        Some("strategy_puzzle_mismatch")
+    );
+}
+
+#[tokio::test]
+async fn puzzle_aware_solve_route_reports_unknown_puzzle() {
+    let app = api_router(ApiState::without_generated_solver());
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/puzzles/cube-4x4x4/solve")
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    serde_json::json!({
+                        "input": { "kind": "notation", "value": "" },
+                        "strategyId": "bounded-ida-star",
+                        "limits": { "maxDepth": 0, "maxNodes": 1000 },
+                        "metric": "htm"
+                    })
+                    .to_string(),
+                ))
+                .expect("request should build"),
+        )
+        .await
+        .expect("request should complete");
+
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+    let response: PuzzleSolveResponse = response_json(response).await;
+
+    assert!(!response.ok);
+    assert_eq!(response.status, "unknown_puzzle");
+    assert_eq!(response.error_kind.as_deref(), Some("unknown_puzzle"));
+    assert!(response.puzzle_id.is_none());
+}
+
+#[tokio::test]
+async fn puzzle_aware_solve_route_rejects_unsupported_input_kind() {
+    let app = api_router(ApiState::without_generated_solver());
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/puzzles/cube-3x3x3/solve")
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    serde_json::json!({
+                        "input": { "kind": "facelets3x3", "value": "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB" },
+                        "strategyId": "bounded-ida-star",
+                        "limits": { "maxDepth": 0, "maxNodes": 1000 },
+                        "metric": "htm"
+                    })
+                    .to_string(),
+                ))
+                .expect("request should build"),
+        )
+        .await
+        .expect("request should complete");
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    let response: PuzzleSolveResponse = response_json(response).await;
+
+    assert!(!response.ok);
+    assert_eq!(response.status, "unsupported_input_kind");
+    assert_eq!(
+        response.error_kind.as_deref(),
+        Some("unsupported_input_kind")
+    );
+}
+
+#[tokio::test]
+async fn puzzle_aware_solve_route_rejects_unsupported_metric() {
+    let app = api_router(ApiState::without_generated_solver());
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/puzzles/cube-3x3x3/solve")
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    serde_json::json!({
+                        "input": { "kind": "notation", "value": "" },
+                        "strategyId": "bounded-ida-star",
+                        "limits": { "maxDepth": 0, "maxNodes": 1000 },
+                        "metric": "qtm"
+                    })
+                    .to_string(),
+                ))
+                .expect("request should build"),
+        )
+        .await
+        .expect("request should complete");
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    let response: PuzzleSolveResponse = response_json(response).await;
+
+    assert!(!response.ok);
+    assert_eq!(response.status, "unsupported_metric");
+    assert_eq!(response.error_kind.as_deref(), Some("unsupported_metric"));
+}
+
+#[tokio::test]
+async fn puzzle_aware_solve_route_rejects_unknown_strategy() {
+    let app = api_router(ApiState::without_generated_solver());
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/puzzles/cube-3x3x3/solve")
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    serde_json::json!({
+                        "input": { "kind": "notation", "value": "" },
+                        "strategyId": "unknown",
+                        "limits": { "maxDepth": 0, "maxNodes": 1000 },
+                        "metric": "htm"
+                    })
+                    .to_string(),
+                ))
+                .expect("request should build"),
+        )
+        .await
+        .expect("request should complete");
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    let response: PuzzleSolveResponse = response_json(response).await;
+
+    assert!(!response.ok);
+    assert_eq!(response.status, "unsupported_strategy");
+    assert_eq!(response.error_kind.as_deref(), Some("unsupported_strategy"));
+}
+
+#[test]
+fn puzzle_aware_solve_preserves_existing_limit_validation() {
+    let request = puzzle_notation_request("", "bounded-ida-star", MAX_API_DEPTH + 1, Some(1_000));
+
+    let (status, response) =
+        solve_puzzle_request(&ApiState::without_generated_solver(), "cube-3x3x3", request);
+
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert!(!response.ok);
+    assert_eq!(response.status, "invalid_limits");
+    assert_eq!(
+        response.error_kind.as_deref(),
+        Some("max_depth_exceeds_limit")
+    );
 }
 
 #[test]
@@ -1156,5 +1656,36 @@ fn scan_request_from_facelets(
         max_depth,
         max_nodes: Some(1_000),
         strategy_id: strategy_id.to_owned(),
+    }
+}
+
+async fn response_json<T>(response: axum::response::Response) -> T
+where
+    T: serde::de::DeserializeOwned,
+{
+    let body = to_bytes(response.into_body(), usize::MAX)
+        .await
+        .expect("body should be readable");
+
+    serde_json::from_slice(&body).expect("response should be JSON")
+}
+
+fn puzzle_notation_request(
+    moves: impl Into<String>,
+    strategy_id: impl Into<String>,
+    max_depth: usize,
+    max_nodes: Option<usize>,
+) -> PuzzleSolveRequest {
+    PuzzleSolveRequest {
+        input: PuzzleSolveInputRequest {
+            kind: "notation".to_owned(),
+            value: moves.into(),
+        },
+        strategy_id: Some(strategy_id.into()),
+        limits: PuzzleSolveLimitsRequest {
+            max_depth,
+            max_nodes,
+        },
+        metric: "htm".to_owned(),
     }
 }

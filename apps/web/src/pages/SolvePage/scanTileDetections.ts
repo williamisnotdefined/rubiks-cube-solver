@@ -138,10 +138,6 @@ function columnCenters(assignment: readonly IndexedScanTileDetection[]): number[
 }
 
 function spacingScore(values: readonly number[]): number {
-  if (values.length !== 3 || values.some((value) => !Number.isFinite(value))) {
-    return 0
-  }
-
   const firstGap = values[1] - values[0]
   const secondGap = values[2] - values[1]
   const minGap = Math.min(firstGap, secondGap)
@@ -151,14 +147,10 @@ function spacingScore(values: readonly number[]): number {
 }
 
 function spread(values: readonly number[]): number {
-  if (values.length === 0) {
-    return 0
-  }
-
   const center = average(values)
   return average(values.map((value) => Math.abs(value - center)))
 }
 
 function average(values: readonly number[]): number {
-  return values.length === 0 ? 0 : values.reduce((sum, value) => sum + value, 0) / values.length
+  return values.reduce((sum, value) => sum + value, 0) / values.length
 }

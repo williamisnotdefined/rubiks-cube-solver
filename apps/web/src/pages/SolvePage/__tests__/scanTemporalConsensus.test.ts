@@ -10,6 +10,14 @@ import {
 } from '../scanTemporalConsensus'
 
 describe('scanTemporalConsensus', () => {
+  it('returns an empty consensus before any frames are available', () => {
+    const consensus = buildTemporalFaceConsensus([])
+
+    expect(consensus.status).toBe('empty')
+    expect(consensus.framesSeen).toBe(0)
+    expect(isTemporalConsensusReady(consensus)).toBe(false)
+  })
+
   it('returns ready consensus for stable repeated sticker frames', () => {
     const frames = temporalFrames(6)
 
@@ -56,6 +64,34 @@ describe('scanTemporalConsensus', () => {
 
     expect(legacyConsensus.framesUsed).toBe(0)
     expect(legacyConsensus.rejectReasons).toContain('unsupported_detection_mode')
+
+    const missingModeConsensus = buildTemporalFaceConsensus(
+      temporalFrames(6, { analysis: { detectionMode: undefined } }),
+    )
+
+    expect(missingModeConsensus.rejectReasons).toContain('unsupported_detection_mode')
+  })
+
+  it('rejects frames with weak confidence or critical quality warnings', () => {
+    const consensus = buildTemporalFaceConsensus(
+      temporalFrames(6, {
+        analysis: {
+          faceConfidence: 0.2,
+          qualityWarnings: ['image_blurry'],
+          tileDetections: stableTileDetections(0, 'F').map((detection) => ({
+            ...detection,
+            confidence: 0.55,
+          })),
+          warnings: ['image_too_dark'],
+        },
+      }),
+    )
+
+    expect(consensus.status).toBe('collecting')
+    expect(consensus.framesRejected).toBe(6)
+    expect(consensus.rejectReasons).toEqual(
+      expect.arrayContaining(['critical_quality_warning', 'low_face_confidence', 'low_tile_confidence']),
+    )
   })
 
   it('reports partial tiles when 9 YOLO stickers are missing', () => {
@@ -81,6 +117,9 @@ describe('scanTemporalConsensus', () => {
 
     expect(consensus.status).toBe('color_disagreement')
     expect(consensus.stickers[0].agreement).toBeCloseTo(0.5)
+    expect(consensus.stickers[0].alternatives).toEqual(
+      expect.arrayContaining([expect.objectContaining({ symbol: 'R' })]),
+    )
   })
 
   it('reports unstable when sticker boxes move too much', () => {

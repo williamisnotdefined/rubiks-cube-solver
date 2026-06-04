@@ -3,6 +3,44 @@ import { describe, expect, it, vi } from 'vitest'
 import { useCameraStream } from '../useCameraStream'
 
 describe('useCameraStream', () => {
+  it('stays idle when inactive', () => {
+    const getUserMedia = vi.fn()
+    mockGetUserMedia(getUserMedia)
+
+    const { result } = renderHook(() => useCameraStream(false))
+
+    expect(result.current.status).toBe('idle')
+    expect(getUserMedia).not.toHaveBeenCalled()
+  })
+
+  it('reports unavailable camera APIs', async () => {
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      mediaDevices: undefined,
+    })
+
+    const { result } = renderHook(() => useCameraStream(true))
+
+    await waitFor(() => expect(result.current.status).toBe('error'))
+    expect(result.current).toMatchObject({
+      message: 'Camera access is not available in this browser.',
+      status: 'error',
+    })
+  })
+
+  it('reports rejected camera permission', async () => {
+    const getUserMedia = vi.fn().mockRejectedValue(new Error('denied'))
+    mockGetUserMedia(getUserMedia)
+
+    const { result } = renderHook(() => useCameraStream(true))
+
+    await waitFor(() => expect(result.current.status).toBe('error'))
+    expect(result.current).toMatchObject({
+      message: 'Camera permission was denied or no camera was found.',
+      status: 'error',
+    })
+  })
+
   it('stops camera tracks when unmounted after the stream is ready', async () => {
     const { stop, stream } = createCameraStream()
     const getUserMedia = vi.fn().mockResolvedValue(stream)
@@ -11,6 +49,12 @@ describe('useCameraStream', () => {
     const { result, unmount } = renderHook(() => useCameraStream(true))
 
     await waitFor(() => expect(result.current.status).toBe('ready'))
+    expect(result.current).toMatchObject({
+      capabilities: { torch: true },
+      settings: { width: 1920 },
+      status: 'ready',
+      stream,
+    })
 
     unmount()
 
@@ -50,8 +94,8 @@ function mockGetUserMedia(getUserMedia: ReturnType<typeof vi.fn>) {
 function createCameraStream() {
   const stop = vi.fn()
   const track = {
-    getCapabilities: vi.fn(() => ({})),
-    getSettings: vi.fn(() => ({})),
+    getCapabilities: vi.fn(() => ({ torch: true })),
+    getSettings: vi.fn(() => ({ width: 1920 })),
     stop,
   } as unknown as MediaStreamTrack
   const stream = {
