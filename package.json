@@ -6,8 +6,8 @@
     "apps/web"
   ],
   "scripts": {
-    "dev": "npm run pruning:native && concurrently -k -n api,vision,web -c blue,magenta,green \"npm run api:dev\" \"npm run vision:dev\" \"npm run web:dev\"",
-    "dev:scan-ml": "RUBIKS_VISION_TILE_DETECTOR_MODEL=vision_ml/local-models/tile-detector.onnx RUBIKS_VISION_TILE_DETECTOR_INPUT_SIZE=640 RUBIKS_VISION_TILE_DETECTOR_CONFIDENCE=0.5 npm run dev",
+    "dev": "npm run pruning:native && RUBIKS_VISION_TILE_DETECTOR_MODEL=vision_ml/local-models/tile-detector.onnx RUBIKS_VISION_TILE_DETECTOR_INPUT_SIZE=640 RUBIKS_VISION_TILE_DETECTOR_CONFIDENCE=0.5 concurrently -k -n api,vision,web -c blue,magenta,green \"npm run api:dev\" \"npm run vision:dev\" \"npm run web:dev\"",
+    "dev:scan-ml": "npm run dev",
     "web:dev": "npm run dev -w @rubiks-cube-solver/web",
     "api:dev": "cargo run -p rubiks-cube-solver-api",
     "api:dev:watch": "if command -v cargo-watch >/dev/null 2>&1; then cargo watch -x \"run -p rubiks-cube-solver-api\"; else cargo run -p rubiks-cube-solver-api; fi",
