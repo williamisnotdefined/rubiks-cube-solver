@@ -675,14 +675,17 @@ describe('ScanCubeModal', () => {
     expect(apiMocks.solveSessionMutateAsync).not.toHaveBeenCalled()
   })
 
-  it('requires recognized photos after manually confirmed faces', async () => {
+  it('allows solving manually confirmed 3x3 colors without recognized photos', async () => {
     const user = userEvent.setup()
+    const onClose = vi.fn()
+    const onSessionSolveResult = vi.fn()
 
     render(
       <ScanCubeModal
         apiReady
         solving={false}
-        onClose={vi.fn()}
+        onClose={onClose}
+        onSessionSolveResult={onSessionSolveResult}
       />,
     )
 
@@ -693,12 +696,24 @@ describe('ScanCubeModal', () => {
     }
 
     const solveButton = screen.getByRole('button', { name: 'Solve scanned cube' })
-    expect(solveButton).toBeDisabled()
+    expect(solveButton).toBeEnabled()
 
-    await user.hover(solveButton.parentElement!)
+    await user.click(solveButton)
 
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('Recognize these faces before solving: G, R, B, O, W, Y.')
-    expect(apiMocks.solveSessionMutateAsync).not.toHaveBeenCalled()
+    await waitFor(() => expect(apiMocks.solveSessionMutateAsync).toHaveBeenCalledTimes(1))
+    expect(apiMocks.solveSessionMutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        faces: expect.arrayContaining([
+          expect.objectContaining({
+            image: undefined,
+            reviewedStickers: expect.any(Array),
+            symbol: 'F',
+          }),
+        ]),
+      }),
+    )
+    expect(onSessionSolveResult).toHaveBeenCalledWith(expect.objectContaining({ ok: true }))
+    expect(onClose).toHaveBeenCalled()
   })
 
   it('allows reviewing a manually filled 2x2 without recognized photos', async () => {

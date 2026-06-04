@@ -180,6 +180,38 @@ describe('scan state helpers', () => {
     )
   })
 
+  it('pins face rotation only for fully manual scan session faces', () => {
+    const drafts = createInitialScanFaceDrafts()
+    const confirmedDrafts = scanSymbols.reduce((currentDrafts, symbol) => {
+      const nextDrafts = {
+        ...currentDrafts,
+        [symbol]: {
+          ...currentDrafts[symbol],
+          stickers: filledStickers(symbol),
+        },
+      }
+
+      return confirmScanFaceDraft(nextDrafts, symbol)
+    }, drafts)
+    const mixedDrafts = {
+      ...confirmedDrafts,
+      F: {
+        ...confirmedDrafts.F,
+        stickers: filledDetectedStickers('F'),
+      },
+    }
+
+    expect(scanSessionFacesFromDrafts(confirmedDrafts)?.find((face) => face.symbol === 'F')).toMatchObject({
+      clientRotation: 0,
+      image: undefined,
+      symbol: 'F',
+    })
+    expect(scanSessionFacesFromDrafts(mixedDrafts)?.find((face) => face.symbol === 'F')).toMatchObject({
+      clientRotation: undefined,
+      symbol: 'F',
+    })
+  })
+
   it('includes explicit center overrides in scan session payloads', () => {
     const drafts = createInitialScanFaceDrafts()
     const confirmedDrafts = scanSymbols.reduce((currentDrafts, symbol) => {

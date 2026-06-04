@@ -133,6 +133,7 @@ export function OddCubeScanModal({
     drafts,
     apiReady,
     solveDisabledReason,
+    { requirePhotos: false },
   )
   const draftValidationMessage = scanFaceDraftValidationMessage(t, draftValidation)
   const centerValidation = currentDraft.analysis?.centerMismatch

@@ -287,6 +287,7 @@ export function scanSessionFacesFromDrafts(
     }
 
     faces.push({
+      clientRotation: reviewedStickers.every(isManuallyReviewedSticker) ? 0 : undefined,
       expectedTop: expectedTopForScanFace(symbol),
       image: draft.photoDataUrl,
       manualOverrides: Object.keys(manualOverrides).length > 0 ? manualOverrides : undefined,
@@ -296,6 +297,10 @@ export function scanSessionFacesFromDrafts(
   }
 
   return faces
+}
+
+function isManuallyReviewedSticker(sticker: ScanSessionReviewedSticker): boolean {
+  return sticker.source === 'manual' || sticker.source === 'center'
 }
 
 export function confirmedDraftCount(drafts: ScanFaceDrafts): number {
