@@ -38,6 +38,14 @@ enum DepthSearchOutcome {
     NodeLimitExceeded,
 }
 
+struct DepthSearchContext<'a> {
+    path: &'a mut Vec<Cube2Move>,
+    path_states: &'a mut Vec<Cube2State>,
+    max_nodes: Option<usize>,
+    explored_nodes: &'a mut usize,
+    heuristic: fn(&Cube2) -> usize,
+}
+
 pub fn solve_cube2_bounded_ida_star(cube: &Cube2, budget: Cube2SearchBudget) -> Cube2SearchOutcome {
     solve_cube2_bounded_ida_star_with_heuristic(cube, budget, cube2_trivial_lower_bound)
 }
@@ -65,17 +73,15 @@ fn solve_cube2_bounded_ida_star_with_heuristic(
     for depth_limit in 0..=budget.max_depth {
         let mut path = Vec::with_capacity(depth_limit);
         let mut path_states = vec![cube.state().clone()];
-
-        match depth_limited_search(
-            cube,
-            depth_limit,
-            None,
-            &mut path,
-            &mut path_states,
-            budget.max_nodes,
-            &mut explored_nodes,
+        let mut context = DepthSearchContext {
+            path: &mut path,
+            path_states: &mut path_states,
+            max_nodes: budget.max_nodes,
+            explored_nodes: &mut explored_nodes,
             heuristic,
-        ) {
+        };
+
+        match depth_limited_search(cube, depth_limit, None, &mut context) {
             DepthSearchOutcome::Found(moves) => {
                 let replay_verified = replay_verifies(cube, &moves);
 
@@ -116,21 +122,17 @@ fn depth_limited_search(
     cube: &Cube2,
     depth_remaining: usize,
     previous_move: Option<Cube2Move>,
-    path: &mut Vec<Cube2Move>,
-    path_states: &mut Vec<Cube2State>,
-    max_nodes: Option<usize>,
-    explored_nodes: &mut usize,
-    heuristic: fn(&Cube2) -> usize,
+    context: &mut DepthSearchContext<'_>,
 ) -> DepthSearchOutcome {
-    if visit_node(max_nodes, explored_nodes).is_err() {
+    if visit_node(context.max_nodes, context.explored_nodes).is_err() {
         return DepthSearchOutcome::NodeLimitExceeded;
     }
 
     if cube.is_solved() {
-        return DepthSearchOutcome::Found(path.clone());
+        return DepthSearchOutcome::Found(context.path.clone());
     }
 
-    if depth_remaining == 0 || heuristic(cube) > depth_remaining {
+    if depth_remaining == 0 || (context.heuristic)(cube) > depth_remaining {
         return DepthSearchOutcome::NotFound;
     }
 
@@ -145,30 +147,25 @@ fn depth_limited_search(
         let mut next = cube.clone();
         next.apply_move(candidate);
 
-        if path_states.iter().any(|state| state == next.state()) {
+        if context
+            .path_states
+            .iter()
+            .any(|state| state == next.state())
+        {
             continue;
         }
 
-        path.push(candidate);
-        path_states.push(next.state().clone());
+        context.path.push(candidate);
+        context.path_states.push(next.state().clone());
 
-        match depth_limited_search(
-            &next,
-            depth_remaining - 1,
-            Some(candidate),
-            path,
-            path_states,
-            max_nodes,
-            explored_nodes,
-            heuristic,
-        ) {
+        match depth_limited_search(&next, depth_remaining - 1, Some(candidate), context) {
             DepthSearchOutcome::Found(moves) => return DepthSearchOutcome::Found(moves),
             DepthSearchOutcome::NotFound => {}
             DepthSearchOutcome::NodeLimitExceeded => return DepthSearchOutcome::NodeLimitExceeded,
         }
 
-        path_states.pop();
-        path.pop();
+        context.path_states.pop();
+        context.path.pop();
     }
 
     DepthSearchOutcome::NotFound

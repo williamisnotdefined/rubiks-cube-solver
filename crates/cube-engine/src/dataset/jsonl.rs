@@ -181,8 +181,9 @@ mod tests {
     use super::{training_examples_to_jsonl, training_examples_v2_to_jsonl};
     use crate::cube::Move;
     use crate::dataset::{
-        DatasetSplit, TrainingExample, TrainingExampleV2, CUBE2_DATASET_COMPATIBILITY,
-        CUBE2_PDB_VERIFIED_LABEL_SOURCE, DATASET_SCHEMA_VERSION, DATASET_SCHEMA_VERSION_V2,
+        DatasetSplit, TrainingExample, TrainingExampleV2, TrainingExampleV2Payload,
+        CUBE2_DATASET_COMPATIBILITY, CUBE2_PDB_VERIFIED_LABEL_SOURCE, DATASET_SCHEMA_VERSION,
+        DATASET_SCHEMA_VERSION_V2,
     };
     use crate::puzzles::cube2::CUBE2_PDB_IDA_STAR_STRATEGY_ID;
 
@@ -212,16 +213,18 @@ mod tests {
     fn training_example_v2_jsonl_includes_puzzle_compatibility_fields() {
         let example = TrainingExampleV2::from_compatibility(
             CUBE2_DATASET_COMPATIBILITY,
-            "cp=0,1,2,3,4,5,6,7;co=0,0,0,0,0,0,0,0".to_owned(),
-            "R".to_owned(),
-            1,
-            "R'".to_owned(),
-            1,
-            Some("R'".to_owned()),
-            CUBE2_PDB_VERIFIED_LABEL_SOURCE,
-            0,
-            CUBE2_PDB_IDA_STAR_STRATEGY_ID,
-            true,
+            TrainingExampleV2Payload {
+                state: "cp=0,1,2,3,4,5,6,7;co=0,0,0,0,0,0,0,0".to_owned(),
+                scramble: "R".to_owned(),
+                scramble_depth: 1,
+                verified_solution: "R'".to_owned(),
+                verified_solution_length: 1,
+                best_move: Some("R'".to_owned()),
+                label_source: CUBE2_PDB_VERIFIED_LABEL_SOURCE,
+                generator_seed: 0,
+                solver_strategy_id: CUBE2_PDB_IDA_STAR_STRATEGY_ID,
+                replay_verified: true,
+            },
         );
 
         let jsonl = training_examples_v2_to_jsonl(&[example]);

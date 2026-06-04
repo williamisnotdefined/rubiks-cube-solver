@@ -148,21 +148,11 @@ fn cube2_scan_faces_to_embedded_facelet_string(
 
 fn solved_facelets() -> [char; CUBE3_FACELET_COUNT] {
     let mut facelets = ['U'; CUBE3_FACELET_COUNT];
-    for position in 9..18 {
-        facelets[position] = 'R';
-    }
-    for position in 18..27 {
-        facelets[position] = 'F';
-    }
-    for position in 27..36 {
-        facelets[position] = 'D';
-    }
-    for position in 36..45 {
-        facelets[position] = 'L';
-    }
-    for position in 45..54 {
-        facelets[position] = 'B';
-    }
+    facelets[9..18].fill('R');
+    facelets[18..27].fill('F');
+    facelets[27..36].fill('D');
+    facelets[36..45].fill('L');
+    facelets[45..54].fill('B');
     facelets
 }
 

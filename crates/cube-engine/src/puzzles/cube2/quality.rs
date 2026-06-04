@@ -500,32 +500,38 @@ fn run_cube2_quality_row(
         Cube2SearchOutcome::Found(solution) => report_row(
             fixture,
             solver_selection,
-            Cube2QualityReportStatus::from_found(solution.replay_verified),
-            Some(solution.depth),
-            solution.explored_nodes,
-            elapsed,
-            Some(solution.replay_verified),
-            solution.moves,
+            Cube2QualityReportMetrics {
+                status: Cube2QualityReportStatus::from_found(solution.replay_verified),
+                solution_length: Some(solution.depth),
+                explored_nodes: solution.explored_nodes,
+                elapsed,
+                replay_verified: Some(solution.replay_verified),
+                moves: solution.moves,
+            },
         ),
         Cube2SearchOutcome::NotFoundWithinLimits { explored_nodes, .. } => report_row(
             fixture,
             solver_selection,
-            Cube2QualityReportStatus::from_not_found(fixture.expectation),
-            None,
-            explored_nodes,
-            elapsed,
-            None,
-            Vec::new(),
+            Cube2QualityReportMetrics {
+                status: Cube2QualityReportStatus::from_not_found(fixture.expectation),
+                solution_length: None,
+                explored_nodes,
+                elapsed,
+                replay_verified: None,
+                moves: Vec::new(),
+            },
         ),
         Cube2SearchOutcome::NodeLimitExceeded { explored_nodes, .. } => report_row(
             fixture,
             solver_selection,
-            Cube2QualityReportStatus::from_node_limit(fixture.expectation),
-            None,
-            explored_nodes,
-            elapsed,
-            None,
-            Vec::new(),
+            Cube2QualityReportMetrics {
+                status: Cube2QualityReportStatus::from_node_limit(fixture.expectation),
+                solution_length: None,
+                explored_nodes,
+                elapsed,
+                replay_verified: None,
+                moves: Vec::new(),
+            },
         ),
     }
 }
@@ -561,12 +567,7 @@ impl Cube2QualityReportStatus {
 fn report_row(
     fixture: &Cube2QualityFixture,
     solver_selection: Cube2QualitySolverSelection,
-    status: Cube2QualityReportStatus,
-    solution_length: Option<usize>,
-    explored_nodes: usize,
-    elapsed: Duration,
-    replay_verified: Option<bool>,
-    moves: Vec<Cube2Move>,
+    metrics: Cube2QualityReportMetrics,
 ) -> Cube2QualityReportRow {
     Cube2QualityReportRow {
         puzzle_id: "cube/2x2x2",
@@ -579,13 +580,22 @@ fn report_row(
         strategy_id: solver_selection.strategy_id(),
         max_depth: fixture.max_depth,
         max_nodes: fixture.max_nodes,
-        status,
-        solution_length,
-        explored_nodes,
-        elapsed,
-        replay_verified,
-        moves,
+        status: metrics.status,
+        solution_length: metrics.solution_length,
+        explored_nodes: metrics.explored_nodes,
+        elapsed: metrics.elapsed,
+        replay_verified: metrics.replay_verified,
+        moves: metrics.moves,
     }
+}
+
+struct Cube2QualityReportMetrics {
+    status: Cube2QualityReportStatus,
+    solution_length: Option<usize>,
+    explored_nodes: usize,
+    elapsed: Duration,
+    replay_verified: Option<bool>,
+    moves: Vec<Cube2Move>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

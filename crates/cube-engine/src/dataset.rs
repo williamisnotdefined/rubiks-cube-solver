@@ -7,7 +7,7 @@ pub use jsonl::{
 };
 pub use types::{
     stable_puzzle_state_hash, stable_state_hash, DatasetCompatibility, DatasetSplit,
-    TrainingExample, TrainingExampleV2, CUBE2_DATASET_COMPATIBILITY,
+    TrainingExample, TrainingExampleV2, TrainingExampleV2Payload, CUBE2_DATASET_COMPATIBILITY,
     CUBE2_PDB_VERIFIED_LABEL_SOURCE, CUBE3_DATASET_COMPATIBILITY, DATASET_SCHEMA_VERSION,
     DATASET_SCHEMA_VERSION_V2, SOLVER_MULTIPROBE_VERIFIED_LABEL_SOURCE,
     SOLVER_QUALITY_VERIFIED_LABEL_SOURCE, SOLVER_VERIFIED_LABEL_SOURCE,

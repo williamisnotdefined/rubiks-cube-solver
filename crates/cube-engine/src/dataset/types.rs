@@ -107,24 +107,29 @@ pub struct TrainingExampleV2 {
     pub replay_verified: bool,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TrainingExampleV2Payload {
+    pub state: String,
+    pub scramble: String,
+    pub scramble_depth: usize,
+    pub verified_solution: String,
+    pub verified_solution_length: usize,
+    pub best_move: Option<String>,
+    pub label_source: &'static str,
+    pub generator_seed: u64,
+    pub solver_strategy_id: &'static str,
+    pub replay_verified: bool,
+}
+
 impl TrainingExampleV2 {
     pub fn from_compatibility(
         compatibility: DatasetCompatibility,
-        state: String,
-        scramble: String,
-        scramble_depth: usize,
-        verified_solution: String,
-        verified_solution_length: usize,
-        best_move: Option<String>,
-        label_source: &'static str,
-        generator_seed: u64,
-        solver_strategy_id: &'static str,
-        replay_verified: bool,
+        payload: TrainingExampleV2Payload,
     ) -> Self {
         let split = DatasetSplit::for_puzzle_state(
             compatibility.puzzle_id,
             compatibility.state_encoding_id,
-            &state,
+            &payload.state,
         );
 
         Self {
@@ -134,18 +139,18 @@ impl TrainingExampleV2 {
             state_encoding_id: compatibility.state_encoding_id,
             move_set_id: compatibility.move_set_id,
             metric: compatibility.metric,
-            state,
-            scramble,
-            scramble_depth,
-            verified_solution,
-            verified_solution_length,
-            best_move,
-            label_source,
+            state: payload.state,
+            scramble: payload.scramble,
+            scramble_depth: payload.scramble_depth,
+            verified_solution: payload.verified_solution,
+            verified_solution_length: payload.verified_solution_length,
+            best_move: payload.best_move,
+            label_source: payload.label_source,
             label_target: VERIFIED_SOLUTION_LENGTH_LABEL_TARGET,
             split,
-            generator_seed,
-            solver_strategy_id,
-            replay_verified,
+            generator_seed: payload.generator_seed,
+            solver_strategy_id: payload.solver_strategy_id,
+            replay_verified: payload.replay_verified,
         }
     }
 }
