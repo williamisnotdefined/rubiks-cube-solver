@@ -212,6 +212,8 @@ pub struct SolveScanRequest {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ScanSessionRequest {
     pub faces: Vec<ScanSessionFaceRequest>,
+    #[serde(rename = "gridSize", default = "default_grid_size")]
+    pub grid_size: usize,
     #[serde(rename = "maxDepth", default = "default_max_depth")]
     pub max_depth: usize,
     #[serde(rename = "maxNodes")]
@@ -384,6 +386,8 @@ pub struct AnalyzeScanFaceRequest {
     pub image: String,
     #[serde(rename = "knownCenters", default)]
     pub known_centers: HashMap<String, RgbColorRequest>,
+    #[serde(rename = "gridSize", default = "default_grid_size")]
+    pub grid_size: usize,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -645,6 +649,10 @@ fn max_nodes_label(max_nodes: Option<usize>) -> String {
 
 fn default_max_depth() -> usize {
     30
+}
+
+fn default_grid_size() -> usize {
+    3
 }
 
 fn default_strategy_id() -> String {

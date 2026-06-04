@@ -253,6 +253,31 @@ describe('ScanCubeModal', () => {
     expect(screen.queryByText('Solving scan')).not.toBeInTheDocument()
   })
 
+  it('hides center and top-orientation metadata for 2x2 scans', () => {
+    const { rerender } = render(
+      <ScanCubeModal
+        apiReady
+        solving={false}
+        onClose={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText(/Expected center:/i)).toBeInTheDocument()
+    expect(screen.getByText(/Keep at top:/i)).toBeInTheDocument()
+
+    rerender(
+      <ScanCubeModal
+        apiReady
+        puzzleSlug="cube-2x2x2"
+        solving={false}
+        onClose={vi.fn()}
+      />,
+    )
+
+    expect(screen.queryByText(/Expected center:/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Keep at top:/i)).not.toBeInTheDocument()
+  })
+
   it('closes from Escape and the backdrop', async () => {
     const user = userEvent.setup()
     const onClose = vi.fn()
@@ -957,6 +982,7 @@ describe('ScanCubeModal', () => {
     await waitFor(() => {
       expect(apiMocks.analyzeMutateAsync).toHaveBeenCalledWith({
         expectedCenter: 'F',
+        gridSize: 3,
         image: 'data:image/jpeg;base64,manual-scan',
         knownCenters: {},
       })

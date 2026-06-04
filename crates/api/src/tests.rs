@@ -966,6 +966,7 @@ async fn analyze_scan_face_reports_unavailable_vision_service() {
     let state = ApiState::without_generated_solver().with_vision_url("http://127.0.0.1:9");
     let request = AnalyzeScanFaceRequest {
         expected_center: "U".to_owned(),
+        grid_size: 3,
         image: "data:image/jpeg;base64,AAAA".to_owned(),
         known_centers: Default::default(),
     };
@@ -1520,6 +1521,7 @@ fn solved_scan_session_request() -> ScanSessionRequest {
                 client_rotation: Some(0),
             })
             .collect(),
+        grid_size: 3,
         max_depth: 0,
         max_nodes: Some(1_000),
         strategy_id: "bounded-ida-star".to_owned(),
@@ -1547,6 +1549,7 @@ fn solved_cube2_scan_session_request() -> ScanSessionRequest {
                 client_rotation: Some(0),
             })
             .collect(),
+        grid_size: 2,
         max_depth: 0,
         max_nodes: Some(1_000),
         strategy_id: "cube2-pdb-ida-star".to_owned(),

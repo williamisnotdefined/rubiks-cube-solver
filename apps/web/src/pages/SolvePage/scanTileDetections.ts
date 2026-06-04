@@ -11,6 +11,7 @@ export type IndexedScanTileDetection = {
 }
 
 type AssignTileDetectionsOptions = {
+  gridSize?: number
   maxCandidates?: number
   minConfidence?: number
 }
@@ -38,20 +39,22 @@ export function assignTileDetectionsToReviewGrid(
   options: AssignTileDetectionsOptions = {},
 ): IndexedScanTileDetection[] | undefined {
   const minConfidence = options.minConfidence ?? defaultMinConfidence
-  const maxCandidates = options.maxCandidates ?? defaultMaxCandidates
+  const gridSize = options.gridSize ?? 3
+  const targetTileCount = gridSize * gridSize
+  const maxCandidates = options.maxCandidates ?? (gridSize === 2 ? 8 : defaultMaxCandidates)
   const candidates = validStickerTileDetections(tileDetections, minConfidence)
     .sort((left, right) => right.confidence - left.confidence)
     .slice(0, maxCandidates)
 
-  if (candidates.length < 9) {
+  if (candidates.length < targetTileCount) {
     return undefined
   }
 
   let bestAssignment: IndexedScanTileDetection[] | undefined
   let bestScore = Number.NEGATIVE_INFINITY
 
-  for (const combination of combinationsOfNine(candidates)) {
-    const assignment = assignCombinationByPosition(combination)
+  for (const combination of combinations(candidates, targetTileCount)) {
+    const assignment = assignCombinationByPosition(combination, gridSize)
     const score = tileAssignmentScore(assignment)
 
     if (score > bestScore) {
@@ -66,19 +69,21 @@ export function assignTileDetectionsToReviewGrid(
 export function assignedTileDetectionsReady(
   tileDetections: readonly ScanTileDetection[] | undefined,
   expectedCenter: ScanFaceSymbol,
+  gridSize = 3,
 ): boolean {
-  const assignedTiles = assignTileDetectionsToReviewGrid(tileDetections)
-  return assignedTiles !== undefined && assignedTiles[4]?.symbol === expectedCenter
+  const assignedTiles = assignTileDetectionsToReviewGrid(tileDetections, { gridSize })
+  return assignedTiles !== undefined && (gridSize === 2 || assignedTiles[4]?.symbol === expectedCenter)
 }
 
 function assignCombinationByPosition(
   detections: readonly ScanTileDetection[],
+  gridSize: number,
 ): IndexedScanTileDetection[] {
   const rows = detections
     .slice()
     .sort((left, right) => left.bbox.y - right.bbox.y)
     .reduce<ScanTileDetection[][]>((groups, detection, index) => {
-      const row = Math.floor(index / 3)
+      const row = Math.floor(index / gridSize)
       groups[row] ??= []
       groups[row].push(detection)
       return groups
@@ -92,7 +97,7 @@ function assignCombinationByPosition(
         bbox: detection.bbox,
         column,
         confidence: detection.confidence,
-        index: row * 3 + column,
+        index: row * gridSize + column,
         row,
         symbol: detection.symbol as ScanFaceSymbol,
       })),
@@ -100,25 +105,27 @@ function assignCombinationByPosition(
 }
 
 function tileAssignmentScore(assignment: readonly IndexedScanTileDetection[]): number {
+  const gridSize = Math.sqrt(assignment.length)
   const averageConfidence = average(assignment.map((tile) => tile.confidence))
-  const rowSpread = average([0, 1, 2].map((row) => spread(assignment.filter((tile) => tile.row === row).map((tile) => tile.bbox.y))))
-  const columnSpread = average([0, 1, 2].map((column) => spread(assignment.filter((tile) => tile.column === column).map((tile) => tile.bbox.x))))
-  const rowSpacing = spacingScore(rowCenters(assignment))
-  const columnSpacing = spacingScore(columnCenters(assignment))
+  const indexes = Array.from({ length: gridSize }, (_, index) => index)
+  const rowSpread = average(indexes.map((row) => spread(assignment.filter((tile) => tile.row === row).map((tile) => tile.bbox.y))))
+  const columnSpread = average(indexes.map((column) => spread(assignment.filter((tile) => tile.column === column).map((tile) => tile.bbox.x))))
+  const rowSpacing = spacingScore(rowCenters(assignment, gridSize))
+  const columnSpacing = spacingScore(columnCenters(assignment, gridSize))
 
   return averageConfidence + rowSpacing * 0.14 + columnSpacing * 0.14 - rowSpread * 0.65 - columnSpread * 0.65
 }
 
-function* combinationsOfNine<T>(items: readonly T[]): Generator<T[]> {
+function* combinations<T>(items: readonly T[], targetCount: number): Generator<T[]> {
   const selected: T[] = []
 
   function* visit(start: number): Generator<T[]> {
-    if (selected.length === 9) {
+    if (selected.length === targetCount) {
       yield selected.slice()
       return
     }
 
-    const remainingSlots = 9 - selected.length
+    const remainingSlots = targetCount - selected.length
     for (let index = start; index <= items.length - remainingSlots; index += 1) {
       selected.push(items[index])
       yield* visit(index + 1)
@@ -129,15 +136,19 @@ function* combinationsOfNine<T>(items: readonly T[]): Generator<T[]> {
   yield* visit(0)
 }
 
-function rowCenters(assignment: readonly IndexedScanTileDetection[]): number[] {
-  return [0, 1, 2].map((row) => average(assignment.filter((tile) => tile.row === row).map((tile) => tile.bbox.y)))
+function rowCenters(assignment: readonly IndexedScanTileDetection[], gridSize: number): number[] {
+  return Array.from({ length: gridSize }, (_, row) => average(assignment.filter((tile) => tile.row === row).map((tile) => tile.bbox.y)))
 }
 
-function columnCenters(assignment: readonly IndexedScanTileDetection[]): number[] {
-  return [0, 1, 2].map((column) => average(assignment.filter((tile) => tile.column === column).map((tile) => tile.bbox.x)))
+function columnCenters(assignment: readonly IndexedScanTileDetection[], gridSize: number): number[] {
+  return Array.from({ length: gridSize }, (_, column) => average(assignment.filter((tile) => tile.column === column).map((tile) => tile.bbox.x)))
 }
 
 function spacingScore(values: readonly number[]): number {
+  if (values.length === 2) {
+    return values[1] - values[0] > 0.05 ? 1 : 0
+  }
+
   const firstGap = values[1] - values[0]
   const secondGap = values[2] - values[1]
   const minGap = Math.min(firstGap, secondGap)

@@ -418,7 +418,9 @@ export function scanStickersFromAnalysis(
 ): ScanSticker[] {
   const stickers = createEmptyScanStickers(centerSymbol, stickersPerFace)
   const analyzedStickersByIndex = new Map(analysis.stickers.map((sticker) => [sticker.index, sticker]))
-  const assignedTiles = assignTileDetectionsToReviewGrid(analysis.tileDetections)
+  const assignedTiles = assignTileDetectionsToReviewGrid(analysis.tileDetections, {
+    gridSize: stickersPerFace === scan2StickersPerFace ? 2 : 3,
+  })
   const centerIndex = scanCenterIndex(stickersPerFace)
 
   for (let index = 0; index < stickersPerFace; index += 1) {

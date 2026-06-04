@@ -28,6 +28,8 @@ def analyze_face(
 ) -> AnalyzeScanFaceResponse:
     if request.expectedCenter not in SCAN_SYMBOLS:
         return failure("invalid_image", "expectedCenter must be one of U, R, F, D, L, B")
+    grid_size = request.gridSize
+    target_tile_count = grid_size * grid_size
 
     image = decode_image(request.image)
     if image is None:
@@ -45,7 +47,7 @@ def analyze_face(
     )
     average_tile_confidence = float(np.mean([detection.confidence for detection in tile_detections])) if tile_detections else 0.0
 
-    if len(tile_detections) < 9:
+    if len(tile_detections) < target_tile_count:
         warnings = quality_warnings.copy()
         if tile_detector.model_configured and not tile_detector.available:
             warnings.append("tile_detector_unavailable")
@@ -54,7 +56,7 @@ def analyze_face(
         return AnalyzeScanFaceResponse(
             ok=False,
             status="face_not_found",
-            message="Could not find 9 sticker tiles. Keep one cube face visible and steady.",
+            message=f"Could not find {target_tile_count} sticker tiles. Keep one cube face visible and steady.",
             expectedCenter=request.expectedCenter,
             faceConfidence=average_tile_confidence,
             detectionMode="tile_detector",
@@ -65,9 +67,10 @@ def analyze_face(
             warnings=warnings,
         )
 
-    ordered_tiles = ordered_tile_detections(tile_detections)
-    center_symbol = ordered_tiles[4].symbol if ordered_tiles is not None else None
-    center_confidence = ordered_tiles[4].confidence if ordered_tiles is not None else 0.0
+    ordered_tiles = ordered_tile_detections(tile_detections, grid_size=grid_size)
+    center_index = scan_center_index(grid_size)
+    center_symbol = ordered_tiles[center_index].symbol if ordered_tiles is not None and center_index is not None else None
+    center_confidence = ordered_tiles[center_index].confidence if ordered_tiles is not None and center_index is not None else 0.0
     center_mismatch = center_symbol is not None and center_symbol != request.expectedCenter
 
     return AnalyzeScanFaceResponse(
@@ -89,17 +92,22 @@ def analyze_face(
     )
 
 
-def ordered_tile_detections(detections: list[TileDetection]) -> list[TileDetection] | None:
-    candidates = sorted(detections, key=lambda detection: detection.confidence, reverse=True)[:9]
-    if len(candidates) != 9:
+def ordered_tile_detections(detections: list[TileDetection], grid_size: int = 3) -> list[TileDetection] | None:
+    target_tile_count = grid_size * grid_size
+    candidates = sorted(detections, key=lambda detection: detection.confidence, reverse=True)[:target_tile_count]
+    if len(candidates) != target_tile_count:
         return None
 
     rows = []
-    for row_start in range(0, 9, 3):
-        row = sorted(candidates, key=lambda detection: detection.bbox[1])[row_start : row_start + 3]
+    for row_start in range(0, target_tile_count, grid_size):
+        row = sorted(candidates, key=lambda detection: detection.bbox[1])[row_start : row_start + grid_size]
         rows.append(sorted(row, key=lambda detection: detection.bbox[0]))
 
     return [detection for row in rows for detection in row]
+
+
+def scan_center_index(grid_size: int) -> int | None:
+    return 4 if grid_size == 3 else None
 
 
 def best_face_detection(detections: list[TileDetection]) -> TileDetection | None:

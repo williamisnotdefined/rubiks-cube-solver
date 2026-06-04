@@ -105,8 +105,8 @@ export function ScanCubeModal({
   const analyzeScanFace = useAnalyzeScanFace()
   const solveScanSession = useSolveScanSession()
   const stickersPerFace = puzzleSlug === 'cube-2x2x2' ? scan2StickersPerFace : scan3StickersPerFace
+  const gridSize = stickersPerFace === scan2StickersPerFace ? 2 : 3
   const centerIndex = scanCenterIndex(stickersPerFace)
-  const scanAnalysisEnabled = stickersPerFace === scan3StickersPerFace
   const [drafts, setDrafts] = useState(() => createInitialScanFaceDrafts(stickersPerFace))
   const [currentFaceIndex, setCurrentFaceIndex] = useState(0)
   const currentFace = scanFaceOrder[currentFaceIndex]
@@ -162,8 +162,9 @@ export function ScanCubeModal({
     photoDataUrl !== undefined || stickers.some((sticker, index) => index !== centerIndex && sticker.symbol !== undefined)
   const hasReviewContent = currentDraftHasReviewContent(currentDraft, centerIndex)
   const liveScan = useLiveScanPreview({
-    enabled: scanAnalysisEnabled && autoScanEnabled && camera.status === 'ready' && !capturing && !hasReviewCaptureContent,
+    enabled: autoScanEnabled && camera.status === 'ready' && !capturing && !hasReviewCaptureContent,
     expectedCenter: currentFace.symbol,
+    gridSize,
     knownCenters,
     videoRef,
   })
@@ -252,6 +253,7 @@ export function ScanCubeModal({
       liveTemporalConsensus,
       currentFace.symbol,
       liveAnalysis,
+      stickersPerFace,
     )
     const uncertain = lowConfidenceCount(nextStickers)
 
@@ -297,6 +299,7 @@ export function ScanCubeModal({
     liveTemporalConsensus,
     photoDataUrl,
     shouldAutoFill,
+    stickersPerFace,
     t,
   ])
 
@@ -330,27 +333,11 @@ export function ScanCubeModal({
 
       const captureMetadata = scanCaptureMetadata(capture)
 
-      if (!scanAnalysisEnabled) {
-        setCurrentDraft({
-          analysis: undefined,
-          autoCapture: undefined,
-          capture: captureMetadata,
-          captureMode: 'manual',
-          centerOverrideConfirmed: false,
-          confirmed: false,
-          lastRejectedCapture: undefined,
-          photoDataUrl: capture.photoDataUrl,
-          stickers: createEmptyScanStickers(currentFace.symbol, stickersPerFace),
-          temporalConsensus: temporalConsensusSnapshot,
-        })
-        setMessage(t('scan.messages.liveReviewReady'))
-        return
-      }
-
       setMessage(t('scan.messages.analyzingFace'))
 
       const analysis = await analyzeScanFace.mutateAsync({
         expectedCenter: currentFace.symbol,
+        gridSize,
         image: capture.photoDataUrl,
         knownCenters,
       })
@@ -474,7 +461,7 @@ export function ScanCubeModal({
   }
 
   function handleConfirmFace() {
-    const centerOverrideConfirmed = scanAnalysisEnabled && centerValidation !== undefined
+    const centerOverrideConfirmed = centerValidation !== undefined
     if (centerOverrideConfirmed && currentDraft.centerOverrideConfirmed !== true) {
       setCenterMismatchConfirmation({ faceSymbol: currentFace.symbol, message: centerValidation })
       setMessage(centerValidation)
@@ -608,16 +595,20 @@ export function ScanCubeModal({
                 <p className="mt-1 text-sm font-semibold leading-relaxed text-[#a8a8a8]">
                   {scanFaceInstruction(t, currentFace.symbol)}
                 </p>
-                <p className="mt-1 text-xs font-extrabold uppercase tracking-[0.16em] text-[#f7f7f7]">
-                  {t('scan.modal.expectedCenter', {
-                    color: scanColorLabel(t, currentFace.symbol),
-                  })}
-                </p>
-                <p className="mt-1 text-xs font-extrabold uppercase tracking-[0.16em] text-[#f7f7f7]">
-                  {t('scan.modal.keepAtTop', {
-                    color: scanFaceTopLabel(t, currentFace.symbol),
-                  })}
-                </p>
+                {centerIndex !== undefined ? (
+                  <>
+                    <p className="mt-1 text-xs font-extrabold uppercase tracking-[0.16em] text-[#f7f7f7]">
+                      {t('scan.modal.expectedCenter', {
+                        color: scanColorLabel(t, currentFace.symbol),
+                      })}
+                    </p>
+                    <p className="mt-1 text-xs font-extrabold uppercase tracking-[0.16em] text-[#f7f7f7]">
+                      {t('scan.modal.keepAtTop', {
+                        color: scanFaceTopLabel(t, currentFace.symbol),
+                      })}
+                    </p>
+                  </>
+                ) : null}
               </div>
               <span className="border border-[#2b2b2b] bg-[#171717] px-3 py-2 text-xs font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
                 {t('scan.modal.confirmed', { count: confirmedDraftCount(drafts) })}
@@ -642,7 +633,7 @@ export function ScanCubeModal({
                 type="button"
                 variant="ghost"
                 aria-pressed={autoScanEnabled}
-                disabled={!scanAnalysisEnabled || capturing || camera.status !== 'ready'}
+                disabled={capturing || camera.status !== 'ready'}
                 onClick={handleAutoScanToggle}
               >
                 {autoScanEnabled ? t('scan.actions.autoScanOn') : t('scan.actions.autoScanOff')}

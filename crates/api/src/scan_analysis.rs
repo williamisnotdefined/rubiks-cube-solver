@@ -69,6 +69,8 @@ impl ScanSessionTimingRecorder {
 #[derive(serde::Serialize)]
 struct VisionScanSessionRequest<'a> {
     faces: &'a [ScanSessionFaceRequest],
+    #[serde(rename = "gridSize")]
+    grid_size: usize,
 }
 
 pub async fn analyze_scan_face_request(
@@ -81,6 +83,16 @@ pub async fn analyze_scan_face_request(
             Json(error_response(
                 "invalid_image",
                 "expectedCenter must be one of U, R, F, D, L, B".to_owned(),
+            )),
+        );
+    }
+
+    if !matches!(request.grid_size, 2 | 3) {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(error_response(
+                "invalid_image",
+                "gridSize must be 2 or 3".to_owned(),
             )),
         );
     }
@@ -169,9 +181,10 @@ pub async fn solve_scan_session_request_for_puzzle(
 
 async fn solve_cube3_scan_session_request(
     state: &ApiState,
-    request: ScanSessionRequest,
+    mut request: ScanSessionRequest,
 ) -> (StatusCode, Json<ScanSessionResponse>) {
     let mut timings = ScanSessionTimingRecorder::start();
+    request.grid_size = 3;
 
     if let Some(message) = validate_scan_session_request(&request, SCAN_STICKERS_PER_FACE) {
         let mut response = scan_session_error("invalid_session", message);
@@ -373,9 +386,10 @@ async fn solve_cube3_scan_session_request(
 }
 
 fn solve_cube2_scan_session_request(
-    request: ScanSessionRequest,
+    mut request: ScanSessionRequest,
 ) -> (StatusCode, Json<ScanSessionResponse>) {
     let mut timings = ScanSessionTimingRecorder::start();
+    request.grid_size = 2;
 
     if let Some(message) = validate_scan_session_request(&request, CUBE2_SCAN_STICKERS_PER_FACE) {
         let mut response = scan_session_error("invalid_session", message);
@@ -698,6 +712,7 @@ async fn request_scan_session_analysis(
         .timeout(VISION_TIMEOUT)
         .json(&VisionScanSessionRequest {
             faces: &request.faces,
+            grid_size: request.grid_size,
         })
         .send()
         .await;

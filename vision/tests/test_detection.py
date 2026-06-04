@@ -50,6 +50,20 @@ def test_detects_synthetic_front_face() -> None:
     assert response.stickers == []
 
 
+def test_detects_synthetic_2x2_front_face_without_center() -> None:
+    image = np.full((720, 720, 3), 180, dtype=np.uint8)
+    response = analyze_face(
+        AnalyzeScanFaceRequest(expectedCenter="F", image=encode_image(image), gridSize=2),
+        tile_detector=FakeTileDetector(symbols=["L", "U", "R", "F"]),
+    )
+
+    assert response.ok
+    assert response.status == "detected"
+    assert not response.centerMismatch
+    assert response.detectedCenter is None
+    assert [tile.symbol for tile in response.tileDetections] == ["L", "U", "R", "F"]
+
+
 def test_reports_mismatched_center() -> None:
     image = synthetic_face(["U", "U", "U", "R", "F", "F", "R", "U", "F"])
     response = analyze_face(
@@ -246,16 +260,19 @@ class FakeTileDetector:
         if self.include_face:
             detections.append(TileDetection(symbol="face", confidence=0.95, bbox=(0.5, 0.5, 0.78, 0.78)))
         symbols = self.symbols or ["L", "U", "D", "R", self.center_symbol, "F", "R", "U", "F"]
+        grid_size = 2 if len(symbols) == 4 else 3
+        step = 160 if grid_size == 3 else 220
+        start = 155 if grid_size == 3 else 250
         for index, symbol in enumerate(symbols):
-            row = index // 3
-            column = index % 3
+            row = index // grid_size
+            column = index % grid_size
             detections.append(
                 TileDetection(
                     symbol=symbol,
                     confidence=0.9,
                     bbox=(
-                        (155 + column * 160) / 720,
-                        (155 + row * 160) / 720,
+                        (start + column * step) / 720,
+                        (start + row * step) / 720,
                         110 / 720,
                         110 / 720,
                     ),
