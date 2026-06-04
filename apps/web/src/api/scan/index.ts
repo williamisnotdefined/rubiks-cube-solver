@@ -13,6 +13,7 @@ export type {
   ScanDetectionBox,
   ScanImageQuality,
   ScanSessionFaceRequest,
+  ScanSessionInvalidCorner,
   ScanSessionManualTarget,
   ScanSessionResult,
   ScanStickerQuality,

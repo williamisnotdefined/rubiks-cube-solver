@@ -5,11 +5,17 @@
     "loading": "Carregando"
   },
   "cube": {
-    "visualization": "Visualização do cubo"
+    "visualization": "Visualização do cubo",
+    "visualizationUnavailable": "A visualização ainda não está disponível para este puzzle."
   },
   "navigation": {
+    "github": "Abrir projeto no GitHub",
     "primary": "Navegação principal",
     "solve": "Resolver",
+    "theme": "Tema",
+    "themeDark": "Escuro",
+    "themeLight": "Claro",
+    "themeSystem": "Sistema",
     "timer": "Timer"
   },
   "scan": {
@@ -40,8 +46,8 @@
       "opening": "Abrindo câmera",
       "statusWithConfidence": "{{mode}} {{confidence}}%",
       "stickerConfidence": "adesivos {{confidence}}%",
-      "stickersFound": "{{count}}/9 adesivos encontrados",
-      "stickersReady": "{{count}}/9 adesivos prontos",
+      "stickersFound": "{{count}}/{{total}} adesivos encontrados",
+      "stickersReady": "{{count}}/{{total}} adesivos prontos",
       "temporalCollecting": "consenso {{count}}/{{target}}",
       "temporalColorDisagreement": "cor instável {{count}} frames",
       "temporalReady": "consenso {{agreement}}% {{count}} frames",
@@ -84,6 +90,32 @@
       "uncertainColor": "cor incerta",
       "uncertainMaybe": "talvez {{color}}"
     },
+    "evenReview": {
+      "autoFit": "Tentar encaixar automaticamente",
+      "autoFitambiguous": "Há mais de um encaixe possível. Ajuste manualmente pela net.",
+      "autoFitnone": "Não foi possível encaixar apenas girando faces. Troque posições ou revise os adesivos.",
+      "autoFitsuggested": "Encontramos um encaixe provável com menos mudanças. Aplique somente depois de revisar a net.",
+      "autoFitunique": "Encaixe encontrado e aplicado. Revise a net antes de resolver.",
+      "applySuggestion": "Aplicar sugestão",
+      "back": "Voltar e editar",
+      "capturedFace": "Capturada: {{face}}",
+      "description": "Confira se esta Kociemba net bate com o cubo físico. Arraste faces para trocar posições e selecione uma face para girar antes de resolver.",
+      "dragInstructions": "Arraste uma face para outro slot ou use os botões de troca. Use os botões de giro para corrigir a orientação da face capturada.",
+      "invalidDescription": "Alguns cantos combinam cores opostas ou impossíveis. Gire as faces ou volte para corrigir os adesivos.",
+      "invalidSolveDisabled": "Corrija os cantos impossíveis destacados antes de resolver.",
+      "invalidTitle": "Cantos impossíveis",
+      "kicker": "Revisão final",
+      "oppositePair": "{{first}} e {{second}} são faces opostas.",
+      "reviewAction": "Revisar cubo montado",
+      "rotate90": "Girar 90°",
+      "rotate180": "Girar 180°",
+      "rotate270": "Girar -90°",
+      "selectedFace": "Slot selecionado: {{face}} · face capturada: {{capturedFace}}",
+      "solve": "Aceitar e resolver",
+      "swapTitle": "Trocar face selecionada com",
+      "title": "Revisar cubo montado",
+      "validMessage": "Os cantos do 2x2 estão estruturalmente válidos. Confirme se o preview bate com o cubo físico."
+    },
     "faces": {
       "B": {
         "instruction": "Mostre a face azul com a face branca no topo da visão da câmera.",
@@ -116,13 +148,45 @@
         "top": "Verde"
       }
     },
+    "faces2": {
+      "B": {
+        "instruction": "Gire o cubo para mostrar o lado de trás sem trocar qual lado está em cima.",
+        "label": "Lado de trás",
+        "top": "Cima"
+      },
+      "D": {
+        "instruction": "Mostre o lado de baixo e deixe o lado da frente no topo da visão da câmera.",
+        "label": "Lado de baixo",
+        "top": "Frente"
+      },
+      "F": {
+        "instruction": "Escolha o lado da frente. Segure o cubo com o lado de cima no topo da visão da câmera.",
+        "label": "Lado da frente",
+        "top": "Cima"
+      },
+      "L": {
+        "instruction": "Gire o cubo para mostrar o lado esquerdo sem trocar qual lado está em cima.",
+        "label": "Lado esquerdo",
+        "top": "Cima"
+      },
+      "R": {
+        "instruction": "Gire o cubo para mostrar o lado direito sem trocar qual lado está em cima.",
+        "label": "Lado direito",
+        "top": "Cima"
+      },
+      "U": {
+        "instruction": "Mostre o lado de cima e deixe o lado da frente no topo da visão da câmera.",
+        "label": "Lado de cima",
+        "top": "Frente"
+      }
+    },
     "live": {
       "cameraDenied": "A permissão da câmera foi negada ou nenhuma câmera foi encontrada.",
       "cameraUnavailable": "O acesso à câmera não está disponível neste navegador.",
       "centerMismatch": "Outra cor central foi detectada. Gire para a face esperada.",
-      "detectingStickers": "Detectando adesivos: {{count}}/9 encontrados.",
+      "detectingStickers": "Detectando adesivos: {{count}}/{{total}} encontrados.",
       "faceDetected": "Face detectada. Segure firme.",
-      "gridReady": "{{count}}/9 adesivos travados. Segure firme.",
+      "gridReady": "{{count}}/{{total}} adesivos travados. Segure firme.",
       "imageBlurry": "A imagem está borrada. Segure o cubo firme.",
       "looking": "Procurando a face do cubo.",
       "lookingKeepVisible": "Procurando a face do cubo. Mantenha o cubo inteiro visível.",
@@ -161,6 +225,7 @@
       "sessionAmbiguous": "O backend encontrou mais de um estado válido para o cubo. Revise os adesivos destacados ou escaneie novamente as faces incertas.",
       "sessionBlurRescan": "A imagem está borrada nas faces {{faces}}. Segure o cubo firme e escaneie essas faces de novo.",
       "sessionGlareRescan": "Há brilho demais nas faces {{faces}}. Reduza os reflexos e escaneie essas faces de novo.",
+      "sessionInvalidCornerTargets": "O scan montou um canto impossível no 2x2. Revise os adesivos destacados e tente resolver novamente.",
       "sessionInvalidCubeState": "O scan não descreve um cubo válido. Revise as faces e escaneie novamente os adesivos incertos.",
       "sessionIncompleteStickers": "Complete os 9 adesivos nas faces {{faces}} antes de resolver.",
       "sessionMissingConfirmedFaces": "Confirme estas faces antes de resolver: {{faces}}.",
@@ -173,7 +238,7 @@
       "solveFailed": "A requisição para resolver o scan falhou.",
       "submittingSession": "Verificando o scan completo com as restrições do cubo...",
       "stillLooking": "Ainda procurando a face do cubo. Mantenha a face inteira visível e deixe o auto scan tentar de novo.",
-      "liveReviewReady": "9 adesivos reconhecidos. Revise as cores, corrija qualquer quadrado se necessário e confirme esta face."
+      "liveReviewReady": "{{count}} adesivos reconhecidos. Revise as cores, corrija qualquer quadrado se necessário e confirme esta face."
     },
     "modal": {
       "cnnEvidenceActive": "Evidência CNN ativa",
@@ -182,6 +247,11 @@
       "confirmed": "{{count}} confirmadas",
       "description": "Mostre uma face por vez com a cor de topo solicitada. A solução usa as cores que você confirmar.",
       "dismiss": "Fechar scan do cubo",
+      "cancelExit": "Cancelar saída do scan do cubo",
+      "exitAction": "Sair",
+      "exitDescription": "Você tem progresso no scan que será perdido se sair agora.",
+      "exitKicker": "Scan não salvo",
+      "exitTitle": "Sair do scan?",
       "expectedCenter": "Centro esperado: {{color}}",
       "faceProgress": "Face {{current}} de {{total}}",
       "keepAtTop": "Mantenha no topo: {{color}}",
@@ -238,6 +308,10 @@
           "label": "tabelas não necessárias",
           "meaning": "Esta estratégia não exige tabelas de poda geradas."
         },
+        "not_applicable": {
+          "label": "tabelas não aplicáveis",
+          "meaning": "Esta estratégia de puzzle não usa artefatos de tabelas de poda 3x3 geradas."
+        },
         "unavailable": {
           "label": "tabelas indisponíveis",
           "meaning": "As tabelas de poda exigidas não estavam disponíveis no servidor da API."
@@ -274,9 +348,14 @@
         "max_nodes_exceeds_limit": "O máximo de nós excede o limite de segurança da API.",
         "missing_corner": "Falta uma peça de canto no cubo escaneado.",
         "missing_edge": "Falta uma peça de aresta no cubo escaneado.",
+        "node_limit_exceeded": "O solver parou após atingir o limite de nós configurado.",
         "notation_too_large": "A notação do embaralhamento é grande demais.",
+        "strategy_puzzle_mismatch": "A estratégia de solver selecionada não pertence a este puzzle.",
         "unknown_corner_stickers": "O cubo escaneado contém uma combinação desconhecida de cores de canto.",
         "unknown_edge_stickers": "O cubo escaneado contém uma combinação desconhecida de cores de aresta.",
+        "unsupported_input_kind": "Este tipo de entrada de puzzle não é suportado pelo endpoint de solve.",
+        "unsupported_metric": "Esta métrica de movimento não é suportada pelo endpoint de solve.",
+        "unsupported_puzzle": "Este puzzle ainda não é suportado pelo endpoint de solve.",
         "unsupported_strategy": "A estratégia de solver selecionada não é suportada por esta API.",
         "unverified_solution": "O solver retornou uma solução que falhou na verificação por replay."
       },
@@ -287,8 +366,14 @@
         "invalid_input": "Estado do cubo inválido",
         "invalid_limits": "Os limites do solver excedem os limites de segurança da API",
         "invalid_notation": "Embaralhamento inválido",
+        "node_limit_exceeded": "Limite de nós excedido",
         "not_found_within_limits": "Nenhuma solução dentro dos limites configurados",
         "request_too_large": "A requisição de solução é grande demais",
+        "strategy_puzzle_mismatch": "Estratégia não corresponde ao puzzle",
+        "unknown_puzzle": "Puzzle desconhecido",
+        "unsupported_input_kind": "Entrada de puzzle não suportada",
+        "unsupported_metric": "Métrica de movimento não suportada",
+        "unsupported_puzzle": "Puzzle não suportado",
         "unsupported_strategy": "Estratégia de solver não suportada",
         "unverified_solution": "A solução do solver falhou na verificação por replay"
       }
@@ -296,7 +381,9 @@
     "form": {
       "maxMoves": "Máx. movimentos",
       "maxNodesMillion": "Máx. nós (M)",
+      "puzzle": "Puzzle",
       "scanCube": "Escanear cubo com a câmera",
+      "scanUnavailableForPuzzle": "O scan por câmera está disponível apenas para 3x3 por enquanto.",
       "scramble": "Embaralhamento",
       "solve": "Resolver"
     },
@@ -319,6 +406,8 @@
       "generated-two-phase": "Solver two-phase gerado",
       "generated-two-phase-multiprobe": "Solver two-phase gerado multiprobe",
       "generated-two-phase-quality": "Solver two-phase gerado de qualidade",
+      "cube2-bounded-ida-star": "2x2 IDA* limitado",
+      "cube2-pdb-ida-star": "2x2 PDB IDA*",
       "meaningDefault": "A estratégia determinística do backend usada nesta requisição. É lógica de busca, não IA generativa.",
       "meaningGeneratedTwoPhase": "A estratégia usada. Gerado não significa IA generativa; é um solver two-phase apoiado por tabelas de poda pré-geradas. Modos de qualidade tentam soluções mais curtas antes de cair no máximo configurado."
     },

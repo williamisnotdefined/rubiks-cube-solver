@@ -27,6 +27,7 @@ def analyze_session(request: AnalyzeScanSessionRequest) -> AnalyzeScanSessionRes
     known_centers: dict[str, RgbColor] = {}
     faces: list[AnalyzedSessionFace] = []
     warnings: list[str] = []
+    target_tile_count = request.gridSize * request.gridSize
 
     for face_request in request.faces:
         analysis = analyze_face(
@@ -34,6 +35,7 @@ def analyze_session(request: AnalyzeScanSessionRequest) -> AnalyzeScanSessionRes
                 expectedCenter=face_request.symbol,
                 image=face_request.image,
                 knownCenters=known_centers,
+                gridSize=request.gridSize,
             )
         )
         analysis = apply_manual_overrides(analysis, face_request)
@@ -46,10 +48,10 @@ def analyze_session(request: AnalyzeScanSessionRequest) -> AnalyzeScanSessionRes
         )
         warnings.extend(analysis.warnings)
 
-        if len(analysis.tileDetections) >= 9:
+        if len(analysis.tileDetections) >= target_tile_count:
             known_centers.pop(face_request.symbol, None)
 
-    partial_failure = any(not face.analysis.ok or len(face.analysis.tileDetections) < 9 for face in faces)
+    partial_failure = any(not face.analysis.ok or len(face.analysis.tileDetections) < target_tile_count for face in faces)
 
     return AnalyzeScanSessionResponse(
         ok=not partial_failure,
@@ -70,14 +72,16 @@ def validate_session_request(request: AnalyzeScanSessionRequest) -> str | None:
     if len(set(symbols)) != 6:
         return "scan session must contain each face symbol exactly once"
 
+    target_tile_count = request.gridSize * request.gridSize
+
     for face in request.faces:
         if face.expectedTop is not None and face.expectedTop not in SCAN_SYMBOLS:
             return "expectedTop must be one of U, R, F, D, L, B"
         if face.clientRotation is not None and face.clientRotation not in VALID_ROTATIONS:
             return "clientRotation must be one of 0, 90, 180, 270"
         for index, symbol in face.manualOverrides.items():
-            if index < 0 or index > 8:
-                return "manualOverrides indexes must be between 0 and 8"
+            if index < 0 or index >= target_tile_count:
+                return f"manualOverrides indexes must be between 0 and {target_tile_count - 1}"
             if symbol not in SCAN_SYMBOLS:
                 return "manualOverrides symbols must be one of U, R, F, D, L, B"
 

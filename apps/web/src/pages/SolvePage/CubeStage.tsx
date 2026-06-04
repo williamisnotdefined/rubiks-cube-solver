@@ -4,13 +4,16 @@ import type { RubiksCubeElement } from '@houstonp/rubiks-cube/view'
 
 const cubeElementName = 'rubiks-cube'
 
+export type CubeStageCubeType = 'Two' | 'Three'
+
 type CubeStageProps = {
   active: boolean
+  cubeType: CubeStageCubeType
   cubeRef: RefObject<RubiksCubeElement | null>
   onReady: () => void
 }
 
-export function CubeStage({ active, cubeRef, onReady }: CubeStageProps) {
+export function CubeStage({ active, cubeType, cubeRef, onReady }: CubeStageProps) {
   const { t } = useTranslation()
   const [registered, setRegistered] = useState(
     () => customElements.get(cubeElementName) !== undefined,
@@ -42,11 +45,11 @@ export function CubeStage({ active, cubeRef, onReady }: CubeStageProps) {
     return () => {
       mounted = false
     }
-  }, [active, onReady])
+  }, [active, cubeType, onReady])
 
   return (
     <section
-      className="cube-stage aspect-square w-[min(280px,calc(100vw-24px))] overflow-hidden border border-[#2b2b2b] bg-[#101010]"
+      className="cube-stage aspect-square w-[min(280px,calc(100vw-24px))] overflow-hidden border border-app-border bg-app-surface"
       aria-label={t('cube.visualization')}
     >
       {active && registered ? (
@@ -58,7 +61,7 @@ export function CubeStage({ active, cubeRef, onReady }: CubeStageProps) {
           camera-peek-angle-horizontal="0.62"
           camera-peek-angle-vertical="0.55"
           camera-radius="5.8"
-          cube-type="Three"
+          cube-type={cubeType}
           piece-gap="1.045"
         />
       ) : null}

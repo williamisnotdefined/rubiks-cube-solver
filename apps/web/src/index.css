@@ -1,5 +1,83 @@
 @import "tailwindcss";
 
+@theme {
+  --color-app-bg: var(--app-bg);
+  --color-app-nav: var(--app-nav);
+  --color-app-stage: var(--app-stage);
+  --color-app-surface: var(--app-surface);
+  --color-app-surface-raised: var(--app-surface-raised);
+  --color-app-control: var(--app-control);
+  --color-app-border: var(--app-border);
+  --color-app-border-strong: var(--app-border-strong);
+  --color-app-text: var(--app-text);
+  --color-app-muted: var(--app-muted);
+  --color-app-inverse: var(--app-inverse);
+  --color-app-focus: var(--app-focus);
+}
+
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --app-bg: #070707;
+  --app-nav: #080808;
+  --app-stage: #090909;
+  --app-surface: #101010;
+  --app-surface-raised: #171717;
+  --app-control: #151515;
+  --app-border: #2b2b2b;
+  --app-border-strong: #3a3a3a;
+  --app-text: #f7f7f7;
+  --app-muted: #a8a8a8;
+  --app-inverse: #080808;
+  --app-focus: #f7f7f7;
+  --scan-u-bg: #f8fafc;
+  --scan-u-fg: #09090b;
+  --scan-r-bg: #ef4444;
+  --scan-r-fg: #ffffff;
+  --scan-f-bg: #22c55e;
+  --scan-f-fg: #052e16;
+  --scan-d-bg: #facc15;
+  --scan-d-fg: #111827;
+  --scan-l-bg: #f97316;
+  --scan-l-fg: #111827;
+  --scan-b-bg: #2563eb;
+  --scan-b-fg: #ffffff;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    color-scheme: light;
+    --app-bg: #d1d5db;
+    --app-nav: #c4c8cf;
+    --app-stage: #bcc1c9;
+    --app-surface: #e0e3e8;
+    --app-surface-raised: #eceef2;
+    --app-control: #d8dce2;
+    --app-border: #9ca3af;
+    --app-border-strong: #6b7280;
+    --app-text: #111827;
+    --app-muted: #4b5563;
+    --app-inverse: #f3f4f6;
+    --app-focus: #111827;
+  }
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --app-bg: #d1d5db;
+  --app-nav: #c4c8cf;
+  --app-stage: #bcc1c9;
+  --app-surface: #e0e3e8;
+  --app-surface-raised: #eceef2;
+  --app-control: #d8dce2;
+  --app-border: #9ca3af;
+  --app-border-strong: #6b7280;
+  --app-text: #111827;
+  --app-muted: #4b5563;
+  --app-inverse: #f3f4f6;
+  --app-focus: #111827;
+}
+
 *,
 *::before,
 *::after {

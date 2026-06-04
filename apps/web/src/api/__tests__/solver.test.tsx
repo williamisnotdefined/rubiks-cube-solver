@@ -1,19 +1,26 @@
 import { waitFor } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { mockApiError, mockApiSuccess } from '@src/test/api'
+import { mockApiError, mockApiSuccess, mockFetchResponse } from '@src/test/api'
 import { renderHookWithProviders } from '@src/test/render'
+import { apiRequest } from '../client'
 import { analyzeScanFace } from '../scan/analyzeFace/analyzeFace'
 import { solveScanSession } from '../scan/solveSession/solveSession'
 import { useAnalyzeScanFace } from '../scan/analyzeFace/useAnalyzeScanFace'
 import { useSolveScanSession } from '../scan/solveSession/useSolveScanSession'
 import { getHealth } from '../solver/getHealth/getHealth'
 import { useGetHealth } from '../solver/getHealth/useGetHealth'
+import { getPuzzles } from '../solver/getPuzzles/getPuzzles'
+import { useGetPuzzles } from '../solver/getPuzzles/useGetPuzzles'
+import { getPuzzleStrategies } from '../solver/getPuzzleStrategies/getPuzzleStrategies'
+import { useGetPuzzleStrategies } from '../solver/getPuzzleStrategies/useGetPuzzleStrategies'
 import { getStrategies } from '../solver/getStrategies/getStrategies'
 import { useGetStrategies } from '../solver/getStrategies/useGetStrategies'
 import { solverQueryKeys } from '../solver/queryKeys'
 import { normalizeSolveResponse } from '../solver/solveNotation/normalizeSolveResponse'
 import { solveNotation } from '../solver/solveNotation/solveNotation'
 import { useSolveNotation } from '../solver/solveNotation/useSolveNotation'
+import { solvePuzzleNotation } from '../solver/solvePuzzleNotation/solvePuzzleNotation'
+import { useSolvePuzzleNotation } from '../solver/solvePuzzleNotation/useSolvePuzzleNotation'
 import { solveScan } from '../solver/solveScan/solveScan'
 import { useSolveScan } from '../solver/solveScan/useSolveScan'
 import type { ApiSolveResponse } from '../solver/types'
@@ -44,8 +51,27 @@ const scanSessionFaces = [
 ] as const
 
 describe('solver API operations', () => {
+  it('uses response status text when error payloads have no message', async () => {
+    mockFetchResponse(null, { status: 502, statusText: 'Bad Gateway' })
+
+    await expect(apiRequest('/broken')).rejects.toMatchObject({ message: 'Bad Gateway' })
+  })
+
+  it('ignores empty message arrays in error payloads', async () => {
+    mockFetchResponse({ message: ['', 123] }, { status: 400, statusText: 'Bad Request' })
+
+    await expect(apiRequest('/broken')).rejects.toMatchObject({ message: 'Bad Request' })
+  })
+
   it('exposes stable query keys', () => {
     expect(solverQueryKeys.health()).toEqual(['solver', 'health'])
+    expect(solverQueryKeys.puzzles()).toEqual(['solver', 'puzzles'])
+    expect(solverQueryKeys.puzzleStrategies('cube-2x2x2')).toEqual([
+      'solver',
+      'puzzles',
+      'cube-2x2x2',
+      'strategies',
+    ])
     expect(solverQueryKeys.strategies()).toEqual(['solver', 'strategies'])
   })
 
@@ -82,6 +108,49 @@ describe('solver API operations', () => {
     await expect(getStrategies()).resolves.toEqual(strategies)
   })
 
+  it('gets puzzle metadata through the request client', async () => {
+    const puzzles = [
+      {
+        id: 'cube/2x2x2',
+        slug: 'cube-2x2x2',
+        label: '2x2x2 Cube',
+        family: 'cube',
+        status: 'experimental',
+        defaultMetric: 'htm',
+        supportedInputs: ['notation'],
+        supportedVisualizations: ['cube2-facelets-v1'],
+        defaultStrategyId: 'cube2-pdb-ida-star',
+        strategyIds: ['cube2-bounded-ida-star', 'cube2-pdb-ida-star'],
+        scannerSupported: true,
+      },
+    ]
+    mockApiSuccess(puzzles)
+
+    await expect(getPuzzles()).resolves.toEqual(puzzles)
+  })
+
+  it('gets puzzle strategies through the request client', async () => {
+    const strategies = [
+      {
+        id: 'cube2-pdb-ida-star',
+        puzzleId: 'cube/2x2x2',
+        label: '2x2 PDB IDA*',
+        solverMode: 'cube2_pdb_ida_star',
+        statusText: 'Experimental 2x2 solver with in-memory PDB heuristic',
+        defaultMetric: 'htm',
+        supportedMetrics: ['htm'],
+        supportedInputs: ['notation', 'scan2x2'],
+      },
+    ]
+    const fetchMock = mockApiSuccess(strategies)
+
+    await expect(getPuzzleStrategies('cube-2x2x2')).resolves.toEqual(strategies)
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:8787/puzzles/cube-2x2x2/strategies',
+      expect.objectContaining({ headers: expect.any(Headers) }),
+    )
+  })
+
   it('normalizes successful solve responses', async () => {
     mockApiSuccess(successPayload)
 
@@ -97,6 +166,69 @@ describe('solver API operations', () => {
       ok: true,
       status: 'success',
     })
+  })
+
+  it('normalizes puzzle-aware 3x3 visual states', async () => {
+    mockApiSuccess({
+      ...successPayload,
+      puzzleId: 'cube/3x3x3',
+      puzzleSlug: 'cube-3x3x3',
+      visualState: {
+        kind: 'cube3-facelets-v1',
+        value: 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB',
+      },
+    })
+
+    await expect(
+      solvePuzzleNotation({
+        limits: { maxDepth: 2, strategyId: 'bounded-ida-star' },
+        notation: 'F',
+        puzzleSlug: 'cube-3x3x3',
+      }),
+    ).resolves.toMatchObject({
+      ok: true,
+      puzzleSlug: 'cube-3x3x3',
+      visualState: 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB',
+      visualStateKind: 'cube3-facelets-v1',
+    })
+  })
+
+  it('posts puzzle-aware 2x2 solve requests and ignores null visual states', async () => {
+    const fetchMock = mockApiSuccess({
+      ...successPayload,
+      generatedTableStatus: 'not_applicable',
+      moves: ["F'"],
+      puzzleId: 'cube/2x2x2',
+      puzzleSlug: 'cube-2x2x2',
+      strategyId: 'cube2-pdb-ida-star',
+      strategyLabel: '2x2 PDB IDA*',
+      solverMode: 'cube2_pdb_ida_star',
+      visualState: null,
+    })
+
+    await expect(
+      solvePuzzleNotation({
+        limits: { maxDepth: 1, maxNodes: 1_000, strategyId: 'cube2-pdb-ida-star' },
+        notation: 'F',
+        puzzleSlug: 'cube-2x2x2',
+      }),
+    ).resolves.toMatchObject({
+      generatedTableStatus: 'not_applicable',
+      ok: true,
+      puzzleSlug: 'cube-2x2x2',
+      visualState: undefined,
+    })
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:8787/puzzles/cube-2x2x2/solve',
+      expect.objectContaining({
+        body: JSON.stringify({
+          input: { kind: 'notation', value: 'F' },
+          limits: { maxDepth: 1, maxNodes: 1_000 },
+          metric: 'htm',
+          strategyId: 'cube2-pdb-ida-star',
+        }),
+      }),
+    )
   })
 
   it('posts scanned faces through the request client', async () => {
@@ -152,7 +284,7 @@ describe('solver API operations', () => {
         knownCenters: { U: { r: 205, g: 210, b: 218 } },
         signal: controller.signal,
       }),
-    ).resolves.toEqual(payload)
+    ).resolves.toMatchObject(payload)
     expect(fetchMock).toHaveBeenCalledWith(
       'http://127.0.0.1:8787/scan/analyze-face',
       expect.objectContaining({
@@ -164,6 +296,32 @@ describe('solver API operations', () => {
         signal: controller.signal,
       }),
     )
+  })
+
+  it('falls back when scan analysis returns no JSON payload', async () => {
+    mockApiSuccess(undefined)
+
+    await expect(
+      analyzeScanFace({
+        expectedCenter: 'U',
+        image: 'data:image/jpeg;base64,scan',
+        knownCenters: {},
+      }),
+    ).resolves.toMatchObject({
+      message: 'The scan analysis request failed.',
+      ok: false,
+      status: 'vision_error',
+    })
+
+    mockFetchResponse(undefined, { status: 503 })
+
+    await expect(
+      analyzeScanFace({
+        expectedCenter: 'U',
+        image: 'data:image/jpeg;base64,scan',
+        knownCenters: {},
+      }),
+    ).resolves.toMatchObject({ ok: false, status: 'vision_unavailable' })
   })
 
   it('posts scan sessions through the request client', async () => {
@@ -199,7 +357,7 @@ describe('solver API operations', () => {
         maxNodes: 1_000,
         strategyId: 'bounded-ida-star',
       }),
-    ).resolves.toEqual(payload)
+    ).resolves.toMatchObject(payload)
     expect(fetchMock).toHaveBeenCalledWith(
       'http://127.0.0.1:8787/scan/solve-session',
       expect.objectContaining({
@@ -211,6 +369,94 @@ describe('solver API operations', () => {
         }),
       }),
     )
+  })
+
+  it('posts puzzle-aware scan sessions through the request client', async () => {
+    const payload = {
+      manualTargets: [],
+      ok: true,
+      rescanFaces: [],
+      solve: successPayload,
+      status: 'accepted',
+    }
+    const fetchMock = mockApiSuccess(payload)
+
+    await expect(
+      solveScanSession({
+        faces: [...scanSessionFaces],
+        maxDepth: 0,
+        puzzleSlug: 'cube-2x2x2',
+        strategyId: 'cube2-pdb-ida-star',
+      }),
+    ).resolves.toEqual(payload)
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:8787/puzzles/cube-2x2x2/scan/solve-session',
+      expect.objectContaining({
+        body: JSON.stringify({
+          faces: [...scanSessionFaces],
+          maxDepth: 0,
+          strategyId: 'cube2-pdb-ida-star',
+        }),
+      }),
+    )
+  })
+
+  it('normalizes nested 2x2 scan solve visual states', async () => {
+    mockApiSuccess({
+      manualTargets: [],
+      ok: true,
+      rescanFaces: [],
+      solve: {
+        ...successPayload,
+        generatedTableStatus: 'not_applicable',
+        strategyId: 'cube2-pdb-ida-star',
+        strategyLabel: '2x2 PDB IDA*',
+        solverMode: 'cube2_pdb_ida_star',
+        visualState: {
+          kind: 'cube2-facelets-v1',
+          value: 'UUUURRRRFFFFDDDDLLLLBBBB',
+        },
+      },
+      status: 'accepted',
+    })
+
+    await expect(
+      solveScanSession({
+        faces: [...scanSessionFaces],
+        maxDepth: 0,
+        puzzleSlug: 'cube-2x2x2',
+        strategyId: 'cube2-pdb-ida-star',
+      }),
+    ).resolves.toMatchObject({
+      solve: {
+        visualState: 'UUUURRRRFFFFDDDDLLLLBBBB',
+        visualStateKind: 'cube2-facelets-v1',
+      },
+    })
+  })
+
+  it('falls back when scan sessions return no JSON payload', async () => {
+    mockApiSuccess(undefined)
+
+    await expect(
+      solveScanSession({
+        faces: [...scanSessionFaces],
+        maxDepth: 0,
+      }),
+    ).resolves.toMatchObject({
+      message: 'The scan session request failed.',
+      ok: false,
+      status: 'api_error',
+    })
+
+    mockFetchResponse(undefined, { status: 503 })
+
+    await expect(
+      solveScanSession({
+        faces: [...scanSessionFaces],
+        maxDepth: 0,
+      }),
+    ).resolves.toMatchObject({ ok: false, status: 'vision_unavailable' })
   })
 
   it('returns scan session API failures without throwing', async () => {
@@ -269,6 +515,28 @@ describe('solver API operations', () => {
     })
   })
 
+  it('normalizes 2x2 node-limit failures', () => {
+    expect(
+      normalizeSolveResponse(
+        {
+          ...successPayload,
+          generatedTableStatus: 'not_applicable',
+          ok: false,
+          status: 'node_limit_exceeded',
+          errorKind: 'node_limit_exceeded',
+          message: 'node cap reached',
+          visualState: null,
+        },
+        true,
+      ),
+    ).toMatchObject({
+      generatedTableStatus: 'not_applicable',
+      ok: false,
+      status: 'node_limit_exceeded',
+      visualState: undefined,
+    })
+  })
+
   it('marks unverified successes as failures', () => {
     expect(
       normalizeSolveResponse({ ...successPayload, replayVerified: false }, true),
@@ -317,12 +585,71 @@ describe('solver React Query hooks', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
+  it('loads puzzle metadata responses', async () => {
+    mockApiSuccess([])
+    const { result } = renderHookWithProviders(() => useGetPuzzles())
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data).toEqual([])
+  })
+
+  it('respects disabled puzzle strategy queries', () => {
+    const fetchMock = mockApiSuccess([])
+    const { result } = renderHookWithProviders(() =>
+      useGetPuzzleStrategies({ enabled: false, puzzleSlug: 'cube-2x2x2' }),
+    )
+
+    expect(result.current.fetchStatus).toBe('idle')
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('loads puzzle strategy responses through the hook', async () => {
+    mockApiSuccess([
+      {
+        defaultMetric: 'htm',
+        id: 'cube2-pdb-ida-star',
+        label: '2x2 PDB IDA*',
+        puzzleId: 'cube/2x2x2',
+        solverMode: 'cube2_pdb_ida_star',
+        statusText: 'Experimental 2x2 solver',
+        supportedInputs: ['notation'],
+        supportedMetrics: ['htm'],
+      },
+    ])
+    const { result } = renderHookWithProviders(() =>
+      useGetPuzzleStrategies({ puzzleSlug: 'cube-2x2x2' }),
+    )
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data).toEqual([
+      expect.objectContaining({ id: 'cube2-pdb-ida-star', puzzleId: 'cube/2x2x2' }),
+    ])
+  })
+
   it('runs solve mutations', async () => {
     mockApiSuccess(successPayload)
     const { result } = renderHookWithProviders(() => useSolveNotation())
 
     await expect(
       result.current.mutateAsync({ limits: { maxDepth: 2 }, notation: 'R U' }),
+    ).resolves.toMatchObject({ ok: true, status: 'success' })
+  })
+
+  it('runs puzzle-aware solve mutations', async () => {
+    mockApiSuccess({
+      ...successPayload,
+      generatedTableStatus: 'not_applicable',
+      puzzleSlug: 'cube-2x2x2',
+      visualState: null,
+    })
+    const { result } = renderHookWithProviders(() => useSolvePuzzleNotation())
+
+    await expect(
+      result.current.mutateAsync({
+        limits: { maxDepth: 1, strategyId: 'cube2-pdb-ida-star' },
+        notation: 'F',
+        puzzleSlug: 'cube-2x2x2',
+      }),
     ).resolves.toMatchObject({ ok: true, status: 'success' })
   })
 

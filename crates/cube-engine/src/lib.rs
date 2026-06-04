@@ -1,5 +1,7 @@
 pub mod cube;
 pub mod dataset;
+pub mod puzzle;
+pub mod puzzles;
 pub mod scan_inference;
 pub mod search;
 pub mod solver;
@@ -21,6 +23,11 @@ pub use cube::{
     EDGE_FACELET_MAPPINGS, EDGE_ORIENTATION_COORDINATE_COUNT,
     SLICE_EDGE_PERMUTATION_COORDINATE_COUNT, UD_EDGE_PERMUTATION_COORDINATE_COUNT,
     UD_SLICE_EDGE_COMBINATION_COORDINATE_COUNT,
+};
+pub use puzzle::{
+    all_puzzle_definitions, all_strategy_definitions, puzzle_definition, puzzle_definition_by_slug,
+    strategies_for_puzzle, strategy_definition_for_puzzle, InputKind, MoveMetric, PuzzleDefinition,
+    PuzzleFamily, PuzzleId, PuzzleStatus, SolverStrategyDefinition, VisualizationKind,
 };
 pub use scan_inference::{
     infer_scan, infer_scan_with_options, ScanFaceletProbabilities, ScanInferenceCandidate,

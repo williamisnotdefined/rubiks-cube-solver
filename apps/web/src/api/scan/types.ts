@@ -89,6 +89,7 @@ export type AnalyzeScanFaceResponse = {
 
 export type AnalyzeScanFaceVariables = {
   expectedCenter: ScanFaceSymbol
+  gridSize?: 2 | 3
   image: string
   knownCenters: Partial<Record<ScanFaceSymbol, RgbColor>>
   signal?: AbortSignal
@@ -114,6 +115,7 @@ export type SolveScanSessionVariables = {
   faces: ScanSessionFaceRequest[]
   maxDepth: number
   maxNodes?: number
+  puzzleSlug?: string
   strategyId?: string
 }
 
@@ -134,6 +136,19 @@ export type AnalyzeScanSessionResponse = {
 export type ScanSessionManualTarget = {
   face: ScanFaceSymbol
   stickers: number[]
+}
+
+export type ScanSessionInvalidCorner = {
+  position: string
+  faces: ScanFaceSymbol[]
+  stickers: ScanFaceSymbol[]
+  targets?: ScanSessionInvalidCornerTarget[]
+  reason?: 'opposite_faces' | 'unknown_corner' | string
+}
+
+export type ScanSessionInvalidCornerTarget = {
+  face: ScanFaceSymbol
+  index: number
 }
 
 export type ScanSessionStatus =
@@ -178,4 +193,5 @@ export type ScanSessionResult = {
   inference?: ScanSessionInference
   rescanFaces: ScanFaceSymbol[]
   manualTargets: ScanSessionManualTarget[]
+  invalidCorners?: ScanSessionInvalidCorner[]
 }

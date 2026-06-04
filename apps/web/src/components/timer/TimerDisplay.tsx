@@ -20,12 +20,12 @@ export function TimerDisplay({
   return (
     <div
       className={cls(
-        'grid min-h-[15rem] w-full cursor-pointer select-none place-items-center border border-[#2b2b2b] bg-[#090909] px-4 py-8 text-center font-mono text-[clamp(4rem,20vw,10rem)] font-black leading-none tracking-[-0.08em] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#f7f7f7]/50',
+        'grid min-h-[15rem] w-full cursor-pointer select-none place-items-center border border-app-border bg-app-stage px-4 py-8 text-center font-mono text-[clamp(4rem,20vw,10rem)] font-black leading-none tracking-[-0.08em] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-app-focus/50',
         {
-          'border-[#2b2b2b] text-[#f7f7f7]': status === 'idle' || status === 'stopped',
-          'border-[#a8a8a8] text-[#a8a8a8]': status === 'holding' || status === 'inspection',
-          'border-[#f7f7f7] bg-[#f7f7f7] text-[#080808]': status === 'ready',
-          'border-[#f7f7f7] text-[#f7f7f7]': status === 'running',
+          'border-app-border text-app-text': status === 'idle' || status === 'stopped',
+          'border-app-muted text-app-muted': status === 'holding' || status === 'inspection',
+          'border-app-text bg-app-text text-app-inverse': status === 'ready',
+          'border-app-text text-app-text': status === 'running',
         },
         className,
       )}

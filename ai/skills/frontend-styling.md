@@ -17,7 +17,8 @@ Preserve the existing visual language and mobile usability while using Tailwind 
 - Inspect nearby components before adding new utility combinations or visual patterns.
 - Do not create or import `.css` files; `apps/web/src/index.css` is the only allowed CSS file and owns Tailwind import, project resets, semantic theme/color variables, and minimal root theme selectors.
 - Put all reusable color values in semantic variables in `apps/web/src/index.css` before using them from Tailwind utilities.
-- Use Tailwind classes backed by semantic tokens such as `bg-app-bg`, `bg-app-surface`, `text-app-text`, `text-app-muted`, `border-app-border`, and `ring-app-focus`; do not add hardcoded arbitrary color classes like `bg-[#...]`.
+- Use Tailwind classes backed by semantic tokens such as `bg-app-bg`, `bg-app-nav`, `bg-app-stage`, `bg-app-surface`, `bg-app-surface-raised`, `bg-app-control`, `text-app-text`, `text-app-muted`, `text-app-inverse`, `border-app-border`, `border-app-border-strong`, and `ring-app-focus`; do not add hardcoded arbitrary color classes.
+- Keep raw hex color values confined to semantic variable definitions in `apps/web/src/index.css`; use theme-backed classes or CSS variables in components, stories, tests, SVG attributes, inline styles, and `apps/web/index.html`.
 - Keep theme behavior system-default by default, with explicit `dark` and `light` overrides only through root theme selectors when implemented.
 - Treat the current visual palette as `dark`; make `light` a gray, not-so-dark theme rather than a white theme.
 - Put all layout, visual treatment, animations, and state styles in component `className` utilities.
@@ -41,6 +42,7 @@ Preserve the existing visual language and mobile usability while using Tailwind 
 
 - Run `npm run build` after Tailwind or component style changes.
 - Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
-- Search changed files for `rounded-`, `border-radius`, local `cn`, local `classNames` helpers, new `.css` files, and hardcoded arbitrary color utilities such as `bg-[#`, `text-[#`, `border-[#`, `ring-[#`, `from-[#`, `via-[#`, and `to-[#`.
+- Run `npm run theme-colors:check` when changing theme tokens, Tailwind color classes, docs that mention color rules, or generated AI route content.
+- Search changed files for `rounded-`, `border-radius`, local `cn`, local `classNames` helpers, new `.css` files, hardcoded arbitrary hex color utilities, and raw hex colors outside `apps/web/src/index.css`.
 - Check system-default, `dark`, and `light` theme behavior when theme code changes.
 - Check mobile breakpoints when feasible.

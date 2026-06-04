@@ -23,6 +23,7 @@ describe('CubeStage', () => {
     render(
       <CubeStage
         active={false}
+        cubeType="Three"
         cubeRef={createRef()}
         onReady={onReady}
       />,
@@ -39,13 +40,39 @@ describe('CubeStage', () => {
     render(
       <CubeStage
         active
+        cubeType="Three"
         cubeRef={createRef()}
         onReady={onReady}
       />,
     )
 
-    await waitFor(() => expect(screen.getByLabelText('Cube visualization')).toContainHTML('rubiks-cube'))
+    await waitFor(() =>
+      expect(screen.getByLabelText('Cube visualization')).toContainHTML('rubiks-cube'),
+    )
+    expect(
+      screen.getByLabelText('Cube visualization').querySelector('rubiks-cube'),
+    ).toHaveAttribute('cube-type', 'Three')
     await waitFor(() => expect(onReady).toHaveBeenCalled())
+  })
+
+  it('renders the 2x2 cube custom element when requested', async () => {
+    const onReady = vi.fn()
+
+    render(
+      <CubeStage
+        active
+        cubeType="Two"
+        cubeRef={createRef()}
+        onReady={onReady}
+      />,
+    )
+
+    await waitFor(() =>
+      expect(screen.getByLabelText('Cube visualization')).toContainHTML('rubiks-cube'),
+    )
+    expect(
+      screen.getByLabelText('Cube visualization').querySelector('rubiks-cube'),
+    ).toHaveAttribute('cube-type', 'Two')
   })
 
   it('uses the already registered element without registering again', async () => {
@@ -55,12 +82,15 @@ describe('CubeStage', () => {
     render(
       <CubeStage
         active
+        cubeType="Three"
         cubeRef={createRef()}
         onReady={onReady}
       />,
     )
 
-    await waitFor(() => expect(screen.getByLabelText('Cube visualization')).toContainHTML('rubiks-cube'))
+    await waitFor(() =>
+      expect(screen.getByLabelText('Cube visualization')).toContainHTML('rubiks-cube'),
+    )
     expect(register).not.toHaveBeenCalled()
     expect(onReady).toHaveBeenCalled()
   })
@@ -70,16 +100,20 @@ describe('CubeStage', () => {
     const { rerender } = render(
       <CubeStage
         active
+        cubeType="Three"
         cubeRef={createRef()}
         onReady={onReady}
       />,
     )
 
-    await waitFor(() => expect(screen.getByLabelText('Cube visualization')).toContainHTML('rubiks-cube'))
+    await waitFor(() =>
+      expect(screen.getByLabelText('Cube visualization')).toContainHTML('rubiks-cube'),
+    )
 
     rerender(
       <CubeStage
         active={false}
+        cubeType="Three"
         cubeRef={createRef()}
         onReady={onReady}
       />,
@@ -90,12 +124,15 @@ describe('CubeStage', () => {
     rerender(
       <CubeStage
         active
+        cubeType="Three"
         cubeRef={createRef()}
         onReady={onReady}
       />,
     )
 
-    await waitFor(() => expect(screen.getByLabelText('Cube visualization')).toContainHTML('rubiks-cube'))
+    await waitFor(() =>
+      expect(screen.getByLabelText('Cube visualization')).toContainHTML('rubiks-cube'),
+    )
     expect(onReady).toHaveBeenCalledTimes(2)
   })
 })

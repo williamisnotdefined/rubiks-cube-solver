@@ -17,11 +17,11 @@ export function AverageCards({ cards, showMilliseconds = false }: AverageCardsPr
   return (
     <div className="grid w-full gap-2 sm:grid-cols-4">
       {cards.map((card) => (
-        <article key={card.label} className="border border-[#2b2b2b] bg-[#101010] p-4">
-          <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#a8a8a8]">
+        <article key={card.label} className="border border-app-border bg-app-surface p-4">
+          <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-app-muted">
             {t(`timer.stats.${card.label}`)}
           </p>
-          <p className="mt-2 font-mono text-2xl font-black text-[#f7f7f7]">
+          <p className="mt-2 font-mono text-2xl font-black text-app-text">
             {formatTimerTime(card.timeMs, { showMilliseconds })}
           </p>
         </article>

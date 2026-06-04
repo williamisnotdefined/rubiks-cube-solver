@@ -88,6 +88,7 @@ class AnalyzeScanFaceRequest(BaseModel):
     expectedCenter: ScanFaceSymbol
     image: str
     knownCenters: dict[ScanFaceSymbol, RgbColor] = Field(default_factory=dict)
+    gridSize: int = Field(default=3, ge=2, le=3)
 
 
 class AnalyzeScanFaceResponse(BaseModel):
@@ -119,6 +120,7 @@ class ScanSessionFaceRequest(BaseModel):
 
 class AnalyzeScanSessionRequest(BaseModel):
     faces: list[ScanSessionFaceRequest]
+    gridSize: int = Field(default=3, ge=2, le=3)
 
 
 class AnalyzedSessionFace(BaseModel):

@@ -231,10 +231,16 @@ Defaults:
 API endpoints:
 
 - `GET /health`
+- `GET /puzzles`
+- `GET /puzzles/:puzzleSlug`
+- `GET /puzzles/:puzzleSlug/strategies`
+- `POST /puzzles/:puzzleSlug/solve` with `{ "input": { "kind": "notation", "value": "R U R'" }, "strategyId": "cube2-pdb-ida-star", "limits": { "maxDepth": 14, "maxNodes": 1000000 }, "metric": "htm" }`
 - `GET /strategies`
 - `POST /solve-notation` with `{ "moves": "R2 D2 F'", "strategyId": "generated-two-phase-quality", "maxDepth": 30, "maxNodes": 10000000 }`
 - `POST /solve-scan` with `{"faces": {"U":"UUURRR...", "R":"...", ...}, "strategyId": "generated-two-phase-quality", "maxDepth": 30, "maxNodes": 10000000 }`
 - `POST /scan/analyze-face` with `{ "expectedCenter": "R", "image": "<base64-png>", "knownCenters": { ... } }`
+- `POST /scan/solve-session` for 3x3 scan sessions.
+- `POST /puzzles/:puzzleSlug/scan/solve-session` for puzzle-scoped scan sessions such as `cube-2x2x2`.
 - If `maxNodes` is omitted, the API uses `10000000`; the request cap is `25000000`.
 - `strategyId` must be one of the IDs returned by `GET /strategies`.
 - Experimental: `strategyId="generated-two-phase-multiprobe"` spends budget on forward and inverse `<=16` move-order probes before falling back to deeper generated two-phase quality.
@@ -243,7 +249,32 @@ API endpoints:
 - Experimental: `strategyId="short-solution-portfolio"` tries bounded PDB16 and generated `<=16` probes before falling back to generated two-phase quality.
 
 Every successful API solve includes `replayVerified=true`.
-The default web-facing contract is move-notation solves via `POST /solve-notation`; facelet/Kociemba strings are not used by the main product input form. Scan-based input uses the additional `/solve-scan` and `/scan/analyze-face` endpoints.
+The default web-facing contract is now puzzle-aware move-notation solving through `POST /puzzles/:puzzleSlug/solve`, while the legacy 3x3 `POST /solve-notation` route remains available for compatibility. Facelet/Kociemba strings are not used by the main product input form. Scan-based input uses the additional `/solve-scan`, `/scan/analyze-face`, `/scan/solve-session`, and puzzle-scoped scan-session endpoints.
+
+### Multi-Puzzle And 2x2 Support
+
+The many-cubes track is documented in `docs/many-cubes-plan.md` and `roadmap-many-cubes.md`. The current implementation keeps `cube/3x3x3` stable and adds experimental `cube/2x2x2` support through the same Rust/API/frontend boundary.
+
+Current puzzle IDs and slugs:
+
+- `cube/3x3x3` -> `cube-3x3x3`, stable.
+- `cube/2x2x2` -> `cube-2x2x2`, experimental.
+- Pyraminx, Clock, Skewb, NxNxN cubes, Square-1, and Megaminx are registered as planned metadata only.
+
+2x2 support includes a puzzle-specific Rust state, move model, notation parser, replay verification, dedicated bounded IDA*, in-memory PDB-backed IDA*, puzzle registry metadata, puzzle-aware API solving, 2x2 scan-session handling, web selection, visualization, and inverse-solution playback.
+
+2x2 strategy IDs:
+
+- `cube2-bounded-ida-star`
+- `cube2-pdb-ida-star`
+
+The initial 2x2 API defaults are conservative and experimental: HTM metric, `maxDepth=14`, `maxNodes=1000000`, depth cap `20`, and node cap `10000000`. The implementation verifies returned solutions by replay and does not claim optimality, a God's Number proof, or a universal short-solution guarantee.
+
+Run the dedicated 2x2 quality report with:
+
+```bash
+npm run solver:bench:2x2
+```
 
 ### Vision Service Integration
 
@@ -312,7 +343,15 @@ Start the full development environment with one command:
 npm run dev
 ```
 
-This generates native pruning tables when needed, starts the API on `127.0.0.1:8787`, and starts the Vite dev server. Use `npm run web:dev` only when you intentionally want to run the frontend without starting the API.
+This generates native pruning tables when needed, starts the API on `127.0.0.1:8787`, starts Vision on `127.0.0.1:8790`, and starts the Vite dev server on `127.0.0.1:5173`. Use `npm run web:dev` only when you intentionally want to run the frontend without starting the API.
+
+Local port split:
+
+- Dev web: `127.0.0.1:5173`
+- Dev API: `127.0.0.1:8787`
+- Dev Vision: `127.0.0.1:8790`
+- Prod web/API: `127.0.0.1:3001`
+- Prod Vision: `127.0.0.1:8791`
 
 Run the browser product flow with native API coverage:
 
@@ -327,7 +366,7 @@ Playwright starts both the API and the Vite preview server. The UI accepts a `Sc
 
 ## Cloudflare Tunnel
 
-Production follows the same local tunnel model used by `zelda-proto`: one local HTTP server listens on port `3001`, serves the built web app, exposes the Rust API routes, and Cloudflare Tunnel publishes it at `wilho.com.br`.
+Production follows the same local tunnel model used by `zelda-proto`: one local HTTP server listens on port `3001`, serves the built web app, exposes the Rust API routes, and Cloudflare Tunnel publishes it at `wilho.com.br`. The production Vision service listens on `8791` by default, so `npm run live:start` can run alongside `npm run dev`.
 
 Start the full production boot path plus tunnel:
 
@@ -359,12 +398,14 @@ Current production route target:
 Production defaults:
 
 - `RUBIKS_API_ADDR=127.0.0.1:3001` in `npm start`
+- `RUBIKS_VISION_PORT=8791` in `npm run vision:start`
+- `RUBIKS_VISION_URL=http://127.0.0.1:$RUBIKS_VISION_PORT` in `npm start` unless explicitly overridden
 - `RUBIKS_WEB_DIST_DIR=apps/web/dist`
 - The production web build uses the same origin for API calls when `VITE_RUBIKS_API_URL` is not set
 
 ## Dataset Generation
 
-`cube-engine` owns deterministic solver-labeled dataset generation. Examples are JSONL records with fixed field order and schema version `1`:
+`cube-engine` owns deterministic solver-labeled dataset generation. The current generator still emits legacy 3x3 JSONL records with fixed field order and schema version `1`:
 
 ```json
 {"schema_version":1,"state":"cp=...;co=...;ep=...;eo=...","scramble":"R U","scramble_depth":2,"verified_solution":"U' R'","verified_solution_length":2,"best_move":"U'","label_source":"generated_two_phase_quality_solver_replay_verified","split":"train"}
@@ -391,9 +432,11 @@ npm run dataset:solver:1k
 
 The committed `datasets/fixtures/small.jsonl` remains a tiny ML smoke fixture with legacy reversible-scramble labels. It is kept for fast deterministic tests, not as the preferred generator path for new training data.
 
+Schema version `2` is puzzle-aware and records `puzzle_id`, `puzzle_slug`, `state_encoding_id`, `move_set_id`, `metric`, `label_target`, `generator_seed`, `solver_strategy_id`, and `replay_verified`. See `docs/dataset-schema-v2.md` for the full contract. The committed `datasets/fixtures/cube2-small-v2.jsonl` validates the initial 2x2 dataset representation, but the current ML value model still accepts only `cube/3x3x3` rows with `cube3-cubie-v1` encoding.
+
 ## ML Value Baseline
 
-The first ML baseline is isolated under `ml/`. It consumes Rust dataset JSONL records and derives model inputs from the serialized `CubieState` fields `cp`, `co`, `ep`, and `eo`. It does not use frontend sticker or color arrays as the primary model input.
+The first ML baseline is isolated under `ml/`. It consumes Rust dataset JSONL records and derives model inputs from the serialized 3x3 `CubieState` fields `cp`, `co`, `ep`, and `eo`. It does not use frontend sticker or color arrays as the primary model input.
 
 Install Python dependencies with:
 
@@ -413,7 +456,7 @@ Train and evaluate the small deterministic PyTorch MLP value model with:
 python -m ml.train_value_baseline --dataset datasets/fixtures/small.jsonl --epochs 1 --seed 0 --output ml/outputs/value-baseline --inference-repeats 1
 ```
 
-The CLI prints a JSON report and writes `metrics.json` plus `value_outputs.tsv` under the requested `--output` directory. The TSV uses comment metadata followed by `CubieState<TAB>predicted_value` rows for local hybrid-search experiments. The default output directory is the ignored workspace-local `ml/outputs/value-baseline`, and the smoke baseline does not write model checkpoints.
+The CLI prints a JSON report and writes `metrics.json` plus `value_outputs.tsv` under the requested `--output` directory. The TSV uses comment metadata followed by `CubieState<TAB>predicted_value` rows for local hybrid-search experiments. The report, model artifact, and TSV metadata include puzzle/model compatibility fields so a 3x3 model cannot silently consume 2x2 rows. The default output directory is the ignored workspace-local `ml/outputs/value-baseline`, and the dependency fallback does not write model checkpoints.
 
 If PyTorch is unavailable, the CLI exits successfully with an explicit dependency-fallback report so smoke verification still records label metrics; install `ml/requirements.txt` to train the PyTorch MLP.
 

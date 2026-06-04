@@ -10,11 +10,16 @@ from statistics import mean
 from typing import Iterable
 
 from .data import (
+    CUBE3_COMPATIBILITY,
     DEPTH_BUCKETS,
     FEATURE_DIM,
+    DatasetCompatibility,
     TrainingExample,
+    dataset_compatibility,
+    dataset_label_target,
     depth_bucket,
     load_jsonl,
+    validate_examples_for_current_value_model,
 )
 from .model import inference_us_per_state, is_torch_available, predict, train_value_model
 
@@ -35,6 +40,7 @@ def run_baseline(
     dataset_path = Path(dataset)
     output_path = Path(output)
     examples = load_jsonl(dataset_path)
+    validate_examples_for_current_value_model(examples)
     train_examples = [example for example in examples if example.split == "train"] or examples
     if not is_torch_available():
         predictions, inference_time = dependency_unavailable_predictions(
@@ -143,12 +149,19 @@ def write_model_artifact(
     layers = exported_layers(value_model)
     artifact = {
         "format": "rubiks_cube_solver_value_model_v1",
+        "model_schema_version": 2,
         "model_type": model["type"],
         "pytorch_available": model["pytorch_available"],
+        "puzzle_id": model["puzzle_id"],
+        "state_encoding_id": model["state_encoding_id"],
+        "move_set_id": model["move_set_id"],
+        "metric": model["metric"],
         "dataset": report["dataset"],
         "examples": len(examples),
         "label_target": label["target"],
         "label_source": dataset_label_source(examples),
+        "role": model["role"],
+        "admissible": safety["admissible_heuristic"],
         "prediction": "estimated_verified_solution_length",
         "feature_dim": model["feature_dim"],
         "hidden_dim": model["hidden_dim"],
@@ -162,7 +175,8 @@ def write_model_artifact(
             "default_product_solver_dependency": safety["default_product_solver_dependency"],
         },
         "input": {
-            "encoding": "normalized CubieState cp/co/ep/eo serialization",
+            "encoding": model["input"],
+            "state_encoding_id": model["state_encoding_id"],
             "feature_order": ["cp/7", "co/2", "ep/11", "eo"],
         },
         "layers": layers,
@@ -209,12 +223,19 @@ def write_value_outputs(
 
     metadata: list[tuple[str, object]] = [
         ("format", "rubiks_cube_solver_value_outputs_v1"),
+        ("model_schema_version", 2),
         ("model_type", model["type"]),
         ("pytorch_available", model["pytorch_available"]),
+        ("puzzle_id", model["puzzle_id"]),
+        ("state_encoding_id", model["state_encoding_id"]),
+        ("move_set_id", model["move_set_id"]),
+        ("metric", model["metric"]),
         ("dataset", report["dataset"]),
         ("examples", len(examples)),
         ("label_target", _require_dict(report, "label")["target"]),
         ("label_source", dataset_label_source(examples)),
+        ("role", model["role"]),
+        ("admissible", safety["admissible_heuristic"]),
         ("prediction", "estimated_verified_solution_length"),
         ("training_epochs", training.get("epochs")),
         ("training_seed", training.get("seed")),
@@ -281,6 +302,13 @@ def metadata_value(value: object) -> str:
     return str(value).replace("\t", " ").replace("\n", " ")
 
 
+def model_input_label(compatibility: DatasetCompatibility) -> str:
+    if compatibility == CUBE3_COMPATIBILITY:
+        return "normalized CubieState cp/co/ep/eo serialization"
+
+    return f"unsupported {compatibility.state_encoding_id} serialization"
+
+
 def build_report(
     *,
     dataset_path: Path,
@@ -295,6 +323,8 @@ def build_report(
     inference_time: float,
 ) -> dict[str, object]:
     train_targets = [example.verified_solution_length for example in train_examples]
+    compatibility = dataset_compatibility(examples)
+    label_target = dataset_label_target(examples)
     model_evaluation = evaluate_predictions(examples, predictions)
     metrics = dict(model_evaluation["metrics"])
     metrics["inference_us_per_state"] = _round(inference_time)
@@ -307,9 +337,15 @@ def build_report(
         "model": {
             "type": "pytorch_mlp",
             "pytorch_available": True,
-            "input": "normalized CubieState cp/co/ep/eo serialization",
+            "model_schema_version": 2,
+            "puzzle_id": compatibility.puzzle_id,
+            "state_encoding_id": compatibility.state_encoding_id,
+            "move_set_id": compatibility.move_set_id,
+            "metric": compatibility.metric,
+            "input": model_input_label(compatibility),
             "feature_dim": FEATURE_DIM,
             "hidden_dim": hidden_dim,
+            "role": "value_estimation",
         },
         "training": {
             "epochs": epochs,
@@ -319,7 +355,7 @@ def build_report(
             "final_loss": _round(training_loss[-1]) if training_loss else None,
         },
         "label": {
-            "target": "verified_solution_length",
+            "target": label_target,
             "semantics": label_semantics(examples),
         },
         "metrics": metrics,

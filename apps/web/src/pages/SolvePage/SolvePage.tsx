@@ -1,10 +1,15 @@
-import { useReducer, useRef, useState, type FormEvent } from 'react'
+import { useCallback, useReducer, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { RubiksCubeElement } from '@houstonp/rubiks-cube/view'
-import { useGetHealth, useGetStrategies, useSolveNotation } from '@api/solver'
+import {
+  useGetHealth,
+  useGetPuzzleStrategies,
+  useGetPuzzles,
+  useSolvePuzzleNotation,
+} from '@api/solver'
 import type { SolveResult as ApiSolveResult } from '@api/solver/types'
 import { waitForPaint } from '@core/timing/waitForPaint'
-import { CubeStage } from './CubeStage'
+import { CubeStage, type CubeStageCubeType } from './CubeStage'
 import { ScanCubeModal } from './ScanCubeModal'
 import { SolveForm } from './SolveForm'
 import { SolveResult } from './SolveResult'
@@ -25,12 +30,22 @@ import {
   validationErrorMessage,
 } from './validation'
 
+const defaultPuzzleSlug = 'cube-3x3x3'
+const cube3VisualizationKind = 'cube3-facelets-v1'
+const cube2VisualizationKind = 'cube2-facelets-v1'
+
 export function SolvePage() {
   const { t } = useTranslation()
   const cubeRef = useRef<RubiksCubeElement | null>(null)
   const healthQuery = useGetHealth()
-  const strategiesQuery = useGetStrategies({ enabled: healthQuery.data?.ok === true })
-  const solveMutation = useSolveNotation()
+  const puzzlesQuery = useGetPuzzles({ enabled: healthQuery.data?.ok === true })
+  const [selectedPuzzleSlug, setSelectedPuzzleSlug] = useState(defaultPuzzleSlug)
+  const selectedPuzzle = puzzleBySlug(puzzlesQuery.data, selectedPuzzleSlug)
+  const strategiesQuery = useGetPuzzleStrategies({
+    enabled: healthQuery.data?.ok === true && selectedPuzzle !== undefined,
+    puzzleSlug: selectedPuzzleSlug,
+  })
+  const solveMutation = useSolvePuzzleNotation()
   const cubeActive = usePageActivity()
   const [cubeReadyRevision, markCubeReady] = useReducer(
     (revision: number) => revision + 1,
@@ -45,6 +60,7 @@ export function SolvePage() {
   )
   const [solutionStep, setSolutionStep] = useState(0)
   const [scanModalOpen, setScanModalOpen] = useState(false)
+  const [scanSessionSolving, setScanSessionSolving] = useState(false)
   const [activeSolveSource, setActiveSolveSource] = useState<'notation' | 'scan'>('notation')
   const [scanSessionSolveResult, setScanSessionSolveResult] = useState<ApiSolveResult | undefined>()
   const activeSolveResult = activeSolveSource === 'scan' ? scanSessionSolveResult : solveMutation.data
@@ -57,27 +73,53 @@ export function SolvePage() {
   )
   const visibleSolutionMoves = successResult?.moves.slice(0, visibleSolutionStep) ?? []
   const visualizationState = successResult?.visualState
+  const visualizationStateKind = successResult?.visualStateKind
+  const visualizationCubeType: CubeStageCubeType | undefined =
+    selectedPuzzle?.supportedVisualizations.includes(cube2VisualizationKind) === true
+      ? 'Two'
+      : selectedPuzzle?.supportedVisualizations.includes(cube3VisualizationKind) === true
+        ? 'Three'
+        : undefined
+  const visualizationSupported = visualizationCubeType !== undefined
+  const useInverseSolutionVisualization =
+    activeSolveSource === 'scan' && visualizationCubeType === 'Two' && successResult !== undefined
   const visualizationNotation =
-    visualizationState === undefined
+    useInverseSolutionVisualization
+      ? notationWithSolutionPrefix(invertMoveSequence(successResult.moves).join(' '), visibleSolutionMoves)
+      : visualizationState === undefined && visualizationSupported
       ? notationWithSolutionPrefix(
           notation,
           activeSolveSource === 'notation' ? visibleSolutionMoves : [],
         )
-      : visibleSolutionMoves.join(' ')
+      : visualizationSupported
+        ? visibleSolutionMoves.join(' ')
+        : ''
+  const visualizationStateForCube = useInverseSolutionVisualization ? undefined : visualizationState
+  const visualizationStateKindForCube = useInverseSolutionVisualization ? undefined : visualizationStateKind
 
   useCubeVisualization(
     cubeRef,
     visualizationNotation,
     cubeReadyRevision,
-    visualizationState,
-    cubeActive,
+    visualizationSupported ? visualizationStateForCube : undefined,
+    visualizationSupported ? visualizationStateKindForCube : undefined,
+    visualizationCubeType,
+    cubeActive && visualizationSupported,
   )
 
   const strategyOptions = strategiesQuery.data ?? []
-  const apiReady = healthQuery.data?.ok === true && strategiesQuery.isSuccess
-  const solving = solveMutation.isPending
+  const puzzleOptions = puzzlesQuery.data ?? []
+  const strategyId = preferredStrategyId(strategyOptions, selectedPuzzle)
+  const scanAvailable = selectedPuzzle?.scannerSupported === true
+  const activeScramblePlaceholder =
+    selectedPuzzleSlug === 'cube-2x2x2' ? 'R U F' : scramblePlaceholder
+  const apiReady =
+    healthQuery.data?.ok === true &&
+    puzzlesQuery.isSuccess &&
+    strategiesQuery.isSuccess &&
+    selectedPuzzle !== undefined
+  const solving = solveMutation.isPending || scanSessionSolving
   const buttonLoading = !apiReady || solving
-  const strategyId = preferredStrategyId(strategyOptions)
   const maxMoves = Number(maxMovesInput)
   const maxNodesMillion = Number(maxNodesMillionInput)
   const maxNodes = maxNodesMillion * nodesPerMillion
@@ -98,6 +140,8 @@ export function SolvePage() {
     !apiReady ||
     solving ||
     notation.trim().length === 0 ||
+    strategyOptions.length === 0 ||
+    strategyId.length === 0 ||
     localValidationMessage !== undefined
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -114,6 +158,7 @@ export function SolvePage() {
     try {
       const solvePromise = solveMutation.mutateAsync({
         notation: notation.trim(),
+        puzzleSlug: selectedPuzzleSlug,
         limits: {
           maxDepth: maxMoves,
           maxNodes,
@@ -135,11 +180,16 @@ export function SolvePage() {
   }
 
   function handleSolutionStepChange(nextStep: number) {
-    setSolutionStep(clampSolutionStep(nextStep, successResult?.moves.length ?? 0))
+    setSolutionStep(clampSolutionStep(nextStep, successResult!.moves.length))
   }
 
   function handleNotationChange(nextNotation: string) {
     setNotation(nextNotation)
+    resetSolveResult()
+  }
+
+  function handlePuzzleChange(nextPuzzleSlug: string) {
+    setSelectedPuzzleSlug(nextPuzzleSlug)
     resetSolveResult()
   }
 
@@ -160,25 +210,50 @@ export function SolvePage() {
     setScanSessionSolveResult(solve)
   }
 
+  const handleScanSessionSolvingChange = useCallback((nextSolving: boolean) => {
+    setScanSessionSolving(nextSolving)
+  }, [])
+
+  function handleScanClick() {
+    if (scanAvailable) {
+      setScanModalOpen(true)
+    }
+  }
+
   return (
-    <main className="app-shell min-h-screen w-full bg-[#070707] px-3 py-4 text-[#f7f7f7] sm:px-5 sm:py-6">
+    <main className="app-shell min-h-screen w-full bg-app-bg px-3 py-4 text-app-text sm:px-5 sm:py-6">
       <section className="mx-auto grid w-full max-w-4xl content-start justify-items-center gap-4">
-        <CubeStage
-          active={cubeActive}
-          cubeRef={cubeRef}
-          onReady={markCubeReady}
-        />
+        {visualizationCubeType !== undefined ? (
+          <CubeStage
+            key={visualizationCubeType}
+            active={cubeActive}
+            cubeType={visualizationCubeType}
+            cubeRef={cubeRef}
+            onReady={markCubeReady}
+          />
+        ) : (
+          <section
+            className="cube-stage flex aspect-square w-[min(280px,calc(100vw-24px))] items-center justify-center border border-app-border bg-app-surface px-5 text-center text-sm font-semibold text-app-muted"
+            aria-label={t('cube.visualizationUnavailable')}
+          >
+            {t('cube.visualizationUnavailable')}
+          </section>
+        )}
         <SolveForm
           notation={notation}
+          puzzleOptions={puzzleOptions}
+          selectedPuzzleSlug={selectedPuzzleSlug}
           maxMovesInput={maxMovesInput}
           maxNodesMillionInput={maxNodesMillionInput}
           buttonLoading={buttonLoading}
           disabled={disabled}
           maxMovesInvalid={maxMovesValidation !== undefined}
           maxNodesInvalid={maxNodesValidation !== undefined}
-          scramblePlaceholder={scramblePlaceholder}
-          onScanClick={() => setScanModalOpen(true)}
+          scanAvailable={scanAvailable}
+          scramblePlaceholder={activeScramblePlaceholder}
+          onScanClick={handleScanClick}
           onNotationChange={handleNotationChange}
+          onPuzzleChange={handlePuzzleChange}
           onMaxMovesChange={handleMaxMovesChange}
           onMaxNodesMillionChange={handleMaxNodesMillionChange}
           onSubmit={handleSubmit}
@@ -189,20 +264,21 @@ export function SolvePage() {
           solving={solving}
           localValidationMessage={localValidationMessage}
         />
-        {successResult !== undefined ? (
+        {successResult !== undefined && visualizationSupported ? (
           <SolutionPlayback
-            moves={successResult?.moves ?? []}
+            moves={successResult.moves}
             step={visibleSolutionStep}
             onStepChange={handleSolutionStepChange}
           />
         ) : null}
-        {scanModalOpen ? (
+        {scanModalOpen && scanAvailable ? (
           <ScanCubeModal
             apiReady={apiReady}
             maxDepth={maxMoves}
             maxNodes={maxNodes}
             solveDisabledReason={localValidationMessage}
-            solving={solveMutation.isPending}
+            solving={solving}
+            puzzleSlug={selectedPuzzleSlug}
             strategyId={strategyId}
             visionCnnAvailable={healthQuery.data?.visionCnnAvailable}
             visionCnnReason={healthQuery.data?.visionCnnReason}
@@ -210,6 +286,7 @@ export function SolvePage() {
             visionTileDetectorReason={healthQuery.data?.visionTileDetectorReason}
             visionOk={healthQuery.data?.visionOk}
             onClose={() => setScanModalOpen(false)}
+            onSessionSolvingChange={handleScanSessionSolvingChange}
             onSessionSolveResult={handleScanSessionSolveResult}
           />
         ) : null}
@@ -218,11 +295,30 @@ export function SolvePage() {
   )
 }
 
+function puzzleBySlug<TPuzzle extends { slug: string }>(
+  puzzles: readonly TPuzzle[] | undefined,
+  slug: string,
+): TPuzzle | undefined {
+  return puzzles?.find((puzzle) => puzzle.slug === slug)
+}
+
 function notationWithSolutionPrefix(
   notation: string,
   solutionMoves: readonly string[],
 ): string {
   return [notation.trim(), ...solutionMoves].filter(Boolean).join(' ')
+}
+
+function invertMoveSequence(moves: readonly string[]): string[] {
+  return moves.slice().reverse().map(invertMoveToken)
+}
+
+function invertMoveToken(move: string): string {
+  if (move.endsWith('2')) {
+    return move
+  }
+
+  return move.endsWith("'") ? move.slice(0, -1) : `${move}'`
 }
 
 function clampSolutionStep(step: number, maxStep: number): number {

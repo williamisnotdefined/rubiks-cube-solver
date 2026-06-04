@@ -5,11 +5,17 @@
     "loading": "Loading"
   },
   "cube": {
-    "visualization": "Cube visualization"
+    "visualization": "Cube visualization",
+    "visualizationUnavailable": "Visualization is not available for this puzzle yet."
   },
   "navigation": {
+    "github": "Open project on GitHub",
     "primary": "Primary navigation",
     "solve": "Solve",
+    "theme": "Theme",
+    "themeDark": "Dark",
+    "themeLight": "Light",
+    "themeSystem": "System",
     "timer": "Timer"
   },
   "scan": {
@@ -40,8 +46,8 @@
       "opening": "Opening camera",
       "statusWithConfidence": "{{mode}} {{confidence}}%",
       "stickerConfidence": "stickers {{confidence}}%",
-      "stickersFound": "{{count}}/9 stickers found",
-      "stickersReady": "{{count}}/9 stickers ready",
+      "stickersFound": "{{count}}/{{total}} stickers found",
+      "stickersReady": "{{count}}/{{total}} stickers ready",
       "temporalCollecting": "consensus {{count}}/{{target}}",
       "temporalColorDisagreement": "color unstable {{count}} frames",
       "temporalReady": "consensus {{agreement}}% {{count}} frames",
@@ -84,6 +90,32 @@
       "uncertainColor": "uncertain color",
       "uncertainMaybe": "maybe {{color}}"
     },
+    "evenReview": {
+      "autoFit": "Try automatic fit",
+      "autoFitambiguous": "More than one fit is possible. Adjust the net manually.",
+      "autoFitnone": "Could not fit by rotating faces only. Swap positions or review stickers.",
+      "autoFitsuggested": "Found a likely fit with fewer changes. Apply it only after reviewing the net.",
+      "autoFitunique": "Fit found and applied. Review the net before solving.",
+      "applySuggestion": "Apply suggestion",
+      "back": "Back and edit",
+      "capturedFace": "Captured: {{face}}",
+      "description": "Check whether this Kociemba net matches the physical cube. Drag faces to swap positions and select a face to rotate it before solving.",
+      "dragInstructions": "Drag a face to another slot or use the swap buttons. Use rotate buttons to fix the captured face orientation.",
+      "invalidDescription": "Some corners combine opposite or impossible colors. Rotate faces or go back to correct stickers.",
+      "invalidSolveDisabled": "Fix the highlighted impossible corners before solving.",
+      "invalidTitle": "Impossible corners",
+      "kicker": "Final review",
+      "oppositePair": "{{first}} and {{second}} are opposite faces.",
+      "reviewAction": "Review assembled cube",
+      "rotate90": "Rotate 90°",
+      "rotate180": "Rotate 180°",
+      "rotate270": "Rotate -90°",
+      "selectedFace": "Selected slot: {{face}} · captured face: {{capturedFace}}",
+      "solve": "Accept and solve",
+      "swapTitle": "Swap selected face with",
+      "title": "Review assembled cube",
+      "validMessage": "The 2x2 corners are structurally valid. Confirm that the preview matches the physical cube."
+    },
     "faces": {
       "B": {
         "instruction": "Show the blue face with the white face at the top of the camera view.",
@@ -116,13 +148,45 @@
         "top": "Green"
       }
     },
+    "faces2": {
+      "B": {
+        "instruction": "Rotate the cube to show the back side without changing which side is up.",
+        "label": "Back side",
+        "top": "Up"
+      },
+      "D": {
+        "instruction": "Show the down side and keep the front side at the top of the camera view.",
+        "label": "Down side",
+        "top": "Front"
+      },
+      "F": {
+        "instruction": "Pick the front side. Hold the cube with the up side at the top of the camera view.",
+        "label": "Front side",
+        "top": "Up"
+      },
+      "L": {
+        "instruction": "Rotate the cube to show the left side without changing which side is up.",
+        "label": "Left side",
+        "top": "Up"
+      },
+      "R": {
+        "instruction": "Rotate the cube to show the right side without changing which side is up.",
+        "label": "Right side",
+        "top": "Up"
+      },
+      "U": {
+        "instruction": "Show the up side and keep the front side at the top of the camera view.",
+        "label": "Up side",
+        "top": "Front"
+      }
+    },
     "live": {
       "cameraDenied": "Camera permission was denied or no camera was found.",
       "cameraUnavailable": "Camera access is not available in this browser.",
       "centerMismatch": "Detected another center color. Rotate to the expected face.",
-      "detectingStickers": "Detecting stickers: {{count}}/9 found.",
+      "detectingStickers": "Detecting stickers: {{count}}/{{total}} found.",
       "faceDetected": "Face detected. Hold steady.",
-      "gridReady": "{{count}}/9 stickers locked. Hold steady.",
+      "gridReady": "{{count}}/{{total}} stickers locked. Hold steady.",
       "imageBlurry": "Image is blurry. Hold the cube steady.",
       "looking": "Looking for cube face.",
       "lookingKeepVisible": "Looking for cube face. Keep the cube fully visible.",
@@ -161,6 +225,7 @@
       "sessionAmbiguous": "The backend found more than one valid cube state. Review the highlighted stickers or rescan unclear faces.",
       "sessionBlurRescan": "Image is blurry on faces {{faces}}. Hold the cube steady and rescan those faces.",
       "sessionGlareRescan": "Too much glare on faces {{faces}}. Reduce reflections and rescan those faces.",
+      "sessionInvalidCornerTargets": "The scan built an impossible 2x2 corner. Review the highlighted stickers and try solving again.",
       "sessionInvalidCubeState": "The scan does not describe a valid cube. Review the faces and rescan unclear stickers.",
       "sessionIncompleteStickers": "Complete all 9 stickers on faces {{faces}} before solving.",
       "sessionMissingConfirmedFaces": "Confirm these faces before solving: {{faces}}.",
@@ -173,7 +238,7 @@
       "solveFailed": "The scan solve request failed.",
       "submittingSession": "Checking the full scan with cube constraints...",
       "stillLooking": "Still looking for the cube face. Keep the full face visible and let auto scan try again.",
-      "liveReviewReady": "9 stickers recognized. Review the colors, correct any square if needed, then confirm this face."
+      "liveReviewReady": "{{count}} stickers recognized. Review the colors, correct any square if needed, then confirm this face."
     },
     "modal": {
       "cnnEvidenceActive": "CNN evidence active",
@@ -182,6 +247,11 @@
       "confirmed": "{{count}} confirmed",
       "description": "Show one face at a time with the requested top color. The solution uses the colors you confirm.",
       "dismiss": "Dismiss scan cube",
+      "cancelExit": "Cancel leaving scan cube",
+      "exitAction": "Leave",
+      "exitDescription": "You have scan progress that will be lost if you leave now.",
+      "exitKicker": "Unsaved scan",
+      "exitTitle": "Leave scan?",
       "expectedCenter": "Expected center: {{color}}",
       "faceProgress": "Face {{current}} of {{total}}",
       "keepAtTop": "Keep at top: {{color}}",
@@ -238,6 +308,10 @@
           "label": "tables not required",
           "meaning": "This strategy does not require generated pruning tables."
         },
+        "not_applicable": {
+          "label": "tables not applicable",
+          "meaning": "This puzzle strategy does not use generated 3x3 pruning-table artifacts."
+        },
         "unavailable": {
           "label": "tables unavailable",
           "meaning": "The required pruning tables were not available on the API server."
@@ -274,9 +348,14 @@
         "max_nodes_exceeds_limit": "Max nodes exceeds the API safety limit.",
         "missing_corner": "The scanned cube is missing a corner piece.",
         "missing_edge": "The scanned cube is missing an edge piece.",
+        "node_limit_exceeded": "The solver stopped after reaching the configured node cap.",
         "notation_too_large": "The scramble notation is too large.",
+        "strategy_puzzle_mismatch": "The selected solver strategy does not belong to this puzzle.",
         "unknown_corner_stickers": "The scanned cube contains an unknown corner color combination.",
         "unknown_edge_stickers": "The scanned cube contains an unknown edge color combination.",
+        "unsupported_input_kind": "This puzzle input type is not supported by the solve endpoint.",
+        "unsupported_metric": "This move metric is not supported by the solve endpoint.",
+        "unsupported_puzzle": "This puzzle is not supported by the solve endpoint yet.",
         "unsupported_strategy": "The selected solver strategy is not supported by this API.",
         "unverified_solution": "The solver returned a solution that failed replay verification."
       },
@@ -287,8 +366,14 @@
         "invalid_input": "Invalid cube state",
         "invalid_limits": "Solver limits exceed API safety caps",
         "invalid_notation": "Invalid scramble",
+        "node_limit_exceeded": "Node limit exceeded",
         "not_found_within_limits": "No solution within the configured limits",
         "request_too_large": "Solve request is too large",
+        "strategy_puzzle_mismatch": "Strategy does not match puzzle",
+        "unknown_puzzle": "Unknown puzzle",
+        "unsupported_input_kind": "Unsupported puzzle input",
+        "unsupported_metric": "Unsupported move metric",
+        "unsupported_puzzle": "Unsupported puzzle",
         "unsupported_strategy": "Unsupported solver strategy",
         "unverified_solution": "Solver solution failed replay verification"
       }
@@ -296,7 +381,9 @@
     "form": {
       "maxMoves": "Max moves",
       "maxNodesMillion": "Max nodes (M)",
+      "puzzle": "Puzzle",
       "scanCube": "Scan cube with camera",
+      "scanUnavailableForPuzzle": "Camera scan is available for 3x3 only right now.",
       "scramble": "Scramble",
       "solve": "Solve"
     },
@@ -319,6 +406,8 @@
       "generated-two-phase": "Generated two-phase solver",
       "generated-two-phase-multiprobe": "Generated two-phase multiprobe solver",
       "generated-two-phase-quality": "Generated two-phase quality solver",
+      "cube2-bounded-ida-star": "2x2 bounded IDA*",
+      "cube2-pdb-ida-star": "2x2 PDB IDA*",
       "meaningDefault": "The deterministic backend solver strategy used for this request. It is search logic, not generative AI.",
       "meaningGeneratedTwoPhase": "The strategy used. Generated does not mean generative AI; this is a two-phase solver backed by pre-generated pruning tables. Quality modes try shorter solution depths before falling back to the configured maximum."
     },

@@ -46,7 +46,7 @@ type PenaltyButtonProps = {
 function PenaltyButton({ active, disabled, label, onClick }: PenaltyButtonProps) {
   return (
     <Button
-      className={cls('w-full', { 'border-[#f7f7f7] bg-[#f7f7f7] text-[#080808]': active })}
+      className={cls('w-full', { 'border-app-text bg-app-text text-app-inverse': active })}
       disabled={disabled}
       type="button"
       variant={active ? 'primary' : 'secondary'}

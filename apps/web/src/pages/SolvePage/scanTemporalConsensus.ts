@@ -45,6 +45,7 @@ export type TemporalFaceConsensus = {
 }
 
 export type TemporalConsensusOptions = {
+  gridSize: number
   maxFrameAgeMs: number
   maxFrames: number
   maxMeanBboxMovement: number
@@ -61,6 +62,7 @@ export type TemporalConsensusOptions = {
 }
 
 export const defaultTemporalConsensusOptions = {
+  gridSize: 3,
   maxFrameAgeMs: 1_800,
   maxFrames: 12,
   maxMeanBboxMovement: 0.035,
@@ -81,16 +83,18 @@ const criticalQualityWarnings = new Set(['image_blurry', 'image_too_dark', 'imag
 
 export function tileAssignmentFromAnalysis(
   analysis: AnalyzeScanFaceResponse,
+  options: TemporalConsensusOptions = defaultTemporalConsensusOptions,
 ): IndexedScanTileDetection[] | undefined {
-  return assignTileDetectionsToReviewGrid(analysis.tileDetections)
+  return assignTileDetectionsToReviewGrid(analysis.tileDetections, { gridSize: options.gridSize })
 }
 
 export function hasCompleteTileDetections(
   analysis: AnalyzeScanFaceResponse,
   expectedCenter: ScanFaceSymbol,
+  options: TemporalConsensusOptions = defaultTemporalConsensusOptions,
 ): boolean {
-  const assignedTiles = tileAssignmentFromAnalysis(analysis)
-  return assignedTiles !== undefined && assignedTiles[4]?.symbol === expectedCenter
+  const assignedTiles = tileAssignmentFromAnalysis(analysis, options)
+  return assignedTiles !== undefined && (options.gridSize === 2 || assignedTiles[4]?.symbol === expectedCenter)
 }
 
 export function addTemporalScanFrame(
@@ -113,7 +117,7 @@ export function buildTemporalFaceConsensus(
   }
 
   const frameEvaluations = buffer.map((frame) => ({
-    assignedTiles: tileAssignmentFromAnalysis(frame.analysis),
+    assignedTiles: tileAssignmentFromAnalysis(frame.analysis, options),
     frame,
     reasons: temporalFrameRejectReasons(frame, options),
   }))
@@ -121,7 +125,7 @@ export function buildTemporalFaceConsensus(
   const rejectReasons = uniqueReasons(frameEvaluations.flatMap(({ reasons }) => reasons))
   const framesRejected = buffer.length - usableFrames.length
   const averageTileConfidence = average(
-    usableFrames.map(({ assignedTiles }) => average((assignedTiles ?? []).map((tile) => tile.confidence))),
+    usableFrames.map(({ assignedTiles }) => average(assignedTiles!.map((tile) => tile.confidence))),
   )
   const averageFaceConfidence = average(usableFrames.map(({ frame }) => frame.analysis.faceConfidence))
 
@@ -148,7 +152,8 @@ export function buildTemporalFaceConsensus(
     }
   }
 
-  const stickers = Array.from({ length: 9 }, (_, index) => stickerConsensus(index, usableFrames))
+  const stickerCount = options.gridSize * options.gridSize
+  const stickers = Array.from({ length: stickerCount }, (_, index) => stickerConsensus(index, usableFrames))
   const temporalAgreement = average(stickers.map((sticker) => sticker.agreement))
   const bboxStats = bboxStability(usableFrames, options)
   const status = temporalConsensusStatus(stickers, temporalAgreement, bboxStats, options)
@@ -180,7 +185,7 @@ function temporalFrameRejectReasons(
 ): string[] {
   const { analysis, expectedCenter } = frame
   const reasons: string[] = []
-  const assignedTiles = tileAssignmentFromAnalysis(analysis)
+  const assignedTiles = tileAssignmentFromAnalysis(analysis, options)
 
   if (!analysis.ok) {
     reasons.push('analysis_not_ok')
@@ -194,13 +199,13 @@ function temporalFrameRejectReasons(
   if (assignedTiles !== undefined && average(assignedTiles.map((tile) => tile.confidence)) < options.minTileConfidence) {
     reasons.push('low_tile_confidence')
   }
-  if (analysis.centerMismatch || (assignedTiles !== undefined && assignedTiles[4]?.symbol !== expectedCenter)) {
+  if (analysis.centerMismatch || (options.gridSize === 3 && assignedTiles !== undefined && assignedTiles[4]?.symbol !== expectedCenter)) {
     reasons.push('center_mismatch')
   }
   if (analysis.faceConfidence < options.minFaceConfidence) {
     reasons.push('low_face_confidence')
   }
-  if ([...(analysis.qualityWarnings ?? []), ...(analysis.warnings ?? [])].some((warning) => criticalQualityWarnings.has(warning))) {
+  if ([...analysis.qualityWarnings, ...analysis.warnings].some((warning) => criticalQualityWarnings.has(warning))) {
     reasons.push('critical_quality_warning')
   }
 
@@ -215,32 +220,29 @@ function stickerConsensus(
   const frameVotes: ScanFaceSymbol[] = []
 
   for (const { assignedTiles } of frames) {
-    const tile = assignedTiles?.[index]
-    if (tile === undefined) {
-      continue
-    }
+    const tile = assignedTiles![index]
 
     scores.set(tile.symbol, (scores.get(tile.symbol) ?? 0) + tile.confidence)
     frameVotes.push(tile.symbol)
   }
 
   const sorted = sortedScores(scores)
-  const [winner, winnerScore = 0] = sorted[0] ?? []
+  const [winner, winnerScore] = sorted[0]!
   const runnerUpScore = sorted[1]?.[1] ?? 0
   const totalScore = sorted.reduce((sum, [, score]) => sum + score, 0)
-  const agreement = winner === undefined ? 0 : frameVotes.filter((vote) => vote === winner).length / frames.length
+  const agreement = frameVotes.filter((vote) => vote === winner).length / frames.length
   const alternatives = sorted.slice(1, 3).map(([symbol, score]) => ({
-    confidence: totalScore > 0 ? score / totalScore : 0,
+    confidence: score / totalScore,
     symbol,
   }))
 
   return {
     agreement,
     alternatives,
-    confidence: totalScore > 0 ? winnerScore / totalScore : 0,
+    confidence: winnerScore / totalScore,
     framesUsed: frameVotes.length,
     index,
-    margin: totalScore > 0 ? (winnerScore - runnerUpScore) / totalScore : 0,
+    margin: (winnerScore - runnerUpScore) / totalScore,
     symbol: winner,
   }
 }
@@ -251,9 +253,6 @@ function temporalConsensusStatus(
   bboxStats: BboxStability,
   options: TemporalConsensusOptions,
 ): TemporalFaceConsensusStatus {
-  if (stickers.some((sticker) => sticker.symbol === undefined)) {
-    return 'partial_tiles'
-  }
   if (
     stickers.some(
       (sticker) =>
@@ -292,7 +291,8 @@ function bboxStability(
   const movements: number[] = []
   const stickerStability: Partial<Record<number, number>> = {}
 
-  for (let index = 0; index < 9; index += 1) {
+  const stickerCount = options.gridSize * options.gridSize
+  for (let index = 0; index < stickerCount; index += 1) {
     const boxes = frames
       .map(({ assignedTiles }) => assignedTiles?.[index]?.bbox)
       .filter((bbox): bbox is ScanDetectionBox => bbox !== undefined)

@@ -14,7 +14,7 @@ export function ScanColorPalette({ selectedSymbol, onSelect }: ScanColorPaletteP
 
   return (
     <div className="grid gap-2" aria-label={t('scan.editor.paletteLabel')} role="group">
-      <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
+      <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
         {t('scan.editor.pickColor')}
       </span>
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
@@ -24,10 +24,10 @@ export function ScanColorPalette({ selectedSymbol, onSelect }: ScanColorPaletteP
 
           return (
             <button
-              className="min-h-11 border px-2 py-2 text-xs font-extrabold uppercase tracking-[0.12em] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#f7f7f7]/50"
+              className="min-h-11 border px-2 py-2 text-xs font-extrabold uppercase tracking-[0.12em] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-app-focus/50"
               style={{
                 backgroundColor: details.background,
-                borderColor: selected ? '#f7f7f7' : '#2b2b2b',
+                borderColor: selected ? 'var(--app-text)' : 'var(--app-border)',
                 color: details.foreground,
               }}
               type="button"

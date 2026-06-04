@@ -23,8 +23,8 @@ export function SolveTable({ rows, showMilliseconds = false, onDeleteSolve }: So
 
   if (rows.length === 0) {
     return (
-      <section className="border border-[#2b2b2b] bg-[#101010] p-4 text-center">
-        <p className="text-sm font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
+      <section className="border border-app-border bg-app-surface p-4 text-center">
+        <p className="text-sm font-extrabold uppercase tracking-[0.16em] text-app-muted">
           {t('timer.solves.empty')}
         </p>
       </section>
@@ -32,9 +32,9 @@ export function SolveTable({ rows, showMilliseconds = false, onDeleteSolve }: So
   }
 
   return (
-    <section className="w-full overflow-x-auto border border-[#2b2b2b] bg-[#101010]" aria-label={t('timer.solves.label')}>
+    <section className="w-full overflow-x-auto border border-app-border bg-app-surface" aria-label={t('timer.solves.label')}>
       <table className="w-full min-w-[44rem] border-collapse text-left text-sm">
-        <thead className="border-b border-[#2b2b2b] text-xs font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
+        <thead className="border-b border-app-border text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
           <tr>
             <th className="px-4 py-3">#</th>
             <th className="px-4 py-3">{t('timer.solves.time')}</th>
@@ -45,15 +45,15 @@ export function SolveTable({ rows, showMilliseconds = false, onDeleteSolve }: So
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.id} className="border-b border-[#2b2b2b] last:border-b-0">
-              <td className="px-4 py-3 font-mono text-[#a8a8a8]">{row.index}</td>
-              <td className="px-4 py-3 font-mono text-lg font-black text-[#f7f7f7]">
+            <tr key={row.id} className="border-b border-app-border last:border-b-0">
+              <td className="px-4 py-3 font-mono text-app-muted">{row.index}</td>
+              <td className="px-4 py-3 font-mono text-lg font-black text-app-text">
                 {formatTimerTime(row.finalTimeMs, { showMilliseconds })}
               </td>
-              <td className="px-4 py-3 text-xs font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
+              <td className="px-4 py-3 text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
                 {t(`timer.penalty.${row.penalty}`)}
               </td>
-              <td className="max-w-md truncate px-4 py-3 font-mono text-xs text-[#a8a8a8]">
+              <td className="max-w-md truncate px-4 py-3 font-mono text-xs text-app-muted">
                 {row.scramble}
               </td>
               <td className="px-4 py-3">

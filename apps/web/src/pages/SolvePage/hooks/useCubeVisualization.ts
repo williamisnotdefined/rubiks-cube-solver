@@ -1,6 +1,7 @@
 import { useEffect, useRef, type RefObject } from 'react'
 import type { Movement } from '@houstonp/rubiks-cube/core'
 import type { RubiksCubeElement } from '@houstonp/rubiks-cube/view'
+import type { PuzzleVisualizationKind } from '@api/solver/types'
 
 const visualizationMoveTokens = [
   'U',
@@ -33,6 +34,8 @@ export function useCubeVisualization(
   notation: string,
   readyRevision: number,
   visualState?: string,
+  visualStateKind?: PuzzleVisualizationKind,
+  cubeType?: 'Two' | 'Three',
   enabled = true,
 ) {
   const visualMovesRef = useRef<Movement[]>([])
@@ -52,12 +55,20 @@ export function useCubeVisualization(
     if (parsed.status !== 'valid') {
       return
     }
+    const compatibleVisualState = compatibleVisualizationState(visualState, visualStateKind, cubeType)
+    if (compatibleVisualState.status === 'invalid') {
+      return
+    }
+    const nextMoves = parsed.moves
+    const nextState = compatibleVisualState.value
 
-    const timeout = window.setTimeout(() => {
-      void syncCubeVisualization({
+    let retryTimeout: number | undefined
+
+    async function runSync(attempt: number) {
+      const synced = await syncCubeVisualization({
         cube: cubeRef.current,
-        nextMoves: parsed.moves,
-        nextState: visualState,
+        nextMoves,
+        nextState,
         previousMoves: visualMovesRef.current,
         previousState: visualStateRef.current,
         hasSynced: visualHasSyncedRef.current,
@@ -68,13 +79,54 @@ export function useCubeVisualization(
           visualHasSyncedRef.current = true
         },
       })
+
+      if (!synced && visualSyncIdRef.current === syncId && attempt < 5) {
+        retryTimeout = window.setTimeout(() => {
+          void runSync(attempt + 1)
+        }, 50)
+      }
+    }
+
+    const timeout = window.setTimeout(() => {
+      void runSync(0)
     }, 0)
 
     return () => {
       visualSyncIdRef.current += 1
       window.clearTimeout(timeout)
+      if (retryTimeout !== undefined) {
+        window.clearTimeout(retryTimeout)
+      }
     }
-  }, [cubeRef, enabled, notation, readyRevision, visualState])
+  }, [cubeRef, cubeType, enabled, notation, readyRevision, visualState, visualStateKind])
+}
+
+type CompatibleVisualizationStateResult =
+  | { status: 'valid'; value: string | undefined }
+  | { status: 'invalid' }
+
+function compatibleVisualizationState(
+  visualState: string | undefined,
+  visualStateKind: PuzzleVisualizationKind | undefined,
+  cubeType: 'Two' | 'Three' | undefined,
+): CompatibleVisualizationStateResult {
+  if (visualState === undefined) {
+    return { status: 'valid', value: undefined }
+  }
+
+  if (visualStateKind === 'cube2-facelets-v1') {
+    return cubeType === 'Two' && visualState.length === 24
+      ? { status: 'valid', value: visualState }
+      : { status: 'invalid' }
+  }
+
+  if (visualStateKind === 'cube3-facelets-v1') {
+    return cubeType === 'Three' && visualState.length === 54
+      ? { status: 'valid', value: visualState }
+      : { status: 'invalid' }
+  }
+
+  return { status: 'invalid' }
 }
 
 function parseVisualizationNotation(input: string): VisualizationNotationParseResult {
@@ -115,9 +167,9 @@ async function syncCubeVisualization({
   hasSynced,
   shouldContinue,
   onSynced,
-}: SyncCubeVisualizationInput): Promise<void> {
+}: SyncCubeVisualizationInput): Promise<boolean> {
   if (cube === null || !shouldContinue()) {
-    return
+    return false
   }
 
   const animateNewMoves =
@@ -134,7 +186,7 @@ async function syncCubeVisualization({
       if (nextState === undefined) {
         cube.reset()
       } else if (!cube.setState(nextState)) {
-        return
+        return false
       }
     }
 
@@ -142,13 +194,16 @@ async function syncCubeVisualization({
 
     for (const move of movesToApply) {
       if (!shouldContinue()) {
-        return
+        return false
       }
 
       await cube.move(move, animateNewMoves ? undefined : { animationSpeedMs: 0 })
     }
+
+    return true
   } catch {
     // The custom element may still be finishing its first connection pass.
+    return false
   }
 }
 

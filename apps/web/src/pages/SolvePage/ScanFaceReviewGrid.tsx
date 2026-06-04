@@ -1,11 +1,12 @@
 import cls from 'classnames'
 import { useTranslation } from 'react-i18next'
 import type { ScanSticker } from './scanState'
-import { isLowConfidenceScanSticker, scanSymbolDetails } from './scanState'
+import { isLowConfidenceScanSticker, scan2StickersPerFace, scanSymbolDetails } from './scanState'
 import { scanColorInitial, scanColorLabel } from './scanTranslations'
 
 type ScanFaceReviewGridProps = {
   reviewTargetIndexes?: readonly number[]
+  stickersPerFace?: number
   stickers: readonly ScanSticker[]
   selectedIndex: number
   onSelect: (index: number) => void
@@ -13,6 +14,7 @@ type ScanFaceReviewGridProps = {
 
 export function ScanFaceReviewGrid({
   reviewTargetIndexes = [],
+  stickersPerFace,
   stickers,
   selectedIndex,
   onSelect,
@@ -22,10 +24,13 @@ export function ScanFaceReviewGrid({
 
   return (
     <div className="grid gap-2" aria-label={t('scan.editor.reviewGroupLabel')} role="group">
-      <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
+      <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
         {t('scan.editor.reviewColors')}
       </span>
-      <div className="grid aspect-square w-full max-w-[17rem] grid-cols-3 gap-2 justify-self-center">
+      <div className={cls(
+        'grid aspect-square w-full max-w-[17rem] gap-2 justify-self-center',
+        stickersPerFace === scan2StickersPerFace ? 'grid-cols-2' : 'grid-cols-3',
+      )}>
         {stickers.map((sticker, index) => {
           const details = sticker.symbol === undefined ? undefined : scanSymbolDetails[sticker.symbol]
           const selected = selectedIndex === index
@@ -40,9 +45,9 @@ export function ScanFaceReviewGrid({
           return (
             <button
               className={cls(
-                'relative min-h-16 border text-sm font-extrabold uppercase tracking-[0.14em] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#f7f7f7]/50',
-                selected ? 'border-[#f7f7f7]' : 'border-[#2b2b2b]',
-                details === undefined ? 'bg-[#171717] text-[#a8a8a8]' : '',
+                'relative min-h-16 border text-sm font-extrabold uppercase tracking-[0.14em] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-app-focus/50',
+                selected ? 'border-app-text' : 'border-app-border',
+                details === undefined ? 'bg-app-surface-raised text-app-muted' : '',
                 lowConfidence ? 'ring-2 ring-amber-300/80' : '',
                 reviewTarget ? 'ring-4 ring-cyan-300/90' : '',
               )}

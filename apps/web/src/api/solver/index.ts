@@ -1,4 +1,7 @@
 export { useGetHealth } from './getHealth'
+export { useGetPuzzleStrategies } from './getPuzzleStrategies'
+export { useGetPuzzles } from './getPuzzles'
 export { useGetStrategies } from './getStrategies'
 export { useSolveNotation } from './solveNotation'
+export { useSolvePuzzleNotation } from './solvePuzzleNotation'
 export { useSolveScan } from './solveScan'

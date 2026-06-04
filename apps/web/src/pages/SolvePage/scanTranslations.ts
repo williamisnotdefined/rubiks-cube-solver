@@ -1,7 +1,7 @@
 import type { TFunction } from 'i18next'
 import type { ScanFaceSymbol } from '@api/solver/types'
 import { scanColorCode } from './scanColorSymbols'
-import type { ScanFaceDraftValidation } from './scanState'
+import { scan2StickersPerFace, type ScanFaceDraftValidation } from './scanState'
 
 export function scanColorLabel(t: TFunction, symbol: ScanFaceSymbol): string {
   return t(`scan.colors.${symbol}`)
@@ -12,16 +12,20 @@ export function scanColorInitial(t: TFunction, symbol: ScanFaceSymbol): string {
   return scanColorCode(symbol)
 }
 
-export function scanFaceLabel(t: TFunction, symbol: ScanFaceSymbol): string {
-  return t(`scan.faces.${symbol}.label`)
+export function scanFaceLabel(t: TFunction, symbol: ScanFaceSymbol, stickersPerFace?: number): string {
+  return t(`${scanFaceTranslationNamespace(stickersPerFace)}.${symbol}.label`)
 }
 
-export function scanFaceInstruction(t: TFunction, symbol: ScanFaceSymbol): string {
-  return t(`scan.faces.${symbol}.instruction`)
+export function scanFaceInstruction(t: TFunction, symbol: ScanFaceSymbol, stickersPerFace?: number): string {
+  return t(`${scanFaceTranslationNamespace(stickersPerFace)}.${symbol}.instruction`)
 }
 
-export function scanFaceTopLabel(t: TFunction, symbol: ScanFaceSymbol): string {
-  return t(`scan.faces.${symbol}.top`)
+export function scanFaceTopLabel(t: TFunction, symbol: ScanFaceSymbol, stickersPerFace?: number): string {
+  return t(`${scanFaceTranslationNamespace(stickersPerFace)}.${symbol}.top`)
+}
+
+function scanFaceTranslationNamespace(stickersPerFace: number | undefined): string {
+  return stickersPerFace === scan2StickersPerFace ? 'scan.faces2' : 'scan.faces'
 }
 
 export function scanFaceDraftValidationMessage(

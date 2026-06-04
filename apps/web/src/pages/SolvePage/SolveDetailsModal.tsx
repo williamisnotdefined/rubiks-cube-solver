@@ -58,14 +58,14 @@ export function SolveDetailsModal({ result, onClose }: SolveDetailsModalProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center px-3 py-6 sm:px-6">
       <button
         aria-label={t('solve.details.dismiss')}
-        className="absolute inset-0 bg-[#070707]/85 backdrop-blur-sm"
+        className="absolute inset-0 bg-app-bg/85 backdrop-blur-sm"
         type="button"
         onClick={onClose}
       />
       <section
         aria-labelledby={titleId}
         aria-modal="true"
-        className="relative max-h-[calc(100vh-3rem)] w-full max-w-3xl overflow-auto border border-[#2b2b2b] bg-[#101010] p-4 text-left text-[#f7f7f7] shadow-2xl sm:p-6"
+        className="relative max-h-[calc(100vh-3rem)] w-full max-w-3xl overflow-auto border border-app-border bg-app-surface p-4 text-left text-app-text shadow-2xl sm:p-6"
         role="dialog"
       >
         <div className="flex items-start justify-between gap-4">
@@ -73,7 +73,7 @@ export function SolveDetailsModal({ result, onClose }: SolveDetailsModalProps) {
             <h2 className="text-lg font-extrabold uppercase tracking-[0.16em]" id={titleId}>
               {t('solve.details.title')}
             </h2>
-            <p className="text-sm font-semibold text-[#a8a8a8]">
+            <p className="text-sm font-semibold text-app-muted">
               {t('solve.details.subtitle')}
             </p>
           </div>
@@ -83,39 +83,39 @@ export function SolveDetailsModal({ result, onClose }: SolveDetailsModalProps) {
         </div>
 
         <dl className="mt-5 grid gap-2 text-sm sm:grid-cols-3">
-          <div className="border border-[#2b2b2b] bg-[#171717] p-3">
-            <dt className="font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">{t('solve.details.solution')}</dt>
+          <div className="border border-app-border bg-app-surface-raised p-3">
+            <dt className="font-extrabold uppercase tracking-[0.16em] text-app-muted">{t('solve.details.solution')}</dt>
             <dd className="mt-1 font-mono text-emerald-300">{movesLabel}</dd>
           </div>
-          <div className="border border-[#2b2b2b] bg-[#171717] p-3">
-            <dt className="font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">{t('solve.details.search')}</dt>
+          <div className="border border-app-border bg-app-surface-raised p-3">
+            <dt className="font-extrabold uppercase tracking-[0.16em] text-app-muted">{t('solve.details.search')}</dt>
             <dd className="mt-1 font-mono text-emerald-300">{nodesLabel}</dd>
           </div>
-          <div className="border border-[#2b2b2b] bg-[#171717] p-3">
-            <dt className="font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">{t('solve.details.time')}</dt>
+          <div className="border border-app-border bg-app-surface-raised p-3">
+            <dt className="font-extrabold uppercase tracking-[0.16em] text-app-muted">{t('solve.details.time')}</dt>
             <dd className="mt-1 font-mono text-emerald-300">{elapsedLabel}</dd>
           </div>
         </dl>
 
-        <div className="mt-5 overflow-x-auto border border-[#2b2b2b]">
+        <div className="mt-5 overflow-x-auto border border-app-border">
           <table className="min-w-[44rem] border-collapse text-sm">
             <thead>
-              <tr className="border-b border-[#2b2b2b] bg-[#070707]">
-                <th className="w-48 px-3 py-3 text-left font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
+              <tr className="border-b border-app-border bg-app-bg">
+                <th className="w-48 px-3 py-3 text-left font-extrabold uppercase tracking-[0.16em] text-app-muted">
                   {t('solve.details.columns.text')}
                 </th>
-                <th className="px-3 py-3 text-left font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
+                <th className="px-3 py-3 text-left font-extrabold uppercase tracking-[0.16em] text-app-muted">
                   {t('solve.details.columns.meaning')}
                 </th>
               </tr>
             </thead>
             <tbody>
               {detailRows.map((row) => (
-                <tr className="border-b border-[#2b2b2b] last:border-b-0" key={row.text}>
-                  <td className="border-r border-[#2b2b2b] px-3 py-3 align-top font-mono text-emerald-300">
+                <tr className="border-b border-app-border last:border-b-0" key={row.text}>
+                  <td className="border-r border-app-border px-3 py-3 align-top font-mono text-emerald-300">
                     {row.text}
                   </td>
-                  <td className="px-3 py-3 align-top leading-relaxed text-[#f7f7f7]">{row.meaning}</td>
+                  <td className="px-3 py-3 align-top leading-relaxed text-app-text">{row.meaning}</td>
                 </tr>
               ))}
             </tbody>

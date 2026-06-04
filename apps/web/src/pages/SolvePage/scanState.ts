@@ -100,6 +100,8 @@ type FlexibleStickerAssignment = {
   index: number
 }
 
+type ScanSessionReviewedSticker = NonNullable<ScanSessionFaceRequest['reviewedStickers']>[number]
+
 export const scanFaceOrder = [
   {
     symbol: 'F',
@@ -140,57 +142,62 @@ export const scanFaceOrder = [
 ] as const satisfies readonly ScanFaceDefinition[]
 
 export const scanSymbols = ['U', 'R', 'F', 'D', 'L', 'B'] as const satisfies readonly ScanFaceSymbol[]
+export const scan3StickersPerFace = 9
+export const scan2StickersPerFace = 4
 
 export const scanSymbolDetails: Record<
   ScanFaceSymbol,
   { label: string; background: string; foreground: string }
 > = {
-  U: { label: 'White', background: '#f8fafc', foreground: '#09090b' },
-  R: { label: 'Red', background: '#ef4444', foreground: '#ffffff' },
-  F: { label: 'Green', background: '#22c55e', foreground: '#052e16' },
-  D: { label: 'Yellow', background: '#facc15', foreground: '#111827' },
-  L: { label: 'Orange', background: '#f97316', foreground: '#111827' },
-  B: { label: 'Blue', background: '#2563eb', foreground: '#ffffff' },
+  U: { label: 'White', background: 'var(--scan-u-bg)', foreground: 'var(--scan-u-fg)' },
+  R: { label: 'Red', background: 'var(--scan-r-bg)', foreground: 'var(--scan-r-fg)' },
+  F: { label: 'Green', background: 'var(--scan-f-bg)', foreground: 'var(--scan-f-fg)' },
+  D: { label: 'Yellow', background: 'var(--scan-d-bg)', foreground: 'var(--scan-d-fg)' },
+  L: { label: 'Orange', background: 'var(--scan-l-bg)', foreground: 'var(--scan-l-fg)' },
+  B: { label: 'Blue', background: 'var(--scan-b-bg)', foreground: 'var(--scan-b-fg)' },
 }
 
 const lowConfidenceThreshold = 0.3
 const detectedOverwriteConfidenceMargin = 0.03
 
-export function createEmptyScanStickers(centerSymbol: ScanFaceSymbol): ScanSticker[] {
-  return Array.from({ length: 9 }, (_, index) =>
-    index === 4
+export function createEmptyScanStickers(centerSymbol: ScanFaceSymbol, stickersPerFace = scan3StickersPerFace): ScanSticker[] {
+  const centerIndex = scanCenterIndex(stickersPerFace)
+  return Array.from({ length: stickersPerFace }, (_, index) =>
+    centerIndex !== undefined && index === centerIndex
       ? { symbol: centerSymbol, confidence: 1, source: 'center' }
       : { confidence: 0, source: 'empty' },
   )
 }
 
-export function createInitialScanFaceDrafts(): ScanFaceDrafts {
+export function createInitialScanFaceDrafts(stickersPerFace = scan3StickersPerFace): ScanFaceDrafts {
   return Object.fromEntries(
     scanFaceOrder.map(({ symbol }) => [
       symbol,
       {
         confirmed: false,
-        stickers: createEmptyScanStickers(symbol),
+        stickers: createEmptyScanStickers(symbol, stickersPerFace),
         symbol,
       },
     ]),
   ) as ScanFaceDrafts
 }
 
-export function isScanFaceComplete(stickers: readonly ScanSticker[]): boolean {
-  return stickers.length === 9 && stickers.every((sticker) => sticker.symbol !== undefined)
+export function isScanFaceComplete(stickers: readonly ScanSticker[], stickersPerFace = scan3StickersPerFace): boolean {
+  return stickers.length === stickersPerFace && stickers.every((sticker) => sticker.symbol !== undefined)
 }
 
 export function validateScanFaceDraft(
   faces: ScanFaces,
   symbol: ScanFaceSymbol,
   stickers: readonly ScanSticker[],
+  stickersPerFace = scan3StickersPerFace,
 ): ScanFaceDraftValidation | undefined {
-  if (!isScanFaceComplete(stickers)) {
+  if (!isScanFaceComplete(stickers, stickersPerFace)) {
     return { key: 'confirmAllNineColors' }
   }
 
-  if (stickers[4]?.symbol !== symbol) {
+  const centerIndex = scanCenterIndex(stickersPerFace)
+  if (centerIndex !== undefined && stickers[centerIndex]?.symbol !== symbol) {
     return { key: 'centerColorMismatch' }
   }
 
@@ -199,23 +206,23 @@ export function validateScanFaceDraft(
     [symbol]: { symbol, stickers: stickers.slice() },
   }
   const counts = countScanSymbols(nextFaces)
-  const overflowSymbol = scanSymbols.find((scanSymbol) => counts[scanSymbol] > 9)
+  const overflowSymbol = scanSymbols.find((scanSymbol) => counts[scanSymbol] > stickersPerFace)
 
-  if (overflowSymbol !== undefined && balancedScanFaceSymbols(nextFaces, false) === undefined) {
+  if (overflowSymbol !== undefined && balancedScanFaceSymbols(nextFaces, stickersPerFace) === undefined) {
     return { key: 'colorAppearsMoreThanNine', values: { symbol: overflowSymbol } }
   }
 
   return undefined
 }
 
-export function scanFacesToPayload(faces: ScanFaces): ScanFacesPayload | undefined {
-  if (!allScanFacesComplete(faces)) {
+export function scanFacesToPayload(faces: ScanFaces, stickersPerFace = scan3StickersPerFace): ScanFacesPayload | undefined {
+  if (!allScanFacesComplete(faces, stickersPerFace)) {
     return undefined
   }
 
-  const balancedFaces = exactScanCounts(faces)
+  const balancedFaces = exactScanCounts(faces, stickersPerFace)
     ? scanFaceSymbolsFromFaces(faces)
-    : balancedScanFaceSymbols(faces, true)
+    : balancedScanFaceSymbols(faces, stickersPerFace)
 
   if (balancedFaces === undefined) {
     return undefined
@@ -225,11 +232,7 @@ export function scanFacesToPayload(faces: ScanFaces): ScanFacesPayload | undefin
 
   for (const { symbol } of scanFaceOrder) {
     const faceSymbols = balancedFaces[symbol]
-    if (faceSymbols === undefined) {
-      return undefined
-    }
-
-    payload[symbol] = orientScanFaceSymbols(symbol, faceSymbols).join('')
+    payload[symbol] = orientScanFaceSymbols(symbol, faceSymbols!).join('')
   }
 
   return payload
@@ -260,23 +263,26 @@ export function scanFacesFromDrafts(drafts: ScanFaceDrafts): ScanFaces {
 
 export function scanSessionFacesFromDrafts(
   drafts: ScanFaceDrafts,
+  stickersPerFace = scan3StickersPerFace,
 ): ScanSessionFaceRequest[] | undefined {
   const faces: ScanSessionFaceRequest[] = []
 
   for (const { symbol } of scanFaceOrder) {
     const draft = drafts[symbol]
-    if (!draft.confirmed || !isScanFaceComplete(draft.stickers)) {
+    if (!draft.confirmed || !isScanFaceComplete(draft.stickers, stickersPerFace)) {
       return undefined
     }
 
+    const centerIndex = scanCenterIndex(stickersPerFace)
+    const reviewedStickers = orientScanFaceReviewedStickers(symbol, draft.stickers)
     const manualOverrides: Partial<Record<number, ScanFaceSymbol>> = {}
-    for (const [index, sticker] of draft.stickers.entries()) {
+    for (const sticker of reviewedStickers) {
       if (
         sticker.symbol !== undefined &&
-        ((index !== 4 && sticker.source === 'manual') ||
-          (index === 4 && draft.centerOverrideConfirmed === true))
+        ((centerIndex === undefined || sticker.index !== centerIndex) && sticker.source === 'manual' ||
+          (centerIndex !== undefined && sticker.index === centerIndex && draft.centerOverrideConfirmed === true))
       ) {
-        manualOverrides[index] = sticker.symbol
+        manualOverrides[sticker.index] = sticker.symbol
       }
     }
 
@@ -284,12 +290,7 @@ export function scanSessionFacesFromDrafts(
       expectedTop: expectedTopForScanFace(symbol),
       image: draft.photoDataUrl,
       manualOverrides: Object.keys(manualOverrides).length > 0 ? manualOverrides : undefined,
-      reviewedStickers: draft.stickers.map((sticker, index) => ({
-        confidence: sticker.confidence,
-        index,
-        source: sticker.source,
-        symbol: sticker.symbol as ScanFaceSymbol,
-      })),
+      reviewedStickers,
       symbol,
     })
   }
@@ -336,12 +337,13 @@ export function replaceScanFaceDraftSticker(
 export function clearScanFaceDraft(
   drafts: ScanFaceDrafts,
   symbol: ScanFaceSymbol,
+  stickersPerFace = scan3StickersPerFace,
 ): ScanFaceDrafts {
   return {
     ...drafts,
     [symbol]: {
       confirmed: false,
-      stickers: createEmptyScanStickers(symbol),
+      stickers: createEmptyScanStickers(symbol, stickersPerFace),
       symbol,
     },
   }
@@ -410,15 +412,19 @@ export function replaceScanSticker(
 export function scanStickersFromAnalysis(
   analysis: AnalyzeScanFaceResponse,
   centerSymbol: ScanFaceSymbol,
+  stickersPerFace = scan3StickersPerFace,
 ): ScanSticker[] {
-  const stickers = createEmptyScanStickers(centerSymbol)
+  const stickers = createEmptyScanStickers(centerSymbol, stickersPerFace)
   const analyzedStickersByIndex = new Map(analysis.stickers.map((sticker) => [sticker.index, sticker]))
-  const assignedTiles = assignTileDetectionsToReviewGrid(analysis.tileDetections)
+  const assignedTiles = assignTileDetectionsToReviewGrid(analysis.tileDetections, {
+    gridSize: stickersPerFace === scan2StickersPerFace ? 2 : 3,
+  })
+  const centerIndex = scanCenterIndex(stickersPerFace)
 
-  for (let index = 0; index < 9; index += 1) {
+  for (let index = 0; index < stickersPerFace; index += 1) {
     const analyzedSticker = analyzedStickersByIndex.get(index)
     const assignedTile = assignedTiles?.[index]
-    const symbol = index === 4 ? centerSymbol : assignedTile?.symbol ?? analyzedSticker?.symbol
+    const symbol = centerIndex !== undefined && index === centerIndex ? centerSymbol : assignedTile?.symbol ?? analyzedSticker?.symbol
 
     if (symbol === undefined) {
       continue
@@ -427,11 +433,11 @@ export function scanStickersFromAnalysis(
     stickers[index] = {
       alternatives: scanStickerAlternativesFromAnalysis(analyzedSticker, assignedTile?.symbol),
       confidence:
-        index === 4
+        centerIndex !== undefined && index === centerIndex
           ? 1
-          : assignedTile?.confidence ?? analyzedSticker?.confidence ?? 0,
+          : assignedTile?.confidence ?? analyzedSticker!.confidence,
       rgb: analyzedSticker?.rgb,
-      source: index === 4 ? 'center' : 'detected',
+      source: centerIndex !== undefined && index === centerIndex ? 'center' : 'detected',
       symbol,
     }
   }
@@ -443,17 +449,19 @@ export function scanStickersFromTemporalConsensus(
   consensus: TemporalFaceConsensus,
   centerSymbol: ScanFaceSymbol,
   analysis?: AnalyzeScanFaceResponse,
+  stickersPerFace = scan3StickersPerFace,
 ): ScanSticker[] {
-  const stickers = createEmptyScanStickers(centerSymbol)
+  const stickers = createEmptyScanStickers(centerSymbol, stickersPerFace)
   const analyzedStickersByIndex = new Map(analysis?.stickers.map((sticker) => [sticker.index, sticker]))
+  const centerIndex = scanCenterIndex(stickersPerFace)
 
   for (const consensusSticker of consensus.stickers) {
-    if (consensusSticker.index < 0 || consensusSticker.index > 8 || consensusSticker.symbol === undefined) {
+    if (consensusSticker.index < 0 || consensusSticker.index >= stickersPerFace || consensusSticker.symbol === undefined) {
       continue
     }
 
     const analyzedSticker = analyzedStickersByIndex.get(consensusSticker.index)
-    const symbol = consensusSticker.index === 4 ? centerSymbol : consensusSticker.symbol
+    const symbol = centerIndex !== undefined && consensusSticker.index === centerIndex ? centerSymbol : consensusSticker.symbol
     const alternatives = consensusSticker.alternatives
       .filter((alternative) => alternative.symbol !== symbol)
       .map((alternative) => ({
@@ -463,9 +471,9 @@ export function scanStickersFromTemporalConsensus(
 
     stickers[consensusSticker.index] = {
       alternatives: alternatives.length > 0 ? alternatives : undefined,
-      confidence: consensusSticker.index === 4 ? 1 : consensusSticker.confidence,
+      confidence: centerIndex !== undefined && consensusSticker.index === centerIndex ? 1 : consensusSticker.confidence,
       rgb: analyzedSticker?.rgb,
-      source: consensusSticker.index === 4 ? 'center' : 'detected',
+      source: centerIndex !== undefined && consensusSticker.index === centerIndex ? 'center' : 'detected',
       symbol,
     }
   }
@@ -510,7 +518,9 @@ export function mergeLiveDetectedScanStickers(
   currentStickers: readonly ScanSticker[],
   incomingStickers: readonly ScanSticker[],
 ): ScanSticker[] {
-  return Array.from({ length: 9 }, (_, index) => {
+  const stickerCount = Math.max(currentStickers.length, incomingStickers.length)
+
+  return Array.from({ length: stickerCount }, (_, index) => {
     const current = currentStickers[index] ?? { confidence: 0, source: 'empty' as const }
     const incoming = incomingStickers[index]
 
@@ -546,6 +556,10 @@ export function isLowConfidenceScanSticker(sticker: ScanSticker, index: number):
   return index !== 4 && sticker.source === 'detected' && sticker.confidence < lowConfidenceThreshold
 }
 
+export function scanCenterIndex(stickersPerFace: number): number | undefined {
+  return stickersPerFace === scan3StickersPerFace ? 4 : undefined
+}
+
 function hasScanFaceDraftContent(draft: ScanFaceDraft): boolean {
   return (
     draft.photoDataUrl !== undefined ||
@@ -555,72 +569,53 @@ function hasScanFaceDraftContent(draft: ScanFaceDraft): boolean {
   )
 }
 
-function allScanFacesComplete(faces: ScanFaces): boolean {
+function allScanFacesComplete(faces: ScanFaces, stickersPerFace: number): boolean {
   return scanFaceOrder.every(({ symbol }) => {
     const face = faces[symbol]
-    return face !== undefined && isScanFaceComplete(face.stickers)
+    return face !== undefined && isScanFaceComplete(face.stickers, stickersPerFace)
   })
 }
 
-function exactScanCounts(faces: ScanFaces): boolean {
+function exactScanCounts(faces: ScanFaces, stickersPerFace: number): boolean {
   const counts = countScanSymbols(faces)
-  return scanSymbols.every((symbol) => counts[symbol] === 9)
+  return scanSymbols.every((symbol) => counts[symbol] === stickersPerFace)
 }
 
 function scanFaceSymbolsFromFaces(
   faces: ScanFaces,
-): Partial<Record<ScanFaceSymbol, ScanFaceSymbol[]>> | undefined {
+): Partial<Record<ScanFaceSymbol, ScanFaceSymbol[]>> {
   const faceSymbols: Partial<Record<ScanFaceSymbol, ScanFaceSymbol[]>> = {}
 
   for (const face of Object.values(faces)) {
-    if (face === undefined || !isScanFaceComplete(face.stickers)) {
-      return undefined
-    }
-
-    faceSymbols[face.symbol] = face.stickers
-      .map((sticker) => sticker.symbol)
-      .filter((symbol): symbol is ScanFaceSymbol => symbol !== undefined)
+    faceSymbols[face!.symbol] = face!.stickers.map((sticker) => sticker.symbol as ScanFaceSymbol)
   }
 
   return faceSymbols
 }
 
-function balancedScanFaceSymbols(
-  faces: ScanFaces,
-  requireExactCounts: boolean,
-): Partial<Record<ScanFaceSymbol, ScanFaceSymbol[]>> | undefined {
+function balancedScanFaceSymbols(faces: ScanFaces, stickersPerFace: number): Partial<Record<ScanFaceSymbol, ScanFaceSymbol[]>> | undefined {
   const assignments: Partial<Record<ScanFaceSymbol, ScanFaceSymbol[]>> = {}
-  const quotas = Object.fromEntries(scanSymbols.map((symbol) => [symbol, 9])) as Record<
+  const quotas = Object.fromEntries(scanSymbols.map((symbol) => [symbol, stickersPerFace])) as Record<
     ScanFaceSymbol,
     number
   >
   const flexibleStickers: FlexibleStickerAssignment[] = []
 
   for (const face of Object.values(faces)) {
-    if (face === undefined || !isScanFaceComplete(face.stickers)) {
-      if (requireExactCounts) {
-        return undefined
-      }
+    const completedFace = face!
+    assignments[completedFace.symbol] = Array.from({ length: stickersPerFace }, () => completedFace.symbol)
 
-      continue
-    }
-
-    assignments[face.symbol] = Array.from({ length: 9 }, () => face.symbol)
-
-    for (const [index, sticker] of face.stickers.entries()) {
-      if (sticker.symbol === undefined) {
-        return undefined
-      }
-
+    for (const [index, sticker] of completedFace.stickers.entries()) {
       if (sticker.source === 'manual' || sticker.source === 'center') {
-        quotas[sticker.symbol] -= 1
-        assignments[face.symbol]![index] = sticker.symbol
+        const symbol = sticker.symbol!
+        quotas[symbol] -= 1
+        assignments[completedFace.symbol]![index] = symbol
         continue
       }
 
       flexibleStickers.push({
         candidates: scanStickerCandidates(sticker),
-        faceSymbol: face.symbol,
+        faceSymbol: completedFace.symbol,
         index,
       })
     }
@@ -633,7 +628,6 @@ function balancedScanFaceSymbols(
   const flexibleSymbols = assignFlexibleStickerSymbols(
     flexibleStickers,
     quotas,
-    requireExactCounts,
   )
   if (flexibleSymbols === undefined) {
     return undefined
@@ -650,9 +644,7 @@ function balancedScanFaceSymbols(
 function scanStickerCandidates(sticker: ScanSticker): StickerCandidate[] {
   const scores = new Map<ScanFaceSymbol, number>()
 
-  if (sticker.symbol !== undefined) {
-    scores.set(sticker.symbol, sticker.confidence + 0.04)
-  }
+  scores.set(sticker.symbol!, sticker.confidence + 0.04)
 
   for (const alternative of sticker.alternatives ?? []) {
     scores.set(alternative.symbol, Math.max(scores.get(alternative.symbol) ?? 0, alternative.confidence))
@@ -666,16 +658,10 @@ function scanStickerCandidates(sticker: ScanSticker): StickerCandidate[] {
 function assignFlexibleStickerSymbols(
   stickers: readonly FlexibleStickerAssignment[],
   quotas: Record<ScanFaceSymbol, number>,
-  requireExactCounts: boolean,
 ): ScanFaceSymbol[] | undefined {
   const memo = new Map<string, number | undefined>()
   const choices = new Map<string, ScanFaceSymbol>()
   const initialQuotas = scanSymbols.map((symbol) => quotas[symbol])
-  const totalCapacity = initialQuotas.reduce((sum, quota) => sum + quota, 0)
-
-  if (totalCapacity < stickers.length || (requireExactCounts && totalCapacity !== stickers.length)) {
-    return undefined
-  }
 
   function bestScore(index: number, remainingQuotas: readonly number[]): number | undefined {
     const key = assignmentMemoKey(index, remainingQuotas)
@@ -684,20 +670,9 @@ function assignFlexibleStickerSymbols(
       return cached
     }
 
-    const remainingStickerCount = stickers.length - index
-    const remainingCapacity = remainingQuotas.reduce((sum, quota) => sum + quota, 0)
-    if (
-      remainingCapacity < remainingStickerCount ||
-      (requireExactCounts && remainingCapacity !== remainingStickerCount)
-    ) {
-      memo.set(key, undefined)
-      return undefined
-    }
-
     if (index === stickers.length) {
-      const score = !requireExactCounts || remainingCapacity === 0 ? 0 : undefined
-      memo.set(key, score)
-      return score
+      memo.set(key, 0)
+      return 0
     }
 
     let best: number | undefined
@@ -737,10 +712,7 @@ function assignFlexibleStickerSymbols(
   const assignedSymbols: ScanFaceSymbol[] = []
   const remainingQuotas = initialQuotas.slice()
   for (let index = 0; index < stickers.length; index += 1) {
-    const symbol = choices.get(assignmentMemoKey(index, remainingQuotas))
-    if (symbol === undefined) {
-      return undefined
-    }
+    const symbol = choices.get(assignmentMemoKey(index, remainingQuotas))!
 
     assignedSymbols.push(symbol)
     remainingQuotas[scanSymbols.indexOf(symbol)] -= 1
@@ -764,11 +736,40 @@ function orientScanFaceSymbols(
   return faceSymbols.slice()
 }
 
+function orientScanFaceReviewedStickers(
+  symbol: ScanFaceSymbol,
+  stickers: readonly ScanSticker[],
+): ScanSessionReviewedSticker[] {
+  return orientScanFaceItems(symbol, stickers).map((sticker, index) => ({
+    confidence: sticker.confidence,
+    index,
+    source: sticker.source,
+    symbol: sticker.symbol as ScanFaceSymbol,
+  }))
+}
+
+function orientScanFaceItems<T>(symbol: ScanFaceSymbol, items: readonly T[]): T[] {
+  if (symbol === 'U') {
+    return rotateFaceSymbols180(items)
+  }
+
+  return items.slice()
+}
+
 export function expectedTopForScanFace(symbol: ScanFaceSymbol): ScanFaceSymbol {
   return symbol === 'U' || symbol === 'D' ? 'F' : 'U'
 }
 
-function rotateFaceSymbols180(faceSymbols: readonly ScanFaceSymbol[]): ScanFaceSymbol[] {
+function rotateFaceSymbols180<T>(faceSymbols: readonly T[]): T[] {
+  if (faceSymbols.length === scan2StickersPerFace) {
+    return [
+      faceSymbols[3],
+      faceSymbols[2],
+      faceSymbols[1],
+      faceSymbols[0],
+    ]
+  }
+
   return [
     faceSymbols[8],
     faceSymbols[7],

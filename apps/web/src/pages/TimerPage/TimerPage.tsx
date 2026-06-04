@@ -45,8 +45,8 @@ export function TimerPage() {
   const setSelectedEventId = useTimerSettingsStore((state) => state.setSelectedEventId)
   const setShowMilliseconds = useTimerSettingsStore((state) => state.setShowMilliseconds)
   const showMilliseconds = useTimerSettingsStore((state) => state.showMilliseconds)
-  const activeSession = sessions.find((session) => session.id === activeSessionId) ?? sessions[0]
-  const solves = activeSession?.solves ?? []
+  const activeSession = sessions.find((session) => session.id === activeSessionId) ?? sessions[0]!
+  const solves = activeSession.solves
   const lastSolve = solves.at(-1)
   const event = scrambleEventById(selectedEventId)
   const stats = timerStats(solves)
@@ -112,7 +112,7 @@ export function TimerPage() {
       <section className="mx-auto grid w-full max-w-5xl content-start gap-4">
         <SessionSummary
           eventLabel={event.label}
-          sessionName={activeSession?.name ?? t('timer.session.defaultName')}
+          sessionName={activeSession.name}
           solveCount={solves.length}
         />
         <ScrambleViewer eventLabel={generatedScramble.event.label} scramble={generatedScramble.scramble} />
@@ -145,19 +145,19 @@ export function TimerPage() {
             selectedEventId={selectedEventId}
             onEventChange={setSelectedEventId}
           />
-          <label className="flex min-h-12 items-center gap-3 border border-[#2b2b2b] bg-[#151515] px-4 py-3 text-xs font-extrabold uppercase tracking-[0.16em] text-[#f7f7f7]">
+          <label className="flex min-h-12 items-center gap-3 border border-app-border bg-app-control px-4 py-3 text-xs font-extrabold uppercase tracking-[0.16em] text-app-text">
             <input
               checked={inspectionEnabled}
-              className="size-4 accent-[#f7f7f7]"
+              className="size-4 accent-app-text"
               type="checkbox"
               onChange={(event) => setInspectionEnabled(event.target.checked)}
             />
             {t('timer.settings.inspection')}
           </label>
-          <label className="flex min-h-12 items-center gap-3 border border-[#2b2b2b] bg-[#151515] px-4 py-3 text-xs font-extrabold uppercase tracking-[0.16em] text-[#f7f7f7]">
+          <label className="flex min-h-12 items-center gap-3 border border-app-border bg-app-control px-4 py-3 text-xs font-extrabold uppercase tracking-[0.16em] text-app-text">
             <input
               checked={showMilliseconds}
-              className="size-4 accent-[#f7f7f7]"
+              className="size-4 accent-app-text"
               type="checkbox"
               onChange={(event) => setShowMilliseconds(event.target.checked)}
             />
@@ -165,7 +165,7 @@ export function TimerPage() {
           </label>
         </Panel>
         <Panel className="grid gap-3" aria-label={t('timer.penalty.label')}>
-          <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#a8a8a8]">
+          <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-app-muted">
             {t('timer.penalty.latest')}
           </p>
           <PenaltyControls

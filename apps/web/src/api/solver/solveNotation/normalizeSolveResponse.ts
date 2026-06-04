@@ -1,9 +1,16 @@
-import type { ApiSolveResponse, SolveFailureResult, SolveResult } from '../types'
+import type {
+  ApiSolveResponse,
+  ApiVisualStateResponse,
+  PuzzleVisualizationKind,
+  SolveFailureResult,
+  SolveResult,
+} from '../types'
 
 export function normalizeSolveResponse(
   payload: ApiSolveResponse,
   httpOk: boolean,
 ): SolveResult {
+  const visualState = normalizedVisualState(payload.visualState)
   const metadata = {
     maxDepth: payload.maxDepth,
     maxNodes: payload.maxNodes,
@@ -11,7 +18,11 @@ export function normalizeSolveResponse(
     strategyLabel: payload.strategyLabel,
     solverMode: payload.solverMode,
     generatedTableStatus: payload.generatedTableStatus,
-    visualState: payload.visualState,
+    puzzleId: payload.puzzleId,
+    puzzleSlug: payload.puzzleSlug,
+    metric: payload.metric,
+    visualState: visualState.value,
+    visualStateKind: visualState.kind,
   }
 
   if (httpOk && payload.ok && payload.status === 'success' && payload.replayVerified === true) {
@@ -58,10 +69,43 @@ function solveFailureStatus(status: string): SolveFailureResult['status'] {
     status === 'request_too_large' ||
     status === 'generated_tables_unavailable' ||
     status === 'generated_tables_corrupt' ||
+    status === 'node_limit_exceeded' ||
+    status === 'strategy_puzzle_mismatch' ||
+    status === 'unsupported_input_kind' ||
+    status === 'unsupported_metric' ||
+    status === 'unsupported_puzzle' ||
+    status === 'unknown_puzzle' ||
     status === 'unverified_solution'
   ) {
     return status
   }
 
   return 'api_error'
+}
+
+function normalizedVisualState(
+  visualState: ApiSolveResponse['visualState'],
+): { kind?: PuzzleVisualizationKind; value?: string } {
+  if (typeof visualState === 'string') {
+    return { kind: 'cube3-facelets-v1', value: visualState }
+  }
+
+  if (isVisualStateResponse(visualState)) {
+    return visualState.kind === 'none'
+      ? { kind: visualState.kind }
+      : { kind: visualState.kind, value: visualState.value }
+  }
+
+  return {}
+}
+
+function isVisualStateResponse(value: unknown): value is ApiVisualStateResponse {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'kind' in value &&
+    typeof value.kind === 'string' &&
+    'value' in value &&
+    typeof value.value === 'string'
+  )
 }

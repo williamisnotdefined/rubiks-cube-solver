@@ -32,6 +32,130 @@ pub struct StrategyResponse {
     pub status_text: &'static str,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct PuzzleResponse {
+    pub id: String,
+    pub slug: String,
+    pub label: String,
+    pub family: String,
+    pub status: String,
+    #[serde(rename = "defaultMetric")]
+    pub default_metric: String,
+    #[serde(rename = "supportedInputs")]
+    pub supported_inputs: Vec<String>,
+    #[serde(rename = "supportedVisualizations")]
+    pub supported_visualizations: Vec<String>,
+    #[serde(rename = "defaultStrategyId")]
+    pub default_strategy_id: Option<String>,
+    #[serde(rename = "strategyIds")]
+    pub strategy_ids: Vec<String>,
+    #[serde(rename = "scannerSupported")]
+    pub scanner_supported: bool,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct PuzzleStrategyResponse {
+    pub id: String,
+    #[serde(rename = "puzzleId")]
+    pub puzzle_id: String,
+    pub label: String,
+    #[serde(rename = "solverMode")]
+    pub solver_mode: String,
+    #[serde(rename = "statusText")]
+    pub status_text: String,
+    #[serde(rename = "defaultMetric")]
+    pub default_metric: String,
+    #[serde(rename = "supportedMetrics")]
+    pub supported_metrics: Vec<String>,
+    #[serde(rename = "supportedInputs")]
+    pub supported_inputs: Vec<String>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct PuzzleApiErrorResponse {
+    pub ok: bool,
+    pub status: String,
+    #[serde(rename = "errorKind")]
+    pub error_kind: String,
+    pub message: String,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
+pub struct PuzzleSolveRequest {
+    pub input: PuzzleSolveInputRequest,
+    #[serde(rename = "strategyId", default)]
+    pub strategy_id: Option<String>,
+    #[serde(default)]
+    pub limits: PuzzleSolveLimitsRequest,
+    #[serde(default = "default_metric")]
+    pub metric: String,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
+pub struct PuzzleSolveInputRequest {
+    pub kind: String,
+    pub value: String,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
+pub struct PuzzleSolveLimitsRequest {
+    #[serde(rename = "maxDepth", default = "default_max_depth")]
+    pub max_depth: usize,
+    #[serde(rename = "maxNodes")]
+    pub max_nodes: Option<usize>,
+}
+
+impl Default for PuzzleSolveLimitsRequest {
+    fn default() -> Self {
+        Self {
+            max_depth: default_max_depth(),
+            max_nodes: None,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct VisualStateResponse {
+    pub kind: String,
+    pub value: String,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct PuzzleSolveResponse {
+    pub ok: bool,
+    pub status: String,
+    #[serde(rename = "puzzleId", skip_serializing_if = "Option::is_none")]
+    pub puzzle_id: Option<String>,
+    #[serde(rename = "puzzleSlug")]
+    pub puzzle_slug: String,
+    #[serde(rename = "strategyId")]
+    pub strategy_id: String,
+    #[serde(rename = "strategyLabel")]
+    pub strategy_label: String,
+    #[serde(rename = "solverMode")]
+    pub solver_mode: String,
+    #[serde(rename = "generatedTableStatus")]
+    pub generated_table_status: String,
+    pub metric: String,
+    #[serde(rename = "maxDepth")]
+    pub max_depth: usize,
+    #[serde(rename = "maxNodes")]
+    pub max_nodes: Option<usize>,
+    pub moves: Vec<String>,
+    pub length: Option<usize>,
+    #[serde(rename = "exploredNodes")]
+    pub explored_nodes: Option<usize>,
+    #[serde(rename = "elapsedMs")]
+    pub elapsed_ms: Option<u128>,
+    #[serde(rename = "replayVerified")]
+    pub replay_verified: Option<bool>,
+    #[serde(rename = "visualState")]
+    pub visual_state: Option<VisualStateResponse>,
+    #[serde(rename = "errorKind")]
+    pub error_kind: Option<String>,
+    pub message: Option<String>,
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SolveResponse {
     pub ok: bool,
@@ -57,7 +181,7 @@ pub struct SolveResponse {
     #[serde(rename = "replayVerified")]
     pub replay_verified: Option<bool>,
     #[serde(rename = "visualState")]
-    pub visual_state: Option<String>,
+    pub visual_state: Option<VisualStateResponse>,
     #[serde(rename = "errorKind")]
     pub error_kind: Option<String>,
     pub message: Option<String>,
@@ -88,6 +212,8 @@ pub struct SolveScanRequest {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ScanSessionRequest {
     pub faces: Vec<ScanSessionFaceRequest>,
+    #[serde(rename = "gridSize", default = "default_grid_size")]
+    pub grid_size: usize,
     #[serde(rename = "maxDepth", default = "default_max_depth")]
     pub max_depth: usize,
     #[serde(rename = "maxNodes")]
@@ -146,6 +272,12 @@ pub struct ScanSessionResponse {
     pub rescan_faces: Vec<String>,
     #[serde(rename = "manualTargets", default)]
     pub manual_targets: Vec<ScanSessionManualTargetResponse>,
+    #[serde(
+        rename = "invalidCorners",
+        default,
+        skip_serializing_if = "Vec::is_empty"
+    )]
+    pub invalid_corners: Vec<ScanSessionInvalidCornerResponse>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -211,6 +343,21 @@ pub struct ScanSessionManualTargetResponse {
     pub stickers: Vec<usize>,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct ScanSessionInvalidCornerResponse {
+    pub position: String,
+    pub faces: Vec<String>,
+    pub stickers: Vec<String>,
+    pub targets: Vec<ScanSessionInvalidCornerTargetResponse>,
+    pub reason: String,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct ScanSessionInvalidCornerTargetResponse {
+    pub face: String,
+    pub index: usize,
+}
+
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
 pub struct ScanFacesRequest {
     #[serde(rename = "U")]
@@ -260,6 +407,8 @@ pub struct AnalyzeScanFaceRequest {
     pub image: String,
     #[serde(rename = "knownCenters", default)]
     pub known_centers: HashMap<String, RgbColorRequest>,
+    #[serde(rename = "gridSize", default = "default_grid_size")]
+    pub grid_size: usize,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -412,7 +561,7 @@ pub(crate) fn success_response_from_parts(
         explored_nodes: Some(explored_nodes),
         elapsed_ms: Some(elapsed_ms),
         replay_verified: Some(replay_verified),
-        visual_state,
+        visual_state: visual_state_response(strategy, visual_state),
         error_kind: None,
         message: None,
     }
@@ -441,7 +590,7 @@ pub(crate) fn not_found_response_from_parts(
         explored_nodes: Some(explored_nodes),
         elapsed_ms: Some(elapsed_ms),
         replay_verified: None,
-        visual_state,
+        visual_state: visual_state_response(strategy, visual_state),
         error_kind: None,
         message: Some(format!(
             "no solution found within limits: max_depth={}, max_nodes={}, explored_nodes={}",
@@ -497,13 +646,13 @@ pub(crate) fn error_response_from_parts(
         explored_nodes: None,
         elapsed_ms: None,
         replay_verified: None,
-        visual_state,
+        visual_state: visual_state_response(strategy, visual_state),
         error_kind: Some(error_kind.into()),
         message: Some(message),
     }
 }
 
-fn generated_table_status(strategy: SolverStrategy) -> &'static str {
+pub(crate) fn generated_table_status(strategy: SolverStrategy) -> &'static str {
     match strategy {
         SolverStrategy::GeneratedTwoPhase
         | SolverStrategy::GeneratedTwoPhaseQuality
@@ -515,6 +664,16 @@ fn generated_table_status(strategy: SolverStrategy) -> &'static str {
     }
 }
 
+fn visual_state_response(
+    _strategy: SolverStrategy,
+    visual_state: Option<String>,
+) -> Option<VisualStateResponse> {
+    visual_state.map(|value| VisualStateResponse {
+        kind: "cube3-facelets-v1".to_owned(),
+        value,
+    })
+}
+
 fn max_nodes_label(max_nodes: Option<usize>) -> String {
     max_nodes.map_or_else(|| "unlimited".to_owned(), |value| value.to_string())
 }
@@ -523,6 +682,14 @@ fn default_max_depth() -> usize {
     30
 }
 
+fn default_grid_size() -> usize {
+    3
+}
+
 fn default_strategy_id() -> String {
     SolverStrategy::GeneratedTwoPhase.id().to_owned()
+}
+
+fn default_metric() -> String {
+    "htm".to_owned()
 }

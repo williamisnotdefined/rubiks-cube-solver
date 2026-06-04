@@ -10,16 +10,16 @@ export function SessionSummary({ eventLabel, sessionName, solveCount }: SessionS
   const { t } = useTranslation()
 
   return (
-    <header className="grid gap-2 border border-[#2b2b2b] bg-[#101010] p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+    <header className="grid gap-2 border border-app-border bg-app-surface p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
       <div>
-        <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#a8a8a8]">
+        <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-app-muted">
           {eventLabel}
         </p>
-        <h1 className="text-2xl font-black uppercase tracking-[0.12em] text-[#f7f7f7]">
+        <h1 className="text-2xl font-black uppercase tracking-[0.12em] text-app-text">
           {sessionName}
         </h1>
       </div>
-      <p className="text-sm font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
+      <p className="text-sm font-extrabold uppercase tracking-[0.16em] text-app-muted">
         {t('timer.session.solveCount', { count: solveCount })}
       </p>
     </header>
