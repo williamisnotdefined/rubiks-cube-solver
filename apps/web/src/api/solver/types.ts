@@ -4,7 +4,7 @@ export type PuzzleSlug = string
 export type ScanFaceSymbol = 'U' | 'R' | 'F' | 'D' | 'L' | 'B'
 
 export type PuzzleStatus = 'stable' | 'experimental' | 'planned' | 'disabled'
-export type PuzzleInputKind = 'notation' | 'facelets3x3' | 'scan3x3'
+export type PuzzleInputKind = 'notation' | 'facelets3x3' | 'scan2x2' | 'scan3x3'
 export type PuzzleVisualizationKind = 'cube3-facelets-v1' | 'cube2-facelets-v1' | 'none'
 
 export type PuzzleDefinition = {

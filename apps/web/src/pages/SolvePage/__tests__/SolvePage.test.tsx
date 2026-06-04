@@ -58,11 +58,11 @@ vi.mock('@api/solver', () => ({
         family: 'cube',
         id: 'cube/2x2x2',
         label: '2x2x2 Cube',
-        scannerSupported: false,
+        scannerSupported: true,
         slug: 'cube-2x2x2',
         status: 'experimental',
         strategyIds: ['cube2-bounded-ida-star', 'cube2-pdb-ida-star'],
-        supportedInputs: ['notation'],
+        supportedInputs: ['notation', 'scan2x2'],
         supportedVisualizations: ['cube2-facelets-v1'],
       },
       {
@@ -306,14 +306,14 @@ describe('SolvePage', () => {
     })
   })
 
-  it('selects 2x2 puzzle settings and disables 3x3-only scan', async () => {
+  it('selects 2x2 puzzle settings and keeps scan available', async () => {
     const user = userEvent.setup()
     render(<SolvePage />)
 
     await user.selectOptions(screen.getByLabelText('Puzzle'), 'cube-2x2x2')
 
     expect(screen.getByLabelText('Scramble')).toHaveAttribute('placeholder', 'R U F')
-    expect(screen.getByRole('button', { name: 'Scan cube with camera' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Scan cube with camera' })).toBeEnabled()
     expect(screen.getByTestId('cube-stage')).toHaveAttribute('data-cube-type', 'Two')
     expect(screen.queryByText('Visualization is not available for this puzzle yet.')).not.toBeInTheDocument()
     expect(useCubeVisualizationMock).toHaveBeenLastCalledWith(

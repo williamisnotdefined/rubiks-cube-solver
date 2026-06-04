@@ -1,11 +1,12 @@
 import cls from 'classnames'
 import { useTranslation } from 'react-i18next'
 import type { ScanSticker } from './scanState'
-import { isLowConfidenceScanSticker, scanSymbolDetails } from './scanState'
+import { isLowConfidenceScanSticker, scan2StickersPerFace, scanSymbolDetails } from './scanState'
 import { scanColorInitial, scanColorLabel } from './scanTranslations'
 
 type ScanFaceReviewGridProps = {
   reviewTargetIndexes?: readonly number[]
+  stickersPerFace?: number
   stickers: readonly ScanSticker[]
   selectedIndex: number
   onSelect: (index: number) => void
@@ -13,6 +14,7 @@ type ScanFaceReviewGridProps = {
 
 export function ScanFaceReviewGrid({
   reviewTargetIndexes = [],
+  stickersPerFace,
   stickers,
   selectedIndex,
   onSelect,
@@ -25,7 +27,10 @@ export function ScanFaceReviewGrid({
       <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
         {t('scan.editor.reviewColors')}
       </span>
-      <div className="grid aspect-square w-full max-w-[17rem] grid-cols-3 gap-2 justify-self-center">
+      <div className={cls(
+        'grid aspect-square w-full max-w-[17rem] gap-2 justify-self-center',
+        stickersPerFace === scan2StickersPerFace ? 'grid-cols-2' : 'grid-cols-3',
+      )}>
         {stickers.map((sticker, index) => {
           const details = sticker.symbol === undefined ? undefined : scanSymbolDetails[sticker.symbol]
           const selected = selectedIndex === index

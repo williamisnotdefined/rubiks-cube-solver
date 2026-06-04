@@ -59,6 +59,7 @@ impl MoveMetric {
 pub enum InputKind {
     Notation,
     Facelets3x3,
+    Scan2x2,
     Scan3x3,
 }
 
@@ -67,6 +68,7 @@ impl InputKind {
         match self {
             Self::Notation => "notation",
             Self::Facelets3x3 => "facelets3x3",
+            Self::Scan2x2 => "scan2x2",
             Self::Scan3x3 => "scan3x3",
         }
     }

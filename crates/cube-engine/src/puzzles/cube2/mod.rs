@@ -4,6 +4,7 @@ mod cubies;
 mod moves;
 mod notation;
 mod quality;
+mod scan;
 mod search;
 mod state;
 
@@ -26,6 +27,7 @@ pub use quality::{
     Cube2QualityReportError, Cube2QualityReportRow, Cube2QualityReportStatus,
     Cube2QualitySolverSelection,
 };
+pub use scan::{cube2_from_scan_faces, cube2_visual_state, Cube2ScanError};
 pub use search::{
     cube2_corner_orientation_pdb, cube2_corner_permutation_pdb, cube2_pdb_heuristic,
     solve_cube2_bounded_ida_star, solve_cube2_pdb_ida_star, Cube2SearchBudget, Cube2SearchOutcome,

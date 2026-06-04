@@ -114,6 +114,7 @@ export type SolveScanSessionVariables = {
   faces: ScanSessionFaceRequest[]
   maxDepth: number
   maxNodes?: number
+  puzzleSlug?: string
   strategyId?: string
 }
 

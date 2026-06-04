@@ -2,18 +2,18 @@ use axum::{
     body::{to_bytes, Body},
     http::{Method, Request, StatusCode},
 };
-use cube_engine::{infer_scan, Facelet, Scramble, SolverStrategy};
+use cube_engine::{infer_scan, Facelet, PuzzleId, Scramble, SolverStrategy};
 use tower::ServiceExt;
 
 use crate::response::unverified_solution_response_from_parts;
 use crate::{
     api_router, api_router_with_web_dist, solve_notation_request, solve_puzzle_request,
-    solve_scan_request, solve_scan_session_request, AnalyzeScanFaceRequest, ApiState,
-    PuzzleApiErrorResponse, PuzzleResponse, PuzzleSolveInputRequest, PuzzleSolveLimitsRequest,
-    PuzzleSolveRequest, PuzzleSolveResponse, PuzzleStrategyResponse, ScanFacesRequest,
-    ScanSessionFaceRequest, ScanSessionRequest, ScanSessionReviewedStickerRequest,
-    SolveNotationRequest, SolveScanRequest, DEFAULT_API_NODES, MAX_API_DEPTH, MAX_API_NODES,
-    MAX_NOTATION_BYTES,
+    solve_scan_request, solve_scan_session_request, solve_scan_session_request_for_puzzle,
+    AnalyzeScanFaceRequest, ApiState, PuzzleApiErrorResponse, PuzzleResponse,
+    PuzzleSolveInputRequest, PuzzleSolveLimitsRequest, PuzzleSolveRequest, PuzzleSolveResponse,
+    PuzzleStrategyResponse, ScanFacesRequest, ScanSessionFaceRequest, ScanSessionRequest,
+    ScanSessionReviewedStickerRequest, SolveNotationRequest, SolveScanRequest, DEFAULT_API_NODES,
+    MAX_API_DEPTH, MAX_API_NODES, MAX_NOTATION_BYTES,
 };
 
 #[test]
@@ -234,7 +234,9 @@ async fn puzzles_route_lists_current_and_experimental_puzzles() {
         cube2.strategy_ids,
         vec!["cube2-bounded-ida-star", "cube2-pdb-ida-star"]
     );
+    assert_eq!(cube2.supported_inputs, vec!["notation", "scan2x2"]);
     assert_eq!(cube2.supported_visualizations, vec!["cube2-facelets-v1"]);
+    assert!(cube2.scanner_supported);
 }
 
 #[tokio::test]
@@ -1024,6 +1026,29 @@ async fn solve_scan_session_reports_unavailable_vision_service() {
 }
 
 #[tokio::test]
+async fn solve_cube2_scan_session_accepts_reviewed_stickers() {
+    let request = solved_cube2_scan_session_request();
+
+    let (status, response) = solve_scan_session_request_for_puzzle(
+        &ApiState::without_generated_solver(),
+        PuzzleId::Cube2x2x2,
+        request,
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::OK);
+    let response = response.0;
+    assert_eq!(response.status, "accepted");
+    let solve = response.solve.expect("2x2 scan should solve");
+    assert!(solve.ok);
+    assert_eq!(solve.strategy_id, "cube2-pdb-ida-star");
+    assert_eq!(
+        solve.visual_state.as_deref(),
+        Some("UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB")
+    );
+}
+
+#[tokio::test]
 async fn solve_scan_session_rescans_obvious_glare_before_inference() {
     let mut scan = solved_scan_session_analysis();
     scan.faces[0]
@@ -1507,6 +1532,36 @@ fn solved_scan_session_request_without_reviewed_stickers() -> ScanSessionRequest
         face.reviewed_stickers.clear();
     }
     request
+}
+
+fn solved_cube2_scan_session_request() -> ScanSessionRequest {
+    ScanSessionRequest {
+        faces: ["U", "R", "F", "D", "L", "B"]
+            .into_iter()
+            .map(|symbol| ScanSessionFaceRequest {
+                symbol: symbol.to_owned(),
+                expected_top: None,
+                image: Some("data:image/jpeg;base64,AAAA".to_owned()),
+                manual_overrides: Default::default(),
+                reviewed_stickers: reviewed_cube2_stickers(symbol),
+                client_rotation: Some(0),
+            })
+            .collect(),
+        max_depth: 0,
+        max_nodes: Some(1_000),
+        strategy_id: "cube2-pdb-ida-star".to_owned(),
+    }
+}
+
+fn reviewed_cube2_stickers(symbol: &str) -> Vec<ScanSessionReviewedStickerRequest> {
+    (0..4)
+        .map(|index| ScanSessionReviewedStickerRequest {
+            index,
+            symbol: symbol.to_owned(),
+            confidence: Some(1.0),
+            source: Some("manual".to_owned()),
+        })
+        .collect()
 }
 
 fn reviewed_stickers(symbol: &str) -> Vec<ScanSessionReviewedStickerRequest> {

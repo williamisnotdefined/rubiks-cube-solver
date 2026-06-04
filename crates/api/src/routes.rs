@@ -6,7 +6,7 @@ use axum::http::{header::CONTENT_TYPE, HeaderValue, Method, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Json, Router};
-use cube_engine::SolverStrategy;
+use cube_engine::{PuzzleId, SolverStrategy};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::services::{ServeDir, ServeFile};
 
@@ -20,7 +20,9 @@ use crate::response::{
     PuzzleSolveResponse, ScanSessionRequest, ScanSessionResponse, SolveNotationRequest,
     SolveResponse, SolveScanRequest, StrategyResponse,
 };
-use crate::scan_analysis::{analyze_scan_face_request, solve_scan_session_request};
+use crate::scan_analysis::{
+    analyze_scan_face_request, solve_scan_session_request, solve_scan_session_request_for_puzzle,
+};
 use crate::solve::{solve_notation_request, solve_scan_request};
 use crate::state::ApiState;
 
@@ -51,6 +53,11 @@ pub fn api_router(state: ApiState) -> Router {
         .route(
             "/scan/solve-session",
             post(solve_scan_session).layer(DefaultBodyLimit::max(MAX_SCAN_SESSION_BODY_BYTES)),
+        )
+        .route(
+            "/puzzles/:puzzle_slug/scan/solve-session",
+            post(solve_puzzle_scan_session)
+                .layer(DefaultBodyLimit::max(MAX_SCAN_SESSION_BODY_BYTES)),
         )
         .route("/solve-notation", post(solve_notation))
         .route("/solve-scan", post(solve_scan))
@@ -192,4 +199,29 @@ async fn solve_scan_session(
     Json(request): Json<ScanSessionRequest>,
 ) -> (StatusCode, Json<ScanSessionResponse>) {
     solve_scan_session_request(&state, request).await
+}
+
+async fn solve_puzzle_scan_session(
+    State(state): State<ApiState>,
+    Path(puzzle_slug): Path<String>,
+    Json(request): Json<ScanSessionRequest>,
+) -> (StatusCode, Json<ScanSessionResponse>) {
+    let Some(puzzle_id) = PuzzleId::from_slug(&puzzle_slug) else {
+        return (
+            StatusCode::NOT_FOUND,
+            Json(ScanSessionResponse {
+                ok: false,
+                status: "unknown_puzzle".to_owned(),
+                message: Some(format!("unknown puzzle slug: {puzzle_slug}")),
+                timings: None,
+                scan: None,
+                solve: None,
+                inference: None,
+                rescan_faces: Vec::new(),
+                manual_targets: Vec::new(),
+            }),
+        );
+    };
+
+    solve_scan_session_request_for_puzzle(&state, puzzle_id, request).await
 }

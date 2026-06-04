@@ -18,6 +18,8 @@ pub enum Cube2Face {
 }
 
 impl Cube2Face {
+    pub const ALL: [Self; 6] = [Self::U, Self::R, Self::F, Self::D, Self::L, Self::B];
+
     pub const fn axis(self) -> Cube2Axis {
         match self {
             Self::L | Self::R => Cube2Axis::X,

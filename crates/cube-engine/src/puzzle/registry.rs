@@ -12,7 +12,7 @@ const CUBE3_INPUTS: [InputKind; 3] = [
     InputKind::Scan3x3,
 ];
 const CUBE3_VISUALIZATIONS: [VisualizationKind; 1] = [VisualizationKind::Cube3FaceletsV1];
-const CUBE2_INPUTS: [InputKind; 1] = [InputKind::Notation];
+const CUBE2_INPUTS: [InputKind; 2] = [InputKind::Notation, InputKind::Scan2x2];
 const CUBE2_VISUALIZATIONS: [VisualizationKind; 1] = [VisualizationKind::Cube2FaceletsV1];
 const PLANNED_INPUTS: [InputKind; 0] = [];
 const PLANNED_VISUALIZATIONS: [VisualizationKind; 0] = [];
@@ -59,7 +59,7 @@ const PUZZLES: [PuzzleDefinition; 8] = [
         supported_visualizations: &CUBE2_VISUALIZATIONS,
         default_strategy_id: Some(CUBE2_PDB_IDA_STAR_STRATEGY_ID),
         strategy_ids: &CUBE2_STRATEGY_IDS,
-        scanner_supported: false,
+        scanner_supported: true,
     },
     planned_puzzle(PuzzleId::Pyraminx, "Pyraminx", PuzzleFamily::Pyraminx),
     planned_puzzle(PuzzleId::Clock, "Clock", PuzzleFamily::Clock),
@@ -242,12 +242,15 @@ mod tests {
             definition.strategy_ids,
             &["cube2-bounded-ida-star", "cube2-pdb-ida-star"]
         );
-        assert_eq!(definition.supported_inputs, &[InputKind::Notation]);
+        assert_eq!(
+            definition.supported_inputs,
+            &[InputKind::Notation, InputKind::Scan2x2]
+        );
         assert_eq!(
             definition.supported_visualizations,
             &[VisualizationKind::Cube2FaceletsV1]
         );
-        assert!(!definition.scanner_supported);
+        assert!(definition.scanner_supported);
     }
 
     #[test]
@@ -302,7 +305,10 @@ mod tests {
             assert_eq!(strategy.puzzle_id, PuzzleId::Cube2x2x2);
             assert_eq!(strategy.default_metric, MoveMetric::Htm);
             assert_eq!(strategy.supported_metrics, &[MoveMetric::Htm]);
-            assert_eq!(strategy.supported_inputs, &[InputKind::Notation]);
+            assert_eq!(
+                strategy.supported_inputs,
+                &[InputKind::Notation, InputKind::Scan2x2]
+            );
         }
     }
 

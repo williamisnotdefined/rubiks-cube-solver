@@ -5,9 +5,13 @@ export async function solveScanSession({
   faces,
   maxDepth,
   maxNodes,
+  puzzleSlug,
   strategyId,
 }: SolveScanSessionVariables): Promise<ScanSessionResult> {
-  const result = await postJsonResponse<ScanSessionResult>('/scan/solve-session', {
+  const path = puzzleSlug === undefined
+    ? '/scan/solve-session'
+    : `/puzzles/${encodeURIComponent(puzzleSlug)}/scan/solve-session`
+  const result = await postJsonResponse<ScanSessionResult>(path, {
     faces,
     maxDepth,
     maxNodes,

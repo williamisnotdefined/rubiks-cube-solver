@@ -26,7 +26,9 @@ pub use response::{
     StrategyResponse, VisualStateResponse,
 };
 pub use routes::{api_router, api_router_with_web_dist};
-pub use scan_analysis::{analyze_scan_face_request, solve_scan_session_request};
+pub use scan_analysis::{
+    analyze_scan_face_request, solve_scan_session_request, solve_scan_session_request_for_puzzle,
+};
 pub use solve::{solve_notation_request, solve_scan_request};
 pub use state::ApiState;
 

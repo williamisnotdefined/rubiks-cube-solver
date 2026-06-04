@@ -264,6 +264,7 @@ export function SolvePage() {
             maxNodes={maxNodes}
             solveDisabledReason={localValidationMessage}
             solving={solveMutation.isPending}
+            puzzleSlug={selectedPuzzleSlug}
             strategyId={strategyId}
             visionCnnAvailable={healthQuery.data?.visionCnnAvailable}
             visionCnnReason={healthQuery.data?.visionCnnReason}

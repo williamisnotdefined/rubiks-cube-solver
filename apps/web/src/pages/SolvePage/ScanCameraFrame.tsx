@@ -22,6 +22,7 @@ type ScanCameraFrameProps = {
   cameraStatus: ScanCameraStatus
   detectionMode?: string | null
   stableFrameCount?: number
+  targetStickerCount?: number
   temporalConsensus?: TemporalFaceConsensus
   tileDetections?: readonly ScanTileDetection[]
   trackingStatus?: LiveScanPreviewStatus
@@ -33,6 +34,7 @@ export const ScanCameraFrame = memo(function ScanCameraFrame({
   cameraStatus,
   detectionMode,
   stableFrameCount = 0,
+  targetStickerCount = 9,
   temporalConsensus,
   tileDetections = [],
   trackingStatus = 'idle',
@@ -44,6 +46,7 @@ export const ScanCameraFrame = memo(function ScanCameraFrame({
     detectionMode,
     stableFrameCount,
     stickerCount: stickerBoxes.length,
+    targetStickerCount,
     t,
     trackingStatus,
   })
@@ -172,12 +175,14 @@ function cameraStatusLabel({
   detectionMode,
   stableFrameCount,
   stickerCount,
+  targetStickerCount,
   t,
   trackingStatus,
 }: {
   detectionMode?: string | null
   stableFrameCount: number
   stickerCount: number
+  targetStickerCount: number
   t: ReturnType<typeof useTranslation>['t']
   trackingStatus: LiveScanPreviewStatus
 }): string | undefined {
@@ -190,8 +195,8 @@ function cameraStatusLabel({
   }
 
   if (stickerCount > 0) {
-    return t(stickerCount >= 9 ? 'scan.camera.stickersReady' : 'scan.camera.stickersFound', {
-      count: Math.min(9, stickerCount),
+    return t(stickerCount >= targetStickerCount ? 'scan.camera.stickersReady' : 'scan.camera.stickersFound', {
+      count: Math.min(targetStickerCount, stickerCount),
     })
   }
 

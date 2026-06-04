@@ -121,7 +121,7 @@ describe('solver API operations', () => {
         supportedVisualizations: ['cube2-facelets-v1'],
         defaultStrategyId: 'cube2-pdb-ida-star',
         strategyIds: ['cube2-bounded-ida-star', 'cube2-pdb-ida-star'],
-        scannerSupported: false,
+        scannerSupported: true,
       },
     ]
     mockApiSuccess(puzzles)
@@ -139,7 +139,7 @@ describe('solver API operations', () => {
         statusText: 'Experimental 2x2 solver with in-memory PDB heuristic',
         defaultMetric: 'htm',
         supportedMetrics: ['htm'],
-        supportedInputs: ['notation'],
+        supportedInputs: ['notation', 'scan2x2'],
       },
     ]
     const fetchMock = mockApiSuccess(strategies)
@@ -366,6 +366,36 @@ describe('solver API operations', () => {
           maxDepth: 0,
           maxNodes: 1_000,
           strategyId: 'bounded-ida-star',
+        }),
+      }),
+    )
+  })
+
+  it('posts puzzle-aware scan sessions through the request client', async () => {
+    const payload = {
+      manualTargets: [],
+      ok: true,
+      rescanFaces: [],
+      solve: successPayload,
+      status: 'accepted',
+    }
+    const fetchMock = mockApiSuccess(payload)
+
+    await expect(
+      solveScanSession({
+        faces: [...scanSessionFaces],
+        maxDepth: 0,
+        puzzleSlug: 'cube-2x2x2',
+        strategyId: 'cube2-pdb-ida-star',
+      }),
+    ).resolves.toEqual(payload)
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:8787/puzzles/cube-2x2x2/scan/solve-session',
+      expect.objectContaining({
+        body: JSON.stringify({
+          faces: [...scanSessionFaces],
+          maxDepth: 0,
+          strategyId: 'cube2-pdb-ida-star',
         }),
       }),
     )

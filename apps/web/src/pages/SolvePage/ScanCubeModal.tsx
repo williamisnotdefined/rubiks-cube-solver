@@ -28,6 +28,9 @@ import {
   scanFaceOrder,
   scanFaceStatusFromDraft,
   scanFacesFromDrafts,
+  scan2StickersPerFace,
+  scan3StickersPerFace,
+  scanCenterIndex,
   scanStickersFromAnalysis,
   scanStickersFromTemporalConsensus,
   scanSessionFacesFromDrafts,
@@ -58,6 +61,7 @@ type ScanCubeModalProps = {
   maxNodes?: number
   solveDisabledReason?: string
   solving: boolean
+  puzzleSlug?: string
   strategyId?: string
   visionCnnAvailable?: boolean
   visionCnnReason?: string
@@ -84,6 +88,7 @@ export function ScanCubeModal({
   maxNodes,
   solveDisabledReason,
   solving,
+  puzzleSlug = 'cube-3x3x3',
   strategyId,
   visionCnnAvailable,
   visionCnnReason,
@@ -99,7 +104,10 @@ export function ScanCubeModal({
   const camera = useCameraStream(true)
   const analyzeScanFace = useAnalyzeScanFace()
   const solveScanSession = useSolveScanSession()
-  const [drafts, setDrafts] = useState(() => createInitialScanFaceDrafts())
+  const stickersPerFace = puzzleSlug === 'cube-2x2x2' ? scan2StickersPerFace : scan3StickersPerFace
+  const centerIndex = scanCenterIndex(stickersPerFace)
+  const scanAnalysisEnabled = stickersPerFace === scan3StickersPerFace
+  const [drafts, setDrafts] = useState(() => createInitialScanFaceDrafts(stickersPerFace))
   const [currentFaceIndex, setCurrentFaceIndex] = useState(0)
   const currentFace = scanFaceOrder[currentFaceIndex]
   const currentDraft = drafts[currentFace.symbol]
@@ -115,14 +123,14 @@ export function ScanCubeModal({
     useState<CenterMismatchConfirmation | undefined>()
   const [message, setMessage] = useState<string | undefined>()
   const confirmedFaces = useMemo(() => scanFacesFromDrafts(drafts), [drafts])
-  const sessionFaces = scanSessionFacesFromDrafts(drafts)
+  const sessionFaces = scanSessionFacesFromDrafts(drafts, stickersPerFace)
   const scanSessionReadiness = scanSessionReadinessMessage(
     t,
     drafts,
     apiReady,
     solveDisabledReason,
   )
-  const draftValidation = validateScanFaceDraft(confirmedFaces, currentFace.symbol, stickers)
+  const draftValidation = validateScanFaceDraft(confirmedFaces, currentFace.symbol, stickers, stickersPerFace)
   const draftValidationMessage = scanFaceDraftValidationMessage(t, draftValidation)
   const centerValidation = scanAnalysis?.centerMismatch
     ? centerMismatchMessage(t, scanAnalysis)
@@ -138,7 +146,7 @@ export function ScanCubeModal({
       scanFaceOrder.map(({ symbol }) => {
         const status = scanFaceStatusFromDraft(
           drafts[symbol],
-          validateScanFaceDraft(confirmedFaces, symbol, drafts[symbol].stickers),
+          validateScanFaceDraft(confirmedFaces, symbol, drafts[symbol].stickers, stickersPerFace),
         )
 
         if (status === 'invalid' || status === 'pending') {
@@ -147,14 +155,14 @@ export function ScanCubeModal({
 
         return isBackendReviewFace(backendReviewTargets, symbol) ? 'needsReview' : status
       }),
-    [backendReviewTargets, confirmedFaces, drafts],
+    [backendReviewTargets, confirmedFaces, drafts, stickersPerFace],
   )
   const knownCenters = useMemo(() => knownCenterReferencesFromFaces(confirmedFaces), [confirmedFaces])
   const hasReviewCaptureContent =
-    photoDataUrl !== undefined || stickers.some((sticker, index) => index !== 4 && sticker.symbol !== undefined)
-  const hasReviewContent = currentDraftHasReviewContent(currentDraft)
+    photoDataUrl !== undefined || stickers.some((sticker, index) => index !== centerIndex && sticker.symbol !== undefined)
+  const hasReviewContent = currentDraftHasReviewContent(currentDraft, centerIndex)
   const liveScan = useLiveScanPreview({
-    enabled: autoScanEnabled && camera.status === 'ready' && !capturing && !hasReviewCaptureContent,
+    enabled: scanAnalysisEnabled && autoScanEnabled && camera.status === 'ready' && !capturing && !hasReviewCaptureContent,
     expectedCenter: currentFace.symbol,
     knownCenters,
     videoRef,
@@ -182,7 +190,7 @@ export function ScanCubeModal({
   const canClearPhoto =
     photoDataUrl !== undefined ||
     scanAnalysis !== undefined ||
-    stickers.some((sticker, index) => index !== 4 && sticker.symbol !== undefined)
+    stickers.some((sticker, index) => index !== centerIndex && sticker.symbol !== undefined)
   const sessionSolving = solveScanSession.isPending
   const reviewTargetIndexes = backendReviewTargets.manualTargets[currentFace.symbol] ?? []
   const cameraStream = camera.status === 'ready' ? camera.stream : undefined
@@ -321,6 +329,24 @@ export function ScanCubeModal({
       }
 
       const captureMetadata = scanCaptureMetadata(capture)
+
+      if (!scanAnalysisEnabled) {
+        setCurrentDraft({
+          analysis: undefined,
+          autoCapture: undefined,
+          capture: captureMetadata,
+          captureMode: 'manual',
+          centerOverrideConfirmed: false,
+          confirmed: false,
+          lastRejectedCapture: undefined,
+          photoDataUrl: capture.photoDataUrl,
+          stickers: createEmptyScanStickers(currentFace.symbol, stickersPerFace),
+          temporalConsensus: temporalConsensusSnapshot,
+        })
+        setMessage(t('scan.messages.liveReviewReady'))
+        return
+      }
+
       setMessage(t('scan.messages.analyzingFace'))
 
       const analysis = await analyzeScanFace.mutateAsync({
@@ -328,9 +354,9 @@ export function ScanCubeModal({
         image: capture.photoDataUrl,
         knownCenters,
       })
-      const nextStickers = scanStickersFromAnalysis(analysis, currentFace.symbol)
+      const nextStickers = scanStickersFromAnalysis(analysis, currentFace.symbol, stickersPerFace)
 
-      if (!isScanFaceComplete(nextStickers)) {
+      if (!isScanFaceComplete(nextStickers, stickersPerFace)) {
         setCurrentDraft({
           analysis,
           autoCapture: undefined,
@@ -345,7 +371,7 @@ export function ScanCubeModal({
             reason: rejectedCaptureReason(analysis),
           },
           photoDataUrl: undefined,
-          stickers: createEmptyScanStickers(currentFace.symbol),
+          stickers: createEmptyScanStickers(currentFace.symbol, stickersPerFace),
           temporalConsensus: temporalConsensusSnapshot,
         })
         setMessage(scanAnalysisMessage(t, analysis) ?? t('scan.messages.manualDetectionFailed'))
@@ -381,7 +407,7 @@ export function ScanCubeModal({
         captureMode: undefined,
         confirmed: false,
         photoDataUrl: undefined,
-        stickers: createEmptyScanStickers(currentFace.symbol),
+        stickers: createEmptyScanStickers(currentFace.symbol, stickersPerFace),
         temporalConsensus: undefined,
       })
       setMessage(error instanceof Error ? error.message : t('scan.messages.analysisFailed'))
@@ -418,14 +444,14 @@ export function ScanCubeModal({
         currentDrafts,
         currentFace.symbol,
         index,
-        index === 4 ? currentFace.symbol : symbol,
+        centerIndex !== undefined && index === centerIndex ? currentFace.symbol : symbol,
       ),
     )
     clearBackendManualTarget(currentFace.symbol, index)
   }
 
   function handleClearPhoto() {
-    setDrafts((currentDrafts) => clearScanFaceDraft(currentDrafts, currentFace.symbol))
+    setDrafts((currentDrafts) => clearScanFaceDraft(currentDrafts, currentFace.symbol, stickersPerFace))
     clearBackendReviewForFace(currentFace.symbol)
     setCenterMismatchConfirmation(undefined)
     setMessage(undefined)
@@ -448,7 +474,7 @@ export function ScanCubeModal({
   }
 
   function handleConfirmFace() {
-    const centerOverrideConfirmed = centerValidation !== undefined
+    const centerOverrideConfirmed = scanAnalysisEnabled && centerValidation !== undefined
     if (centerOverrideConfirmed && currentDraft.centerOverrideConfirmed !== true) {
       setCenterMismatchConfirmation({ faceSymbol: currentFace.symbol, message: centerValidation })
       setMessage(centerValidation)
@@ -496,6 +522,7 @@ export function ScanCubeModal({
         faces,
         maxDepth,
         maxNodes,
+        puzzleSlug,
         strategyId,
       })
 
@@ -602,6 +629,7 @@ export function ScanCubeModal({
               cameraStatus={camera.status}
               detectionMode={cameraAnalysis?.detectionMode}
               stableFrameCount={liveStableFrameCount}
+              targetStickerCount={stickersPerFace}
               temporalConsensus={cameraTemporalConsensus}
               tileDetections={cameraAnalysis?.tileDetections}
               trackingStatus={liveStatus}
@@ -614,7 +642,7 @@ export function ScanCubeModal({
                 type="button"
                 variant="ghost"
                 aria-pressed={autoScanEnabled}
-                disabled={capturing || camera.status !== 'ready'}
+                disabled={!scanAnalysisEnabled || capturing || camera.status !== 'ready'}
                 onClick={handleAutoScanToggle}
               >
                 {autoScanEnabled ? t('scan.actions.autoScanOn') : t('scan.actions.autoScanOff')}
@@ -658,6 +686,7 @@ export function ScanCubeModal({
               centerSymbol={currentFace.symbol}
               key={currentFace.symbol}
               reviewTargetIndexes={reviewTargetIndexes}
+              stickersPerFace={stickersPerFace}
               stickers={stickers}
               onStickerColorChange={handleStickerColorChange}
             />
@@ -673,7 +702,7 @@ export function ScanCubeModal({
                         className="size-3 border border-[#2b2b2b]"
                         style={{ backgroundColor: details.background }}
                       />
-                      {scanColorLabel(t, symbol)}: {previewCounts[symbol]}/9
+                      {scanColorLabel(t, symbol)}: {previewCounts[symbol]}/{stickersPerFace}
                     </span>
                   )
                 })}
@@ -761,11 +790,11 @@ function CenterMismatchConfirmationModal({
   )
 }
 
-function currentDraftHasReviewContent(draft: ScanFaceDraft): boolean {
+function currentDraftHasReviewContent(draft: ScanFaceDraft, centerIndex: number | undefined): boolean {
   return (
     draft.photoDataUrl !== undefined ||
     draft.analysis !== undefined ||
-    draft.stickers.some((sticker, index) => index !== 4 && sticker.symbol !== undefined)
+    draft.stickers.some((sticker, index) => index !== centerIndex && sticker.symbol !== undefined)
   )
 }
 
