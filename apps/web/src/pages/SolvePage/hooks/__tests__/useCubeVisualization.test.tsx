@@ -119,6 +119,50 @@ describe('useCubeVisualization', () => {
     expect(cube.move).toHaveBeenCalledWith('R', { animationSpeedMs: 0 })
   })
 
+  it('retries setting visual state when the cube element is still connecting', async () => {
+    vi.useFakeTimers()
+    const cube = createFakeCube()
+    const visualState = 'UUUURFRDFRFDDBDDLLBLUUBB'
+    cube.setState.mockImplementationOnce(() => {
+      throw new Error('not initialized')
+    })
+
+    render(
+      <HookHarness
+        cube={cube}
+        cubeType="Two"
+        notation=""
+        visualState={visualState}
+        visualStateKind="cube2-facelets-v1"
+      />,
+    )
+    await runVisualizationSync()
+
+    expect(cube.setState).toHaveBeenCalledTimes(2)
+    expect(cube.setState).toHaveBeenLastCalledWith(visualState)
+  })
+
+  it('retries setting visual state when the cube element rejects the first state sync', async () => {
+    vi.useFakeTimers()
+    const cube = createFakeCube()
+    const visualState = 'UUUURFRDFRFDDBDDLLBLUUBB'
+    cube.setState.mockReturnValueOnce(false)
+
+    render(
+      <HookHarness
+        cube={cube}
+        cubeType="Two"
+        notation=""
+        visualState={visualState}
+        visualStateKind="cube2-facelets-v1"
+      />,
+    )
+    await runVisualizationSync()
+
+    expect(cube.setState).toHaveBeenCalledTimes(2)
+    expect(cube.setState).toHaveBeenLastCalledWith(visualState)
+  })
+
   it('ignores incompatible 2x2 visual state length', async () => {
     vi.useFakeTimers()
     const cube = createFakeCube()

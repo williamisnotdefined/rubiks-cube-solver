@@ -81,8 +81,12 @@ export function SolvePage() {
         ? 'Three'
         : undefined
   const visualizationSupported = visualizationCubeType !== undefined
+  const useInverseSolutionVisualization =
+    activeSolveSource === 'scan' && visualizationCubeType === 'Two' && successResult !== undefined
   const visualizationNotation =
-    visualizationState === undefined && visualizationSupported
+    useInverseSolutionVisualization
+      ? notationWithSolutionPrefix(invertMoveSequence(successResult.moves).join(' '), visibleSolutionMoves)
+      : visualizationState === undefined && visualizationSupported
       ? notationWithSolutionPrefix(
           notation,
           activeSolveSource === 'notation' ? visibleSolutionMoves : [],
@@ -90,13 +94,15 @@ export function SolvePage() {
       : visualizationSupported
         ? visibleSolutionMoves.join(' ')
         : ''
+  const visualizationStateForCube = useInverseSolutionVisualization ? undefined : visualizationState
+  const visualizationStateKindForCube = useInverseSolutionVisualization ? undefined : visualizationStateKind
 
   useCubeVisualization(
     cubeRef,
     visualizationNotation,
     cubeReadyRevision,
-    visualizationSupported ? visualizationState : undefined,
-    visualizationSupported ? visualizationStateKind : undefined,
+    visualizationSupported ? visualizationStateForCube : undefined,
+    visualizationSupported ? visualizationStateKindForCube : undefined,
     visualizationCubeType,
     cubeActive && visualizationSupported,
   )
@@ -301,6 +307,18 @@ function notationWithSolutionPrefix(
   solutionMoves: readonly string[],
 ): string {
   return [notation.trim(), ...solutionMoves].filter(Boolean).join(' ')
+}
+
+function invertMoveSequence(moves: readonly string[]): string[] {
+  return moves.slice().reverse().map(invertMoveToken)
+}
+
+function invertMoveToken(move: string): string {
+  if (move.endsWith('2')) {
+    return move
+  }
+
+  return move.endsWith("'") ? move.slice(0, -1) : `${move}'`
 }
 
 function clampSolutionStep(step: number, maxStep: number): number {

@@ -2,6 +2,7 @@ use axum::{
     body::{to_bytes, Body},
     http::{Method, Request, StatusCode},
 };
+use cube_engine::puzzles::cube2::{cube2_visual_state, Cube2, Cube2Algorithm};
 use cube_engine::{infer_scan, Facelet, PuzzleId, Scramble, SolverStrategy};
 use tower::ServiceExt;
 
@@ -1057,6 +1058,37 @@ async fn solve_cube2_scan_session_accepts_reviewed_stickers() {
 }
 
 #[tokio::test]
+async fn solve_cube2_scan_session_returns_initial_scrambled_visual_state() {
+    let algorithm: Cube2Algorithm = "R U F".parse().expect("algorithm should parse");
+    let mut cube = Cube2::solved();
+    algorithm.apply_to(&mut cube);
+    let initial_visual_state = cube2_visual_state(&cube);
+    assert_ne!(initial_visual_state, "UUUURRRRFFFFDDDDLLLLBBBB");
+    let mut request = cube2_scan_session_request_from_visual_state(&initial_visual_state);
+    request.max_depth = 20;
+    request.max_nodes = Some(100_000);
+
+    let (status, response) = solve_scan_session_request_for_puzzle(
+        &ApiState::without_generated_solver(),
+        PuzzleId::Cube2x2x2,
+        request,
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::OK);
+    let response = response.0;
+    assert_eq!(response.status, "accepted");
+    let solve = response.solve.expect("2x2 scan should solve");
+    assert!(solve.ok);
+    assert_eq!(solve.replay_verified, Some(true));
+    let visual_state = solve
+        .visual_state
+        .expect("2x2 scan should return visual state");
+    assert_eq!(visual_state.kind, "cube2-facelets-v1");
+    assert_eq!(visual_state.value, initial_visual_state);
+}
+
+#[tokio::test]
 async fn solve_cube2_scan_session_highlights_invalid_corner_stickers() {
     let mut request = solved_cube2_scan_session_request();
     replace_reviewed_cube2_sticker(&mut request, "U", 3, "B");
@@ -1591,6 +1623,39 @@ fn solved_cube2_scan_session_request() -> ScanSessionRequest {
                 image: Some("data:image/jpeg;base64,AAAA".to_owned()),
                 manual_overrides: Default::default(),
                 reviewed_stickers: reviewed_cube2_stickers(symbol),
+                client_rotation: Some(0),
+            })
+            .collect(),
+        grid_size: 2,
+        max_depth: 0,
+        max_nodes: Some(1_000),
+        strategy_id: "cube2-pdb-ida-star".to_owned(),
+    }
+}
+
+fn cube2_scan_session_request_from_visual_state(visual_state: &str) -> ScanSessionRequest {
+    let chars: Vec<char> = visual_state.chars().collect();
+    assert_eq!(chars.len(), 24);
+
+    ScanSessionRequest {
+        faces: ["U", "R", "F", "D", "L", "B"]
+            .into_iter()
+            .enumerate()
+            .map(|(face_index, symbol)| ScanSessionFaceRequest {
+                symbol: symbol.to_owned(),
+                expected_top: None,
+                image: Some("data:image/jpeg;base64,AAAA".to_owned()),
+                manual_overrides: Default::default(),
+                reviewed_stickers: chars[face_index * 4..face_index * 4 + 4]
+                    .iter()
+                    .enumerate()
+                    .map(|(index, symbol)| ScanSessionReviewedStickerRequest {
+                        index,
+                        symbol: symbol.to_string(),
+                        confidence: Some(1.0),
+                        source: Some("manual".to_owned()),
+                    })
+                    .collect(),
                 client_rotation: Some(0),
             })
             .collect(),

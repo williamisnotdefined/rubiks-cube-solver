@@ -437,7 +437,7 @@ describe('SolvePage', () => {
     )
   })
 
-  it('drives the page cube from a successful 2x2 scan solve visual state', async () => {
+  it('reconstructs the 2x2 scan state from the inverse solution for playback', async () => {
     const user = userEvent.setup()
     const visualState = 'UUUURRRRFFFFDDDDLLLLBBBB'
     apiMocks.scanSessionSolveResult = scanSuccessResult(visualState, 'cube2-facelets-v1')
@@ -449,10 +449,22 @@ describe('SolvePage', () => {
 
     expect(useCubeVisualizationMock).toHaveBeenLastCalledWith(
       expect.anything(),
-      '',
+      "U' R'",
       expect.any(Number),
-      visualState,
-      'cube2-facelets-v1',
+      undefined,
+      undefined,
+      'Two',
+      true,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Next move' }))
+
+    expect(useCubeVisualizationMock).toHaveBeenLastCalledWith(
+      expect.anything(),
+      "U' R' R",
+      expect.any(Number),
+      undefined,
+      undefined,
       'Two',
       true,
     )
