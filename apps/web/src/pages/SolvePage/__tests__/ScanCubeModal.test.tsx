@@ -699,6 +699,29 @@ describe('ScanCubeModal', () => {
     expect(apiMocks.solveSessionMutateAsync).not.toHaveBeenCalled()
   })
 
+  it('allows reviewing a manually filled 2x2 without recognized photos', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <ScanCubeModal
+        apiReady
+        puzzleSlug="cube-2x2x2"
+        solving={false}
+        onClose={vi.fn()}
+      />,
+    )
+
+    await confirmAllEvenFacesManually(user)
+
+    const reviewButton = screen.getByRole('button', { name: 'Review assembled cube' })
+    expect(reviewButton).toBeEnabled()
+
+    await user.click(reviewButton)
+
+    expect(await screen.findByRole('heading', { name: 'Review assembled cube' })).toBeInTheDocument()
+    expect(apiMocks.solveSessionMutateAsync).not.toHaveBeenCalled()
+  })
+
   it('submits the full scan session and closes on accepted solve', async () => {
     const user = userEvent.setup()
     const onClose = vi.fn()
@@ -1391,6 +1414,32 @@ async function confirmAllFaces(
     if (faceIndex < 5) {
       await screen.findByRole('heading', { name: labels[faceIndex + 1] })
     }
+  }
+}
+
+async function confirmAllEvenFacesManually(user: ReturnType<typeof userEvent.setup>) {
+  const labels = ['Front side', 'Right side', 'Back side', 'Left side', 'Up side', 'Down side']
+
+  for (let faceIndex = 0; faceIndex < 6; faceIndex += 1) {
+    const symbol = scanFaceOrder[faceIndex].symbol
+
+    await screen.findByRole('heading', { name: labels[faceIndex] })
+    await fillCurrentEvenFaceManually(user, symbol)
+    await user.click(screen.getByRole('button', { name: 'Confirm face' }))
+
+    if (faceIndex < 5) {
+      await screen.findByRole('heading', { name: labels[faceIndex + 1] })
+    }
+  }
+}
+
+async function fillCurrentEvenFaceManually(
+  user: ReturnType<typeof userEvent.setup>,
+  symbol: ScanFaceSymbol,
+) {
+  for (const index of [0, 1, 2, 3]) {
+    await user.click(screen.getByTestId(`scan-sticker-${index}`))
+    await user.click(screen.getByRole('button', { name: scanColorName(symbol) }))
   }
 }
 

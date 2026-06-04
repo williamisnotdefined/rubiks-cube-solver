@@ -154,6 +154,7 @@ export function EvenCubeScanModal({
     drafts,
     apiReady,
     solveDisabledReason,
+    { requirePhotos: !isEvenCubeScan },
   )
   const draftValidationMessage = scanFaceDraftValidationMessage(t, draftValidation)
   const faceValidation = draftValidationMessage

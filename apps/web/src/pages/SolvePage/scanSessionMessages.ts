@@ -41,6 +41,7 @@ export function scanSessionReadinessMessage(
   drafts: ScanFaceDrafts,
   apiReady: boolean,
   solveDisabledReason: string | undefined,
+  { requirePhotos = true }: { requirePhotos?: boolean } = {},
 ): string | undefined {
   if (!apiReady) {
     return t('scan.messages.apiNotReady')
@@ -72,7 +73,7 @@ export function scanSessionReadinessMessage(
     })
   }
 
-  if (missingPhotoFaces.length > 0) {
+  if (requirePhotos && missingPhotoFaces.length > 0) {
     return t('scan.messages.sessionMissingPhotos', {
       faces: scanColorCodes(missingPhotoFaces),
     })
