@@ -236,6 +236,8 @@ describe('SolvePage', () => {
       '',
       expect.any(Number),
       undefined,
+      undefined,
+      'Three',
       true,
     )
   })
@@ -251,6 +253,8 @@ describe('SolvePage', () => {
       '',
       expect.any(Number),
       undefined,
+      undefined,
+      'Three',
       false,
     )
   })
@@ -337,6 +341,8 @@ describe('SolvePage', () => {
       '',
       expect.any(Number),
       undefined,
+      undefined,
+      'Two',
       true,
     )
   })
@@ -425,6 +431,8 @@ describe('SolvePage', () => {
       'R',
       expect.any(Number),
       visualState,
+      'cube3-facelets-v1',
+      'Three',
       true,
     )
   })
@@ -458,5 +466,6 @@ function scanSuccessResult(visualState?: string): SolveResult {
     strategyId: 'generated-two-phase-quality',
     strategyLabel: 'Generated two-phase quality solver',
     visualState,
+    visualStateKind: visualState === undefined ? undefined : 'cube3-facelets-v1',
   }
 }

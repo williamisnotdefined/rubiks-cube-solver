@@ -17,7 +17,7 @@ use crate::config::{DEFAULT_API_NODES, MAX_API_DEPTH, MAX_API_NODES, MAX_NOTATIO
 use crate::response::{
     generated_table_status, PuzzleApiErrorResponse, PuzzleResponse, PuzzleSolveLimitsRequest,
     PuzzleSolveRequest, PuzzleSolveResponse, PuzzleStrategyResponse, SolveNotationRequest,
-    SolveResponse, VisualStateResponse,
+    SolveResponse,
 };
 use crate::solve::solve_notation_request;
 use crate::state::ApiState;
@@ -592,10 +592,7 @@ fn puzzle_solve_response_from_legacy(
         explored_nodes: response.explored_nodes,
         elapsed_ms: response.elapsed_ms,
         replay_verified: response.replay_verified,
-        visual_state: response.visual_state.map(|value| VisualStateResponse {
-            kind: VisualizationKind::Cube3FaceletsV1.as_str().to_owned(),
-            value,
-        }),
+        visual_state: response.visual_state,
         error_kind: response.error_kind,
         message: response.message,
     }

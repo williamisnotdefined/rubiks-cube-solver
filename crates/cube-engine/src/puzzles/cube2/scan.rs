@@ -77,6 +77,19 @@ pub fn cube2_from_scan_faces(faces: &[(Cube2Face, String)]) -> Result<Cube2, Cub
 }
 
 pub fn cube2_visual_state(cube: &Cube2) -> String {
+    let embedded = cube2_embedded_facelet_string(cube);
+    Cube2Face::ALL
+        .into_iter()
+        .flat_map(|face| {
+            let chars = embedded.chars().collect::<Vec<_>>();
+            (0..CUBE2_SCAN_STICKERS_PER_FACE).map(move |sticker_index| {
+                chars[cube2_to_cube3_corner_position(face, sticker_index)]
+            })
+        })
+        .collect()
+}
+
+fn cube2_embedded_facelet_string(cube: &Cube2) -> String {
     let mut facelets = solved_facelets();
 
     for (position_index, target_mapping) in CORNER_FACELET_MAPPINGS.iter().enumerate() {
@@ -203,7 +216,7 @@ fn cube2_corner_from_corner(corner: Corner) -> Cube2Corner {
 
 #[cfg(test)]
 mod tests {
-    use super::{cube2_from_scan_faces, cube2_visual_state};
+    use super::{cube2_embedded_facelet_string, cube2_from_scan_faces, cube2_visual_state};
     use crate::puzzles::cube2::{Cube2, Cube2Algorithm, Cube2Face};
 
     #[test]
@@ -214,13 +227,30 @@ mod tests {
     }
 
     #[test]
-    fn visual_state_embeds_2x2_corners_in_valid_facelet_string() {
+    fn visual_state_returns_2x2_facelet_string() {
         let visual_state = cube2_visual_state(&Cube2::solved());
 
-        assert_eq!(
-            visual_state,
-            "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB"
-        );
+        assert_eq!(visual_state, "UUUURRRRFFFFDDDDLLLLBBBB");
+        assert_eq!(visual_state.len(), 24);
+    }
+
+    #[test]
+    fn scrambled_visual_state_preserves_2x2_color_counts() {
+        let algorithm: Cube2Algorithm = "R U F".parse().expect("algorithm should parse");
+        let mut cube = Cube2::solved();
+        algorithm.apply_to(&mut cube);
+        let visual_state = cube2_visual_state(&cube);
+
+        assert_eq!(visual_state.len(), 24);
+        for symbol in ['U', 'R', 'F', 'D', 'L', 'B'] {
+            assert_eq!(
+                visual_state
+                    .chars()
+                    .filter(|actual| *actual == symbol)
+                    .count(),
+                4
+            );
+        }
     }
 
     #[test]
@@ -228,7 +258,7 @@ mod tests {
         let algorithm: Cube2Algorithm = "R U F".parse().expect("algorithm should parse");
         let mut expected = Cube2::solved();
         algorithm.apply_to(&mut expected);
-        let visual_state = cube2_visual_state(&expected);
+        let visual_state = cube2_embedded_facelet_string(&expected);
         let scan_faces = scan_faces_from_embedded_visual_state(&visual_state);
 
         let actual = cube2_from_scan_faces(&scan_faces).expect("scan should parse");

@@ -284,7 +284,7 @@ describe('solver API operations', () => {
         knownCenters: { U: { r: 205, g: 210, b: 218 } },
         signal: controller.signal,
       }),
-    ).resolves.toEqual(payload)
+    ).resolves.toMatchObject(payload)
     expect(fetchMock).toHaveBeenCalledWith(
       'http://127.0.0.1:8787/scan/analyze-face',
       expect.objectContaining({
@@ -357,7 +357,7 @@ describe('solver API operations', () => {
         maxNodes: 1_000,
         strategyId: 'bounded-ida-star',
       }),
-    ).resolves.toEqual(payload)
+    ).resolves.toMatchObject(payload)
     expect(fetchMock).toHaveBeenCalledWith(
       'http://127.0.0.1:8787/scan/solve-session',
       expect.objectContaining({
@@ -399,6 +399,40 @@ describe('solver API operations', () => {
         }),
       }),
     )
+  })
+
+  it('normalizes nested 2x2 scan solve visual states', async () => {
+    mockApiSuccess({
+      manualTargets: [],
+      ok: true,
+      rescanFaces: [],
+      solve: {
+        ...successPayload,
+        generatedTableStatus: 'not_applicable',
+        strategyId: 'cube2-pdb-ida-star',
+        strategyLabel: '2x2 PDB IDA*',
+        solverMode: 'cube2_pdb_ida_star',
+        visualState: {
+          kind: 'cube2-facelets-v1',
+          value: 'UUUURRRRFFFFDDDDLLLLBBBB',
+        },
+      },
+      status: 'accepted',
+    })
+
+    await expect(
+      solveScanSession({
+        faces: [...scanSessionFaces],
+        maxDepth: 0,
+        puzzleSlug: 'cube-2x2x2',
+        strategyId: 'cube2-pdb-ida-star',
+      }),
+    ).resolves.toMatchObject({
+      solve: {
+        visualState: 'UUUURRRRFFFFDDDDLLLLBBBB',
+        visualStateKind: 'cube2-facelets-v1',
+      },
+    })
   })
 
   it('falls back when scan sessions return no JSON payload', async () => {

@@ -22,7 +22,7 @@ use crate::response::{
     ImageQualityResponse, RgbColorRequest, ScanFacesRequest, ScanSessionFaceRequest,
     ScanSessionInferenceResponse, ScanSessionInvalidCornerResponse,
     ScanSessionInvalidCornerTargetResponse, ScanSessionManualTargetResponse, ScanSessionRequest,
-    ScanSessionResponse, ScanSessionTimingsResponse, SolveScanRequest,
+    ScanSessionResponse, ScanSessionTimingsResponse, SolveScanRequest, VisualStateResponse,
 };
 use crate::scan_quality_gate::{
     evaluate_obvious_scan_quality_with_overrides, evaluate_scan_quality_with_overrides,
@@ -504,7 +504,7 @@ fn solve_cube2_scan_cube(
                 "maxDepth {} exceeds API limit {}",
                 request.max_depth, MAX_API_DEPTH
             ),
-            Some(cube2_visual_state(cube)),
+            cube2_visual_state_response(cube2_visual_state(cube)),
         );
     }
 
@@ -517,7 +517,7 @@ fn solve_cube2_scan_cube(
             "invalid_limits",
             Some("max_nodes_exceeds_limit"),
             format!("maxNodes {max_nodes} exceeds API limit {MAX_API_NODES}"),
-            Some(cube2_visual_state(cube)),
+            cube2_visual_state_response(cube2_visual_state(cube)),
         );
     }
 
@@ -540,12 +540,12 @@ fn solve_cube2_scan_cube(
                     "unsupported 2x2 solver strategy id: {}",
                     request.strategy_id
                 ),
-                Some(cube2_visual_state(cube)),
+                cube2_visual_state_response(cube2_visual_state(cube)),
             );
         }
     };
     let elapsed_ms = started.elapsed().as_millis();
-    let visual_state = Some(cube2_visual_state(cube));
+    let visual_state = cube2_visual_state_response(cube2_visual_state(cube));
 
     match outcome {
         Cube2SearchOutcome::Found(solution) => crate::SolveResponse {
@@ -849,7 +849,7 @@ fn cube2_scan_search_error_response(
     status: impl Into<String>,
     error_kind: Option<&str>,
     message: String,
-    visual_state: Option<String>,
+    visual_state: Option<VisualStateResponse>,
 ) -> crate::SolveResponse {
     crate::SolveResponse {
         ok: false,
@@ -878,7 +878,7 @@ fn cube2_scan_error_response(
     status: impl Into<String>,
     error_kind: Option<&str>,
     message: String,
-    visual_state: Option<String>,
+    visual_state: Option<VisualStateResponse>,
 ) -> crate::SolveResponse {
     crate::SolveResponse {
         ok: false,
@@ -898,6 +898,13 @@ fn cube2_scan_error_response(
         error_kind: error_kind.map(str::to_owned),
         message: Some(message),
     }
+}
+
+fn cube2_visual_state_response(value: String) -> Option<VisualStateResponse> {
+    Some(VisualStateResponse {
+        kind: "cube2-facelets-v1".to_owned(),
+        value,
+    })
 }
 
 fn cube2_strategy_label(strategy_id: &str) -> String {

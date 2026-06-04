@@ -24,15 +24,19 @@ function HookHarness({
   notation,
   revision = 0,
   visualState,
+  visualStateKind = 'cube3-facelets-v1',
+  cubeType = 'Three',
 }: {
   cube: FakeCube | null
   enabled?: boolean
   notation: string
   revision?: number
   visualState?: string
+  visualStateKind?: 'cube2-facelets-v1' | 'cube3-facelets-v1' | 'none'
+  cubeType?: 'Two' | 'Three'
 }) {
   const cubeRef = useRef(cube as unknown as RubiksCubeElement | null)
-  useCubeVisualization(cubeRef, notation, revision, visualState, enabled)
+  useCubeVisualization(cubeRef, notation, revision, visualState, visualStateKind, cubeType, enabled)
 
   return null
 }
@@ -93,6 +97,46 @@ describe('useCubeVisualization', () => {
     expect(cube.reset).not.toHaveBeenCalled()
     expect(cube.setState).toHaveBeenCalledWith(visualState)
     expect(cube.move).toHaveBeenCalledWith('R', { animationSpeedMs: 0 })
+  })
+
+  it('sets compatible 2x2 visual state before applying solution moves', async () => {
+    vi.useFakeTimers()
+    const cube = createFakeCube()
+    const visualState = 'UUUURRRRFFFFDDDDLLLLBBBB'
+
+    render(
+      <HookHarness
+        cube={cube}
+        cubeType="Two"
+        notation="R"
+        visualState={visualState}
+        visualStateKind="cube2-facelets-v1"
+      />,
+    )
+    await runVisualizationSync()
+
+    expect(cube.setState).toHaveBeenCalledWith(visualState)
+    expect(cube.move).toHaveBeenCalledWith('R', { animationSpeedMs: 0 })
+  })
+
+  it('ignores incompatible 2x2 visual state length', async () => {
+    vi.useFakeTimers()
+    const cube = createFakeCube()
+    const visualState = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB'
+
+    render(
+      <HookHarness
+        cube={cube}
+        cubeType="Two"
+        notation="R"
+        visualState={visualState}
+        visualStateKind="cube2-facelets-v1"
+      />,
+    )
+    await runVisualizationSync()
+
+    expect(cube.setState).not.toHaveBeenCalled()
+    expect(cube.move).not.toHaveBeenCalled()
   })
 
   it('animates appended moves from the same visual state', async () => {

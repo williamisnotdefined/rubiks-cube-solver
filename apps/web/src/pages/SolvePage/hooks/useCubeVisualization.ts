@@ -1,6 +1,7 @@
 import { useEffect, useRef, type RefObject } from 'react'
 import type { Movement } from '@houstonp/rubiks-cube/core'
 import type { RubiksCubeElement } from '@houstonp/rubiks-cube/view'
+import type { PuzzleVisualizationKind } from '@api/solver/types'
 
 const visualizationMoveTokens = [
   'U',
@@ -33,6 +34,8 @@ export function useCubeVisualization(
   notation: string,
   readyRevision: number,
   visualState?: string,
+  visualStateKind?: PuzzleVisualizationKind,
+  cubeType?: 'Two' | 'Three',
   enabled = true,
 ) {
   const visualMovesRef = useRef<Movement[]>([])
@@ -52,12 +55,16 @@ export function useCubeVisualization(
     if (parsed.status !== 'valid') {
       return
     }
+    const compatibleVisualState = compatibleVisualizationState(visualState, visualStateKind, cubeType)
+    if (compatibleVisualState.status === 'invalid') {
+      return
+    }
 
     const timeout = window.setTimeout(() => {
       void syncCubeVisualization({
         cube: cubeRef.current,
         nextMoves: parsed.moves,
-        nextState: visualState,
+        nextState: compatibleVisualState.value,
         previousMoves: visualMovesRef.current,
         previousState: visualStateRef.current,
         hasSynced: visualHasSyncedRef.current,
@@ -74,7 +81,35 @@ export function useCubeVisualization(
       visualSyncIdRef.current += 1
       window.clearTimeout(timeout)
     }
-  }, [cubeRef, enabled, notation, readyRevision, visualState])
+  }, [cubeRef, cubeType, enabled, notation, readyRevision, visualState, visualStateKind])
+}
+
+type CompatibleVisualizationStateResult =
+  | { status: 'valid'; value: string | undefined }
+  | { status: 'invalid' }
+
+function compatibleVisualizationState(
+  visualState: string | undefined,
+  visualStateKind: PuzzleVisualizationKind | undefined,
+  cubeType: 'Two' | 'Three' | undefined,
+): CompatibleVisualizationStateResult {
+  if (visualState === undefined) {
+    return { status: 'valid', value: undefined }
+  }
+
+  if (visualStateKind === 'cube2-facelets-v1') {
+    return cubeType === 'Two' && visualState.length === 24
+      ? { status: 'valid', value: visualState }
+      : { status: 'invalid' }
+  }
+
+  if (visualStateKind === 'cube3-facelets-v1') {
+    return cubeType === 'Three' && visualState.length === 54
+      ? { status: 'valid', value: visualState }
+      : { status: 'invalid' }
+  }
+
+  return { status: 'invalid' }
 }
 
 function parseVisualizationNotation(input: string): VisualizationNotationParseResult {

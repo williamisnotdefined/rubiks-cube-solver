@@ -181,7 +181,7 @@ pub struct SolveResponse {
     #[serde(rename = "replayVerified")]
     pub replay_verified: Option<bool>,
     #[serde(rename = "visualState")]
-    pub visual_state: Option<String>,
+    pub visual_state: Option<VisualStateResponse>,
     #[serde(rename = "errorKind")]
     pub error_kind: Option<String>,
     pub message: Option<String>,
@@ -561,7 +561,7 @@ pub(crate) fn success_response_from_parts(
         explored_nodes: Some(explored_nodes),
         elapsed_ms: Some(elapsed_ms),
         replay_verified: Some(replay_verified),
-        visual_state,
+        visual_state: visual_state_response(strategy, visual_state),
         error_kind: None,
         message: None,
     }
@@ -590,7 +590,7 @@ pub(crate) fn not_found_response_from_parts(
         explored_nodes: Some(explored_nodes),
         elapsed_ms: Some(elapsed_ms),
         replay_verified: None,
-        visual_state,
+        visual_state: visual_state_response(strategy, visual_state),
         error_kind: None,
         message: Some(format!(
             "no solution found within limits: max_depth={}, max_nodes={}, explored_nodes={}",
@@ -646,7 +646,7 @@ pub(crate) fn error_response_from_parts(
         explored_nodes: None,
         elapsed_ms: None,
         replay_verified: None,
-        visual_state,
+        visual_state: visual_state_response(strategy, visual_state),
         error_kind: Some(error_kind.into()),
         message: Some(message),
     }
@@ -662,6 +662,16 @@ pub(crate) fn generated_table_status(strategy: SolverStrategy) -> &'static str {
         | SolverStrategy::ShortSolutionPortfolio => "available",
         SolverStrategy::BoundedIdaStar => "not_required",
     }
+}
+
+fn visual_state_response(
+    _strategy: SolverStrategy,
+    visual_state: Option<String>,
+) -> Option<VisualStateResponse> {
+    visual_state.map(|value| VisualStateResponse {
+        kind: "cube3-facelets-v1".to_owned(),
+        value,
+    })
 }
 
 fn max_nodes_label(max_nodes: Option<usize>) -> String {

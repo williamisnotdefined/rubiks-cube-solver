@@ -73,6 +73,7 @@ export function SolvePage() {
   )
   const visibleSolutionMoves = successResult?.moves.slice(0, visibleSolutionStep) ?? []
   const visualizationState = successResult?.visualState
+  const visualizationStateKind = successResult?.visualStateKind
   const visualizationCubeType: CubeStageCubeType | undefined =
     selectedPuzzle?.supportedVisualizations.includes(cube2VisualizationKind) === true
       ? 'Two'
@@ -95,6 +96,8 @@ export function SolvePage() {
     visualizationNotation,
     cubeReadyRevision,
     visualizationSupported ? visualizationState : undefined,
+    visualizationSupported ? visualizationStateKind : undefined,
+    visualizationCubeType,
     cubeActive && visualizationSupported,
   )
 

@@ -47,9 +47,14 @@ fn scan_strategy_solves_solved_state_without_generated_tables() {
     assert_eq!(response.status, "success");
     assert!(response.moves.is_empty());
     assert_eq!(response.replay_verified, Some(true));
+    let visual_state = response
+        .visual_state
+        .as_ref()
+        .expect("visual state should be returned");
+    assert_eq!(visual_state.kind, "cube3-facelets-v1");
     assert_eq!(
-        response.visual_state.as_deref(),
-        Some("UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB")
+        visual_state.value.as_str(),
+        "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB"
     );
 }
 
@@ -1043,10 +1048,12 @@ async fn solve_cube2_scan_session_accepts_reviewed_stickers() {
     let solve = response.solve.expect("2x2 scan should solve");
     assert!(solve.ok);
     assert_eq!(solve.strategy_id, "cube2-pdb-ida-star");
-    assert_eq!(
-        solve.visual_state.as_deref(),
-        Some("UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB")
-    );
+    let visual_state = solve
+        .visual_state
+        .expect("2x2 scan should return visual state");
+    assert_eq!(visual_state.kind, "cube2-facelets-v1");
+    assert_eq!(visual_state.value, "UUUURRRRFFFFDDDDLLLLBBBB");
+    assert_eq!(visual_state.value.len(), 24);
 }
 
 #[tokio::test]

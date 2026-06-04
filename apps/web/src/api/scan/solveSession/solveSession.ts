@@ -1,5 +1,11 @@
 import { postJsonResponse } from '@api/client'
+import { normalizeSolveResponse } from '@api/solver/solveNotation/normalizeSolveResponse'
+import type { ApiSolveResponse } from '@api/solver/types'
 import type { ScanSessionResult, SolveScanSessionVariables } from '../types'
+
+type RawScanSessionResult = Omit<ScanSessionResult, 'solve'> & {
+  solve?: ApiSolveResponse
+}
 
 export async function solveScanSession({
   faces,
@@ -11,7 +17,7 @@ export async function solveScanSession({
   const path = puzzleSlug === undefined
     ? '/scan/solve-session'
     : `/puzzles/${encodeURIComponent(puzzleSlug)}/scan/solve-session`
-  const result = await postJsonResponse<ScanSessionResult>(path, {
+  const result = await postJsonResponse<RawScanSessionResult>(path, {
     faces,
     maxDepth,
     maxNodes,
@@ -19,7 +25,7 @@ export async function solveScanSession({
   })
 
   if (result.payload !== undefined) {
-    return result.payload
+    return normalizeScanSessionResult(result.payload)
   }
 
   return {
@@ -28,5 +34,18 @@ export async function solveScanSession({
     message: result.statusText || 'The scan session request failed.',
     manualTargets: [],
     rescanFaces: [],
+  }
+}
+
+function normalizeScanSessionResult(result: RawScanSessionResult): ScanSessionResult {
+  const { solve, ...sessionResult } = result
+
+  if (solve === undefined) {
+    return sessionResult
+  }
+
+  return {
+    ...sessionResult,
+    solve: normalizeSolveResponse(solve, solve.ok),
   }
 }
