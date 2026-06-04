@@ -381,7 +381,7 @@ function invalidDisplayIndexes(
 ): ReadonlySet<number> {
   const indexes = new Set<number>()
   for (let index = 0; index < stickersPerFace; index += 1) {
-    if (invalidStickerTargets.has(invalidTargetKey(slot, displayIndexToPayloadIndex(slot, index, stickersPerFace)))) {
+    if (invalidStickerTargets.has(invalidTargetKey(slot, displayIndexToPayloadIndex(slot, index)))) {
       indexes.add(index)
     }
   }

@@ -6,6 +6,7 @@ import {
   evenCubeScanSessionFacesFromDrafts,
   findEvenCubeFullFit,
   swapEvenCubeNetAssignments,
+  validateEvenCubeScan,
 } from '../evenCubeScan'
 import {
   clearScanFaceDraft,
@@ -523,6 +524,29 @@ describe('scan state helpers', () => {
       expect.objectContaining({ index: 2, symbol: 'L' }),
       expect.objectContaining({ index: 3, symbol: 'R' }),
     ])
+  })
+
+  it('keeps the assembled 2x2 U slot in net orientation without an extra 180-degree flip', () => {
+    const baseDrafts = confirmed2x2Drafts()
+    const drafts = {
+      ...baseDrafts,
+      U: { ...baseDrafts.U, stickers: stickersFromSymbols('UUDB') },
+      L: { ...baseDrafts.L, stickers: stickersFromSymbols('BBUF') },
+      F: { ...baseDrafts.F, stickers: stickersFromSymbols('RDRF') },
+      R: { ...baseDrafts.R, stickers: stickersFromSymbols('LLDR') },
+      B: { ...baseDrafts.B, stickers: stickersFromSymbols('FRFB') },
+      D: { ...baseDrafts.D, stickers: stickersFromSymbols('DLLU') },
+    }
+
+    expect(validateEvenCubeScan(drafts, {}, createDefaultEvenCubeNetAssignments())).toMatchObject({ ok: true })
+    expect(evenCubeScanSessionFacesFromDrafts(drafts, {}, createDefaultEvenCubeNetAssignments())
+      ?.find((face) => face.symbol === 'U')?.reviewedStickers)
+      .toEqual([
+        expect.objectContaining({ index: 0, symbol: 'U' }),
+        expect.objectContaining({ index: 1, symbol: 'U' }),
+        expect.objectContaining({ index: 2, symbol: 'D' }),
+        expect.objectContaining({ index: 3, symbol: 'B' }),
+      ])
   })
 
   it('does not auto-fit ambiguous solid 2x2 faces silently', () => {

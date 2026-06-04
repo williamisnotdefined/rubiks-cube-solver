@@ -2,9 +2,9 @@ import type { ScanSessionFaceRequest } from '@api/scan'
 import type { ScanFaceSymbol } from '@api/solver/types'
 import {
   isScanFaceComplete,
+  expectedTopForScanFace,
   scan2StickersPerFace,
   scanFaceOrder,
-  scanSessionFacesFromDrafts,
   scanSymbols,
   type ScanFaceDrafts,
   type ScanSticker,
@@ -68,7 +68,39 @@ export function evenCubeScanSessionFacesFromDrafts(
   assignments: EvenCubeNetAssignments,
   stickersPerFace = scan2StickersPerFace,
 ): ScanSessionFaceRequest[] | undefined {
-  return scanSessionFacesFromDrafts(evenCubeDraftsFromNet(drafts, rotations, assignments), stickersPerFace)
+  const netDrafts = evenCubeDraftsFromNet(drafts, rotations, assignments)
+  const faces: ScanSessionFaceRequest[] = []
+
+  for (const { symbol } of scanFaceOrder) {
+    const draft = netDrafts[symbol]
+    if (!draft.confirmed || !isScanFaceComplete(draft.stickers, stickersPerFace)) {
+      return undefined
+    }
+
+    const manualOverrides: Partial<Record<number, ScanFaceSymbol>> = {}
+    const reviewedStickers = draft.stickers.map((sticker, index) => {
+      if (sticker.symbol !== undefined && sticker.source === 'manual') {
+        manualOverrides[index] = sticker.symbol
+      }
+
+      return {
+        confidence: sticker.confidence,
+        index,
+        source: sticker.source,
+        symbol: sticker.symbol as ScanFaceSymbol,
+      }
+    })
+
+    faces.push({
+      expectedTop: expectedTopForScanFace(symbol),
+      image: draft.photoDataUrl,
+      manualOverrides: Object.keys(manualOverrides).length > 0 ? manualOverrides : undefined,
+      reviewedStickers,
+      symbol,
+    })
+  }
+
+  return faces
 }
 
 export function validateEvenCubeScan(
@@ -284,7 +316,7 @@ function partialEvenCubeCornersValid(
         break
       }
 
-      const displayIndex = displayIndexToPayloadIndex(slot, index, stickersPerFace)
+      const displayIndex = displayIndexToPayloadIndex(slot, index)
       const sticker = rotateEvenCubeStickers(drafts[capturedFace].stickers, rotation)[displayIndex]
       if (sticker.symbol === undefined) {
         cornerComplete = false
@@ -423,12 +455,8 @@ export function evenCubeCornerDefinitions(stickersPerFace = scan2StickersPerFace
   ]
 }
 
-export function displayIndexToPayloadIndex(slot: ScanFaceSymbol, index: number, stickersPerFace = scan2StickersPerFace): number {
-  if (slot !== 'U') {
-    return index
-  }
-
-  return stickersPerFace - 1 - index
+export function displayIndexToPayloadIndex(_slot: ScanFaceSymbol, index: number): number {
+  return index
 }
 
 function rotateSquareItems<T>(items: readonly T[], gridSize: number, rotation: EvenCubeFaceRotation): T[] {
