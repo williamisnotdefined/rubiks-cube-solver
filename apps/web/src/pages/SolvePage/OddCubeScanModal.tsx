@@ -7,6 +7,7 @@ import {
 } from '@api/scan'
 import type { ScanFaceSymbol, SolveResult } from '@api/solver/types'
 import { Button } from '@components/Button'
+import { ScanExitConfirmationModal } from './ScanExitConfirmationModal'
 import { ScanFaceCaptureStep } from './ScanFaceCaptureStep'
 import { ScanModalShell } from './ScanModalShell'
 import {
@@ -17,7 +18,7 @@ import {
 } from './scanState'
 import { scanColorLabel, scanFaceDraftValidationMessage } from './scanTranslations'
 import { scanColorCode } from './scanColorSymbols'
-import { scanQualityMessage } from './scanCaptureWorkflowHelpers'
+import { scanDraftsHaveProgress, scanQualityMessage } from './scanCaptureWorkflowHelpers'
 import {
   backendReviewTargetsFromSessionResult,
   emptyBackendReviewTargets,
@@ -80,6 +81,7 @@ export function OddCubeScanModal({
   const [backendReviewTargets, setBackendReviewTargets] = useState<BackendReviewTargets>(() =>
     emptyBackendReviewTargets(),
   )
+  const [exitConfirmationVisible, setExitConfirmationVisible] = useState(false)
   const [centerMismatchConfirmation, setCenterMismatchConfirmation] =
     useState<CenterMismatchConfirmation | undefined>()
   const {
@@ -139,12 +141,23 @@ export function OddCubeScanModal({
   const solveScanDisabledReason = scanSessionReadiness
   const solveScanDisabled = solving || sessionSolving || solveScanDisabledReason !== undefined
   const reviewTargetIndexes = backendReviewTargets.manualTargets[currentFace.symbol] ?? []
+  const hasScanProgress = scanDraftsHaveProgress(drafts, centerIndex)
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
+        if (exitConfirmationVisible) {
+          setExitConfirmationVisible(false)
+          return
+        }
+
         if (centerMismatchConfirmation !== undefined) {
           setCenterMismatchConfirmation(undefined)
+          return
+        }
+
+        if (hasScanProgress) {
+          setExitConfirmationVisible(true)
           return
         }
 
@@ -155,7 +168,16 @@ export function OddCubeScanModal({
     document.addEventListener('keydown', handleKeyDown)
 
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [centerMismatchConfirmation, onClose])
+  }, [centerMismatchConfirmation, exitConfirmationVisible, hasScanProgress, onClose])
+
+  function handleProtectedClose() {
+    if (hasScanProgress) {
+      setExitConfirmationVisible(true)
+      return
+    }
+
+    onClose()
+  }
 
   function clearBackendReviewForFace(symbol: ScanFaceSymbol) {
     setBackendReviewTargets((targets) => removeBackendReviewFace(targets, symbol))
@@ -245,6 +267,7 @@ export function OddCubeScanModal({
         visionTileDetectorAvailable={visionTileDetectorAvailable}
         visionTileDetectorReason={visionTileDetectorReason}
         onClose={onClose}
+        onOverlayClose={handleProtectedClose}
       >
 
         <ScanFaceCaptureStep
@@ -291,6 +314,12 @@ export function OddCubeScanModal({
           onConfirm={handleConfirmCenterMismatch}
         />
       )}
+      {exitConfirmationVisible ? (
+        <ScanExitConfirmationModal
+          onCancel={() => setExitConfirmationVisible(false)}
+          onConfirm={onClose}
+        />
+      ) : null}
     </>
   )
 }

@@ -20,6 +20,18 @@ export function currentDraftHasReviewContent(draft: ScanFaceDraft, centerIndex: 
   )
 }
 
+export function scanDraftsHaveProgress(drafts: ScanFaceDrafts, centerIndex: number | undefined): boolean {
+  return scanFaceOrder.some(({ symbol }) => {
+    const draft = drafts[symbol]
+
+    return (
+      draft.confirmed ||
+      draft.lastRejectedCapture !== undefined ||
+      currentDraftHasReviewContent(draft, centerIndex)
+    )
+  })
+}
+
 export function canApplyLiveAutofill(draft: ScanFaceDraft): boolean {
   return !draft.confirmed
 }

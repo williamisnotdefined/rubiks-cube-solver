@@ -31,7 +31,7 @@ import {
   scanSessionFacesFromDrafts,
 } from './scanState'
 import { scanFaceDraftValidationMessage } from './scanTranslations'
-import { scanQualityMessage } from './scanCaptureWorkflowHelpers'
+import { scanDraftsHaveProgress, scanQualityMessage } from './scanCaptureWorkflowHelpers'
 import {
   backendReviewTargetsFromSessionResult,
   emptyBackendReviewTargets,
@@ -45,6 +45,7 @@ import {
   scanSessionMessage,
   scanSessionReadinessMessage,
 } from './scanSessionMessages'
+import { ScanExitConfirmationModal } from './ScanExitConfirmationModal'
 import { useScanCaptureWorkflow } from './hooks/useScanCaptureWorkflow'
 
 export type ScanCubeModalProps = {
@@ -91,6 +92,7 @@ export function EvenCubeScanModal({
   )
   const [evenReviewVisible, setEvenReviewVisible] = useState(false)
   const [evenFaceRotations, setEvenFaceRotations] = useState<EvenCubeFaceRotations>({})
+  const [exitConfirmationVisible, setExitConfirmationVisible] = useState(false)
   const [evenNetAssignments, setEvenNetAssignments] = useState<EvenCubeNetAssignments>(() =>
     createDefaultEvenCubeNetAssignments(),
   )
@@ -161,10 +163,21 @@ export function EvenCubeScanModal({
     : scanSessionReadiness
   const solveScanDisabled = solving || sessionSolving || solveScanDisabledReason !== undefined
   const reviewTargetIndexes = backendReviewTargets.manualTargets[currentFace.symbol] ?? []
+  const hasScanProgress = scanDraftsHaveProgress(drafts, undefined)
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
+        if (exitConfirmationVisible) {
+          setExitConfirmationVisible(false)
+          return
+        }
+
+        if (hasScanProgress) {
+          setExitConfirmationVisible(true)
+          return
+        }
+
         onClose()
       }
     }
@@ -172,7 +185,16 @@ export function EvenCubeScanModal({
     document.addEventListener('keydown', handleKeyDown)
 
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [onClose])
+  }, [exitConfirmationVisible, hasScanProgress, onClose])
+
+  function handleProtectedClose() {
+    if (hasScanProgress) {
+      setExitConfirmationVisible(true)
+      return
+    }
+
+    onClose()
+  }
 
   function clearBackendReviewForFace(symbol: ScanFaceSymbol) {
     setBackendReviewTargets((targets) => removeBackendReviewFace(targets, symbol))
@@ -316,15 +338,17 @@ export function EvenCubeScanModal({
   }
 
   return (
-    <ScanModalShell
-      titleId={titleId}
-      visionOk={visionOk}
-      visionCnnAvailable={visionCnnAvailable}
-      visionCnnReason={visionCnnReason}
-      visionTileDetectorAvailable={visionTileDetectorAvailable}
-      visionTileDetectorReason={visionTileDetectorReason}
-      onClose={onClose}
-    >
+    <>
+      <ScanModalShell
+        titleId={titleId}
+        visionOk={visionOk}
+        visionCnnAvailable={visionCnnAvailable}
+        visionCnnReason={visionCnnReason}
+        visionTileDetectorAvailable={visionTileDetectorAvailable}
+        visionTileDetectorReason={visionTileDetectorReason}
+        onClose={onClose}
+        onOverlayClose={handleProtectedClose}
+      >
 
         {evenReviewVisible && isEvenCubeScan ? (
           <EvenCubeReviewStep
@@ -381,7 +405,14 @@ export function EvenCubeScanModal({
             onStickerColorChange={handleStickerColorChange}
           />
         )}
-    </ScanModalShell>
+      </ScanModalShell>
+      {exitConfirmationVisible ? (
+        <ScanExitConfirmationModal
+          onCancel={() => setExitConfirmationVisible(false)}
+          onConfirm={onClose}
+        />
+      ) : null}
+    </>
   )
 }
 

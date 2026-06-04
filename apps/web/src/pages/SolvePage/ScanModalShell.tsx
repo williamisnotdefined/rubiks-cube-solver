@@ -12,6 +12,7 @@ type ScanModalShellProps = {
   visionTileDetectorAvailable?: boolean
   visionTileDetectorReason?: string
   onClose: () => void
+  onOverlayClose?: () => void
 }
 
 export function ScanModalShell({
@@ -23,6 +24,7 @@ export function ScanModalShell({
   visionTileDetectorAvailable,
   visionTileDetectorReason,
   onClose,
+  onOverlayClose,
 }: ScanModalShellProps) {
   const { t } = useTranslation()
 
@@ -32,7 +34,7 @@ export function ScanModalShell({
         aria-label={t('scan.modal.dismiss')}
         className="absolute inset-0 bg-app-bg/90"
         type="button"
-        onClick={onClose}
+        onClick={onOverlayClose ?? onClose}
       />
       <section
         aria-labelledby={titleId}

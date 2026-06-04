@@ -307,6 +307,74 @@ describe('ScanCubeModal', () => {
     expect(onClose).toHaveBeenCalledTimes(2)
   })
 
+  it('asks for confirmation before the backdrop closes a scan with progress', async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+    render(
+      <ScanCubeModal
+        apiReady
+        solving={false}
+        onClose={onClose}
+      />,
+    )
+
+    await user.click(screen.getByTestId('scan-sticker-0'))
+    await user.click(screen.getByRole('button', { name: 'Red' }))
+    await user.click(screen.getByLabelText('Dismiss scan cube'))
+
+    expect(onClose).not.toHaveBeenCalled()
+    expect(screen.getByRole('dialog', { name: 'Leave scan?' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(screen.queryByRole('dialog', { name: 'Leave scan?' })).not.toBeInTheDocument()
+    expect(onClose).not.toHaveBeenCalled()
+
+    await user.click(screen.getByLabelText('Dismiss scan cube'))
+    await user.click(screen.getByRole('button', { name: 'Leave' }))
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('asks for confirmation before Escape closes a scan with progress', async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+    render(
+      <ScanCubeModal
+        apiReady
+        solving={false}
+        onClose={onClose}
+      />,
+    )
+
+    await user.click(screen.getByTestId('scan-sticker-0'))
+    await user.click(screen.getByRole('button', { name: 'Red' }))
+    await user.keyboard('{Escape}')
+
+    expect(onClose).not.toHaveBeenCalled()
+    expect(screen.getByRole('dialog', { name: 'Leave scan?' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Leave' }))
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('asks for confirmation before the backdrop closes a 2x2 scan with progress', async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+    render(
+      <ScanCubeModal
+        apiReady
+        puzzleSlug="cube-2x2x2"
+        solving={false}
+        onClose={onClose}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Red' }))
+    await user.click(screen.getByLabelText('Dismiss scan cube'))
+
+    expect(onClose).not.toHaveBeenCalled()
+    expect(screen.getByRole('dialog', { name: 'Leave scan?' })).toBeInTheDocument()
+  })
+
   it('explains API readiness and solve-disabled reasons before submitting', async () => {
     const user = userEvent.setup()
     const { rerender } = render(
