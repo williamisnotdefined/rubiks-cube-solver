@@ -85,6 +85,32 @@
       "uncertainColor": "cor incerta",
       "uncertainMaybe": "talvez {{color}}"
     },
+    "evenReview": {
+      "autoFit": "Tentar encaixar automaticamente",
+      "autoFitambiguous": "Há mais de um encaixe possível. Ajuste manualmente pela net.",
+      "autoFitnone": "Não foi possível encaixar apenas girando faces. Troque posições ou revise os adesivos.",
+      "autoFitsuggested": "Encontramos um encaixe provável com menos mudanças. Aplique somente depois de revisar a net.",
+      "autoFitunique": "Encaixe encontrado e aplicado. Revise a net antes de resolver.",
+      "applySuggestion": "Aplicar sugestão",
+      "back": "Voltar e editar",
+      "capturedFace": "Capturada: {{face}}",
+      "description": "Confira se esta Kociemba net bate com o cubo físico. Arraste faces para trocar posições e selecione uma face para girar antes de resolver.",
+      "dragInstructions": "Arraste uma face para outro slot ou use os botões de troca. Use os botões de giro para corrigir a orientação da face capturada.",
+      "invalidDescription": "Alguns cantos combinam cores opostas ou impossíveis. Gire as faces ou volte para corrigir os adesivos.",
+      "invalidSolveDisabled": "Corrija os cantos impossíveis destacados antes de resolver.",
+      "invalidTitle": "Cantos impossíveis",
+      "kicker": "Revisão final",
+      "oppositePair": "{{first}} e {{second}} são faces opostas.",
+      "reviewAction": "Revisar cubo montado",
+      "rotate90": "Girar 90°",
+      "rotate180": "Girar 180°",
+      "rotate270": "Girar -90°",
+      "selectedFace": "Slot selecionado: {{face}} · face capturada: {{capturedFace}}",
+      "solve": "Aceitar e resolver",
+      "swapTitle": "Trocar face selecionada com",
+      "title": "Revisar cubo montado",
+      "validMessage": "Os cantos do 2x2 estão estruturalmente válidos. Confirme se o preview bate com o cubo físico."
+    },
     "faces": {
       "B": {
         "instruction": "Mostre a face azul com a face branca no topo da visão da câmera.",
@@ -119,32 +145,32 @@
     },
     "faces2": {
       "B": {
-        "instruction": "Mostre o lado de trás. Mantenha o mesmo lado de cima no topo da visão da câmera.",
+        "instruction": "Gire o cubo para mostrar o lado de trás sem trocar qual lado está em cima.",
         "label": "Lado de trás",
         "top": "Cima"
       },
       "D": {
-        "instruction": "Mostre o lado de baixo com o lado da frente no topo da visão da câmera.",
+        "instruction": "Mostre o lado de baixo e deixe o lado da frente no topo da visão da câmera.",
         "label": "Lado de baixo",
         "top": "Frente"
       },
       "F": {
-        "instruction": "Escolha primeiro um lado da frente. Mantenha o lado escolhido como cima no topo da visão da câmera.",
+        "instruction": "Escolha o lado da frente. Segure o cubo com o lado de cima no topo da visão da câmera.",
         "label": "Lado da frente",
         "top": "Cima"
       },
       "L": {
-        "instruction": "Mostre o lado esquerdo. Mantenha o mesmo lado de cima no topo da visão da câmera.",
+        "instruction": "Gire o cubo para mostrar o lado esquerdo sem trocar qual lado está em cima.",
         "label": "Lado esquerdo",
         "top": "Cima"
       },
       "R": {
-        "instruction": "Mostre o lado direito. Mantenha o mesmo lado de cima no topo da visão da câmera.",
+        "instruction": "Gire o cubo para mostrar o lado direito sem trocar qual lado está em cima.",
         "label": "Lado direito",
         "top": "Cima"
       },
       "U": {
-        "instruction": "Mostre o lado de cima com o lado da frente no topo da visão da câmera.",
+        "instruction": "Mostre o lado de cima e deixe o lado da frente no topo da visão da câmera.",
         "label": "Lado de cima",
         "top": "Frente"
       }
@@ -194,6 +220,7 @@
       "sessionAmbiguous": "O backend encontrou mais de um estado válido para o cubo. Revise os adesivos destacados ou escaneie novamente as faces incertas.",
       "sessionBlurRescan": "A imagem está borrada nas faces {{faces}}. Segure o cubo firme e escaneie essas faces de novo.",
       "sessionGlareRescan": "Há brilho demais nas faces {{faces}}. Reduza os reflexos e escaneie essas faces de novo.",
+      "sessionInvalidCornerTargets": "O scan montou um canto impossível no 2x2. Revise os adesivos destacados e tente resolver novamente.",
       "sessionInvalidCubeState": "O scan não descreve um cubo válido. Revise as faces e escaneie novamente os adesivos incertos.",
       "sessionIncompleteStickers": "Complete os 9 adesivos nas faces {{faces}} antes de resolver.",
       "sessionMissingConfirmedFaces": "Confirme estas faces antes de resolver: {{faces}}.",

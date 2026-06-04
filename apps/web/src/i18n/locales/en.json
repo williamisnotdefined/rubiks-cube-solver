@@ -85,6 +85,32 @@
       "uncertainColor": "uncertain color",
       "uncertainMaybe": "maybe {{color}}"
     },
+    "evenReview": {
+      "autoFit": "Try automatic fit",
+      "autoFitambiguous": "More than one fit is possible. Adjust the net manually.",
+      "autoFitnone": "Could not fit by rotating faces only. Swap positions or review stickers.",
+      "autoFitsuggested": "Found a likely fit with fewer changes. Apply it only after reviewing the net.",
+      "autoFitunique": "Fit found and applied. Review the net before solving.",
+      "applySuggestion": "Apply suggestion",
+      "back": "Back and edit",
+      "capturedFace": "Captured: {{face}}",
+      "description": "Check whether this Kociemba net matches the physical cube. Drag faces to swap positions and select a face to rotate it before solving.",
+      "dragInstructions": "Drag a face to another slot or use the swap buttons. Use rotate buttons to fix the captured face orientation.",
+      "invalidDescription": "Some corners combine opposite or impossible colors. Rotate faces or go back to correct stickers.",
+      "invalidSolveDisabled": "Fix the highlighted impossible corners before solving.",
+      "invalidTitle": "Impossible corners",
+      "kicker": "Final review",
+      "oppositePair": "{{first}} and {{second}} are opposite faces.",
+      "reviewAction": "Review assembled cube",
+      "rotate90": "Rotate 90°",
+      "rotate180": "Rotate 180°",
+      "rotate270": "Rotate -90°",
+      "selectedFace": "Selected slot: {{face}} · captured face: {{capturedFace}}",
+      "solve": "Accept and solve",
+      "swapTitle": "Swap selected face with",
+      "title": "Review assembled cube",
+      "validMessage": "The 2x2 corners are structurally valid. Confirm that the preview matches the physical cube."
+    },
     "faces": {
       "B": {
         "instruction": "Show the blue face with the white face at the top of the camera view.",
@@ -119,32 +145,32 @@
     },
     "faces2": {
       "B": {
-        "instruction": "Show the back side. Keep the same up side at the top of the camera view.",
+        "instruction": "Rotate the cube to show the back side without changing which side is up.",
         "label": "Back side",
         "top": "Up"
       },
       "D": {
-        "instruction": "Show the down side with the front side at the top of the camera view.",
+        "instruction": "Show the down side and keep the front side at the top of the camera view.",
         "label": "Down side",
         "top": "Front"
       },
       "F": {
-        "instruction": "Pick a front side first. Keep the chosen up side at the top of the camera view.",
+        "instruction": "Pick the front side. Hold the cube with the up side at the top of the camera view.",
         "label": "Front side",
         "top": "Up"
       },
       "L": {
-        "instruction": "Show the left side. Keep the same up side at the top of the camera view.",
+        "instruction": "Rotate the cube to show the left side without changing which side is up.",
         "label": "Left side",
         "top": "Up"
       },
       "R": {
-        "instruction": "Show the right side. Keep the same up side at the top of the camera view.",
+        "instruction": "Rotate the cube to show the right side without changing which side is up.",
         "label": "Right side",
         "top": "Up"
       },
       "U": {
-        "instruction": "Show the up side with the front side at the top of the camera view.",
+        "instruction": "Show the up side and keep the front side at the top of the camera view.",
         "label": "Up side",
         "top": "Front"
       }
@@ -194,6 +220,7 @@
       "sessionAmbiguous": "The backend found more than one valid cube state. Review the highlighted stickers or rescan unclear faces.",
       "sessionBlurRescan": "Image is blurry on faces {{faces}}. Hold the cube steady and rescan those faces.",
       "sessionGlareRescan": "Too much glare on faces {{faces}}. Reduce reflections and rescan those faces.",
+      "sessionInvalidCornerTargets": "The scan built an impossible 2x2 corner. Review the highlighted stickers and try solving again.",
       "sessionInvalidCubeState": "The scan does not describe a valid cube. Review the faces and rescan unclear stickers.",
       "sessionIncompleteStickers": "Complete all 9 stickers on faces {{faces}} before solving.",
       "sessionMissingConfirmedFaces": "Confirm these faces before solving: {{faces}}.",

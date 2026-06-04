@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@components/Button'
 import {
+  scan2StickersPerFace,
   scanFaceOrder,
   scanSymbolDetails,
   type ScanFaceStatus,
@@ -76,6 +77,7 @@ export function ScanFaceCarousel({
             const details = scanSymbolDetails[symbol]
             const label = scanFaceLabel(t, symbol, stickersPerFace)
             const statusLabel = scanFaceStatusLabel(t, status)
+            const usePositionalLabel = stickersPerFace === scan2StickersPerFace
 
             return (
               <button
@@ -90,11 +92,13 @@ export function ScanFaceCarousel({
                 onClick={() => onFaceIndexChange(index)}
               >
                 <span className="flex items-center justify-center gap-2">
-                  <span
-                    className="size-3 border border-app-border"
-                    style={{ backgroundColor: details.background }}
-                  />
-                  {scanColorCode(symbol)}
+                  {usePositionalLabel ? null : (
+                    <span
+                      className="size-3 border border-app-border"
+                      style={{ backgroundColor: details.background }}
+                    />
+                  )}
+                  {usePositionalLabel ? label : scanColorCode(symbol)}
                 </span>
                 <span className="truncate text-[0.62rem] tracking-[0.12em]">{statusLabel}</span>
               </button>

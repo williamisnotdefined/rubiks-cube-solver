@@ -5,7 +5,7 @@ use axum::{
 use cube_engine::{infer_scan, Facelet, PuzzleId, Scramble, SolverStrategy};
 use tower::ServiceExt;
 
-use crate::response::unverified_solution_response_from_parts;
+use crate::response::{unverified_solution_response_from_parts, ScanSessionManualTargetResponse};
 use crate::{
     api_router, api_router_with_web_dist, solve_notation_request, solve_puzzle_request,
     solve_scan_request, solve_scan_session_request, solve_scan_session_request_for_puzzle,
@@ -1050,6 +1050,44 @@ async fn solve_cube2_scan_session_accepts_reviewed_stickers() {
 }
 
 #[tokio::test]
+async fn solve_cube2_scan_session_highlights_invalid_corner_stickers() {
+    let mut request = solved_cube2_scan_session_request();
+    replace_reviewed_cube2_sticker(&mut request, "U", 3, "B");
+    replace_reviewed_cube2_sticker(&mut request, "F", 1, "L");
+    replace_reviewed_cube2_sticker(&mut request, "B", 0, "U");
+    replace_reviewed_cube2_sticker(&mut request, "L", 0, "F");
+
+    let (status, response) = solve_scan_session_request_for_puzzle(
+        &ApiState::without_generated_solver(),
+        PuzzleId::Cube2x2x2,
+        request,
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::OK);
+    let response = response.0;
+    assert!(!response.ok);
+    assert_eq!(response.status, "invalid_cube_state");
+    assert_eq!(
+        response.message.as_deref(),
+        Some("invalid 2x2 scan cube state: unknown corner stickers at position Urf: BRL")
+    );
+    assert_manual_target_contains(&response.manual_targets, "U", 3);
+    assert_manual_target_contains(&response.manual_targets, "R", 0);
+    assert_manual_target_contains(&response.manual_targets, "F", 1);
+    let invalid_corner = response
+        .invalid_corners
+        .iter()
+        .find(|corner| corner.position == "Urf")
+        .expect("invalid corner should be reported");
+    assert_eq!(invalid_corner.faces, ["U", "R", "F"]);
+    assert_eq!(invalid_corner.stickers, ["B", "R", "L"]);
+    assert_eq!(invalid_corner.reason, "opposite_faces");
+    assert_eq!(invalid_corner.targets[0].face, "U");
+    assert_eq!(invalid_corner.targets[0].index, 3);
+}
+
+#[tokio::test]
 async fn solve_scan_session_rescans_obvious_glare_before_inference() {
     let mut scan = solved_scan_session_analysis();
     scan.faces[0]
@@ -1565,6 +1603,38 @@ fn reviewed_cube2_stickers(symbol: &str) -> Vec<ScanSessionReviewedStickerReques
             source: Some("manual".to_owned()),
         })
         .collect()
+}
+
+fn replace_reviewed_cube2_sticker(
+    request: &mut ScanSessionRequest,
+    face_symbol: &str,
+    sticker_index: usize,
+    symbol: &str,
+) {
+    let face = request
+        .faces
+        .iter_mut()
+        .find(|face| face.symbol == face_symbol)
+        .expect("face should exist");
+    let sticker = face
+        .reviewed_stickers
+        .iter_mut()
+        .find(|sticker| sticker.index == sticker_index)
+        .expect("sticker should exist");
+
+    sticker.symbol = symbol.to_owned();
+}
+
+fn assert_manual_target_contains(
+    targets: &[ScanSessionManualTargetResponse],
+    face: &str,
+    sticker: usize,
+) {
+    let target = targets
+        .iter()
+        .find(|target| target.face == face)
+        .expect("manual target should exist");
+    assert!(target.stickers.contains(&sticker));
 }
 
 fn reviewed_stickers(symbol: &str) -> Vec<ScanSessionReviewedStickerRequest> {

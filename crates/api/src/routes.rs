@@ -219,6 +219,7 @@ async fn solve_puzzle_scan_session(
                 inference: None,
                 rescan_faces: Vec::new(),
                 manual_targets: Vec::new(),
+                invalid_corners: Vec::new(),
             }),
         );
     };

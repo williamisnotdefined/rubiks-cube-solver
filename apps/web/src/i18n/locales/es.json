@@ -85,6 +85,32 @@
       "uncertainColor": "color incierto",
       "uncertainMaybe": "quizás {{color}}"
     },
+    "evenReview": {
+      "autoFit": "Intentar encaje automático",
+      "autoFitambiguous": "Hay más de un encaje posible. Ajusta la red manualmente.",
+      "autoFitnone": "No fue posible encajar solo girando caras. Intercambia posiciones o revisa stickers.",
+      "autoFitsuggested": "Encontramos un encaje probable con menos cambios. Aplícalo solo después de revisar la red.",
+      "autoFitunique": "Encaje encontrado y aplicado. Revisa la red antes de resolver.",
+      "applySuggestion": "Aplicar sugerencia",
+      "back": "Volver y editar",
+      "capturedFace": "Capturada: {{face}}",
+      "description": "Comprueba si esta red de Kociemba coincide con el cubo físico. Arrastra caras para intercambiar posiciones y selecciona una cara para girarla antes de resolver.",
+      "dragInstructions": "Arrastra una cara a otro slot o usa los botones de intercambio. Usa los botones de giro para corregir la orientación de la cara capturada.",
+      "invalidDescription": "Algunas esquinas combinan colores opuestos o imposibles. Gira caras o vuelve para corregir stickers.",
+      "invalidSolveDisabled": "Corrige las esquinas imposibles resaltadas antes de resolver.",
+      "invalidTitle": "Esquinas imposibles",
+      "kicker": "Revisión final",
+      "oppositePair": "{{first}} y {{second}} son caras opuestas.",
+      "reviewAction": "Revisar cubo armado",
+      "rotate90": "Girar 90°",
+      "rotate180": "Girar 180°",
+      "rotate270": "Girar -90°",
+      "selectedFace": "Slot seleccionado: {{face}} · cara capturada: {{capturedFace}}",
+      "solve": "Aceptar y resolver",
+      "swapTitle": "Intercambiar cara seleccionada con",
+      "title": "Revisar cubo armado",
+      "validMessage": "Las esquinas del 2x2 son estructuralmente válidas. Confirma que la vista previa coincide con el cubo físico."
+    },
     "faces": {
       "B": {
         "instruction": "Muestra la cara azul con la cara blanca en la parte superior de la vista de la cámara.",
@@ -119,32 +145,32 @@
     },
     "faces2": {
       "B": {
-        "instruction": "Muestra el lado trasero. Mantén el mismo lado superior en la parte superior de la vista de la cámara.",
+        "instruction": "Gira el cubo para mostrar el lado trasero sin cambiar qué lado queda arriba.",
         "label": "Lado trasero",
         "top": "Arriba"
       },
       "D": {
-        "instruction": "Muestra el lado inferior con el lado frontal en la parte superior de la vista de la cámara.",
+        "instruction": "Muestra el lado inferior y deja el lado frontal en la parte superior de la vista de la cámara.",
         "label": "Lado inferior",
         "top": "Frente"
       },
       "F": {
-        "instruction": "Elige primero un lado frontal. Mantén el lado elegido como superior en la parte superior de la vista de la cámara.",
+        "instruction": "Elige el lado frontal. Sostén el cubo con el lado superior en la parte superior de la vista de la cámara.",
         "label": "Lado frontal",
         "top": "Arriba"
       },
       "L": {
-        "instruction": "Muestra el lado izquierdo. Mantén el mismo lado superior en la parte superior de la vista de la cámara.",
+        "instruction": "Gira el cubo para mostrar el lado izquierdo sin cambiar qué lado queda arriba.",
         "label": "Lado izquierdo",
         "top": "Arriba"
       },
       "R": {
-        "instruction": "Muestra el lado derecho. Mantén el mismo lado superior en la parte superior de la vista de la cámara.",
+        "instruction": "Gira el cubo para mostrar el lado derecho sin cambiar qué lado queda arriba.",
         "label": "Lado derecho",
         "top": "Arriba"
       },
       "U": {
-        "instruction": "Muestra el lado superior con el lado frontal en la parte superior de la vista de la cámara.",
+        "instruction": "Muestra el lado superior y deja el lado frontal en la parte superior de la vista de la cámara.",
         "label": "Lado superior",
         "top": "Frente"
       }
@@ -194,6 +220,7 @@
       "sessionAmbiguous": "El backend encontró más de un estado válido del cubo. Revisa los stickers resaltados o vuelve a escanear las caras dudosas.",
       "sessionBlurRescan": "La imagen está borrosa en las caras {{faces}}. Mantén firme el cubo y vuelve a escanear esas caras.",
       "sessionGlareRescan": "Hay demasiado brillo en las caras {{faces}}. Reduce los reflejos y vuelve a escanear esas caras.",
+      "sessionInvalidCornerTargets": "El escaneo formó una esquina imposible en el 2x2. Revisa los stickers resaltados e intenta resolver de nuevo.",
       "sessionInvalidCubeState": "El escaneo no describe un cubo válido. Revisa las caras y vuelve a escanear los stickers dudosos.",
       "sessionIncompleteStickers": "Completa los 9 stickers en las caras {{faces}} antes de resolver.",
       "sessionMissingConfirmedFaces": "Confirma estas caras antes de resolver: {{faces}}.",

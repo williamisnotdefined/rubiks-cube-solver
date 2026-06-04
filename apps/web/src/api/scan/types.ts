@@ -138,6 +138,19 @@ export type ScanSessionManualTarget = {
   stickers: number[]
 }
 
+export type ScanSessionInvalidCorner = {
+  position: string
+  faces: ScanFaceSymbol[]
+  stickers: ScanFaceSymbol[]
+  targets?: ScanSessionInvalidCornerTarget[]
+  reason?: 'opposite_faces' | 'unknown_corner' | string
+}
+
+export type ScanSessionInvalidCornerTarget = {
+  face: ScanFaceSymbol
+  index: number
+}
+
 export type ScanSessionStatus =
   | 'accepted'
   | 'needs_rescan_face'
@@ -180,4 +193,5 @@ export type ScanSessionResult = {
   inference?: ScanSessionInference
   rescanFaces: ScanFaceSymbol[]
   manualTargets: ScanSessionManualTarget[]
+  invalidCorners?: ScanSessionInvalidCorner[]
 }

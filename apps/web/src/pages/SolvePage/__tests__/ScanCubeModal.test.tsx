@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AnalyzeScanFaceResponse, ScanSessionResult } from '@api/scan'
@@ -253,7 +253,7 @@ describe('ScanCubeModal', () => {
     expect(screen.queryByText('Solving scan')).not.toBeInTheDocument()
   })
 
-  it('hides center and top-orientation metadata for 2x2 scans', () => {
+  it('hides center metadata but shows top orientation for 2x2 scans', () => {
     const { rerender } = render(
       <ScanCubeModal
         apiReady
@@ -275,7 +275,7 @@ describe('ScanCubeModal', () => {
     )
 
     expect(screen.queryByText(/Expected center:/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/Keep at top:/i)).not.toBeInTheDocument()
+    expect(screen.getByText(/Keep at top:/i)).toBeInTheDocument()
   })
 
   it('closes from Escape and the backdrop', async () => {
@@ -787,6 +787,74 @@ describe('ScanCubeModal', () => {
     expect(screen.getByTestId('scan-sticker-2')).not.toHaveAccessibleName(/needs confirmation/)
   })
 
+  it('explains invalid 2x2 corner targets from the backend', async () => {
+    const user = userEvent.setup()
+    liveScanMocks.autoRecognize = true
+    apiMocks.solveSessionMutateAsync.mockResolvedValue(
+      scanSessionRejected({
+        invalidCorners: [
+          {
+            faces: ['U', 'R', 'F'],
+            position: 'Urf',
+            reason: 'opposite_faces',
+            stickers: ['B', 'R', 'L'],
+            targets: [
+              { face: 'U', index: 3 },
+              { face: 'R', index: 0 },
+              { face: 'F', index: 1 },
+            ],
+          },
+        ],
+        manualTargets: [
+          { face: 'U', stickers: [3] },
+          { face: 'R', stickers: [0] },
+          { face: 'F', stickers: [1] },
+        ],
+        message: undefined,
+        status: 'invalid_cube_state',
+      }),
+    )
+    render(
+      <ScanCubeModal
+        apiReady
+        puzzleSlug="cube-2x2x2"
+        solving={false}
+        onClose={vi.fn()}
+      />,
+    )
+
+    await confirmAllFaces(user, ['Front side', 'Right side', 'Back side', 'Left side', 'Up side', 'Down side'])
+    await user.click(screen.getByRole('button', { name: 'Review assembled cube' }))
+    expect(await screen.findByRole('heading', { name: 'Review assembled cube' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Accept and solve' }))
+
+    expect(await screen.findByRole('heading', { name: 'Review assembled cube' })).toBeInTheDocument()
+    expect(screen.getByText(/Urf .*Blue\/Red\/Orange/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Accept and solve' })).toBeDisabled()
+  })
+
+  it('swaps 2x2 Kociemba net slots with buttons without drag and drop', async () => {
+    const user = userEvent.setup()
+    liveScanMocks.autoRecognize = true
+    render(
+      <ScanCubeModal
+        apiReady
+        puzzleSlug="cube-2x2x2"
+        solving={false}
+        onClose={vi.fn()}
+      />,
+    )
+
+    await confirmAllFaces(user, ['Front side', 'Right side', 'Back side', 'Left side', 'Up side', 'Down side'])
+    await user.click(screen.getByRole('button', { name: 'Review assembled cube' }))
+
+    expect(await screen.findByText(/Selected slot: Front side .* captured face: Front side/)).toBeInTheDocument()
+    const swapPanel = screen.getByText('Swap selected face with').parentElement!
+    await user.click(within(swapPanel).getByRole('button', { name: 'Right side' }))
+
+    expect(screen.getByText(/Selected slot: Right side .* captured face: Front side/)).toBeInTheDocument()
+  })
+
   it('keeps backend manual targets when editing a different sticker', async () => {
     const user = userEvent.setup()
     liveScanMocks.autoRecognize = true
@@ -1243,14 +1311,17 @@ describe('ScanCubeModal', () => {
 
 })
 
-async function confirmAllFaces(user: ReturnType<typeof userEvent.setup>) {
+async function confirmAllFaces(
+  user: ReturnType<typeof userEvent.setup>,
+  labels: readonly string[] = scanFaceOrder.map((face) => face.label),
+) {
   for (let faceIndex = 0; faceIndex < 6; faceIndex += 1) {
-    await screen.findByRole('heading', { name: scanFaceOrder[faceIndex].label })
+    await screen.findByRole('heading', { name: labels[faceIndex] })
     await waitFor(() => expect(screen.getByRole('button', { name: 'Confirm face' })).toBeEnabled())
     await user.click(screen.getByRole('button', { name: 'Confirm face' }))
 
     if (faceIndex < 5) {
-      await screen.findByRole('heading', { name: scanFaceOrder[faceIndex + 1].label })
+      await screen.findByRole('heading', { name: labels[faceIndex + 1] })
     }
   }
 }
@@ -1355,13 +1426,14 @@ function scanSessionAccepted(): ScanSessionResult {
 }
 
 function scanSessionRejected({
+  invalidCorners,
   manualTargets = [],
   message,
   qualityReasons = [],
   rescanFaces = [],
   status,
 }: Pick<ScanSessionResult, 'status'> &
-  Partial<Pick<ScanSessionResult, 'manualTargets' | 'message' | 'rescanFaces'>> & {
+  Partial<Pick<ScanSessionResult, 'invalidCorners' | 'manualTargets' | 'message' | 'rescanFaces'>> & {
     qualityReasons?: string[]
   }): ScanSessionResult {
   return {
@@ -1372,6 +1444,7 @@ function scanSessionRejected({
       stateConfidence: 0.4,
       status,
     },
+    invalidCorners,
     manualTargets,
     message,
     ok: false,

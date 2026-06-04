@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import type { AnalyzeScanFaceResponse } from '@api/scan'
 import {
+  createDefaultEvenCubeNetAssignments,
+  evenCubeFitSolution,
+  evenCubeScanSessionFacesFromDrafts,
+  findEvenCubeFullFit,
+  swapEvenCubeNetAssignments,
+} from '../evenCubeScan'
+import {
   clearScanFaceDraft,
   confirmScanFaceDraft,
   confirmedDraftCount,
@@ -474,6 +481,79 @@ describe('scan state helpers', () => {
     ])
   })
 
+  it('builds 2x2 scan sessions from Kociemba net slot assignments', () => {
+    const drafts = confirmed2x2Drafts()
+    const assignments = swapEvenCubeNetAssignments(createDefaultEvenCubeNetAssignments(), 'F', 'R')
+
+    const sessionFaces = evenCubeScanSessionFacesFromDrafts(drafts, {}, assignments)
+
+    expect(sessionFaces?.find((face) => face.symbol === 'F')?.reviewedStickers).toEqual([
+      expect.objectContaining({ index: 0, symbol: 'R' }),
+      expect.objectContaining({ index: 1, symbol: 'R' }),
+      expect.objectContaining({ index: 2, symbol: 'R' }),
+      expect.objectContaining({ index: 3, symbol: 'R' }),
+    ])
+    expect(sessionFaces?.find((face) => face.symbol === 'R')?.reviewedStickers).toEqual([
+      expect.objectContaining({ index: 0, symbol: 'F' }),
+      expect.objectContaining({ index: 1, symbol: 'F' }),
+      expect.objectContaining({ index: 2, symbol: 'F' }),
+      expect.objectContaining({ index: 3, symbol: 'F' }),
+    ])
+  })
+
+  it('applies captured face rotations before building 2x2 scan sessions from the net', () => {
+    const baseDrafts = confirmed2x2Drafts()
+    const drafts = {
+      ...baseDrafts,
+      F: {
+        ...baseDrafts.F,
+        stickers: stickersFromSymbols('URDL'),
+      },
+    }
+
+    const sessionFaces = evenCubeScanSessionFacesFromDrafts(
+      drafts,
+      { F: 90 },
+      createDefaultEvenCubeNetAssignments(),
+    )
+
+    expect(sessionFaces?.find((face) => face.symbol === 'F')?.reviewedStickers).toEqual([
+      expect.objectContaining({ index: 0, symbol: 'D' }),
+      expect.objectContaining({ index: 1, symbol: 'U' }),
+      expect.objectContaining({ index: 2, symbol: 'L' }),
+      expect.objectContaining({ index: 3, symbol: 'R' }),
+    ])
+  })
+
+  it('does not auto-fit ambiguous solid 2x2 faces silently', () => {
+    expect(findEvenCubeFullFit(confirmed2x2Drafts())).toMatchObject({ status: 'ambiguous' })
+  })
+
+  it('reports no auto-fit for impossible 2x2 color counts', () => {
+    const baseDrafts = confirmed2x2Drafts()
+    const drafts = {
+      ...baseDrafts,
+      F: {
+        ...baseDrafts.F,
+        stickers: filledStickers2x2('U'),
+      },
+    }
+
+    expect(findEvenCubeFullFit(drafts)).toEqual({ status: 'none' })
+  })
+
+  it('scores even-cube auto-fit changes by swaps and rotations', () => {
+    const assignments = swapEvenCubeNetAssignments(createDefaultEvenCubeNetAssignments(), 'F', 'R')
+    const solution = evenCubeFitSolution(assignments, { F: 90, U: 180 })
+
+    expect(solution.changes).toEqual({
+      rotatedFaces: 2,
+      rotationQuarterTurns: 3,
+      swappedSlots: 2,
+    })
+    expect(solution.score).toBe(265)
+  })
+
   it('returns no scan session when any draft is unconfirmed or incomplete', () => {
     const drafts = createInitialScanFaceDrafts()
 
@@ -499,6 +579,20 @@ function filledStickers2x2(symbol: (typeof scanSymbols)[number]): ScanSticker[] 
     confidence: 1,
     source: 'manual',
   }))
+}
+
+function confirmed2x2Drafts() {
+  return scanSymbols.reduce((currentDrafts, symbol) => {
+    const nextDrafts = {
+      ...currentDrafts,
+      [symbol]: {
+        ...currentDrafts[symbol],
+        stickers: filledStickers2x2(symbol),
+      },
+    }
+
+    return confirmScanFaceDraft(nextDrafts, symbol)
+  }, createInitialScanFaceDrafts(4))
 }
 
 function filledDetectedStickers(symbol: (typeof scanSymbols)[number]): ScanSticker[] {

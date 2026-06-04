@@ -272,6 +272,12 @@ pub struct ScanSessionResponse {
     pub rescan_faces: Vec<String>,
     #[serde(rename = "manualTargets", default)]
     pub manual_targets: Vec<ScanSessionManualTargetResponse>,
+    #[serde(
+        rename = "invalidCorners",
+        default,
+        skip_serializing_if = "Vec::is_empty"
+    )]
+    pub invalid_corners: Vec<ScanSessionInvalidCornerResponse>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -335,6 +341,21 @@ pub struct ScanSessionInferenceResponse {
 pub struct ScanSessionManualTargetResponse {
     pub face: String,
     pub stickers: Vec<usize>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct ScanSessionInvalidCornerResponse {
+    pub position: String,
+    pub faces: Vec<String>,
+    pub stickers: Vec<String>,
+    pub targets: Vec<ScanSessionInvalidCornerTargetResponse>,
+    pub reason: String,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct ScanSessionInvalidCornerTargetResponse {
+    pub face: String,
+    pub index: usize,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize)]

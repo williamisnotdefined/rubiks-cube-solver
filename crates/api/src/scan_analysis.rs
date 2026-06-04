@@ -1,16 +1,18 @@
+use std::collections::BTreeMap;
 use std::time::{Duration, Instant};
 
 use axum::http::StatusCode;
 use axum::Json;
+use cube_engine::cube::cubies::Corner;
 use cube_engine::puzzles::cube2::{
     cube2_from_scan_faces, cube2_visual_state, solve_cube2_bounded_ida_star,
-    solve_cube2_pdb_ida_star, Cube2Face, Cube2SearchBudget, Cube2SearchOutcome,
+    solve_cube2_pdb_ida_star, Cube2Face, Cube2ScanError, Cube2SearchBudget, Cube2SearchOutcome,
     CUBE2_BOUNDED_IDA_STAR_STRATEGY_ID, CUBE2_PDB_IDA_STAR_STRATEGY_ID,
 };
 use cube_engine::{
-    all_strategy_definitions, infer_scan, Facelet, PuzzleId, ScanInferenceInput,
-    ScanInferenceResult, ScanInferenceStatus, ScanManualOverride, SCAN_FACELET_COUNT,
-    SCAN_FACELET_SYMBOL_COUNT, SCAN_STICKERS_PER_FACE,
+    all_strategy_definitions, infer_scan, Facelet, FaceletConversionError, PuzzleId,
+    ScanInferenceInput, ScanInferenceResult, ScanInferenceStatus, ScanManualOverride,
+    SCAN_FACELET_COUNT, SCAN_FACELET_SYMBOL_COUNT, SCAN_STICKERS_PER_FACE,
 };
 
 use crate::config::{DEFAULT_API_NODES, MAX_API_DEPTH, MAX_API_NODES, MAX_SCAN_IMAGE_BYTES};
@@ -18,8 +20,9 @@ use crate::response::{
     AnalyzeScanFaceRequest, AnalyzeScanFaceResponse, AnalyzeScanSessionResponse,
     AnalyzedSessionFaceResponse, AnalyzedStickerResponse, ColorProbabilitiesResponse,
     ImageQualityResponse, RgbColorRequest, ScanFacesRequest, ScanSessionFaceRequest,
-    ScanSessionInferenceResponse, ScanSessionRequest, ScanSessionResponse,
-    ScanSessionTimingsResponse, SolveScanRequest,
+    ScanSessionInferenceResponse, ScanSessionInvalidCornerResponse,
+    ScanSessionInvalidCornerTargetResponse, ScanSessionManualTargetResponse, ScanSessionRequest,
+    ScanSessionResponse, ScanSessionTimingsResponse, SolveScanRequest,
 };
 use crate::scan_quality_gate::{
     evaluate_obvious_scan_quality_with_overrides, evaluate_scan_quality_with_overrides,
@@ -224,6 +227,7 @@ async fn solve_cube3_scan_session_request(
                 inference: None,
                 rescan_faces,
                 manual_targets: Vec::new(),
+                invalid_corners: Vec::new(),
             }),
         );
     }
@@ -249,6 +253,7 @@ async fn solve_cube3_scan_session_request(
                     .map(|facelet| facelet.symbol().to_string())
                     .collect(),
                 manual_targets: Vec::new(),
+                invalid_corners: Vec::new(),
             }),
         );
     }
@@ -266,6 +271,7 @@ async fn solve_cube3_scan_session_request(
                 inference: None,
                 rescan_faces: Vec::new(),
                 manual_targets: Vec::new(),
+                invalid_corners: Vec::new(),
             }),
         );
     };
@@ -295,6 +301,7 @@ async fn solve_cube3_scan_session_request(
                     .map(|facelet| facelet.symbol().to_string())
                     .collect(),
                 manual_targets: quality_gate.manual_targets,
+                invalid_corners: Vec::new(),
             }),
         );
     }
@@ -312,6 +319,7 @@ async fn solve_cube3_scan_session_request(
                 inference: Some(inference_response),
                 rescan_faces: Vec::new(),
                 manual_targets: Vec::new(),
+                invalid_corners: Vec::new(),
             }),
         );
     };
@@ -329,6 +337,7 @@ async fn solve_cube3_scan_session_request(
                 inference: Some(inference_response),
                 rescan_faces: Vec::new(),
                 manual_targets: Vec::new(),
+                invalid_corners: Vec::new(),
             }),
         );
     };
@@ -359,6 +368,7 @@ async fn solve_cube3_scan_session_request(
                 inference: Some(inference_response),
                 rescan_faces: Vec::new(),
                 manual_targets: Vec::new(),
+                invalid_corners: Vec::new(),
             }),
         );
     }
@@ -381,6 +391,7 @@ async fn solve_cube3_scan_session_request(
             inference: Some(inference_response),
             rescan_faces: Vec::new(),
             manual_targets: Vec::new(),
+            invalid_corners: Vec::new(),
         }),
     )
 }
@@ -421,6 +432,7 @@ fn solve_cube2_scan_session_request(
                 inference: None,
                 rescan_faces: Vec::new(),
                 manual_targets: Vec::new(),
+                invalid_corners: Vec::new(),
             }),
         );
     };
@@ -428,6 +440,8 @@ fn solve_cube2_scan_session_request(
     let cube = match cube2_from_scan_faces(&faces) {
         Ok(cube) => cube,
         Err(error) => {
+            let manual_targets = cube2_invalid_corner_manual_targets(&faces, &error);
+            let invalid_corners = cube2_invalid_corner_responses(&faces, &error);
             return (
                 StatusCode::OK,
                 Json(ScanSessionResponse {
@@ -439,7 +453,8 @@ fn solve_cube2_scan_session_request(
                     solve: None,
                     inference: None,
                     rescan_faces: Vec::new(),
-                    manual_targets: Vec::new(),
+                    manual_targets,
+                    invalid_corners,
                 }),
             );
         }
@@ -469,6 +484,7 @@ fn solve_cube2_scan_session_request(
             inference: None,
             rescan_faces: Vec::new(),
             manual_targets: Vec::new(),
+            invalid_corners: Vec::new(),
         }),
     )
 }
@@ -601,6 +617,214 @@ fn cube2_scan_faces_from_session(request: &ScanSessionRequest) -> Option<Vec<(Cu
             Some((cube2_face, symbols))
         })
         .collect()
+}
+
+fn cube2_invalid_corner_manual_targets(
+    faces: &[(Cube2Face, String)],
+    error: &Cube2ScanError,
+) -> Vec<ScanSessionManualTargetResponse> {
+    let Cube2ScanError::InvalidCubeState {
+        error: FaceletConversionError::UnknownCornerStickers { position, .. },
+    } = error
+    else {
+        return Vec::new();
+    };
+
+    let invalid_positions = cube2_invalid_corner_positions(faces);
+    let positions = if invalid_positions.is_empty() {
+        vec![*position]
+    } else {
+        invalid_positions
+    };
+
+    let mut targets_by_face: BTreeMap<&'static str, Vec<usize>> = BTreeMap::new();
+    for position in positions {
+        for (face, sticker) in cube2_corner_review_targets(position) {
+            let targets = targets_by_face.entry(cube2_face_symbol(face)).or_default();
+            if !targets.contains(&sticker) {
+                targets.push(sticker);
+            }
+        }
+    }
+
+    targets_by_face
+        .into_iter()
+        .map(|(face, mut stickers)| {
+            stickers.sort_unstable();
+            ScanSessionManualTargetResponse {
+                face: face.to_owned(),
+                stickers,
+            }
+        })
+        .collect()
+}
+
+fn cube2_invalid_corner_responses(
+    faces: &[(Cube2Face, String)],
+    error: &Cube2ScanError,
+) -> Vec<ScanSessionInvalidCornerResponse> {
+    let Cube2ScanError::InvalidCubeState {
+        error: FaceletConversionError::UnknownCornerStickers { position, .. },
+    } = error
+    else {
+        return Vec::new();
+    };
+
+    let invalid_positions = cube2_invalid_corner_positions(faces);
+    let positions = if invalid_positions.is_empty() {
+        vec![*position]
+    } else {
+        invalid_positions
+    };
+
+    positions
+        .into_iter()
+        .filter_map(|position| cube2_invalid_corner_response(faces, position))
+        .collect()
+}
+
+fn cube2_invalid_corner_response(
+    faces: &[(Cube2Face, String)],
+    position: Corner,
+) -> Option<ScanSessionInvalidCornerResponse> {
+    let targets = cube2_corner_review_targets(position);
+    let stickers: Option<Vec<String>> = targets
+        .into_iter()
+        .map(|(face, sticker)| {
+            cube2_scan_face_sticker(faces, face, sticker).map(|symbol| symbol.to_string())
+        })
+        .collect();
+
+    Some(ScanSessionInvalidCornerResponse {
+        position: format!("{position:?}"),
+        faces: cube2_corner_faces(position)
+            .into_iter()
+            .map(|face| cube2_face_symbol(face).to_owned())
+            .collect(),
+        stickers: stickers?,
+        targets: targets
+            .into_iter()
+            .map(|(face, index)| ScanSessionInvalidCornerTargetResponse {
+                face: cube2_face_symbol(face).to_owned(),
+                index,
+            })
+            .collect(),
+        reason: cube2_invalid_corner_reason(faces, position).to_owned(),
+    })
+}
+
+fn cube2_invalid_corner_reason(faces: &[(Cube2Face, String)], position: Corner) -> &'static str {
+    let Some(stickers) = cube2_corner_review_targets(position)
+        .into_iter()
+        .map(|(face, sticker)| cube2_scan_face_sticker(faces, face, sticker))
+        .collect::<Option<Vec<char>>>()
+    else {
+        return "unknown_corner";
+    };
+
+    if cube2_corner_has_opposite_faces(&stickers) {
+        "opposite_faces"
+    } else {
+        "unknown_corner"
+    }
+}
+
+fn cube2_corner_has_opposite_faces(stickers: &[char]) -> bool {
+    [('U', 'D'), ('R', 'L'), ('F', 'B')]
+        .into_iter()
+        .any(|(first, second)| stickers.contains(&first) && stickers.contains(&second))
+}
+
+fn cube2_corner_faces(position: Corner) -> [Cube2Face; 3] {
+    match position {
+        Corner::Urf => [Cube2Face::U, Cube2Face::R, Cube2Face::F],
+        Corner::Ufl => [Cube2Face::U, Cube2Face::F, Cube2Face::L],
+        Corner::Ulb => [Cube2Face::U, Cube2Face::L, Cube2Face::B],
+        Corner::Ubr => [Cube2Face::U, Cube2Face::B, Cube2Face::R],
+        Corner::Dfr => [Cube2Face::D, Cube2Face::F, Cube2Face::R],
+        Corner::Dlf => [Cube2Face::D, Cube2Face::L, Cube2Face::F],
+        Corner::Dbl => [Cube2Face::D, Cube2Face::B, Cube2Face::L],
+        Corner::Drb => [Cube2Face::D, Cube2Face::R, Cube2Face::B],
+    }
+}
+
+fn cube2_invalid_corner_positions(faces: &[(Cube2Face, String)]) -> Vec<Corner> {
+    let mut invalid_positions = Vec::new();
+    for position in [
+        Corner::Urf,
+        Corner::Ufl,
+        Corner::Ulb,
+        Corner::Ubr,
+        Corner::Dfr,
+        Corner::Dlf,
+        Corner::Dbl,
+        Corner::Drb,
+    ] {
+        let stickers: Option<Vec<char>> = cube2_corner_review_targets(position)
+            .into_iter()
+            .map(|(face, sticker)| cube2_scan_face_sticker(faces, face, sticker))
+            .collect();
+        let Some(stickers) = stickers else {
+            continue;
+        };
+
+        if !cube2_valid_corner_stickers(&stickers) {
+            invalid_positions.push(position);
+        }
+    }
+
+    invalid_positions
+}
+
+fn cube2_scan_face_sticker(
+    faces: &[(Cube2Face, String)],
+    face: Cube2Face,
+    index: usize,
+) -> Option<char> {
+    faces
+        .iter()
+        .find(|(candidate, _)| *candidate == face)
+        .and_then(|(_, stickers)| stickers.chars().nth(index))
+}
+
+fn cube2_valid_corner_stickers(stickers: &[char]) -> bool {
+    let mut sorted = stickers.to_vec();
+    sorted.sort_unstable();
+    matches!(
+        sorted.as_slice(),
+        ['F', 'R', 'U']
+            | ['F', 'L', 'U']
+            | ['B', 'L', 'U']
+            | ['B', 'R', 'U']
+            | ['D', 'F', 'R']
+            | ['D', 'F', 'L']
+            | ['B', 'D', 'L']
+            | ['B', 'D', 'R']
+    )
+}
+
+fn cube2_corner_review_targets(position: Corner) -> [(Cube2Face, usize); 3] {
+    match position {
+        Corner::Urf => [(Cube2Face::U, 3), (Cube2Face::R, 0), (Cube2Face::F, 1)],
+        Corner::Ufl => [(Cube2Face::U, 2), (Cube2Face::F, 0), (Cube2Face::L, 1)],
+        Corner::Ulb => [(Cube2Face::U, 0), (Cube2Face::L, 0), (Cube2Face::B, 1)],
+        Corner::Ubr => [(Cube2Face::U, 1), (Cube2Face::B, 0), (Cube2Face::R, 1)],
+        Corner::Dfr => [(Cube2Face::D, 1), (Cube2Face::F, 3), (Cube2Face::R, 2)],
+        Corner::Dlf => [(Cube2Face::D, 0), (Cube2Face::L, 3), (Cube2Face::F, 2)],
+        Corner::Dbl => [(Cube2Face::D, 2), (Cube2Face::B, 3), (Cube2Face::L, 2)],
+        Corner::Drb => [(Cube2Face::D, 3), (Cube2Face::R, 3), (Cube2Face::B, 2)],
+    }
+}
+
+fn cube2_face_symbol(face: Cube2Face) -> &'static str {
+    match face {
+        Cube2Face::U => "U",
+        Cube2Face::R => "R",
+        Cube2Face::F => "F",
+        Cube2Face::D => "D",
+        Cube2Face::L => "L",
+        Cube2Face::B => "B",
+    }
 }
 
 fn cube2_face_from_symbol(symbol: &str) -> Option<Cube2Face> {
@@ -1148,6 +1372,7 @@ fn scan_session_error(status: &str, message: String) -> ScanSessionResponse {
         inference: None,
         rescan_faces: Vec::new(),
         manual_targets: Vec::new(),
+        invalid_corners: Vec::new(),
     }
 }
 
