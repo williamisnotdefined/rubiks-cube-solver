@@ -101,11 +101,6 @@ export function EvenCubeReviewStep({
     setSelectedSlot(targetSlot)
   }
 
-  function handleSwap(targetSlot: ScanFaceSymbol) {
-    onSwapFaces(selectedSlot, targetSlot)
-    setSelectedSlot(targetSlot)
-  }
-
   function handleAutoFit() {
     setAutoFitStatus(onAutoFit())
   }
@@ -162,33 +157,14 @@ export function EvenCubeReviewStep({
           <div className="grid grid-cols-3 gap-2">
             {rotationButtons.map(({ labelKey, rotation }) => (
               <Button
-                className="min-h-10 px-3 py-2 text-xs"
+                className="min-h-10 flex-col px-3 py-2 text-xs"
                 key={rotation}
                 type="button"
                 variant="secondary"
                 onClick={() => onRotateFace(selectedCapturedFace, rotation)}
               >
-                {t(labelKey)}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid gap-2 border border-app-border bg-app-surface-raised p-3">
-          <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
-            {t('scan.evenReview.swapTitle')}
-          </span>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {netFaces.map(({ symbol }) => (
-              <Button
-                className="min-h-10 px-3 py-2 text-xs"
-                disabled={symbol === selectedSlot}
-                key={symbol}
-                type="button"
-                variant="ghost"
-                onClick={() => handleSwap(symbol)}
-              >
-                {scanFaceLabel(t, symbol, 4)}
+                <RotationIcon rotation={rotation} />
+                <span>{t(labelKey)}</span>
               </Button>
             ))}
           </div>
@@ -297,9 +273,13 @@ function KociembaNetSlot({
       <button
         {...listeners}
         {...attributes}
+        aria-label={t('scan.evenReview.selectedFace', {
+          face: scanFaceLabel(t, slot, 4),
+          capturedFace: scanFaceLabel(t, assignment, 4),
+        })}
         aria-pressed={isSelected}
         className={cls(
-          'grid w-full gap-1 border bg-app-surface p-2 text-xs font-extrabold uppercase tracking-[0.12em] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-app-focus/50',
+          'grid w-full border bg-app-surface p-2 text-xs font-extrabold uppercase tracking-[0.12em] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-app-focus/50',
           isInvalid ? 'border-red-300 text-app-text' : isSelected ? 'border-app-text text-app-text' : 'border-app-border text-app-muted',
           isOver ? 'ring-2 ring-app-focus/70' : undefined,
         )}
@@ -308,10 +288,6 @@ function KociembaNetSlot({
         type="button"
         onClick={() => onSelect(slot)}
       >
-        <span>{scanFaceLabel(t, slot, 4)}</span>
-        <span className="text-[0.6rem] text-app-muted">
-          {t('scan.evenReview.capturedFace', { face: scanFaceLabel(t, assignment, 4) })}
-        </span>
         <StickerGrid
           gridSize={gridSize}
           invalidIndexes={invalidDisplayIndexes(slot, invalidStickerTargets, stickersPerFace)}
@@ -319,6 +295,34 @@ function KociembaNetSlot({
         />
       </button>
     </div>
+  )
+}
+
+function RotationIcon({ rotation }: { rotation: EvenCubeFaceRotation }) {
+  if (rotation === 180) {
+    return (
+      <svg aria-hidden="true" className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M7 7h9a5 5 0 0 1 0 10H6" />
+        <path d="m10 3-4 4 4 4" />
+        <path d="m10 13-4 4 4 4" />
+      </svg>
+    )
+  }
+
+  if (rotation === 270) {
+    return (
+      <svg aria-hidden="true" className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M7 7h8a5 5 0 1 1 0 10H8" />
+        <path d="m11 3-4 4 4 4" />
+      </svg>
+    )
+  }
+
+  return (
+    <svg aria-hidden="true" className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M17 7H9a5 5 0 1 0 0 10h7" />
+      <path d="m13 3 4 4-4 4" />
+    </svg>
   )
 }
 

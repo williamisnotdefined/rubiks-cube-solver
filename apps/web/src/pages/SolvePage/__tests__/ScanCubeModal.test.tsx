@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AnalyzeScanFaceResponse, ScanSessionResult } from '@api/scan'
@@ -976,7 +976,7 @@ describe('ScanCubeModal', () => {
     expect(screen.getByRole('button', { name: 'Accept and solve' })).toBeDisabled()
   })
 
-  it('swaps 2x2 Kociemba net slots with buttons without drag and drop', async () => {
+  it('does not render redundant 2x2 net swap buttons', async () => {
     const user = userEvent.setup()
     liveScanMocks.autoRecognize = true
     render(
@@ -992,37 +992,7 @@ describe('ScanCubeModal', () => {
     await user.click(screen.getByRole('button', { name: 'Review assembled cube' }))
 
     expect(await screen.findByText(/Selected slot: Front side .* captured face: Front side/)).toBeInTheDocument()
-    const swapPanel = screen.getByText('Swap selected face with').parentElement!
-    await user.click(within(swapPanel).getByRole('button', { name: 'Right side' }))
-
-    expect(screen.getByText(/Selected slot: Right side .* captured face: Front side/)).toBeInTheDocument()
-  })
-
-  it('resets stale 2x2 net swaps after editing captured faces', async () => {
-    const user = userEvent.setup()
-    liveScanMocks.autoRecognize = true
-    render(
-      <ScanCubeModal
-        apiReady
-        puzzleSlug="cube-2x2x2"
-        solving={false}
-        onClose={vi.fn()}
-      />,
-    )
-
-    await confirmAllFaces(user, ['Front side', 'Right side', 'Back side', 'Left side', 'Up side', 'Down side'])
-    await user.click(screen.getByRole('button', { name: 'Review assembled cube' }))
-    expect(await screen.findByText(/Selected slot: Front side .* captured face: Front side/)).toBeInTheDocument()
-    const swapPanel = screen.getByText('Swap selected face with').parentElement!
-    await user.click(within(swapPanel).getByRole('button', { name: 'Right side' }))
-
-    expect(screen.getByText(/Selected slot: Right side .* captured face: Front side/)).toBeInTheDocument()
-
-    await user.click(screen.getByRole('button', { name: 'Back and edit' }))
-    await user.click(screen.getByRole('button', { name: /Go to Right side/ }))
-    await user.click(screen.getByRole('button', { name: 'Review assembled cube' }))
-
-    expect(await screen.findByText(/Selected slot: Front side .* captured face: Front side/)).toBeInTheDocument()
+    expect(screen.queryByText('Swap selected face with')).not.toBeInTheDocument()
   })
 
   it('keeps backend manual targets when editing a different sticker', async () => {
