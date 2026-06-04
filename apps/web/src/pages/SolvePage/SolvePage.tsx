@@ -1,4 +1,4 @@
-import { useReducer, useRef, useState, type FormEvent } from 'react'
+import { useCallback, useReducer, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { RubiksCubeElement } from '@houstonp/rubiks-cube/view'
 import {
@@ -60,6 +60,7 @@ export function SolvePage() {
   )
   const [solutionStep, setSolutionStep] = useState(0)
   const [scanModalOpen, setScanModalOpen] = useState(false)
+  const [scanSessionSolving, setScanSessionSolving] = useState(false)
   const [activeSolveSource, setActiveSolveSource] = useState<'notation' | 'scan'>('notation')
   const [scanSessionSolveResult, setScanSessionSolveResult] = useState<ApiSolveResult | undefined>()
   const activeSolveResult = activeSolveSource === 'scan' ? scanSessionSolveResult : solveMutation.data
@@ -108,7 +109,7 @@ export function SolvePage() {
     puzzlesQuery.isSuccess &&
     strategiesQuery.isSuccess &&
     selectedPuzzle !== undefined
-  const solving = solveMutation.isPending
+  const solving = solveMutation.isPending || scanSessionSolving
   const buttonLoading = !apiReady || solving
   const maxMoves = Number(maxMovesInput)
   const maxNodesMillion = Number(maxNodesMillionInput)
@@ -200,6 +201,10 @@ export function SolvePage() {
     setScanSessionSolveResult(solve)
   }
 
+  const handleScanSessionSolvingChange = useCallback((nextSolving: boolean) => {
+    setScanSessionSolving(nextSolving)
+  }, [])
+
   function handleScanClick() {
     if (scanAvailable) {
       setScanModalOpen(true)
@@ -263,7 +268,7 @@ export function SolvePage() {
             maxDepth={maxMoves}
             maxNodes={maxNodes}
             solveDisabledReason={localValidationMessage}
-            solving={solveMutation.isPending}
+            solving={solving}
             puzzleSlug={selectedPuzzleSlug}
             strategyId={strategyId}
             visionCnnAvailable={healthQuery.data?.visionCnnAvailable}
@@ -272,6 +277,7 @@ export function SolvePage() {
             visionTileDetectorReason={healthQuery.data?.visionTileDetectorReason}
             visionOk={healthQuery.data?.visionOk}
             onClose={() => setScanModalOpen(false)}
+            onSessionSolvingChange={handleScanSessionSolvingChange}
             onSessionSolveResult={handleScanSessionSolveResult}
           />
         ) : null}

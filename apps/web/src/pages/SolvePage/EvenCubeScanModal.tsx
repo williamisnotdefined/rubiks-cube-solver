@@ -62,6 +62,7 @@ export type ScanCubeModalProps = {
   visionTileDetectorReason?: string
   visionOk?: boolean
   onClose: () => void
+  onSessionSolvingChange?: (solving: boolean) => void
   onSessionSolveResult?: (solve: SolveResult) => void
 }
 
@@ -78,6 +79,7 @@ export function EvenCubeScanModal({
   visionTileDetectorReason,
   visionOk,
   onClose,
+  onSessionSolvingChange,
   onSessionSolveResult,
 }: ScanCubeModalProps) {
   const { t } = useTranslation()
@@ -167,6 +169,12 @@ export function EvenCubeScanModal({
   const hasScanProgress = scanDraftsHaveProgress(drafts, undefined)
 
   useEffect(() => {
+    onSessionSolvingChange?.(sessionSolving)
+
+    return () => onSessionSolvingChange?.(false)
+  }, [onSessionSolvingChange, sessionSolving])
+
+  useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         if (exitConfirmationVisible) {
@@ -207,6 +215,8 @@ export function EvenCubeScanModal({
 
   function resetEvenReviewState() {
     setEvenReviewVisible(false)
+    setEvenFaceRotations({})
+    setEvenNetAssignments(createDefaultEvenCubeNetAssignments())
     setBackendEvenInvalidCorners([])
     setEvenAutoFitSuggestion(undefined)
   }

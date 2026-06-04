@@ -132,11 +132,13 @@ vi.mock('../ScanCubeModal', () => ({
   ScanCubeModal: ({
     apiReady,
     onClose,
+    onSessionSolvingChange,
     onSessionSolveResult,
     solving,
   }: {
     apiReady: boolean
     onClose: () => void
+    onSessionSolvingChange: (solving: boolean) => void
     onSessionSolveResult: (solve: SolveResult) => void
     solving: boolean
   }) => (
@@ -151,6 +153,9 @@ vi.mock('../ScanCubeModal', () => ({
         }}
       >
         Solve scanned cube
+      </button>
+      <button type="button" onClick={() => onSessionSolvingChange(true)}>
+        Start scan solve
       </button>
     </section>
   ),
@@ -281,6 +286,17 @@ describe('SolvePage', () => {
 
     expect(screen.getByRole('dialog', { name: 'Scan cube' })).toBeInTheDocument()
     expect(screen.getByText('Face 1 of 6')).toBeInTheDocument()
+  })
+
+  it('shows the page cube loader while scan solve is pending', async () => {
+    const user = userEvent.setup()
+    render(<SolvePage />)
+
+    await user.click(screen.getByRole('button', { name: 'Scan cube with camera' }))
+    await user.click(screen.getByRole('button', { name: 'Start scan solve' }))
+
+    expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Solve scanned cube' })).toBeDisabled()
   })
 
   it('submits trimmed notation with selected solver limits', async () => {

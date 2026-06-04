@@ -15,6 +15,7 @@ const apiMocks = vi.hoisted(() => ({
     | { status: 'loading' }
     | { message: string; status: 'error' },
   cameraStream: {} as MediaStream,
+  solveSessionIsPending: false,
   solveSessionMutateAsync: vi.fn(),
 }))
 
@@ -46,7 +47,7 @@ vi.mock('@api/scan', async () => {
       reset: apiMocks.analyzeReset,
     }),
     useSolveScanSession: () => ({
-      isPending: false,
+      isPending: apiMocks.solveSessionIsPending,
       mutateAsync: apiMocks.solveSessionMutateAsync,
     }),
   }
@@ -221,6 +222,7 @@ describe('ScanCubeModal', () => {
     apiMocks.analyzeReset.mockReset()
     apiMocks.solveSessionMutateAsync.mockReset()
     apiMocks.solveSessionMutateAsync.mockResolvedValue(scanSessionAccepted())
+    apiMocks.solveSessionIsPending = false
     apiMocks.cameraState = { status: 'ready', stream: apiMocks.cameraStream }
     captureScanImageMock.mockReset()
     captureScanImageMock.mockResolvedValue(capturedScanImage())
@@ -722,6 +724,56 @@ describe('ScanCubeModal', () => {
     expect(apiMocks.solveSessionMutateAsync).not.toHaveBeenCalled()
   })
 
+  it('shows a cube loader on the final 2x2 accept button while scan solve is pending', async () => {
+    const user = userEvent.setup()
+    const { rerender } = render(
+      <ScanCubeModal
+        apiReady
+        puzzleSlug="cube-2x2x2"
+        solving={false}
+        onClose={vi.fn()}
+      />,
+    )
+
+    await confirmAllEvenFacesManually(user)
+    await user.click(screen.getByRole('button', { name: 'Review assembled cube' }))
+    expect(await screen.findByRole('heading', { name: 'Review assembled cube' })).toBeInTheDocument()
+
+    apiMocks.solveSessionIsPending = true
+    rerender(
+      <ScanCubeModal
+        apiReady
+        puzzleSlug="cube-2x2x2"
+        solving={false}
+        onClose={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: 'Loading' })).toBeDisabled()
+  })
+
+  it('closes the 2x2 final review after an accepted solve response', async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+    const onSessionSolveResult = vi.fn()
+    render(
+      <ScanCubeModal
+        apiReady
+        puzzleSlug="cube-2x2x2"
+        solving={false}
+        onClose={onClose}
+        onSessionSolveResult={onSessionSolveResult}
+      />,
+    )
+
+    await confirmAllEvenFacesManually(user)
+    await user.click(screen.getByRole('button', { name: 'Review assembled cube' }))
+    await user.click(await screen.findByRole('button', { name: 'Accept and solve' }))
+
+    await waitFor(() => expect(onSessionSolveResult).toHaveBeenCalledWith(expect.objectContaining({ ok: true })))
+    expect(onClose).toHaveBeenCalled()
+  })
+
   it('submits the full scan session and closes on accepted solve', async () => {
     const user = userEvent.setup()
     const onClose = vi.fn()
@@ -944,6 +996,33 @@ describe('ScanCubeModal', () => {
     await user.click(within(swapPanel).getByRole('button', { name: 'Right side' }))
 
     expect(screen.getByText(/Selected slot: Right side .* captured face: Front side/)).toBeInTheDocument()
+  })
+
+  it('resets stale 2x2 net swaps after editing captured faces', async () => {
+    const user = userEvent.setup()
+    liveScanMocks.autoRecognize = true
+    render(
+      <ScanCubeModal
+        apiReady
+        puzzleSlug="cube-2x2x2"
+        solving={false}
+        onClose={vi.fn()}
+      />,
+    )
+
+    await confirmAllFaces(user, ['Front side', 'Right side', 'Back side', 'Left side', 'Up side', 'Down side'])
+    await user.click(screen.getByRole('button', { name: 'Review assembled cube' }))
+    expect(await screen.findByText(/Selected slot: Front side .* captured face: Front side/)).toBeInTheDocument()
+    const swapPanel = screen.getByText('Swap selected face with').parentElement!
+    await user.click(within(swapPanel).getByRole('button', { name: 'Right side' }))
+
+    expect(screen.getByText(/Selected slot: Right side .* captured face: Front side/)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Back and edit' }))
+    await user.click(screen.getByRole('button', { name: /Go to Right side/ }))
+    await user.click(screen.getByRole('button', { name: 'Review assembled cube' }))
+
+    expect(await screen.findByText(/Selected slot: Front side .* captured face: Front side/)).toBeInTheDocument()
   })
 
   it('keeps backend manual targets when editing a different sticker', async () => {

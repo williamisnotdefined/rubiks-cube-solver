@@ -13,6 +13,7 @@ import {
 } from '@dnd-kit/core'
 import type { ScanFaceSymbol } from '@api/solver/types'
 import { Button } from '@components/Button'
+import { Loader3x3 } from '@components/Loader3x3'
 import {
   displayIndexToPayloadIndex,
   rotateEvenCubeStickers,
@@ -240,10 +241,11 @@ export function EvenCubeReviewStep({
           <Button
             className="min-h-10 px-4 py-2"
             disabled={hasInvalidCorners || solving}
+            aria-label={solving ? t('common.loading') : undefined}
             type="button"
             onClick={onSolve}
           >
-            {t('scan.evenReview.solve')}
+            {solving ? <Loader3x3 decorative className="size-8" registerDelayMs={150} /> : t('scan.evenReview.solve')}
           </Button>
         </div>
       </div>

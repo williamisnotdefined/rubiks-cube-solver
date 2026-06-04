@@ -9,8 +9,13 @@
     "visualizationUnavailable": "La visualización aún no está disponible para este puzzle."
   },
   "navigation": {
+    "github": "Abrir proyecto en GitHub",
     "primary": "Navegación principal",
     "solve": "Resolver",
+    "theme": "Tema",
+    "themeDark": "Oscuro",
+    "themeLight": "Claro",
+    "themeSystem": "Sistema",
     "timer": "Timer"
   },
   "scan": {

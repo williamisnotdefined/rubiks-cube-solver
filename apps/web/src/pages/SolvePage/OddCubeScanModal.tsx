@@ -48,6 +48,7 @@ export type ScanCubeModalProps = {
   visionTileDetectorReason?: string
   visionOk?: boolean
   onClose: () => void
+  onSessionSolvingChange?: (solving: boolean) => void
   onSessionSolveResult?: (solve: SolveResult) => void
 }
 
@@ -69,6 +70,7 @@ export function OddCubeScanModal({
   visionTileDetectorReason,
   visionOk,
   onClose,
+  onSessionSolvingChange,
   onSessionSolveResult,
 }: ScanCubeModalProps) {
   const { t } = useTranslation()
@@ -142,6 +144,12 @@ export function OddCubeScanModal({
   const solveScanDisabled = solving || sessionSolving || solveScanDisabledReason !== undefined
   const reviewTargetIndexes = backendReviewTargets.manualTargets[currentFace.symbol] ?? []
   const hasScanProgress = scanDraftsHaveProgress(drafts, centerIndex)
+
+  useEffect(() => {
+    onSessionSolvingChange?.(sessionSolving)
+
+    return () => onSessionSolvingChange?.(false)
+  }, [onSessionSolvingChange, sessionSolving])
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
