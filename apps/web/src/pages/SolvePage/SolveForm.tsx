@@ -69,7 +69,11 @@ export function SolveForm({
             onChange={(event) => onPuzzleChange(event.target.value)}
           >
             {puzzleOptions.map((puzzle) => (
-              <option key={puzzle.slug} value={puzzle.slug}>
+              <option
+                disabled={isPuzzleOptionDisabled(puzzle)}
+                key={puzzle.slug}
+                value={puzzle.slug}
+              >
                 {puzzle.label}
               </option>
             ))}
@@ -156,5 +160,13 @@ export function SolveForm({
         </Button>
       </div>
     </form>
+  )
+}
+
+function isPuzzleOptionDisabled(puzzle: PuzzleDefinition): boolean {
+  return (
+    puzzle.status === 'planned' ||
+    puzzle.status === 'disabled' ||
+    puzzle.strategyIds.length === 0
   )
 }

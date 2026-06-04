@@ -75,6 +75,7 @@ impl InputKind {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum VisualizationKind {
     Cube3FaceletsV1,
+    Cube2FaceletsV1,
     None,
 }
 
@@ -82,6 +83,7 @@ impl VisualizationKind {
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::Cube3FaceletsV1 => "cube3-facelets-v1",
+            Self::Cube2FaceletsV1 => "cube2-facelets-v1",
             Self::None => "none",
         }
     }

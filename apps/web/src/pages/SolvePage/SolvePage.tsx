@@ -9,7 +9,7 @@ import {
 } from '@api/solver'
 import type { SolveResult as ApiSolveResult } from '@api/solver/types'
 import { waitForPaint } from '@core/timing/waitForPaint'
-import { CubeStage } from './CubeStage'
+import { CubeStage, type CubeStageCubeType } from './CubeStage'
 import { ScanCubeModal } from './ScanCubeModal'
 import { SolveForm } from './SolveForm'
 import { SolveResult } from './SolveResult'
@@ -32,6 +32,7 @@ import {
 
 const defaultPuzzleSlug = 'cube-3x3x3'
 const cube3VisualizationKind = 'cube3-facelets-v1'
+const cube2VisualizationKind = 'cube2-facelets-v1'
 
 export function SolvePage() {
   const { t } = useTranslation()
@@ -72,8 +73,13 @@ export function SolvePage() {
   )
   const visibleSolutionMoves = successResult?.moves.slice(0, visibleSolutionStep) ?? []
   const visualizationState = successResult?.visualState
-  const visualizationSupported =
-    selectedPuzzle?.supportedVisualizations.includes(cube3VisualizationKind) === true
+  const visualizationCubeType: CubeStageCubeType | undefined =
+    selectedPuzzle?.supportedVisualizations.includes(cube2VisualizationKind) === true
+      ? 'Two'
+      : selectedPuzzle?.supportedVisualizations.includes(cube3VisualizationKind) === true
+        ? 'Three'
+        : undefined
+  const visualizationSupported = visualizationCubeType !== undefined
   const visualizationNotation =
     visualizationState === undefined && visualizationSupported
       ? notationWithSolutionPrefix(
@@ -213,9 +219,11 @@ export function SolvePage() {
   return (
     <main className="app-shell min-h-screen w-full bg-[#070707] px-3 py-4 text-[#f7f7f7] sm:px-5 sm:py-6">
       <section className="mx-auto grid w-full max-w-4xl content-start justify-items-center gap-4">
-        {visualizationSupported ? (
+        {visualizationCubeType !== undefined ? (
           <CubeStage
+            key={visualizationCubeType}
             active={cubeActive}
+            cubeType={visualizationCubeType}
             cubeRef={cubeRef}
             onReady={markCubeReady}
           />

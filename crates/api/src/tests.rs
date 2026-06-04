@@ -234,6 +234,7 @@ async fn puzzles_route_lists_current_and_experimental_puzzles() {
         cube2.strategy_ids,
         vec!["cube2-bounded-ida-star", "cube2-pdb-ida-star"]
     );
+    assert_eq!(cube2.supported_visualizations, vec!["cube2-facelets-v1"]);
 }
 
 #[tokio::test]

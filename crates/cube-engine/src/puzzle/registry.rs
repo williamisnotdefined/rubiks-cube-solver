@@ -13,7 +13,7 @@ const CUBE3_INPUTS: [InputKind; 3] = [
 ];
 const CUBE3_VISUALIZATIONS: [VisualizationKind; 1] = [VisualizationKind::Cube3FaceletsV1];
 const CUBE2_INPUTS: [InputKind; 1] = [InputKind::Notation];
-const CUBE2_VISUALIZATIONS: [VisualizationKind; 1] = [VisualizationKind::None];
+const CUBE2_VISUALIZATIONS: [VisualizationKind; 1] = [VisualizationKind::Cube2FaceletsV1];
 const PLANNED_INPUTS: [InputKind; 0] = [];
 const PLANNED_VISUALIZATIONS: [VisualizationKind; 0] = [];
 const HTM_METRICS: [MoveMetric; 1] = [MoveMetric::Htm];
@@ -193,7 +193,9 @@ mod tests {
         all_puzzle_definitions, all_strategy_definitions, puzzle_definition_by_slug,
         strategies_for_puzzle, strategy_definition_for_puzzle,
     };
-    use crate::puzzle::{InputKind, MoveMetric, PuzzleFamily, PuzzleId, PuzzleStatus};
+    use crate::puzzle::{
+        InputKind, MoveMetric, PuzzleFamily, PuzzleId, PuzzleStatus, VisualizationKind,
+    };
     use crate::solver::SolverStrategy;
 
     #[test]
@@ -241,6 +243,10 @@ mod tests {
             &["cube2-bounded-ida-star", "cube2-pdb-ida-star"]
         );
         assert_eq!(definition.supported_inputs, &[InputKind::Notation]);
+        assert_eq!(
+            definition.supported_visualizations,
+            &[VisualizationKind::Cube2FaceletsV1]
+        );
         assert!(!definition.scanner_supported);
     }
 

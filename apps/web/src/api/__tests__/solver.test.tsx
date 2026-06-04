@@ -118,7 +118,7 @@ describe('solver API operations', () => {
         status: 'experimental',
         defaultMetric: 'htm',
         supportedInputs: ['notation'],
-        supportedVisualizations: ['none'],
+        supportedVisualizations: ['cube2-facelets-v1'],
         defaultStrategyId: 'cube2-pdb-ida-star',
         strategyIds: ['cube2-bounded-ida-star', 'cube2-pdb-ida-star'],
         scannerSupported: false,

@@ -63,7 +63,19 @@ vi.mock('@api/solver', () => ({
         status: 'experimental',
         strategyIds: ['cube2-bounded-ida-star', 'cube2-pdb-ida-star'],
         supportedInputs: ['notation'],
-        supportedVisualizations: ['none'],
+        supportedVisualizations: ['cube2-facelets-v1'],
+      },
+      {
+        defaultMetric: 'htm',
+        family: 'pyraminx',
+        id: 'pyraminx',
+        label: 'Pyraminx',
+        scannerSupported: false,
+        slug: 'pyraminx',
+        status: 'planned',
+        strategyIds: [],
+        supportedInputs: [],
+        supportedVisualizations: [],
       },
     ],
     isSuccess: true,
@@ -148,7 +160,15 @@ vi.mock('../CubeStage', async () => {
   const { useEffect } = await vi.importActual<typeof import('react')>('react')
 
   return {
-    CubeStage: ({ active, onReady }: { active: boolean; onReady: () => void }) => {
+    CubeStage: ({
+      active,
+      cubeType,
+      onReady,
+    }: {
+      active: boolean
+      cubeType: 'Two' | 'Three'
+      onReady: () => void
+    }) => {
       useEffect(() => {
         if (active) {
           onReady()
@@ -156,7 +176,11 @@ vi.mock('../CubeStage', async () => {
       }, [active, onReady])
 
       return (
-        <section aria-label="Cube visualization" data-testid="cube-stage">
+        <section
+          aria-label="Cube visualization"
+          data-cube-type={cubeType}
+          data-testid="cube-stage"
+        >
           {active ? <div data-testid="cube-stage-enabled" /> : null}
         </section>
       )
@@ -200,6 +224,7 @@ describe('SolvePage', () => {
     expect(screen.getByRole('button', { name: 'Solve' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Scan cube with camera' })).toBeInTheDocument()
     expect(screen.getByLabelText('Puzzle')).toHaveValue('cube-3x3x3')
+    expect(screen.getByTestId('cube-stage')).toHaveAttribute('data-cube-type', 'Three')
     expect(screen.getByLabelText('Strategy')).toHaveValue('generated-two-phase-quality')
     expect(useCubeVisualizationMock).toHaveBeenLastCalledWith(
       expect.anything(),
@@ -240,6 +265,14 @@ describe('SolvePage', () => {
     expect(screen.getByLabelText('Strategy')).toBeInTheDocument()
   })
 
+  it('disables puzzle options that are not implemented yet', () => {
+    render(<SolvePage />)
+
+    expect(screen.getByRole('option', { name: '3x3x3 Cube' })).not.toBeDisabled()
+    expect(screen.getByRole('option', { name: '2x2x2 Cube' })).not.toBeDisabled()
+    expect(screen.getByRole('option', { name: 'Pyraminx' })).toBeDisabled()
+  })
+
   it('opens the scan modal from the camera button', async () => {
     const user = userEvent.setup()
     render(<SolvePage />)
@@ -273,7 +306,7 @@ describe('SolvePage', () => {
     })
   })
 
-  it('selects 2x2 strategies and disables 3x3-only scan and visualization', async () => {
+  it('selects 2x2 strategies and disables 3x3-only scan', async () => {
     const user = userEvent.setup()
     render(<SolvePage />)
 
@@ -282,14 +315,14 @@ describe('SolvePage', () => {
     await waitFor(() => expect(screen.getByLabelText('Strategy')).toHaveValue('cube2-pdb-ida-star'))
     expect(screen.getByLabelText('Scramble')).toHaveAttribute('placeholder', 'R U F')
     expect(screen.getByRole('button', { name: 'Scan cube with camera' })).toBeDisabled()
-    expect(screen.queryByTestId('cube-stage')).not.toBeInTheDocument()
-    expect(screen.getByText('Visualization is not available for this puzzle yet.')).toBeInTheDocument()
+    expect(screen.getByTestId('cube-stage')).toHaveAttribute('data-cube-type', 'Two')
+    expect(screen.queryByText('Visualization is not available for this puzzle yet.')).not.toBeInTheDocument()
     expect(useCubeVisualizationMock).toHaveBeenLastCalledWith(
       expect.anything(),
       '',
       expect.any(Number),
       undefined,
-      false,
+      true,
     )
   })
 
