@@ -312,7 +312,15 @@ Start the full development environment with one command:
 npm run dev
 ```
 
-This generates native pruning tables when needed, starts the API on `127.0.0.1:8787`, and starts the Vite dev server. Use `npm run web:dev` only when you intentionally want to run the frontend without starting the API.
+This generates native pruning tables when needed, starts the API on `127.0.0.1:8787`, starts Vision on `127.0.0.1:8790`, and starts the Vite dev server on `127.0.0.1:5173`. Use `npm run web:dev` only when you intentionally want to run the frontend without starting the API.
+
+Local port split:
+
+- Dev web: `127.0.0.1:5173`
+- Dev API: `127.0.0.1:8787`
+- Dev Vision: `127.0.0.1:8790`
+- Prod web/API: `127.0.0.1:3001`
+- Prod Vision: `127.0.0.1:8791`
 
 Run the browser product flow with native API coverage:
 
@@ -327,7 +335,7 @@ Playwright starts both the API and the Vite preview server. The UI accepts a `Sc
 
 ## Cloudflare Tunnel
 
-Production follows the same local tunnel model used by `zelda-proto`: one local HTTP server listens on port `3001`, serves the built web app, exposes the Rust API routes, and Cloudflare Tunnel publishes it at `wilho.com.br`.
+Production follows the same local tunnel model used by `zelda-proto`: one local HTTP server listens on port `3001`, serves the built web app, exposes the Rust API routes, and Cloudflare Tunnel publishes it at `wilho.com.br`. The production Vision service listens on `8791` by default, so `npm run live:start` can run alongside `npm run dev`.
 
 Start the full production boot path plus tunnel:
 
@@ -359,6 +367,8 @@ Current production route target:
 Production defaults:
 
 - `RUBIKS_API_ADDR=127.0.0.1:3001` in `npm start`
+- `RUBIKS_VISION_PORT=8791` in `npm run vision:start`
+- `RUBIKS_VISION_URL=http://127.0.0.1:$RUBIKS_VISION_PORT` in `npm start` unless explicitly overridden
 - `RUBIKS_WEB_DIST_DIR=apps/web/dist`
 - The production web build uses the same origin for API calls when `VITE_RUBIKS_API_URL` is not set
 

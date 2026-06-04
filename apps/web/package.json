@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host 127.0.0.1 --port 5173",
     "build": "tsc -b && vite build",
     "lint": "eslint . --max-warnings 0",
-    "preview": "vite preview",
+    "preview": "vite preview --host 127.0.0.1 --port 4173",
     "storybook": "storybook dev -p 6006 --host 0.0.0.0",
     "storybook:build": "storybook build",
     "test": "vitest run --passWithNoTests",
