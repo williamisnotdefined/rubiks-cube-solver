@@ -207,7 +207,7 @@ export function SolvePage() {
   }
 
   return (
-    <main className="app-shell min-h-screen w-full bg-[#070707] px-3 py-4 text-[#f7f7f7] sm:px-5 sm:py-6">
+    <main className="app-shell min-h-screen w-full bg-app-bg px-3 py-4 text-app-text sm:px-5 sm:py-6">
       <section className="mx-auto grid w-full max-w-4xl content-start justify-items-center gap-4">
         {visualizationCubeType !== undefined ? (
           <CubeStage
@@ -219,7 +219,7 @@ export function SolvePage() {
           />
         ) : (
           <section
-            className="cube-stage flex aspect-square w-[min(280px,calc(100vw-24px))] items-center justify-center border border-[#2b2b2b] bg-[#101010] px-5 text-center text-sm font-semibold text-[#a8a8a8]"
+            className="cube-stage flex aspect-square w-[min(280px,calc(100vw-24px))] items-center justify-center border border-app-border bg-app-surface px-5 text-center text-sm font-semibold text-app-muted"
             aria-label={t('cube.visualizationUnavailable')}
           >
             {t('cube.visualizationUnavailable')}

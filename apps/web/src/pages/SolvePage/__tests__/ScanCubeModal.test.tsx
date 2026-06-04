@@ -317,8 +317,11 @@ describe('ScanCubeModal', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: 'Solve scanned cube' }))
-    expect(screen.getByText('The API is not ready yet.')).toBeInTheDocument()
+    let solveButton = screen.getByRole('button', { name: 'Solve scanned cube' })
+    expect(solveButton).toBeDisabled()
+
+    await user.hover(solveButton.parentElement!)
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('The API is not ready yet.')
 
     rerender(
       <ScanCubeModal
@@ -329,8 +332,11 @@ describe('ScanCubeModal', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: 'Solve scanned cube' }))
-    expect(screen.getByText('Generated tables are loading.')).toBeInTheDocument()
+    solveButton = screen.getByRole('button', { name: 'Solve scanned cube' })
+    expect(solveButton).toBeDisabled()
+
+    await user.hover(solveButton.parentElement!)
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Generated tables are loading.')
     expect(apiMocks.solveSessionMutateAsync).not.toHaveBeenCalled()
   })
 
@@ -580,6 +586,8 @@ describe('ScanCubeModal', () => {
       />,
     )
 
+    expect(screen.getByRole('button', { name: 'Solve scanned cube' })).toBeDisabled()
+
     await confirmAllFaces(user)
 
     expect(screen.getByRole('button', { name: 'Solve scanned cube' })).toBeEnabled()
@@ -588,11 +596,12 @@ describe('ScanCubeModal', () => {
     liveScanMocks.autoRecognize = false
     await user.click(screen.getByRole('button', { name: 'Clear face' }))
 
-    expect(screen.getByRole('button', { name: 'Solve scanned cube' })).toBeEnabled()
+    const solveButton = screen.getByRole('button', { name: 'Solve scanned cube' })
+    expect(solveButton).toBeDisabled()
 
-    await user.click(screen.getByRole('button', { name: 'Solve scanned cube' }))
+    await user.hover(solveButton.parentElement!)
 
-    expect(screen.getByText('Confirm these faces before solving: G.')).toBeInTheDocument()
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Confirm these faces before solving: G.')
     expect(apiMocks.solveSessionMutateAsync).not.toHaveBeenCalled()
   })
 
@@ -613,9 +622,12 @@ describe('ScanCubeModal', () => {
       await user.click(screen.getByRole('button', { name: 'Confirm face' }))
     }
 
-    await user.click(screen.getByRole('button', { name: 'Solve scanned cube' }))
+    const solveButton = screen.getByRole('button', { name: 'Solve scanned cube' })
+    expect(solveButton).toBeDisabled()
 
-    expect(screen.getByText('Recognize these faces before solving: G, R, B, O, W, Y.')).toBeInTheDocument()
+    await user.hover(solveButton.parentElement!)
+
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Recognize these faces before solving: G, R, B, O, W, Y.')
     expect(apiMocks.solveSessionMutateAsync).not.toHaveBeenCalled()
   })
 

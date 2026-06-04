@@ -49,7 +49,7 @@ export function CubeStage({ active, cubeType, cubeRef, onReady }: CubeStageProps
 
   return (
     <section
-      className="cube-stage aspect-square w-[min(280px,calc(100vw-24px))] overflow-hidden border border-[#2b2b2b] bg-[#101010]"
+      className="cube-stage aspect-square w-[min(280px,calc(100vw-24px))] overflow-hidden border border-app-border bg-app-surface"
       aria-label={t('cube.visualization')}
     >
       {active && registered ? (

@@ -212,8 +212,9 @@ Rules for styling `apps/web` with Tailwind CSS v4 utilities, theme tokens, and c
 
 - Use Tailwind CSS v4 through `@tailwindcss/vite` and the single required `apps/web/src/index.css` entrypoint.
 - Keep `apps/web/src/index.css` as the only allowed CSS file; it may contain `@import "tailwindcss";`, project-level CSS resets, semantic theme/color variables, Tailwind v4 `@theme` token mappings, and minimal root theme selectors.
+- Keep raw hex color values confined to semantic variable definitions in `apps/web/src/index.css`; application markup, components, stories, tests, and `apps/web/index.html` should use theme-backed classes or CSS variables instead.
 - Define every reusable color as a semantic CSS variable in `apps/web/src/index.css` before using it in Tailwind classes.
-- Expose theme colors through semantic Tailwind tokens such as `bg-app-bg`, `bg-app-surface`, `text-app-text`, `text-app-muted`, `border-app-border`, and `ring-app-focus` instead of hardcoded color utilities.
+- Expose theme colors through semantic Tailwind tokens such as `bg-app-bg`, `bg-app-nav`, `bg-app-stage`, `bg-app-surface`, `bg-app-surface-raised`, `bg-app-control`, `text-app-text`, `text-app-muted`, `text-app-inverse`, `border-app-border`, `border-app-border-strong`, and `ring-app-focus` instead of hardcoded color utilities.
 - Name color tokens by UI role, not raw color names; prefer `--app-surface`, `--app-border`, and `--app-muted` over names such as `--gray-900`.
 - Use system theme preference by default through `prefers-color-scheme`; explicit theme overrides, when implemented, should use a root selector such as `[data-theme="dark"]` or `[data-theme="light"]` and must still route through the same semantic variables.
 - Preserve the current dark visual treatment as the `dark` theme.
@@ -232,7 +233,8 @@ Rules for styling `apps/web` with Tailwind CSS v4 utilities, theme tokens, and c
 
 - Do not add, import, or keep component, page, feature, or extra global `.css` files.
 - Do not put custom selectors, theme tokens, document defaults, base styles, animations, or keyframes in any CSS file other than `apps/web/src/index.css`.
-- Do not hardcode colors through Tailwind arbitrary color utilities such as `bg-[#070707]`, `text-[#f7f7f7]`, `border-[#2b2b2b]`, `ring-[#f7f7f7]/50`, `from-[#...]`, `via-[#...]`, or `to-[#...]`.
+- Do not hardcode colors through Tailwind arbitrary hex color utilities.
+- Do not add raw hex colors in React props, inline styles, SVG `fill`/`stroke`, tests, Storybook stories, or `apps/web/index.html`; add a semantic variable in `apps/web/src/index.css` and consume it through `var(...)` or a theme-backed Tailwind class.
 - Do not duplicate raw color values in components after a semantic token exists.
 - Do not make the light theme pure white, near-white, or visually disconnected from the current dark product tone.
 - Do not add a Tailwind config file unless Tailwind utility classes cannot express a concrete current need.
@@ -246,7 +248,8 @@ Rules for styling `apps/web` with Tailwind CSS v4 utilities, theme tokens, and c
 
 ## Verification
 
-- Search changed files for local class-name helpers, `rounded-`, new `.css` files, and hardcoded arbitrary color utilities such as `bg-[#`, `text-[#`, `border-[#`, `ring-[#`, `from-[#`, `via-[#`, and `to-[#` before finishing.
+- Search changed files for local class-name helpers, `rounded-`, new `.css` files, hardcoded arbitrary hex color utilities, and raw hex colors outside `apps/web/src/index.css` before finishing.
+- Run `npm run theme-colors:check` after changing theme tokens, Tailwind color classes, docs that mention color rules, or generated AI route content.
 - Run `npm run build` after Tailwind or component style changes.
 - Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
 - Check both system-default theme behavior and explicit `dark`/`light` theme behavior when theme code changes.
@@ -357,9 +360,11 @@ The solve form defaults to an empty scramble so the visualization starts solved;
 
 - `apps/web/src/index.css` is the only allowed CSS file and owns Tailwind import, project-level CSS resets, semantic theme/color variables, Tailwind v4 token mappings, and minimal root theme selectors.
 - Component layout, visual treatment, animations, and state styles should use Tailwind utilities.
-- Reusable color values must be defined as semantic CSS variables in `apps/web/src/index.css` and consumed through semantic Tailwind utilities such as `bg-app-bg`, `bg-app-surface`, `text-app-text`, `text-app-muted`, `border-app-border`, and `ring-app-focus`.
-- Do not use hardcoded arbitrary Tailwind color utilities such as `bg-[#...]`, `text-[#...]`, `border-[#...]`, `ring-[#...]`, `from-[#...]`, `via-[#...]`, or `to-[#...]` in components.
+- Reusable color values must be defined as semantic CSS variables in `apps/web/src/index.css` and consumed through semantic Tailwind utilities such as `bg-app-bg`, `bg-app-nav`, `bg-app-stage`, `bg-app-surface`, `bg-app-surface-raised`, `bg-app-control`, `text-app-text`, `text-app-muted`, `text-app-inverse`, `border-app-border`, `border-app-border-strong`, and `ring-app-focus`.
+- Do not use hardcoded arbitrary Tailwind hex color utilities in components, stories, tests, or `apps/web/index.html`.
+- Do not add raw hex colors outside `apps/web/src/index.css`; SVG `fill`/`stroke` and dynamic inline styles should use semantic CSS variables such as `var(--app-text)` or scan-specific variables such as `var(--scan-u-bg)`.
 - Theme behavior defaults to the user's system preference; the `dark` theme preserves the current visual palette, and the `light` theme should be gray/not-so-dark rather than white.
+- `npm run theme-colors:check` enforces that raw hex colors stay in `apps/web/src/index.css` and that docs do not reintroduce literal arbitrary hex utility markers.
 - The current web UI is intentionally square; do not add `border-radius` or Tailwind `rounded-*` utilities.
 - Conditional class composition uses `classnames` as `cls`.
 - Do not add component/page CSS files, CSS-in-JS, Sass, or a design-system dependency without a concrete current need.

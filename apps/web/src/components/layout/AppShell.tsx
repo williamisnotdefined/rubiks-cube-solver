@@ -8,7 +8,7 @@ type AppShellProps = {
 
 export function AppShell({ activeRoute, children }: AppShellProps) {
   return (
-    <div className="min-h-screen bg-[#070707] text-[#f7f7f7]">
+    <div className="min-h-screen bg-app-bg text-app-text">
       <PageNav activeRoute={activeRoute} />
       {children}
     </div>

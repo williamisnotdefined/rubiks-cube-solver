@@ -23,7 +23,7 @@ const statusClassNames: Record<ScanFaceStatus, string> = {
   draft: 'border-sky-300/80 text-sky-100',
   invalid: 'border-red-300/80 text-red-100',
   needsReview: 'border-amber-300/80 text-amber-100',
-  pending: 'border-[#2b2b2b] text-[#a8a8a8]',
+  pending: 'border-app-border text-app-muted',
 }
 
 export function ScanFaceCarousel({
@@ -66,7 +66,7 @@ export function ScanFaceCarousel({
 
   return (
     <div className="mt-5 grid gap-4">
-      <div className="grid gap-3 border border-[#2b2b2b] bg-[#171717] p-3">
+      <div className="grid gap-3 border border-app-border bg-app-surface-raised p-3">
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
           {scanFaceOrder.map(({ symbol }, index) => {
             const active = index === currentFaceIndex
@@ -80,8 +80,8 @@ export function ScanFaceCarousel({
                 aria-current={active ? 'step' : undefined}
                 aria-label={t('scan.carousel.goToFace', { face: label, status: statusLabel })}
                 className={cls(
-                  'grid min-h-14 gap-1 border bg-[#101010] px-2 py-2 text-center text-xs font-extrabold uppercase tracking-[0.14em] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#f7f7f7]/50',
-                  active ? 'border-[#f7f7f7] text-[#f7f7f7]' : statusClassNames[status],
+                  'grid min-h-14 gap-1 border bg-app-surface px-2 py-2 text-center text-xs font-extrabold uppercase tracking-[0.14em] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-app-focus/50',
+                  active ? 'border-app-text text-app-text' : statusClassNames[status],
                 )}
                 key={symbol}
                 type="button"
@@ -89,7 +89,7 @@ export function ScanFaceCarousel({
               >
                 <span className="flex items-center justify-center gap-2">
                   <span
-                    className="size-3 border border-[#2b2b2b]"
+                    className="size-3 border border-app-border"
                     style={{ backgroundColor: details.background }}
                   />
                   {scanColorCode(symbol)}
@@ -133,7 +133,7 @@ export function ScanFaceCarousel({
               {index === currentFaceIndex ? (
                 children
               ) : (
-                <div className="grid min-h-80 place-items-center border border-[#2b2b2b] bg-[#101010] p-6 text-center text-sm font-semibold text-[#a8a8a8]">
+                <div className="grid min-h-80 place-items-center border border-app-border bg-app-surface p-6 text-center text-sm font-semibold text-app-muted">
                   {scanFaceLabel(t, symbol)}
                 </div>
               )}

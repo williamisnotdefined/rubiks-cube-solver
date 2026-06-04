@@ -147,12 +147,12 @@ export const scanSymbolDetails: Record<
   ScanFaceSymbol,
   { label: string; background: string; foreground: string }
 > = {
-  U: { label: 'White', background: '#f8fafc', foreground: '#09090b' },
-  R: { label: 'Red', background: '#ef4444', foreground: '#ffffff' },
-  F: { label: 'Green', background: '#22c55e', foreground: '#052e16' },
-  D: { label: 'Yellow', background: '#facc15', foreground: '#111827' },
-  L: { label: 'Orange', background: '#f97316', foreground: '#111827' },
-  B: { label: 'Blue', background: '#2563eb', foreground: '#ffffff' },
+  U: { label: 'White', background: 'var(--scan-u-bg)', foreground: 'var(--scan-u-fg)' },
+  R: { label: 'Red', background: 'var(--scan-r-bg)', foreground: 'var(--scan-r-fg)' },
+  F: { label: 'Green', background: 'var(--scan-f-bg)', foreground: 'var(--scan-f-fg)' },
+  D: { label: 'Yellow', background: 'var(--scan-d-bg)', foreground: 'var(--scan-d-fg)' },
+  L: { label: 'Orange', background: 'var(--scan-l-bg)', foreground: 'var(--scan-l-fg)' },
+  B: { label: 'Blue', background: 'var(--scan-b-bg)', foreground: 'var(--scan-b-fg)' },
 }
 
 const lowConfidenceThreshold = 0.3

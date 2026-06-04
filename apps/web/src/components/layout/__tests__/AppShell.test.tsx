@@ -27,14 +27,14 @@ describe('PageNav', () => {
 
     expect(solveLink).toHaveAttribute('href', '#/solve')
     expect(timerLink).toHaveAttribute('href', '#/timer')
-    expect(solveLink).toHaveClass('bg-[#f7f7f7]')
-    expect(timerLink).toHaveClass('bg-[#101010]')
+    expect(solveLink).toHaveClass('bg-app-text')
+    expect(timerLink).toHaveClass('bg-app-surface')
   })
 
   it('marks timer as active and solve as inactive', () => {
     render(<PageNav activeRoute="timer" />)
 
-    expect(screen.getByRole('link', { name: 'Timer' })).toHaveClass('bg-[#f7f7f7]')
-    expect(screen.getByRole('link', { name: 'Solve' })).toHaveClass('bg-[#101010]')
+    expect(screen.getByRole('link', { name: 'Timer' })).toHaveClass('bg-app-text')
+    expect(screen.getByRole('link', { name: 'Solve' })).toHaveClass('bg-app-surface')
   })
 })

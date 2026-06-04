@@ -10,6 +10,7 @@ import {
 import type { ScanFaceSymbol, SolveResult } from '@api/solver/types'
 import { Button } from '@components/Button'
 import { Loader3x3 } from '@components/Loader3x3'
+import { Tooltip } from '@components/Tooltip'
 import { captureScanImage, type CapturedScanImage } from './scanCapture'
 import { ScanCameraFrame } from './ScanCameraFrame'
 import { ScanFaceCarousel } from './ScanFaceCarousel'
@@ -193,6 +194,8 @@ export function ScanCubeModal({
     scanAnalysis !== undefined ||
     stickers.some((sticker, index) => index !== centerIndex && sticker.symbol !== undefined)
   const sessionSolving = solveScanSession.isPending
+  const solveScanDisabledReason = scanSessionReadiness
+  const solveScanDisabled = solving || sessionSolving || solveScanDisabledReason !== undefined
   const reviewTargetIndexes = backendReviewTargets.manualTargets[currentFace.symbol] ?? []
   const cameraStream = camera.status === 'ready' ? camera.stream : undefined
 
@@ -541,14 +544,14 @@ export function ScanCubeModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center px-3 py-6 sm:px-6">
       <button
         aria-label={t('scan.modal.dismiss')}
-        className="absolute inset-0 bg-[#070707]/90"
+        className="absolute inset-0 bg-app-bg/90"
         type="button"
         onClick={onClose}
       />
       <section
         aria-labelledby={titleId}
         aria-modal="true"
-        className="relative max-h-[calc(100vh-3rem)] w-full max-w-4xl overflow-auto border border-[#2b2b2b] bg-[#101010] p-4 text-left text-[#f7f7f7] shadow-2xl sm:p-6"
+        className="relative max-h-[calc(100vh-3rem)] w-full max-w-4xl overflow-auto border border-app-border bg-app-surface p-4 text-left text-app-text shadow-2xl sm:p-6"
         role="dialog"
       >
         <div className="flex items-start justify-between gap-4">
@@ -556,13 +559,13 @@ export function ScanCubeModal({
             <h2 className="text-lg font-extrabold uppercase tracking-[0.16em]" id={titleId}>
               {t('scan.modal.title')}
             </h2>
-            <p className="text-sm font-semibold text-[#a8a8a8]">
+            <p className="text-sm font-semibold text-app-muted">
               {t('scan.modal.description')}
             </p>
-            <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
+            <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
               {scanCnnStatusMessage(t, visionOk, visionCnnAvailable, visionCnnReason)}
             </p>
-            <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
+            <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
               {scanTileDetectorStatusMessage(
                 t,
                 visionOk,
@@ -585,24 +588,24 @@ export function ScanCubeModal({
           <div className="grid gap-3">
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
+                <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
                   {t('scan.modal.faceProgress', {
                     current: currentFaceIndex + 1,
                     total: scanFaceOrder.length,
                   })}
                 </p>
                 <h3 className="mt-1 text-xl font-extrabold">{scanFaceLabel(t, currentFace.symbol)}</h3>
-                <p className="mt-1 text-sm font-semibold leading-relaxed text-[#a8a8a8]">
+                <p className="mt-1 text-sm font-semibold leading-relaxed text-app-muted">
                   {scanFaceInstruction(t, currentFace.symbol)}
                 </p>
                 {centerIndex !== undefined ? (
                   <>
-                    <p className="mt-1 text-xs font-extrabold uppercase tracking-[0.16em] text-[#f7f7f7]">
+                    <p className="mt-1 text-xs font-extrabold uppercase tracking-[0.16em] text-app-text">
                       {t('scan.modal.expectedCenter', {
                         color: scanColorLabel(t, currentFace.symbol),
                       })}
                     </p>
-                    <p className="mt-1 text-xs font-extrabold uppercase tracking-[0.16em] text-[#f7f7f7]">
+                    <p className="mt-1 text-xs font-extrabold uppercase tracking-[0.16em] text-app-text">
                       {t('scan.modal.keepAtTop', {
                         color: scanFaceTopLabel(t, currentFace.symbol),
                       })}
@@ -610,7 +613,7 @@ export function ScanCubeModal({
                   </>
                 ) : null}
               </div>
-              <span className="border border-[#2b2b2b] bg-[#171717] px-3 py-2 text-xs font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
+              <span className="border border-app-border bg-app-surface-raised px-3 py-2 text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
                 {t('scan.modal.confirmed', { count: confirmedDraftCount(drafts) })}
               </span>
             </div>
@@ -681,7 +684,7 @@ export function ScanCubeModal({
               stickers={stickers}
               onStickerColorChange={handleStickerColorChange}
             />
-            <div className="grid gap-2 border border-[#2b2b2b] bg-[#171717] p-3 text-sm font-semibold text-[#a8a8a8]">
+            <div className="grid gap-2 border border-app-border bg-app-surface-raised p-3 text-sm font-semibold text-app-muted">
               <span className="text-xs font-extrabold uppercase tracking-[0.16em]">{t('scan.editor.colorCount')}</span>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {scanSymbols.map((symbol) => {
@@ -690,7 +693,7 @@ export function ScanCubeModal({
                   return (
                     <span className="flex items-center gap-2" key={symbol}>
                       <span
-                        className="size-3 border border-[#2b2b2b]"
+                        className="size-3 border border-app-border"
                         style={{ backgroundColor: details.background }}
                       />
                       {scanColorLabel(t, symbol)}: {previewCounts[symbol]}/{stickersPerFace}
@@ -699,17 +702,22 @@ export function ScanCubeModal({
                 })}
               </div>
             </div>
-            <p className="min-h-10 text-sm font-semibold leading-relaxed text-[#a8a8a8]" aria-live="polite">
+            <p className="min-h-10 text-sm font-semibold leading-relaxed text-app-muted" aria-live="polite">
               {message ?? solveDisabledReason ?? scannerMessage}
             </p>
-            <Button
-              aria-label={solving || sessionSolving ? t('common.loading') : undefined}
-              type="button"
-              disabled={solving || sessionSolving}
-              onClick={handleSolveScan}
-            >
-              {solving || sessionSolving ? <Loader3x3 decorative className="size-8" registerDelayMs={150} /> : t('scan.actions.solveScannedCube')}
-            </Button>
+            <Tooltip content={solveScanDisabledReason}>
+              <span className="inline-flex" tabIndex={solveScanDisabledReason === undefined ? undefined : 0}>
+                <Button
+                  aria-label={solving || sessionSolving ? t('common.loading') : undefined}
+                  className="w-full"
+                  type="button"
+                  disabled={solveScanDisabled}
+                  onClick={handleSolveScan}
+                >
+                  {solving || sessionSolving ? <Loader3x3 decorative className="size-8" registerDelayMs={150} /> : t('scan.actions.solveScannedCube')}
+                </Button>
+              </span>
+            </Tooltip>
           </div>
         </div>
         </ScanFaceCarousel>
@@ -743,27 +751,27 @@ function CenterMismatchConfirmationModal({
     <div className="fixed inset-0 z-[70] flex items-center justify-center px-3 py-6 sm:px-6">
       <button
         aria-label={t('scan.centerMismatch.dismiss')}
-        className="absolute inset-0 bg-[#070707]/85"
+        className="absolute inset-0 bg-app-bg/85"
         type="button"
         onClick={onCancel}
       />
       <section
         aria-labelledby={titleId}
         aria-modal="true"
-        className="relative grid w-full max-w-lg gap-5 border border-[#3a3a3a] bg-[#101010] p-4 text-left text-[#f7f7f7] shadow-2xl sm:p-6"
+        className="relative grid w-full max-w-lg gap-5 border border-app-border-strong bg-app-surface p-4 text-left text-app-text shadow-2xl sm:p-6"
         role="dialog"
       >
         <div className="grid gap-2">
-          <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
+          <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
             {t('scan.centerMismatch.kicker')}
           </p>
           <h2 className="text-lg font-extrabold uppercase tracking-[0.16em]" id={titleId}>
             {t('scan.centerMismatch.title')}
           </h2>
-          <p className="text-sm font-semibold leading-relaxed text-[#a8a8a8]">
+          <p className="text-sm font-semibold leading-relaxed text-app-muted">
             {message}
           </p>
-          <p className="text-sm font-extrabold leading-relaxed text-[#f7f7f7]">
+          <p className="text-sm font-extrabold leading-relaxed text-app-text">
             {t('scan.messages.centerMismatchConfirmQuestion')}
           </p>
         </div>

@@ -10,7 +10,7 @@ describe('PenaltyControls', () => {
 
     render(<PenaltyControls penalty="plus2" onPenaltyChange={onPenaltyChange} />)
 
-    expect(screen.getByRole('button', { name: '+2' })).toHaveClass('bg-[#f7f7f7]')
+    expect(screen.getByRole('button', { name: '+2' })).toHaveClass('bg-app-text')
 
     await user.click(screen.getByRole('button', { name: 'OK' }))
     await user.click(screen.getByRole('button', { name: 'DNF' }))

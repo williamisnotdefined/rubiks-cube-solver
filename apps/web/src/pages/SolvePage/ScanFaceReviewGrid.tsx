@@ -24,7 +24,7 @@ export function ScanFaceReviewGrid({
 
   return (
     <div className="grid gap-2" aria-label={t('scan.editor.reviewGroupLabel')} role="group">
-      <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#a8a8a8]">
+      <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
         {t('scan.editor.reviewColors')}
       </span>
       <div className={cls(
@@ -45,9 +45,9 @@ export function ScanFaceReviewGrid({
           return (
             <button
               className={cls(
-                'relative min-h-16 border text-sm font-extrabold uppercase tracking-[0.14em] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#f7f7f7]/50',
-                selected ? 'border-[#f7f7f7]' : 'border-[#2b2b2b]',
-                details === undefined ? 'bg-[#171717] text-[#a8a8a8]' : '',
+                'relative min-h-16 border text-sm font-extrabold uppercase tracking-[0.14em] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-app-focus/50',
+                selected ? 'border-app-text' : 'border-app-border',
+                details === undefined ? 'bg-app-surface-raised text-app-muted' : '',
                 lowConfidence ? 'ring-2 ring-amber-300/80' : '',
                 reviewTarget ? 'ring-4 ring-cyan-300/90' : '',
               )}

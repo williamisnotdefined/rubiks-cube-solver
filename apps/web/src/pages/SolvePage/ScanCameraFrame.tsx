@@ -54,7 +54,7 @@ export const ScanCameraFrame = memo(function ScanCameraFrame({
   const tileConfidence = average(stickerBoxes.map((box) => box.confidence))
 
   return (
-    <div className="relative aspect-square w-full max-w-[32rem] justify-self-center overflow-hidden border border-[#2b2b2b] bg-[#070707]">
+    <div className="relative aspect-square w-full max-w-[32rem] justify-self-center overflow-hidden border border-app-border bg-app-bg">
       <video
         className="block size-full object-cover"
         muted
@@ -77,10 +77,10 @@ export const ScanCameraFrame = memo(function ScanCameraFrame({
                 y={(detection.bbox.y - detection.bbox.height / 2) * 100}
               />
               <text
-                fill="#f7f7f7"
+                fill="var(--app-text)"
                 fontSize="3.1"
                 fontWeight="800"
-                stroke="#070707"
+                stroke="var(--app-bg)"
                 strokeWidth="0.25"
                 x={(detection.bbox.x - detection.bbox.width / 2) * 100 + 1}
                 y={(detection.bbox.y - detection.bbox.height / 2) * 100 + 4}
@@ -92,27 +92,27 @@ export const ScanCameraFrame = memo(function ScanCameraFrame({
         </svg>
       ) : null}
       {statusLabel === undefined ? null : (
-        <div className="absolute left-2 top-2 border border-[#2b2b2b] bg-[#070707]/80 px-2 py-1 text-[0.65rem] font-extrabold uppercase tracking-[0.12em] text-[#f7f7f7]">
+        <div className="absolute left-2 top-2 border border-app-border bg-app-bg/80 px-2 py-1 text-[0.65rem] font-extrabold uppercase tracking-[0.12em] text-app-text">
           {statusLabel}
         </div>
       )}
       {temporalStatusLabel === undefined ? null : (
-        <div className="absolute right-2 top-2 border border-[#2b2b2b] bg-[#070707]/80 px-2 py-1 text-[0.65rem] font-extrabold uppercase tracking-[0.12em] text-[#f7f7f7]">
+        <div className="absolute right-2 top-2 border border-app-border bg-app-bg/80 px-2 py-1 text-[0.65rem] font-extrabold uppercase tracking-[0.12em] text-app-text">
           {temporalStatusLabel}
         </div>
       )}
       {tileConfidence <= 0 ? null : (
-        <div className="absolute bottom-2 left-2 border border-[#2b2b2b] bg-[#070707]/80 px-2 py-1 text-[0.65rem] font-extrabold uppercase tracking-[0.12em] text-[#f7f7f7]">
+        <div className="absolute bottom-2 left-2 border border-app-border bg-app-bg/80 px-2 py-1 text-[0.65rem] font-extrabold uppercase tracking-[0.12em] text-app-text">
           {t('scan.camera.stickerConfidence', { confidence: Math.round(tileConfidence * 100) })}
         </div>
       )}
       {cameraStatus === 'loading' ? (
-        <div className="absolute inset-0 grid place-items-center bg-[#070707]/70 text-sm font-extrabold uppercase tracking-[0.16em] text-[#f7f7f7]">
+        <div className="absolute inset-0 grid place-items-center bg-app-bg/70 text-sm font-extrabold uppercase tracking-[0.16em] text-app-text">
           {t('scan.camera.opening')}
         </div>
       ) : null}
       {cameraStatus === 'error' ? (
-        <div className="absolute inset-0 grid place-items-center bg-[#070707]/85 p-4 text-center text-sm font-semibold leading-relaxed text-[#f7f7f7]">
+        <div className="absolute inset-0 grid place-items-center bg-app-bg/85 p-4 text-center text-sm font-semibold leading-relaxed text-app-text">
           {t('scan.camera.errorManualFallback', { message: cameraMessage })}
         </div>
       ) : null}

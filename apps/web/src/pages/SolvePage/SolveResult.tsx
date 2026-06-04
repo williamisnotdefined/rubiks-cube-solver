@@ -32,7 +32,7 @@ export function SolveResult({
   return (
     <>
       <output
-        className="result flex min-h-11 w-full flex-col items-center justify-center gap-2 text-center text-lg font-extrabold text-[#f7f7f7] sm:text-xl"
+        className="result flex min-h-11 w-full flex-col items-center justify-center gap-2 text-center text-lg font-extrabold text-app-text sm:text-xl"
         aria-live="polite"
       >
         {solving ? <Loader3x3 label={t('common.loading')} /> : null}
@@ -41,7 +41,7 @@ export function SolveResult({
             <code className="max-w-full text-inherit [font:inherit] [overflow-wrap:anywhere]">
               {successResult.moves.length === 0 ? t('solve.result.solved') : successResult.moves.join(' ')}
             </code>
-            <span className="result-meta text-sm font-semibold text-[#a8a8a8]">
+            <span className="result-meta text-sm font-semibold text-app-muted">
               {t('solve.result.successMeta', {
                 count: successResult.length,
                 elapsed: t('solve.result.foundIn', {
@@ -49,7 +49,7 @@ export function SolveResult({
                 }),
               })}{' '}
               <button
-                className="border-0 bg-transparent p-0 font-semibold text-[#f7f7f7] underline underline-offset-4 outline-none transition-colors hover:text-[#a8a8a8] focus-visible:ring-2 focus-visible:ring-[#f7f7f7]/50"
+                className="border-0 bg-transparent p-0 font-semibold text-app-text underline underline-offset-4 outline-none transition-colors hover:text-app-muted focus-visible:ring-2 focus-visible:ring-app-focus/50"
                 type="button"
                 onClick={() => setDetailsOpen(true)}
               >
@@ -65,7 +65,7 @@ export function SolveResult({
           <>
             <span>{solveErrorMessage(failureResult, t)}</span>
             {failureDetail === undefined ? null : (
-              <span className="result-meta text-sm font-semibold text-[#a8a8a8]">
+              <span className="result-meta text-sm font-semibold text-app-muted">
                 {failureDetail}
               </span>
             )}
@@ -75,7 +75,7 @@ export function SolveResult({
           <>
             <span>{t('solve.errors.status.api_error')}</span>
             {error.message.length === 0 ? null : (
-              <span className="result-meta text-sm font-semibold text-[#a8a8a8]">
+              <span className="result-meta text-sm font-semibold text-app-muted">
                 {error.message}
               </span>
             )}
