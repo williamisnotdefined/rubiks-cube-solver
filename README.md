@@ -364,7 +364,7 @@ Production defaults:
 
 ## Dataset Generation
 
-`cube-engine` owns deterministic solver-labeled dataset generation. Examples are JSONL records with fixed field order and schema version `1`:
+`cube-engine` owns deterministic solver-labeled dataset generation. The current generator still emits legacy 3x3 JSONL records with fixed field order and schema version `1`:
 
 ```json
 {"schema_version":1,"state":"cp=...;co=...;ep=...;eo=...","scramble":"R U","scramble_depth":2,"verified_solution":"U' R'","verified_solution_length":2,"best_move":"U'","label_source":"generated_two_phase_quality_solver_replay_verified","split":"train"}
@@ -391,9 +391,11 @@ npm run dataset:solver:1k
 
 The committed `datasets/fixtures/small.jsonl` remains a tiny ML smoke fixture with legacy reversible-scramble labels. It is kept for fast deterministic tests, not as the preferred generator path for new training data.
 
+Schema version `2` is puzzle-aware and records `puzzle_id`, `puzzle_slug`, `state_encoding_id`, `move_set_id`, `metric`, `label_target`, `generator_seed`, `solver_strategy_id`, and `replay_verified`. See `docs/dataset-schema-v2.md` for the full contract. The committed `datasets/fixtures/cube2-small-v2.jsonl` validates the initial 2x2 dataset representation, but the current ML value model still accepts only `cube/3x3x3` rows with `cube3-cubie-v1` encoding.
+
 ## ML Value Baseline
 
-The first ML baseline is isolated under `ml/`. It consumes Rust dataset JSONL records and derives model inputs from the serialized `CubieState` fields `cp`, `co`, `ep`, and `eo`. It does not use frontend sticker or color arrays as the primary model input.
+The first ML baseline is isolated under `ml/`. It consumes Rust dataset JSONL records and derives model inputs from the serialized 3x3 `CubieState` fields `cp`, `co`, `ep`, and `eo`. It does not use frontend sticker or color arrays as the primary model input.
 
 Install Python dependencies with:
 
@@ -413,7 +415,7 @@ Train and evaluate the small deterministic PyTorch MLP value model with:
 python -m ml.train_value_baseline --dataset datasets/fixtures/small.jsonl --epochs 1 --seed 0 --output ml/outputs/value-baseline --inference-repeats 1
 ```
 
-The CLI prints a JSON report and writes `metrics.json` plus `value_outputs.tsv` under the requested `--output` directory. The TSV uses comment metadata followed by `CubieState<TAB>predicted_value` rows for local hybrid-search experiments. The default output directory is the ignored workspace-local `ml/outputs/value-baseline`, and the smoke baseline does not write model checkpoints.
+The CLI prints a JSON report and writes `metrics.json` plus `value_outputs.tsv` under the requested `--output` directory. The TSV uses comment metadata followed by `CubieState<TAB>predicted_value` rows for local hybrid-search experiments. The report, model artifact, and TSV metadata include puzzle/model compatibility fields so a 3x3 model cannot silently consume 2x2 rows. The default output directory is the ignored workspace-local `ml/outputs/value-baseline`, and the dependency fallback does not write model checkpoints.
 
 If PyTorch is unavailable, the CLI exits successfully with an explicit dependency-fallback report so smoke verification still records label metrics; install `ml/requirements.txt` to train the PyTorch MLP.
 

@@ -5,12 +5,13 @@ from pathlib import Path
 
 import pytest
 
-from ml.data import DEPTH_BUCKETS, FEATURE_DIM, load_jsonl
+from ml.data import CUBE3_COMPATIBILITY, DEPTH_BUCKETS, FEATURE_DIM, DatasetError, load_jsonl
 from ml import train_value_baseline as baseline
 
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = ROOT / "datasets/fixtures/small.jsonl"
+CUBE2_FIXTURE = ROOT / "datasets/fixtures/cube2-small-v2.jsonl"
 
 
 def test_one_epoch_training_is_deterministic_and_reports_required_metrics(
@@ -35,8 +36,14 @@ def test_one_epoch_training_is_deterministic_and_reports_required_metrics(
 
     assert first["model"]["type"] == "pytorch_mlp"
     assert first["model"]["pytorch_available"] is True
+    assert first["model"]["model_schema_version"] == 2
+    assert first["model"]["puzzle_id"] == CUBE3_COMPATIBILITY.puzzle_id
+    assert first["model"]["state_encoding_id"] == CUBE3_COMPATIBILITY.state_encoding_id
+    assert first["model"]["move_set_id"] == CUBE3_COMPATIBILITY.move_set_id
+    assert first["model"]["metric"] == CUBE3_COMPATIBILITY.metric
     assert first["model"]["input"] == "normalized CubieState cp/co/ep/eo serialization"
     assert first["model"]["feature_dim"] == FEATURE_DIM
+    assert first["model"]["role"] == "value_estimation"
     assert first["label"]["target"] == "verified_solution_length"
     assert first["safety"]["validates_states"] is False
     assert first["safety"]["replaces_replay_verification"] is False
@@ -58,9 +65,16 @@ def test_one_epoch_training_is_deterministic_and_reports_required_metrics(
     assert Path(first["output"]["value_outputs_tsv"]) == value_outputs
     value_metadata, value_rows = read_value_outputs(value_outputs)
     assert value_metadata["format"] == "rubiks_cube_solver_value_outputs_v1"
+    assert value_metadata["model_schema_version"] == "2"
     assert value_metadata["model_type"] == "pytorch_mlp"
     assert value_metadata["pytorch_available"] == "true"
+    assert value_metadata["puzzle_id"] == CUBE3_COMPATIBILITY.puzzle_id
+    assert value_metadata["state_encoding_id"] == CUBE3_COMPATIBILITY.state_encoding_id
+    assert value_metadata["move_set_id"] == CUBE3_COMPATIBILITY.move_set_id
+    assert value_metadata["metric"] == CUBE3_COMPATIBILITY.metric
     assert value_metadata["label_source"] == "reversible_scramble_inverse_replay_verified"
+    assert value_metadata["role"] == "value_estimation"
+    assert value_metadata["admissible"] == "false"
     assert value_metadata["safety.validates_states"] == "false"
     assert value_metadata["safety.replaces_replay_verification"] == "false"
     assert value_metadata["safety.admissible_heuristic"] == "false"
@@ -68,9 +82,16 @@ def test_one_epoch_training_is_deterministic_and_reports_required_metrics(
     assert len(value_rows) == first["examples"]
     exported_model = json.loads(model_artifact.read_text(encoding="utf-8"))
     assert exported_model["format"] == "rubiks_cube_solver_value_model_v1"
+    assert exported_model["model_schema_version"] == 2
     assert exported_model["model_type"] == "pytorch_mlp"
     assert exported_model["pytorch_available"] is True
+    assert exported_model["puzzle_id"] == CUBE3_COMPATIBILITY.puzzle_id
+    assert exported_model["state_encoding_id"] == CUBE3_COMPATIBILITY.state_encoding_id
+    assert exported_model["move_set_id"] == CUBE3_COMPATIBILITY.move_set_id
+    assert exported_model["metric"] == CUBE3_COMPATIBILITY.metric
     assert exported_model["feature_dim"] == FEATURE_DIM
+    assert exported_model["role"] == "value_estimation"
+    assert exported_model["admissible"] is False
     assert [layer["type"] for layer in exported_model["layers"]] == [
         "linear",
         "relu",
@@ -104,6 +125,8 @@ def test_dependency_fallback_reports_required_fields(
 
     assert report["model"]["type"] == "constant_train_mean_dependency_fallback"
     assert report["model"]["pytorch_available"] is False
+    assert report["model"]["model_schema_version"] == 2
+    assert report["model"]["puzzle_id"] == CUBE3_COMPATIBILITY.puzzle_id
     assert report["model"]["input"] == "normalized CubieState cp/co/ep/eo serialization"
     assert report["model"]["feature_dim"] == FEATURE_DIM
     assert report["training"]["skipped_reason"] == "pytorch_unavailable"
@@ -120,12 +143,24 @@ def test_dependency_fallback_reports_required_fields(
     value_metadata, value_rows = read_value_outputs(value_outputs)
     assert value_metadata["model_type"] == "constant_train_mean_dependency_fallback"
     assert value_metadata["pytorch_available"] == "false"
+    assert value_metadata["puzzle_id"] == CUBE3_COMPATIBILITY.puzzle_id
     assert value_metadata["training_skipped_reason"] == "pytorch_unavailable"
     assert len(value_rows) == report["examples"]
     assert sorted(path.name for path in tmp_path.iterdir()) == [
         "metrics.json",
         "value_outputs.tsv",
     ]
+
+
+def test_value_baseline_rejects_cube2_dataset_until_encoder_exists(tmp_path: Path) -> None:
+    with pytest.raises(DatasetError, match="current value model only supports"):
+        baseline.run_baseline(
+            dataset=CUBE2_FIXTURE,
+            epochs=1,
+            seed=0,
+            output=tmp_path,
+            inference_repeats=1,
+        )
 
 
 def test_cli_writes_json_report(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:
