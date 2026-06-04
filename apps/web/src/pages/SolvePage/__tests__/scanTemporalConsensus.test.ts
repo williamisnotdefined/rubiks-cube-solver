@@ -32,6 +32,22 @@ describe('scanTemporalConsensus', () => {
     expect(consensus.stickers[4]).toMatchObject({ symbol: 'U', agreement: 1 })
   })
 
+  it('returns ready consensus for stable repeated 2x2 sticker frames', () => {
+    const frames = temporalFrames(6, {
+      analysis: { tileDetections: stable2x2TileDetections('F') },
+    })
+
+    const consensus = buildTemporalFaceConsensus(frames, {
+      ...defaultTemporalConsensusOptions,
+      gridSize: 2,
+      minTileDetections: 4,
+    })
+
+    expect(consensus.status).toBe('ready')
+    expect(consensus.stickers).toHaveLength(4)
+    expect(consensus.framesUsed).toBe(6)
+  })
+
   it('collects until the minimum frame count is reached', () => {
     const consensus = buildTemporalFaceConsensus(temporalFrames(5))
 
@@ -245,6 +261,24 @@ function stableTileDetections(
       },
       confidence: 0.9,
       symbol: index === 4 ? 'U' : nonCenterSymbol,
+    }
+  })
+}
+
+function stable2x2TileDetections(symbol: ScanFaceSymbol): NonNullable<AnalyzeScanFaceResponse['tileDetections']> {
+  return Array.from({ length: 4 }, (_, index) => {
+    const row = Math.floor(index / 2)
+    const column = index % 2
+
+    return {
+      bbox: {
+        height: 0.24,
+        width: 0.24,
+        x: 0.32 + column * 0.3,
+        y: 0.32 + row * 0.3,
+      },
+      confidence: 0.9,
+      symbol,
     }
   })
 }

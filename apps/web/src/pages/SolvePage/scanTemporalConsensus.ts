@@ -185,7 +185,7 @@ function temporalFrameRejectReasons(
 ): string[] {
   const { analysis, expectedCenter } = frame
   const reasons: string[] = []
-  const assignedTiles = tileAssignmentFromAnalysis(analysis)
+  const assignedTiles = tileAssignmentFromAnalysis(analysis, options)
 
   if (!analysis.ok) {
     reasons.push('analysis_not_ok')

@@ -520,7 +520,9 @@ export function mergeLiveDetectedScanStickers(
   currentStickers: readonly ScanSticker[],
   incomingStickers: readonly ScanSticker[],
 ): ScanSticker[] {
-  return Array.from({ length: 9 }, (_, index) => {
+  const stickerCount = Math.max(currentStickers.length, incomingStickers.length)
+
+  return Array.from({ length: stickerCount }, (_, index) => {
     const current = currentStickers[index] ?? { confidence: 0, source: 'empty' as const }
     const incoming = incomingStickers[index]
 

@@ -415,6 +415,20 @@ describe('scan state helpers', () => {
     expect(merged[2]).toMatchObject({ confidence: 0.9, source: 'detected', symbol: 'B' })
   })
 
+  it('preserves 2x2 sticker counts when merging live detections', () => {
+    const current = createEmptyScanStickers('F', 4)
+    const incoming = Array.from({ length: 4 }, () => ({
+      confidence: 0.9,
+      source: 'detected' as const,
+      symbol: 'F' as const,
+    }))
+
+    const merged = mergeLiveDetectedScanStickers(current, incoming)
+
+    expect(merged).toHaveLength(4)
+    expect(merged.every((sticker) => sticker.symbol === 'F')).toBe(true)
+  })
+
   it('returns no scan session when any draft is unconfirmed or incomplete', () => {
     const drafts = createInitialScanFaceDrafts()
 
