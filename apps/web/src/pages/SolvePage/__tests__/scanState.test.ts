@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import type { AnalyzeScanFaceResponse } from '@api/scan'
 import {
+  createDefaultEvenCubeFaceRotations,
   createDefaultEvenCubeNetAssignments,
   evenCubeFitSolution,
   evenCubeScanSessionFacesFromDrafts,
   findEvenCubeFullFit,
   swapEvenCubeNetAssignments,
   validateEvenCubeScan,
+  type EvenCubeNetAssignments,
 } from '../evenCubeScan'
 import {
   clearScanFaceDraft,
@@ -489,10 +491,10 @@ describe('scan state helpers', () => {
     const sessionFaces = evenCubeScanSessionFacesFromDrafts(drafts, {}, assignments)
 
     expect(sessionFaces?.find((face) => face.symbol === 'F')?.reviewedStickers).toEqual([
-      expect.objectContaining({ index: 0, symbol: 'R' }),
-      expect.objectContaining({ index: 1, symbol: 'R' }),
-      expect.objectContaining({ index: 2, symbol: 'R' }),
-      expect.objectContaining({ index: 3, symbol: 'R' }),
+      expect.objectContaining({ index: 0, symbol: 'L' }),
+      expect.objectContaining({ index: 1, symbol: 'L' }),
+      expect.objectContaining({ index: 2, symbol: 'L' }),
+      expect.objectContaining({ index: 3, symbol: 'L' }),
     ])
     expect(sessionFaces?.find((face) => face.symbol === 'R')?.reviewedStickers).toEqual([
       expect.objectContaining({ index: 0, symbol: 'F' }),
@@ -538,8 +540,8 @@ describe('scan state helpers', () => {
       D: { ...baseDrafts.D, stickers: stickersFromSymbols('DLLU') },
     }
 
-    expect(validateEvenCubeScan(drafts, {}, createDefaultEvenCubeNetAssignments())).toMatchObject({ ok: true })
-    expect(evenCubeScanSessionFacesFromDrafts(drafts, {}, createDefaultEvenCubeNetAssignments())
+    expect(validateEvenCubeScan(drafts, {}, identityEvenCubeNetAssignments())).toMatchObject({ ok: true })
+    expect(evenCubeScanSessionFacesFromDrafts(drafts, {}, identityEvenCubeNetAssignments())
       ?.find((face) => face.symbol === 'U')?.reviewedStickers)
       .toEqual([
         expect.objectContaining({ index: 0, symbol: 'U' }),
@@ -568,7 +570,7 @@ describe('scan state helpers', () => {
 
   it('scores even-cube auto-fit changes by swaps and rotations', () => {
     const assignments = swapEvenCubeNetAssignments(createDefaultEvenCubeNetAssignments(), 'F', 'R')
-    const solution = evenCubeFitSolution(assignments, { F: 90, U: 180 })
+    const solution = evenCubeFitSolution(assignments, { ...createDefaultEvenCubeFaceRotations(), F: 90, U: 180 })
 
     expect(solution.changes).toEqual({
       rotatedFaces: 2,
@@ -617,6 +619,10 @@ function confirmed2x2Drafts() {
 
     return confirmScanFaceDraft(nextDrafts, symbol)
   }, createInitialScanFaceDrafts(4))
+}
+
+function identityEvenCubeNetAssignments(): EvenCubeNetAssignments {
+  return Object.fromEntries(scanSymbols.map((symbol) => [symbol, symbol])) as EvenCubeNetAssignments
 }
 
 function filledDetectedStickers(symbol: (typeof scanSymbols)[number]): ScanSticker[] {

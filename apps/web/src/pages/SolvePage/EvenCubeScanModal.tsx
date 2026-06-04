@@ -10,6 +10,7 @@ import type { ScanFaceSymbol, SolveResult } from '@api/solver/types'
 import { EvenCubeReviewStep } from './EvenCubeReviewStep'
 import {
   allEvenCubeFacesConfirmed,
+  createDefaultEvenCubeFaceRotations,
   createDefaultEvenCubeNetAssignments,
   findEvenCubeFullFit,
   evenCubeScanSessionFacesFromDrafts,
@@ -93,7 +94,9 @@ export function EvenCubeScanModal({
     emptyBackendReviewTargets(),
   )
   const [evenReviewVisible, setEvenReviewVisible] = useState(false)
-  const [evenFaceRotations, setEvenFaceRotations] = useState<EvenCubeFaceRotations>({})
+  const [evenFaceRotations, setEvenFaceRotations] = useState<EvenCubeFaceRotations>(() =>
+    createDefaultEvenCubeFaceRotations(),
+  )
   const [exitConfirmationVisible, setExitConfirmationVisible] = useState(false)
   const [evenNetAssignments, setEvenNetAssignments] = useState<EvenCubeNetAssignments>(() =>
     createDefaultEvenCubeNetAssignments(),
@@ -215,7 +218,7 @@ export function EvenCubeScanModal({
 
   function resetEvenReviewState() {
     setEvenReviewVisible(false)
-    setEvenFaceRotations({})
+    setEvenFaceRotations(createDefaultEvenCubeFaceRotations())
     setEvenNetAssignments(createDefaultEvenCubeNetAssignments())
     setBackendEvenInvalidCorners([])
     setEvenAutoFitSuggestion(undefined)

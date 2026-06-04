@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { SolveResult } from '@api/solver/types'
+import type { PuzzleVisualizationKind, SolveResult } from '@api/solver/types'
 import { SolvePage } from '../SolvePage'
 import { useCubeVisualization } from '../hooks/useCubeVisualization'
 import { usePageActivity } from '../hooks/usePageActivity'
@@ -437,6 +437,27 @@ describe('SolvePage', () => {
     )
   })
 
+  it('drives the page cube from a successful 2x2 scan solve visual state', async () => {
+    const user = userEvent.setup()
+    const visualState = 'UUUURRRRFFFFDDDDLLLLBBBB'
+    apiMocks.scanSessionSolveResult = scanSuccessResult(visualState, 'cube2-facelets-v1')
+
+    render(<SolvePage />)
+    await user.selectOptions(screen.getByLabelText('Puzzle'), 'cube-2x2x2')
+    await user.click(screen.getByRole('button', { name: 'Scan cube with camera' }))
+    await user.click(screen.getByRole('button', { name: 'Solve scanned cube' }))
+
+    expect(useCubeVisualizationMock).toHaveBeenLastCalledWith(
+      expect.anything(),
+      '',
+      expect.any(Number),
+      visualState,
+      'cube2-facelets-v1',
+      'Two',
+      true,
+    )
+  })
+
   it('renders terminal scan solve failures on the page', async () => {
     const user = userEvent.setup()
     apiMocks.scanSessionSolveResult = limitFailure
@@ -450,7 +471,10 @@ describe('SolvePage', () => {
   })
 })
 
-function scanSuccessResult(visualState?: string): SolveResult {
+function scanSuccessResult(
+  visualState?: string,
+  visualStateKind: PuzzleVisualizationKind = 'cube3-facelets-v1',
+): SolveResult {
   return {
     elapsedMs: 12,
     exploredNodes: 42,
@@ -466,6 +490,6 @@ function scanSuccessResult(visualState?: string): SolveResult {
     strategyId: 'generated-two-phase-quality',
     strategyLabel: 'Generated two-phase quality solver',
     visualState,
-    visualStateKind: visualState === undefined ? undefined : 'cube3-facelets-v1',
+    visualStateKind: visualState === undefined ? undefined : visualStateKind,
   }
 }

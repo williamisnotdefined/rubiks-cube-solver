@@ -61,6 +61,15 @@ type CornerDefinition = {
 const validCornerKeys = new Set(['FRU', 'FLU', 'BLU', 'BRU', 'DFR', 'DFL', 'BDL', 'BDR'])
 const maxFitSolutions = 20
 const suggestionScoreGap = 50
+const defaultEvenCubeNetAssignments: EvenCubeNetAssignments = {
+  B: 'B',
+  D: 'D',
+  F: 'F',
+  L: 'R',
+  R: 'L',
+  U: 'U',
+}
+const defaultEvenCubeFaceRotations: EvenCubeFaceRotations = { D: 180 }
 
 export function evenCubeScanSessionFacesFromDrafts(
   drafts: ScanFaceDrafts,
@@ -165,7 +174,11 @@ export function rotateEvenCubeDrafts(
 }
 
 export function createDefaultEvenCubeNetAssignments(): EvenCubeNetAssignments {
-  return Object.fromEntries(scanFaceOrder.map(({ symbol }) => [symbol, symbol])) as EvenCubeNetAssignments
+  return { ...defaultEvenCubeNetAssignments }
+}
+
+export function createDefaultEvenCubeFaceRotations(): EvenCubeFaceRotations {
+  return { ...defaultEvenCubeFaceRotations }
 }
 
 export function swapEvenCubeNetAssignments(
@@ -285,18 +298,24 @@ function evenCubeFitChanges(
   let rotationQuarterTurns = 0
 
   for (const { symbol } of scanFaceOrder) {
-    if (assignments[symbol] !== symbol) {
+    if (assignments[symbol] !== defaultEvenCubeNetAssignments[symbol]) {
       swappedSlots += 1
     }
 
     const rotation = rotations[symbol] ?? 0
-    if (rotation !== 0) {
+    const defaultRotation = defaultEvenCubeFaceRotations[symbol] ?? 0
+    if (rotation !== defaultRotation) {
       rotatedFaces += 1
-      rotationQuarterTurns += rotation / 90
+      rotationQuarterTurns += rotationDistance(rotation, defaultRotation) / 90
     }
   }
 
   return { rotatedFaces, rotationQuarterTurns, swappedSlots }
+}
+
+function rotationDistance(rotation: EvenCubeFaceRotation, defaultRotation: EvenCubeFaceRotation): EvenCubeFaceRotation {
+  const clockwiseDistance = Math.abs(rotation - defaultRotation)
+  return Math.min(clockwiseDistance, 360 - clockwiseDistance) as EvenCubeFaceRotation
 }
 
 function partialEvenCubeCornersValid(
