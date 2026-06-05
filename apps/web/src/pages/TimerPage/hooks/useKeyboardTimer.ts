@@ -1,7 +1,10 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import type { TimerMachine } from './useTimerMachine'
 
 export function useKeyboardTimer(timer: TimerMachine) {
+  const timerRef = useRef(timer)
+  timerRef.current = timer
+
   useEffect(() => {
     let spaceDown = false
 
@@ -10,9 +13,11 @@ export function useKeyboardTimer(timer: TimerMachine) {
         return
       }
 
-      if (timer.status === 'running') {
+      const currentTimer = timerRef.current
+
+      if (currentTimer.status === 'running') {
         event.preventDefault()
-        timer.stopTimer()
+        currentTimer.stopTimer()
         return
       }
 
@@ -21,7 +26,7 @@ export function useKeyboardTimer(timer: TimerMachine) {
 
         if (!spaceDown) {
           spaceDown = true
-          timer.beginHold()
+          currentTimer.beginHold()
         }
       }
     }
@@ -37,7 +42,7 @@ export function useKeyboardTimer(timer: TimerMachine) {
 
       event.preventDefault()
       spaceDown = false
-      timer.releaseHold()
+      timerRef.current.releaseHold()
     }
 
     window.addEventListener('keydown', handleKeyDown)
@@ -47,7 +52,7 @@ export function useKeyboardTimer(timer: TimerMachine) {
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
     }
-  }, [timer])
+  }, [])
 }
 
 function isEditableTarget(target: EventTarget | null): boolean {
