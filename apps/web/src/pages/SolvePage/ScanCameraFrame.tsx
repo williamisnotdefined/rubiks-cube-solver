@@ -62,34 +62,27 @@ export const ScanCameraFrame = memo(function ScanCameraFrame({
         ref={videoRef}
       />
       {stickerBoxes.length > 0 ? (
-        <svg className="pointer-events-none absolute inset-0 size-full" viewBox="0 0 100 100">
+        <div className="pointer-events-none absolute inset-0">
           {stickerBoxes.map((detection) => (
-            <g key={detection.key}>
-              <rect
-                fill={scanBoxFill(detection.symbol)}
-                fillOpacity="0.1"
-                height={detection.bbox.height * 100}
-                stroke={scanBoxStroke(detection.symbol)}
-                strokeOpacity={trackingStatus === 'holding_steady' ? '0.95' : '0.72'}
-                strokeWidth={trackingStatus === 'holding_steady' ? '0.65' : '0.45'}
-                width={detection.bbox.width * 100}
-                x={(detection.bbox.x - detection.bbox.width / 2) * 100}
-                y={(detection.bbox.y - detection.bbox.height / 2) * 100}
-              />
-              <text
-                fill="var(--app-text)"
-                fontSize="3.1"
-                fontWeight="800"
-                stroke="var(--app-bg)"
-                strokeWidth="0.25"
-                x={(detection.bbox.x - detection.bbox.width / 2) * 100 + 1}
-                y={(detection.bbox.y - detection.bbox.height / 2) * 100 + 4}
-              >
+            <div
+              key={detection.key}
+              className="absolute border font-extrabold text-app-text"
+              style={{
+                backgroundColor: `color-mix(in srgb, ${scanBoxFill(detection.symbol)} 10%, transparent)`,
+                borderColor: `color-mix(in srgb, ${scanBoxStroke(detection.symbol)} ${trackingStatus === 'holding_steady' ? 95 : 72}%, transparent)`,
+                borderWidth: trackingStatus === 'holding_steady' ? '2px' : '1px',
+                height: `${detection.bbox.height * 100}%`,
+                left: `${(detection.bbox.x - detection.bbox.width / 2) * 100}%`,
+                top: `${(detection.bbox.y - detection.bbox.height / 2) * 100}%`,
+                width: `${detection.bbox.width * 100}%`,
+              }}
+            >
+              <span className="absolute left-1 top-1 bg-app-bg/70 px-1 text-[0.65rem] leading-none">
                 {scanBoxLabel(detection.symbol)} {Math.round(detection.confidence * 100)}
-              </text>
-            </g>
+              </span>
+            </div>
           ))}
-        </svg>
+        </div>
       ) : null}
       {statusLabel === undefined ? null : (
         <div className="absolute left-2 top-2 border border-app-border bg-app-bg/80 px-2 py-1 text-[0.65rem] font-extrabold uppercase tracking-[0.12em] text-app-text">

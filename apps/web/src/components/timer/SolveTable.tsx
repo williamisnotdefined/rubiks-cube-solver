@@ -1,3 +1,4 @@
+import cls from 'classnames'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@components/Button'
 import { formatTimerTime } from '@core/timer/formatTimerTime'
@@ -13,17 +14,18 @@ export type SolveTableRow = {
 }
 
 type SolveTableProps = {
+  className?: string
   rows: readonly SolveTableRow[]
   showMilliseconds?: boolean
   onDeleteSolve?: (solveId: string) => void
 }
 
-export function SolveTable({ rows, showMilliseconds = false, onDeleteSolve }: SolveTableProps) {
+export function SolveTable({ className, rows, showMilliseconds = false, onDeleteSolve }: SolveTableProps) {
   const { t } = useTranslation()
 
   if (rows.length === 0) {
     return (
-      <section className="border border-app-border bg-app-surface p-4 text-center">
+      <section className={cls('flex h-full min-h-0 items-center justify-center border border-app-border bg-app-surface p-4 text-center', className)} aria-label={t('timer.solves.label')}>
         <p className="text-sm font-extrabold uppercase tracking-[0.16em] text-app-muted">
           {t('timer.solves.empty')}
         </p>
@@ -32,9 +34,9 @@ export function SolveTable({ rows, showMilliseconds = false, onDeleteSolve }: So
   }
 
   return (
-    <section className="w-full overflow-x-auto border border-app-border bg-app-surface" aria-label={t('timer.solves.label')}>
-      <table className="w-full min-w-[44rem] border-collapse text-left text-sm">
-        <thead className="border-b border-app-border text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
+    <section className={cls('h-full min-h-0 w-full overflow-auto border border-app-border bg-app-surface', className)} aria-label={t('timer.solves.label')}>
+      <table className="w-full min-w-[32rem] border-collapse text-left text-sm">
+        <thead className="sticky top-0 border-b border-app-border bg-app-surface text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
           <tr>
             <th className="px-4 py-3">#</th>
             <th className="px-4 py-3">{t('timer.solves.time')}</th>

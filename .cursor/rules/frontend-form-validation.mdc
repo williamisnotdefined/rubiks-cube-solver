@@ -123,6 +123,8 @@ Rules for React component boundaries in `apps/web`.
 - Import core helpers from direct file paths; do not add `src/core` barrels.
 - Keep React component props explicit and small.
 - Prefer `children` for layout wrappers such as panels, shells, and result regions.
+- Use `lucide-react` for UI icons; import icon components directly from `lucide-react` instead of authoring local SVG icons.
+- Use shared Radix-backed primitives under `apps/web/src/components`, such as `apps/web/src/components/Popover.tsx`, for popovers and floating UI so portal, focus, escape, and outside-click behavior stay consistent.
 - Extract focused hooks for repeated or stateful UI behavior, but do not hide an oversized component in a single oversized hook.
 - Keep new or substantially changed React component files at or below 400 lines where practical.
 - Keep Storybook stories in a `stories/` child folder beside the source area they cover.
@@ -137,6 +139,9 @@ Rules for React component boundaries in `apps/web`.
 - Do not create React Context for mutable UI state.
 - Do not render short fixed control groups through artificial arrays when direct JSX is clearer.
 - Do not mix cube validation, search, or solver behavior into React components.
+- Do not write inline `<svg>` icons, local `*Icon` components, or custom icon path data in React components; choose the closest `lucide-react` icon instead.
+- Do not hand-roll popover/dropdown state, document outside-click listeners, focus handling, or portal positioning when the shared `Popover` primitive can represent the behavior.
+- Do not import `@radix-ui/react-popover` directly outside `apps/web/src/components/Popover.tsx`.
 - Do not place component stories in a shared fixtures folder; reserve shared story data for `src/stories` if it exists.
 
 ## Data-Driven Rendering
@@ -149,6 +154,7 @@ Rules for React component boundaries in `apps/web`.
 - Ensure extracted components do not change user-visible behavior.
 - Run `npm run build` after TypeScript or React component moves.
 - Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
+- Search changed frontend files for inline `<svg>`, local `*Icon` components, custom icon path data, and direct `@radix-ui/react-popover` imports outside `apps/web/src/components/Popover.tsx` before finishing.
 - Run `npm run storybook:build -w @rubiks-cube-solver/web` after adding or changing stories.
 
 ## Reference: `ai/rules/frontend-state-rules.md`

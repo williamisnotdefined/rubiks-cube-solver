@@ -175,6 +175,8 @@ Rules for React component boundaries in `apps/web`.
 - Import core helpers from direct file paths; do not add `src/core` barrels.
 - Keep React component props explicit and small.
 - Prefer `children` for layout wrappers such as panels, shells, and result regions.
+- Use `lucide-react` for UI icons; import icon components directly from `lucide-react` instead of authoring local SVG icons.
+- Use shared Radix-backed primitives under `apps/web/src/components`, such as `apps/web/src/components/Popover.tsx`, for popovers and floating UI so portal, focus, escape, and outside-click behavior stay consistent.
 - Extract focused hooks for repeated or stateful UI behavior, but do not hide an oversized component in a single oversized hook.
 - Keep new or substantially changed React component files at or below 400 lines where practical.
 - Keep Storybook stories in a `stories/` child folder beside the source area they cover.
@@ -189,6 +191,9 @@ Rules for React component boundaries in `apps/web`.
 - Do not create React Context for mutable UI state.
 - Do not render short fixed control groups through artificial arrays when direct JSX is clearer.
 - Do not mix cube validation, search, or solver behavior into React components.
+- Do not write inline `<svg>` icons, local `*Icon` components, or custom icon path data in React components; choose the closest `lucide-react` icon instead.
+- Do not hand-roll popover/dropdown state, document outside-click listeners, focus handling, or portal positioning when the shared `Popover` primitive can represent the behavior.
+- Do not import `@radix-ui/react-popover` directly outside `apps/web/src/components/Popover.tsx`.
 - Do not place component stories in a shared fixtures folder; reserve shared story data for `src/stories` if it exists.
 
 ## Data-Driven Rendering
@@ -201,6 +206,7 @@ Rules for React component boundaries in `apps/web`.
 - Ensure extracted components do not change user-visible behavior.
 - Run `npm run build` after TypeScript or React component moves.
 - Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
+- Search changed frontend files for inline `<svg>`, local `*Icon` components, custom icon path data, and direct `@radix-ui/react-popover` imports outside `apps/web/src/components/Popover.tsx` before finishing.
 - Run `npm run storybook:build -w @rubiks-cube-solver/web` after adding or changing stories.
 
 ## Reference: `ai/rules/frontend-form-rules.md`
@@ -259,6 +265,8 @@ The frontend renders and controls solver interaction. It must not become the sou
 - `@houstonp/rubiks-cube` as a visualization custom element
 - Tailwind CSS v4 through `@tailwindcss/vite` and the single `apps/web/src/index.css` entrypoint for Tailwind import, resets, and semantic theme/color variables
 - `classnames` imported as `cls` for conditional class composition
+- `lucide-react` for UI icons; local SVG icon components and custom icon path data are not part of the frontend icon surface
+- Radix-backed shared primitives, including `apps/web/src/components/Popover.tsx`, for popovers and floating UI rendered through portals
 - Vitest, Testing Library, and V8 coverage for unit/component/API-hook tests
 - Storybook for component stories and visual inspection
 
@@ -298,6 +306,7 @@ The solve form defaults to an empty scramble so the visualization starts solved;
 - Shared reusable UI should live under `apps/web/src/components` only when there is a real shared consumer.
 - Context-independent helpers live under `apps/web/src/core/<category>/<name>.ts` and are imported directly without core barrels.
 - Keep page-specific hooks, validation helpers, message mapping, and constants under the owning page folder until reuse exists.
+- Use shared component primitives for repeated interaction patterns such as popovers; feature code should consume the primitive rather than direct Radix imports or hand-rolled outside-click/focus handling.
 - Keep new or substantially changed React component files at or below 400 lines where practical.
 - Storybook stories live in a `stories/` child folder beside the source area they cover.
 - Use one primary story export per component and rely on controls for prop variation.
@@ -322,6 +331,7 @@ The solve form defaults to an empty scramble so the visualization starts solved;
 - `npm run theme-colors:check` enforces that raw hex colors stay in `apps/web/src/index.css` and that docs do not reintroduce literal arbitrary hex utility markers.
 - The current web UI is intentionally square; do not add `border-radius` or Tailwind `rounded-*` utilities.
 - Conditional class composition uses `classnames` as `cls`.
+- Icons use `lucide-react` components styled with semantic Tailwind classes; React components should not include inline SVG icon markup.
 - Do not add component/page CSS files, CSS-in-JS, Sass, or a design-system dependency without a concrete current need.
 - Desktop and mobile layouts should be considered for every UI change.
 

@@ -226,7 +226,7 @@ export function SolvePage() {
   }
 
   return (
-    <main className="app-shell min-h-screen w-full bg-app-bg px-3 py-4 text-app-text sm:px-5 sm:py-6">
+    <main className="app-shell min-h-0 flex-1 overflow-auto bg-app-bg px-3 py-4 text-app-text sm:px-5 sm:py-6">
       <section className="mx-auto grid w-full max-w-4xl content-start justify-items-center gap-4">
         {visualizationCubeType !== undefined ? (
           <CubeStage

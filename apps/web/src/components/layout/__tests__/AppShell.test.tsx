@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
 import { AppShell } from '../AppShell'
@@ -19,16 +19,16 @@ describe('AppShell', () => {
 
     expect(screen.getByRole('navigation', { name: 'Primary navigation' })).toBeInTheDocument()
     expect(screen.getByText('Solver workspace')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Rubik Solver' })).toHaveAttribute('href', '#/solve')
+    expect(screen.getByRole('link', { name: 'Solver' })).toHaveAttribute('href', '#/solve')
   })
 })
 
 describe('PageNav', () => {
-  it('marks solve as active and timer as inactive', () => {
+  it('marks solver as active and timer as inactive', () => {
     render(<PageNav activeRoute="solve" />)
 
     const navigation = screen.getByRole('navigation', { name: 'Primary navigation' })
-    const solveLink = within(navigation).getByRole('link', { name: 'Solve' })
+    const solveLink = within(navigation).getByRole('link', { name: 'Solver' })
     const timerLink = within(navigation).getByRole('link', { name: 'Timer' })
 
     expect(solveLink).toHaveAttribute('href', '#/solve')
@@ -41,7 +41,7 @@ describe('PageNav', () => {
     render(<PageNav activeRoute="timer" />)
 
     expect(screen.getByRole('link', { name: 'Timer' })).toHaveClass('bg-app-text')
-    expect(screen.getByRole('link', { name: 'Solve' })).toHaveClass('bg-app-surface')
+    expect(screen.getByRole('link', { name: 'Solver' })).toHaveClass('bg-app-surface')
   })
 
   it('links to the project on GitHub', () => {
@@ -51,6 +51,32 @@ describe('PageNav', () => {
       'href',
       'https://github.com/williamisnotdefined/rubiks-cube-solver',
     )
+  })
+
+  it('opens and closes the mobile menu drawer', async () => {
+    const user = userEvent.setup()
+    render(<PageNav activeRoute="timer" />)
+
+    expect(screen.queryAllByRole('button', { name: 'Close menu' })).toHaveLength(0)
+
+    await user.click(screen.getByRole('button', { name: 'Open menu' }))
+
+    expect(screen.getAllByRole('navigation', { name: 'Primary navigation' })).toHaveLength(2)
+    expect(screen.getAllByRole('link', { name: 'Timer' })).toHaveLength(2)
+
+    await user.click(screen.getAllByRole('button', { name: 'Close menu' })[0])
+
+    expect(screen.queryAllByRole('button', { name: 'Close menu' })).toHaveLength(0)
+  })
+
+  it('closes the mobile menu with Escape', async () => {
+    const user = userEvent.setup()
+    render(<PageNav activeRoute="timer" />)
+
+    await user.click(screen.getByRole('button', { name: 'Open menu' }))
+    fireEvent.keyDown(window, { key: 'Escape' })
+
+    expect(screen.queryAllByRole('button', { name: 'Close menu' })).toHaveLength(0)
   })
 
   it('persists explicit theme choices and returns to system mode', async () => {
