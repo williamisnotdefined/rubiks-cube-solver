@@ -8,6 +8,11 @@ import {
 } from '@api/scan'
 import type { ScanFaceSymbol, SolveResult } from '@api/solver/types'
 import { EvenCubeReviewStep } from './EvenCubeReviewStep'
+import { NoSolutionLimitsModal, type NoSolutionRetryLimits } from './NoSolutionLimitsModal'
+import {
+  isNoSolutionLimitFailure,
+  type NoSolutionLimitFailureResult,
+} from './noSolutionLimits'
 import {
   allEvenCubeFacesConfirmed,
   createDefaultEvenCubeFaceRotations,
@@ -97,6 +102,7 @@ export function EvenCubeScanModal({
     createDefaultEvenCubeFaceRotations(),
   )
   const [exitConfirmationVisible, setExitConfirmationVisible] = useState(false)
+  const [limitFailureResult, setLimitFailureResult] = useState<NoSolutionLimitFailureResult | undefined>()
   const [evenNetAssignments, setEvenNetAssignments] = useState<EvenCubeNetAssignments>(() =>
     createDefaultEvenCubeNetAssignments(),
   )
@@ -230,7 +236,7 @@ export function EvenCubeScanModal({
     await submitScanSession()
   }
 
-  async function submitScanSession() {
+  async function submitScanSession(limits?: NoSolutionRetryLimits) {
     if (sessionFaces === undefined) {
       setMessage(t('scan.messages.confirmAllFaces'))
       return
@@ -242,8 +248,8 @@ export function EvenCubeScanModal({
       setMessage(t('scan.messages.submittingSession'))
       const result = await solveScanSession.mutateAsync({
         faces,
-        maxDepth,
-        maxNodes,
+        maxDepth: limits?.maxDepth ?? maxDepth,
+        maxNodes: limits?.maxNodes ?? maxNodes,
         puzzleSlug,
         strategyId,
       })
@@ -302,8 +308,15 @@ export function EvenCubeScanModal({
 
   function handleScanSessionResult(result: ScanSessionResult) {
     if (result.solve?.ok === true) {
+      setLimitFailureResult(undefined)
       onSessionSolveResult?.(result.solve)
       onClose()
+      return
+    }
+
+    if (isNoSolutionLimitFailure(result.solve)) {
+      setLimitFailureResult(result.solve)
+      setMessage(result.solve.message ?? scanSessionMessage(t, result))
       return
     }
 
@@ -331,6 +344,11 @@ export function EvenCubeScanModal({
     }
 
     setMessage(scanSessionMessage(t, result))
+  }
+
+  async function handleLimitFailureRetry(limits: NoSolutionRetryLimits) {
+    setLimitFailureResult(undefined)
+    await submitScanSession(limits)
   }
 
   return (
@@ -407,6 +425,15 @@ export function EvenCubeScanModal({
           onConfirm={onClose}
         />
       ) : null}
+      {limitFailureResult === undefined ? null : (
+        <NoSolutionLimitsModal
+          puzzleSlug={puzzleSlug}
+          result={limitFailureResult}
+          solving={solving || sessionSolving}
+          onClose={() => setLimitFailureResult(undefined)}
+          onRetry={handleLimitFailureRetry}
+        />
+      )}
     </>
   )
 }

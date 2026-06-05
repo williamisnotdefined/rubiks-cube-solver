@@ -1,4 +1,4 @@
-import { useCallback, useReducer, useRef, useState } from 'react'
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { RubiksCubeElement } from '@houstonp/rubiks-cube/view'
 import {
@@ -10,6 +10,8 @@ import {
 import type { SolveResult as ApiSolveResult } from '@api/solver/types'
 import { waitForPaint } from '@core/timing/waitForPaint'
 import { CubeStage, type CubeStageCubeType } from './CubeStage'
+import { NoSolutionLimitsModal, type NoSolutionRetryLimits } from './NoSolutionLimitsModal'
+import { isNoSolutionLimitFailure } from './noSolutionLimits'
 import { ScanCubeModal } from './ScanCubeModal'
 import { SolveForm } from './SolveForm'
 import { SolveResult } from './SolveResult'
@@ -64,6 +66,7 @@ export function SolvePage() {
   const [scanSessionSolving, setScanSessionSolving] = useState(false)
   const [activeSolveSource, setActiveSolveSource] = useState<'notation' | 'scan'>('notation')
   const [scanSessionSolveResult, setScanSessionSolveResult] = useState<ApiSolveResult | undefined>()
+  const [limitFailureModalDismissed, setLimitFailureModalDismissed] = useState(false)
   const activeSolveResult = activeSolveSource === 'scan' ? scanSessionSolveResult : solveMutation.data
   const activeSolveError = activeSolveSource === 'scan' ? null : solveMutation.error
   const successResult =
@@ -73,6 +76,10 @@ export function SolvePage() {
     successResult?.moves.length ?? 0,
   )
   const visibleSolutionMoves = successResult?.moves.slice(0, visibleSolutionStep) ?? []
+  const limitFailureResult = activeSolveSource === 'notation' && isNoSolutionLimitFailure(activeSolveResult)
+    ? activeSolveResult
+    : undefined
+  const limitFailureModalVisible = limitFailureResult !== undefined && !limitFailureModalDismissed
   const visualizationState = successResult?.visualState
   const visualizationStateKind = successResult?.visualStateKind
   const visualizationCubeType: CubeStageCubeType | undefined =
@@ -107,6 +114,10 @@ export function SolvePage() {
     visualizationCubeType,
     cubeActive && visualizationSupported,
   )
+
+  useEffect(() => {
+    setLimitFailureModalDismissed(false)
+  }, [activeSolveResult])
 
   const strategyOptions = strategiesQuery.data ?? []
   const puzzleOptions = puzzlesQuery.data ?? []
@@ -151,17 +162,55 @@ export function SolvePage() {
       return
     }
 
+    await submitNotationSolve({
+      maxDepth: formValues.maxMoves,
+      maxNodes: formValues.maxNodesMillion * nodesPerMillion,
+      notation: formValues.notation,
+      puzzleSlug: formValues.puzzleSlug,
+    })
+  }
+
+  async function handleNoSolutionRetry(limits: NoSolutionRetryLimits) {
+    if (
+      !apiReady ||
+      localValidationMessage !== undefined ||
+      notation.trim().length === 0 ||
+      strategyId.length === 0
+    ) {
+      return
+    }
+
+    await submitNotationSolve({
+      maxDepth: limits.maxDepth,
+      maxNodes: limits.maxNodes,
+      notation: notation.trim(),
+      puzzleSlug: selectedPuzzleSlug,
+    })
+  }
+
+  async function submitNotationSolve({
+    maxDepth,
+    maxNodes,
+    notation,
+    puzzleSlug,
+  }: {
+    maxDepth: number
+    maxNodes: number
+    notation: string
+    puzzleSlug: string
+  }) {
     setSolutionStep(0)
     setActiveSolveSource('notation')
     setScanSessionSolveResult(undefined)
+    setLimitFailureModalDismissed(false)
 
     try {
       const solvePromise = solveMutation.mutateAsync({
-        notation: formValues.notation,
-        puzzleSlug: formValues.puzzleSlug,
+        notation,
+        puzzleSlug,
         limits: {
-          maxDepth: formValues.maxMoves,
-          maxNodes: formValues.maxNodesMillion * nodesPerMillion,
+          maxDepth,
+          maxNodes,
           strategyId,
         },
       })
@@ -291,6 +340,15 @@ export function SolvePage() {
             onClose={() => setScanModalOpen(false)}
             onSessionSolvingChange={handleScanSessionSolvingChange}
             onSessionSolveResult={handleScanSessionSolveResult}
+          />
+        ) : null}
+        {limitFailureModalVisible ? (
+          <NoSolutionLimitsModal
+            puzzleSlug={selectedPuzzleSlug}
+            result={limitFailureResult}
+            solving={solving}
+            onClose={() => setLimitFailureModalDismissed(true)}
+            onRetry={handleNoSolutionRetry}
           />
         ) : null}
       </section>

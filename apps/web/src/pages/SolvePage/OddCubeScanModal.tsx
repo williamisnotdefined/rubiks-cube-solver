@@ -15,6 +15,11 @@ import {
   AlertDialogTitle,
 } from '@components/AlertDialog'
 import { Button } from '@components/Button'
+import { NoSolutionLimitsModal, type NoSolutionRetryLimits } from './NoSolutionLimitsModal'
+import {
+  isNoSolutionLimitFailure,
+  type NoSolutionLimitFailureResult,
+} from './noSolutionLimits'
 import { ScanExitConfirmationModal } from './ScanExitConfirmationModal'
 import { ScanFaceCaptureStep } from './ScanFaceCaptureStep'
 import { ScanModalShell } from './ScanModalShell'
@@ -93,6 +98,7 @@ export function OddCubeScanModal({
   const [exitConfirmationVisible, setExitConfirmationVisible] = useState(false)
   const [centerMismatchConfirmation, setCenterMismatchConfirmation] =
     useState<CenterMismatchConfirmation | undefined>()
+  const [limitFailureResult, setLimitFailureResult] = useState<NoSolutionLimitFailureResult | undefined>()
   const {
     autoScanEnabled,
     camera,
@@ -204,7 +210,7 @@ export function OddCubeScanModal({
     await submitScanSession()
   }
 
-  async function submitScanSession() {
+  async function submitScanSession(limits?: NoSolutionRetryLimits) {
     if (sessionFaces === undefined) {
       setMessage(t('scan.messages.confirmAllFaces'))
       return
@@ -216,8 +222,8 @@ export function OddCubeScanModal({
       setMessage(t('scan.messages.submittingSession'))
       const result = await solveScanSession.mutateAsync({
         faces,
-        maxDepth,
-        maxNodes,
+        maxDepth: limits?.maxDepth ?? maxDepth,
+        maxNodes: limits?.maxNodes ?? maxNodes,
         puzzleSlug,
         strategyId,
       })
@@ -230,8 +236,15 @@ export function OddCubeScanModal({
 
   function handleScanSessionResult(result: ScanSessionResult) {
     if (result.solve?.ok === true) {
+      setLimitFailureResult(undefined)
       onSessionSolveResult?.(result.solve)
       onClose()
+      return
+    }
+
+    if (isNoSolutionLimitFailure(result.solve)) {
+      setLimitFailureResult(result.solve)
+      setMessage(result.solve.message ?? scanSessionMessage(t, result))
       return
     }
 
@@ -249,6 +262,11 @@ export function OddCubeScanModal({
     }
 
     setMessage(scanSessionMessage(t, result))
+  }
+
+  async function handleLimitFailureRetry(limits: NoSolutionRetryLimits) {
+    setLimitFailureResult(undefined)
+    await submitScanSession(limits)
   }
 
   return (
@@ -313,6 +331,15 @@ export function OddCubeScanModal({
           onConfirm={onClose}
         />
       ) : null}
+      {limitFailureResult === undefined ? null : (
+        <NoSolutionLimitsModal
+          puzzleSlug={puzzleSlug}
+          result={limitFailureResult}
+          solving={solving || sessionSolving}
+          onClose={() => setLimitFailureResult(undefined)}
+          onRetry={handleLimitFailureRetry}
+        />
+      )}
     </>
   )
 }
