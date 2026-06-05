@@ -41,6 +41,8 @@
     "preview": "npm run preview -w @rubiks-cube-solver/web",
     "pretest:e2e": "cargo run --quiet -p cube-engine --bin generate_pruning_tables -- --output crates/cube-engine/pruning-tables --phase1-max-depth 8 --phase2-max-depth 10 && VITE_RUBIKS_API_URL=http://127.0.0.1:8787 npm run build",
     "test:e2e": "playwright test",
+    "pretest:e2e:heavy-scan": "npm run pretest:e2e",
+    "test:e2e:heavy-scan": "RUN_HEAVY_SCAN_E2E=1 playwright test tests/e2e/heavy-manual-scan-flow.spec.ts",
     "pruning:native": "cargo run --quiet -p cube-engine --bin generate_pruning_tables -- --output crates/cube-engine/pruning-tables --phase1-max-depth 8 --phase2-max-depth 10",
     "pruning:report": "cargo run --quiet -p cube-engine --bin pruning_table_report",
     "pdb:corner": "cargo run --quiet -p cube-engine --bin generate_corner_pdb -- --output crates/cube-engine/pruning-tables/corner-pattern-database.rpdb --max-depth 8",

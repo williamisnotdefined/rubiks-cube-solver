@@ -7,7 +7,7 @@ use cube_engine::{
     SolverConfig, SolverStrategy,
 };
 
-use crate::config::{DEFAULT_API_NODES, MAX_API_DEPTH, MAX_API_NODES, MAX_NOTATION_BYTES};
+use crate::config::{CUBE3_MAX_API_DEPTH, DEFAULT_API_NODES, MAX_API_NODES, MAX_NOTATION_BYTES};
 use crate::error_kind::solve_input_error_kind;
 use crate::response::{
     error_response_from_parts, not_found_response_from_parts, success_response_from_parts,
@@ -154,7 +154,7 @@ fn solve_prepared_cube(
 fn validate_solve_notation_request_limits(
     mut request: SolveNotationRequest,
 ) -> Result<SolveNotationRequest, Box<SolveResponse>> {
-    if request.max_depth > MAX_API_DEPTH {
+    if request.max_depth > CUBE3_MAX_API_DEPTH {
         return Err(Box::new(error_response_from_parts(
             &request.strategy_id,
             request.max_depth,
@@ -164,7 +164,7 @@ fn validate_solve_notation_request_limits(
             "max_depth_exceeds_limit",
             format!(
                 "maxDepth {} exceeds API limit {}",
-                request.max_depth, MAX_API_DEPTH
+                request.max_depth, CUBE3_MAX_API_DEPTH
             ),
             None,
         )));
@@ -209,7 +209,7 @@ fn validate_solve_notation_request_limits(
 fn validate_solve_scan_request_limits(
     mut request: SolveScanRequest,
 ) -> Result<SolveScanRequest, Box<SolveResponse>> {
-    if request.max_depth > MAX_API_DEPTH {
+    if request.max_depth > CUBE3_MAX_API_DEPTH {
         return Err(Box::new(error_response_from_parts(
             &request.strategy_id,
             request.max_depth,
@@ -219,7 +219,7 @@ fn validate_solve_scan_request_limits(
             "max_depth_exceeds_limit",
             format!(
                 "maxDepth {} exceeds API limit {}",
-                request.max_depth, MAX_API_DEPTH
+                request.max_depth, CUBE3_MAX_API_DEPTH
             ),
             None,
         )));

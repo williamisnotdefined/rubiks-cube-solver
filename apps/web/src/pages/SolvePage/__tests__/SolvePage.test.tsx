@@ -41,14 +41,14 @@ vi.mock('@api/solver', () => ({
     data: [
       {
         defaultMetric: 'htm',
-        defaultStrategyId: 'generated-two-phase-quality',
+        defaultStrategyId: 'generated-two-phase',
         family: 'cube',
         id: 'cube/3x3x3',
         label: '3x3x3 Cube',
         scannerSupported: true,
         slug: 'cube-3x3x3',
         status: 'stable',
-        strategyIds: ['generated-two-phase-quality'],
+        strategyIds: ['generated-two-phase', 'generated-two-phase-quality'],
         supportedInputs: ['notation'],
         supportedVisualizations: ['cube3-facelets-v1'],
       },
@@ -106,6 +106,16 @@ vi.mock('@api/solver', () => ({
             },
           ]
         : [
+            {
+              defaultMetric: 'htm',
+              id: 'generated-two-phase',
+              label: 'Generated two-phase solver',
+              puzzleId: 'cube/3x3x3',
+              solverMode: 'generated_two_phase',
+              statusText: 'ready',
+              supportedInputs: ['notation'],
+              supportedMetrics: ['htm'],
+            },
             {
               defaultMetric: 'htm',
               id: 'generated-two-phase-quality',
@@ -199,6 +209,16 @@ vi.mock('../hooks/useCubeVisualization', () => ({
 
 vi.mock('../hooks/usePageActivity', () => ({
   usePageActivity: vi.fn(),
+}))
+
+vi.mock('@components/Loader3x3', () => ({
+  Loader3x3: ({
+    decorative,
+    label = 'Loading',
+  }: {
+    decorative?: boolean
+    label?: string
+  }) => (decorative ? <span data-testid="loader-3x3" /> : <span aria-label={label} role="status" />),
 }))
 
 const useCubeVisualizationMock = vi.mocked(useCubeVisualization)
@@ -320,7 +340,7 @@ describe('SolvePage', () => {
         limits: {
           maxDepth: 2,
           maxNodes: 15_000_000,
-          strategyId: 'generated-two-phase-quality',
+          strategyId: 'generated-two-phase',
         },
       })
     })
@@ -333,6 +353,8 @@ describe('SolvePage', () => {
     await user.selectOptions(screen.getByLabelText('Puzzle'), 'cube-2x2x2')
 
     expect(screen.getByLabelText('Scramble')).toHaveAttribute('placeholder', 'R U F')
+    expect(screen.getByLabelText('Max moves')).toHaveValue(11)
+    expect(screen.getByLabelText('Max moves')).toHaveAttribute('max', '11')
     expect(screen.getByRole('button', { name: 'Scan cube with camera' })).toBeEnabled()
     expect(screen.getByTestId('cube-stage')).toHaveAttribute('data-cube-type', 'Two')
     expect(screen.queryByText('Visualization is not available for this puzzle yet.')).not.toBeInTheDocument()
@@ -360,12 +382,31 @@ describe('SolvePage', () => {
         notation: 'R U F',
         puzzleSlug: 'cube-2x2x2',
         limits: {
-          maxDepth: 20,
+          maxDepth: 11,
           maxNodes: 10_000_000,
           strategyId: 'cube2-pdb-ida-star',
         },
       })
     })
+  })
+
+  it('uses a 20 move cap for 3x3 local validation', () => {
+    render(<SolvePage />)
+
+    expect(screen.getByLabelText('Max moves')).toHaveAttribute('max', '20')
+  })
+
+  it('rejects 2x2 max moves above 11 before sending requests', async () => {
+    const user = userEvent.setup()
+    render(<SolvePage />)
+
+    await user.selectOptions(screen.getByLabelText('Puzzle'), 'cube-2x2x2')
+    await user.type(screen.getByLabelText('Scramble'), 'R')
+    await user.clear(screen.getByLabelText('Max moves'))
+    await user.type(screen.getByLabelText('Max moves'), '12')
+    fireEvent.submit(screen.getByTestId('solve-form'))
+
+    expect(apiMocks.mutateAsync).not.toHaveBeenCalled()
   })
 
   it('does not submit when local limits are invalid', async () => {

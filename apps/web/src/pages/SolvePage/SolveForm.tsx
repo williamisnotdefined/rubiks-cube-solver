@@ -6,13 +6,14 @@ import { Field } from '@components/Field'
 import { SelectInput, TextInput } from '@components/FormControls'
 import { Loader3x3 } from '@components/Loader3x3'
 import type { PuzzleDefinition } from '@api/solver/types'
-import { maxMovesLimit, maxNodesMillionOptions } from './constants'
+import { maxNodesMillionOptions } from './constants'
 
 type SolveFormProps = {
   notation: string
   puzzleOptions: readonly PuzzleDefinition[]
   selectedPuzzleSlug: string
   maxMovesInput: string
+  maxMovesLimit: number
   maxNodesMillionInput: string
   buttonLoading: boolean
   disabled: boolean
@@ -33,6 +34,7 @@ export function SolveForm({
   puzzleOptions,
   selectedPuzzleSlug,
   maxMovesInput,
+  maxMovesLimit,
   maxNodesMillionInput,
   buttonLoading,
   disabled,

@@ -15,7 +15,7 @@ use cube_engine::{
     SCAN_FACELET_COUNT, SCAN_FACELET_SYMBOL_COUNT, SCAN_STICKERS_PER_FACE,
 };
 
-use crate::config::{DEFAULT_API_NODES, MAX_API_DEPTH, MAX_API_NODES, MAX_SCAN_IMAGE_BYTES};
+use crate::config::{CUBE2_MAX_API_DEPTH, DEFAULT_API_NODES, MAX_API_NODES, MAX_SCAN_IMAGE_BYTES};
 use crate::response::{
     AnalyzeScanFaceRequest, AnalyzeScanFaceResponse, AnalyzeScanSessionResponse,
     AnalyzedSessionFaceResponse, AnalyzedStickerResponse, ColorProbabilitiesResponse,
@@ -493,7 +493,7 @@ fn solve_cube2_scan_cube(
     cube: &cube_engine::puzzles::cube2::Cube2,
     request: &ScanSessionRequest,
 ) -> crate::SolveResponse {
-    if request.max_depth > MAX_API_DEPTH {
+    if request.max_depth > CUBE2_MAX_API_DEPTH {
         return cube2_scan_error_response(
             &request.strategy_id,
             request.max_depth,
@@ -502,7 +502,7 @@ fn solve_cube2_scan_cube(
             Some("max_depth_exceeds_limit"),
             format!(
                 "maxDepth {} exceeds API limit {}",
-                request.max_depth, MAX_API_DEPTH
+                request.max_depth, CUBE2_MAX_API_DEPTH
             ),
             cube2_visual_state_response(cube2_visual_state(cube)),
         );

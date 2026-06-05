@@ -16,7 +16,7 @@ import { SolveResult } from './SolveResult'
 import { SolutionPlayback } from './SolutionPlayback'
 import {
   defaultNotation,
-  maxMovesLimit,
+  maxMovesLimitForPuzzle,
   nodesPerMillion,
   scramblePlaceholder,
 } from './constants'
@@ -123,10 +123,11 @@ export function SolvePage() {
   const maxMoves = Number(maxMovesInput)
   const maxNodesMillion = Number(maxNodesMillionInput)
   const maxNodes = maxNodesMillion * nodesPerMillion
+  const activeMaxMovesLimit = maxMovesLimitForPuzzle(selectedPuzzleSlug)
   const maxMovesValidation = validateWholeNumberLimit(
     maxMovesInput,
     t('solve.form.maxMoves'),
-    maxMovesLimit,
+    activeMaxMovesLimit,
   )
   const maxNodesValidation = validateMaxNodesMillionOption(
     maxNodesMillionInput,
@@ -190,6 +191,10 @@ export function SolvePage() {
 
   function handlePuzzleChange(nextPuzzleSlug: string) {
     setSelectedPuzzleSlug(nextPuzzleSlug)
+    const nextMaxMovesLimit = maxMovesLimitForPuzzle(nextPuzzleSlug)
+    if (Number(maxMovesInput) > nextMaxMovesLimit) {
+      setMaxMovesInput(String(nextMaxMovesLimit))
+    }
     resetSolveResult()
   }
 
@@ -244,6 +249,7 @@ export function SolvePage() {
           puzzleOptions={puzzleOptions}
           selectedPuzzleSlug={selectedPuzzleSlug}
           maxMovesInput={maxMovesInput}
+          maxMovesLimit={activeMaxMovesLimit}
           maxNodesMillionInput={maxNodesMillionInput}
           buttonLoading={buttonLoading}
           disabled={disabled}

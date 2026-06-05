@@ -7,6 +7,7 @@ const meta = {
     buttonLoading: false,
     disabled: false,
     maxMovesInput: '20',
+    maxMovesLimit: 20,
     maxNodesInvalid: false,
     maxNodesMillionInput: '10',
     notation: '',
