@@ -1,3 +1,4 @@
+import cls from 'classnames'
 import { useTranslation } from 'react-i18next'
 import { formatTimerTime } from '@core/timer/formatTimerTime'
 
@@ -8,14 +9,15 @@ export type AverageCardValue = {
 
 type AverageCardsProps = {
   cards: readonly AverageCardValue[]
+  className?: string
   showMilliseconds?: boolean
 }
 
-export function AverageCards({ cards, showMilliseconds = false }: AverageCardsProps) {
+export function AverageCards({ cards, className, showMilliseconds = false }: AverageCardsProps) {
   const { t } = useTranslation()
 
   return (
-    <div className="grid w-full gap-2 sm:grid-cols-4">
+    <div className={cls('grid w-full gap-2 sm:grid-cols-4', className)}>
       {cards.map((card) => (
         <article key={card.label} className="border border-app-border bg-app-surface p-4">
           <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-app-muted">

@@ -11,6 +11,8 @@ The frontend renders and controls solver interaction. It must not become the sou
 - `@houstonp/rubiks-cube` as a visualization custom element
 - Tailwind CSS v4 through `@tailwindcss/vite` and the single `apps/web/src/index.css` entrypoint for Tailwind import, resets, and semantic theme/color variables
 - `classnames` imported as `cls` for conditional class composition
+- `lucide-react` for UI icons; local SVG icon components and custom icon path data are not part of the frontend icon surface
+- Radix-backed shared primitives, including `apps/web/src/components/Popover.tsx`, for popovers and floating UI rendered through portals
 - Vitest, Testing Library, and V8 coverage for unit/component/API-hook tests
 - Storybook for component stories and visual inspection
 
@@ -50,6 +52,7 @@ The solve form defaults to an empty scramble so the visualization starts solved;
 - Shared reusable UI should live under `apps/web/src/components` only when there is a real shared consumer.
 - Context-independent helpers live under `apps/web/src/core/<category>/<name>.ts` and are imported directly without core barrels.
 - Keep page-specific hooks, validation helpers, message mapping, and constants under the owning page folder until reuse exists.
+- Use shared component primitives for repeated interaction patterns such as popovers; feature code should consume the primitive rather than direct Radix imports or hand-rolled outside-click/focus handling.
 - Keep new or substantially changed React component files at or below 400 lines where practical.
 - Storybook stories live in a `stories/` child folder beside the source area they cover.
 - Use one primary story export per component and rely on controls for prop variation.
@@ -74,6 +77,7 @@ The solve form defaults to an empty scramble so the visualization starts solved;
 - `npm run theme-colors:check` enforces that raw hex colors stay in `apps/web/src/index.css` and that docs do not reintroduce literal arbitrary hex utility markers.
 - The current web UI is intentionally square; do not add `border-radius` or Tailwind `rounded-*` utilities.
 - Conditional class composition uses `classnames` as `cls`.
+- Icons use `lucide-react` components styled with semantic Tailwind classes; React components should not include inline SVG icon markup.
 - Do not add component/page CSS files, CSS-in-JS, Sass, or a design-system dependency without a concrete current need.
 - Desktop and mobile layouts should be considered for every UI change.
 

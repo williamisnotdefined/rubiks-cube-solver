@@ -9,9 +9,12 @@
     "visualizationUnavailable": "La visualización aún no está disponible para este puzzle."
   },
   "navigation": {
+    "closeMenu": "Cerrar menú",
     "github": "Abrir proyecto en GitHub",
+    "menu": "Menú",
+    "openMenu": "Abrir menú",
     "primary": "Navegación principal",
-    "solve": "Resolver",
+    "solve": "Solver",
     "theme": "Tema",
     "themeDark": "Oscuro",
     "themeLight": "Claro",
@@ -438,6 +441,7 @@
       "copy": "Copiar scramble",
       "event": "Evento",
       "next": "Siguiente scramble",
+      "previous": "Scramble anterior",
       "title": "Scramble"
     },
     "session": {

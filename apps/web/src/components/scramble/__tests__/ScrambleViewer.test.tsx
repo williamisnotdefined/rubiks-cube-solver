@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it, vi } from 'vitest'
 import { ScrambleViewer } from '../ScrambleViewer'
 
 describe('ScrambleViewer', () => {
@@ -15,5 +16,32 @@ describe('ScrambleViewer', () => {
 
     expect(screen.getByText(/1\. R U/)).toHaveClass('whitespace-pre-wrap')
     expect(screen.getByText(/2\. F B/)).toBeInTheDocument()
+  })
+
+  it('renders scramble controls inside the viewer', async () => {
+    const user = userEvent.setup()
+    const onCopy = vi.fn()
+    const onNext = vi.fn()
+    const onPrevious = vi.fn()
+
+    render(
+      <ScrambleViewer
+        canGoPrevious
+        eventLabel="3x3x3"
+        scramble="R U R' U'"
+        onCopy={onCopy}
+        onNext={onNext}
+        onPrevious={onPrevious}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Previous scramble' }))
+    await user.click(screen.getByRole('button', { name: 'Next scramble' }))
+    await user.click(screen.getByRole('button', { name: 'Copy scramble' }))
+
+    expect(onPrevious).toHaveBeenCalledTimes(1)
+    expect(onNext).toHaveBeenCalledTimes(1)
+    expect(onCopy).toHaveBeenCalledTimes(1)
+    expect(screen.queryByText('Copy scramble')).not.toBeInTheDocument()
   })
 })

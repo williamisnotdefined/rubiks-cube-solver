@@ -20,7 +20,7 @@ export function TimerDisplay({
   return (
     <div
       className={cls(
-        'grid min-h-[15rem] w-full cursor-pointer select-none place-items-center border border-app-border bg-app-stage px-4 py-8 text-center font-mono text-[clamp(4rem,20vw,10rem)] font-black leading-none tracking-[-0.08em] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-app-focus/50',
+        'grid min-h-[12rem] w-full cursor-pointer touch-none select-none place-items-center border border-app-border bg-app-stage px-4 py-8 text-center font-mono text-[clamp(4rem,20vw,10rem)] font-black leading-none tracking-[-0.08em] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-app-focus/50 sm:min-h-[15rem]',
         {
           'border-app-border text-app-text': status === 'idle' || status === 'stopped',
           'border-app-muted text-app-muted': status === 'holding' || status === 'inspection',

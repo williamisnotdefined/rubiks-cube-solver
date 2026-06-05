@@ -1,4 +1,5 @@
 import cls from 'classnames'
+import { RotateCcw, RotateCw } from 'lucide-react'
 import { useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -163,7 +164,7 @@ export function EvenCubeReviewStep({
                 variant="secondary"
                 onClick={() => onRotateFace(selectedCapturedFace, rotation)}
               >
-                <RotationIcon rotation={rotation} />
+                <RotationGlyph rotation={rotation} />
                 <span>{t(labelKey)}</span>
               </Button>
             ))}
@@ -298,32 +299,16 @@ function KociembaNetSlot({
   )
 }
 
-function RotationIcon({ rotation }: { rotation: EvenCubeFaceRotation }) {
+function RotationGlyph({ rotation }: { rotation: EvenCubeFaceRotation }) {
   if (rotation === 180) {
-    return (
-      <svg aria-hidden="true" className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M7 7h9a5 5 0 0 1 0 10H6" />
-        <path d="m10 3-4 4 4 4" />
-        <path d="m10 13-4 4 4 4" />
-      </svg>
-    )
+    return <RotateCcw aria-hidden="true" className="size-5" strokeWidth={2} />
   }
 
   if (rotation === 270) {
-    return (
-      <svg aria-hidden="true" className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M7 7h8a5 5 0 1 1 0 10H8" />
-        <path d="m11 3-4 4 4 4" />
-      </svg>
-    )
+    return <RotateCcw aria-hidden="true" className="size-5" strokeWidth={2} />
   }
 
-  return (
-    <svg aria-hidden="true" className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M17 7H9a5 5 0 1 0 0 10h7" />
-      <path d="m13 3 4 4-4 4" />
-    </svg>
-  )
+  return <RotateCw aria-hidden="true" className="size-5" strokeWidth={2} />
 }
 
 function invalidCornerMessage(t: ReturnType<typeof useTranslation>['t'], corner: EvenCubeInvalidCorner): string {

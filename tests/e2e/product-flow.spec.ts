@@ -162,6 +162,55 @@ test.describe('product solve flow', () => {
   })
 })
 
+test.describe('timer layout', () => {
+  test('keeps the document fixed and scrolls solves internally', async ({ page }) => {
+    await page.addInitScript(() => {
+      const solves = Array.from({ length: 40 }, (_, index) => ({
+        comment: '',
+        endedAt: 1_700_000_000_000 + index,
+        eventId: '333',
+        finalTimeMs: 12_000 + index,
+        id: `solve-${index}`,
+        penalty: 'ok',
+        rawTimeMs: 12_000 + index,
+        scramble: "R U R' U' F2 D2 L B' R2 U2",
+        startedAt: 1_700_000_000_000 + index - 12_000,
+      }))
+
+      window.localStorage.setItem(
+        'rubiks-timer-sessions',
+        JSON.stringify({
+          state: {
+            activeSessionId: 'timer-session-default',
+            sessions: [
+              {
+                eventId: '333',
+                id: 'timer-session-default',
+                name: 'Default Session',
+                solves,
+              },
+            ],
+          },
+          version: 0,
+        }),
+      )
+    })
+
+    await page.goto('/#/timer')
+
+    await expect(page.getByRole('timer', { name: 'Speedsolve timer' })).toBeVisible()
+
+    const pageScroll = await page.evaluate(() => ({
+      clientHeight: document.scrollingElement?.clientHeight ?? 0,
+      scrollHeight: document.scrollingElement?.scrollHeight ?? 0,
+    }))
+    expect(pageScroll.scrollHeight).toBeLessThanOrEqual(pageScroll.clientHeight + 1)
+
+    const solveList = page.getByLabel('Solves')
+    await expect.poll(() => solveList.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true)
+  })
+})
+
 async function cubeState(cube: Locator): Promise<string> {
   return cube.evaluate((element) => {
     try {

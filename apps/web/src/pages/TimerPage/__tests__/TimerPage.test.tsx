@@ -20,6 +20,7 @@ describe('TimerPage', () => {
     expect(screen.getByRole('timer', { name: 'Speedsolve timer' })).toBeInTheDocument()
     expect(screen.getAllByText(/3x3x3/).length).toBeGreaterThan(0)
     expect(screen.getByText('No solves yet')).toBeInTheDocument()
+    expect(screen.queryByText('Default Session')).not.toBeInTheDocument()
   })
 
   it('ignores penalty changes before any solve exists', async () => {
@@ -36,7 +37,8 @@ describe('TimerPage', () => {
 
     render(<TimerPage />)
 
-    expect(screen.getByText('Default Session')).toBeInTheDocument()
+    expect(screen.getByRole('timer', { name: 'Speedsolve timer' })).toBeInTheDocument()
+    expect(screen.getByText('No solves yet')).toBeInTheDocument()
   })
 
   it('records a solve with the keyboard timer', async () => {
@@ -107,12 +109,17 @@ describe('TimerPage', () => {
     })
     render(<TimerPage />)
 
+    expect(screen.getByRole('button', { name: 'Previous scramble' })).toBeDisabled()
     await user.click(screen.getByRole('button', { name: 'Copy scramble' }))
     expect(writeText).toHaveBeenCalledWith(expect.any(String))
     expect(screen.getByRole('button', { name: 'Copied' })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Next scramble' }))
     expect(screen.getByRole('button', { name: 'Copy scramble' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Previous scramble' })).toBeEnabled()
+
+    await user.click(screen.getByRole('button', { name: 'Previous scramble' }))
+    expect(screen.getByRole('button', { name: 'Previous scramble' })).toBeDisabled()
   })
 
   it('keeps copy button unchanged when clipboard write fails', async () => {

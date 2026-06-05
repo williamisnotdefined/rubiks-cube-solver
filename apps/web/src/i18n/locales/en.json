@@ -9,9 +9,12 @@
     "visualizationUnavailable": "Visualization is not available for this puzzle yet."
   },
   "navigation": {
+    "closeMenu": "Close menu",
     "github": "Open project on GitHub",
+    "menu": "Menu",
+    "openMenu": "Open menu",
     "primary": "Primary navigation",
-    "solve": "Solve",
+    "solve": "Solver",
     "theme": "Theme",
     "themeDark": "Dark",
     "themeLight": "Light",
@@ -438,6 +441,7 @@
       "copy": "Copy scramble",
       "event": "Event",
       "next": "Next scramble",
+      "previous": "Previous scramble",
       "title": "Scramble"
     },
     "session": {
