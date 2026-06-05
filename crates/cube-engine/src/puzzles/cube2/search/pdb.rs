@@ -10,6 +10,12 @@ use crate::puzzles::cube2::{
 
 static CUBE2_CORNER_ORIENTATION_PDB: OnceLock<Vec<u8>> = OnceLock::new();
 static CUBE2_CORNER_PERMUTATION_PDB: OnceLock<Vec<u8>> = OnceLock::new();
+static CUBE2_CORNER_ORIENTATION_MOVE_TABLE: OnceLock<Vec<[usize; CUBE2_MOVE_COUNT]>> =
+    OnceLock::new();
+static CUBE2_CORNER_PERMUTATION_MOVE_TABLE: OnceLock<Vec<[usize; CUBE2_MOVE_COUNT]>> =
+    OnceLock::new();
+
+const CUBE2_MOVE_COUNT: usize = CUBE2_FACE_MOVES.len();
 
 pub fn cube2_corner_orientation_pdb() -> &'static [u8] {
     CUBE2_CORNER_ORIENTATION_PDB
@@ -34,8 +40,21 @@ pub fn cube2_pdb_heuristic(cube: &Cube2) -> usize {
     ))
 }
 
+pub(super) fn cube2_corner_orientation_move_table() -> &'static [[usize; CUBE2_MOVE_COUNT]] {
+    CUBE2_CORNER_ORIENTATION_MOVE_TABLE
+        .get_or_init(generate_corner_orientation_move_table)
+        .as_slice()
+}
+
+pub(super) fn cube2_corner_permutation_move_table() -> &'static [[usize; CUBE2_MOVE_COUNT]] {
+    CUBE2_CORNER_PERMUTATION_MOVE_TABLE
+        .get_or_init(generate_corner_permutation_move_table)
+        .as_slice()
+}
+
 fn generate_corner_orientation_pdb() -> Vec<u8> {
     let mut distances = vec![u8::MAX; CUBE2_CORNER_ORIENTATION_COORDINATE_COUNT];
+    let move_table = cube2_corner_orientation_move_table();
     let mut queue = VecDeque::new();
 
     distances[0] = 0;
@@ -43,16 +62,7 @@ fn generate_corner_orientation_pdb() -> Vec<u8> {
 
     while let Some(coordinate) = queue.pop_front() {
         let distance = distances[coordinate];
-        let state = cube2_state_from_corner_orientation_coordinate(coordinate)
-            .expect("queued orientation coordinate should reconstruct");
-
-        for move_ in CUBE2_FACE_MOVES {
-            let mut cube = Cube2::try_from_state(state.clone())
-                .expect("projected orientation state should remain valid");
-            cube.apply_move(move_);
-
-            let next_coordinate = cube2_corner_orientation_coordinate(cube.state())
-                .expect("moved orientation state should index");
+        for next_coordinate in move_table[coordinate] {
             if distances[next_coordinate] != u8::MAX {
                 continue;
             }
@@ -72,6 +82,7 @@ fn generate_corner_orientation_pdb() -> Vec<u8> {
 
 fn generate_corner_permutation_pdb() -> Vec<u8> {
     let mut distances = vec![u8::MAX; CUBE2_CORNER_PERMUTATION_COORDINATE_COUNT];
+    let move_table = cube2_corner_permutation_move_table();
     let mut queue = VecDeque::new();
 
     distances[0] = 0;
@@ -79,16 +90,7 @@ fn generate_corner_permutation_pdb() -> Vec<u8> {
 
     while let Some(coordinate) = queue.pop_front() {
         let distance = distances[coordinate];
-        let state = cube2_state_from_corner_permutation_coordinate(coordinate)
-            .expect("queued permutation coordinate should reconstruct");
-
-        for move_ in CUBE2_FACE_MOVES {
-            let mut cube = Cube2::try_from_state(state.clone())
-                .expect("projected permutation state should remain valid");
-            cube.apply_move(move_);
-
-            let next_coordinate = cube2_corner_permutation_coordinate(cube.state())
-                .expect("moved permutation state should index");
+        for next_coordinate in move_table[coordinate] {
             if distances[next_coordinate] != u8::MAX {
                 continue;
             }
@@ -106,9 +108,50 @@ fn generate_corner_permutation_pdb() -> Vec<u8> {
     distances
 }
 
+fn generate_corner_orientation_move_table() -> Vec<[usize; CUBE2_MOVE_COUNT]> {
+    let mut move_table = vec![[0; CUBE2_MOVE_COUNT]; CUBE2_CORNER_ORIENTATION_COORDINATE_COUNT];
+
+    for (coordinate, transitions) in move_table.iter_mut().enumerate() {
+        let state = cube2_state_from_corner_orientation_coordinate(coordinate)
+            .expect("orientation coordinate should reconstruct");
+
+        for (move_index, move_) in CUBE2_FACE_MOVES.iter().copied().enumerate() {
+            let mut cube = Cube2::try_from_state(state.clone())
+                .expect("projected orientation state should remain valid");
+            cube.apply_move(move_);
+            transitions[move_index] = cube2_corner_orientation_coordinate(cube.state())
+                .expect("moved orientation state should index");
+        }
+    }
+
+    move_table
+}
+
+fn generate_corner_permutation_move_table() -> Vec<[usize; CUBE2_MOVE_COUNT]> {
+    let mut move_table = vec![[0; CUBE2_MOVE_COUNT]; CUBE2_CORNER_PERMUTATION_COORDINATE_COUNT];
+
+    for (coordinate, transitions) in move_table.iter_mut().enumerate() {
+        let state = cube2_state_from_corner_permutation_coordinate(coordinate)
+            .expect("permutation coordinate should reconstruct");
+
+        for (move_index, move_) in CUBE2_FACE_MOVES.iter().copied().enumerate() {
+            let mut cube = Cube2::try_from_state(state.clone())
+                .expect("projected permutation state should remain valid");
+            cube.apply_move(move_);
+            transitions[move_index] = cube2_corner_permutation_coordinate(cube.state())
+                .expect("moved permutation state should index");
+        }
+    }
+
+    move_table
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{cube2_corner_orientation_pdb, cube2_corner_permutation_pdb, cube2_pdb_heuristic};
+    use super::{
+        cube2_corner_orientation_move_table, cube2_corner_orientation_pdb,
+        cube2_corner_permutation_move_table, cube2_corner_permutation_pdb, cube2_pdb_heuristic,
+    };
     use crate::puzzles::cube2::{
         cube2_corner_orientation_coordinate, cube2_corner_permutation_coordinate, Cube2,
         Cube2Algorithm, CUBE2_CORNER_ORIENTATION_COORDINATE_COUNT,
@@ -140,6 +183,24 @@ mod tests {
         assert!(cube2_corner_permutation_pdb()
             .iter()
             .all(|distance| *distance != u8::MAX));
+    }
+
+    #[test]
+    fn move_tables_have_expected_sizes_and_solved_transitions() {
+        assert_eq!(
+            cube2_corner_orientation_move_table().len(),
+            CUBE2_CORNER_ORIENTATION_COORDINATE_COUNT
+        );
+        assert_eq!(
+            cube2_corner_permutation_move_table().len(),
+            CUBE2_CORNER_PERMUTATION_COORDINATE_COUNT
+        );
+        assert!(cube2_corner_orientation_move_table()[0]
+            .iter()
+            .all(|coordinate| *coordinate < CUBE2_CORNER_ORIENTATION_COORDINATE_COUNT));
+        assert!(cube2_corner_permutation_move_table()[0]
+            .iter()
+            .all(|coordinate| *coordinate < CUBE2_CORNER_PERMUTATION_COORDINATE_COUNT));
     }
 
     #[test]

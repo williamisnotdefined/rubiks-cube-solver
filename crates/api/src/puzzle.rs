@@ -13,7 +13,10 @@ use cube_engine::{
     SolverStrategyDefinition, VisualizationKind,
 };
 
-use crate::config::{DEFAULT_API_NODES, MAX_API_DEPTH, MAX_API_NODES, MAX_NOTATION_BYTES};
+use crate::config::{
+    CUBE2_MAX_API_DEPTH, CUBE3_MAX_API_DEPTH, DEFAULT_API_NODES, MAX_API_DEPTH, MAX_API_NODES,
+    MAX_NOTATION_BYTES,
+};
 use crate::response::{
     generated_table_status, PuzzleApiErrorResponse, PuzzleResponse, PuzzleSolveLimitsRequest,
     PuzzleSolveRequest, PuzzleSolveResponse, PuzzleStrategyResponse, SolveNotationRequest,
@@ -416,7 +419,8 @@ fn validate_puzzle_solve_notation_limits(
     limits: &mut PuzzleSolveLimitsRequest,
     metric: &str,
 ) -> Result<(), Box<PuzzleSolveResponse>> {
-    if limits.max_depth > MAX_API_DEPTH {
+    let max_depth_limit = max_depth_limit_for_puzzle(puzzle.id);
+    if limits.max_depth > max_depth_limit {
         return Err(Box::new(puzzle_solve_error_response(
             Some(puzzle.id),
             puzzle.slug,
@@ -427,7 +431,7 @@ fn validate_puzzle_solve_notation_limits(
             "max_depth_exceeds_limit",
             format!(
                 "maxDepth {} exceeds API limit {}",
-                limits.max_depth, MAX_API_DEPTH
+                limits.max_depth, max_depth_limit
             ),
         )));
     }
@@ -466,6 +470,19 @@ fn validate_puzzle_solve_notation_limits(
     limits.max_nodes = Some(max_nodes);
 
     Ok(())
+}
+
+fn max_depth_limit_for_puzzle(puzzle_id: PuzzleId) -> usize {
+    match puzzle_id {
+        PuzzleId::Cube3x3x3 => CUBE3_MAX_API_DEPTH,
+        PuzzleId::Cube2x2x2 => CUBE2_MAX_API_DEPTH,
+        PuzzleId::Pyraminx
+        | PuzzleId::Clock
+        | PuzzleId::Skewb
+        | PuzzleId::CubeNxN
+        | PuzzleId::Square1
+        | PuzzleId::Megaminx => MAX_API_DEPTH,
+    }
 }
 
 #[allow(clippy::too_many_arguments)]

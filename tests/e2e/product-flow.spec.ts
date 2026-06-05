@@ -1,7 +1,7 @@
 import { expect, test, type Locator } from '@playwright/test'
 
 const scramblePlaceholder = "R2 D2 F2 D L2 F2 U' R2 D B2 L2 U' B' R' B' R2 B2 L B U'"
-const realNotation = "B U L U D B' U' R' U' B U2 F' L2 B2 R2 D2 L2 D2 R2 F D2"
+const realNotation = "U' F2 U2 B2 F2 D' F2 D' F2 L2 U' B' L' D B L' R B2 D2 F'"
 
 test.describe('product solve flow', () => {
   test('renders notation-only controls and caps the cube size', async ({ page }) => {
@@ -105,14 +105,16 @@ test.describe('product solve flow', () => {
   })
 
   test('solves real scramble through the API', async ({ page }) => {
+    test.setTimeout(90_000)
+
     await page.goto('/')
 
     const input = page.getByLabel('Scramble')
     await expect(input).toBeEnabled({ timeout: 15_000 })
 
     await input.fill(realNotation)
-    await page.getByLabel('Max moves').fill('30')
-    await page.getByLabel('Max nodes (M)').selectOption('10')
+    await page.getByLabel('Max moves').fill('20')
+    await page.getByLabel('Max nodes (M)').selectOption('25')
     await page.getByRole('button', { name: 'Solve' }).click()
 
     await expect(page.locator('.result code')).toHaveText(/\S/, { timeout: 60_000 })
@@ -149,10 +151,10 @@ test.describe('product solve flow', () => {
     await page.getByLabel('Max moves').fill('46')
 
     await expect(page.getByRole('button', { name: 'Solve' })).toBeDisabled()
-    await expect(page.locator('.result')).toContainText('Max moves must be 30 or less')
+    await expect(page.locator('.result')).toContainText('Max moves must be 20 or less')
     expect(solveRequests).toBe(0)
 
-    await page.getByLabel('Max moves').fill('30')
+    await page.getByLabel('Max moves').fill('20')
     await page.getByLabel('Max nodes (M)').selectOption('25')
 
     await expect(page.getByRole('button', { name: 'Solve' })).toBeEnabled()

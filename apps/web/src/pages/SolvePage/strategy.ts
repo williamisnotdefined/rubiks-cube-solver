@@ -1,17 +1,10 @@
 import type { PuzzleDefinition, PuzzleStrategyOption, SolverStrategyOption } from '@api/solver/types'
-import { fallbackStrategyId, preferredQualityStrategyId } from './constants'
+import { fallbackStrategyId } from './constants'
 
 export function preferredStrategyId(
   strategyOptions: readonly (PuzzleStrategyOption | SolverStrategyOption)[] | undefined,
   puzzle?: PuzzleDefinition,
 ): string {
-  if (
-    puzzle?.slug === 'cube-3x3x3' &&
-    strategyOptions?.some((option) => option.id === preferredQualityStrategyId) === true
-  ) {
-    return preferredQualityStrategyId
-  }
-
   if (
     puzzle?.defaultStrategyId !== undefined &&
     strategyOptions?.some((option) => option.id === puzzle.defaultStrategyId) === true

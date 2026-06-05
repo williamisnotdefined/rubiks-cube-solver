@@ -1,6 +1,7 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
+use cube_engine::puzzles::cube2::{cube2_pdb_heuristic, Cube2};
 use cube_engine::GeneratedTwoPhaseSolver;
 
 use crate::{DEFAULT_PRUNING_TABLE_DIR, DEFAULT_VISION_URL};
@@ -32,6 +33,7 @@ impl ApiState {
         let directory = directory.as_ref();
         let solver =
             GeneratedTwoPhaseSolver::load_from_dir(directory).map_err(|error| error.to_string())?;
+        let _ = cube2_pdb_heuristic(&Cube2::solved());
 
         Ok(Self {
             generated_solver: Some(Arc::new(solver)),

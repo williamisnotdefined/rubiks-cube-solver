@@ -249,9 +249,14 @@ export function OddCubeScanModal({
   }
 
   function handleScanSessionResult(result: ScanSessionResult) {
-    if (result.solve !== undefined) {
+    if (result.solve?.ok === true) {
       onSessionSolveResult?.(result.solve)
       onClose()
+      return
+    }
+
+    if (result.solve !== undefined) {
+      setMessage(result.solve.message ?? scanSessionMessage(t, result))
       return
     }
 

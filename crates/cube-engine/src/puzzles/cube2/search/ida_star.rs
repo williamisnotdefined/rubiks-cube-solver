@@ -1,5 +1,11 @@
-use super::pdb::cube2_pdb_heuristic;
-use crate::puzzles::cube2::{Cube2, Cube2Move, Cube2State, CUBE2_FACE_MOVES};
+use super::pdb::{
+    cube2_corner_orientation_move_table, cube2_corner_orientation_pdb,
+    cube2_corner_permutation_move_table, cube2_corner_permutation_pdb,
+};
+use crate::puzzles::cube2::{
+    cube2_corner_orientation_coordinate, cube2_corner_permutation_coordinate,
+};
+use crate::puzzles::cube2::{Cube2, Cube2Face, Cube2Move, Cube2State, CUBE2_FACE_MOVES};
 
 pub const CUBE2_BOUNDED_IDA_STAR_STRATEGY_ID: &str = "cube2-bounded-ida-star";
 pub const CUBE2_PDB_IDA_STAR_STRATEGY_ID: &str = "cube2-pdb-ida-star";
@@ -46,12 +52,93 @@ struct DepthSearchContext<'a> {
     heuristic: fn(&Cube2) -> usize,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct Cube2SearchCoordinates {
+    corner_orientation: usize,
+    corner_permutation: usize,
+}
+
+struct CoordinateDepthSearchContext<'a> {
+    path: &'a mut Vec<Cube2Move>,
+    path_states: &'a mut Vec<Cube2SearchCoordinates>,
+    max_nodes: Option<usize>,
+    explored_nodes: &'a mut usize,
+}
+
 pub fn solve_cube2_bounded_ida_star(cube: &Cube2, budget: Cube2SearchBudget) -> Cube2SearchOutcome {
     solve_cube2_bounded_ida_star_with_heuristic(cube, budget, cube2_trivial_lower_bound)
 }
 
 pub fn solve_cube2_pdb_ida_star(cube: &Cube2, budget: Cube2SearchBudget) -> Cube2SearchOutcome {
-    solve_cube2_bounded_ida_star_with_heuristic(cube, budget, cube2_pdb_heuristic)
+    solve_cube2_pdb_ida_star_with_coordinates(cube, budget)
+}
+
+fn solve_cube2_pdb_ida_star_with_coordinates(
+    cube: &Cube2,
+    budget: Cube2SearchBudget,
+) -> Cube2SearchOutcome {
+    if cube.is_solved() {
+        return Cube2SearchOutcome::Found(Cube2SearchSolution {
+            moves: Vec::new(),
+            explored_nodes: 0,
+            depth: 0,
+            replay_verified: true,
+        });
+    }
+
+    let start_coordinates = Cube2SearchCoordinates {
+        corner_orientation: cube2_corner_orientation_coordinate(cube.state())
+            .expect("reachable 2x2 state should have a valid corner-orientation coordinate"),
+        corner_permutation: cube2_corner_permutation_coordinate(cube.state())
+            .expect("reachable 2x2 state should have a valid corner-permutation coordinate"),
+    };
+    let mut explored_nodes = 0;
+
+    for depth_limit in 0..=budget.max_depth {
+        let mut path = Vec::with_capacity(depth_limit);
+        let mut path_states = vec![start_coordinates];
+        let mut context = CoordinateDepthSearchContext {
+            path: &mut path,
+            path_states: &mut path_states,
+            max_nodes: budget.max_nodes,
+            explored_nodes: &mut explored_nodes,
+        };
+
+        match coordinate_depth_limited_search(start_coordinates, depth_limit, None, &mut context) {
+            DepthSearchOutcome::Found(moves) => {
+                let replay_verified = replay_verifies(cube, &moves);
+
+                if !replay_verified {
+                    return Cube2SearchOutcome::NotFoundWithinLimits {
+                        explored_nodes,
+                        max_depth: budget.max_depth,
+                    };
+                }
+
+                return Cube2SearchOutcome::Found(Cube2SearchSolution {
+                    depth: moves.len(),
+                    moves,
+                    explored_nodes,
+                    replay_verified,
+                });
+            }
+            DepthSearchOutcome::NotFound => {}
+            DepthSearchOutcome::NodeLimitExceeded => {
+                return Cube2SearchOutcome::NodeLimitExceeded {
+                    explored_nodes,
+                    max_depth: budget.max_depth,
+                    max_nodes: budget
+                        .max_nodes
+                        .expect("node limit outcome requires configured max_nodes"),
+                };
+            }
+        }
+    }
+
+    Cube2SearchOutcome::NotFoundWithinLimits {
+        explored_nodes,
+        max_depth: budget.max_depth,
+    }
 }
 
 fn solve_cube2_bounded_ida_star_with_heuristic(
@@ -136,16 +223,17 @@ fn depth_limited_search(
         return DepthSearchOutcome::NotFound;
     }
 
-    for candidate in CUBE2_FACE_MOVES {
+    let mut candidates = Vec::new();
+    for move_ in CUBE2_FACE_MOVES {
         if previous_move
-            .map(|move_| move_.face() == candidate.face())
+            .map(|previous| should_skip_candidate(previous, move_))
             .unwrap_or(false)
         {
             continue;
         }
 
         let mut next = cube.clone();
-        next.apply_move(candidate);
+        next.apply_move(move_);
 
         if context
             .path_states
@@ -155,6 +243,17 @@ fn depth_limited_search(
             continue;
         }
 
+        let heuristic = (context.heuristic)(&next);
+        if heuristic > depth_remaining - 1 {
+            continue;
+        }
+
+        candidates.push((heuristic, move_, next));
+    }
+
+    candidates.sort_by_key(|(heuristic, move_, _)| (*heuristic, cube2_move_order(*move_)));
+
+    for (_, candidate, next) in candidates {
         context.path.push(candidate);
         context.path_states.push(next.state().clone());
 
@@ -169,6 +268,118 @@ fn depth_limited_search(
     }
 
     DepthSearchOutcome::NotFound
+}
+
+fn coordinate_depth_limited_search(
+    coordinates: Cube2SearchCoordinates,
+    depth_remaining: usize,
+    previous_move: Option<Cube2Move>,
+    context: &mut CoordinateDepthSearchContext<'_>,
+) -> DepthSearchOutcome {
+    if visit_node(context.max_nodes, context.explored_nodes).is_err() {
+        return DepthSearchOutcome::NodeLimitExceeded;
+    }
+
+    if coordinates.is_solved() {
+        return DepthSearchOutcome::Found(context.path.clone());
+    }
+
+    if depth_remaining == 0 || cube2_pdb_coordinate_heuristic(coordinates) > depth_remaining {
+        return DepthSearchOutcome::NotFound;
+    }
+
+    let mut candidates = Vec::new();
+    for move_ in CUBE2_FACE_MOVES {
+        if previous_move
+            .map(|previous| should_skip_candidate(previous, move_))
+            .unwrap_or(false)
+        {
+            continue;
+        }
+
+        let next = coordinates_after_move(coordinates, move_);
+        if context.path_states.contains(&next) {
+            continue;
+        }
+
+        let heuristic = cube2_pdb_coordinate_heuristic(next);
+        if heuristic > depth_remaining - 1 {
+            continue;
+        }
+
+        candidates.push((heuristic, move_, next));
+    }
+
+    candidates.sort_by_key(|(heuristic, move_, _)| (*heuristic, cube2_move_order(*move_)));
+
+    for (_, candidate, next) in candidates {
+        context.path.push(candidate);
+        context.path_states.push(next);
+
+        match coordinate_depth_limited_search(next, depth_remaining - 1, Some(candidate), context) {
+            DepthSearchOutcome::Found(moves) => return DepthSearchOutcome::Found(moves),
+            DepthSearchOutcome::NotFound => {}
+            DepthSearchOutcome::NodeLimitExceeded => return DepthSearchOutcome::NodeLimitExceeded,
+        }
+
+        context.path_states.pop();
+        context.path.pop();
+    }
+
+    DepthSearchOutcome::NotFound
+}
+
+impl Cube2SearchCoordinates {
+    fn is_solved(self) -> bool {
+        self.corner_orientation == 0 && self.corner_permutation == 0
+    }
+}
+
+fn coordinates_after_move(
+    coordinates: Cube2SearchCoordinates,
+    move_: Cube2Move,
+) -> Cube2SearchCoordinates {
+    let move_index = cube2_move_order(move_);
+
+    Cube2SearchCoordinates {
+        corner_orientation: cube2_corner_orientation_move_table()[coordinates.corner_orientation]
+            [move_index],
+        corner_permutation: cube2_corner_permutation_move_table()[coordinates.corner_permutation]
+            [move_index],
+    }
+}
+
+fn cube2_pdb_coordinate_heuristic(coordinates: Cube2SearchCoordinates) -> usize {
+    usize::from(cube2_corner_orientation_pdb()[coordinates.corner_orientation]).max(usize::from(
+        cube2_corner_permutation_pdb()[coordinates.corner_permutation],
+    ))
+}
+
+fn should_skip_candidate(previous: Cube2Move, candidate: Cube2Move) -> bool {
+    if previous.face() == candidate.face() {
+        return true;
+    }
+
+    previous.axis() == candidate.axis()
+        && cube2_face_order(candidate.face()) < cube2_face_order(previous.face())
+}
+
+fn cube2_face_order(face: Cube2Face) -> usize {
+    match face {
+        Cube2Face::U => 0,
+        Cube2Face::D => 1,
+        Cube2Face::L => 2,
+        Cube2Face::R => 3,
+        Cube2Face::F => 4,
+        Cube2Face::B => 5,
+    }
+}
+
+fn cube2_move_order(move_: Cube2Move) -> usize {
+    CUBE2_FACE_MOVES
+        .iter()
+        .position(|candidate| *candidate == move_)
+        .expect("2x2 move should be in move ordering")
 }
 
 fn visit_node(max_nodes: Option<usize>, explored_nodes: &mut usize) -> Result<(), ()> {
@@ -197,8 +408,9 @@ fn replay_verifies(cube: &Cube2, moves: &[Cube2Move]) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        solve_cube2_bounded_ida_star, solve_cube2_pdb_ida_star, Cube2SearchBudget,
-        Cube2SearchOutcome, CUBE2_BOUNDED_IDA_STAR_STRATEGY_ID, CUBE2_PDB_IDA_STAR_STRATEGY_ID,
+        should_skip_candidate, solve_cube2_bounded_ida_star, solve_cube2_pdb_ida_star,
+        Cube2SearchBudget, Cube2SearchOutcome, CUBE2_BOUNDED_IDA_STAR_STRATEGY_ID,
+        CUBE2_PDB_IDA_STAR_STRATEGY_ID,
     };
     use crate::puzzles::cube2::{Cube2, Cube2Algorithm, Cube2Move};
 
@@ -329,6 +541,14 @@ mod tests {
         assert_eq!(solution.depth, 1);
         assert_eq!(solution.moves, vec![Cube2Move::R2]);
         assert_solution_replays(&cube, &solution.moves);
+    }
+
+    #[test]
+    fn same_axis_pruning_keeps_one_canonical_face_order() {
+        assert!(should_skip_candidate(Cube2Move::D, Cube2Move::U));
+        assert!(!should_skip_candidate(Cube2Move::U, Cube2Move::D));
+        assert!(should_skip_candidate(Cube2Move::R, Cube2Move::RPrime));
+        assert!(!should_skip_candidate(Cube2Move::R, Cube2Move::F));
     }
 
     #[test]

@@ -826,7 +826,7 @@ describe('ScanCubeModal', () => {
     expect(onClose).toHaveBeenCalled()
   })
 
-  it('closes and returns terminal scan solve failures to the page', async () => {
+  it('keeps terminal scan solve failures in the modal', async () => {
     const user = userEvent.setup()
     const onClose = vi.fn()
     const onSessionSolveResult = vi.fn()
@@ -850,8 +850,9 @@ describe('ScanCubeModal', () => {
     await confirmAllFaces(user)
     await user.click(screen.getByRole('button', { name: 'Solve scanned cube' }))
 
-    await waitFor(() => expect(onSessionSolveResult).toHaveBeenCalledWith(scanSolveFailure()))
-    expect(onClose).toHaveBeenCalled()
+    await screen.findByText('no solution found within limits')
+    expect(onSessionSolveResult).not.toHaveBeenCalled()
+    expect(onClose).not.toHaveBeenCalled()
   })
 
   it('navigates to backend rescan targets', async () => {

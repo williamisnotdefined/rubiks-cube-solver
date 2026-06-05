@@ -13,8 +13,8 @@ use crate::{
     AnalyzeScanFaceRequest, ApiState, PuzzleApiErrorResponse, PuzzleResponse,
     PuzzleSolveInputRequest, PuzzleSolveLimitsRequest, PuzzleSolveRequest, PuzzleSolveResponse,
     PuzzleStrategyResponse, ScanFacesRequest, ScanSessionFaceRequest, ScanSessionRequest,
-    ScanSessionReviewedStickerRequest, SolveNotationRequest, SolveScanRequest, DEFAULT_API_NODES,
-    MAX_API_DEPTH, MAX_API_NODES, MAX_NOTATION_BYTES,
+    ScanSessionReviewedStickerRequest, SolveNotationRequest, SolveScanRequest, CUBE2_MAX_API_DEPTH,
+    CUBE3_MAX_API_DEPTH, DEFAULT_API_NODES, MAX_API_NODES, MAX_NOTATION_BYTES,
 };
 
 #[test]
@@ -96,7 +96,7 @@ fn scan_request_reports_invalid_center_sticker() {
 
 #[test]
 fn generated_scan_strategy_reports_unavailable_when_solver_not_loaded() {
-    let request = solved_scan_request("generated-two-phase", 30);
+    let request = solved_scan_request("generated-two-phase", CUBE3_MAX_API_DEPTH);
 
     let (status, response) = solve_scan_request(&ApiState::without_generated_solver(), request);
 
@@ -109,7 +109,7 @@ fn generated_scan_strategy_reports_unavailable_when_solver_not_loaded() {
 fn generated_strategy_reports_unavailable_when_solver_not_loaded() {
     let request = SolveNotationRequest {
         moves: String::new(),
-        max_depth: 30,
+        max_depth: CUBE3_MAX_API_DEPTH,
         max_nodes: Some(1_000),
         strategy_id: "generated-two-phase".to_owned(),
     };
@@ -132,7 +132,7 @@ fn generated_quality_strategy_without_tables_does_not_return_reverse_scramble_sh
         .collect();
     let request = SolveNotationRequest {
         moves: moves.to_owned(),
-        max_depth: 30,
+        max_depth: CUBE3_MAX_API_DEPTH,
         max_nodes: Some(1_000),
         strategy_id: "generated-two-phase-quality".to_owned(),
     };
@@ -510,6 +510,27 @@ fn puzzle_aware_solve_request_reports_2x2_depth_limit() {
 }
 
 #[test]
+fn puzzle_aware_solve_request_rejects_2x2_depth_above_puzzle_cap() {
+    let request = puzzle_notation_request(
+        "",
+        "cube2-pdb-ida-star",
+        CUBE2_MAX_API_DEPTH + 1,
+        Some(1_000),
+    );
+
+    let (status, response) =
+        solve_puzzle_request(&ApiState::without_generated_solver(), "cube-2x2x2", request);
+
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert!(!response.ok);
+    assert_eq!(response.status, "invalid_limits");
+    assert_eq!(
+        response.error_kind.as_deref(),
+        Some("max_depth_exceeds_limit")
+    );
+}
+
+#[test]
 fn puzzle_aware_solve_request_reports_2x2_node_limit() {
     let request = puzzle_notation_request("R U F", "cube2-pdb-ida-star", 3, Some(1));
 
@@ -685,7 +706,8 @@ async fn puzzle_aware_solve_route_rejects_unknown_strategy() {
 
 #[test]
 fn puzzle_aware_solve_preserves_existing_limit_validation() {
-    let request = puzzle_notation_request("", "bounded-ida-star", MAX_API_DEPTH + 1, Some(1_000));
+    let request =
+        puzzle_notation_request("", "bounded-ida-star", CUBE3_MAX_API_DEPTH + 1, Some(1_000));
 
     let (status, response) =
         solve_puzzle_request(&ApiState::without_generated_solver(), "cube-3x3x3", request);
@@ -703,7 +725,7 @@ fn puzzle_aware_solve_preserves_existing_limit_validation() {
 fn notation_request_reports_invalid_notation() {
     let request = SolveNotationRequest {
         moves: "R Q".to_owned(),
-        max_depth: 30,
+        max_depth: CUBE3_MAX_API_DEPTH,
         max_nodes: Some(1_000),
         strategy_id: "generated-two-phase".to_owned(),
     };
@@ -755,12 +777,27 @@ fn notation_request_accepts_explicit_max_nodes_up_to_api_cap() {
 fn notation_request_rejects_excessive_depth() {
     let request = SolveNotationRequest {
         moves: String::new(),
-        max_depth: MAX_API_DEPTH + 1,
+        max_depth: CUBE3_MAX_API_DEPTH + 1,
         max_nodes: Some(1_000),
         strategy_id: "bounded-ida-star".to_owned(),
     };
 
     let (status, response) = solve_notation_request(&ApiState::without_generated_solver(), request);
+
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert!(!response.ok);
+    assert_eq!(response.status, "invalid_limits");
+    assert_eq!(
+        response.error_kind.as_deref(),
+        Some("max_depth_exceeds_limit")
+    );
+}
+
+#[test]
+fn scan_request_rejects_3x3_depth_above_puzzle_cap() {
+    let request = solved_scan_request("bounded-ida-star", CUBE3_MAX_API_DEPTH + 1);
+
+    let (status, response) = solve_scan_request(&ApiState::without_generated_solver(), request);
 
     assert_eq!(status, StatusCode::BAD_REQUEST);
     assert!(!response.ok);
@@ -1033,6 +1070,24 @@ async fn solve_scan_session_reports_unavailable_vision_service() {
 }
 
 #[tokio::test]
+async fn solve_scan_session_rejects_3x3_depth_above_puzzle_cap() {
+    let mut request = solved_scan_session_request();
+    request.max_depth = CUBE3_MAX_API_DEPTH + 1;
+
+    let (status, response) =
+        solve_scan_session_request(&ApiState::without_generated_solver(), request).await;
+
+    assert_eq!(status, StatusCode::OK);
+    let response = response.0;
+    assert!(!response.ok);
+    assert_eq!(response.status, "api_error");
+    let solve = response.solve.expect("3x3 scan should include solve error");
+    assert!(!solve.ok);
+    assert_eq!(solve.status, "invalid_limits");
+    assert_eq!(solve.error_kind.as_deref(), Some("max_depth_exceeds_limit"));
+}
+
+#[tokio::test]
 async fn solve_cube2_scan_session_accepts_reviewed_stickers() {
     let request = solved_cube2_scan_session_request();
 
@@ -1065,7 +1120,7 @@ async fn solve_cube2_scan_session_returns_initial_scrambled_visual_state() {
     let initial_visual_state = cube2_visual_state(&cube);
     assert_ne!(initial_visual_state, "UUUURRRRFFFFDDDDLLLLBBBB");
     let mut request = cube2_scan_session_request_from_visual_state(&initial_visual_state);
-    request.max_depth = 20;
+    request.max_depth = CUBE2_MAX_API_DEPTH;
     request.max_nodes = Some(100_000);
 
     let (status, response) = solve_scan_session_request_for_puzzle(
@@ -1086,6 +1141,28 @@ async fn solve_cube2_scan_session_returns_initial_scrambled_visual_state() {
         .expect("2x2 scan should return visual state");
     assert_eq!(visual_state.kind, "cube2-facelets-v1");
     assert_eq!(visual_state.value, initial_visual_state);
+}
+
+#[tokio::test]
+async fn solve_cube2_scan_session_rejects_depth_above_puzzle_cap() {
+    let mut request = solved_cube2_scan_session_request();
+    request.max_depth = CUBE2_MAX_API_DEPTH + 1;
+
+    let (status, response) = solve_scan_session_request_for_puzzle(
+        &ApiState::without_generated_solver(),
+        PuzzleId::Cube2x2x2,
+        request,
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::OK);
+    let response = response.0;
+    assert!(!response.ok);
+    assert_eq!(response.status, "api_error");
+    let solve = response.solve.expect("2x2 scan should include solve error");
+    assert!(!solve.ok);
+    assert_eq!(solve.status, "invalid_limits");
+    assert_eq!(solve.error_kind.as_deref(), Some("max_depth_exceeds_limit"));
 }
 
 #[tokio::test]
@@ -1565,7 +1642,7 @@ async fn cors_allows_local_web_origins_only() {
 fn unknown_strategy_returns_bad_request() {
     let request = SolveNotationRequest {
         moves: String::new(),
-        max_depth: 30,
+        max_depth: CUBE3_MAX_API_DEPTH,
         max_nodes: Some(1_000),
         strategy_id: "unknown".to_owned(),
     };
