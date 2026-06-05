@@ -21,7 +21,7 @@ The gate does not claim optimality, `<=16`, God's Number coverage, or a 20-move 
 | `cargo run --quiet -p cube-engine --bin generate_pruning_tables -- --output crates/cube-engine/pruning-tables --phase1-max-depth 8 --phase2-max-depth 10` | Passed | Generated ignored native pruning-table artifacts for API and generated two-phase rows. |
 | `npm run api:test` | Passed | Native HTTP API tests passed. |
 | `npm run build` | Passed | Built the API-backed web app. |
-| `npm run lint -w @rubiks-cube-solver/web` | Passed | Web workspace ESLint completed with `--max-warnings 0`. |
+| `npm run lint -w @rubiks-cube-solver/web` | Passed | Web workspace Biome lint completed with warnings denied. |
 | `npm run test:e2e` | Passed | Playwright started the native API and web preview, verified notation-only UI controls, checked the 350px cube cap, solved shallow and real move-notation flows through HTTP, and checked replay-verified UI results. |
 | `python -m pytest ml` | Passed | ML fixture tests passed with 8 passed and 1 skipped. |
 | `python -m ml.train_value_baseline --dataset datasets/fixtures/small.jsonl --epochs 1 --seed 0 --output ml/outputs/value-baseline --inference-repeats 1` | Passed | Produced ignored local `metrics.json` and `value_outputs.tsv`; PyTorch was unavailable, so the documented constant-train-mean dependency fallback ran without writing a checkpoint. |
@@ -43,8 +43,8 @@ Environment notes for this run:
 | Command | Latest outcome | Evidence and notes |
 | --- | --- | --- |
 | `npm run test -w @rubiks-cube-solver/web` | Passed | 55 Vitest files and 368 tests passed, including timer penalty/unit coverage. |
-| `npm run build` | Passed | Built the API-backed web app with route-level lazy chunks; Vite still reports known chunk-size warnings for large app/Three-related chunks. |
-| `npm run lint` | Passed | Ran `ai:check`, `theme-colors:check`, and web ESLint with zero lint warnings. |
+| `npm run build` | Passed | Built the API-backed web app with route-level lazy chunks; the app build no longer reports the prior chunk-size warning, with `vendor-three-runtime` still near the configured limit. |
+| `npm run lint` | Passed | Ran `ai:check`, `theme-colors:check`, and web Biome lint with zero lint warnings. |
 | `npm run storybook:build -w @rubiks-cube-solver/web` | Passed | Storybook built successfully; the existing docgen skip warning for `.storybook/preview.tsx` remains informational. |
 | `npm run test:e2e:full` | Passed | Full non-heavy Playwright suite ran serially with 31 passed and 1 heavy scan skipped by design. Coverage includes product solve, manual scan, responsive UI, and timer flows. |
 | `npm run ai:sync` then `npm run ai:check` | Passed | Canonical AI docs and generated `.opencode`, `.cursor`, and `.github/instructions` routes were synchronized and checked. |

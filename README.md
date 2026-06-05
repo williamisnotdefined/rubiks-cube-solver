@@ -59,9 +59,13 @@ npm run dev
 npm run web:dev
 npm run api:dev
 npm run build
+npm run lint
+npm run format -w @rubiks-cube-solver/web
 npm run live:start
 npm run product:gate
 ```
+
+The web workspace uses Biome for linting and formatting through `npm run lint -w @rubiks-cube-solver/web` and `npm run format -w @rubiks-cube-solver/web`. The root `npm run format` remains reserved for AI route synchronization.
 
 When Rust is installed:
 

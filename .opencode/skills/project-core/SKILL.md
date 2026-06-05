@@ -74,6 +74,7 @@ Global rules for changes anywhere in this repository.
 - Use cubie representation as the primary engine model.
 - Keep workspace-specific code inside the owning workspace unless there is a current cross-workspace consumer.
 - Use repository-root commands such as `npm run ai:check`, `npm run api:test`, `npm run build`, and `cargo test` so paths and workspaces resolve consistently.
+- For `apps/web`, use Biome through workspace scripts for linting and formatting; do not add ESLint or Prettier configs unless explicitly requested.
 - Run targeted verification for the affected area and report any environment blockers.
 - Before any AI-created commit or pull request, run `cargo clippy --all-targets --all-features -- -D warnings` from the repository root when the Rust toolchain is available.
 - Keep AI route files generated from canonical files under `ai`.

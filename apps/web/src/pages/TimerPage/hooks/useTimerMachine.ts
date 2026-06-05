@@ -51,9 +51,20 @@ export function useTimerMachine({
 
   useEffect(
     () => () => {
-      clearHoldTimeout()
-      clearFrame()
-      clearInspectionFrame()
+      if (holdTimeoutRef.current !== undefined) {
+        clearTimeout(holdTimeoutRef.current)
+        holdTimeoutRef.current = undefined
+      }
+
+      if (frameRef.current !== undefined) {
+        cancelAnimationFrame(frameRef.current)
+        frameRef.current = undefined
+      }
+
+      if (inspectionFrameRef.current !== undefined) {
+        cancelAnimationFrame(inspectionFrameRef.current)
+        inspectionFrameRef.current = undefined
+      }
     },
     [],
   )
