@@ -160,10 +160,10 @@ describe('solver API operations', () => {
         notation: 'R U',
       }),
     ).resolves.toMatchObject({
-      elapsedMs: 12,
       exploredNodes: 42,
       moves: ["U'", "R'"],
       ok: true,
+      requestElapsedMs: expect.any(Number),
       status: 'success',
     })
   })
@@ -188,6 +188,7 @@ describe('solver API operations', () => {
     ).resolves.toMatchObject({
       ok: true,
       puzzleSlug: 'cube-3x3x3',
+      requestElapsedMs: expect.any(Number),
       visualState: 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB',
       visualStateKind: 'cube3-facelets-v1',
     })
@@ -216,6 +217,7 @@ describe('solver API operations', () => {
       generatedTableStatus: 'not_applicable',
       ok: true,
       puzzleSlug: 'cube-2x2x2',
+      requestElapsedMs: expect.any(Number),
       visualState: undefined,
     })
     expect(fetchMock).toHaveBeenCalledWith(
@@ -357,7 +359,20 @@ describe('solver API operations', () => {
         maxNodes: 1_000,
         strategyId: 'bounded-ida-star',
       }),
-    ).resolves.toMatchObject(payload)
+    ).resolves.toMatchObject({
+      inference: payload.inference,
+      manualTargets: [],
+      ok: true,
+      rescanFaces: [],
+      solve: {
+        exploredNodes: 42,
+        ok: true,
+        requestElapsedMs: expect.any(Number),
+        status: 'success',
+      },
+      status: 'accepted',
+      timings: payload.timings,
+    })
     expect(fetchMock).toHaveBeenCalledWith(
       'http://127.0.0.1:8787/scan/solve-session',
       expect.objectContaining({
@@ -388,7 +403,17 @@ describe('solver API operations', () => {
         puzzleSlug: 'cube-2x2x2',
         strategyId: 'cube2-pdb-ida-star',
       }),
-    ).resolves.toEqual(payload)
+    ).resolves.toMatchObject({
+      manualTargets: [],
+      ok: true,
+      rescanFaces: [],
+      solve: {
+        ok: true,
+        requestElapsedMs: expect.any(Number),
+        status: 'success',
+      },
+      status: 'accepted',
+    })
     expect(fetchMock).toHaveBeenCalledWith(
       'http://127.0.0.1:8787/puzzles/cube-2x2x2/scan/solve-session',
       expect.objectContaining({
@@ -482,8 +507,8 @@ describe('solver API operations', () => {
     ).resolves.toEqual(payload)
   })
 
-  it('defaults missing optional success metrics', () => {
-    const { elapsedMs, exploredNodes, length } = normalizeSolveResponse(
+  it('uses request elapsed time and defaults missing optional success metrics', () => {
+    const { exploredNodes, length, requestElapsedMs } = normalizeSolveResponse(
       {
         ...successPayload,
         elapsedMs: undefined,
@@ -491,11 +516,12 @@ describe('solver API operations', () => {
         length: undefined,
       },
       true,
+      27_000,
     ) as Extract<ReturnType<typeof normalizeSolveResponse>, { ok: true }>
 
-    expect(elapsedMs).toBe(0)
     expect(exploredNodes).toBe(0)
     expect(length).toBe(successPayload.moves.length)
+    expect(requestElapsedMs).toBe(27_000)
   })
 
   it('normalizes API failure responses without throwing', async () => {
@@ -528,6 +554,7 @@ describe('solver API operations', () => {
           visualState: null,
         },
         true,
+        0,
       ),
     ).toMatchObject({
       generatedTableStatus: 'not_applicable',
@@ -539,7 +566,7 @@ describe('solver API operations', () => {
 
   it('marks unverified successes as failures', () => {
     expect(
-      normalizeSolveResponse({ ...successPayload, replayVerified: false }, true),
+      normalizeSolveResponse({ ...successPayload, replayVerified: false }, true, 0),
     ).toMatchObject({
       ok: false,
       status: 'unverified_solution',
@@ -548,7 +575,7 @@ describe('solver API operations', () => {
 
   it('falls back to api_error for unknown statuses', () => {
     expect(
-      normalizeSolveResponse({ ...successPayload, ok: false, status: 'unknown_status' }, false),
+      normalizeSolveResponse({ ...successPayload, ok: false, status: 'unknown_status' }, false, 0),
     ).toMatchObject({
       ok: false,
       status: 'api_error',

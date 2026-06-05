@@ -10,5 +10,5 @@ export async function solveScan({ faces, limits }: SolveScanVariables) {
     strategyId: limits.strategyId,
   })
 
-  return normalizeSolveResponse(result.payload, result.httpOk)
+  return normalizeSolveResponse(result.payload, result.httpOk, result.requestElapsedMs)
 }

@@ -78,7 +78,7 @@ export type SolveSuccessResult = SolveMetadata & {
   moves: string[]
   length: number
   exploredNodes: number
-  elapsedMs: number
+  requestElapsedMs: number
   replayVerified: boolean
 }
 

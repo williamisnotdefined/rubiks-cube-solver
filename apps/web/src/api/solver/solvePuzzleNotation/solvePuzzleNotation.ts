@@ -23,5 +23,5 @@ export async function solvePuzzleNotation({
     },
   )
 
-  return normalizeSolveResponse(result.payload, result.httpOk)
+  return normalizeSolveResponse(result.payload, result.httpOk, result.requestElapsedMs)
 }

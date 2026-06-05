@@ -9,6 +9,7 @@ import type {
 export function normalizeSolveResponse(
   payload: ApiSolveResponse,
   httpOk: boolean,
+  requestElapsedMs: number,
 ): SolveResult {
   const visualState = normalizedVisualState(payload.visualState)
   const metadata = {
@@ -33,7 +34,7 @@ export function normalizeSolveResponse(
       moves: payload.moves,
       length: payload.length ?? payload.moves.length,
       exploredNodes: payload.exploredNodes ?? 0,
-      elapsedMs: payload.elapsedMs ?? 0,
+      requestElapsedMs,
       replayVerified: true,
     }
   }

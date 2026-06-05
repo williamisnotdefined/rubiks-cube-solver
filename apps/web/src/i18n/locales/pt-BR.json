@@ -290,8 +290,8 @@
         "text": "Texto"
       },
       "dismiss": "Fechar detalhes do solver",
-      "elapsedLabel": "encontrado em {{elapsed}}",
-      "elapsedMeaning": "O tempo de busca no backend para esta solução. Não inclui o tempo total da UI, latência de rede ou renderização do cubo.",
+      "elapsedLabel": "resposta em {{elapsed}}",
+      "elapsedMeaning": "O tempo total da requisição de solução medido no navegador. Inclui a ida e volta até a API e o processamento da resposta, então pode diferir do tempo de busca no backend.",
       "maxNodesConfigured": "limite de {{nodes}} nós",
       "maxNodesUnlimited": "sem limite de nós configurado",
       "movesLabel": "{{count}} movimentos",
@@ -303,7 +303,7 @@
       "search": "Busca",
       "solution": "Solução",
       "solutionLengthMeaning": "O tamanho da solução retornada. Cada token de notação conta como um movimento, incluindo meias-voltas como R2 ou B2.",
-      "subtitle": "Estas métricas descrevem como o backend encontrou e verificou esta solução.",
+      "subtitle": "Estas métricas descrevem a solução retornada, o tempo da requisição e a verificação do backend.",
       "tables": {
         "available": {
           "label": "tabelas disponíveis",
@@ -414,7 +414,7 @@
       "solved": " resolvido"
     },
     "result": {
-      "foundIn": "encontrado em {{elapsed}}",
+      "foundIn": "resposta em {{elapsed}}",
       "seeMore": "ver mais",
       "solved": "Resolvido",
       "successMeta": "{{count}} movimentos - {{elapsed}} -"

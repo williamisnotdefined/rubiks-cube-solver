@@ -3,6 +3,7 @@ export const defaultApiBaseUrl = 'http://127.0.0.1:8787'
 export type ApiJsonResponse<TResponse> = {
   payload: TResponse
   httpOk: boolean
+  requestElapsedMs: number
   status: number
   statusText: string
 }
@@ -58,15 +59,18 @@ export async function apiJsonResponse<TResponse>(
   path: string,
   options: RequestInit = {},
 ): Promise<ApiJsonResponse<TResponse>> {
+  const startedAt = nowMs()
   const response = await fetch(apiUrl(path), {
     ...options,
     headers: jsonHeaders(options.headers),
   })
   const payload = await responseJson<TResponse>(response)
+  const requestElapsedMs = Math.max(0, Math.round(nowMs() - startedAt))
 
   return {
     payload,
     httpOk: response.ok,
+    requestElapsedMs,
     status: response.status,
     statusText: response.statusText,
   }
@@ -124,4 +128,10 @@ function errorMessageFromPayload(payload: unknown, fallback: string): string {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
+}
+
+function nowMs(): number {
+  return typeof globalThis.performance?.now === 'function'
+    ? globalThis.performance.now()
+    : Date.now()
 }
