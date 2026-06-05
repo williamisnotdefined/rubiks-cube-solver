@@ -4,10 +4,12 @@ import type { TimerStatus } from '../types'
 
 const inspectionLimitMs = 15_000
 const inspectionDnfMs = 17_000
+const defaultDisplayTickMs = 50
 
 type SolveCompleteHandler = (rawTimeMs: number, penalty: TimerPenalty) => void
 
 type UseTimerMachineOptions = {
+  displayTickMs?: number
   holdToStartMs: number
   inspectionEnabled: boolean
   onSolveComplete: SolveCompleteHandler
@@ -26,6 +28,7 @@ export type TimerMachine = {
 }
 
 export function useTimerMachine({
+  displayTickMs = defaultDisplayTickMs,
   holdToStartMs,
   inspectionEnabled,
   onSolveComplete,
@@ -36,8 +39,8 @@ export function useTimerMachine({
   const [inspectionPenalty, setInspectionPenalty] = useState<TimerPenalty>('ok')
   const statusRef = useRef<TimerStatus>('idle')
   const holdTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const frameRef = useRef<number | undefined>(undefined)
-  const inspectionFrameRef = useRef<number | undefined>(undefined)
+  const timerTickRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const inspectionTickRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const holdTargetRef = useRef<'inspection' | 'solve'>('solve')
   const previousStatusRef = useRef<TimerStatus>('idle')
   const runningStartedAtRef = useRef(0)
@@ -56,14 +59,14 @@ export function useTimerMachine({
         holdTimeoutRef.current = undefined
       }
 
-      if (frameRef.current !== undefined) {
-        cancelAnimationFrame(frameRef.current)
-        frameRef.current = undefined
+      if (timerTickRef.current !== undefined) {
+        clearTimeout(timerTickRef.current)
+        timerTickRef.current = undefined
       }
 
-      if (inspectionFrameRef.current !== undefined) {
-        cancelAnimationFrame(inspectionFrameRef.current)
-        inspectionFrameRef.current = undefined
+      if (inspectionTickRef.current !== undefined) {
+        clearTimeout(inspectionTickRef.current)
+        inspectionTickRef.current = undefined
       }
     },
     [],
@@ -82,16 +85,16 @@ export function useTimerMachine({
   }
 
   function clearFrame() {
-    if (frameRef.current !== undefined) {
-      cancelAnimationFrame(frameRef.current)
-      frameRef.current = undefined
+    if (timerTickRef.current !== undefined) {
+      clearTimeout(timerTickRef.current)
+      timerTickRef.current = undefined
     }
   }
 
   function clearInspectionFrame() {
-    if (inspectionFrameRef.current !== undefined) {
-      cancelAnimationFrame(inspectionFrameRef.current)
-      inspectionFrameRef.current = undefined
+    if (inspectionTickRef.current !== undefined) {
+      clearTimeout(inspectionTickRef.current)
+      inspectionTickRef.current = undefined
     }
   }
 
@@ -183,11 +186,11 @@ export function useTimerMachine({
       setInspectionRemainingMs(Math.max(0, inspectionLimitMs - elapsedInspectionMs))
 
       if (statusRef.current === 'inspection') {
-        inspectionFrameRef.current = requestAnimationFrame(tick)
+        inspectionTickRef.current = setTimeout(tick, displayTickMs)
       }
     }
 
-    inspectionFrameRef.current = requestAnimationFrame(tick)
+    inspectionTickRef.current = setTimeout(tick, displayTickMs)
   }
 
   function startRunning() {
@@ -204,11 +207,11 @@ export function useTimerMachine({
       setElapsedMs(Math.max(0, performance.now() - runningStartedAtRef.current))
 
       if (statusRef.current === 'running') {
-        frameRef.current = requestAnimationFrame(tick)
+        timerTickRef.current = setTimeout(tick, displayTickMs)
       }
     }
 
-    frameRef.current = requestAnimationFrame(tick)
+    timerTickRef.current = setTimeout(tick, displayTickMs)
   }
 
   function stopTimer() {

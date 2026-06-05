@@ -35,6 +35,28 @@ describe('useTouchTimer', () => {
 
     expect(timer.cancelHold).toHaveBeenCalledTimes(2)
   })
+
+  it('keeps stable handlers while using the latest timer', () => {
+    const firstTimer = timerMachine()
+    const nextTimer = timerMachine()
+    const { result, rerender } = renderHook(
+      ({ timer }) => useTouchTimer(timer),
+      { initialProps: { timer: firstTimer } },
+    )
+    const firstHandlers = result.current
+
+    rerender({ timer: nextTimer })
+
+    expect(result.current).toBe(firstHandlers)
+
+    result.current.onPointerDown(pointerEvent({ pointerId: 3, preventDefault: vi.fn() }))
+    result.current.onPointerUp(pointerEvent({ pointerId: 3, preventDefault: vi.fn() }))
+
+    expect(firstTimer.beginHold).not.toHaveBeenCalled()
+    expect(firstTimer.releaseHold).not.toHaveBeenCalled()
+    expect(nextTimer.beginHold).toHaveBeenCalledTimes(1)
+    expect(nextTimer.releaseHold).toHaveBeenCalledTimes(1)
+  })
 })
 
 function timerMachine(): TimerMachine {

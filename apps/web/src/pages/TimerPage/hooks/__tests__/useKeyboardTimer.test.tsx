@@ -38,6 +38,39 @@ describe('useKeyboardTimer', () => {
     expect(timer.beginHold).not.toHaveBeenCalled()
     expect(timer.releaseHold).not.toHaveBeenCalled()
   })
+
+  it('keeps one listener pair across rerenders and uses the latest timer', () => {
+    const idleTimer = timerMachine({ status: 'idle' })
+    const runningTimer = timerMachine({ status: 'running' })
+    const addEventListener = vi.spyOn(window, 'addEventListener')
+    const removeEventListener = vi.spyOn(window, 'removeEventListener')
+    const listenerCount = (eventType: string) =>
+      addEventListener.mock.calls.filter(([type]) => type === eventType).length
+    const removedListenerCount = (eventType: string) =>
+      removeEventListener.mock.calls.filter(([type]) => type === eventType).length
+    const { rerender, unmount } = renderHook(
+      ({ timer }) => useKeyboardTimer(timer),
+      { initialProps: { timer: idleTimer } },
+    )
+
+    expect(listenerCount('keydown')).toBe(1)
+    expect(listenerCount('keyup')).toBe(1)
+
+    rerender({ timer: runningTimer })
+
+    expect(listenerCount('keydown')).toBe(1)
+    expect(listenerCount('keyup')).toBe(1)
+
+    window.dispatchEvent(keyboardEvent('keydown', { code: 'KeyA', key: 'a' }))
+
+    expect(idleTimer.stopTimer).not.toHaveBeenCalled()
+    expect(runningTimer.stopTimer).toHaveBeenCalledTimes(1)
+
+    unmount()
+
+    expect(removedListenerCount('keydown')).toBe(1)
+    expect(removedListenerCount('keyup')).toBe(1)
+  })
 })
 
 function timerMachine({ status }: { status: TimerMachine['status'] }): TimerMachine {

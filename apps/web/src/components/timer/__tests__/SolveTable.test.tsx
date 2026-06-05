@@ -8,6 +8,7 @@ describe('SolveTable', () => {
     render(<SolveTable rows={[]} />)
 
     expect(screen.getByText('No solves yet')).toBeInTheDocument()
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
   })
 
   it('renders solve rows and deletes by id', async () => {
@@ -30,6 +31,19 @@ describe('SolveTable', () => {
 
     expect(screen.getAllByText('DNF')).toHaveLength(2)
     expect(screen.getByRole('button', { name: 'Delete' })).toBeDisabled()
+  })
+
+  it('renders every row for small solve lists', () => {
+    const rows = Array.from({ length: 3 }, (_, index) => (
+      row(`solve-${index + 1}`, index + 1, `R U ${index + 1}`)
+    ))
+
+    render(<SolveTable rows={rows} />)
+
+    expect(screen.getAllByRole('row')).toHaveLength(rows.length + 1)
+    for (const solveRow of rows) {
+      expect(screen.getByText(solveRow.scramble)).toBeInTheDocument()
+    }
   })
 
   it('virtualizes large solve lists without rendering every row', () => {

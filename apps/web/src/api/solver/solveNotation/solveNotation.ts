@@ -10,5 +10,5 @@ export async function solveNotation({ notation, limits }: SolveNotationVariables
     strategyId: limits.strategyId,
   })
 
-  return normalizeSolveResponse(result.payload, result.httpOk)
+  return normalizeSolveResponse(result.payload, result.httpOk, result.requestElapsedMs)
 }

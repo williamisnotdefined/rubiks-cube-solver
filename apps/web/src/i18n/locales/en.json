@@ -290,8 +290,8 @@
         "text": "Text"
       },
       "dismiss": "Dismiss solver details",
-      "elapsedLabel": "found in {{elapsed}}",
-      "elapsedMeaning": "The backend search time for this solve. It does not include total UI time, network latency, or cube rendering time.",
+      "elapsedLabel": "response in {{elapsed}}",
+      "elapsedMeaning": "The total solve request time measured in the browser. It includes the API round trip and response parsing, so it can differ from the backend search time.",
       "maxNodesConfigured": "{{nodes}} node cap",
       "maxNodesUnlimited": "no configured node cap",
       "movesLabel": "{{count}} moves",
@@ -303,7 +303,7 @@
       "search": "Search",
       "solution": "Solution",
       "solutionLengthMeaning": "The returned solution length. Each notation token counts as one move, including half turns such as R2 or B2.",
-      "subtitle": "These metrics describe how the backend found and verified this solution.",
+      "subtitle": "These metrics describe the returned solution, request timing, and backend verification.",
       "tables": {
         "available": {
           "label": "tables available",
@@ -414,7 +414,7 @@
       "solved": " solved"
     },
     "result": {
-      "foundIn": "found in {{elapsed}}",
+      "foundIn": "response in {{elapsed}}",
       "seeMore": "see more",
       "solved": "Solved",
       "successMeta": "{{count}} moves - {{elapsed}} -"

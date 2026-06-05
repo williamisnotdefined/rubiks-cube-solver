@@ -5,7 +5,6 @@ const meta = {
   args: {
     error: null,
     result: {
-      elapsedMs: 1_234,
       exploredNodes: 12_345,
       generatedTableStatus: 'available',
       length: 2,
@@ -14,6 +13,7 @@ const meta = {
       moves: ["U'", "R'"],
       ok: true,
       replayVerified: true,
+      requestElapsedMs: 1_234,
       solverMode: 'generated_two_phase_quality',
       status: 'success',
       strategyId: 'generated-two-phase-quality',

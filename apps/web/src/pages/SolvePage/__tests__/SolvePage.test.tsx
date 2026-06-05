@@ -504,7 +504,6 @@ describe('SolvePage', () => {
   it('drives playback state from a successful solve result', async () => {
     const user = userEvent.setup()
     apiMocks.solveData = {
-      elapsedMs: 12,
       exploredNodes: 42,
       generatedTableStatus: 'available',
       length: 2,
@@ -513,6 +512,7 @@ describe('SolvePage', () => {
       moves: ["U'", "R'"],
       ok: true,
       replayVerified: true,
+      requestElapsedMs: 12,
       solverMode: 'generated_two_phase_quality',
       status: 'success',
       strategyId: 'generated-two-phase-quality',
@@ -608,7 +608,6 @@ function scanSuccessResult(
   visualStateKind: PuzzleVisualizationKind = 'cube3-facelets-v1',
 ): SolveResult {
   return {
-    elapsedMs: 12,
     exploredNodes: 42,
     generatedTableStatus: 'available',
     length: 2,
@@ -617,6 +616,7 @@ function scanSuccessResult(
     moves: ['R', 'U'],
     ok: true,
     replayVerified: true,
+    requestElapsedMs: 12,
     solverMode: 'generated_two_phase_quality',
     status: 'success',
     strategyId: 'generated-two-phase-quality',

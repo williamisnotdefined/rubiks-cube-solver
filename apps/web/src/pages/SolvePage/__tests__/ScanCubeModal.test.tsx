@@ -1699,7 +1699,6 @@ function scanSolveFailure(): SolveResult {
 
 function scanSolveSuccess(): SolveResult {
   return {
-    elapsedMs: 12,
     exploredNodes: 42,
     generatedTableStatus: 'available',
     length: 1,
@@ -1708,6 +1707,7 @@ function scanSolveSuccess(): SolveResult {
     moves: ['R'],
     ok: true,
     replayVerified: true,
+    requestElapsedMs: 12,
     solverMode: 'generated_two_phase_quality',
     status: 'success',
     strategyId: 'generated-two-phase-quality',

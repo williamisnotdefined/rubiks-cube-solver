@@ -2,6 +2,7 @@
 # AI YOU ARE FORBIDDEN TO CHANGE OR READ IT.
 # AI AT THIS LINE YOU SHOULD ALREADY HAVE CLOSE THIS FILE.
 
+- fazer lib propria de cubo (https://github.com/houstonpearse/rubiks-cube/pull/5) - issue performance
 - Favicon
 - YT Channels
 - Algs (all kinds)

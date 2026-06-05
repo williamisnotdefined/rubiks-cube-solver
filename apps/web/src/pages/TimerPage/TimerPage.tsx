@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCopyToClipboard } from 'usehooks-ts'
 import { AverageCards } from '@components/timer/AverageCards'
@@ -47,6 +47,7 @@ export function TimerPage() {
     return { index: 0, items: [initialScramble] }
   })
   const [copied, setCopied] = useState(false)
+  const [timerResetSignal, setTimerResetSignal] = useState(0)
   const sessions = useTimerStore((state) => state.sessions)
   const activeSessionId = useTimerStore((state) => state.activeSessionId)
   const addSolve = useTimerStore((state) => state.addSolve)
@@ -64,16 +65,14 @@ export function TimerPage() {
   const solves = activeSession.solves
   const lastSolve = solves.at(-1)
   const generatedScramble = scrambleHistory.items[scrambleHistory.index]!
+  const solveRows = useMemo(
+    () => solves.slice().reverse().map((solve, index) => ({
+      ...solve,
+      index: solves.length - index,
+    })),
+    [solves],
+  )
   const stats = timerStats(solves)
-  const timer = useTimerMachine({
-    holdToStartMs,
-    inspectionEnabled,
-    onSolveComplete: handleSolveComplete,
-  })
-  const touchHandlers = useTouchTimer(timer)
-
-  useKeyboardTimer(timer)
-
   useEffect(() => {
     setActiveSessionEvent(selectedEventId)
     setScrambleHistory({ index: 0, items: [generateScrambleForEvent(selectedEventId)] })
@@ -118,7 +117,7 @@ export function TimerPage() {
       }
     })
     setCopied(false)
-    timer.resetStopped()
+    setTimerResetSignal((signal) => signal + 1)
   }
 
   function handlePreviousScramble() {
@@ -127,7 +126,7 @@ export function TimerPage() {
       index: Math.max(0, history.index - 1),
     }))
     setCopied(false)
-    timer.resetStopped()
+    setTimerResetSignal((signal) => signal + 1)
   }
 
   async function handleCopyScramble() {
@@ -202,22 +201,13 @@ export function TimerPage() {
           </Panel>
         </div>
         <div className="grid min-h-0 grid-rows-[minmax(12rem,2fr)_minmax(7rem,1fr)] gap-2 overflow-hidden lg:grid-cols-[minmax(0,1fr)_24rem] lg:grid-rows-none xl:grid-cols-[minmax(0,1fr)_30rem]">
-          <section className="grid min-h-0 grid-rows-[minmax(0,1fr)_auto_auto] gap-2 overflow-hidden">
-            <TimerDisplay
-              aria-label={t('timer.displayLabel')}
-              className="h-full"
-              elapsedMs={timer.elapsedMs}
-              showMilliseconds={showMilliseconds}
-              status={timer.status}
-              {...touchHandlers}
-            />
-            <TimerStatusBar status={timer.status} />
-            <InspectionBar
-              enabled={inspectionEnabled}
-              penalty={timer.inspectionPenalty}
-              remainingMs={timer.inspectionRemainingMs}
-            />
-          </section>
+          <TimerRuntime
+            holdToStartMs={holdToStartMs}
+            inspectionEnabled={inspectionEnabled}
+            resetSignal={timerResetSignal}
+            showMilliseconds={showMilliseconds}
+            onSolveComplete={handleSolveComplete}
+          />
           <aside className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-2 overflow-hidden">
             <AverageCards
               cards={[
@@ -231,10 +221,7 @@ export function TimerPage() {
             />
             <SolveTable
               className="h-full min-h-0"
-              rows={solves
-                .slice()
-                .reverse()
-                .map((solve, index) => ({ ...solve, index: solves.length - index }))}
+              rows={solveRows}
               showMilliseconds={showMilliseconds}
               onDeleteSolve={deleteSolve}
             />
@@ -242,6 +229,59 @@ export function TimerPage() {
         </div>
       </section>
     </main>
+  )
+}
+
+type TimerRuntimeProps = {
+  holdToStartMs: number
+  inspectionEnabled: boolean
+  resetSignal: number
+  showMilliseconds: boolean
+  onSolveComplete: (rawTimeMs: number, penalty: TimerPenalty) => void
+}
+
+function TimerRuntime({
+  holdToStartMs,
+  inspectionEnabled,
+  resetSignal,
+  showMilliseconds,
+  onSolveComplete,
+}: TimerRuntimeProps) {
+  const { t } = useTranslation()
+  const timer = useTimerMachine({
+    holdToStartMs,
+    inspectionEnabled,
+    onSolveComplete,
+  })
+  const timerRef = useRef(timer)
+  timerRef.current = timer
+  const touchHandlers = useTouchTimer(timer)
+
+  useKeyboardTimer(timer)
+
+  useEffect(() => {
+    if (resetSignal > 0) {
+      timerRef.current.resetStopped()
+    }
+  }, [resetSignal])
+
+  return (
+    <section className="grid min-h-0 grid-rows-[minmax(0,1fr)_auto_auto] gap-2 overflow-hidden">
+      <TimerDisplay
+        aria-label={t('timer.displayLabel')}
+        className="h-full"
+        elapsedMs={timer.elapsedMs}
+        showMilliseconds={showMilliseconds}
+        status={timer.status}
+        {...touchHandlers}
+      />
+      <TimerStatusBar status={timer.status} />
+      <InspectionBar
+        enabled={inspectionEnabled}
+        penalty={timer.inspectionPenalty}
+        remainingMs={timer.inspectionRemainingMs}
+      />
+    </section>
   )
 }
 

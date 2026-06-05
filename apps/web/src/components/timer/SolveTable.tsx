@@ -1,5 +1,5 @@
 import cls from 'classnames'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   flexRender,
   getCoreRowModel,
@@ -15,6 +15,7 @@ import type { TimerPenalty } from '@core/timer/penalties'
 const virtualTableEstimatedRowHeight = 56
 const virtualTableFallbackHeight = 640
 const virtualTableFallbackRowCount = 24
+const virtualTableInitialRect = { height: virtualTableFallbackHeight, width: 0 }
 
 type VirtualSolveRow = {
   end: number
@@ -38,10 +39,80 @@ type SolveTableProps = {
   onDeleteSolve?: (solveId: string) => void
 }
 
-export function SolveTable({ className, rows, showMilliseconds = false, onDeleteSolve }: SolveTableProps) {
+const solveTableCoreRowModel = getCoreRowModel<SolveTableRow>()
+
+export function SolveTable(props: SolveTableProps) {
+  if (props.rows.length === 0) {
+    return <EmptySolveTable className={props.className} />
+  }
+
+  if (props.rows.length <= virtualTableFallbackRowCount) {
+    return <PlainSolveTable {...props} />
+  }
+
+  return <VirtualizedSolveTable {...props} />
+}
+
+function EmptySolveTable({ className }: Pick<SolveTableProps, 'className'>) {
+  const { t } = useTranslation()
+
+  return (
+    <section className={cls('flex h-full min-h-0 items-center justify-center border border-app-border bg-app-surface p-4 text-center', className)} aria-label={t('timer.solves.label')}>
+      <p className="text-sm font-extrabold uppercase tracking-[0.16em] text-app-muted">
+        {t('timer.solves.empty')}
+      </p>
+    </section>
+  )
+}
+
+function PlainSolveTable({ className, rows, showMilliseconds = false, onDeleteSolve }: SolveTableProps) {
+  const { t } = useTranslation()
+
+  return (
+    <section className={cls('h-full min-h-0 w-full overflow-auto border border-app-border bg-app-surface', className)} aria-label={t('timer.solves.label')}>
+      <table className="w-full min-w-[32rem] border-collapse text-left text-sm">
+        <thead className="sticky top-0 border-b border-app-border bg-app-surface text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
+          <tr>
+            <th className="px-4 py-3">#</th>
+            <th className="px-4 py-3">{t('timer.solves.time')}</th>
+            <th className="px-4 py-3">{t('timer.solves.penalty')}</th>
+            <th className="px-4 py-3">{t('timer.solves.scramble')}</th>
+            <th className="px-4 py-3">{t('timer.solves.actions')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.id} className="border-b border-app-border last:border-b-0">
+              <td className="px-4 py-3 font-mono text-app-muted">{row.index}</td>
+              <td className="px-4 py-3 font-mono text-lg font-black text-app-text">
+                {formatTimerTime(row.finalTimeMs, { showMilliseconds })}
+              </td>
+              <td className="px-4 py-3 text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
+                {t(`timer.penalty.${row.penalty}`)}
+              </td>
+              <td className="max-w-md truncate px-4 py-3 font-mono text-xs text-app-muted">
+                {row.scramble}
+              </td>
+              <td className="px-4 py-3">
+                <DeleteSolveButton
+                  disabled={onDeleteSolve === undefined}
+                  solveId={row.id}
+                  onDeleteSolve={onDeleteSolve}
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  )
+}
+
+function VirtualizedSolveTable({ className, rows, showMilliseconds = false, onDeleteSolve }: SolveTableProps) {
   const { t } = useTranslation()
   const [scrollParentElement, setScrollParentElement] = useState<HTMLElement | null>(null)
-  const columns: ColumnDef<SolveTableRow>[] = [
+  const data = useMemo(() => [...rows], [rows])
+  const columns = useMemo<ColumnDef<SolveTableRow>[]>(() => [
     {
       accessorKey: 'index',
       cell: ({ row }) => (
@@ -70,23 +141,21 @@ export function SolveTable({ className, rows, showMilliseconds = false, onDelete
     },
     {
       cell: ({ row }) => (
-        <Button
+        <DeleteSolveButton
           disabled={onDeleteSolve === undefined}
-          type="button"
-          variant="ghost"
-          onClick={() => onDeleteSolve?.(row.original.id)}
-        >
-          {t('timer.solves.delete')}
-        </Button>
+          solveId={row.original.id}
+          onDeleteSolve={onDeleteSolve}
+        />
       ),
       header: t('timer.solves.actions'),
       id: 'actions',
     },
-  ]
+  ], [onDeleteSolve, showMilliseconds, t])
   const table = useReactTable({
+    autoResetPageIndex: false,
     columns,
-    data: [...rows],
-    getCoreRowModel: getCoreRowModel(),
+    data,
+    getCoreRowModel: solveTableCoreRowModel,
     getRowId: (row) => row.id,
   })
   const tableRows = table.getRowModel().rows
@@ -94,70 +163,23 @@ export function SolveTable({ className, rows, showMilliseconds = false, onDelete
     count: tableRows.length,
     estimateSize: () => virtualTableEstimatedRowHeight,
     getScrollElement: () => scrollParentElement,
-    initialRect: { height: 640, width: 0 },
-    observeElementRect: (instance, callback) => {
-      const element = instance.scrollElement
-
-      if (element === null) {
-        return undefined
-      }
-
-      const scrollElement = element
-
-      function notify() {
-        const rect = scrollElement.getBoundingClientRect()
-        callback({
-          height: rect.height || virtualTableFallbackHeight,
-          width: rect.width || 0,
-        })
-      }
-
-      notify()
-
-      if (typeof ResizeObserver === 'undefined') {
-        return undefined
-      }
-
-      const resizeObserver = new ResizeObserver(notify)
-      resizeObserver.observe(scrollElement)
-
-      return () => resizeObserver.disconnect()
-    },
+    initialRect: virtualTableInitialRect,
+    observeElementRect: observeVirtualTableElementRect,
     overscan: 8,
   })
   const virtualRows = rowVirtualizer.getVirtualItems()
-  const shouldVirtualize = rows.length > virtualTableFallbackRowCount
-  const visibleVirtualRows: VirtualSolveRow[] = shouldVirtualize
-    ? virtualRows.length > 0
-      ? virtualRows
-      : tableRows.slice(0, virtualTableFallbackRowCount).map((_, index) => ({
-          end: (index + 1) * virtualTableEstimatedRowHeight,
-          index,
-          start: index * virtualTableEstimatedRowHeight,
-        }))
-    : tableRows.map((_, index) => ({
+  const visibleVirtualRows: VirtualSolveRow[] = virtualRows.length > 0
+    ? virtualRows
+    : tableRows.slice(0, virtualTableFallbackRowCount).map((_, index) => ({
         end: (index + 1) * virtualTableEstimatedRowHeight,
         index,
         start: index * virtualTableEstimatedRowHeight,
       }))
-  const totalSize = shouldVirtualize
-    ? rowVirtualizer.getTotalSize() || tableRows.length * virtualTableEstimatedRowHeight
-    : tableRows.length * virtualTableEstimatedRowHeight
-  const topPaddingHeight = shouldVirtualize ? visibleVirtualRows[0]?.start ?? 0 : 0
-  const bottomPaddingHeight =
-    !shouldVirtualize || visibleVirtualRows.length === 0
-      ? 0
-      : totalSize - visibleVirtualRows[visibleVirtualRows.length - 1]!.end
-
-  if (rows.length === 0) {
-    return (
-      <section className={cls('flex h-full min-h-0 items-center justify-center border border-app-border bg-app-surface p-4 text-center', className)} aria-label={t('timer.solves.label')}>
-        <p className="text-sm font-extrabold uppercase tracking-[0.16em] text-app-muted">
-          {t('timer.solves.empty')}
-        </p>
-      </section>
-    )
-  }
+  const totalSize = rowVirtualizer.getTotalSize() || tableRows.length * virtualTableEstimatedRowHeight
+  const topPaddingHeight = visibleVirtualRows[0]?.start ?? 0
+  const bottomPaddingHeight = visibleVirtualRows.length === 0
+    ? 0
+    : totalSize - visibleVirtualRows[visibleVirtualRows.length - 1]!.end
 
   return (
     <section ref={setScrollParentElement} className={cls('h-full min-h-0 w-full overflow-auto border border-app-border bg-app-surface', className)} aria-label={t('timer.solves.label')}>
@@ -176,60 +198,88 @@ export function SolveTable({ className, rows, showMilliseconds = false, onDelete
           ))}
         </thead>
         <tbody>
-          {shouldVirtualize ? (
-            <>
-              {topPaddingHeight > 0 ? (
-                <tr aria-hidden="true">
-                  <td colSpan={table.getAllLeafColumns().length} style={{ height: topPaddingHeight }} />
-                </tr>
-              ) : null}
-              {visibleVirtualRows.map((virtualRow) => {
-                const row = tableRows[virtualRow.index]!
-
-                return (
-                  <tr key={row.id} className="border-b border-app-border last:border-b-0">
-                    {row.getVisibleCells().map((cell) => (
-                      <td className={cellClassName(cell.column.id)} key={cell.id}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
-                  </tr>
-                )
-              })}
-              {bottomPaddingHeight > 0 ? (
-                <tr aria-hidden="true">
-                  <td colSpan={table.getAllLeafColumns().length} style={{ height: bottomPaddingHeight }} />
-                </tr>
-              ) : null}
-            </>
-          ) : rows.map((row) => (
-            <tr key={row.id} className="border-b border-app-border last:border-b-0">
-              <td className="px-4 py-3 font-mono text-app-muted">{row.index}</td>
-              <td className="px-4 py-3 font-mono text-lg font-black text-app-text">
-                {formatTimerTime(row.finalTimeMs, { showMilliseconds })}
-              </td>
-              <td className="px-4 py-3 text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
-                {t(`timer.penalty.${row.penalty}`)}
-              </td>
-              <td className="max-w-md truncate px-4 py-3 font-mono text-xs text-app-muted">
-                {row.scramble}
-              </td>
-              <td className="px-4 py-3">
-                <Button
-                  disabled={onDeleteSolve === undefined}
-                  type="button"
-                  variant="ghost"
-                  onClick={() => onDeleteSolve?.(row.id)}
-                >
-                  {t('timer.solves.delete')}
-                </Button>
-              </td>
+          {topPaddingHeight > 0 ? (
+            <tr aria-hidden="true">
+              <td colSpan={table.getAllLeafColumns().length} style={{ height: topPaddingHeight }} />
             </tr>
-          ))}
+          ) : null}
+          {visibleVirtualRows.map((virtualRow) => {
+            const row = tableRows[virtualRow.index]!
+
+            return (
+              <tr key={row.id} className="border-b border-app-border last:border-b-0">
+                {row.getVisibleCells().map((cell) => (
+                  <td className={cellClassName(cell.column.id)} key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
+            )
+          })}
+          {bottomPaddingHeight > 0 ? (
+            <tr aria-hidden="true">
+              <td colSpan={table.getAllLeafColumns().length} style={{ height: bottomPaddingHeight }} />
+            </tr>
+          ) : null}
         </tbody>
       </table>
     </section>
   )
+}
+
+function DeleteSolveButton({
+  disabled,
+  solveId,
+  onDeleteSolve,
+}: {
+  disabled: boolean
+  solveId: string
+  onDeleteSolve?: (solveId: string) => void
+}) {
+  const { t } = useTranslation()
+
+  return (
+    <Button
+      disabled={disabled}
+      type="button"
+      variant="ghost"
+      onClick={() => onDeleteSolve?.(solveId)}
+    >
+      {t('timer.solves.delete')}
+    </Button>
+  )
+}
+
+function observeVirtualTableElementRect(
+  instance: { scrollElement: HTMLElement | null },
+  callback: (rect: { height: number; width: number }) => void,
+) {
+  const element = instance.scrollElement
+
+  if (element === null) {
+    return undefined
+  }
+
+  const scrollElement = element
+
+  function notify() {
+    const rect = scrollElement.getBoundingClientRect()
+    callback({
+      height: rect.height || virtualTableFallbackHeight,
+      width: rect.width || 0,
+    })
+  }
+
+  notify()
+
+  if (typeof ResizeObserver === 'undefined') {
+    return undefined
+  }
+
+  const resizeObserver = new ResizeObserver(notify)
+  resizeObserver.observe(scrollElement)
+
+  return () => resizeObserver.disconnect()
 }
 
 function cellClassName(columnId: string): string {

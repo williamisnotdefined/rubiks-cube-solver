@@ -5,7 +5,6 @@ import { SolveResult } from '../SolveResult'
 import type { SolveResult as ApiSolveResult } from '@api/solver/types'
 
 const successResult: ApiSolveResult = {
-  elapsedMs: 1_234,
   exploredNodes: 12_345,
   generatedTableStatus: 'available',
   length: 2,
@@ -14,6 +13,7 @@ const successResult: ApiSolveResult = {
   moves: ["U'", "R'"],
   ok: true,
   replayVerified: true,
+  requestElapsedMs: 27_000,
   solverMode: 'generated_two_phase_quality',
   status: 'success',
   strategyId: 'generated-two-phase-quality',
@@ -41,7 +41,7 @@ describe('SolveResult', () => {
     render(<SolveResult error={null} result={successResult} solving={false} />)
 
     expect(screen.getByText("U' R'")).toBeInTheDocument()
-    expect(screen.getByText(/2 moves - found in 1.23 s/)).toBeInTheDocument()
+    expect(screen.getByText(/2 moves - response in 27.0 s/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'see more' })).toBeInTheDocument()
     expect(screen.queryByText(/12,345 nodes/)).not.toBeInTheDocument()
     expect(screen.queryByText(/replay verified/)).not.toBeInTheDocument()
@@ -56,6 +56,7 @@ describe('SolveResult', () => {
     const dialog = screen.getByRole('dialog', { name: 'Solver details' })
     expect(within(dialog).getByText('Generated two-phase quality solver')).toBeInTheDocument()
     expect(within(dialog).getAllByText('12,345 nodes').length).toBeGreaterThan(0)
+    expect(within(dialog).getAllByText('response in 27.0 s').length).toBeGreaterThan(0)
     expect(within(dialog).getByText('tables available')).toBeInTheDocument()
     expect(within(dialog).getByText('replay verified')).toBeInTheDocument()
     expect(within(dialog).getByText(/does not mean generative AI/)).toBeInTheDocument()

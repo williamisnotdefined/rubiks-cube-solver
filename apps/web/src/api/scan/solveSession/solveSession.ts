@@ -25,7 +25,7 @@ export async function solveScanSession({
   })
 
   if (result.payload !== undefined) {
-    return normalizeScanSessionResult(result.payload)
+    return normalizeScanSessionResult(result.payload, result.requestElapsedMs)
   }
 
   return {
@@ -37,7 +37,10 @@ export async function solveScanSession({
   }
 }
 
-function normalizeScanSessionResult(result: RawScanSessionResult): ScanSessionResult {
+function normalizeScanSessionResult(
+  result: RawScanSessionResult,
+  requestElapsedMs: number,
+): ScanSessionResult {
   const { solve, ...sessionResult } = result
 
   if (solve === undefined) {
@@ -46,6 +49,6 @@ function normalizeScanSessionResult(result: RawScanSessionResult): ScanSessionRe
 
   return {
     ...sessionResult,
-    solve: normalizeSolveResponse(solve, solve.ok),
+    solve: normalizeSolveResponse(solve, solve.ok, requestElapsedMs),
   }
 }

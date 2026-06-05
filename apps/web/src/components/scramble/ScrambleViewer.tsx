@@ -31,11 +31,11 @@ export function ScrambleViewer({
 
   return (
     <section className={cls('grid min-h-0 gap-2 border border-app-border bg-app-surface px-3 py-2 text-center', className)}>
-      <div className="flex min-h-8 flex-wrap items-center justify-between gap-2 text-left">
-        <p className="flex min-w-0 items-center gap-2 text-xs font-extrabold uppercase tracking-[0.18em] text-app-muted">
-          <span>{t('timer.scramble.title')} /</span>
+      <div className="grid min-h-8 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
+        <span aria-hidden="true" />
+        <div className="min-w-0 justify-self-center text-xs font-extrabold uppercase tracking-[0.18em] text-app-muted">
           {eventControl ?? <span>{eventLabel}</span>}
-        </p>
+        </div>
         {hasActions ? (
           <div className="flex justify-self-end border border-app-border bg-app-control">
             <button

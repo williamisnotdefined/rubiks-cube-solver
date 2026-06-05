@@ -95,6 +95,7 @@ describe('api client', () => {
     await expect(postJsonResponse('/solve-notation', { moves: 'R' })).resolves.toMatchObject({
       httpOk: false,
       payload: undefined,
+      requestElapsedMs: expect.any(Number),
       status: 503,
       statusText: 'Service Unavailable',
     })

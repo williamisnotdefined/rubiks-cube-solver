@@ -45,7 +45,7 @@ export function SolveResult({
               {t('solve.result.successMeta', {
                 count: successResult.length,
                 elapsed: t('solve.result.foundIn', {
-                  elapsed: formatElapsedMs(successResult.elapsedMs),
+                  elapsed: formatElapsedMs(successResult.requestElapsedMs),
                 }),
               })}{' '}
               <button

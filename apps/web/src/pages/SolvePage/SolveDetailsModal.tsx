@@ -20,7 +20,7 @@ export function SolveDetailsModal({ result, onClose }: SolveDetailsModalProps) {
   const { t } = useTranslation()
   const movesLabel = t('solve.details.movesLabel', { count: result.length })
   const elapsedLabel = t('solve.details.elapsedLabel', {
-    elapsed: formatElapsedMs(result.elapsedMs),
+    elapsed: formatElapsedMs(result.requestElapsedMs),
   })
   const nodesLabel = t('solve.details.nodesLabel', { nodes: formatNumber(result.exploredNodes) })
   const tablesLabel = tableStatusLabel(result.generatedTableStatus, t)

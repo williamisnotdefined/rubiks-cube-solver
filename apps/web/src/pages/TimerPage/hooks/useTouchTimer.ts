@@ -1,4 +1,4 @@
-import type { PointerEvent } from 'react'
+import { useMemo, useRef, type PointerEvent } from 'react'
 import type { TimerMachine } from './useTimerMachine'
 
 type TouchTimerHandlers = {
@@ -9,18 +9,25 @@ type TouchTimerHandlers = {
 }
 
 export function useTouchTimer(timer: TimerMachine): TouchTimerHandlers {
-  return {
-    onPointerCancel: timer.cancelHold,
+  const timerRef = useRef(timer)
+  timerRef.current = timer
+
+  return useMemo(() => ({
+    onPointerCancel() {
+      timerRef.current.cancelHold()
+    },
     onPointerDown(event) {
       event.preventDefault()
       event.currentTarget.setPointerCapture?.(event.pointerId)
-      timer.beginHold()
+      timerRef.current.beginHold()
     },
-    onPointerLeave: timer.cancelHold,
+    onPointerLeave() {
+      timerRef.current.cancelHold()
+    },
     onPointerUp(event) {
       event.preventDefault()
       event.currentTarget.releasePointerCapture?.(event.pointerId)
-      timer.releaseHold()
+      timerRef.current.releaseHold()
     },
-  }
+  }), [])
 }
