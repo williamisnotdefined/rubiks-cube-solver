@@ -1,4 +1,4 @@
-import { useCallback, useReducer, useRef, useState, type FormEvent } from 'react'
+import { useCallback, useReducer, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { RubiksCubeElement } from '@houstonp/rubiks-cube/view'
 import {
@@ -28,6 +28,7 @@ import {
   validateMaxNodesMillionOption,
   validateWholeNumberLimit,
   validationErrorMessage,
+  type SolveFormSubmit,
 } from './validation'
 
 const defaultPuzzleSlug = 'cube-3x3x3'
@@ -145,9 +146,7 @@ export function SolvePage() {
     strategyId.length === 0 ||
     localValidationMessage !== undefined
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
+  async function handleSubmit(formValues: SolveFormSubmit) {
     if (!apiReady || localValidationMessage !== undefined) {
       return
     }
@@ -158,11 +157,11 @@ export function SolvePage() {
 
     try {
       const solvePromise = solveMutation.mutateAsync({
-        notation: notation.trim(),
-        puzzleSlug: selectedPuzzleSlug,
+        notation: formValues.notation,
+        puzzleSlug: formValues.puzzleSlug,
         limits: {
-          maxDepth: maxMoves,
-          maxNodes,
+          maxDepth: formValues.maxMoves,
+          maxNodes: formValues.maxNodesMillion * nodesPerMillion,
           strategyId,
         },
       })
@@ -253,8 +252,6 @@ export function SolvePage() {
           maxNodesMillionInput={maxNodesMillionInput}
           buttonLoading={buttonLoading}
           disabled={disabled}
-          maxMovesInvalid={maxMovesValidation !== undefined}
-          maxNodesInvalid={maxNodesValidation !== undefined}
           scanAvailable={scanAvailable}
           scramblePlaceholder={activeScramblePlaceholder}
           onScanClick={handleScanClick}

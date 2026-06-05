@@ -31,15 +31,26 @@ describe('SolveTable', () => {
     expect(screen.getAllByText('DNF')).toHaveLength(2)
     expect(screen.getByRole('button', { name: 'Delete' })).toBeDisabled()
   })
+
+  it('virtualizes large solve lists without rendering every row', () => {
+    const rows = Array.from({ length: 100 }, (_, index) => (
+      row(`solve-${index + 1}`, index + 1, `R U ${index + 1}`)
+    ))
+
+    render(<SolveTable rows={rows} />)
+
+    expect(screen.getByRole('table')).toBeInTheDocument()
+    expect(screen.getAllByRole('row').length).toBeLessThan(rows.length)
+  })
 })
 
-function row(id: string): SolveTableRow {
+function row(id: string, index = 1, scramble = 'R U'): SolveTableRow {
   return {
     finalTimeMs: 12_345,
     id,
-    index: 1,
+    index,
     penalty: 'ok',
     rawTimeMs: 12_345,
-    scramble: 'R U',
+    scramble,
   }
 }

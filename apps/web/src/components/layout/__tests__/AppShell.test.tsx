@@ -1,17 +1,21 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type { ReactNode } from 'react'
+import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it } from 'vitest'
+import { useThemeStore } from '@core/theme/themeStore'
 import { AppShell } from '../AppShell'
 import { PageNav } from '../PageNav'
 
 afterEach(() => {
+  useThemeStore.getState().setThemePreference('system')
   window.localStorage.clear()
   delete document.documentElement.dataset.theme
 })
 
 describe('AppShell', () => {
   it('renders primary navigation and page content', () => {
-    render(
+    renderWithRouter(
       <AppShell activeRoute="solve">
         <main>Solver workspace</main>
       </AppShell>,
@@ -19,33 +23,33 @@ describe('AppShell', () => {
 
     expect(screen.getByRole('navigation', { name: 'Primary navigation' })).toBeInTheDocument()
     expect(screen.getByText('Solver workspace')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Solver' })).toHaveAttribute('href', '#/solve')
+    expect(screen.getByRole('link', { name: 'Solver' })).toHaveAttribute('href', '/solve')
   })
 })
 
 describe('PageNav', () => {
   it('marks solver as active and timer as inactive', () => {
-    render(<PageNav activeRoute="solve" />)
+    renderWithRouter(<PageNav activeRoute="solve" />)
 
     const navigation = screen.getByRole('navigation', { name: 'Primary navigation' })
     const solveLink = within(navigation).getByRole('link', { name: 'Solver' })
     const timerLink = within(navigation).getByRole('link', { name: 'Timer' })
 
-    expect(solveLink).toHaveAttribute('href', '#/solve')
-    expect(timerLink).toHaveAttribute('href', '#/timer')
+    expect(solveLink).toHaveAttribute('href', '/solve')
+    expect(timerLink).toHaveAttribute('href', '/timer')
     expect(solveLink).toHaveClass('bg-app-text')
     expect(timerLink).toHaveClass('bg-app-surface')
   })
 
   it('marks timer as active and solve as inactive', () => {
-    render(<PageNav activeRoute="timer" />)
+    renderWithRouter(<PageNav activeRoute="timer" />, '/timer')
 
     expect(screen.getByRole('link', { name: 'Timer' })).toHaveClass('bg-app-text')
     expect(screen.getByRole('link', { name: 'Solver' })).toHaveClass('bg-app-surface')
   })
 
   it('links to the project on GitHub', () => {
-    render(<PageNav activeRoute="solve" />)
+    renderWithRouter(<PageNav activeRoute="solve" />)
 
     expect(screen.getByRole('link', { name: 'Open project on GitHub' })).toHaveAttribute(
       'href',
@@ -55,14 +59,15 @@ describe('PageNav', () => {
 
   it('opens and closes the mobile menu drawer', async () => {
     const user = userEvent.setup()
-    render(<PageNav activeRoute="timer" />)
+    renderWithRouter(<PageNav activeRoute="timer" />, '/timer')
 
     expect(screen.queryAllByRole('button', { name: 'Close menu' })).toHaveLength(0)
 
     await user.click(screen.getByRole('button', { name: 'Open menu' }))
 
-    expect(screen.getAllByRole('navigation', { name: 'Primary navigation' })).toHaveLength(2)
-    expect(screen.getAllByRole('link', { name: 'Timer' })).toHaveLength(2)
+    const drawer = screen.getByRole('dialog', { name: 'Menu' })
+    expect(within(drawer).getByRole('navigation', { name: 'Primary navigation' })).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'Timer' })).toHaveLength(1)
 
     await user.click(screen.getAllByRole('button', { name: 'Close menu' })[0])
 
@@ -71,17 +76,17 @@ describe('PageNav', () => {
 
   it('closes the mobile menu with Escape', async () => {
     const user = userEvent.setup()
-    render(<PageNav activeRoute="timer" />)
+    renderWithRouter(<PageNav activeRoute="timer" />, '/timer')
 
     await user.click(screen.getByRole('button', { name: 'Open menu' }))
-    fireEvent.keyDown(window, { key: 'Escape' })
+    await user.keyboard('{Escape}')
 
     expect(screen.queryAllByRole('button', { name: 'Close menu' })).toHaveLength(0)
   })
 
   it('persists explicit theme choices and returns to system mode', async () => {
     const user = userEvent.setup()
-    render(<PageNav activeRoute="solve" />)
+    renderWithRouter(<PageNav activeRoute="solve" />)
 
     await user.click(screen.getByRole('button', { name: 'Theme' }))
     await user.click(screen.getByRole('menuitemradio', { name: 'Light' }))
@@ -96,3 +101,11 @@ describe('PageNav', () => {
     expect(window.localStorage.getItem('rubiks-cube-solver-theme')).toBeNull()
   })
 })
+
+function renderWithRouter(ui: ReactNode, path = '/solve') {
+  return render(
+    <MemoryRouter initialEntries={[path]}>
+      {ui}
+    </MemoryRouter>,
+  )
+}

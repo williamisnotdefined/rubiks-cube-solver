@@ -1,7 +1,7 @@
-import { useEffect, useId } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { GeneratedTableStatus, SolveSuccessResult } from '@api/solver/types'
 import { Button } from '@components/Button'
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@components/Dialog'
 import { formatElapsedMs } from '@core/format/formatElapsedMs'
 import { formatNumber } from '@core/format/formatNumber'
 import { solveStrategyLabel } from './solveMessages'
@@ -18,7 +18,6 @@ type DetailRow = {
 
 export function SolveDetailsModal({ result, onClose }: SolveDetailsModalProps) {
   const { t } = useTranslation()
-  const titleId = useId()
   const movesLabel = t('solve.details.movesLabel', { count: result.length })
   const elapsedLabel = t('solve.details.elapsedLabel', {
     elapsed: formatElapsedMs(result.elapsedMs),
@@ -42,40 +41,29 @@ export function SolveDetailsModal({ result, onClose }: SolveDetailsModalProps) {
     t,
   })
 
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
+  return (
+    <Dialog open onOpenChange={(open) => {
+      if (!open) {
         onClose()
       }
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
-
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [onClose])
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-3 py-6 sm:px-6">
-      <button
-        aria-label={t('solve.details.dismiss')}
-        className="absolute inset-0 bg-app-bg/85 backdrop-blur-sm"
-        type="button"
-        onClick={onClose}
-      />
-      <section
-        aria-labelledby={titleId}
-        aria-modal="true"
-        className="relative max-h-[calc(100vh-3rem)] w-full max-w-3xl overflow-auto border border-app-border bg-app-surface p-4 text-left text-app-text shadow-2xl sm:p-6"
-        role="dialog"
+    }}>
+      <DialogContent
+        className="left-1/2 top-1/2 max-h-[calc(100vh-3rem)] w-[calc(100vw-1.5rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-auto border border-app-border bg-app-surface p-4 text-left text-app-text shadow-2xl sm:w-[calc(100vw-3rem)] sm:p-6"
+        overlayClassName="bg-app-bg/85 backdrop-blur-sm"
+        overlayLabel={t('solve.details.dismiss')}
       >
         <div className="flex items-start justify-between gap-4">
           <div className="grid gap-1">
-            <h2 className="text-lg font-extrabold uppercase tracking-[0.16em]" id={titleId}>
-              {t('solve.details.title')}
-            </h2>
-            <p className="text-sm font-semibold text-app-muted">
-              {t('solve.details.subtitle')}
-            </p>
+            <DialogTitle asChild>
+              <h2 className="text-lg font-extrabold uppercase tracking-[0.16em]">
+                {t('solve.details.title')}
+              </h2>
+            </DialogTitle>
+            <DialogDescription asChild>
+              <p className="text-sm font-semibold text-app-muted">
+                {t('solve.details.subtitle')}
+              </p>
+            </DialogDescription>
           </div>
           <Button className="min-h-10 px-4 py-2" type="button" variant="secondary" onClick={onClose}>
             {t('common.close')}
@@ -85,15 +73,15 @@ export function SolveDetailsModal({ result, onClose }: SolveDetailsModalProps) {
         <dl className="mt-5 grid gap-2 text-sm sm:grid-cols-3">
           <div className="border border-app-border bg-app-surface-raised p-3">
             <dt className="font-extrabold uppercase tracking-[0.16em] text-app-muted">{t('solve.details.solution')}</dt>
-            <dd className="mt-1 font-mono text-emerald-300">{movesLabel}</dd>
+            <dd className="mt-1 font-mono text-app-success">{movesLabel}</dd>
           </div>
           <div className="border border-app-border bg-app-surface-raised p-3">
             <dt className="font-extrabold uppercase tracking-[0.16em] text-app-muted">{t('solve.details.search')}</dt>
-            <dd className="mt-1 font-mono text-emerald-300">{nodesLabel}</dd>
+            <dd className="mt-1 font-mono text-app-success">{nodesLabel}</dd>
           </div>
           <div className="border border-app-border bg-app-surface-raised p-3">
             <dt className="font-extrabold uppercase tracking-[0.16em] text-app-muted">{t('solve.details.time')}</dt>
-            <dd className="mt-1 font-mono text-emerald-300">{elapsedLabel}</dd>
+            <dd className="mt-1 font-mono text-app-success">{elapsedLabel}</dd>
           </div>
         </dl>
 
@@ -112,7 +100,7 @@ export function SolveDetailsModal({ result, onClose }: SolveDetailsModalProps) {
             <tbody>
               {detailRows.map((row) => (
                 <tr className="border-b border-app-border last:border-b-0" key={row.text}>
-                  <td className="border-r border-app-border px-3 py-3 align-top font-mono text-emerald-300">
+                  <td className="border-r border-app-border px-3 py-3 align-top font-mono text-app-success">
                     {row.text}
                   </td>
                   <td className="px-3 py-3 align-top leading-relaxed text-app-text">{row.meaning}</td>
@@ -121,8 +109,8 @@ export function SolveDetailsModal({ result, onClose }: SolveDetailsModalProps) {
             </tbody>
           </table>
         </div>
-      </section>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 

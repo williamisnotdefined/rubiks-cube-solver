@@ -48,8 +48,8 @@ export function ScanFaceReviewGrid({
                 'relative min-h-16 border text-sm font-extrabold uppercase tracking-[0.14em] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-app-focus/50',
                 selected ? 'border-app-text' : 'border-app-border',
                 details === undefined ? 'bg-app-surface-raised text-app-muted' : '',
-                lowConfidence ? 'ring-2 ring-amber-300/80' : '',
-                reviewTarget ? 'ring-4 ring-cyan-300/90' : '',
+                lowConfidence ? 'ring-2 ring-app-warning/80' : '',
+                reviewTarget ? 'ring-4 ring-app-info/90' : '',
               )}
               style={
                 details === undefined

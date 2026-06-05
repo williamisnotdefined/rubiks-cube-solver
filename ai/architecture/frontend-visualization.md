@@ -7,20 +7,25 @@ The frontend renders and controls solver interaction. It must not become the sou
 - TypeScript
 - React
 - Vite
+- React Router 7 with `HashRouter` for `#/solve` and `#/timer` routes, with page-level route code-splitting through React `lazy`/`Suspense`
 - `@tanstack/react-query` for API health, strategy metadata, and solve mutation state
 - `@houstonp/rubiks-cube` as a visualization custom element
 - Tailwind CSS v4 through `@tailwindcss/vite` and the single `apps/web/src/index.css` entrypoint for Tailwind import, resets, and semantic theme/color variables
 - `classnames` imported as `cls` for conditional class composition
 - `lucide-react` for UI icons; local SVG icon components and custom icon path data are not part of the frontend icon surface
-- Radix-backed shared primitives, including `apps/web/src/components/Popover.tsx`, for popovers and floating UI rendered through portals
+- Radix-backed shared primitives for dialogs, alert dialogs, selects, switches, checkboxes, toasts, popovers, and tooltips rendered through the wrappers in `apps/web/src/components`
+- React Hook Form and Zod for solve-form limit validation and submission shaping
+- Zustand for scoped timer, solve-settings, theme, and toast state
+- TanStack Table and TanStack Virtual for timer solve-table rendering
+- Motion for small overlay, select, toast, and error-boundary transitions with reduced-motion support
 - Vitest, Testing Library, and V8 coverage for unit/component/API-hook tests
 - Storybook for component stories and visual inspection
+- Playwright for product, scan, and timer E2E flows
 
 ## Optional Additions
 
 - React Three Fiber or another vetted Three.js abstraction only if the current custom element cannot support the needed visualization behavior.
-- Zustand only when shared local UI state is truly cross-component or cross-route and nearest-owner state is insufficient.
-- React Router and form libraries only after there is a concrete implemented need.
+- Additional global state, routing, form, animation, or component dependencies only after the existing stack cannot satisfy a concrete current need.
 
 ## Boundary
 
@@ -37,6 +42,7 @@ The solve form defaults to an empty scramble so the visualization starts solved;
 - `apps/web/src/api` owns HTTP request details, response normalization, typed results, API base URL handling, and API error mapping.
 - API operations are grouped by domain under `apps/web/src/api/<domain>` with request functions, React Query hooks, operation barrels, domain barrels, and domain query keys.
 - React Query owns API health, strategy metadata, solve mutation pending/error/data state, and future server-state operations.
+- Zustand owns only scoped client state that is already shared across components or routes, such as timer sessions/settings, solve settings, theme, and toasts.
 - React components own local form inputs, loading indicators, result display, and visualization playback state.
 - API load state, solve result state, form state, and visualization state should remain separate unless a single owner explicitly coordinates them.
 - Selection or playback state should be represented by IDs, move indexes, or notation strings rather than duplicated cube objects when possible.
@@ -46,13 +52,14 @@ The solve form defaults to an empty scramble so the visualization starts solved;
 ## UI Composition
 
 - `App.tsx` should stay thin and delegate the product screen to page-level modules.
+- Route-level code-splitting belongs in `App.tsx`; keep page-specific lazy chunks behind the current `HashRouter` routes.
 - Keep route or screen components readable as composition as the UI grows.
 - Extract named components for repeated panels, controls, result sections, or visualization shells when the extraction clarifies ownership.
 - Keep page-specific pieces colocated near the owning screen until reused elsewhere.
 - Shared reusable UI should live under `apps/web/src/components` only when there is a real shared consumer.
 - Context-independent helpers live under `apps/web/src/core/<category>/<name>.ts` and are imported directly without core barrels.
 - Keep page-specific hooks, validation helpers, message mapping, and constants under the owning page folder until reuse exists.
-- Use shared component primitives for repeated interaction patterns such as popovers; feature code should consume the primitive rather than direct Radix imports or hand-rolled outside-click/focus handling.
+- Use shared component primitives for repeated interaction patterns; feature code should consume wrappers such as `Dialog`, `AlertDialog`, `Select`, `Switch`, `Checkbox`, `Toast`, `Popover`, and `Tooltip` rather than direct Radix imports or hand-rolled portal/focus/outside-click handling.
 - Keep new or substantially changed React component files at or below 400 lines where practical.
 - Storybook stories live in a `stories/` child folder beside the source area they cover.
 - Use one primary story export per component and rely on controls for prop variation.
@@ -88,6 +95,8 @@ The solve form defaults to an empty scramble so the visualization starts solved;
 - API request tests mock fetch success and API error payloads.
 - Coverage runs with `npm run test:coverage -w @rubiks-cube-solver/web` and keeps thresholds at 95% or higher.
 - Storybook builds with `npm run storybook:build -w @rubiks-cube-solver/web`.
+- Playwright E2E tests use accessible roles and labels. Radix Select controls are not native `<select>` elements, so specs use helpers under `tests/e2e/select-helpers.ts` instead of `selectOption()` or `locator('option')`.
+- E2E commands are split by scope: `npm run test:e2e:smoke` for product/responsive/timer smoke, `npm run test:e2e:scan` for serial manual scan coverage, `npm run test:e2e:full` for the complete non-heavy gate, and `npm run test:e2e:heavy-scan` for opt-in generated scan reports.
 
 ## Visualization Libraries
 

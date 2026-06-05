@@ -18,6 +18,8 @@ Protect observable frontend behavior with Vitest, Testing Library, Storybook, an
 - Identify the behavior and the narrowest owning test folder before adding tests.
 - Add regression tests before fixing bugs when feasible.
 - Use Testing Library accessibility queries for React components.
+- Use Playwright accessibility queries for E2E flows.
+- Use `tests/e2e/select-helpers.ts` for Radix Select controls instead of native `selectOption()` assumptions.
 - Use shared web test helpers under `apps/web/src/test` for React Query providers and fetch mocks.
 - Test API request functions and hooks with mocked success and API-error responses.
 - Keep core helper tests under `apps/web/src/core/<category>/__tests__`.
@@ -29,6 +31,7 @@ Protect observable frontend behavior with Vitest, Testing Library, Storybook, an
 - Tests cover user-visible behavior, API hook boundaries, core helpers, and regression paths.
 - Tests live in `__tests__/` folders beside the source area they cover.
 - Storybook stories live in nearby `stories/` folders and avoid one story per prop.
+- E2E coverage protects product solve, manual scan, routing, and timer flows when behavior changes.
 - Coverage remains at or above 95% for configured web coverage targets.
 
 ## Verification
@@ -37,3 +40,5 @@ Protect observable frontend behavior with Vitest, Testing Library, Storybook, an
 - Run `npm run test -w @rubiks-cube-solver/web` after web test changes.
 - Run `npm run test:coverage -w @rubiks-cube-solver/web` after coverage or broad frontend changes.
 - Run `npm run storybook:build -w @rubiks-cube-solver/web` after story changes.
+- Run `npm run test:e2e` after product, timer, scan, or routing behavior changes when prerequisites are available.
+- Use `npm run test:e2e:smoke` for a faster product/responsive/timer check, `npm run test:e2e:scan` for manual scan coverage, and `npm run test:e2e:full` for the complete non-heavy gate.

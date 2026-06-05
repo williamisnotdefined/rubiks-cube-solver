@@ -1,15 +1,15 @@
 import cls from 'classnames'
 import { GitFork, Menu, Sun, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { NavLink as RouterNavLink } from 'react-router'
+import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from '@components/Dialog'
 import { Popover, PopoverContent, PopoverTrigger } from '@components/Popover'
+import { useThemePreferenceSync, useThemeStore, type ThemePreference } from '@core/theme/themeStore'
 
 export type PageNavRoute = 'solve' | 'timer'
 
-type ThemePreference = 'dark' | 'light' | 'system'
-
 const githubUrl = 'https://github.com/williamisnotdefined/rubiks-cube-solver'
-const themeStorageKey = 'rubiks-cube-solver-theme'
 
 type PageNavProps = {
   activeRoute: PageNavRoute
@@ -19,69 +19,61 @@ export function PageNav({ activeRoute }: PageNavProps) {
   const { t } = useTranslation()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        setMobileMenuOpen(false)
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
-
   return (
     <>
-      <div className="flex min-h-14 shrink-0 items-center justify-between border-b border-app-border bg-app-nav px-3 md:hidden">
-        <span className="text-sm font-black uppercase tracking-[0.2em] text-app-text">
-          {activeRoute === 'timer' ? t('navigation.timer') : t('navigation.solve')}
-        </span>
-        <button
-          aria-expanded={mobileMenuOpen}
-          aria-label={t('navigation.openMenu')}
-          className="inline-flex min-h-10 min-w-10 items-center justify-center border border-app-border bg-app-surface text-app-text outline-none transition-colors hover:border-app-text hover:bg-app-surface-raised focus-visible:ring-2 focus-visible:ring-app-focus/50"
-          type="button"
-          onClick={() => setMobileMenuOpen(true)}
+      <Dialog open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+        <div className="flex min-h-14 shrink-0 items-center justify-between border-b border-app-border bg-app-nav px-3 md:hidden">
+          <span className="text-sm font-black uppercase tracking-[0.2em] text-app-text">
+            {activeRoute === 'timer' ? t('navigation.timer') : t('navigation.solve')}
+          </span>
+          <DialogTrigger asChild>
+            <button
+              aria-expanded={mobileMenuOpen}
+              aria-label={t('navigation.openMenu')}
+              className="inline-flex min-h-10 min-w-10 items-center justify-center border border-app-border bg-app-surface text-app-text outline-none transition-colors hover:border-app-text hover:bg-app-surface-raised focus-visible:ring-2 focus-visible:ring-app-focus/50"
+              type="button"
+            >
+              <Menu aria-hidden="true" className="size-5" strokeWidth={2} />
+            </button>
+          </DialogTrigger>
+        </div>
+        <DialogContent
+          aria-describedby={undefined}
+          className="inset-y-0 left-0 z-40 flex w-72 min-h-0 flex-col border-r border-app-border bg-app-nav p-3 text-app-text shadow-2xl md:hidden"
+          motionPreset="drawer"
+          overlayClassName="z-40 bg-app-bg/80 md:hidden"
+          overlayLabel={t('navigation.closeMenu')}
         >
-          <Menu aria-hidden="true" className="size-5" strokeWidth={2} />
-        </button>
-      </div>
+          <nav
+            className="flex min-h-0 flex-1 flex-col"
+            aria-label={t('navigation.primary')}
+          >
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <DialogTitle asChild>
+                <span className="text-sm font-black uppercase tracking-[0.2em] text-app-text">
+                  {t('navigation.menu')}
+                </span>
+              </DialogTitle>
+              <DialogClose asChild>
+                <button
+                  aria-label={t('navigation.closeMenu')}
+                  className="inline-flex min-h-10 min-w-10 items-center justify-center border border-app-border bg-app-surface text-app-text outline-none transition-colors hover:border-app-text hover:bg-app-surface-raised focus-visible:ring-2 focus-visible:ring-app-focus/50"
+                  type="button"
+                >
+                  <X aria-hidden="true" className="size-5" strokeWidth={2} />
+                </button>
+              </DialogClose>
+            </div>
+            <NavContent activeRoute={activeRoute} onNavigate={() => setMobileMenuOpen(false)} />
+          </nav>
+        </DialogContent>
+      </Dialog>
       <nav
         className="hidden h-full w-64 shrink-0 border-r border-app-border bg-app-nav p-3 md:flex"
         aria-label={t('navigation.primary')}
       >
         <NavContent activeRoute={activeRoute} />
       </nav>
-      {mobileMenuOpen ? (
-        <div className="fixed inset-0 z-40 grid grid-cols-[minmax(0,18rem)_minmax(0,1fr)] md:hidden">
-          <nav
-            className="flex min-h-0 flex-col border-r border-app-border bg-app-nav p-3 shadow-2xl"
-            aria-label={t('navigation.primary')}
-          >
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <span className="text-sm font-black uppercase tracking-[0.2em] text-app-text">
-                {t('navigation.menu')}
-              </span>
-              <button
-                aria-label={t('navigation.closeMenu')}
-                className="inline-flex min-h-10 min-w-10 items-center justify-center border border-app-border bg-app-surface text-app-text outline-none transition-colors hover:border-app-text hover:bg-app-surface-raised focus-visible:ring-2 focus-visible:ring-app-focus/50"
-                type="button"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <X aria-hidden="true" className="size-5" strokeWidth={2} />
-              </button>
-            </div>
-            <NavContent activeRoute={activeRoute} onNavigate={() => setMobileMenuOpen(false)} />
-          </nav>
-          <button
-            aria-label={t('navigation.closeMenu')}
-            className="bg-app-bg/80 outline-none focus-visible:ring-2 focus-visible:ring-app-focus/50"
-            type="button"
-            onClick={() => setMobileMenuOpen(false)}
-          />
-        </div>
-      ) : null}
     </>
   )
 }
@@ -97,12 +89,12 @@ function NavContent({ activeRoute, onNavigate }: NavContentProps) {
   return (
     <div className="flex min-h-0 w-full flex-col gap-4">
       <div className="grid gap-2">
-        <NavLink active={activeRoute === 'solve'} href="#/solve" onClick={onNavigate}>
+        <PageNavLink active={activeRoute === 'solve'} to="/solve" onClick={onNavigate}>
           {t('navigation.solve')}
-        </NavLink>
-        <NavLink active={activeRoute === 'timer'} href="#/timer" onClick={onNavigate}>
+        </PageNavLink>
+        <PageNavLink active={activeRoute === 'timer'} to="/timer" onClick={onNavigate}>
           {t('navigation.timer')}
-        </NavLink>
+        </PageNavLink>
       </div>
       <div className="mt-auto flex gap-2">
         <ThemeMenu />
@@ -123,14 +115,13 @@ function NavContent({ activeRoute, onNavigate }: NavContentProps) {
 function ThemeMenu() {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
-  const [theme, setTheme] = useState<ThemePreference>(() => storedThemePreference())
+  const theme = useThemeStore((state) => state.theme)
+  const setThemePreference = useThemeStore((state) => state.setThemePreference)
 
-  useEffect(() => {
-    applyThemePreference(theme)
-  }, [theme])
+  useThemePreferenceSync()
 
   function handleThemeSelect(nextTheme: ThemePreference) {
-    setTheme(nextTheme)
+    setThemePreference(nextTheme)
     setOpen(false)
   }
 
@@ -193,16 +184,16 @@ function ThemeMenuItem({
   )
 }
 
-type NavLinkProps = {
+type PageNavLinkProps = {
   active: boolean
   children: string
-  href: string
   onClick?: () => void
+  to: string
 }
 
-function NavLink({ active, children, href, onClick }: NavLinkProps) {
+function PageNavLink({ active, children, onClick, to }: PageNavLinkProps) {
   return (
-    <a
+    <RouterNavLink
       className={cls(
         'border border-app-border px-4 py-3 text-xs font-extrabold uppercase tracking-[0.16em] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus/50',
         {
@@ -210,27 +201,11 @@ function NavLink({ active, children, href, onClick }: NavLinkProps) {
           'bg-app-surface text-app-muted hover:bg-app-surface-raised hover:text-app-text': !active,
         },
       )}
-      href={href}
       aria-current={active ? 'page' : undefined}
+      to={to}
       onClick={onClick}
     >
       {children}
-    </a>
+    </RouterNavLink>
   )
-}
-
-function storedThemePreference(): ThemePreference {
-  const storedTheme = window.localStorage.getItem(themeStorageKey)
-  return storedTheme === 'light' || storedTheme === 'dark' ? storedTheme : 'system'
-}
-
-function applyThemePreference(theme: ThemePreference) {
-  if (theme === 'system') {
-    window.localStorage.removeItem(themeStorageKey)
-    delete document.documentElement.dataset.theme
-    return
-  }
-
-  window.localStorage.setItem(themeStorageKey, theme)
-  document.documentElement.dataset.theme = theme
 }

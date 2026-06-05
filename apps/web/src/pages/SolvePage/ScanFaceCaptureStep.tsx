@@ -1,4 +1,4 @@
-import type { RefObject } from 'react'
+import type { Ref } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AnalyzeScanFaceResponse } from '@api/scan'
 import type { ScanFaceSymbol } from '@api/solver/types'
@@ -55,7 +55,7 @@ type ScanFaceCaptureStepProps = {
   scannerMessage: string
   showExpectedCenter: boolean
   stickersPerFace: number
-  videoRef: RefObject<HTMLVideoElement | null>
+  videoRef: Ref<HTMLVideoElement>
   onAutoScanToggle: () => void
   onCapture: () => void
   onClear: () => void

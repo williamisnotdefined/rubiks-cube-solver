@@ -39,10 +39,11 @@ Keep form state and lightweight validation clear while preserving the notation-o
 
 - Keep browser-facing solve input as move notation.
 - Keep the default scramble empty so the cube starts solved; place sample scrambles in placeholders or examples.
-- Keep simple required and numeric limit validation near the owning form.
+- Use the existing React Hook Form and Zod setup for solve-form required and numeric limit validation.
+- Keep simpler form-like controls local when RHF/Zod would add indirection without value.
 - Normalize notation before submitting it through the API client.
 - Let the API and engine own notation parsing, cube validity, search limits, and solver errors.
-- Add form libraries only when the form grows beyond lightweight local validation.
+- Do not add another form or validation library while RHF/Zod cover the current form need.
 - Keep validation messages accessible and close to the UI state that owns them.
 
 ## Expected Output
@@ -70,7 +71,8 @@ Rules for forms and local validation in `apps/web`.
 ## Always
 
 - Keep the browser-facing solve flow notation-only.
-- Keep simple solve controls in lightweight local state unless complexity justifies a form library.
+- Use the existing React Hook Form and Zod setup for solve controls that need schema validation or coordinated submission shaping.
+- Keep simpler form-like controls in lightweight local state when RHF/Zod would add indirection without value.
 - Keep local validation near the owning form when it only validates simple limits or required values.
 - Normalize move notation with `trim()` before API submission.
 - Keep field labels explicit and accessible through visible text.
@@ -84,7 +86,7 @@ Rules for forms and local validation in `apps/web`.
 - Do not expose facelet, Kociemba, sticker-state, or raw cube-state input modes in browser UI.
 - Do not submit facelet or sticker-state payloads from the browser.
 - Do not rely on browser validation for app-level solver messages.
-- Do not add React Hook Form, Zod, or another form library until current form complexity needs schema validation, many fields, or reusable validation.
+- Do not add another form or validation library while React Hook Form and Zod cover the current form need.
 - Do not duplicate API validation in the frontend beyond lightweight UX checks.
 - Do not parse or validate cube solvability in React components.
 
@@ -122,7 +124,7 @@ Rules for React component boundaries in `apps/web`.
 - Keep React component props explicit and small.
 - Prefer `children` for layout wrappers such as panels, shells, and result regions.
 - Use `lucide-react` for UI icons; import icon components directly from `lucide-react` instead of authoring local SVG icons.
-- Use shared Radix-backed primitives under `apps/web/src/components`, such as `apps/web/src/components/Popover.tsx`, for popovers and floating UI so portal, focus, escape, and outside-click behavior stay consistent.
+- Use shared Radix-backed primitives under `apps/web/src/components`, including `Dialog`, `AlertDialog`, `Select`, `Switch`, `Checkbox`, `Toast`, `Popover`, and `Tooltip`, so portal, focus, escape, and outside-click behavior stay consistent.
 - Extract focused hooks for repeated or stateful UI behavior, but do not hide an oversized component in a single oversized hook.
 - Keep new or substantially changed React component files at or below 400 lines where practical.
 - Keep Storybook stories in a `stories/` child folder beside the source area they cover.
@@ -138,8 +140,8 @@ Rules for React component boundaries in `apps/web`.
 - Do not render short fixed control groups through artificial arrays when direct JSX is clearer.
 - Do not mix cube validation, search, or solver behavior into React components.
 - Do not write inline `<svg>` icons, local `*Icon` components, or custom icon path data in React components; choose the closest `lucide-react` icon instead.
-- Do not hand-roll popover/dropdown state, document outside-click listeners, focus handling, or portal positioning when the shared `Popover` primitive can represent the behavior.
-- Do not import `@radix-ui/react-popover` directly outside `apps/web/src/components/Popover.tsx`.
+- Do not hand-roll dialog, select, switch, checkbox, toast, popover/dropdown state, document outside-click listeners, focus handling, or portal positioning when a shared primitive can represent the behavior.
+- Do not import Radix packages directly outside the corresponding wrapper under `apps/web/src/components` unless a new shared primitive is being created.
 - Do not place component stories in a shared fixtures folder; reserve shared story data for `src/stories` if it exists.
 
 ## Data-Driven Rendering
@@ -152,7 +154,7 @@ Rules for React component boundaries in `apps/web`.
 - Ensure extracted components do not change user-visible behavior.
 - Run `npm run build` after TypeScript or React component moves.
 - Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
-- Search changed frontend files for inline `<svg>`, local `*Icon` components, custom icon path data, and direct `@radix-ui/react-popover` imports outside `apps/web/src/components/Popover.tsx` before finishing.
+- Search changed frontend files for inline `<svg>`, local `*Icon` components, custom icon path data, and direct Radix package imports outside `apps/web/src/components` wrappers before finishing.
 - Run `npm run storybook:build -w @rubiks-cube-solver/web` after adding or changing stories.
 
 ## Reference: `ai/rules/frontend-state-rules.md`
@@ -174,12 +176,13 @@ Rules for client-side state ownership in `apps/web`.
 - Keep state reset rules next to the state owner.
 - Represent selection or playback state by notation strings, move indexes, IDs, or small status values instead of duplicated cube objects.
 - Use stable refs for custom element synchronization details that should not trigger renders.
+- Use existing Zustand stores only for scoped client state that is genuinely shared, including timer sessions/settings, solve settings, theme, and toasts.
 
 ## Never
 
 - Do not copy API data into broad mutable stores just to pass it through the UI.
 - Do not use React Context for mutable UI state.
-- Do not add Zustand unless state is truly cross-page or cross-feature and local state plus focused hooks are insufficient.
+- Do not add broad Zustand stores for API data, single-component UI state, or state that nearest-owner React state already represents clearly.
 - Do not copy React Query data into local state just to pass it to children.
 - Do not make a Three.js, web-component, facelet, or sticker state the canonical engine state.
 - Do not let visualization sync state own solver correctness.
@@ -192,7 +195,7 @@ Rules for client-side state ownership in `apps/web`.
 4. Focused hooks for repeated or stateful UI behavior.
 5. Component-local `useState` for component-only state.
 6. Stable refs for imperative custom element coordination.
-7. External client-state libraries only after current ownership options are insufficient.
+7. Existing scoped Zustand stores only when local state and focused hooks are insufficient.
 
 ## Verification
 

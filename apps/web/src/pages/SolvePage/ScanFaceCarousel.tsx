@@ -21,10 +21,10 @@ type ScanFaceCarouselProps = {
 }
 
 const statusClassNames: Record<ScanFaceStatus, string> = {
-  confirmed: 'border-emerald-300/80 text-emerald-100',
-  draft: 'border-sky-300/80 text-sky-100',
-  invalid: 'border-red-300/80 text-red-100',
-  needsReview: 'border-amber-300/80 text-amber-100',
+  confirmed: 'border-app-success/80 text-app-success',
+  draft: 'border-app-info/80 text-app-info',
+  invalid: 'border-app-danger/80 text-app-danger',
+  needsReview: 'border-app-warning/80 text-app-warning',
   pending: 'border-app-border text-app-muted',
 }
 

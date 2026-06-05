@@ -8,6 +8,12 @@
     "visualization": "Cube visualization",
     "visualizationUnavailable": "Visualization is not available for this puzzle yet."
   },
+  "errorBoundary": {
+    "description": "The current view crashed unexpectedly. Try again or switch routes to reload it.",
+    "kicker": "Unexpected error",
+    "retry": "Try again",
+    "title": "Something went wrong"
+  },
   "navigation": {
     "closeMenu": "Close menu",
     "github": "Open project on GitHub",
@@ -439,6 +445,7 @@
     "scramble": {
       "copied": "Copied",
       "copy": "Copy scramble",
+      "copyFailed": "Could not copy scramble",
       "event": "Event",
       "next": "Next scramble",
       "previous": "Previous scramble",

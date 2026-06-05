@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@components/Button'
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@components/Dialog'
 import { scanCnnStatusMessage, scanTileDetectorStatusMessage } from './scanSessionMessages'
 
 type ScanModalShellProps = {
   children: ReactNode
-  titleId: string
   visionOk?: boolean
   visionCnnAvailable?: boolean
   visionCnnReason?: string
@@ -17,7 +17,6 @@ type ScanModalShellProps = {
 
 export function ScanModalShell({
   children,
-  titleId,
   visionOk,
   visionCnnAvailable,
   visionCnnReason,
@@ -27,29 +26,31 @@ export function ScanModalShell({
   onOverlayClose,
 }: ScanModalShellProps) {
   const { t } = useTranslation()
+  const handleDismiss = onOverlayClose ?? onClose
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-3 py-6 sm:px-6">
-      <button
-        aria-label={t('scan.modal.dismiss')}
-        className="absolute inset-0 bg-app-bg/90"
-        type="button"
-        onClick={onOverlayClose ?? onClose}
-      />
-      <section
-        aria-labelledby={titleId}
-        aria-modal="true"
-        className="relative max-h-[calc(100vh-3rem)] w-full max-w-4xl overflow-auto border border-app-border bg-app-surface p-4 text-left text-app-text shadow-2xl sm:p-6"
-        role="dialog"
+    <Dialog open onOpenChange={(open) => {
+      if (!open) {
+        handleDismiss()
+      }
+    }}>
+      <DialogContent
+        className="left-1/2 top-1/2 max-h-[calc(100vh-3rem)] w-[calc(100vw-1.5rem)] max-w-4xl -translate-x-1/2 -translate-y-1/2 overflow-auto border border-app-border bg-app-surface p-4 text-left text-app-text shadow-2xl sm:w-[calc(100vw-3rem)] sm:p-6"
+        overlayClassName="bg-app-bg/90"
+        overlayLabel={t('scan.modal.dismiss')}
       >
         <div className="flex items-start justify-between gap-4">
           <div className="grid gap-1">
-            <h2 className="text-lg font-extrabold uppercase tracking-[0.16em]" id={titleId}>
-              {t('scan.modal.title')}
-            </h2>
-            <p className="text-sm font-semibold text-app-muted">
-              {t('scan.modal.description')}
-            </p>
+            <DialogTitle asChild>
+              <h2 className="text-lg font-extrabold uppercase tracking-[0.16em]">
+                {t('scan.modal.title')}
+              </h2>
+            </DialogTitle>
+            <DialogDescription asChild>
+              <p className="text-sm font-semibold text-app-muted">
+                {t('scan.modal.description')}
+              </p>
+            </DialogDescription>
             <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
               {scanCnnStatusMessage(t, visionOk, visionCnnAvailable, visionCnnReason)}
             </p>
@@ -68,7 +69,7 @@ export function ScanModalShell({
         </div>
 
         {children}
-      </section>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

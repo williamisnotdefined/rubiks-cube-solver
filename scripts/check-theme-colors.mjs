@@ -32,7 +32,18 @@ const files = stdout
 const failures = []
 
 for (const filePath of files) {
-  const content = await readFile(path.join(rootDir, filePath), 'utf8')
+  let content
+
+  try {
+    content = await readFile(path.join(rootDir, filePath), 'utf8')
+  } catch (error) {
+    if (error?.code === 'ENOENT') {
+      continue
+    }
+
+    throw error
+  }
+
   const appFile = appPathPrefixes.some((prefix) => filePath === prefix || filePath.startsWith(prefix))
   const docFile = docPathPrefixes.some((prefix) => filePath.startsWith(prefix))
 

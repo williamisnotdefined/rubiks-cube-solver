@@ -15,12 +15,13 @@ Rules for client-side state ownership in `apps/web`.
 - Keep state reset rules next to the state owner.
 - Represent selection or playback state by notation strings, move indexes, IDs, or small status values instead of duplicated cube objects.
 - Use stable refs for custom element synchronization details that should not trigger renders.
+- Use existing Zustand stores only for scoped client state that is genuinely shared, including timer sessions/settings, solve settings, theme, and toasts.
 
 ## Never
 
 - Do not copy API data into broad mutable stores just to pass it through the UI.
 - Do not use React Context for mutable UI state.
-- Do not add Zustand unless state is truly cross-page or cross-feature and local state plus focused hooks are insufficient.
+- Do not add broad Zustand stores for API data, single-component UI state, or state that nearest-owner React state already represents clearly.
 - Do not copy React Query data into local state just to pass it to children.
 - Do not make a Three.js, web-component, facelet, or sticker state the canonical engine state.
 - Do not let visualization sync state own solver correctness.
@@ -33,7 +34,7 @@ Rules for client-side state ownership in `apps/web`.
 4. Focused hooks for repeated or stateful UI behavior.
 5. Component-local `useState` for component-only state.
 6. Stable refs for imperative custom element coordination.
-7. External client-state libraries only after current ownership options are insufficient.
+7. Existing scoped Zustand stores only when local state and focused hooks are insufficient.
 
 ## Verification
 

@@ -248,7 +248,7 @@ describe('SolvePage', () => {
     expect(screen.getByTestId('cube-stage-enabled')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Solve' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Scan cube with camera' })).toBeInTheDocument()
-    expect(screen.getByLabelText('Puzzle')).toHaveValue('cube-3x3x3')
+    expect(screen.getByRole('combobox', { name: 'Puzzle' })).toHaveTextContent('3x3x3 Cube')
     expect(screen.getByTestId('cube-stage')).toHaveAttribute('data-cube-type', 'Three')
     expect(screen.queryByLabelText('Strategy')).not.toBeInTheDocument()
     expect(useCubeVisualizationMock).toHaveBeenLastCalledWith(
@@ -288,18 +288,21 @@ describe('SolvePage', () => {
     expect(within(scrambleRow).getByLabelText('Scramble')).toBeInTheDocument()
     expect(within(scrambleRow).getByRole('button', { name: 'Scan cube with camera' })).toBeInTheDocument()
     expect(within(limitsRow).getByLabelText('Max moves')).toBeInTheDocument()
-    expect(within(limitsRow).getByLabelText('Max nodes (M)')).toBeInTheDocument()
+    expect(within(limitsRow).getByRole('combobox', { name: 'Max nodes (M)' })).toBeInTheDocument()
     expect(within(limitsRow).getByRole('button', { name: 'Solve' })).toBeInTheDocument()
-    expect(screen.getByLabelText('Puzzle')).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Puzzle' })).toBeInTheDocument()
     expect(screen.queryByLabelText('Strategy')).not.toBeInTheDocument()
   })
 
-  it('disables puzzle options that are not implemented yet', () => {
+  it('disables puzzle options that are not implemented yet', async () => {
+    const user = userEvent.setup()
     render(<SolvePage />)
 
-    expect(screen.getByRole('option', { name: '3x3x3 Cube' })).not.toBeDisabled()
-    expect(screen.getByRole('option', { name: '2x2x2 Cube' })).not.toBeDisabled()
-    expect(screen.getByRole('option', { name: 'Pyraminx' })).toBeDisabled()
+    await user.click(screen.getByRole('combobox', { name: 'Puzzle' }))
+
+    expect(screen.getByRole('option', { name: '3x3x3 Cube' })).not.toHaveAttribute('aria-disabled')
+    expect(screen.getByRole('option', { name: '2x2x2 Cube' })).not.toHaveAttribute('aria-disabled')
+    expect(screen.getByRole('option', { name: 'Pyraminx' })).toHaveAttribute('aria-disabled', 'true')
   })
 
   it('opens the scan modal from the camera button', async () => {
@@ -330,7 +333,7 @@ describe('SolvePage', () => {
     await user.type(screen.getByLabelText('Scramble'), '  R U  ')
     await user.clear(screen.getByLabelText('Max moves'))
     await user.type(screen.getByLabelText('Max moves'), '2')
-    await user.selectOptions(screen.getByLabelText('Max nodes (M)'), '15')
+    await chooseSelectOption(user, 'Max nodes (M)', '15')
     await user.click(screen.getByRole('button', { name: 'Solve' }))
 
     await waitFor(() => {
@@ -350,7 +353,7 @@ describe('SolvePage', () => {
     const user = userEvent.setup()
     render(<SolvePage />)
 
-    await user.selectOptions(screen.getByLabelText('Puzzle'), 'cube-2x2x2')
+    await chooseSelectOption(user, 'Puzzle', '2x2x2 Cube')
 
     expect(screen.getByLabelText('Scramble')).toHaveAttribute('placeholder', 'R U F')
     expect(screen.getByLabelText('Max moves')).toHaveValue(11)
@@ -373,7 +376,7 @@ describe('SolvePage', () => {
     const user = userEvent.setup()
     render(<SolvePage />)
 
-    await user.selectOptions(screen.getByLabelText('Puzzle'), 'cube-2x2x2')
+    await chooseSelectOption(user, 'Puzzle', '2x2x2 Cube')
     await user.type(screen.getByLabelText('Scramble'), 'R U F')
     await user.click(screen.getByRole('button', { name: 'Solve' }))
 
@@ -400,7 +403,7 @@ describe('SolvePage', () => {
     const user = userEvent.setup()
     render(<SolvePage />)
 
-    await user.selectOptions(screen.getByLabelText('Puzzle'), 'cube-2x2x2')
+    await chooseSelectOption(user, 'Puzzle', '2x2x2 Cube')
     await user.type(screen.getByLabelText('Scramble'), 'R')
     await user.clear(screen.getByLabelText('Max moves'))
     await user.type(screen.getByLabelText('Max moves'), '12')
@@ -484,7 +487,7 @@ describe('SolvePage', () => {
     apiMocks.scanSessionSolveResult = scanSuccessResult(visualState, 'cube2-facelets-v1')
 
     render(<SolvePage />)
-    await user.selectOptions(screen.getByLabelText('Puzzle'), 'cube-2x2x2')
+    await chooseSelectOption(user, 'Puzzle', '2x2x2 Cube')
     await user.click(screen.getByRole('button', { name: 'Scan cube with camera' }))
     await user.click(screen.getByRole('button', { name: 'Solve scanned cube' }))
 
@@ -523,6 +526,13 @@ describe('SolvePage', () => {
     expect(screen.getByText('No solution within the configured limits')).toBeInTheDocument()
   })
 })
+
+type TestUser = ReturnType<typeof userEvent.setup>
+
+async function chooseSelectOption(user: TestUser, label: string, optionName: string) {
+  await user.click(screen.getByRole('combobox', { name: label }))
+  await user.click(screen.getByRole('option', { name: optionName }))
+}
 
 function scanSuccessResult(
   visualState?: string,

@@ -1,7 +1,18 @@
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
+import { Checkbox } from '../Checkbox'
 import { Field } from '../Field'
 import { Loader3x3 } from '../Loader3x3'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../Select'
+import { Switch } from '../Switch'
 
 const cubeMocks = vi.hoisted(() => {
   const mocks = {
@@ -51,6 +62,46 @@ describe('Field', () => {
   })
 })
 
+describe('Select', () => {
+  it('selects an item through the accessible combobox', async () => {
+    const user = userEvent.setup()
+    render(<SelectHarness />)
+
+    await user.click(screen.getByRole('combobox', { name: 'Max nodes' }))
+    await user.click(screen.getByRole('option', { name: '15' }))
+
+    expect(screen.getByRole('combobox', { name: 'Max nodes' })).toHaveTextContent('15')
+  })
+})
+
+describe('Switch', () => {
+  it('toggles checked state', async () => {
+    const user = userEvent.setup()
+    render(<SwitchHarness />)
+
+    const control = screen.getByRole('switch', { name: 'Inspection' })
+    expect(control).toHaveAttribute('aria-checked', 'false')
+
+    await user.click(control)
+
+    expect(control).toHaveAttribute('aria-checked', 'true')
+  })
+})
+
+describe('Checkbox', () => {
+  it('toggles checked state', async () => {
+    const user = userEvent.setup()
+    render(<CheckboxHarness />)
+
+    const control = screen.getByRole('checkbox', { name: 'Use inspection' })
+    expect(control).toHaveAttribute('aria-checked', 'false')
+
+    await user.click(control)
+
+    expect(control).toHaveAttribute('aria-checked', 'true')
+  })
+})
+
 describe('Loader3x3', () => {
   it('renders an accessible loading indicator by default', () => {
     render(<Loader3x3 />)
@@ -91,3 +142,37 @@ describe('Loader3x3', () => {
     expect(container.firstElementChild).not.toHaveClass('size-10')
   })
 })
+
+function SelectHarness() {
+  const [value, setValue] = useState('10')
+
+  return (
+    <Select value={value} onValueChange={setValue}>
+      <SelectTrigger aria-label="Max nodes">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="10">10</SelectItem>
+        <SelectItem value="15">15</SelectItem>
+      </SelectContent>
+    </Select>
+  )
+}
+
+function SwitchHarness() {
+  const [checked, setChecked] = useState(false)
+
+  return <Switch aria-label="Inspection" checked={checked} onCheckedChange={setChecked} />
+}
+
+function CheckboxHarness() {
+  const [checked, setChecked] = useState(false)
+
+  return (
+    <Checkbox
+      aria-label="Use inspection"
+      checked={checked}
+      onCheckedChange={(nextChecked) => setChecked(nextChecked === true)}
+    />
+  )
+}

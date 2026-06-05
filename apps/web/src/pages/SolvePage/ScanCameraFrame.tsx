@@ -1,4 +1,4 @@
-import { memo, type RefObject } from 'react'
+import { memo, type Ref } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ScanDetectionBox, ScanTileDetection } from '@api/scan'
 import type { ScanFaceSymbol } from '@api/solver/types'
@@ -26,7 +26,7 @@ type ScanCameraFrameProps = {
   temporalConsensus?: TemporalFaceConsensus
   tileDetections?: readonly ScanTileDetection[]
   trackingStatus?: LiveScanPreviewStatus
-  videoRef: RefObject<HTMLVideoElement | null>
+  videoRef: Ref<HTMLVideoElement>
 }
 
 export const ScanCameraFrame = memo(function ScanCameraFrame({

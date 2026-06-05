@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { ToastProvider } from '@components/Toast'
 import { TimerPage } from '../TimerPage'
 import { useTimerSettingsStore } from '../timerSettingsStore'
 import { useTimerStore } from '../timerStore'
@@ -15,7 +16,7 @@ describe('TimerPage', () => {
   })
 
   it('renders the timer workspace with a scramble and empty solve list', () => {
-    render(<TimerPage />)
+    renderTimerPage()
 
     expect(screen.getByRole('timer', { name: 'Speedsolve timer' })).toBeInTheDocument()
     expect(screen.getAllByText(/3x3x3/).length).toBeGreaterThan(0)
@@ -25,7 +26,7 @@ describe('TimerPage', () => {
 
   it('ignores penalty changes before any solve exists', async () => {
     const user = userEvent.setup()
-    render(<TimerPage />)
+    renderTimerPage()
 
     await user.click(screen.getByRole('button', { name: '+2' }))
 
@@ -35,14 +36,14 @@ describe('TimerPage', () => {
   it('falls back to the first timer session when the active id is stale', () => {
     useTimerStore.getState().setActiveSessionId('missing-session')
 
-    render(<TimerPage />)
+    renderTimerPage()
 
     expect(screen.getByRole('timer', { name: 'Speedsolve timer' })).toBeInTheDocument()
     expect(screen.getByText('No solves yet')).toBeInTheDocument()
   })
 
   it('records a solve with the keyboard timer', async () => {
-    render(<TimerPage />)
+    renderTimerPage()
 
     fireEvent.keyDown(window, { code: 'Space', key: ' ' })
     fireEvent.keyUp(window, { code: 'Space', key: ' ' })
@@ -55,9 +56,9 @@ describe('TimerPage', () => {
     expect(within(screen.getByRole('table')).getByText('1')).toBeInTheDocument()
   })
 
-  it('updates the latest solve penalty', async () => {
+  it('updates the latest solve penalty between +2, DNF, and OK', async () => {
     const user = userEvent.setup()
-    render(<TimerPage />)
+    renderTimerPage()
 
     fireEvent.keyDown(window, { code: 'Space', key: ' ' })
     fireEvent.keyUp(window, { code: 'Space', key: ' ' })
@@ -68,13 +69,21 @@ describe('TimerPage', () => {
     await user.click(screen.getByRole('button', { name: '+2' }))
 
     expect(within(screen.getByRole('table')).getByText('+2')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'DNF' }))
+
+    expect(within(screen.getByRole('table')).getAllByText('DNF').length).toBeGreaterThan(0)
+
+    await user.click(screen.getByRole('button', { name: 'OK' }))
+
+    expect(within(screen.getByRole('table')).getByText('OK')).toBeInTheDocument()
   })
 
   it('switches WCA events and stores the selected event on the solve', async () => {
     const user = userEvent.setup()
-    render(<TimerPage />)
+    renderTimerPage()
 
-    await user.selectOptions(screen.getByLabelText('Event'), 'pyraminx')
+    await chooseSelectOption(user, 'Event', 'Pyraminx')
 
     await waitFor(() => expect(screen.getAllByText(/Pyraminx/).length).toBeGreaterThan(0))
 
@@ -91,9 +100,9 @@ describe('TimerPage', () => {
 
   it('renders multiline MBLD scrambles', async () => {
     const user = userEvent.setup()
-    render(<TimerPage />)
+    renderTimerPage()
 
-    await user.selectOptions(screen.getByLabelText('Event'), '333mbld')
+    await chooseSelectOption(user, 'Event', '3x3 MBLD')
 
     expect(
       await screen.findByText((content) => content.includes('1. ') && content.includes('5. ')),
@@ -107,12 +116,13 @@ describe('TimerPage', () => {
       configurable: true,
       value: { writeText },
     })
-    render(<TimerPage />)
+    renderTimerPage()
 
     expect(screen.getByRole('button', { name: 'Previous scramble' })).toBeDisabled()
     await user.click(screen.getByRole('button', { name: 'Copy scramble' }))
     expect(writeText).toHaveBeenCalledWith(expect.any(String))
     expect(screen.getByRole('button', { name: 'Copied' })).toBeInTheDocument()
+    expect(screen.getByText('Copied')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Next scramble' }))
     expect(screen.getByRole('button', { name: 'Copy scramble' })).toBeInTheDocument()
@@ -128,21 +138,22 @@ describe('TimerPage', () => {
       configurable: true,
       value: { writeText: vi.fn().mockRejectedValue(new Error('denied')) },
     })
-    render(<TimerPage />)
+    renderTimerPage()
 
     await user.click(screen.getByRole('button', { name: 'Copy scramble' }))
 
     expect(screen.getByRole('button', { name: 'Copy scramble' })).toBeInTheDocument()
+    expect(screen.getByText('Could not copy scramble')).toBeInTheDocument()
   })
 
   it('toggles inspection and millisecond display settings', async () => {
     const user = userEvent.setup()
-    render(<TimerPage />)
+    renderTimerPage()
 
-    await user.click(screen.getByLabelText('Inspection'))
+    await user.click(screen.getByRole('switch', { name: 'Inspection' }))
     expect(screen.getByText('WCA inspection')).toBeInTheDocument()
 
-    await user.click(screen.getByLabelText('Milliseconds'))
+    await user.click(screen.getByRole('switch', { name: 'Milliseconds' }))
     fireEvent.keyDown(window, { code: 'Space', key: ' ' })
     fireEvent.keyUp(window, { code: 'Space', key: ' ' })
     await waitFor(() => expect(screen.getAllByText('Inspection').length).toBeGreaterThan(1))
@@ -157,7 +168,7 @@ describe('TimerPage', () => {
 
   it('deletes recorded solves from the table', async () => {
     const user = userEvent.setup()
-    render(<TimerPage />)
+    renderTimerPage()
 
     fireEvent.keyDown(window, { code: 'Space', key: ' ' })
     fireEvent.keyUp(window, { code: 'Space', key: ' ' })
@@ -167,6 +178,21 @@ describe('TimerPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'Delete' }))
 
-    expect(screen.getByText('No solves yet')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByText('No solves yet')).toBeInTheDocument())
   })
 })
+
+function renderTimerPage() {
+  return render(
+    <ToastProvider>
+      <TimerPage />
+    </ToastProvider>,
+  )
+}
+
+type TestUser = ReturnType<typeof userEvent.setup>
+
+async function chooseSelectOption(user: TestUser, label: string, optionName: string) {
+  await user.click(screen.getByRole('combobox', { name: label }))
+  await user.click(screen.getByRole('option', { name: optionName }))
+}

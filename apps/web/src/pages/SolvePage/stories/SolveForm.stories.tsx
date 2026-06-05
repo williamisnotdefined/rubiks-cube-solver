@@ -8,7 +8,6 @@ const meta = {
     disabled: false,
     maxMovesInput: '20',
     maxMovesLimit: 20,
-    maxNodesInvalid: false,
     maxNodesMillionInput: '10',
     notation: '',
     puzzleOptions: [
@@ -59,7 +58,7 @@ const meta = {
     onNotationChange: () => undefined,
     onPuzzleChange: () => undefined,
     onScanClick: () => undefined,
-    onSubmit: (event) => event.preventDefault(),
+    onSubmit: () => undefined,
   },
   component: SolveForm,
   title: 'SolvePage/SolveForm',

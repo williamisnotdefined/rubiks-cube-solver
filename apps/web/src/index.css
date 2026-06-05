@@ -13,6 +13,10 @@
   --color-app-muted: var(--app-muted);
   --color-app-inverse: var(--app-inverse);
   --color-app-focus: var(--app-focus);
+  --color-app-success: var(--app-success);
+  --color-app-danger: var(--app-danger);
+  --color-app-warning: var(--app-warning);
+  --color-app-info: var(--app-info);
 }
 
 :root,
@@ -30,6 +34,10 @@
   --app-muted: #a8a8a8;
   --app-inverse: #080808;
   --app-focus: #f7f7f7;
+  --app-success: #86efac;
+  --app-danger: #fca5a5;
+  --app-warning: #fcd34d;
+  --app-info: #7dd3fc;
   --scan-u-bg: #f8fafc;
   --scan-u-fg: #09090b;
   --scan-r-bg: #ef4444;
@@ -59,6 +67,10 @@
     --app-muted: #4b5563;
     --app-inverse: #f3f4f6;
     --app-focus: #111827;
+    --app-success: #166534;
+    --app-danger: #b91c1c;
+    --app-warning: #92400e;
+    --app-info: #075985;
   }
 }
 
@@ -76,6 +88,10 @@
   --app-muted: #4b5563;
   --app-inverse: #f3f4f6;
   --app-focus: #111827;
+  --app-success: #166534;
+  --app-danger: #b91c1c;
+  --app-warning: #92400e;
+  --app-info: #075985;
 }
 
 *,
