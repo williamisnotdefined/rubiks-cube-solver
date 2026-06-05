@@ -136,24 +136,29 @@ impl PruningTable {
         &self,
         index: usize,
     ) -> Result<u8, PruningLookupError> {
-        let table_size = self
-            .metadata
-            .table_size()
-            .map_err(|error| PruningLookupError::InvalidMetadata { error })?;
-
-        if index >= table_size {
-            return Err(PruningLookupError::IndexOutOfRange { index, table_size });
-        }
-
         match &self.entries {
-            PruningEntries::Sparse(entries) => entries
-                .get(&index)
-                .copied()
-                .ok_or(PruningLookupError::MissingEntry { index }),
+            PruningEntries::Sparse(entries) => {
+                let table_size = self
+                    .metadata
+                    .table_size()
+                    .map_err(|error| PruningLookupError::InvalidMetadata { error })?;
+
+                if index >= table_size {
+                    return Err(PruningLookupError::IndexOutOfRange { index, table_size });
+                }
+
+                entries
+                    .get(&index)
+                    .copied()
+                    .ok_or(PruningLookupError::MissingEntry { index })
+            }
             PruningEntries::Dense(entries) => match entries.get(index).copied() {
                 Some(UNREACHED_DISTANCE) => Err(PruningLookupError::MissingEntry { index }),
                 Some(distance) => Ok(distance),
-                None => Err(PruningLookupError::IndexOutOfRange { index, table_size }),
+                None => Err(PruningLookupError::IndexOutOfRange {
+                    index,
+                    table_size: entries.len(),
+                }),
             },
         }
     }

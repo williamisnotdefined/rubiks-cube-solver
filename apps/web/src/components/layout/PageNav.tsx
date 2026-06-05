@@ -1,8 +1,9 @@
 import cls from 'classnames'
-import { GitFork, Menu, Sun, X } from 'lucide-react'
+import { Menu, Sun, X } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink as RouterNavLink } from 'react-router'
+import { siGithub } from 'simple-icons/icons'
 import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from '@components/Dialog'
 import { Popover, PopoverContent, PopoverTrigger } from '@components/Popover'
 import { useThemePreferenceSync, useThemeStore, type ThemePreference } from '@core/theme/themeStore'
@@ -105,7 +106,15 @@ function NavContent({ activeRoute, onNavigate }: NavContentProps) {
           rel="noreferrer"
           target="_blank"
         >
-          <GitFork aria-hidden="true" className="size-5" strokeWidth={2} />
+          <span className="sr-only">{t('navigation.github')}</span>
+          <svg
+            aria-hidden="true"
+            className="size-5"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path d={siGithub.path} />
+          </svg>
         </a>
       </div>
     </div>

@@ -329,6 +329,14 @@
       "time": "Time",
       "title": "Solver details"
     },
+    "noSolution": {
+      "attempted": "{{strategy}} tried up to {{maxDepth}} moves and {{maxNodes}} nodes.",
+      "description": "The solver did not find a replay-verified result with the current limits. Increase the limits and try the same cube again.",
+      "dismiss": "Close solve limits dialog",
+      "previousAttempt": "Previous attempt",
+      "retry": "Try with these limits",
+      "title": "Try different limits"
+    },
     "errors": {
       "detail": {
         "generated_tables_corrupt": "Regenerate native pruning tables; the current API artifacts do not match the Rust engine.",

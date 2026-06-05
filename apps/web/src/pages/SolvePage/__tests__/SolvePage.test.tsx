@@ -349,6 +349,75 @@ describe('SolvePage', () => {
     })
   })
 
+  it('opens a retry modal for notation solve limit failures', async () => {
+    const user = userEvent.setup()
+    const { rerender } = render(<SolvePage />)
+
+    await user.type(screen.getByLabelText('Scramble'), 'R U')
+    apiMocks.solveData = limitFailure
+    rerender(<SolvePage />)
+
+    const dialog = screen.getByRole('dialog', { name: 'Try different limits' })
+    expect(within(dialog).getByText('Previous attempt')).toBeInTheDocument()
+    expect(within(dialog).getByText(/12,345 nodes/)).toBeInTheDocument()
+  })
+
+  it('retries notation solve with updated shared limits from the modal', async () => {
+    const user = userEvent.setup()
+    const { rerender } = render(<SolvePage />)
+
+    await user.type(screen.getByLabelText('Scramble'), 'R U')
+    apiMocks.solveData = limitFailure
+    rerender(<SolvePage />)
+    apiMocks.mutateAsync.mockClear()
+
+    const dialog = screen.getByRole('dialog', { name: 'Try different limits' })
+    await user.clear(within(dialog).getByLabelText('Max moves'))
+    await user.type(within(dialog).getByLabelText('Max moves'), '18')
+    await user.click(within(dialog).getByRole('combobox', { name: 'Max nodes (M)' }))
+    await user.click(screen.getByRole('option', { name: '25' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Try with these limits' }))
+
+    await waitFor(() => {
+      expect(apiMocks.mutateAsync).toHaveBeenCalledWith({
+        notation: 'R U',
+        puzzleSlug: 'cube-3x3x3',
+        limits: {
+          maxDepth: 18,
+          maxNodes: 25_000_000,
+          strategyId: 'generated-two-phase',
+        },
+      })
+    })
+    expect(useSolveSettingsStore.getState()).toMatchObject({
+      maxMovesInput: '18',
+      maxNodesMillionInput: '25',
+    })
+  })
+
+  it('opens the retry modal for 2x2 node limit failures with the 2x2 move cap', async () => {
+    const user = userEvent.setup()
+    const { rerender } = render(<SolvePage />)
+
+    await chooseSelectOption(user, 'Puzzle', '2x2x2 Cube')
+    await user.type(screen.getByLabelText('Scramble'), 'R U F')
+    apiMocks.solveData = {
+      ...limitFailure,
+      errorKind: 'node_limit_exceeded',
+      generatedTableStatus: 'not_applicable',
+      maxDepth: 11,
+      maxNodes: 1,
+      solverMode: 'cube2_pdb_ida_star',
+      status: 'node_limit_exceeded',
+      strategyId: 'cube2-pdb-ida-star',
+      strategyLabel: '2x2 PDB IDA*',
+    }
+    rerender(<SolvePage />)
+
+    const dialog = screen.getByRole('dialog', { name: 'Try different limits' })
+    expect(within(dialog).getByLabelText('Max moves')).toHaveAttribute('max', '11')
+  })
+
   it('selects 2x2 puzzle settings and keeps scan available', async () => {
     const user = userEvent.setup()
     render(<SolvePage />)

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AnalyzeScanFaceResponse, ScanSessionResult } from '@api/scan'
@@ -6,6 +6,7 @@ import type { ScanFaceSymbol, SolveResult } from '@api/solver/types'
 import { ScanCubeModal } from '../ScanCubeModal'
 import { captureScanImage } from '../scanCapture'
 import { scanFaceOrder } from '../scanState'
+import { useSolveSettingsStore } from '../solveSettingsStore'
 
 const apiMocks = vi.hoisted(() => ({
   analyzeReset: vi.fn(),
@@ -232,6 +233,7 @@ describe('ScanCubeModal', () => {
     liveScanMocks.analysisOverrides = undefined
     liveScanMocks.enabledValues = []
     liveScanMocks.resetAutoFill.mockClear()
+    useSolveSettingsStore.getState().resetSolveSettings()
     Object.defineProperty(HTMLMediaElement.prototype, 'play', {
       configurable: true,
       value: vi.fn().mockResolvedValue(undefined),
@@ -851,8 +853,53 @@ describe('ScanCubeModal', () => {
     await user.click(screen.getByRole('button', { name: 'Solve scanned cube' }))
 
     await screen.findByText('no solution found within limits')
+    expect(screen.getByRole('dialog', { name: 'Try different limits' })).toBeInTheDocument()
     expect(onSessionSolveResult).not.toHaveBeenCalled()
     expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('retries a terminal scan solve failure with updated shared limits', async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+    const onSessionSolveResult = vi.fn()
+    liveScanMocks.autoRecognize = true
+    apiMocks.solveSessionMutateAsync
+      .mockResolvedValueOnce({
+        ...scanSessionAccepted(),
+        ok: false,
+        solve: scanSolveFailure(),
+        status: 'api_error',
+      })
+      .mockResolvedValueOnce(scanSessionAccepted())
+
+    render(
+      <ScanCubeModal
+        apiReady
+        solving={false}
+        onClose={onClose}
+        onSessionSolveResult={onSessionSolveResult}
+      />,
+    )
+
+    await confirmAllFaces(user)
+    await user.click(screen.getByRole('button', { name: 'Solve scanned cube' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Try different limits' })
+
+    await user.clear(within(dialog).getByLabelText('Max moves'))
+    await user.type(within(dialog).getByLabelText('Max moves'), '18')
+    await user.click(within(dialog).getByRole('combobox', { name: 'Max nodes (M)' }))
+    await user.click(screen.getByRole('option', { name: '25' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Try with these limits' }))
+
+    await waitFor(() => expect(apiMocks.solveSessionMutateAsync).toHaveBeenCalledTimes(2))
+    expect(apiMocks.solveSessionMutateAsync).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        maxDepth: 18,
+        maxNodes: 25_000_000,
+      }),
+    )
+    await waitFor(() => expect(onSessionSolveResult).toHaveBeenCalledWith(expect.objectContaining({ ok: true })))
+    expect(onClose).toHaveBeenCalled()
   })
 
   it('navigates to backend rescan targets', async () => {

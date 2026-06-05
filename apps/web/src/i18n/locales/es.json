@@ -329,6 +329,14 @@
       "time": "Tiempo",
       "title": "Detalles del solver"
     },
+    "noSolution": {
+      "attempted": "{{strategy}} intentó hasta {{maxDepth}} movimientos y {{maxNodes}} nodos.",
+      "description": "El solver no encontró un resultado verificado por replay con los límites actuales. Aumenta los límites e intenta el mismo cubo de nuevo.",
+      "dismiss": "Cerrar diálogo de límites del solver",
+      "previousAttempt": "Intento anterior",
+      "retry": "Intentar con estos límites",
+      "title": "Intentar otros límites"
+    },
     "errors": {
       "detail": {
         "generated_tables_corrupt": "Regenera las tablas de poda nativas; los artefactos actuales de la API no coinciden con el motor Rust.",
