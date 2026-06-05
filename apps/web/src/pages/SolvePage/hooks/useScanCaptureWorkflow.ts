@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAnalyzeScanFace, type AnalyzeScanFaceResponse } from '@api/scan'
 import type { ScanFaceSymbol } from '@api/solver/types'
@@ -61,6 +61,7 @@ export function useScanCaptureWorkflow({
 }: UseScanCaptureWorkflowOptions) {
   const { t } = useTranslation()
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  const [videoElementRevision, setVideoElementRevision] = useState(0)
   const camera = useCameraStream(true)
   const analyzeScanFace = useAnalyzeScanFace()
   const [drafts, setDrafts] = useState(() => createInitialScanFaceDrafts(stickersPerFace))
@@ -131,6 +132,14 @@ export function useScanCaptureWorkflow({
     scanAnalysis !== undefined ||
     stickers.some((sticker, index) => index !== centerIndex && sticker.symbol !== undefined)
   const cameraStream = camera.status === 'ready' ? camera.stream : undefined
+  const setVideoRef = useCallback((video: HTMLVideoElement | null) => {
+    if (videoRef.current === video) {
+      return
+    }
+
+    videoRef.current = video
+    setVideoElementRevision((revision) => revision + 1)
+  }, [])
 
   useEffect(() => {
     const video = videoRef.current
@@ -152,7 +161,7 @@ export function useScanCaptureWorkflow({
         video.srcObject = null
       }
     }
-  }, [cameraStream, currentFaceIndex])
+  }, [cameraStream, currentFaceIndex, videoElementRevision])
 
   useEffect(() => {
     if (
@@ -417,6 +426,6 @@ export function useScanCaptureWorkflow({
     setDrafts,
     setMessage,
     stickers,
-    videoRef,
+    videoRef: setVideoRef,
   }
 }

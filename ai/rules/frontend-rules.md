@@ -18,10 +18,14 @@ Rules for the web visualization and frontend-to-API boundary.
 - Extract React components only when UI repeats or a named component makes ownership and composition clearer.
 - Keep one-off UI inline when extraction would add indirection without reuse or state-boundary value.
 - Keep route or screen files readable as composition; `App.tsx` should stay thin as the UI grows.
+- Use React Router through the current `HashRouter` route setup; do not switch to `BrowserRouter` without a server fallback requirement.
+- Keep page-level route code-splitting in `App.tsx` with React `lazy`/`Suspense` when route bundles grow.
 - Keep page-specific components, hooks, and helpers under the owning page folder until reused elsewhere.
 - Keep shared reusable components under `apps/web/src/components` only after there is a real shared consumer.
+- Use existing shared Radix-backed primitives for dialogs, selects, switches, checkboxes, toasts, popovers, and tooltips instead of importing Radix directly in feature code.
 - Prefer explicit props and children for reusable layout wrappers.
-- Use lightweight local validation for simple solve controls; add a form library only when current form complexity requires it.
+- Use the existing React Hook Form and Zod setup for solve-form schema validation and submission shaping; keep cube semantics and notation validity in Rust/API code.
+- Use existing Zustand stores only for scoped client state that is shared beyond one component, such as timer sessions/settings, solve settings, theme, and toasts.
 - Use Tailwind utility classes for styling; keep Tailwind import, resets, and semantic theme/color variables in the single `apps/web/src/index.css` entrypoint.
 
 ## Never
@@ -32,7 +36,8 @@ Rules for the web visualization and frontend-to-API boundary.
 - Do not add or import `.css` files outside the single Tailwind/theme entrypoint `apps/web/src/index.css`.
 - Do not make browser clients submit facelets to the API; client-facing solve requests use move notation only.
 - Do not copy API data into broad mutable stores just to pass it through the UI.
-- Do not introduce Zustand, React Hook Form, Zod, React Router, Tailwind, or Storybook conventions unless the dependency exists and current UI complexity justifies it.
+- Do not add new frontend state, form, routing, animation, styling, or component dependencies while the existing stack can satisfy the current need.
+- Do not use native-select assumptions such as Playwright `selectOption()` for Radix Select controls.
 - Do not turn a large component into a hidden god hook or god provider.
 - Do not import raw request functions into UI once a project-level hook/client boundary exists for that operation.
 - Do not import query keys or raw request functions into React components.

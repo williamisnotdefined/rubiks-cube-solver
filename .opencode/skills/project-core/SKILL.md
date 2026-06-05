@@ -117,6 +117,7 @@ Testing rules for this repository.
 - Use Vitest APIs such as `describe`, `it`, `expect`, `vi.fn`, and `vi.spyOn` for `apps/web` unit and component tests.
 - Keep `apps/web` tests in `__tests__/` folders beside the source area they cover.
 - Use Testing Library for React component behavior and public accessibility queries.
+- Use Playwright accessibility queries for E2E flows and shared E2E helpers for non-native controls such as Radix Select.
 - Keep `apps/web/src/api` request and hook tests in `apps/web/src/api/__tests__`, using shared fetch and React Query helpers under `apps/web/src/test`.
 - Keep `apps/web/src/core` tests under `apps/web/src/core/<category>/__tests__/<name>.test.ts`.
 - Keep `apps/web` coverage thresholds at 95% or higher for statements, branches, functions, and lines when coverage is configured.
@@ -131,6 +132,7 @@ Testing rules for this repository.
 - Do not use Jest-only APIs or `jest.mock` patterns in Vitest tests.
 - Do not place `apps/web` tests as loose sibling `*.test.ts(x)` files when a nearby `__tests__/` folder is available.
 - Do not add duplicate web test helpers when `apps/web/src/test/render.tsx` or `apps/web/src/test/api.ts` already covers the setup.
+- Do not use Playwright `selectOption()` or `locator('option')` for Radix Select controls; use helpers under `tests/e2e/select-helpers.ts`.
 
 ## Verification
 
@@ -142,6 +144,7 @@ Testing rules for this repository.
 - Web coverage: `npm run test:coverage -w @rubiks-cube-solver/web`.
 - Web Storybook: `npm run storybook:build -w @rubiks-cube-solver/web`.
 - End-to-end tests: `npm run test:e2e` after the API, web app, and pruning-table prerequisites are available.
+- E2E split commands: `npm run test:e2e:smoke` for product/responsive/timer smoke, `npm run test:e2e:scan` for serial manual scan coverage, and `npm run test:e2e:full` for the complete non-heavy suite.
 - ML tests: `python -m pytest ml`.
 - Product gate: `npm run product:gate` for release-level or cross-boundary validation.
 - AI routes: `npm run ai:check`.

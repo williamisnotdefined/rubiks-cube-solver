@@ -186,8 +186,8 @@ export function EvenCubeReviewStep({
         </div>
 
         {hasInvalidCorners ? (
-          <div className="grid gap-2 border border-red-300/80 bg-app-surface-raised p-3 text-sm font-semibold text-app-text">
-            <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-red-200">
+          <div className="grid gap-2 border border-app-danger/80 bg-app-surface-raised p-3 text-sm font-semibold text-app-text">
+            <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-app-danger">
               {t('scan.evenReview.invalidTitle')}
             </span>
             <p className="text-app-muted">{t('scan.evenReview.invalidDescription')}</p>
@@ -206,7 +206,7 @@ export function EvenCubeReviewStep({
             </ul>
           </div>
         ) : (
-          <div className="border border-emerald-300/80 bg-app-surface-raised p-3 text-sm font-semibold text-app-muted">
+          <div className="border border-app-success/80 bg-app-surface-raised p-3 text-sm font-semibold text-app-muted">
             {t('scan.evenReview.validMessage')}
           </div>
         )}
@@ -281,7 +281,7 @@ function KociembaNetSlot({
         aria-pressed={isSelected}
         className={cls(
           'grid w-full border bg-app-surface p-2 text-xs font-extrabold uppercase tracking-[0.12em] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-app-focus/50',
-          isInvalid ? 'border-red-300 text-app-text' : isSelected ? 'border-app-text text-app-text' : 'border-app-border text-app-muted',
+          isInvalid ? 'border-app-danger text-app-text' : isSelected ? 'border-app-text text-app-text' : 'border-app-border text-app-muted',
           isOver ? 'ring-2 ring-app-focus/70' : undefined,
         )}
         ref={setDraggableRef}
@@ -352,7 +352,7 @@ function StickerGrid({
           <span
             className={cls(
               'grid min-h-8 place-items-center border text-xs font-extrabold',
-              invalidIndexes.has(index) ? 'border-red-300 ring-2 ring-red-300/80' : 'border-app-border',
+              invalidIndexes.has(index) ? 'border-app-danger ring-2 ring-app-danger/80' : 'border-app-border',
             )}
             key={index}
             style={details === undefined ? undefined : { backgroundColor: details.background, color: details.foreground }}

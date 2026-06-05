@@ -21,9 +21,10 @@ Place each frontend state concern at the narrowest correct owner without duplica
 - Keep API server state and solve mutation state in React Query hooks under `apps/web/src/api`.
 - Keep request construction and response normalization in `apps/web/src/api`, not page components.
 - Keep page workflow state in the nearest page component that coordinates it.
+- Use existing Zustand stores only for scoped shared state such as timer sessions/settings, solve settings, theme, and toasts.
 - Keep imperative custom-element sync in focused hooks and refs.
 - Use IDs, indexes, notation strings, and status values instead of duplicated cube objects.
-- Add external state libraries only after local state and focused hooks are insufficient.
+- Do not add broad stores for API data or single-component UI state.
 
 ## Expected Output
 
@@ -31,6 +32,7 @@ Place each frontend state concern at the narrowest correct owner without duplica
 - Components do not copy React Query data into broad mutable stores.
 - Visualization state does not become solver state.
 - API, form, solve result, and visualization concerns remain separable.
+- Existing stores stay scoped and do not become a generic app-state layer.
 
 ## Verification
 

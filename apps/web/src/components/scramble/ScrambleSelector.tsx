@@ -1,6 +1,14 @@
 import { useTranslation } from 'react-i18next'
 import { Field } from '@components/Field'
-import { SelectInput } from '@components/FormControls'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@components/Select'
 import type { ScrambleEvent } from '@core/scramble/types'
 
 type ScrambleSelectorProps = {
@@ -15,22 +23,28 @@ export function ScrambleSelector({ events, selectedEventId, onEventChange }: Scr
 
   return (
     <Field label={t('timer.scramble.event')}>
-      <SelectInput
+      <Select
         value={selectedEventId}
-        onChange={(event) => onEventChange(event.target.value)}
+        onValueChange={onEventChange}
       >
-        {groups.map((group) => (
-          <optgroup key={group} label={group}>
-            {events
-              .filter((event) => event.group === group)
-              .map((event) => (
-                <option key={event.id} value={event.id}>
-                  {event.label}
-                </option>
-              ))}
-          </optgroup>
-        ))}
-      </SelectInput>
+        <SelectTrigger aria-label={t('timer.scramble.event')}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {groups.map((group) => (
+            <SelectGroup key={group}>
+              <SelectLabel>{group}</SelectLabel>
+              {events
+                .filter((event) => event.group === group)
+                .map((event) => (
+                  <SelectItem key={event.id} value={event.id}>
+                    {event.label}
+                  </SelectItem>
+                ))}
+            </SelectGroup>
+          ))}
+        </SelectContent>
+      </Select>
     </Field>
   )
 }

@@ -1,0 +1,85 @@
+import cls from 'classnames'
+import * as SelectPrimitive from '@radix-ui/react-select'
+import { Check, ChevronDown } from 'lucide-react'
+import { motion, useReducedMotion } from 'motion/react'
+import type { ComponentPropsWithoutRef } from 'react'
+
+export const Select = SelectPrimitive.Root
+export const SelectGroup = SelectPrimitive.Group
+export const SelectValue = SelectPrimitive.Value
+
+const selectTriggerClassName =
+  'flex h-12 w-full min-w-0 items-center justify-between gap-2 border border-app-border bg-app-control px-4 py-3 text-base text-app-text outline-none transition-colors focus-visible:border-app-text focus-visible:ring-2 focus-visible:ring-app-focus/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 data-[placeholder]:text-app-muted aria-invalid:border-app-text md:text-sm'
+
+type SelectTriggerProps = ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
+
+export function SelectTrigger({ children, className, ...props }: SelectTriggerProps) {
+  return (
+    <SelectPrimitive.Trigger className={cls(selectTriggerClassName, className)} {...props}>
+      {children ?? <SelectPrimitive.Value />}
+      <SelectPrimitive.Icon asChild>
+        <ChevronDown aria-hidden="true" className="size-4 shrink-0" strokeWidth={2.4} />
+      </SelectPrimitive.Icon>
+    </SelectPrimitive.Trigger>
+  )
+}
+
+type SelectContentProps = ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
+
+export function SelectContent({ children, className, ...props }: SelectContentProps) {
+  const reduceMotion = useReducedMotion()
+
+  return (
+    <SelectPrimitive.Portal>
+      <SelectPrimitive.Content
+        asChild
+        position="popper"
+        {...props}
+      >
+        <motion.div
+          animate={{ opacity: 1, y: 0 }}
+          className={cls(
+            'z-[90] max-h-72 min-w-[var(--radix-select-trigger-width)] overflow-hidden border border-app-border bg-app-surface-raised text-app-text shadow-2xl',
+            className,
+          )}
+          initial={reduceMotion ? false : { opacity: 0, y: -4 }}
+          transition={{ duration: reduceMotion ? 0 : 0.12, ease: 'easeOut' }}
+        >
+          <SelectPrimitive.Viewport className="p-1">
+            {children}
+          </SelectPrimitive.Viewport>
+        </motion.div>
+      </SelectPrimitive.Content>
+    </SelectPrimitive.Portal>
+  )
+}
+
+type SelectLabelProps = ComponentPropsWithoutRef<typeof SelectPrimitive.Label>
+
+export function SelectLabel({ className, ...props }: SelectLabelProps) {
+  return (
+    <SelectPrimitive.Label
+      className={cls('px-3 py-2 text-[0.65rem] font-black uppercase tracking-[0.18em] text-app-muted', className)}
+      {...props}
+    />
+  )
+}
+
+type SelectItemProps = ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
+
+export function SelectItem({ children, className, ...props }: SelectItemProps) {
+  return (
+    <SelectPrimitive.Item
+      className={cls(
+        'relative flex min-h-9 cursor-pointer select-none items-center px-3 pr-9 text-xs font-extrabold uppercase tracking-[0.14em] outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-40 data-[highlighted]:bg-app-text data-[highlighted]:text-app-inverse',
+        className,
+      )}
+      {...props}
+    >
+      <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+      <SelectPrimitive.ItemIndicator className="absolute right-3 inline-flex items-center justify-center">
+        <Check aria-hidden="true" className="size-4" strokeWidth={2.4} />
+      </SelectPrimitive.ItemIndicator>
+    </SelectPrimitive.Item>
+  )
+}

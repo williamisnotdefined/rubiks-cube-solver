@@ -8,6 +8,12 @@
     "visualization": "Visualização do cubo",
     "visualizationUnavailable": "A visualização ainda não está disponível para este puzzle."
   },
+  "errorBoundary": {
+    "description": "A tela atual quebrou de forma inesperada. Tente novamente ou troque de rota para recarregá-la.",
+    "kicker": "Erro inesperado",
+    "retry": "Tentar novamente",
+    "title": "Algo deu errado"
+  },
   "navigation": {
     "closeMenu": "Fechar menu",
     "github": "Abrir projeto no GitHub",
@@ -439,6 +445,7 @@
     "scramble": {
       "copied": "Copiado",
       "copy": "Copiar scramble",
+      "copyFailed": "Não foi possível copiar o scramble",
       "event": "Evento",
       "next": "Próximo scramble",
       "previous": "Scramble anterior",

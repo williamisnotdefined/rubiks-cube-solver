@@ -337,6 +337,18 @@ npm run pruning:native
 
 The web app talks to the native HTTP API so generated two-phase pruning tables stay on the server and Rust owns artifact loading, solving, playback, and replay verification.
 
+Current frontend stack:
+
+- React 19, TypeScript, Vite, and React Router 7 with `HashRouter` for `#/solve` and `#/timer` routes.
+- TanStack React Query for API health, puzzle metadata, strategy metadata, and solve mutation state.
+- Radix-backed shared primitives for dialogs, alert dialogs, selects, switches, checkboxes, toasts, popovers, and tooltips; feature code should use wrappers in `apps/web/src/components` instead of direct Radix imports.
+- React Hook Form plus Zod for solve-form limit validation and submission shaping; Rust remains responsible for notation semantics, cube validity, and solver correctness.
+- Zustand for scoped client state such as timer sessions/settings, solve settings, theme, and toast notifications.
+- TanStack Table and TanStack Virtual for the timer solve table.
+- Motion for small overlay, select, toast, and error-boundary transitions with reduced-motion support.
+- Tailwind CSS v4 through the single `apps/web/src/index.css` entrypoint and semantic `app-*` tokens. The UI stays square: do not add `rounded-*` utilities.
+- Storybook for component inspection and Playwright for product/timer E2E flows.
+
 Start the full development environment with one command:
 
 ```bash
@@ -357,12 +369,23 @@ Run the browser product flow with native API coverage:
 
 ```bash
 npm run pruning:native
+npm run test -w @rubiks-cube-solver/web
 npm run build
 npm run lint -w @rubiks-cube-solver/web
+npm run storybook:build -w @rubiks-cube-solver/web
 npm run test:e2e
 ```
 
 Playwright starts both the API and the Vite preview server. The UI accepts a `Scramble` field as the only product input, prefers `generated-two-phase-quality` when the API advertises it, falls back to `generated-two-phase`, never asks the browser client to submit facelets, and displays `replay verified` only for API-confirmed solving results.
+
+E2E tests should interact through accessible roles and labels. Radix Select controls are not native `<select>` elements, so Playwright specs should use the shared helpers in `tests/e2e/select-helpers.ts` instead of `selectOption()` or `locator('option')`. Timer E2E coverage includes keyboard start/stop, penalties (`OK`, `+2`, `DNF`), event selection, inspection/millisecond settings, scramble copy/history actions, solve deletion, and internal solve-list scrolling.
+
+Useful E2E splits:
+
+- `npm run test:e2e:smoke`: product solve, responsive UI, and timer smoke coverage.
+- `npm run test:e2e:scan`: manual 3x3/2x2 scan coverage, run serially for API/preview stability.
+- `npm run test:e2e:full`: complete non-heavy Playwright gate, equivalent to the stable full suite.
+- `npm run test:e2e:heavy-scan`: opt-in canonical generated scan report coverage.
 
 ## Cloudflare Tunnel
 

@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   useSolveScanSession,
@@ -6,6 +6,14 @@ import {
   type ScanSessionResult,
 } from '@api/scan'
 import type { ScanFaceSymbol, SolveResult } from '@api/solver/types'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogTitle,
+} from '@components/AlertDialog'
 import { Button } from '@components/Button'
 import { ScanExitConfirmationModal } from './ScanExitConfirmationModal'
 import { ScanFaceCaptureStep } from './ScanFaceCaptureStep'
@@ -75,7 +83,6 @@ export function OddCubeScanModal({
 }: ScanCubeModalProps) {
   const { t } = useTranslation()
   const puzzleSlug: string = 'cube-3x3x3'
-  const titleId = useId()
   const solveScanSession = useSolveScanSession()
   const stickersPerFace = scan3StickersPerFace
   const gridSize = 3
@@ -151,33 +158,6 @@ export function OddCubeScanModal({
 
     return () => onSessionSolvingChange?.(false)
   }, [onSessionSolvingChange, sessionSolving])
-
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        if (exitConfirmationVisible) {
-          setExitConfirmationVisible(false)
-          return
-        }
-
-        if (centerMismatchConfirmation !== undefined) {
-          setCenterMismatchConfirmation(undefined)
-          return
-        }
-
-        if (hasScanProgress) {
-          setExitConfirmationVisible(true)
-          return
-        }
-
-        onClose()
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
-
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [centerMismatchConfirmation, exitConfirmationVisible, hasScanProgress, onClose])
 
   function handleProtectedClose() {
     if (hasScanProgress) {
@@ -274,7 +254,6 @@ export function OddCubeScanModal({
   return (
     <>
       <ScanModalShell
-        titleId={titleId}
         visionOk={visionOk}
         visionCnnAvailable={visionCnnAvailable}
         visionCnnReason={visionCnnReason}
@@ -350,47 +329,58 @@ function CenterMismatchConfirmationModal({
   onConfirm,
 }: CenterMismatchConfirmationModalProps) {
   const { t } = useTranslation()
-  const titleId = useId()
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center px-3 py-6 sm:px-6">
-      <button
-        aria-label={t('scan.centerMismatch.dismiss')}
-        className="absolute inset-0 bg-app-bg/85"
-        type="button"
-        onClick={onCancel}
-      />
-      <section
-        aria-labelledby={titleId}
-        aria-modal="true"
-        className="relative grid w-full max-w-lg gap-5 border border-app-border-strong bg-app-surface p-4 text-left text-app-text shadow-2xl sm:p-6"
-        role="dialog"
+    <AlertDialog open onOpenChange={(open) => {
+      if (!open) {
+        onCancel()
+      }
+    }}>
+      <AlertDialogContent
+        className="left-1/2 top-1/2 z-[70] grid w-[calc(100vw-1.5rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-5 border border-app-border-strong bg-app-surface p-4 text-left text-app-text shadow-2xl sm:w-[calc(100vw-3rem)] sm:p-6"
+        overlayClassName="z-[70] bg-app-bg/85"
+        overlayLabel={t('scan.centerMismatch.dismiss')}
+        onOverlayClick={onCancel}
       >
         <div className="grid gap-2">
           <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
             {t('scan.centerMismatch.kicker')}
           </p>
-          <h2 className="text-lg font-extrabold uppercase tracking-[0.16em]" id={titleId}>
-            {t('scan.centerMismatch.title')}
-          </h2>
-          <p className="text-sm font-semibold leading-relaxed text-app-muted">
-            {message}
-          </p>
+          <AlertDialogTitle asChild>
+            <h2 className="text-lg font-extrabold uppercase tracking-[0.16em]">
+              {t('scan.centerMismatch.title')}
+            </h2>
+          </AlertDialogTitle>
+          <AlertDialogDescription asChild>
+            <p className="text-sm font-semibold leading-relaxed text-app-muted">
+              {message}
+            </p>
+          </AlertDialogDescription>
           <p className="text-sm font-extrabold leading-relaxed text-app-text">
             {t('scan.messages.centerMismatchConfirmQuestion')}
           </p>
         </div>
 
         <div className="flex flex-wrap justify-end gap-2">
-          <Button className="min-h-10 px-4 py-2" type="button" variant="secondary" onClick={onCancel}>
-            {t('common.cancel')}
-          </Button>
-          <Button className="min-h-10 px-4 py-2" type="button" onClick={onConfirm}>
-            {t('scan.actions.confirmAnyway')}
-          </Button>
+          <AlertDialogCancel asChild>
+            <Button className="min-h-10 px-4 py-2" type="button" variant="secondary" onClick={(event) => {
+              event.preventDefault()
+              onCancel()
+            }}>
+              {t('common.cancel')}
+            </Button>
+          </AlertDialogCancel>
+          <AlertDialogAction asChild>
+            <Button className="min-h-10 px-4 py-2" type="button" onClick={(event) => {
+              event.preventDefault()
+              onConfirm()
+            }}>
+              {t('scan.actions.confirmAnyway')}
+            </Button>
+          </AlertDialogAction>
         </div>
-      </section>
-    </div>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }
 

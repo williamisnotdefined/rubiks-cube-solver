@@ -1,31 +1,38 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense } from 'react'
+import { Navigate, Route, Routes, useLocation } from 'react-router'
+import { AppErrorBoundary } from '@components/AppErrorBoundary'
 import { AppShell } from '@components/layout/AppShell'
 import type { PageNavRoute } from '@components/layout/PageNav'
-import { SolvePage } from './pages/SolvePage/SolvePage'
-import { TimerPage } from './pages/TimerPage/TimerPage'
+
+const SolvePage = lazy(() => import('./pages/SolvePage/SolvePage').then((module) => ({ default: module.SolvePage })))
+const TimerPage = lazy(() => import('./pages/TimerPage/TimerPage').then((module) => ({ default: module.TimerPage })))
 
 function App() {
-  const [route, setRoute] = useState<PageNavRoute>(() => routeFromHash())
-
-  useEffect(() => {
-    function handleHashChange() {
-      setRoute(routeFromHash())
-    }
-
-    window.addEventListener('hashchange', handleHashChange)
-
-    return () => window.removeEventListener('hashchange', handleHashChange)
-  }, [])
+  const location = useLocation()
+  const route: PageNavRoute = location.pathname === '/timer' ? 'timer' : 'solve'
 
   return (
     <AppShell activeRoute={route}>
-      {route === 'timer' ? <TimerPage /> : <SolvePage />}
+      <AppErrorBoundary resetKeys={[location.pathname]}>
+        <Suspense fallback={<RouteFallback />}>
+          <Routes>
+            <Route path="/" element={<Navigate replace to="/solve" />} />
+            <Route path="/solve" element={<SolvePage />} />
+            <Route path="/timer" element={<TimerPage />} />
+            <Route path="*" element={<Navigate replace to="/solve" />} />
+          </Routes>
+        </Suspense>
+      </AppErrorBoundary>
     </AppShell>
   )
 }
 
-export default App
-
-function routeFromHash(): PageNavRoute {
-  return window.location.hash === '#/timer' ? 'timer' : 'solve'
+function RouteFallback() {
+  return (
+    <div className="grid min-h-0 flex-1 place-items-center border border-app-border bg-app-surface p-6 text-xs font-extrabold uppercase tracking-[0.18em] text-app-muted" role="status">
+      Loading route
+    </div>
+  )
 }
+
+export default App

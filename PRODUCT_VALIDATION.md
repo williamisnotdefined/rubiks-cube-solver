@@ -34,6 +34,28 @@ Environment notes for this run:
 - PyTorch was not installed; the ML smoke command completed through the documented `constant_train_mean_dependency_fallback` path with `pytorch_available=false`.
 - The gate intentionally generated ignored local artifacts for native pruning tables, frontend build output, Playwright output, and ML outputs. No generated datasets, model checkpoints, or large generated artifacts are part of the durable report.
 
+## Frontend UI Libraries Rollout Validation
+
+- Date: 2026-06-05
+- Status: Passed for the frontend rollout scope; this section does not replace the full `npm run product:gate` result above.
+- Scope: React Router `HashRouter`, Radix-backed primitives, React Hook Form/Zod solve controls, Zustand scoped UI stores, TanStack Table/Virtual timer table, Motion transitions, route code-splitting, timer E2E coverage, responsive/reduced-motion smoke coverage, and updated AI route guidance.
+
+| Command | Latest outcome | Evidence and notes |
+| --- | --- | --- |
+| `npm run test -w @rubiks-cube-solver/web` | Passed | 55 Vitest files and 368 tests passed, including timer penalty/unit coverage. |
+| `npm run build` | Passed | Built the API-backed web app with route-level lazy chunks; Vite still reports known chunk-size warnings for large app/Three-related chunks. |
+| `npm run lint` | Passed | Ran `ai:check`, `theme-colors:check`, and web ESLint with zero lint warnings. |
+| `npm run storybook:build -w @rubiks-cube-solver/web` | Passed | Storybook built successfully; the existing docgen skip warning for `.storybook/preview.tsx` remains informational. |
+| `npm run test:e2e:full` | Passed | Full non-heavy Playwright suite ran serially with 31 passed and 1 heavy scan skipped by design. Coverage includes product solve, manual scan, responsive UI, and timer flows. |
+| `npm run ai:sync` then `npm run ai:check` | Passed | Canonical AI docs and generated `.opencode`, `.cursor`, and `.github/instructions` routes were synchronized and checked. |
+
+Additional E2E split commands for this rollout:
+
+- `npm run test:e2e:smoke` runs product, responsive UI, and timer smoke specs.
+- `npm run test:e2e:scan` runs manual scan specs serially.
+- `npm run test:e2e:full` runs the complete non-heavy suite serially.
+- `npm run test:e2e:heavy-scan` remains opt-in through `RUN_HEAVY_SCAN_E2E=1` and is not part of the default full suite.
+
 ## GOALS.md Coverage
 
 | Required capability | Product evidence | Gate coverage |

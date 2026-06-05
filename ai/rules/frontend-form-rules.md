@@ -5,7 +5,8 @@ Rules for forms and local validation in `apps/web`.
 ## Always
 
 - Keep the browser-facing solve flow notation-only.
-- Keep simple solve controls in lightweight local state unless complexity justifies a form library.
+- Use the existing React Hook Form and Zod setup for solve controls that need schema validation or coordinated submission shaping.
+- Keep simpler form-like controls in lightweight local state when RHF/Zod would add indirection without value.
 - Keep local validation near the owning form when it only validates simple limits or required values.
 - Normalize move notation with `trim()` before API submission.
 - Keep field labels explicit and accessible through visible text.
@@ -19,7 +20,7 @@ Rules for forms and local validation in `apps/web`.
 - Do not expose facelet, Kociemba, sticker-state, or raw cube-state input modes in browser UI.
 - Do not submit facelet or sticker-state payloads from the browser.
 - Do not rely on browser validation for app-level solver messages.
-- Do not add React Hook Form, Zod, or another form library until current form complexity needs schema validation, many fields, or reusable validation.
+- Do not add another form or validation library while React Hook Form and Zod cover the current form need.
 - Do not duplicate API validation in the frontend beyond lightweight UX checks.
 - Do not parse or validate cube solvability in React components.
 

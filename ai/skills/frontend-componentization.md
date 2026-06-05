@@ -22,6 +22,7 @@ Split UI by real ownership and reuse while keeping solver logic in Rust and avoi
 - Move page-level screens under `apps/web/src/pages`.
 - Keep page-specific components, hooks, and helpers under the owning page folder until reused.
 - Move shared primitives to `apps/web/src/components` only when there is a real shared consumer.
+- Use existing shared primitives for Radix-backed dialogs, alert dialogs, selects, switches, checkboxes, toasts, popovers, and tooltips instead of direct Radix imports in feature code.
 - Move context-independent helpers such as formatting and paint timing to `apps/web/src/core/<category>/<name>.ts` with direct imports.
 - Extract focused hooks for stateful behavior such as API loading, form workflow, or custom-element synchronization.
 - Add or update one Storybook story per component, using controls for props instead of separate prop-variant stories.
@@ -35,6 +36,7 @@ Split UI by real ownership and reuse while keeping solver logic in Rust and avoi
 - API load state, solve result state, form state, and visualization state have clear nearest owners.
 - Extracted components preserve behavior and accessibility.
 - Shared abstractions are added only when current reuse justifies them.
+- Feature components consume shared primitives rather than duplicating portal, focus, escape, and outside-click behavior.
 - Storybook coverage follows component ownership and does not create one story per prop.
 
 ## Verification

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useCopyToClipboard } from 'usehooks-ts'
 import { AverageCards } from '@components/timer/AverageCards'
 import { InspectionBar } from '@components/timer/InspectionBar'
 import { PenaltyControls } from '@components/timer/PenaltyControls'
@@ -8,6 +9,17 @@ import { TimerDisplay } from '@components/timer/TimerDisplay'
 import { TimerStatusBar } from '@components/timer/TimerStatusBar'
 import { Panel } from '@components/layout/Panel'
 import { ScrambleViewer } from '@components/scramble/ScrambleViewer'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@components/Select'
+import { Switch } from '@components/Switch'
+import { useToast } from '@core/toast/toastStore'
 import {
   generateScrambleForEvent,
   scrambleEvents,
@@ -25,6 +37,8 @@ import type { TimerSolve } from './types'
 
 export function TimerPage() {
   const { t } = useTranslation()
+  const [, copyToClipboard] = useCopyToClipboard()
+  const showToast = useToast()
   const [scrambleHistory, setScrambleHistory] = useState<ScrambleHistory>(() => {
     const initialScramble = generateScrambleForEvent(
       useTimerSettingsStore.getState().selectedEventId,
@@ -117,12 +131,15 @@ export function TimerPage() {
   }
 
   async function handleCopyScramble() {
-    try {
-      await navigator.clipboard?.writeText(generatedScramble.scramble)
-      setCopied(true)
-    } catch {
-      setCopied(false)
-    }
+    const copySucceeded = await copyToClipboard(generatedScramble.scramble)
+
+    setCopied(copySucceeded)
+    showToast({
+      title: copySucceeded
+        ? t('timer.scramble.copied')
+        : t('timer.scramble.copyFailed'),
+      tone: copySucceeded ? 'success' : 'error',
+    })
   }
 
   function handlePenaltyChange(penalty: TimerPenalty) {
@@ -156,20 +173,18 @@ export function TimerPage() {
           />
           <Panel className="grid min-h-0 grid-cols-2 gap-2 p-2 sm:grid-cols-[auto_auto_minmax(14rem,1fr)] sm:items-center" aria-label={t('timer.settings.label')}>
             <label className="flex min-h-9 items-center gap-2 border border-app-border bg-app-control px-3 py-2 text-xs font-extrabold uppercase tracking-[0.16em] text-app-text">
-              <input
+              <Switch
+                aria-label={t('timer.settings.inspection')}
                 checked={inspectionEnabled}
-                className="size-3 accent-app-text"
-                type="checkbox"
-                onChange={(event) => setInspectionEnabled(event.target.checked)}
+                onCheckedChange={setInspectionEnabled}
               />
               {t('timer.settings.inspection')}
             </label>
             <label className="flex min-h-9 items-center gap-2 border border-app-border bg-app-control px-3 py-2 text-xs font-extrabold uppercase tracking-[0.16em] text-app-text">
-              <input
+              <Switch
+                aria-label={t('timer.settings.milliseconds')}
                 checked={showMilliseconds}
-                className="size-3 accent-app-text"
-                type="checkbox"
-                onChange={(event) => setShowMilliseconds(event.target.checked)}
+                onCheckedChange={setShowMilliseconds}
               />
               {t('timer.settings.milliseconds')}
             </label>
@@ -250,23 +265,30 @@ function CompactScrambleEventSelect({
   const groups = Array.from(new Set(events.map((event) => event.group)))
 
   return (
-    <select
-      aria-label={t('timer.scramble.event')}
-      className="h-7 max-w-40 border border-app-border bg-app-control px-2 text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted outline-none transition-colors focus-visible:border-app-text focus-visible:ring-2 focus-visible:ring-app-focus/50"
+    <Select
       value={selectedEventId}
-      onChange={(event) => onEventChange(event.target.value)}
+      onValueChange={onEventChange}
     >
-      {groups.map((group) => (
-        <optgroup key={group} label={group}>
-          {events
-            .filter((event) => event.group === group)
-            .map((event) => (
-              <option key={event.id} value={event.id}>
-                {event.label}
-              </option>
-            ))}
-        </optgroup>
-      ))}
-    </select>
+      <SelectTrigger
+        aria-label={t('timer.scramble.event')}
+        className="h-7 max-w-40 px-2 py-1 text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted"
+      >
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {groups.map((group) => (
+          <SelectGroup key={group}>
+            <SelectLabel>{group}</SelectLabel>
+            {events
+              .filter((event) => event.group === group)
+              .map((event) => (
+                <SelectItem key={event.id} value={event.id}>
+                  {event.label}
+                </SelectItem>
+              ))}
+          </SelectGroup>
+        ))}
+      </SelectContent>
+    </Select>
   )
 }

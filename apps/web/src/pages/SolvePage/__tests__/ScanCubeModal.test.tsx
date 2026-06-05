@@ -325,10 +325,10 @@ describe('ScanCubeModal', () => {
     await user.click(screen.getByLabelText('Dismiss scan cube'))
 
     expect(onClose).not.toHaveBeenCalled()
-    expect(screen.getByRole('dialog', { name: 'Leave scan?' })).toBeInTheDocument()
+    expect(screen.getByRole('alertdialog', { name: 'Leave scan?' })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Cancel' }))
-    expect(screen.queryByRole('dialog', { name: 'Leave scan?' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('alertdialog', { name: 'Leave scan?' })).not.toBeInTheDocument()
     expect(onClose).not.toHaveBeenCalled()
 
     await user.click(screen.getByLabelText('Dismiss scan cube'))
@@ -352,7 +352,7 @@ describe('ScanCubeModal', () => {
     await user.keyboard('{Escape}')
 
     expect(onClose).not.toHaveBeenCalled()
-    expect(screen.getByRole('dialog', { name: 'Leave scan?' })).toBeInTheDocument()
+    expect(screen.getByRole('alertdialog', { name: 'Leave scan?' })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Leave' }))
     expect(onClose).toHaveBeenCalledTimes(1)
@@ -374,7 +374,7 @@ describe('ScanCubeModal', () => {
     await user.click(screen.getByLabelText('Dismiss scan cube'))
 
     expect(onClose).not.toHaveBeenCalled()
-    expect(screen.getByRole('dialog', { name: 'Leave scan?' })).toBeInTheDocument()
+    expect(screen.getByRole('alertdialog', { name: 'Leave scan?' })).toBeInTheDocument()
   })
 
   it('explains API readiness and solve-disabled reasons before submitting', async () => {
@@ -1164,20 +1164,20 @@ describe('ScanCubeModal', () => {
       writable: true,
     })
 
-    const { container } = render(
+    render(
       <ScanCubeModal
         apiReady
         solving={false}
         onClose={vi.fn()}
       />,
     )
-    const greenVideo = container.querySelector('video')
+    const greenVideo = document.body.querySelector('video')
 
     await waitFor(() => expect(greenVideo?.srcObject).toBe(apiMocks.cameraStream))
     const initialPlayCalls = play.mock.calls.length
 
     await user.click(screen.getByRole('button', { name: /Go to Red face/ }))
-    const redVideo = container.querySelector('video')
+    const redVideo = document.body.querySelector('video')
 
     expect(redVideo).not.toBe(greenVideo)
     await waitFor(() => expect(greenVideo?.srcObject).toBeNull())
@@ -1364,11 +1364,11 @@ describe('ScanCubeModal', () => {
     await screen.findByText(/Center looks W \/ White/)
     await user.click(screen.getByRole('button', { name: 'Confirm face' }))
 
-    expect(screen.getByRole('dialog', { name: 'Confirm expected face' })).toBeInTheDocument()
+    expect(screen.getByRole('alertdialog', { name: 'Confirm expected face' })).toBeInTheDocument()
 
     await user.keyboard('{Escape}')
 
-    expect(screen.queryByRole('dialog', { name: 'Confirm expected face' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('alertdialog', { name: 'Confirm expected face' })).not.toBeInTheDocument()
     expect(onClose).not.toHaveBeenCalled()
 
     await user.click(screen.getByRole('button', { name: 'Confirm face' }))

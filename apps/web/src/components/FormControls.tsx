@@ -7,7 +7,3 @@ const fieldClassName =
 export function TextInput({ className, ...props }: ComponentPropsWithRef<'input'>) {
   return <input className={cls(fieldClassName, className)} {...props} />
 }
-
-export function SelectInput({ className, ...props }: ComponentPropsWithRef<'select'>) {
-  return <select className={cls(fieldClassName, 'appearance-auto', className)} {...props} />
-}

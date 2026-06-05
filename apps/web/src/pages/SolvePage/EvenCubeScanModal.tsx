@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   useSolveScanSession,
@@ -85,7 +85,6 @@ export function EvenCubeScanModal({
 }: ScanCubeModalProps) {
   const { t } = useTranslation()
   const puzzleSlug: string = 'cube-2x2x2'
-  const titleId = useId()
   const solveScanSession = useSolveScanSession()
   const stickersPerFace = puzzleSlug === 'cube-2x2x2' ? scan2StickersPerFace : scan3StickersPerFace
   const isEvenCubeScan = stickersPerFace === scan2StickersPerFace
@@ -176,28 +175,6 @@ export function EvenCubeScanModal({
 
     return () => onSessionSolvingChange?.(false)
   }, [onSessionSolvingChange, sessionSolving])
-
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        if (exitConfirmationVisible) {
-          setExitConfirmationVisible(false)
-          return
-        }
-
-        if (hasScanProgress) {
-          setExitConfirmationVisible(true)
-          return
-        }
-
-        onClose()
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
-
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [exitConfirmationVisible, hasScanProgress, onClose])
 
   function handleProtectedClose() {
     if (hasScanProgress) {
@@ -359,7 +336,6 @@ export function EvenCubeScanModal({
   return (
     <>
       <ScanModalShell
-        titleId={titleId}
         visionOk={visionOk}
         visionCnnAvailable={visionCnnAvailable}
         visionCnnReason={visionCnnReason}

@@ -226,7 +226,7 @@ export function useTimerMachine({
   }
 }
 
-function inspectionPenaltyForElapsed(elapsedMs: number): TimerPenalty {
+export function inspectionPenaltyForElapsed(elapsedMs: number): TimerPenalty {
   if (elapsedMs >= inspectionDnfMs) {
     return 'dnf'
   }

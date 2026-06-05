@@ -28,6 +28,10 @@ Build a visualization layer that renders cube state and controls playback withou
 - Keep API load state, solve result state, form input state, and visualization playback state separately owned.
 - Extract React components only when reuse, naming clarity, or state boundaries justify the new file.
 - Keep `App.tsx` thin and move page composition, page-specific components, hooks, and helpers under the owning page folder as UI grows.
+- Keep route behavior on the existing React Router `HashRouter` setup unless server fallback requirements change.
+- Keep page-level lazy route chunks in `App.tsx` when route bundles grow.
+- Use existing shared primitives for Radix-backed dialogs, selects, switches, checkboxes, toasts, popovers, and tooltips.
+- Use the existing React Hook Form/Zod, Zustand, TanStack Table/Virtual, and Motion patterns instead of adding new frontend libraries.
 - Use focused hooks for imperative custom-element synchronization instead of broad page effects.
 - Use the current Tailwind CSS v4 stack and `classnames` conventions for visual work.
 - Keep reusable context-independent helpers under `apps/web/src/core` and import them directly.
@@ -47,6 +51,7 @@ Build a visualization layer that renders cube state and controls playback withou
 - Screen files read as composition instead of accumulating all form, result, validation, and visualization details.
 - Components consume domain API hooks instead of raw request functions or query keys.
 - Component stories and Vitest coverage protect changed frontend surfaces.
+- Playwright E2E covers product, scan, and timer flows through accessible roles and current shared helpers.
 
 ## Verification
 
@@ -54,4 +59,5 @@ Build a visualization layer that renders cube state and controls playback withou
 - Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
 - Run `npm run test -w @rubiks-cube-solver/web` and `npm run test:coverage -w @rubiks-cube-solver/web` after broad frontend changes.
 - Run `npm run storybook:build -w @rubiks-cube-solver/web` after story changes.
+- Run `npm run test:e2e` after product, routing, timer, or scan-flow behavior changes when prerequisites are available.
 - Run engine/API tests for any Rust solver behavior touched by UI work.

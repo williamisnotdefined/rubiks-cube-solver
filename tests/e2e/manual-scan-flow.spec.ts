@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
+import { chooseRadixSelectOption, expectRadixSelectOptionEnabled } from './select-helpers'
 
 type ScanFaceSymbol = 'U' | 'R' | 'F' | 'D' | 'L' | 'B'
 type FaceStickers = Record<ScanFaceSymbol, string>
@@ -152,7 +153,7 @@ test.describe('manual scan solve flow', () => {
       })
       const solvedState = await waitForCubeState(cube, 54)
       await page.getByLabel('Max moves').fill('20')
-      await page.getByLabel('Max nodes (M)').selectOption(maxNodesMillion)
+      await chooseRadixSelectOption(page, 'Max nodes (M)', maxNodesMillion)
       await page.getByLabel('Scramble').fill(fixture.scramble)
       const scanFaces = scanFacesFor3x3(fixture.visualState)
 
@@ -191,10 +192,8 @@ test.describe('manual scan solve flow', () => {
 
       const puzzleSelect = page.getByRole('combobox', { name: 'Puzzle' })
       await expect(puzzleSelect).toBeEnabled({ timeout: 15_000 })
-      await expect(puzzleSelect.locator('option[value="cube-2x2x2"]')).toHaveCount(1, {
-        timeout: 15_000,
-      })
-      await puzzleSelect.selectOption('cube-2x2x2')
+      await expectRadixSelectOptionEnabled(page, 'Puzzle', '2x2x2 Cube')
+      await chooseRadixSelectOption(page, 'Puzzle', '2x2x2 Cube')
 
       const cube = page.locator('.cube-stage rubiks-cube')
       await expect(page.getByRole('button', { name: 'Scan cube with camera' })).toBeEnabled({
@@ -202,7 +201,7 @@ test.describe('manual scan solve flow', () => {
       })
       const solvedState = await waitForCubeState(cube, 24)
       await page.getByLabel('Max moves').fill('11')
-      await page.getByLabel('Max nodes (M)').selectOption(maxNodesMillion)
+      await chooseRadixSelectOption(page, 'Max nodes (M)', maxNodesMillion)
       await page.getByLabel('Scramble').fill(fixture.scramble)
       const scanFaces = scanFacesFor2x2(fixture.visualState)
 

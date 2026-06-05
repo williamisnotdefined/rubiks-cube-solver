@@ -1,4 +1,5 @@
 import { expect, test, type Locator } from '@playwright/test'
+import { chooseRadixSelectOption, expectRadixSelectOptions, expectRadixSelectValue } from './select-helpers'
 
 const scramblePlaceholder = "R2 D2 F2 D L2 F2 U' R2 D B2 L2 U' B' R' B' R2 B2 L B U'"
 const realNotation = "U' F2 U2 B2 F2 D' F2 D' F2 L2 U' B' L' D B L' R B2 D2 F'"
@@ -24,9 +25,8 @@ test.describe('product solve flow', () => {
     await expect(page.getByRole('button', { name: 'Solve' })).toBeDisabled()
     const maxMoves = page.getByLabel('Max moves')
     await expect(maxMoves).toHaveValue('20')
-    const maxNodes = page.getByLabel('Max nodes (M)')
-    await expect(maxNodes).toHaveValue('10')
-    await expect(maxNodes.locator('option')).toHaveText(['10', '15', '20', '25'])
+    await expectRadixSelectValue(page, 'Max nodes (M)', '10')
+    await expectRadixSelectOptions(page, 'Max nodes (M)', ['10', '15', '20', '25'])
     await expect(page.getByText('API connected')).toHaveCount(0)
     await expect(page.getByText(/Generated-table solver/i)).toHaveCount(0)
   })
@@ -114,7 +114,7 @@ test.describe('product solve flow', () => {
 
     await input.fill(realNotation)
     await page.getByLabel('Max moves').fill('20')
-    await page.getByLabel('Max nodes (M)').selectOption('25')
+    await chooseRadixSelectOption(page, 'Max nodes (M)', '25')
     await page.getByRole('button', { name: 'Solve' }).click()
 
     await expect(page.locator('.result code')).toHaveText(/\S/, { timeout: 60_000 })
@@ -155,7 +155,7 @@ test.describe('product solve flow', () => {
     expect(solveRequests).toBe(0)
 
     await page.getByLabel('Max moves').fill('20')
-    await page.getByLabel('Max nodes (M)').selectOption('25')
+    await chooseRadixSelectOption(page, 'Max nodes (M)', '25')
 
     await expect(page.getByRole('button', { name: 'Solve' })).toBeEnabled()
     expect(solveRequests).toBe(0)

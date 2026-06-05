@@ -18,10 +18,11 @@ Keep form state and lightweight validation clear while preserving the notation-o
 
 - Keep browser-facing solve input as move notation.
 - Keep the default scramble empty so the cube starts solved; place sample scrambles in placeholders or examples.
-- Keep simple required and numeric limit validation near the owning form.
+- Use the existing React Hook Form and Zod setup for solve-form required and numeric limit validation.
+- Keep simpler form-like controls local when RHF/Zod would add indirection without value.
 - Normalize notation before submitting it through the API client.
 - Let the API and engine own notation parsing, cube validity, search limits, and solver errors.
-- Add form libraries only when the form grows beyond lightweight local validation.
+- Do not add another form or validation library while RHF/Zod cover the current form need.
 - Keep validation messages accessible and close to the UI state that owns them.
 
 ## Expected Output

@@ -8,6 +8,12 @@
     "visualization": "Visualización del cubo",
     "visualizationUnavailable": "La visualización aún no está disponible para este puzzle."
   },
+  "errorBoundary": {
+    "description": "La vista actual falló de forma inesperada. Intenta de nuevo o cambia de ruta para recargarla.",
+    "kicker": "Error inesperado",
+    "retry": "Intentar de nuevo",
+    "title": "Algo salió mal"
+  },
   "navigation": {
     "closeMenu": "Cerrar menú",
     "github": "Abrir proyecto en GitHub",
@@ -439,6 +445,7 @@
     "scramble": {
       "copied": "Copiado",
       "copy": "Copiar scramble",
+      "copyFailed": "No se pudo copiar el scramble",
       "event": "Evento",
       "next": "Siguiente scramble",
       "previous": "Scramble anterior",

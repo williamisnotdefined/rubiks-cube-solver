@@ -125,10 +125,14 @@ Rules for the web visualization and frontend-to-API boundary.
 - Extract React components only when UI repeats or a named component makes ownership and composition clearer.
 - Keep one-off UI inline when extraction would add indirection without reuse or state-boundary value.
 - Keep route or screen files readable as composition; `App.tsx` should stay thin as the UI grows.
+- Use React Router through the current `HashRouter` route setup; do not switch to `BrowserRouter` without a server fallback requirement.
+- Keep page-level route code-splitting in `App.tsx` with React `lazy`/`Suspense` when route bundles grow.
 - Keep page-specific components, hooks, and helpers under the owning page folder until reused elsewhere.
 - Keep shared reusable components under `apps/web/src/components` only after there is a real shared consumer.
+- Use existing shared Radix-backed primitives for dialogs, selects, switches, checkboxes, toasts, popovers, and tooltips instead of importing Radix directly in feature code.
 - Prefer explicit props and children for reusable layout wrappers.
-- Use lightweight local validation for simple solve controls; add a form library only when current form complexity requires it.
+- Use the existing React Hook Form and Zod setup for solve-form schema validation and submission shaping; keep cube semantics and notation validity in Rust/API code.
+- Use existing Zustand stores only for scoped client state that is shared beyond one component, such as timer sessions/settings, solve settings, theme, and toasts.
 - Use Tailwind utility classes for styling; keep Tailwind import, resets, and semantic theme/color variables in the single `apps/web/src/index.css` entrypoint.
 
 ## Never
@@ -139,7 +143,8 @@ Rules for the web visualization and frontend-to-API boundary.
 - Do not add or import `.css` files outside the single Tailwind/theme entrypoint `apps/web/src/index.css`.
 - Do not make browser clients submit facelets to the API; client-facing solve requests use move notation only.
 - Do not copy API data into broad mutable stores just to pass it through the UI.
-- Do not introduce Zustand, React Hook Form, Zod, React Router, Tailwind, or Storybook conventions unless the dependency exists and current UI complexity justifies it.
+- Do not add new frontend state, form, routing, animation, styling, or component dependencies while the existing stack can satisfy the current need.
+- Do not use native-select assumptions such as Playwright `selectOption()` for Radix Select controls.
 - Do not turn a large component into a hidden god hook or god provider.
 - Do not import raw request functions into UI once a project-level hook/client boundary exists for that operation.
 - Do not import query keys or raw request functions into React components.
@@ -224,6 +229,7 @@ Testing rules for this repository.
 - Use Vitest APIs such as `describe`, `it`, `expect`, `vi.fn`, and `vi.spyOn` for `apps/web` unit and component tests.
 - Keep `apps/web` tests in `__tests__/` folders beside the source area they cover.
 - Use Testing Library for React component behavior and public accessibility queries.
+- Use Playwright accessibility queries for E2E flows and shared E2E helpers for non-native controls such as Radix Select.
 - Keep `apps/web/src/api` request and hook tests in `apps/web/src/api/__tests__`, using shared fetch and React Query helpers under `apps/web/src/test`.
 - Keep `apps/web/src/core` tests under `apps/web/src/core/<category>/__tests__/<name>.test.ts`.
 - Keep `apps/web` coverage thresholds at 95% or higher for statements, branches, functions, and lines when coverage is configured.
@@ -238,6 +244,7 @@ Testing rules for this repository.
 - Do not use Jest-only APIs or `jest.mock` patterns in Vitest tests.
 - Do not place `apps/web` tests as loose sibling `*.test.ts(x)` files when a nearby `__tests__/` folder is available.
 - Do not add duplicate web test helpers when `apps/web/src/test/render.tsx` or `apps/web/src/test/api.ts` already covers the setup.
+- Do not use Playwright `selectOption()` or `locator('option')` for Radix Select controls; use helpers under `tests/e2e/select-helpers.ts`.
 
 ## Verification
 
@@ -249,6 +256,7 @@ Testing rules for this repository.
 - Web coverage: `npm run test:coverage -w @rubiks-cube-solver/web`.
 - Web Storybook: `npm run storybook:build -w @rubiks-cube-solver/web`.
 - End-to-end tests: `npm run test:e2e` after the API, web app, and pruning-table prerequisites are available.
+- E2E split commands: `npm run test:e2e:smoke` for product/responsive/timer smoke, `npm run test:e2e:scan` for serial manual scan coverage, and `npm run test:e2e:full` for the complete non-heavy suite.
 - ML tests: `python -m pytest ml`.
 - Product gate: `npm run product:gate` for release-level or cross-boundary validation.
 - AI routes: `npm run ai:check`.
