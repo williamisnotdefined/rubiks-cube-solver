@@ -45,6 +45,7 @@ Make changes that preserve project boundaries, roadmap order, existing conventio
 - Check whether `cube-engine`, `solver-search`, `api-boundary`, or `frontend-visualization` applies.
 - Follow existing naming, layout, imports, and error handling before adding a new pattern.
 - Decide verification before editing: bug fixes need regression tests, behavior changes need targeted behavior tests, and AI knowledge changes need sync checks.
+- Before an AI-created commit or pull request, run `cargo clippy --all-targets --all-features -- -D warnings` from the repository root when the Rust toolchain is available.
 - Keep generated AI routes synchronized through `npm run ai:sync`.
 
 ## Expected Output
@@ -60,6 +61,7 @@ Make changes that preserve project boundaries, roadmap order, existing conventio
 - Run `npm run ai:check` for AI changes.
 - Run `cargo test` for Rust changes when Rust is installed.
 - Run `npm run build` and `npm run lint -w @rubiks-cube-solver/web` for web changes when dependencies are installed.
+- Run `cargo clippy --all-targets --all-features -- -D warnings` before committing, pushing, or opening/updating a PR when the AI is asked to do those GitHub actions.
 
 # Referenced Context
 
@@ -80,6 +82,7 @@ Global rules for changes anywhere in this repository.
 - Keep workspace-specific code inside the owning workspace unless there is a current cross-workspace consumer.
 - Use repository-root commands such as `npm run ai:check`, `npm run api:test`, `npm run build`, and `cargo test` so paths and workspaces resolve consistently.
 - Run targeted verification for the affected area and report any environment blockers.
+- Before any AI-created commit or pull request, run `cargo clippy --all-targets --all-features -- -D warnings` from the repository root when the Rust toolchain is available.
 - Keep AI route files generated from canonical files under `ai`.
 
 ## Never
@@ -99,6 +102,7 @@ Global rules for changes anywhere in this repository.
 - API changes: `npm run api:test` or the relevant `cargo test -p rubiks-cube-solver-api` target.
 - Web changes: `npm run build` and `npm run lint -w @rubiks-cube-solver/web` when dependencies are installed.
 - Broad repository changes: run affected targeted checks first, then broader checks only when the change crosses boundaries.
+- Commit and PR requests: run `cargo clippy --all-targets --all-features -- -D warnings` before committing, pushing, or opening/updating the PR, or report the environment blocker if it cannot run.
 
 ## Reference: `ai/rules/testing-rules.md`
 
