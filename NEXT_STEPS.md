@@ -6,7 +6,6 @@
 - Favicon
 - YT Channels
 - Algs (all kinds)
-- timer tem que ser mais controlavel, ele tá estranho a questao da tecla de espaço.
 - remover do select a opção NxNxN Cube
 
 
