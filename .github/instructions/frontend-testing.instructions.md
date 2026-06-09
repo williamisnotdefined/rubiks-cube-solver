@@ -126,6 +126,7 @@ Rules for React component boundaries in `apps/web`.
 ## Always
 
 - Keep route or screen files readable as composition.
+- Keep frontend route paths and URL segments in English stable slugs; translate menu labels, headings, and copy through `react-i18next` instead of localizing URLs.
 - Extract components when UI repeats or a named component clarifies ownership, state boundaries, or screen structure.
 - Keep one-off UI inline when extraction only adds indirection.
 - Keep page-level screens under `apps/web/src/pages`.
@@ -148,6 +149,7 @@ Rules for React component boundaries in `apps/web`.
 - Do not turn every extraction into a broad component library.
 - Do not move page, cube, solver, API, or visualization-specific helpers into shared utilities before reuse exists.
 - Do not let `App.tsx`, page files, or hooks become god modules.
+- Do not add localized route paths such as Portuguese or Spanish URL segments; user-visible navigation text belongs in locale files.
 - Do not fix a god component by moving all state and effects into a god provider or god hook.
 - Do not create React Context for mutable UI state.
 - Do not render short fixed control groups through artificial arrays when direct JSX is clearer.
@@ -276,6 +278,7 @@ The solve form defaults to an empty scramble so the visualization starts solved;
 
 - `App.tsx` should stay thin and delegate the product screen to page-level modules.
 - Route-level code-splitting belongs in `App.tsx`; keep page-specific lazy chunks behind the current `HashRouter` routes.
+- Route paths use English stable slugs such as `/solve`, `/timer`, and `/channels`; translate visible navigation labels and page copy with `react-i18next`, not localized URLs.
 - Keep route or screen components readable as composition as the UI grows.
 - Extract named components for repeated panels, controls, result sections, or visualization shells when the extraction clarifies ownership.
 - Keep page-specific pieces colocated near the owning screen until reused elsewhere.

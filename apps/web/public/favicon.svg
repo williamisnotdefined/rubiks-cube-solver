@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">Rubik's Cube Solver favicon</title>
+  <path d="M10 50 L32 62 L54 50 L32 38 Z" fill="#000000" opacity="0.32" />
+  <g stroke="#070707" stroke-width="1.65" stroke-linejoin="bevel">
+    <polygon points="8,18 16,22.333 16,31.667 8,27.333" fill="#22c55e" />
+    <polygon points="16,22.333 24,26.667 24,36 16,31.667" fill="#16a34a" />
+    <polygon points="24,26.667 32,31 32,40.333 24,36" fill="#15803d" />
+    <polygon points="8,27.333 16,31.667 16,41 8,36.667" fill="#4ade80" />
+    <polygon points="16,31.667 24,36 24,45.333 16,41" fill="#22c55e" />
+    <polygon points="24,36 32,40.333 32,49.667 24,45.333" fill="#166534" />
+    <polygon points="8,36.667 16,41 16,50.333 8,46" fill="#86efac" />
+    <polygon points="16,41 24,45.333 24,54.667 16,50.333" fill="#4ade80" />
+    <polygon points="24,45.333 32,49.667 32,59 24,54.667" fill="#22c55e" />
+
+    <polygon points="32,31 40,26.667 40,36 32,40.333" fill="#f87171" />
+    <polygon points="40,26.667 48,22.333 48,31.667 40,36" fill="#ef4444" />
+    <polygon points="48,22.333 56,18 56,27.333 48,31.667" fill="#dc2626" />
+    <polygon points="32,40.333 40,36 40,45.333 32,49.667" fill="#ef4444" />
+    <polygon points="40,36 48,31.667 48,41 40,45.333" fill="#dc2626" />
+    <polygon points="48,31.667 56,27.333 56,36.667 48,41" fill="#b91c1c" />
+    <polygon points="32,49.667 40,45.333 40,54.667 32,59" fill="#dc2626" />
+    <polygon points="40,45.333 48,41 48,50.333 40,54.667" fill="#b91c1c" />
+    <polygon points="48,41 56,36.667 56,46 48,50.333" fill="#991b1b" />
+
+    <polygon points="32,5 40,9.333 32,13.667 24,9.333" fill="#ffffff" />
+    <polygon points="40,9.333 48,13.667 40,18 32,13.667" fill="#f8fafc" />
+    <polygon points="48,13.667 56,18 48,22.333 40,18" fill="#e5e7eb" />
+    <polygon points="24,9.333 32,13.667 24,18 16,13.667" fill="#f8fafc" />
+    <polygon points="32,13.667 40,18 32,22.333 24,18" fill="#facc15" />
+    <polygon points="40,18 48,22.333 40,26.667 32,22.333" fill="#f8fafc" />
+    <polygon points="16,13.667 24,18 16,22.333 8,18" fill="#e5e7eb" />
+    <polygon points="24,18 32,22.333 24,26.667 16,22.333" fill="#f8fafc" />
+    <polygon points="32,22.333 40,26.667 32,31 24,26.667" fill="#ffffff" />
+  </g>
+  <path d="M32 5 L56 18 L56 46 L32 59 L8 46 L8 18 Z" fill="none" stroke="#f7f7f7" stroke-width="1.35" stroke-linejoin="bevel" opacity="0.72" />
+</svg>
