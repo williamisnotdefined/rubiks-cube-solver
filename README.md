@@ -345,7 +345,7 @@ The web app talks to the native HTTP API so generated two-phase pruning tables s
 
 Current frontend stack:
 
-- React 19, TypeScript, Vite, and React Router 7 with `HashRouter` for `#/solve` and `#/timer` routes.
+- React 19, TypeScript, Vite, and React Router 7 with `BrowserRouter` for clean `/solve` and `/timer` routes.
 - TanStack React Query for API health, puzzle metadata, strategy metadata, and solve mutation state.
 - Radix-backed shared primitives for dialogs, alert dialogs, selects, switches, checkboxes, toasts, popovers, and tooltips; feature code should use wrappers in `apps/web/src/components` instead of direct Radix imports.
 - React Hook Form plus Zod for solve-form limit validation and submission shaping; Rust remains responsible for notation semantics, cube validity, and solver correctness.

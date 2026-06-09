@@ -79,7 +79,7 @@ test.describe('product solve flow', () => {
     await expect(page.locator('.result code')).toHaveText("U' R'", {
       timeout: 30_000,
     })
-    await expect(page.locator('.result')).toContainText(/found in/)
+    await expect(page.locator('.result')).toContainText(/2 moves - response in/)
     await page.getByRole('button', { name: 'see more' }).click()
     const details = page.getByRole('dialog', { name: 'Solver details' })
     await expect(details).toContainText(/Generated two-phase (quality )?solver/)
@@ -196,7 +196,7 @@ test.describe('timer layout', () => {
       )
     })
 
-    await page.goto('/#/timer')
+    await page.goto('/timer')
 
     await expect(page.getByRole('timer', { name: 'Speedsolve timer' })).toBeVisible()
 

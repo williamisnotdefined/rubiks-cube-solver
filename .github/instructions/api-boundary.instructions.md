@@ -124,7 +124,7 @@ Rules for the web visualization and frontend-to-API boundary.
 - Extract React components only when UI repeats or a named component makes ownership and composition clearer.
 - Keep one-off UI inline when extraction would add indirection without reuse or state-boundary value.
 - Keep route or screen files readable as composition; `App.tsx` should stay thin as the UI grows.
-- Use React Router through the current `HashRouter` route setup; do not switch to `BrowserRouter` without a server fallback requirement.
+- Use React Router through the current `BrowserRouter` route setup; keep server/static hosting configured to fall back to `index.html` for frontend routes.
 - Keep frontend route paths and URL segments in English stable slugs; translate visible menu labels, headings, and copy through `react-i18next` locale files under `apps/web/src/i18n/locales`.
 - Keep supported locale resources in key and interpolation-placeholder parity across `en`, `es`, `pt-BR`, `it`, `de`, `fr`, `ru`, `zh` for Simplified Chinese, and `ja`.
 - Keep page-level route code-splitting in `App.tsx` with React `lazy`/`Suspense` when route bundles grow.
