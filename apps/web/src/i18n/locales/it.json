@@ -1,0 +1,1119 @@
+{
+  "common": {
+    "cancel": "Annulla",
+    "close": "Chiudi",
+    "loading": "Caricamento",
+    "loadingRoute": "Caricamento percorso"
+  },
+  "channels": {
+    "bannerAlt": "Banner del canale {{channel}}",
+    "description": "Una griglia curata di {{count}} canali YouTube per tutorial, speedcubing, recensioni, record e cultura cuber.",
+    "kicker": "Directory cubing di YouTube",
+    "openChannel": "Apri {{channel}} su YouTube",
+    "openInYouTube": "Apri su YouTube",
+    "title": "Canali YT"
+  },
+  "algorithms": {
+    "index": {
+      "description": "Schede statiche di algoritmi: immagine del caso più algoritmo. Nessuna API, nessuno stato trainer, nessun testo editoriale.",
+      "kicker": "Schede algoritmi",
+      "puzzle": "Puzzle",
+      "puzzleList": "Categorie di algoritmi per puzzle",
+      "title": "Algoritmi"
+    },
+    "table": {
+      "algorithm": "Algoritmo",
+      "case": "Caso",
+      "name": "Nome",
+      "source": "Fonte"
+    },
+    "methods": {
+      "cfop": {
+        "algorithmCount": "4 passaggi, 78 algoritmi completi di ultimo strato",
+        "cases": {
+          "sexyMove": {
+            "name": "Trigger base F2L",
+            "note": "Un piccolo trigger usato per accoppiare e inserire molti casi F2L. Impara l'effetto prima di memorizzare liste lunghe."
+          },
+          "sune": {
+            "name": "Sune OLL",
+            "note": "Una delle forme OLL più importanti. Appare in OLL a 2 look, OLL completo, Ortega 2x2 e set in stile CLL."
+          },
+          "tPerm": {
+            "name": "Permutazione T",
+            "note": "Una PLL veloce che scambia una coppia di angoli e una coppia di spigoli. È un benchmark utile per l'esecuzione dell'ultimo strato."
+          },
+          "uPerm": {
+            "name": "Permutazione U",
+            "note": "Una PLL solo di spigoli. Molti solver imparano presto le permutazioni U perché chiudono molti casi PLL da principianti."
+          }
+        },
+        "images": {
+          "hero": "Diagramma del metodo CFOP con informazioni sui primi due strati"
+        },
+        "level": "Da principiante ad avanzato",
+        "recommendedFor": "Speedsolving 3x3 e fase 3x3 dei big cube",
+        "steps": {
+          "cross": {
+            "body": "Risolvi quattro spigoli inferiori attorno al colore scelto, di solito pianificando tutta la cross durante l'ispezione. L'obiettivo non è solo risolverla, ma finire con una presa stabile e una prima coppia F2L prevedibile.",
+            "title": "Cross"
+          },
+          "f2l": {
+            "body": "Accoppia ogni angolo del primo strato con lo spigolo corrispondente dello strato intermedio e inserisci la coppia in uno slot. Un F2L efficiente riguarda soprattutto capire il movimento dei pezzi, non memorizzare subito ogni caso.",
+            "title": "F2L"
+          },
+          "oll": {
+            "body": "Orienta l'ultimo strato in modo che la faccia superiore abbia un solo colore. I principianti possono dividerlo in OLL a 2 look; OLL completo ha 57 casi.",
+            "title": "OLL"
+          },
+          "pll": {
+            "body": "Permuta i pezzi dell'ultimo strato già orientati. PLL a 2 look basta per iniziare; PLL completo ha 21 casi ed è uno dei migliori primi set avanzati da imparare.",
+            "title": "PLL"
+          }
+        },
+        "summary": "CFOP risolve il cubo tramite Cross, F2L, OLL e PLL. È il percorso di speedsolving 3x3 più documentato e l'upgrade più semplice dal layer-by-layer.",
+        "title": "CFOP"
+      },
+      "cll": {
+        "algorithmCount": "42 casi dopo uno strato 2x2 risolto",
+        "cases": {
+          "antisune": {
+            "name": "Gruppo Antisune",
+            "note": "Il partner dall'aspetto inverso di Sune. È comune e vale la pena riconoscerlo dagli sticker superiori e dalle barre laterali."
+          },
+          "hCase": {
+            "name": "Gruppo H",
+            "note": "Un gruppo compatto con schemi opposti distintivi. Alcuni casi hanno algoritmi molto brevi."
+          },
+          "sune": {
+            "name": "Gruppo Sune",
+            "note": "Uno dei primi gruppi CLL che molti solver riconoscono perché è collegato direttamente a forme OLL familiari."
+          },
+          "tCase": {
+            "name": "Gruppo T",
+            "note": "Questo gruppo premia un riconoscimento pulito delle barre. Evita di confonderlo con casi Pi e U simili."
+          }
+        },
+        "images": {
+          "hero": "Diagramma del metodo CLL"
+        },
+        "level": "2x2 avanzato",
+        "recommendedFor": "Solver 2x2 che risolvono già rapidamente uno strato",
+        "steps": {
+          "oneLookCorners": {
+            "body": "Usa un algoritmo per risolvere tutti gli angoli rimanenti. Questo rimuove la divisione OLL più PBL da Ortega e rende l'ultimo strato un one look.",
+            "title": "Risolvi l'ultimo strato in un solo look"
+          },
+          "recognition": {
+            "body": "Il riconoscimento è organizzato per famiglie di orientamento degli angoli come Sune, Antisune, T, U, L, Pi e H. Impara un gruppo alla volta e allena insieme i casi simili.",
+            "title": "Riconoscimento dei gruppi"
+          },
+          "solvedLayer": {
+            "body": "CLL parte da uno strato completamente risolto, non solo da una faccia risolta. Il primo strato viene di solito pianificato durante l'ispezione sugli scramble facili.",
+            "title": "Primo strato risolto"
+          }
+        },
+        "summary": "CLL risolve i quattro angoli 2x2 rimanenti in un algoritmo dopo uno strato risolto. È il passaggio naturale dopo Ortega.",
+        "title": "2x2 CLL"
+      },
+      "clockBeginner": {
+        "algorithmCount": "Basato su procedura, non ricco di algoritmi",
+        "cases": {
+          "pins": {
+            "name": "Notazione dei pin",
+            "note": "UR, DR, DL e UL identificano quali pin sono alzati. Una descrizione del metodo ha senso solo quando le posizioni dei pin sono inequivocabili."
+          },
+          "twelve": {
+            "name": "Obiettivo Clock risolto",
+            "note": "Ogni quadrante deve puntare a 12:00 su entrambi i lati. Il puzzle riguarda offset controllati dei quadranti, non la permutazione dei pezzi."
+          }
+        },
+        "level": "Principiante",
+        "recommendedFor": "Imparare la notazione Clock prima dei metodi speed",
+        "steps": {
+          "corners": {
+            "body": "Dopo le cross, porta ogni quadrante d'angolo rimanente a 12 senza disturbare i gruppi risolti. L'ordine esatto delle rotelle dipende dal metodo scelto.",
+            "title": "Angoli"
+          },
+          "crosses": {
+            "body": "La maggior parte dei metodi per principianti allinea prima un insieme di quadranti centrali e laterali su un lato, poi ripete sull'altro lato dopo aver girato il puzzle.",
+            "title": "Costruisci gruppi di quadranti"
+          },
+          "flip": {
+            "body": "Girare il Clock cambia quali quadranti sono collegati da ogni rotella. Una buona notazione mantiene leggibili le operazioni davanti e dietro.",
+            "title": "Gira e finisci"
+          },
+          "notation": {
+            "body": "Clock usa pin e giri di rotella invece dei giri di faccia del cubo. Impara come le posizioni dei pin collegano i quadranti prima di provare a memorizzare un metodo.",
+            "title": "Prima la notazione"
+          }
+        },
+        "summary": "I metodi Clock risolvono gruppi di quadranti usando pin e rotelle. Inizia dalla notazione e da una procedura affidabile per principianti prima di ottimizzare il numero di mosse.",
+        "title": "Metodo base Clock"
+      },
+      "eg": {
+        "algorithmCount": "128 casi incluse idee PBL",
+        "cases": {
+          "eg0": {
+            "name": "EG-0 / base CLL",
+            "note": "Lo strato inferiore è completamente risolto. Questi sono i casi CLL che conosci già se hai imparato prima 2x2 CLL."
+          },
+          "eg1": {
+            "name": "EG-1",
+            "note": "La prima faccia ha uno schema di scambio adiacente. Il riconoscimento deve includere dove si trovano i pezzi inferiori accoppiati prima dell'algoritmo."
+          },
+          "eg2": {
+            "name": "EG-2",
+            "note": "La prima faccia ha uno schema di scambio diagonale. È potente, ma utile solo quando l'ispezione può coprire tutta la solve."
+          }
+        },
+        "images": {
+          "eg0": "Caso EG-0 della prima faccia",
+          "eg1": "Caso EG-1 della prima faccia",
+          "eg2": "Caso EG-2 della prima faccia",
+          "hero": "Rappresentazione del metodo EG"
+        },
+        "level": "2x2 esperto",
+        "recommendedFor": "Risoluzione 2x2 one-look e ispezione avanzata",
+        "steps": {
+          "auf": {
+            "body": "EG richiede spesso sia pre-AUF sia post-AUF. Questo rende il riconoscimento più difficile di CLL anche quando l'algoritmo finale è veloce.",
+            "title": "Controlla AUF"
+          },
+          "caseGroup": {
+            "body": "Classifica la prima faccia in EG-0, EG-1 o EG-2. Questo ti dice se lo strato inferiore è risolto, scambiato adiacente o scambiato diagonale.",
+            "title": "Identifica il gruppo EG"
+          },
+          "face": {
+            "body": "Costruisci una faccia, non necessariamente uno strato completo. Il valore di EG deriva dallo scegliere una faccia che renda visibile il resto durante l'ispezione.",
+            "title": "Costruisci una faccia"
+          }
+        },
+        "summary": "EG è un metodo 2x2 ad alto numero di algoritmi: risolvi una faccia, poi risolvi tutto il cubo in un algoritmo. È più forte quando l'intera solve può essere pianificata in ispezione.",
+        "title": "2x2 EG"
+      },
+      "fourByFour": {
+        "algorithmCount": "Flusso di riduzione più algoritmi di parità",
+        "cases": {
+          "ollParity": {
+            "name": "Parità OLL",
+            "note": "Un 4x4 ridotto può mostrare un singolo dedge ribaltato, uno stato impossibile su un vero 3x3. Imparalo separatamente dall'OLL normale."
+          },
+          "pllParity": {
+            "name": "Parità PLL",
+            "note": "La parità PLL scambia due dedge dopo la fase 3x3. Il riconoscimento è semplice, ma l'esecuzione deve essere controllata."
+          }
+        },
+        "level": "Intermedio",
+        "recommendedFor": "Primo metodo 4x4 e transizione a Yau",
+        "steps": {
+          "centers": {
+            "body": "Costruisci i sei centri 2x2. Nella riduzione, di solito si fa prima dell'accoppiamento degli spigoli; in Yau, alcuni spigoli della cross sono risolti prima per migliorare il lookahead.",
+            "title": "Centri"
+          },
+          "edgePairing": {
+            "body": "Accoppia gli spigoli wing corrispondenti in dedge. Una volta accoppiati tutti i dedge, il puzzle si comporta come un 3x3 con possibili casi di parità.",
+            "title": "Accoppia gli spigoli"
+          },
+          "parity": {
+            "body": "I casi di parità non sono errori. Succedono perché la riduzione nasconde informazioni interne del 4x4 che un normale 3x3 non ha.",
+            "title": "Gestisci la parità"
+          },
+          "threeByThreeStage": {
+            "body": "Risolvi il cubo ridotto con un metodo 3x3 come CFOP. Tieni gli algoritmi di parità separati dagli algoritmi dell'ultimo strato del 3x3.",
+            "title": "Fase 3x3"
+          }
+        },
+        "summary": "La riduzione 4x4 trasforma il puzzle in un 3x3 risolvendo centri e accoppiando spigoli, poi gestisce casi di parità che non esistono sul 3x3.",
+        "title": "Riduzione 4x4 e Yau"
+      },
+      "megaminxBeginner": {
+        "algorithmCount": "Risoluzione per lo più intuitiva in stile F2L",
+        "cases": {
+          "lastLayerSune": {
+            "name": "Idea Sune dell'ultimo strato",
+            "note": "Molte idee dell'ultimo strato del Megaminx somigliano a trigger 3x3, ma il riconoscimento avviene su un ultimo strato a cinque lati."
+          },
+          "s2lInsert": {
+            "name": "Idea di inserimento della coppia",
+            "note": "Gli inserimenti del secondo strato e degli strati successivi sono più facili se pensi in coppie, non in pezzi isolati."
+          }
+        },
+        "images": {
+          "hero": "Foto del puzzle Megaminx"
+        },
+        "level": "Da principiante a intermedio",
+        "recommendedFor": "Solver 3x3 che imparano Megaminx",
+        "steps": {
+          "lastLayerCorners": {
+            "body": "Finisci orientando e permutando gli angoli finali. Mantieni separati il colore superiore e i colori laterali nel riconoscimento.",
+            "title": "Angoli dell'ultimo strato"
+          },
+          "lastLayerEdges": {
+            "body": "Orienta e permuta gli spigoli finali. Alcune idee dell'ultimo strato 3x3 si trasferiscono, ma la disposizione a cinque spigoli cambia i casi.",
+            "title": "Spigoli dell'ultimo strato"
+          },
+          "s2l": {
+            "body": "Continua attorno al puzzle con coppie angolo-spigolo. Il metodo sembra un F2L esteso con più slot e più tracciamento dei colori.",
+            "title": "Secondi strati"
+          },
+          "star": {
+            "body": "Inizia con una stella di cinque spigoli attorno a un centro. È l'equivalente Megaminx del pianificare una base stabile prima di risolvere le coppie.",
+            "title": "Stella"
+          }
+        },
+        "summary": "Megaminx si risolve di solito con un metodo a strati ispirato al 3x3: stella, coppie attorno al puzzle, poi un ultimo strato adattato a cinque lati.",
+        "title": "Metodo Megaminx per principianti"
+      },
+      "ortega": {
+        "algorithmCount": "3 passaggi, circa 12 algoritmi",
+        "cases": {
+          "adjacentPbl": {
+            "name": "PBL adiacente",
+            "note": "Entrambi gli strati devono essere permutati, con barre che possono essere allineate prima dell'algoritmo."
+          },
+          "antisune": {
+            "name": "Antisune OLL",
+            "note": "Il partner inverso di Sune. Allenalo insieme a Sune per evitare esitazioni nel riconoscimento."
+          },
+          "diagonalPbl": {
+            "name": "PBL diagonale",
+            "note": "Un caso PBL compatto che scambia angoli diagonali tra gli strati."
+          },
+          "sune": {
+            "name": "Sune OLL",
+            "note": "Un caso centrale di orientamento per la faccia opposta."
+          }
+        },
+        "images": {
+          "hero": "Animazione del metodo Ortega"
+        },
+        "level": "2x2 intermedio",
+        "recommendedFor": "Superare il 2x2 da principiante senza imparare CLL completo",
+        "steps": {
+          "firstFace": {
+            "body": "Costruisci una faccia intuitivamente. I colori laterali non devono combaciare, quindi il primo passaggio è più veloce di uno strato completo.",
+            "title": "Prima faccia"
+          },
+          "oppositeFace": {
+            "body": "Orienta la faccia opposta con un piccolo set OLL. Il risultato sono due facce di colore risolto con pezzi non necessariamente permutati.",
+            "title": "Faccia opposta"
+          },
+          "pbl": {
+            "body": "Permuta entrambi gli strati insieme. Il riconoscimento PBL è l'abilità principale di Ortega dopo che la prima faccia diventa facile.",
+            "title": "PBL"
+          }
+        },
+        "summary": "Ortega risolve un 2x2 creando una faccia, orientando la faccia opposta e poi permutando entrambi gli strati con PBL.",
+        "title": "2x2 Ortega"
+      },
+      "petrus": {
+        "algorithmCount": "5 passaggi, per lo più intuitivi prima dell'ultimo strato",
+        "cases": {
+          "blockExpansion": {
+            "name": "Espansione del blocco",
+            "note": "Petrus premia il vedere come un blocco 2x2x2 può diventare 2x2x3 senza rompere pezzi risolti."
+          },
+          "edgeOrientation": {
+            "name": "Trigger di orientamento degli spigoli",
+            "note": "Dopo il blocco 2x2x3, orientare gli spigoli permette di risolvere il resto di F2L con un set di mosse ridotto."
+          }
+        },
+        "images": {
+          "hero": "Animazione del metodo Petrus"
+        },
+        "level": "Blockbuilding intermedio",
+        "recommendedFor": "Ragionamento a poche mosse e pratica di blockbuilding",
+        "steps": {
+          "edgeOrientation": {
+            "body": "Orienta gli spigoli rimanenti non risolti. Questa è l'identità di Petrus: fare EO presto così il resto diventa più semplice.",
+            "title": "Orienta gli spigoli"
+          },
+          "finishF2l": {
+            "body": "Finisci i primi due strati con il vincolo degli spigoli orientati. Può essere molto efficiente in mosse, ma richiede lookahead flessibile.",
+            "title": "Finisci F2L"
+          },
+          "lastLayer": {
+            "body": "Usa qualsiasi sistema di ultimo strato. Poiché gli spigoli sono orientati, sono possibili OCLL più PLL, COLL più EPLL o approcci in stile ZBLL.",
+            "title": "Ultimo strato"
+          },
+          "twoByThreeBlock": {
+            "body": "Espandi il blocco a 2x2x3. La scelta dell'espansione influenza sia l'orientamento degli spigoli sia l'ergonomia del resto della solve.",
+            "title": "Blocco 2x2x3"
+          },
+          "twoByTwoBlock": {
+            "body": "Costruisci un blocco 2x2x2 ovunque. Non è uno strato: è un blocco risolto compatto che lascia disponibili molti giri.",
+            "title": "Blocco 2x2x2"
+          }
+        },
+        "summary": "Petrus costruisce prima blocchi, orienta presto gli spigoli e finisce F2L con meno restrizioni rispetto ai metodi layer-by-layer.",
+        "title": "Petrus"
+      },
+      "pyraminxVFirst": {
+        "algorithmCount": "Set per principianti più casi in stile L4E",
+        "cases": {
+          "beginnerCycleA": {
+            "name": "Ciclo di tre spigoli A",
+            "note": "Un ciclo base Pyraminx usato nei metodi per principianti per muovere spigoli senza richiedere molti algoritmi."
+          },
+          "beginnerCycleB": {
+            "name": "Ciclo di tre spigoli B",
+            "note": "Il ciclo speculare. Imparalo in coppia con il primo ciclo."
+          },
+          "twoEdgeFlip": {
+            "name": "Flip di due spigoli",
+            "note": "Un caso comune dell'ultimo spigolo. I solver più veloci spesso rielaborano la notazione per fingertrick migliori."
+          }
+        },
+        "level": "Da principiante a intermedio",
+        "recommendedFor": "Solver Pyraminx che imparano l'option select",
+        "steps": {
+          "lastEdges": {
+            "body": "Finisci gli ultimi spigoli con un piccolo set di algoritmi. Gli approcci avanzati V First puntano molto sul riconoscere questi casi senza pause.",
+            "title": "Ultimi spigoli"
+          },
+          "optionSelect": {
+            "body": "I solver Pyraminx forti confrontano partenze V First e Top First durante l'ispezione. Scegli l'opzione con la chiusura più pulita, non solo la prima che vedi.",
+            "title": "Option select"
+          },
+          "tips": {
+            "body": "Le punte sono indipendenti e dovrebbero essere risolte senza pensarci. Fallo durante la solve solo quando non interrompono il lookahead.",
+            "title": "Punte e centri"
+          },
+          "v": {
+            "body": "Costruisci una V: due spigoli risolti attorno a un'area d'angolo. Questo dà una base stabile per il set dell'ultimo spigolo.",
+            "title": "V First"
+          }
+        },
+        "summary": "I metodi speed Pyraminx ruotano di solito attorno alle scelte V First e Top First. V First è comune perché è intuitivo e facile da ispezionare.",
+        "title": "Pyraminx V First"
+      },
+      "roux": {
+        "algorithmCount": "4 passaggi, da 9 a 42 algoritmi CMLL",
+        "cases": {
+          "cmllSune": {
+            "name": "Caso CMLL in stile Sune",
+            "note": "CMLL risolve gli ultimi quattro angoli ignorando la maggior parte delle posizioni degli spigoli. Alcuni casi somigliano a idee COLL o OLLCP."
+          },
+          "lseo": {
+            "name": "Schema di orientamento LSE",
+            "note": "Roux termina con giri MU. Il riconoscimento dell'orientamento degli spigoli è più importante del numero grezzo di algoritmi."
+          },
+          "mSliceEdgeFlip": {
+            "name": "Controllo degli spigoli nella slice M",
+            "note": "Giri M e U puliti sono essenziali. Roux è veloce solo quando i movimenti di slice sono affidabili."
+          }
+        },
+        "images": {
+          "hero": "Rappresentazione del metodo Roux"
+        },
+        "level": "Da intermedio ad avanzato",
+        "recommendedFor": "Risoluzione 3x3 a poche mosse e pratica one-handed",
+        "steps": {
+          "cmll": {
+            "body": "Risolvi i quattro angoli dell'ultimo strato in un passaggio lasciando gli spigoli per lo più liberi. CMLL completo ha 42 casi, ma una versione a due look basta per iniziare.",
+            "title": "CMLL"
+          },
+          "firstBlock": {
+            "body": "Costruisci un blocco 1x2x3 su un lato. Questa è la parte più difficile per i nuovi solver Roux perché è vero blockbuilding, non inserimento in slot.",
+            "title": "Primo blocco"
+          },
+          "lse": {
+            "body": "Risolvi gli ultimi sei spigoli con mosse M e U: orienta gli spigoli, risolvi UL e UR, poi finisci la slice M. Qui Roux diventa molto efficiente in mosse.",
+            "title": "Ultimi sei spigoli"
+          },
+          "secondBlock": {
+            "body": "Costruisci il blocco opposto 1x2x3 senza distruggere il primo. Dopo questo, lo strato U e la slice M restano disponibili per la chiusura.",
+            "title": "Secondo blocco"
+          }
+        },
+        "summary": "Roux risolve due blocchi laterali, poi gli angoli, poi gli ultimi sei spigoli. Usa meno mosse di CFOP e dipende dal blockbuilding più il controllo della slice M.",
+        "title": "Roux"
+      },
+      "sarahSkewb": {
+        "algorithmCount": "Principiante: due trigger principali da 4 mosse",
+        "cases": {
+          "hedgeslammer": {
+            "name": "Hedgeslammer",
+            "note": "La notazione di Sarah usa questo trigger come controparte dello sledgehammer. Scegli prese adatte al tuo hardware Skewb."
+          },
+          "lastCenters": {
+            "name": "Ultimi centri",
+            "note": "L'ultimo passaggio ripete le stesse idee di trigger dopo rotazioni. Tieni traccia dei centri, non solo degli angoli."
+          },
+          "sledgehammer": {
+            "name": "Sledgehammer",
+            "note": "Uno dei due trigger principali da 4 mosse nel metodo di Sarah. Molti casi Skewb si riducono a sledgehammer o hedgeslammer ripetuti."
+          }
+        },
+        "images": {
+          "hero": "Passaggio degli angoli del metodo Skewb di Sarah",
+          "step1": "Diagramma del primo lato dello Skewb di Sarah",
+          "step4": "Diagramma degli ultimi centri dello Skewb di Sarah"
+        },
+        "level": "Da principiante ad avanzato",
+        "recommendedFor": "Solver Skewb che vogliono un percorso chiaro da principiante a L2L",
+        "steps": {
+          "corners": {
+            "body": "Usa i due trigger da 4 mosse per risolvere gli angoli rimanenti. Il riconoscimento è semplice all'inizio e diventa più algoritmico nella versione intermedia.",
+            "title": "Angoli rimanenti"
+          },
+          "firstSide": {
+            "body": "Risolvi un lato intuitivamente. L'ultimo angolo può richiedere di spostare temporaneamente un angolo risolto, cosa normale su Skewb.",
+            "title": "Primo lato"
+          },
+          "lastCenters": {
+            "body": "Risolvi i centri rimanenti abbinando uno dei casi noti, ruotando il puzzle se necessario e applicando la stessa struttura di trigger.",
+            "title": "Centri rimanenti"
+          },
+          "topCenter": {
+            "body": "Risolvi il centro opposto dopo gli angoli. La versione principiante lo separa dagli ultimi centri per mantenere facile il riconoscimento.",
+            "title": "Centro opposto"
+          }
+        },
+        "summary": "Il metodo Skewb di Sarah è costruito attorno a due trigger brevi. La versione principiante ha quattro passaggi, poi combina i passaggi man mano che il riconoscimento migliora.",
+        "title": "Metodo Skewb di Sarah"
+      },
+      "squareOneShape": {
+        "algorithmCount": "Metodo shape-first con casi di notazione",
+        "cases": {
+          "kiteScallop": {
+            "name": "Esempio di shape",
+            "note": "I casi di cubeshape si imparano meglio per famiglie di forme. Non trattare ogni sequenza come un algoritmo scollegato."
+          },
+          "notation": {
+            "name": "Notazione Square-1",
+            "note": "(x,y) gira gli strati superiore e inferiore in unità da 30 gradi, poi / scambia la metà destra nella notazione classica."
+          }
+        },
+        "images": {
+          "hero": "Puzzle Square-1 in forma risolta"
+        },
+        "level": "Intermedio",
+        "recommendedFor": "Imparare la notazione Square-1 e cubeshape",
+        "steps": {
+          "parity": {
+            "body": "I casi simili a parità in Square-1 fanno parte del flusso del metodo. Tieni la correzione della parità separata dal cubeshape così il riconoscimento resta pulito.",
+            "title": "Gestisci la parità"
+          },
+          "permutation": {
+            "body": "Permuta angoli e spigoli dopo la separazione. Molti metodi speed riducono questo a set di algoritmi compatti.",
+            "title": "Permuta i pezzi"
+          },
+          "separation": {
+            "body": "Separa angoli e spigoli nei loro strati corretti dopo aver ripristinato la forma di cubo. Alcuni metodi la chiamano orientamento, anche se i pezzi Square-1 non si orientano come pezzi di cubo.",
+            "title": "Separa gli strati"
+          },
+          "shape": {
+            "body": "Riporta prima il puzzle alla forma di cubo. Questo rende possibile il riconoscimento successivo ed è la più grande barriera iniziale per i nuovi solver Square-1.",
+            "title": "Cubeshape"
+          }
+        },
+        "summary": "La risoluzione Square-1 inizia ripristinando la forma di cubo, poi separando e permutando i pezzi con una notazione unica del puzzle.",
+        "title": "Cubeshape Square-1"
+      },
+      "zz": {
+        "algorithmCount": "3 o 4 passaggi a seconda dell'ultimo strato",
+        "cases": {
+          "edgeOrientation": {
+            "name": "Trigger di orientamento degli spigoli",
+            "note": "Questo trigger mostra cosa cambia un algoritmo di orientamento degli spigoli, ma ZZ EO viene di solito pianificato intuitivamente durante l'ispezione."
+          },
+          "twoGenLastLayer": {
+            "name": "Idea di finale two-generator",
+            "note": "Una volta orientati gli spigoli, molti finali possono usare giri veloci in stile R, U e L con meno casi scomodi."
+          }
+        },
+        "images": {
+          "hero": "Animazione EOLine per ZZ"
+        },
+        "level": "Da intermedio ad avanzato",
+        "recommendedFor": "Risoluzione 3x3 senza rotazioni ed ergonomia one-handed",
+        "steps": {
+          "eoLineOrCross": {
+            "body": "Orienta tutti gli spigoli mentre piazzi una linea o una cross in basso. Lo ZZ moderno spesso preferisce EOCross perché migliora il lookahead dopo l'ispezione.",
+            "title": "EOLine o EOCross"
+          },
+          "lastLayer": {
+            "body": "Finisci con un sistema di ultimo strato che beneficia dagli spigoli orientati: OCLL più PLL, COLL più EPLL o, in seguito, ZBLL.",
+            "title": "Ultimo strato"
+          },
+          "zzF2l": {
+            "body": "Completa F2L principalmente con mosse R, U e L. L'orientamento degli spigoli riduce i casi e mantiene stabile la presa del cubo.",
+            "title": "ZZ F2L"
+          }
+        },
+        "summary": "ZZ orienta gli spigoli all'inizio, poi risolve F2L con un set di mosse ridotto. Scambia un'ispezione più difficile con giri più fluidi in seguito.",
+        "title": "ZZ"
+      }
+    },
+    "page": {
+      "algorithmCount": "Algoritmi",
+      "backToIndex": "Algoritmi",
+      "essentialCases": "Casi essenziali",
+      "imageSource": "Fonte immagine:",
+      "level": "Livello",
+      "methods": "Metodi",
+      "recommendedFor": "Consigliato per",
+      "references": "Riferimenti originali",
+      "stepNumber": "Passaggio {{count}}",
+      "steps": "Passaggi del metodo"
+    },
+    "puzzles": {
+      "2x2": {
+        "description": "Metodi Pocket Cube focalizzati su risoluzione face-first, angoli dell'ultimo strato e finali one-look.",
+        "title": "2x2"
+      },
+      "3x3": {
+        "description": "Metodi speed 3x3 principali: a strati, blockbuilding, orientamento degli spigoli e approcci a poche mosse.",
+        "title": "3x3"
+      },
+      "4x4": {
+        "description": "Riduzione dei big cube, flusso in stile Yau e casi di parità prima di tornare a una fase 3x3.",
+        "title": "4x4"
+      },
+      "clock": {
+        "description": "Notazione Clock, logica dei pin e struttura di risoluzione per principianti per l'evento WCA Clock.",
+        "title": "Clock"
+      },
+      "megaminx": {
+        "description": "Metodi per il dodecaedro ispirati alla risoluzione di coppie 3x3, adattati a un ultimo strato a cinque lati.",
+        "title": "Megaminx"
+      },
+      "pyraminx": {
+        "description": "Metodi Pyraminx costruiti attorno a punte, V First, Top First e riconoscimento rapido dell'ultimo spigolo.",
+        "title": "Pyraminx"
+      },
+      "skewb": {
+        "description": "Metodi Skewb che combinano trigger brevi, controllo degli angoli e cicli dei centri.",
+        "title": "Skewb"
+      },
+      "square1": {
+        "description": "Risoluzione shape-shifting Square-1: cubeshape, separazione, permutazione e notazione.",
+        "title": "Square-1"
+      }
+    },
+    "sources": {
+      "jaapClock": "Jaap's Puzzle Page: Clock",
+      "jaapPyraminx": "Jaap's Puzzle Page: Pyraminx",
+      "jaapSquareOne": "Jaap's Puzzle Page: Square-1",
+      "jpermEgOne": "J Perm: algoritmi 2x2 EG-1",
+      "jpermFourByFour": "J Perm: tutorial 4x4",
+      "jpermFourByFourOll": "J Perm: algoritmi di parità OLL 4x4",
+      "jpermFourByFourPll": "J Perm: algoritmi di parità PLL 4x4",
+      "jpermOll": "J Perm: algoritmi OLL",
+      "jpermPll": "J Perm: algoritmi PLL",
+      "jpermTwoByTwo": "J Perm: tutorial 2x2",
+      "jpermTwoByTwoCll": "J Perm: algoritmi 2x2 CLL",
+      "larsPetrus": "Tutorial Lars Petrus",
+      "rouxCommunity": "Guida della community Roux Speed Solvers",
+      "ruwixCfop": "Ruwix: metodo CFOP avanzato",
+      "sarahSkewb": "Sarah's Cubing: metodo Skewb",
+      "speedsolvingCfop": "Speedsolving Wiki: metodo CFOP",
+      "speedsolvingClock": "Speedsolving Wiki: Rubik's Clock",
+      "speedsolvingCll": "Speedsolving Wiki: CLL",
+      "speedsolvingEg": "Speedsolving Wiki: metodo EG",
+      "speedsolvingMegaminx": "Speedsolving Wiki: Megaminx",
+      "speedsolvingOrtega": "Speedsolving Wiki: metodo Ortega",
+      "speedsolvingPetrus": "Speedsolving Wiki: metodo Petrus",
+      "speedsolvingPyraminx": "Speedsolving Wiki: metodi Pyraminx",
+      "speedsolvingRoux": "Speedsolving Wiki: metodo Roux",
+      "speedsolvingSkewb": "Speedsolving Wiki: elenco dei metodi Skewb",
+      "speedsolvingSquareOne": "Speedsolving Wiki: Square-1",
+      "speedsolvingZz": "Speedsolving Wiki: metodo ZZ",
+      "wcaRegulations": "Regolamento WCA",
+      "zzMethod": "Sito ZZ Method"
+    }
+  },
+  "cube": {
+    "visualization": "Visualizzazione del cubo",
+    "visualizationUnavailable": "La visualizzazione non è ancora disponibile per questo puzzle."
+  },
+  "errorBoundary": {
+    "description": "La vista corrente si è arrestata in modo imprevisto. Riprova o cambia percorso per ricaricarla.",
+    "kicker": "Errore imprevisto",
+    "retry": "Riprova",
+    "title": "Qualcosa è andato storto"
+  },
+  "navigation": {
+    "algorithms": "Algoritmi",
+    "algorithmsMenu": "Metodi puzzle",
+    "channels": "Canali YT",
+    "closeMenu": "Chiudi menu",
+    "github": "Apri il progetto su GitHub",
+    "menu": "Menu",
+    "openMenu": "Apri menu",
+    "primary": "Navigazione principale",
+    "solve": "Solver",
+    "theme": "Tema",
+    "themeDark": "Scuro",
+    "themeLight": "Chiaro",
+    "themeSystem": "Sistema",
+    "timer": "Timer"
+  },
+  "scan": {
+    "actions": {
+      "analyzing": "Analisi",
+      "autoScanOff": "Auto scan disattivato",
+      "autoScanOn": "Auto scan attivato",
+      "clearPhoto": "Cancella faccia",
+      "confirmAnyway": "Conferma comunque",
+      "confirmFace": "Conferma faccia",
+      "nextFace": "Faccia successiva",
+      "previousFace": "Faccia precedente",
+      "retakePhoto": "Scansiona di nuovo",
+      "solveScannedCube": "Risolvi cubo scansionato",
+      "takePhoto": "Scansiona faccia",
+      "updateFace": "Aggiorna faccia"
+    },
+    "camera": {
+      "capturedFaceAlt": "Faccia del cubo riconosciuta",
+      "errorManualFallback": "{{message}} Puoi comunque compilare la griglia manualmente.",
+      "holdSteady": "tieni fermo {{count}}/{{target}}",
+      "lookingForCube": "ricerca del cubo",
+      "modes": {
+        "rejected": "rifiutato",
+        "reviewed_stickers": "colori revisionati",
+        "tile_detector": "rilevatore sticker"
+      },
+      "opening": "Apertura fotocamera",
+      "statusWithConfidence": "{{mode}} {{confidence}}%",
+      "stickerConfidence": "sticker {{confidence}}%",
+      "stickersFound": "{{count}}/{{total}} sticker trovati",
+      "stickersReady": "{{count}}/{{total}} sticker pronti",
+      "temporalCollecting": "consenso {{count}}/{{target}}",
+      "temporalColorDisagreement": "colore instabile {{count}} frame",
+      "temporalReady": "consenso {{agreement}}% {{count}} frame",
+      "temporalUnstable": "geometria instabile {{count}} frame",
+      "tracking": "tracciamento {{count}}/{{target}}"
+    },
+    "carousel": {
+      "faceConfirmed": "confermata",
+      "faceDraft": "bozza",
+      "faceInvalid": "non valida",
+      "faceNeedsReview": "revisione",
+      "facePending": "in sospeso",
+      "goToFace": "Vai a {{face}}, {{status}}",
+      "next": "Successiva",
+      "previous": "Precedente"
+    },
+    "colors": {
+      "B": "Blu",
+      "D": "Giallo",
+      "F": "Verde",
+      "L": "Arancione",
+      "R": "Rosso",
+      "U": "Bianco"
+    },
+    "centerMismatch": {
+      "dismiss": "Chiudi conferma centro",
+      "kicker": "Centro diverso",
+      "title": "Conferma faccia prevista"
+    },
+    "editor": {
+      "colorCount": "Conteggio colori",
+      "orAlternative": "o {{colorInitial}}",
+      "paletteLabel": "Palette colori",
+      "pickColor": "Scegli un colore",
+      "needsConfirmation": "richiede conferma",
+      "reviewColors": "Revisiona colori",
+      "reviewGroupLabel": "Colori della faccia scansionata",
+      "selectSquareHint": "Seleziona un quadrato, poi scegli un colore per correggerlo.",
+      "stickerLabel": "Sticker {{index}}{{color}}",
+      "uncertainColor": "colore incerto",
+      "uncertainMaybe": "forse {{color}}"
+    },
+    "evenReview": {
+      "autoFit": "Prova adattamento automatico",
+      "autoFitambiguous": "È possibile più di un adattamento. Regola manualmente la net.",
+      "autoFitnone": "Impossibile adattare ruotando solo le facce. Scambia posizioni o revisiona gli sticker.",
+      "autoFitsuggested": "Trovato un adattamento probabile con meno modifiche. Applicalo solo dopo aver revisionato la net.",
+      "autoFitunique": "Adattamento trovato e applicato. Revisiona la net prima di risolvere.",
+      "applySuggestion": "Applica suggerimento",
+      "back": "Indietro e modifica",
+      "capturedFace": "Catturata: {{face}}",
+      "description": "Controlla se questa net Kociemba corrisponde al cubo fisico. Trascina le facce per scambiare posizioni e seleziona una faccia per ruotarla prima di risolvere.",
+      "dragInstructions": "Trascina una faccia in un altro slot o usa i pulsanti di scambio. Usa i pulsanti di rotazione per correggere l'orientamento della faccia catturata.",
+      "invalidDescription": "Alcuni angoli combinano colori opposti o impossibili. Ruota le facce o torna indietro per correggere gli sticker.",
+      "invalidSolveDisabled": "Correggi gli angoli impossibili evidenziati prima di risolvere.",
+      "invalidTitle": "Angoli impossibili",
+      "kicker": "Revisione finale",
+      "oppositePair": "{{first}} e {{second}} sono facce opposte.",
+      "reviewAction": "Revisiona cubo assemblato",
+      "rotate90": "Ruota 90°",
+      "rotate180": "Ruota 180°",
+      "rotate270": "Ruota -90°",
+      "selectedFace": "Slot selezionato: {{face}} · faccia catturata: {{capturedFace}}",
+      "solve": "Accetta e risolvi",
+      "swapTitle": "Scambia faccia selezionata con",
+      "title": "Revisiona cubo assemblato",
+      "validMessage": "Gli angoli del 2x2 sono strutturalmente validi. Conferma che l'anteprima corrisponda al cubo fisico."
+    },
+    "faces": {
+      "B": {
+        "instruction": "Mostra la faccia blu con la faccia bianca in alto nella vista della fotocamera.",
+        "label": "Faccia blu",
+        "top": "Bianco"
+      },
+      "D": {
+        "instruction": "Mostra la faccia gialla con la faccia verde in alto nella vista della fotocamera.",
+        "label": "Faccia gialla",
+        "top": "Verde"
+      },
+      "F": {
+        "instruction": "Mostra la faccia verde con la faccia bianca in alto nella vista della fotocamera.",
+        "label": "Faccia verde",
+        "top": "Bianco"
+      },
+      "L": {
+        "instruction": "Mostra la faccia arancione con la faccia bianca in alto nella vista della fotocamera.",
+        "label": "Faccia arancione",
+        "top": "Bianco"
+      },
+      "R": {
+        "instruction": "Mostra la faccia rossa con la faccia bianca in alto nella vista della fotocamera.",
+        "label": "Faccia rossa",
+        "top": "Bianco"
+      },
+      "U": {
+        "instruction": "Mostra la faccia bianca con la faccia verde in alto nella vista della fotocamera.",
+        "label": "Faccia bianca",
+        "top": "Verde"
+      }
+    },
+    "faces2": {
+      "B": {
+        "instruction": "Ruota il cubo per mostrare il lato posteriore senza cambiare quale lato è in alto.",
+        "label": "Lato posteriore",
+        "top": "Alto"
+      },
+      "D": {
+        "instruction": "Mostra il lato inferiore e mantieni il lato frontale in alto nella vista della fotocamera.",
+        "label": "Lato inferiore",
+        "top": "Frontale"
+      },
+      "F": {
+        "instruction": "Scegli il lato frontale. Tieni il cubo con il lato superiore in alto nella vista della fotocamera.",
+        "label": "Lato frontale",
+        "top": "Alto"
+      },
+      "L": {
+        "instruction": "Ruota il cubo per mostrare il lato sinistro senza cambiare quale lato è in alto.",
+        "label": "Lato sinistro",
+        "top": "Alto"
+      },
+      "R": {
+        "instruction": "Ruota il cubo per mostrare il lato destro senza cambiare quale lato è in alto.",
+        "label": "Lato destro",
+        "top": "Alto"
+      },
+      "U": {
+        "instruction": "Mostra il lato superiore e mantieni il lato frontale in alto nella vista della fotocamera.",
+        "label": "Lato superiore",
+        "top": "Frontale"
+      }
+    },
+    "live": {
+      "cameraDenied": "Il permesso della fotocamera è stato negato o non è stata trovata alcuna fotocamera.",
+      "cameraUnavailable": "L'accesso alla fotocamera non è disponibile in questo browser.",
+      "centerMismatch": "Rilevato un altro colore centrale. Ruota verso la faccia prevista.",
+      "detectingStickers": "Rilevamento sticker: {{count}}/{{total}} trovati.",
+      "faceDetected": "Faccia rilevata. Tieni fermo.",
+      "gridReady": "{{count}}/{{total}} sticker bloccati. Tieni fermo.",
+      "imageBlurry": "L'immagine è sfocata. Tieni fermo il cubo.",
+      "looking": "Ricerca della faccia del cubo.",
+      "lookingKeepVisible": "Ricerca della faccia del cubo. Mantieni il cubo completamente visibile.",
+      "partialGrid": "{{count}}/9 sticker trovati. Mostra una faccia piatta.",
+      "scanFailed": "Analisi live scan non riuscita.",
+      "stableCapturing": "Tutti gli sticker sono stabili. Revisiona i colori.",
+      "tooBright": "Troppo riflesso. Riduci i riflessi luminosi.",
+      "tooDark": "Troppo buio. Aggiungi più luce."
+    },
+    "messages": {
+      "allFacesConfirmed": "Tutte le facce sono confermate. Risolvi il cubo scansionato quando sei pronto.",
+      "analysisFailed": "La richiesta di analisi della scansione non è riuscita.",
+      "analyzingFace": "Analisi della faccia del cubo...",
+      "apiNotReady": "L'API non è ancora pronta.",
+      "autoCaptured": "Catturata automaticamente. Revisiona i colori prima di confermare questa faccia.",
+      "autoCapturing": "Cattura automatica della faccia stabile...",
+      "autoPaused": "Auto scan in pausa. Attivalo quando la faccia è visibile.",
+      "cameraFrameFailed": "Impossibile leggere un frame della fotocamera. Riprova.",
+      "cameraNotReady": "La fotocamera non è ancora pronta.",
+      "captured": "Foto catturata. Revisiona i colori prima di confermare questa faccia.",
+      "capturingPhoto": "Cattura foto...",
+      "centerMismatchFallback": "Il centro catturato non corrisponde a questo passaggio di scansione. Rifai la foto.",
+      "centerMismatchConfirmQuestion": "Sei sicuro che questa sia la faccia prevista?",
+      "centerMismatchWithColors": "Il centro sembra {{detectedColor}}{{confidence}}, ma questo passaggio prevede {{expectedColor}}. Ruota verso la faccia prevista prima di confermare.",
+      "confirmAllFaces": "Conferma tutte e sei le facce e assicurati che ogni colore appaia esattamente 9 volte.",
+      "confidenceSuffix": " (confidenza {{confidence}}%)",
+      "detectedUncertain": "{{count}} colori rilevati sono incerti. Revisiona i quadrati evidenziati o cancella la faccia per scansionare di nuovo.",
+      "faceNeedsReview": "Revisiona questa faccia prima di risolvere.",
+      "faceUpdated": "Faccia aggiornata. Revisiona le altre facce o risolvi quando sei pronto.",
+      "genericRejected": "Il cubo scansionato è stato rifiutato. Revisiona i colori confermati.",
+      "lowConfidence": "La confidenza del rilevamento è bassa.",
+      "manualDetectionFailed": "Impossibile rilevare una faccia del cubo. Rifai la foto o compila manualmente la griglia.",
+      "qualityBlurry": "Tieni fermo il cubo per una foto più nitida.",
+      "qualityBright": "Riduci il riflesso prima di scansionare.",
+      "qualityDark": "Aggiungi più luce prima di scansionare.",
+      "sessionAmbiguous": "Il backend ha trovato più di uno stato cubo valido. Revisiona gli sticker evidenziati o scansiona di nuovo le facce poco chiare.",
+      "sessionBlurRescan": "L'immagine è sfocata sulle facce {{faces}}. Tieni fermo il cubo e scansiona di nuovo quelle facce.",
+      "sessionGlareRescan": "Troppo riflesso sulle facce {{faces}}. Riduci i riflessi e scansiona di nuovo quelle facce.",
+      "sessionInvalidCornerTargets": "La scansione ha costruito un angolo 2x2 impossibile. Revisiona gli sticker evidenziati e prova di nuovo a risolvere.",
+      "sessionInvalidCubeState": "La scansione non descrive un cubo valido. Revisiona le facce e scansiona di nuovo gli sticker poco chiari.",
+      "sessionIncompleteStickers": "Completa tutti e 9 gli sticker sulle facce {{faces}} prima di risolvere.",
+      "sessionMissingConfirmedFaces": "Conferma queste facce prima di risolvere: {{faces}}.",
+      "sessionMissingPhotos": "Riconosci queste facce prima di risolvere: {{faces}}.",
+      "sessionNeedsManualConfirmation": "Conferma gli sticker evidenziati prima di risolvere.",
+      "sessionNeedsRescan": "Una o più facce devono essere scansionate di nuovo.",
+      "sessionRejected": "La sessione di scansione è stata rifiutata. Revisiona le facce prima di risolvere.",
+      "sessionShadowRescan": "Troppa ombra sulle facce {{faces}}. Aggiungi luce più uniforme e scansiona di nuovo quelle facce.",
+      "sessionVisionUnavailable": "Il servizio di visione non ha potuto completare la sessione. Riprova quando il servizio di visione è disponibile.",
+      "solveFailed": "La richiesta di risoluzione della scansione non è riuscita.",
+      "submittingSession": "Controllo della scansione completa con i vincoli del cubo...",
+      "stillLooking": "Sto ancora cercando la faccia del cubo. Mantieni tutta la faccia visibile e lascia che l'auto scan riprovi.",
+      "liveReviewReady": "{{count}} sticker riconosciuti. Revisiona i colori, correggi eventuali quadrati se necessario, poi conferma questa faccia."
+    },
+    "modal": {
+      "cnnEvidenceActive": "Evidenza CNN attiva",
+      "cnnReasonUnknown": "non configurato",
+      "colorFallbackActive": "Fallback solo colore: {{reason}}",
+      "confirmed": "{{count}} confermate",
+      "description": "Mostra una faccia alla volta con il colore superiore richiesto. La soluzione usa i colori che confermi.",
+      "dismiss": "Chiudi scansione cubo",
+      "cancelExit": "Annulla uscita dalla scansione cubo",
+      "exitAction": "Esci",
+      "exitDescription": "Hai progressi di scansione che andranno persi se esci ora.",
+      "exitKicker": "Scansione non salvata",
+      "exitTitle": "Uscire dalla scansione?",
+      "expectedCenter": "Centro previsto: {{color}}",
+      "faceProgress": "Faccia {{current}} di {{total}}",
+      "keepAtTop": "Mantieni in alto: {{color}}",
+      "tileDetectorActive": "Rilevatore sticker attivo",
+      "tileDetectorFallbackActive": "Fallback rilevatore sticker: {{reason}}",
+      "tileDetectorReasonUnknown": "non configurato",
+      "title": "Scansiona cubo",
+      "visionStatusUnavailable": "Stato visione non disponibile"
+    },
+    "validation": {
+      "centerColorMismatch": "Il colore centrale deve corrispondere alla faccia in scansione.",
+      "colorAppearsMoreThanNine": "{{color}} appare più di 9 volte.",
+      "confirmAllNineColors": "Conferma tutti e 9 i colori prima di continuare."
+    },
+    "warnings": {
+      "tile_detector_rejected": "La proposta del rilevatore sticker è stata rifiutata. Mantieni la faccia del cubo piatta e visibile.",
+      "image_blurry": "L'immagine è sfocata. Tieni fermo il cubo.",
+      "image_too_bright": "Troppo riflesso. Riduci i riflessi luminosi.",
+      "image_too_dark": "Troppo buio. Aggiungi più luce.",
+      "low_confidence_sticker": "Uno o più sticker sono incerti. Revisiona i quadrati evidenziati."
+    }
+  },
+  "solve": {
+    "details": {
+      "columns": {
+        "meaning": "Significato",
+        "text": "Testo"
+      },
+      "dismiss": "Chiudi dettagli solver",
+      "elapsedLabel": "risposta in {{elapsed}}",
+      "elapsedMeaning": "Il tempo totale della richiesta di risoluzione misurato nel browser. Include il round trip API e il parsing della risposta, quindi può differire dal tempo di ricerca del backend.",
+      "maxNodesConfigured": "limite di {{nodes}} nodi",
+      "maxNodesUnlimited": "nessun limite nodi configurato",
+      "movesLabel": "{{count}} mosse",
+      "nodesLabel": "{{nodes}} nodi",
+      "nodesMeaning": "Il solver ha esplorato questo numero di nodi di ricerca interni prima di trovare la soluzione. Questa esecuzione ha usato {{maxNodesLabel}}.",
+      "replayNotVerified": "replay non verificato",
+      "replayVerified": "replay verificato",
+      "replayVerifiedMeaning": "Dopo aver trovato le mosse, il backend le ha riprodotte sul cubo scramble e ha confermato che il cubo diventa risolto.",
+      "search": "Ricerca",
+      "solution": "Soluzione",
+      "solutionLengthMeaning": "La lunghezza della soluzione restituita. Ogni token di notazione conta come una mossa, incluse le mezze rotazioni come R2 o B2.",
+      "subtitle": "Queste metriche descrivono la soluzione restituita, il timing della richiesta e la verifica del backend.",
+      "tables": {
+        "available": {
+          "label": "tabelle disponibili",
+          "meaning": "Le tabelle di pruning pre-generate richieste da questa strategia erano disponibili. Aiutano a potare la ricerca."
+        },
+        "corrupt_or_incompatible": {
+          "label": "tabelle corrotte o incompatibili",
+          "meaning": "Le tabelle di pruning richieste esistono ma non corrispondono al formato o ai metadati previsti, quindi dovrebbero essere rigenerate."
+        },
+        "not_required": {
+          "label": "tabelle non richieste",
+          "meaning": "Questa strategia non richiede tabelle di pruning generate."
+        },
+        "not_applicable": {
+          "label": "tabelle non applicabili",
+          "meaning": "Questa strategia puzzle non usa artefatti generati di tabelle di pruning 3x3."
+        },
+        "unavailable": {
+          "label": "tabelle non disponibili",
+          "meaning": "Le tabelle di pruning richieste non erano disponibili sul server API."
+        }
+      },
+      "time": "Tempo",
+      "title": "Dettagli solver"
+    },
+    "noSolution": {
+      "attempted": "{{strategy}} ha provato fino a {{maxDepth}} mosse e {{maxNodes}} nodi.",
+      "description": "Il solver non ha trovato un risultato verificato dal replay con i limiti attuali. Aumenta i limiti e prova di nuovo lo stesso cubo.",
+      "dismiss": "Chiudi dialogo limiti solver",
+      "previousAttempt": "Tentativo precedente",
+      "retry": "Prova con questi limiti",
+      "title": "Prova limiti diversi"
+    },
+    "errors": {
+      "detail": {
+        "generated_tables_corrupt": "Rigenera le tabelle di pruning native; gli artefatti API correnti non corrispondono al motore Rust.",
+        "generated_tables_unavailable": "Genera le tabelle di pruning native e avvia npm run api:dev prima di risolvere.",
+        "invalid_input_orientation_hint": "Controlla l'orientamento della scansione: cattura verde, rosso, blu e arancione con bianco in alto; cattura bianco e giallo con verde in alto.",
+        "not_found_within_limits": "{{strategy}} ha esplorato {{nodes}} nodi a massimo {{maxDepth}} mosse."
+      },
+      "errorKind": {
+        "duplicate_corner": "Il cubo scansionato ha un pezzo angolo duplicato.",
+        "duplicate_corner_stickers": "Il cubo scansionato ha sticker di angolo duplicati.",
+        "duplicate_edge": "Il cubo scansionato ha un pezzo spigolo duplicato.",
+        "duplicate_edge_stickers": "Il cubo scansionato ha sticker di spigolo duplicati.",
+        "generated_tables_unavailable": "L'API non ha caricato le tabelle di pruning generate richieste da questa strategia.",
+        "invalid_center_sticker": "Uno o più sticker centrali non corrispondono a un layout di cubo valido.",
+        "invalid_corner_orientation": "L'orientamento degli angoli scansionati non è valido.",
+        "invalid_corner_orientation_sum": "Le torsioni degli angoli scansionati non formano un cubo risolvibile.",
+        "invalid_corner_sticker_order": "Un angolo scansionato ha un ordine sticker non valido.",
+        "invalid_edge_orientation": "L'orientamento degli spigoli scansionati non è valido.",
+        "invalid_edge_orientation_sum": "I flip degli spigoli scansionati non formano un cubo risolvibile.",
+        "invalid_face_count": "I colori del cubo devono apparire esattamente 9 volte ciascuno.",
+        "invalid_length": "Lo stato del cubo ha il numero sbagliato di sticker.",
+        "invalid_move_notation": "Usa notazione standard come R, U, R' o U2.",
+        "invalid_permutation_parity": "I pezzi scansionati hanno una parità di permutazione impossibile.",
+        "invalid_symbol": "Lo stato del cubo contiene un simbolo colore non valido.",
+        "max_depth_exceeds_limit": "Il massimo di mosse supera il limite di sicurezza dell'API.",
+        "max_nodes_exceeds_limit": "Il massimo di nodi supera il limite di sicurezza dell'API.",
+        "missing_corner": "Nel cubo scansionato manca un pezzo angolo.",
+        "missing_edge": "Nel cubo scansionato manca un pezzo spigolo.",
+        "node_limit_exceeded": "Il solver si è fermato dopo aver raggiunto il limite di nodi configurato.",
+        "notation_too_large": "La notazione dello scramble è troppo grande.",
+        "strategy_puzzle_mismatch": "La strategia solver selezionata non appartiene a questo puzzle.",
+        "unknown_corner_stickers": "Il cubo scansionato contiene una combinazione sconosciuta di colori d'angolo.",
+        "unknown_edge_stickers": "Il cubo scansionato contiene una combinazione sconosciuta di colori di spigolo.",
+        "unsupported_input_kind": "Questo tipo di input puzzle non è supportato dall'endpoint solve.",
+        "unsupported_metric": "Questa metrica di movimento non è supportata dall'endpoint solve.",
+        "unsupported_puzzle": "Questo puzzle non è ancora supportato dall'endpoint solve.",
+        "unsupported_strategy": "La strategia solver selezionata non è supportata da questa API.",
+        "unverified_solution": "Il solver ha restituito una soluzione che ha fallito la verifica replay."
+      },
+      "status": {
+        "api_error": "Richiesta solve API non riuscita",
+        "generated_tables_corrupt": "Tabelle API two-phase generate corrotte o incompatibili",
+        "generated_tables_unavailable": "Tabelle two-phase generate non disponibili sull'API",
+        "invalid_input": "Stato cubo non valido",
+        "invalid_limits": "I limiti del solver superano i cap di sicurezza dell'API",
+        "invalid_notation": "Scramble non valido",
+        "node_limit_exceeded": "Limite nodi superato",
+        "not_found_within_limits": "Nessuna soluzione entro i limiti configurati",
+        "request_too_large": "La richiesta solve è troppo grande",
+        "strategy_puzzle_mismatch": "La strategia non corrisponde al puzzle",
+        "unknown_puzzle": "Puzzle sconosciuto",
+        "unsupported_input_kind": "Input puzzle non supportato",
+        "unsupported_metric": "Metrica di movimento non supportata",
+        "unsupported_puzzle": "Puzzle non supportato",
+        "unsupported_strategy": "Strategia solver non supportata",
+        "unverified_solution": "La soluzione del solver ha fallito la verifica replay"
+      }
+    },
+    "form": {
+      "maxMoves": "Mosse max",
+      "maxNodesMillion": "Nodi max (M)",
+      "puzzle": "Puzzle",
+      "scanCube": "Scansiona cubo con fotocamera",
+      "scanUnavailableForPuzzle": "La scansione con fotocamera è disponibile solo per 3x3 per ora.",
+      "scramble": "Scramble",
+      "solve": "Risolvi"
+    },
+    "playback": {
+      "ariaLabel": "Riproduzione soluzione",
+      "currentMove": "Mossa {{step}}: {{move}}",
+      "nextMove": "Mossa successiva",
+      "previousMove": "Mossa precedente",
+      "scramble": "Scramble",
+      "solutionStep": "Passaggio soluzione",
+      "solved": " risolto"
+    },
+    "result": {
+      "foundIn": "risposta in {{elapsed}}",
+      "seeMore": "vedi altro",
+      "solved": "Risolto",
+      "successMeta": "{{count}} mosse - {{elapsed}} -"
+    },
+    "strategies": {
+      "generated-two-phase": "Solver two-phase generato",
+      "generated-two-phase-multiprobe": "Solver two-phase multiprobe generato",
+      "generated-two-phase-quality": "Solver two-phase quality generato",
+      "cube2-bounded-ida-star": "2x2 bounded IDA*",
+      "cube2-pdb-ida-star": "2x2 PDB IDA*",
+      "meaningDefault": "La strategia solver backend deterministica usata per questa richiesta. È logica di ricerca, non AI generativa.",
+      "meaningGeneratedTwoPhase": "La strategia usata. Generato non significa AI generativa; è un solver two-phase supportato da tabelle di pruning pre-generate. Le modalità quality provano profondità di soluzione più brevi prima di ripiegare sul massimo configurato."
+    },
+    "validation": {
+      "oneOf": "{{label}} deve essere uno di {{options}}",
+      "required": "{{label}} è obbligatorio",
+      "wholeNumber": "{{label}} deve essere un numero intero",
+      "withinLimit": "{{label}} deve essere {{limit}} o meno"
+    }
+  },
+  "timer": {
+    "displayLabel": "Timer speedsolve",
+    "instructions": {
+      "space": "Spazio o tocco: tieni premuto, rilascia per iniziare, premi per fermare."
+    },
+    "inspection": {
+      "title": "Ispezione WCA"
+    },
+    "penalty": {
+      "dnf": "DNF",
+      "label": "Controlli penalità",
+      "latest": "Penalità ultima solve",
+      "ok": "OK",
+      "plus2": "+2"
+    },
+    "scramble": {
+      "copied": "Copiato",
+      "copy": "Copia scramble",
+      "copyFailed": "Impossibile copiare scramble",
+      "event": "Evento",
+      "next": "Scramble successivo",
+      "previous": "Scramble precedente",
+      "title": "Scramble"
+    },
+    "session": {
+      "defaultName": "Sessione predefinita",
+      "solveCount": "{{count}} solve"
+    },
+    "settings": {
+      "inspection": "Ispezione",
+      "label": "Impostazioni timer",
+      "milliseconds": "Millisecondi"
+    },
+    "solves": {
+      "actions": "Azioni",
+      "delete": "Elimina",
+      "empty": "Nessuna solve ancora",
+      "label": "Solve",
+      "penalty": "Penalità",
+      "scramble": "Scramble",
+      "time": "Tempo"
+    },
+    "stats": {
+      "ao12": "ao12",
+      "ao5": "ao5",
+      "best": "Migliore",
+      "mean": "Media"
+    },
+    "status": {
+      "holding": "In attesa",
+      "idle": "Pronto da tenere",
+      "inspection": "Ispezione",
+      "ready": "Pronto",
+      "running": "Risoluzione",
+      "stopped": "Fermato"
+    }
+  }
+}

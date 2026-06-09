@@ -10,6 +10,7 @@ The project is method-agnostic. Generated two-phase search is a current classica
 
 - Rust workspace scaffolded.
 - `cube-engine` contains cubie state, moves, notation parsing, scrambles, validation, bounded IDA*, generated two-phase search, solver datasets, and quality reporting.
+- `apps/web` uses `react-i18next` locale resources with browser-language detection for English, Spanish, Brazilian Portuguese, Italian, German, French, Russian, Simplified Chinese, and Japanese.
 - AI knowledge routing is managed from canonical files under `ai/`.
 
 ## Quick Start

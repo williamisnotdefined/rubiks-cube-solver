@@ -1,0 +1,1119 @@
+{
+  "common": {
+    "cancel": "Abbrechen",
+    "close": "Schließen",
+    "loading": "Wird geladen",
+    "loadingRoute": "Route wird geladen"
+  },
+  "channels": {
+    "bannerAlt": "Banner des Kanals {{channel}}",
+    "description": "Ein kuratiertes Raster mit {{count}} YouTube-Kanälen für Tutorials, Speedcubing, Reviews, Rekorde und Puzzle-Kultur.",
+    "kicker": "YouTube-Cubing-Verzeichnis",
+    "openChannel": "{{channel}} auf YouTube öffnen",
+    "openInYouTube": "Auf YouTube öffnen",
+    "title": "YT Channels"
+  },
+  "algorithms": {
+    "index": {
+      "description": "Statische Algorithmus-Blätter: Fallbild plus Algorithmus. Keine API, kein Trainer-Status, kein redaktioneller Text.",
+      "kicker": "Algorithmus-Blätter",
+      "puzzle": "Puzzle",
+      "puzzleList": "Puzzle-Algorithmuskategorien",
+      "title": "Algorithmen"
+    },
+    "table": {
+      "algorithm": "Algorithmus",
+      "case": "Fall",
+      "name": "Name",
+      "source": "Quelle"
+    },
+    "methods": {
+      "cfop": {
+        "algorithmCount": "4 Schritte, 78 vollständige Last-Layer-Algorithmen",
+        "cases": {
+          "sexyMove": {
+            "name": "F2L-Basis-Trigger",
+            "note": "Ein kleiner Trigger, mit dem viele F2L-Fälle gepaart und eingesetzt werden. Lerne die Wirkung, bevor du lange Listen auswendig lernst."
+          },
+          "sune": {
+            "name": "Sune OLL",
+            "note": "Eine der wichtigsten OLL-Formen. Sie erscheint in 2-look OLL, vollständigem OLL, 2x2 Ortega und CLL-ähnlichen Sets."
+          },
+          "tPerm": {
+            "name": "T-Permutation",
+            "note": "Ein schneller PLL, der ein Eckenpaar und ein Kantenpaar vertauscht. Er ist ein nützlicher Maßstab für die Ausführung des Last Layer."
+          },
+          "uPerm": {
+            "name": "U-Permutation",
+            "note": "Ein PLL nur für Kanten. Viele Solver lernen U-Permutationen früh, weil sie viele Anfänger-PLL-Fälle abschließen."
+          }
+        },
+        "images": {
+          "hero": "CFOP-Methodendiagramm mit Informationen zu den ersten zwei Ebenen"
+        },
+        "level": "Anfänger bis Fortgeschrittene",
+        "recommendedFor": "3x3-Speedsolving und 3x3-Phase bei Big Cubes",
+        "steps": {
+          "cross": {
+            "body": "Löse vier untere Kanten um die gewählte Farbe, meist während du das gesamte Cross in der Inspection planst. Ziel ist nicht nur, es zu lösen, sondern mit stabilem Griff und einem vorhersagbaren ersten F2L-Paar zu enden.",
+            "title": "Cross"
+          },
+          "f2l": {
+            "body": "Paare jede Ecke der ersten Ebene mit der passenden Kante der mittleren Ebene und setze das Paar in einen Slot ein. Effizientes F2L bedeutet vor allem, die Bewegung der Teile zu verstehen, nicht zuerst jeden Fall auswendig zu lernen.",
+            "title": "F2L"
+          },
+          "oll": {
+            "body": "Orientiere den Last Layer so, dass die obere Seite eine Farbe hat. Anfänger können dies in 2-look OLL aufteilen; vollständiges OLL hat 57 Fälle.",
+            "title": "OLL"
+          },
+          "pll": {
+            "body": "Permutiere die bereits orientierten Teile des Last Layer. 2-look PLL reicht für den Anfang; vollständiges PLL hat 21 Fälle und ist eines der besten ersten fortgeschrittenen Sets zum Lernen.",
+            "title": "PLL"
+          }
+        },
+        "summary": "CFOP löst den Würfel über Cross, F2L, OLL und PLL. Es ist der am besten dokumentierte Weg für 3x3-Speedsolving und das einfachste Upgrade von Layer-by-Layer.",
+        "title": "CFOP"
+      },
+      "cll": {
+        "algorithmCount": "42 Fälle nach einer gelösten 2x2-Ebene",
+        "cases": {
+          "antisune": {
+            "name": "Antisune-Gruppe",
+            "note": "Der invers aussehende Partner von Sune. Er ist häufig und lohnt sich, anhand oberer Sticker und Seitenbalken erkannt zu werden."
+          },
+          "hCase": {
+            "name": "H-Gruppe",
+            "note": "Eine kompakte Gruppe mit markanten gegenüberliegenden Mustern. Einige Fälle haben sehr kurze Algorithmen."
+          },
+          "sune": {
+            "name": "Sune-Gruppe",
+            "note": "Eine der ersten CLL-Gruppen, die die meisten Solver erkennen, weil sie direkt mit vertrauten OLL-Formen zusammenhängt."
+          },
+          "tCase": {
+            "name": "T-Gruppe",
+            "note": "Diese Gruppe belohnt saubere Balkenerkennung. Vermeide, sie mit ähnlichen Pi- und U-Fällen zu verwechseln."
+          }
+        },
+        "images": {
+          "hero": "CLL-Methodendiagramm"
+        },
+        "level": "Fortgeschrittenes 2x2",
+        "recommendedFor": "2x2-Solver, die bereits schnell eine Ebene lösen",
+        "steps": {
+          "oneLookCorners": {
+            "body": "Verwende einen Algorithmus, um alle verbleibenden Ecken zu lösen. Dadurch entfällt die Aufteilung in OLL plus PBL aus Ortega und der Last Layer wird zu einem Look.",
+            "title": "Den Last Layer in einem Look lösen"
+          },
+          "recognition": {
+            "body": "Die Erkennung ist nach Eckenorientierungsfamilien wie Sune, Antisune, T, U, L, Pi und H organisiert. Lerne jeweils eine Gruppe und übe ähnliche Fälle zusammen.",
+            "title": "Gruppenerkennung"
+          },
+          "solvedLayer": {
+            "body": "CLL beginnt mit einer vollständig gelösten Ebene, nicht nur mit einer gelösten Seite. Die erste Ebene wird bei einfachen Scrambles meist während der Inspection geplant.",
+            "title": "Gelöste erste Ebene"
+          }
+        },
+        "summary": "CLL löst die verbleibenden vier 2x2-Ecken nach einer gelösten Ebene mit einem Algorithmus. Es ist der natürliche Schritt nach Ortega.",
+        "title": "2x2 CLL"
+      },
+      "clockBeginner": {
+        "algorithmCount": "Prozedurbasiert, nicht algorithmuslastig",
+        "cases": {
+          "pins": {
+            "name": "Pin-Notation",
+            "note": "UR, DR, DL und UL geben an, welche Pins oben sind. Eine Methodenbeschreibung ergibt erst Sinn, wenn die Pin-Positionen eindeutig sind."
+          },
+          "twelve": {
+            "name": "Gelöstes Clock-Ziel",
+            "note": "Jedes Zifferblatt muss auf beiden Seiten auf 12:00 zeigen. Beim Puzzle geht es um kontrollierte Zifferblatt-Offsets, nicht um Teilepermutation."
+          }
+        },
+        "level": "Anfänger",
+        "recommendedFor": "Clock-Notation vor Speed-Methoden lernen",
+        "steps": {
+          "corners": {
+            "body": "Bringe nach den Kreuzen jedes verbleibende Eck-Zifferblatt auf 12, ohne gelöste Gruppen zu stören. Die genaue Radreihenfolge hängt von der gewählten Methode ab.",
+            "title": "Ecken"
+          },
+          "crosses": {
+            "body": "Die meisten Anfängermethoden richten zuerst eine Gruppe aus mittleren und Kanten-Zifferblättern auf einer Seite aus und wiederholen dies nach dem Umdrehen des Puzzles auf der anderen Seite.",
+            "title": "Zifferblattgruppen bilden"
+          },
+          "flip": {
+            "body": "Das Umdrehen der Clock ändert, welche Zifferblätter durch jedes Rad verbunden sind. Gute Notation hält Vorder- und Rückseitenoperationen lesbar.",
+            "title": "Umdrehen und beenden"
+          },
+          "notation": {
+            "body": "Clock verwendet Pins und Raddrehungen statt Würfelseitendrehungen. Lerne, wie Pin-Positionen Zifferblätter verbinden, bevor du versuchst, eine Methode auswendig zu lernen.",
+            "title": "Zuerst die Notation"
+          }
+        },
+        "summary": "Clock-Methoden lösen Zifferblattgruppen mit Pins und Raddrehungen. Beginne mit Notation und einer zuverlässigen Anfängerprozedur, bevor du die Zuganzahl optimierst.",
+        "title": "Clock-Grundmethode"
+      },
+      "eg": {
+        "algorithmCount": "128 Fälle einschließlich PBL-Ideen",
+        "cases": {
+          "eg0": {
+            "name": "EG-0 / CLL-Basis",
+            "note": "Die untere Ebene ist vollständig gelöst. Dies sind die CLL-Fälle, die du bereits kennst, wenn du zuerst 2x2 CLL gelernt hast."
+          },
+          "eg1": {
+            "name": "EG-1",
+            "note": "Die erste Seite hat ein benachbartes Tauschmuster. Die Erkennung muss einschließen, wo die gepaarten unteren Teile vor dem Algorithmus sitzen."
+          },
+          "eg2": {
+            "name": "EG-2",
+            "note": "Die erste Seite hat ein diagonales Tauschmuster. Es ist mächtig, aber nur nützlich, wenn die Inspection den gesamten Solve abdecken kann."
+          }
+        },
+        "images": {
+          "eg0": "EG-0-Fall für die erste Seite",
+          "eg1": "EG-1-Fall für die erste Seite",
+          "eg2": "EG-2-Fall für die erste Seite",
+          "hero": "EG-Methodendarstellung"
+        },
+        "level": "Experten-2x2",
+        "recommendedFor": "One-look-2x2-Lösen und fortgeschrittene Inspection",
+        "steps": {
+          "auf": {
+            "body": "EG benötigt oft sowohl Pre-AUF als auch Post-AUF. Das macht die Erkennung schwieriger als bei CLL, selbst wenn der finale Algorithmus schnell ist.",
+            "title": "AUF kontrollieren"
+          },
+          "caseGroup": {
+            "body": "Klassifiziere die erste Seite als EG-0, EG-1 oder EG-2. Das sagt dir, ob die untere Ebene gelöst, benachbart vertauscht oder diagonal vertauscht ist.",
+            "title": "Die EG-Gruppe identifizieren"
+          },
+          "face": {
+            "body": "Baue eine Seite, nicht unbedingt eine vollständige Ebene. Der Wert von EG liegt darin, eine Seite zu wählen, die den Rest während der Inspection sichtbar macht.",
+            "title": "Eine Seite bauen"
+          }
+        },
+        "summary": "EG ist eine 2x2-Methode mit vielen Algorithmen: eine Seite lösen und dann den ganzen Würfel mit einem Algorithmus lösen. Sie ist am stärksten, wenn der gesamte Solve in der Inspection geplant werden kann.",
+        "title": "2x2 EG"
+      },
+      "fourByFour": {
+        "algorithmCount": "Reduktionsablauf plus Paritätsalgorithmen",
+        "cases": {
+          "ollParity": {
+            "name": "OLL-Parität",
+            "note": "Ein reduzierter 4x4 kann eine einzelne gekippte Dedge zeigen, ein Zustand, der auf einem echten 3x3 unmöglich ist. Lerne dies getrennt vom normalen OLL."
+          },
+          "pllParity": {
+            "name": "PLL-Parität",
+            "note": "PLL-Parität vertauscht zwei Dedges nach der 3x3-Phase. Die Erkennung ist einfach, aber die Ausführung muss kontrolliert sein."
+          }
+        },
+        "level": "Mittelstufe",
+        "recommendedFor": "Erste 4x4-Methode und Übergang zu Yau",
+        "steps": {
+          "centers": {
+            "body": "Baue die sechs 2x2-Zentren. Bei Reduction geschieht dies normalerweise vor dem Edge Pairing; bei Yau werden einige Cross-Kanten früher gelöst, um besseres Lookahead zu ermöglichen.",
+            "title": "Zentren"
+          },
+          "edgePairing": {
+            "body": "Paare passende Wing-Kanten zu Dedges. Sobald alle Dedges gepaart sind, verhält sich das Puzzle wie ein 3x3 mit möglichen Paritätsfällen.",
+            "title": "Kanten paaren"
+          },
+          "parity": {
+            "body": "Paritätsfälle sind keine Fehler. Sie entstehen, weil Reduction interne 4x4-Informationen verbirgt, die ein normaler 3x3 nicht hat.",
+            "title": "Parität behandeln"
+          },
+          "threeByThreeStage": {
+            "body": "Löse den reduzierten Würfel mit einer 3x3-Methode wie CFOP. Halte Paritätsalgorithmen getrennt von den 3x3-Last-Layer-Algorithmen.",
+            "title": "3x3-Phase"
+          }
+        },
+        "summary": "4x4-Reduction macht das Puzzle durch das Lösen der Zentren und Paaren der Kanten zu einem 3x3 und behandelt anschließend Paritätsfälle, die auf dem 3x3 nicht existieren.",
+        "title": "4x4-Reduction und Yau"
+      },
+      "megaminxBeginner": {
+        "algorithmCount": "Meist intuitives Lösen im F2L-Stil",
+        "cases": {
+          "lastLayerSune": {
+            "name": "Last-Layer-Sune-Idee",
+            "note": "Viele Megaminx-Last-Layer-Ideen ähneln 3x3-Triggern, aber die Erkennung findet auf einem fünfseitigen Last Layer statt."
+          },
+          "s2lInsert": {
+            "name": "Idee zum Einsetzen von Paaren",
+            "note": "Einsetzungen in der zweiten und späteren Ebenen sind einfacher, wenn du in Paaren denkst, nicht in isolierten Teilen."
+          }
+        },
+        "images": {
+          "hero": "Megaminx-Puzzlefoto"
+        },
+        "level": "Anfänger bis Mittelstufe",
+        "recommendedFor": "3x3-Solver, die Megaminx lernen",
+        "steps": {
+          "lastLayerCorners": {
+            "body": "Beende den Solve, indem du die finalen Ecken orientierst und permutierst. Halte die obere Farbe und die Seitenfarben in deiner Erkennung getrennt.",
+            "title": "Last-Layer-Ecken"
+          },
+          "lastLayerEdges": {
+            "body": "Orientiere und permutiere die finalen Kanten. Einige 3x3-Last-Layer-Ideen übertragen sich, aber das Fünf-Kanten-Layout verändert die Fälle.",
+            "title": "Last-Layer-Kanten"
+          },
+          "s2l": {
+            "body": "Arbeite dich mit Ecke-Kante-Paaren um das Puzzle herum weiter. Die Methode fühlt sich wie erweitertes F2L mit mehr Slots und mehr Farbverfolgung an.",
+            "title": "Zweite Ebenen"
+          },
+          "star": {
+            "body": "Beginne mit einem Fünf-Kanten-Stern um ein Zentrum. Das ist das Megaminx-Äquivalent zum Planen einer stabilen Basis vor dem Paarlösen.",
+            "title": "Stern"
+          }
+        },
+        "summary": "Megaminx wird meist mit einer 3x3-inspirierten Ebenenmethode gelöst: Stern, Paare um das Puzzle herum und dann ein an fünf Seiten angepasster Last Layer.",
+        "title": "Megaminx-Anfängermethode"
+      },
+      "ortega": {
+        "algorithmCount": "3 Schritte, etwa 12 Algorithmen",
+        "cases": {
+          "adjacentPbl": {
+            "name": "Benachbarter PBL",
+            "note": "Beide Ebenen müssen permutiert werden, mit Balken, die vor dem Algorithmus ausgerichtet werden können."
+          },
+          "antisune": {
+            "name": "Antisune OLL",
+            "note": "Der inverse Partner von Sune. Übe ihn zusammen mit Sune, um Zögern bei der Erkennung zu vermeiden."
+          },
+          "diagonalPbl": {
+            "name": "Diagonaler PBL",
+            "note": "Ein kompakter PBL-Fall, der diagonale Ecken über Ebenen hinweg vertauscht."
+          },
+          "sune": {
+            "name": "Sune OLL",
+            "note": "Ein zentraler Orientierungsfall für die gegenüberliegende Seite."
+          }
+        },
+        "images": {
+          "hero": "Ortega-Methodenanimation"
+        },
+        "level": "Mittelstufe 2x2",
+        "recommendedFor": "Über Anfänger-2x2 hinausgehen, ohne vollständiges CLL zu lernen",
+        "steps": {
+          "firstFace": {
+            "body": "Baue intuitiv eine Seite. Die Seitenfarben müssen nicht übereinstimmen, wodurch der erste Schritt schneller ist als eine vollständige Ebene.",
+            "title": "Erste Seite"
+          },
+          "oppositeFace": {
+            "body": "Orientiere die gegenüberliegende Seite mit einem kleinen OLL-Set. Das Ergebnis sind zwei Seiten mit gelöster Farbe, deren Teile nicht unbedingt permutiert sind.",
+            "title": "Gegenüberliegende Seite"
+          },
+          "pbl": {
+            "body": "Permutiere beide Ebenen gleichzeitig. PBL-Erkennung ist die wichtigste Ortega-Fähigkeit, nachdem die erste Seite leicht geworden ist.",
+            "title": "PBL"
+          }
+        },
+        "summary": "Ortega löst einen 2x2, indem eine Seite erstellt, die gegenüberliegende Seite orientiert und anschließend beide Ebenen mit PBL permutiert werden.",
+        "title": "2x2 Ortega"
+      },
+      "petrus": {
+        "algorithmCount": "5 Schritte, vor dem Last Layer größtenteils intuitiv",
+        "cases": {
+          "blockExpansion": {
+            "name": "Blockerweiterung",
+            "note": "Petrus belohnt das Erkennen, wie ein 2x2x2-Block zu einem 2x2x3 werden kann, ohne gelöste Teile zu zerstören."
+          },
+          "edgeOrientation": {
+            "name": "Kantenorientierungs-Trigger",
+            "note": "Nach dem 2x2x3-Block ermöglicht das Orientieren der Kanten, den Rest von F2L mit einem reduzierten Zugset zu lösen."
+          }
+        },
+        "images": {
+          "hero": "Petrus-Methodenanimation"
+        },
+        "level": "Blockbuilding-Mittelstufe",
+        "recommendedFor": "Fewest-Move-Denken und Blockbuilding-Übung",
+        "steps": {
+          "edgeOrientation": {
+            "body": "Orientiere die verbleibenden ungelösten Kanten. Das ist die Identität von Petrus: EO früh erledigen, damit der Rest einfacher wird.",
+            "title": "Kanten orientieren"
+          },
+          "finishF2l": {
+            "body": "Beende die ersten zwei Ebenen mit der Einschränkung orientierter Kanten. Das kann sehr zug-effizient sein, erfordert aber flexibles Lookahead.",
+            "title": "F2L beenden"
+          },
+          "lastLayer": {
+            "body": "Verwende ein beliebiges Last-Layer-System. Da die Kanten orientiert sind, sind OCLL plus PLL, COLL plus EPLL oder ZBLL-ähnliche Ansätze möglich.",
+            "title": "Last Layer"
+          },
+          "twoByThreeBlock": {
+            "body": "Erweitere den Block zu 2x2x3. Die Wahl der Erweiterung beeinflusst sowohl die Kantenorientierung als auch die Ergonomie des restlichen Solves.",
+            "title": "2x2x3-Block"
+          },
+          "twoByTwoBlock": {
+            "body": "Baue irgendwo einen 2x2x2-Block. Das ist keine Ebene, sondern ein kompakter gelöster Block, der viele Drehungen verfügbar lässt.",
+            "title": "2x2x2-Block"
+          }
+        },
+        "summary": "Petrus baut zuerst Blöcke, orientiert Kanten früh und beendet F2L mit weniger Einschränkungen als Layer-by-Layer-Methoden.",
+        "title": "Petrus"
+      },
+      "pyraminxVFirst": {
+        "algorithmCount": "Anfängerset plus L4E-ähnliche Fälle",
+        "cases": {
+          "beginnerCycleA": {
+            "name": "Drei-Kanten-Zyklus A",
+            "note": "Ein grundlegender Pyraminx-Zyklus, der in Anfängermethoden verwendet wird, um Kanten ohne viele Algorithmen zu bewegen."
+          },
+          "beginnerCycleB": {
+            "name": "Drei-Kanten-Zyklus B",
+            "note": "Der gespiegelte Zyklus. Lerne ihn als Paar mit dem ersten Zyklus."
+          },
+          "twoEdgeFlip": {
+            "name": "Zwei-Kanten-Flip",
+            "note": "Ein häufiger Last-Edge-Fall. Schnellere Solver überarbeiten oft die Notation für bessere Fingertricks."
+          }
+        },
+        "level": "Anfänger bis Mittelstufe",
+        "recommendedFor": "Pyraminx-Solver, die Option Select lernen",
+        "steps": {
+          "lastEdges": {
+            "body": "Beende die letzten Kanten mit einem kleinen Algorithmusset. Fortgeschrittene V First-Ansätze konzentrieren sich stark darauf, diese Fälle ohne Pausen zu erkennen.",
+            "title": "Letzte Kanten"
+          },
+          "optionSelect": {
+            "body": "Starke Pyraminx-Solver vergleichen während der Inspection V First- und Top First-Starts. Wähle die Option mit dem saubersten Finish, nicht nur die erste, die du siehst.",
+            "title": "Option Select"
+          },
+          "tips": {
+            "body": "Tips sind unabhängig und sollten ohne Nachdenken gelöst werden. Erledige sie während des Solves nur, wenn sie das Lookahead nicht unterbrechen.",
+            "title": "Tips und Zentren"
+          },
+          "v": {
+            "body": "Baue ein V: zwei gelöste Kanten um einen Eckbereich. Das gibt eine stabile Basis für das Last-Edge-Set.",
+            "title": "V First"
+          }
+        },
+        "summary": "Pyraminx-Speedmethoden drehen sich meist um V First- und Top First-Entscheidungen. V First ist verbreitet, weil es intuitiv und leicht zu inspizieren ist.",
+        "title": "Pyraminx V First"
+      },
+      "roux": {
+        "algorithmCount": "4 Schritte, 9 bis 42 CMLL-Algorithmen",
+        "cases": {
+          "cmllSune": {
+            "name": "CMLL-Sune-ähnlicher Fall",
+            "note": "CMLL löst die letzten vier Ecken und ignoriert dabei die meisten Kantenpositionen. Einige Fälle ähneln COLL- oder OLLCP-Ideen."
+          },
+          "lseo": {
+            "name": "LSE-Orientierungsmuster",
+            "note": "Roux endet mit MU-Drehungen. Erkennung der Kantenorientierung ist wichtiger als die reine Algorithmusanzahl."
+          },
+          "mSliceEdgeFlip": {
+            "name": "M-Slice-Kantenkontrolle",
+            "note": "Saubere M- und U-Drehungen sind entscheidend. Roux ist nur schnell, wenn die Slice-Züge zuverlässig sind."
+          }
+        },
+        "images": {
+          "hero": "Roux-Methodendarstellung"
+        },
+        "level": "Mittelstufe bis Fortgeschrittene",
+        "recommendedFor": "3x3-Lösen mit wenigen Zügen und einhändiges Üben",
+        "steps": {
+          "cmll": {
+            "body": "Löse die vier Last-Layer-Ecken in einem Schritt, während die Kanten größtenteils frei bleiben. Vollständiges CMLL hat 42 Fälle, aber eine Two-Look-Version reicht für den Anfang.",
+            "title": "CMLL"
+          },
+          "firstBlock": {
+            "body": "Baue einen 1x2x3-Block auf einer Seite. Das ist der schwierigste Teil für neue Roux-Solver, weil es echtes Blockbuilding ist, keine Slot-Einsetzung.",
+            "title": "Erster Block"
+          },
+          "lse": {
+            "body": "Löse die letzten sechs Kanten mit M- und U-Zügen: Kanten orientieren, UL und UR lösen und dann den M-Slice beenden. Hier wird Roux sehr zug-effizient.",
+            "title": "Letzte sechs Kanten"
+          },
+          "secondBlock": {
+            "body": "Baue den gegenüberliegenden 1x2x3-Block, ohne den ersten zu zerstören. Danach bleiben die U-Ebene und der M-Slice für das Finish verfügbar.",
+            "title": "Zweiter Block"
+          }
+        },
+        "summary": "Roux löst zwei Seitenblöcke, dann Ecken und anschließend die letzten sechs Kanten. Es verwendet weniger Züge als CFOP und hängt von Blockbuilding plus M-Slice-Kontrolle ab.",
+        "title": "Roux"
+      },
+      "sarahSkewb": {
+        "algorithmCount": "Anfänger: zwei zentrale 4-Zug-Trigger",
+        "cases": {
+          "hedgeslammer": {
+            "name": "Hedgeslammer",
+            "note": "Sarahs Notation verwendet diesen Trigger als Gegenstück zum Sledgehammer. Wähle Griffe, die zu deiner Skewb-Hardware passen."
+          },
+          "lastCenters": {
+            "name": "Letzte Zentren",
+            "note": "Der letzte Schritt wiederholt dieselben Trigger-Ideen nach Rotationen. Behalte Zentren im Blick, nicht nur Ecken."
+          },
+          "sledgehammer": {
+            "name": "Sledgehammer",
+            "note": "Einer der zwei zentralen 4-Zug-Trigger in Sarahs Methode. Viele Skewb-Fälle reduzieren sich auf wiederholten Sledgehammer oder Hedgeslammer."
+          }
+        },
+        "images": {
+          "hero": "Eckenschritt in Sarahs Skewb-Methode",
+          "step1": "Erste-Seite-Diagramm von Sarahs Skewb",
+          "step4": "Letzte-Zentren-Diagramm von Sarahs Skewb"
+        },
+        "level": "Anfänger bis Fortgeschrittene",
+        "recommendedFor": "Skewb-Solver, die einen klaren Weg vom Anfänger bis L2L wollen",
+        "steps": {
+          "corners": {
+            "body": "Verwende die zwei 4-Zug-Trigger, um die verbleibenden Ecken zu lösen. Die Erkennung ist anfangs einfach und wird in der Zwischenversion algorithmischer.",
+            "title": "Verbleibende Ecken"
+          },
+          "firstSide": {
+            "body": "Löse eine Seite intuitiv. Die letzte Ecke kann erfordern, eine gelöste Ecke vorübergehend zu bewegen; das ist bei Skewb normal.",
+            "title": "Erste Seite"
+          },
+          "lastCenters": {
+            "body": "Löse die verbleibenden Zentren, indem du einen der bekannten Fälle zuordnest, das Puzzle bei Bedarf drehst und dieselbe Trigger-Struktur anwendest.",
+            "title": "Verbleibende Zentren"
+          },
+          "topCenter": {
+            "body": "Löse nach den Ecken das gegenüberliegende Zentrum. Die Anfängerversion trennt dies von den letzten Zentren, damit die Erkennung einfach bleibt.",
+            "title": "Gegenüberliegendes Zentrum"
+          }
+        },
+        "summary": "Sarahs Skewb-Methode basiert auf zwei kurzen Triggern. Die Anfängerversion hat vier Schritte und kombiniert später Schritte, wenn die Erkennung besser wird.",
+        "title": "Sarahs Skewb-Methode"
+      },
+      "squareOneShape": {
+        "algorithmCount": "Shape-First-Methode mit Notationsfällen",
+        "cases": {
+          "kiteScallop": {
+            "name": "Shape-Beispiel",
+            "note": "Cubeshape-Fälle lernt man am besten nach Shape-Familien. Behandle nicht jede Sequenz als unabhängigen Algorithmus."
+          },
+          "notation": {
+            "name": "Square-1-Notation",
+            "note": "(x,y) dreht die obere und untere Ebene in 30-Grad-Einheiten, danach tauscht / in klassischer Notation die rechte Hälfte."
+          }
+        },
+        "images": {
+          "hero": "Square-1-Puzzle in gelöster Form"
+        },
+        "level": "Mittelstufe",
+        "recommendedFor": "Square-1-Notation und Cubeshape lernen",
+        "steps": {
+          "parity": {
+            "body": "Square-1-paritätsähnliche Fälle sind Teil des Methodenablaufs. Halte den Paritätsfix von Cubeshape getrennt, damit die Erkennung sauber bleibt.",
+            "title": "Parität behandeln"
+          },
+          "permutation": {
+            "body": "Permutiere Ecken und Kanten nach der Trennung. Viele Speedmethoden reduzieren dies auf kompakte Algorithmussets.",
+            "title": "Teile permutieren"
+          },
+          "separation": {
+            "body": "Trenne Ecken und Kanten in ihre richtigen Ebenen, nachdem die Würfelform wiederhergestellt ist. Einige Methoden nennen dies Orientierung, obwohl Square-1-Teile sich nicht wie Würfelteile orientieren.",
+            "title": "Ebenen trennen"
+          },
+          "shape": {
+            "body": "Bringe das Puzzle zuerst zurück in Würfelform. Das ermöglicht spätere Erkennung und ist die größte frühe Hürde für neue Square-1-Solver.",
+            "title": "Cubeshape"
+          }
+        },
+        "summary": "Square-1-Lösen beginnt mit der Wiederherstellung der Würfelform, danach werden Teile mit einer für das Puzzle einzigartigen Notation getrennt und permutiert.",
+        "title": "Square-1-Cubeshape"
+      },
+      "zz": {
+        "algorithmCount": "3 oder 4 Schritte, je nach Last Layer",
+        "cases": {
+          "edgeOrientation": {
+            "name": "Kantenorientierungs-Trigger",
+            "note": "Dieser Trigger zeigt, was ein Kantenorientierungsalgorithmus verändert, aber ZZ EO wird normalerweise während der Inspection intuitiv geplant."
+          },
+          "twoGenLastLayer": {
+            "name": "Two-Generator-Finish-Idee",
+            "note": "Sobald Kanten orientiert sind, können viele Finishes schnelle R-, U- und L-ähnliche Drehungen mit weniger unangenehmen Fällen verwenden."
+          }
+        },
+        "images": {
+          "hero": "EOLine-Animation für ZZ"
+        },
+        "level": "Mittelstufe bis Fortgeschrittene",
+        "recommendedFor": "Rotationsloses 3x3-Lösen und einhändige Ergonomie",
+        "steps": {
+          "eoLineOrCross": {
+            "body": "Orientiere alle Kanten und platziere entweder eine Linie oder ein Cross auf der Unterseite. Modernes ZZ bevorzugt oft EOCross, weil es das Lookahead nach der Inspection verbessert.",
+            "title": "EOLine oder EOCross"
+          },
+          "lastLayer": {
+            "body": "Beende mit einem Last-Layer-System, das von orientierten Kanten profitiert: OCLL plus PLL, COLL plus EPLL oder schließlich ZBLL.",
+            "title": "Last Layer"
+          },
+          "zzF2l": {
+            "body": "Vervollständige F2L größtenteils mit R-, U- und L-Zügen. Kantenorientierung reduziert Fälle und hält den Würfelgriff stabil.",
+            "title": "ZZ F2L"
+          }
+        },
+        "summary": "ZZ orientiert die Kanten zu Beginn und löst dann F2L mit einem reduzierten Zugset. Es tauscht eine schwierigere Inspection gegen später flüssigeres Drehen.",
+        "title": "ZZ"
+      }
+    },
+    "page": {
+      "algorithmCount": "Algorithmen",
+      "backToIndex": "Algorithmen",
+      "essentialCases": "Wesentliche Fälle",
+      "imageSource": "Bildquelle:",
+      "level": "Level",
+      "methods": "Methoden",
+      "recommendedFor": "Empfohlen für",
+      "references": "Originalreferenzen",
+      "stepNumber": "Schritt {{count}}",
+      "steps": "Methodenschritte"
+    },
+    "puzzles": {
+      "2x2": {
+        "description": "Pocket-Cube-Methoden mit Fokus auf Face-First-Lösen, Last-Layer-Ecken und One-Look-Finishes.",
+        "title": "2x2"
+      },
+      "3x3": {
+        "description": "Zentrale 3x3-Speedmethoden: ebenenbasiert, Blockbuilding, Kantenorientierung und Ansätze mit wenigen Zügen.",
+        "title": "3x3"
+      },
+      "4x4": {
+        "description": "Big-Cube-Reduction, Yau-ähnlicher Ablauf und Paritätsfälle vor der Rückkehr zu einer 3x3-Phase.",
+        "title": "4x4"
+      },
+      "clock": {
+        "description": "Clock-Notation, Pin-Logik und Anfänger-Lösungsstruktur für das WCA-Clock-Event.",
+        "title": "Clock"
+      },
+      "megaminx": {
+        "description": "Dodekaeder-Methoden, inspiriert vom 3x3-Paarlösen und angepasst an einen fünfseitigen Last Layer.",
+        "title": "Megaminx"
+      },
+      "pyraminx": {
+        "description": "Pyraminx-Methoden rund um Tips, V First, Top First und schnelle Last-Edge-Erkennung.",
+        "title": "Pyraminx"
+      },
+      "skewb": {
+        "description": "Skewb-Methoden, die kurze Trigger, Eckenkontrolle und Zentrenzyklen kombinieren.",
+        "title": "Skewb"
+      },
+      "square1": {
+        "description": "Formveränderndes Square-1-Lösen: Cubeshape, Trennung, Permutation und Notation.",
+        "title": "Square-1"
+      }
+    },
+    "sources": {
+      "jaapClock": "Jaap's Puzzle Page: Clock",
+      "jaapPyraminx": "Jaap's Puzzle Page: Pyraminx",
+      "jaapSquareOne": "Jaap's Puzzle Page: Square-1",
+      "jpermEgOne": "J Perm: 2x2 EG-1-Algorithmen",
+      "jpermFourByFour": "J Perm: 4x4-Tutorial",
+      "jpermFourByFourOll": "J Perm: 4x4-OLL-Paritätsalgorithmen",
+      "jpermFourByFourPll": "J Perm: 4x4-PLL-Paritätsalgorithmen",
+      "jpermOll": "J Perm: OLL-Algorithmen",
+      "jpermPll": "J Perm: PLL-Algorithmen",
+      "jpermTwoByTwo": "J Perm: 2x2-Tutorial",
+      "jpermTwoByTwoCll": "J Perm: 2x2-CLL-Algorithmen",
+      "larsPetrus": "Lars Petrus-Tutorial",
+      "rouxCommunity": "Community-Leitfaden der Roux Speed Solvers",
+      "ruwixCfop": "Ruwix: fortgeschrittene CFOP-Methode",
+      "sarahSkewb": "Sarah's Cubing: Skewb-Methode",
+      "speedsolvingCfop": "Speedsolving Wiki: CFOP-Methode",
+      "speedsolvingClock": "Speedsolving Wiki: Rubik's Clock",
+      "speedsolvingCll": "Speedsolving Wiki: CLL",
+      "speedsolvingEg": "Speedsolving Wiki: EG-Methode",
+      "speedsolvingMegaminx": "Speedsolving Wiki: Megaminx",
+      "speedsolvingOrtega": "Speedsolving Wiki: Ortega-Methode",
+      "speedsolvingPetrus": "Speedsolving Wiki: Petrus-Methode",
+      "speedsolvingPyraminx": "Speedsolving Wiki: Pyraminx-Methoden",
+      "speedsolvingRoux": "Speedsolving Wiki: Roux-Methode",
+      "speedsolvingSkewb": "Speedsolving Wiki: Liste der Skewb-Methoden",
+      "speedsolvingSquareOne": "Speedsolving Wiki: Square-1",
+      "speedsolvingZz": "Speedsolving Wiki: ZZ-Methode",
+      "wcaRegulations": "WCA Regulations",
+      "zzMethod": "ZZ Method-Website"
+    }
+  },
+  "cube": {
+    "visualization": "Würfelvisualisierung",
+    "visualizationUnavailable": "Für dieses Puzzle ist noch keine Visualisierung verfügbar."
+  },
+  "errorBoundary": {
+    "description": "Die aktuelle Ansicht ist unerwartet abgestürzt. Versuche es erneut oder wechsle die Route, um sie neu zu laden.",
+    "kicker": "Unerwarteter Fehler",
+    "retry": "Erneut versuchen",
+    "title": "Etwas ist schiefgelaufen"
+  },
+  "navigation": {
+    "algorithms": "Algorithmen",
+    "algorithmsMenu": "Puzzle-Methoden",
+    "channels": "YT Channels",
+    "closeMenu": "Menü schließen",
+    "github": "Projekt auf GitHub öffnen",
+    "menu": "Menü",
+    "openMenu": "Menü öffnen",
+    "primary": "Hauptnavigation",
+    "solve": "Solver",
+    "theme": "Theme",
+    "themeDark": "Dunkel",
+    "themeLight": "Hell",
+    "themeSystem": "System",
+    "timer": "Timer"
+  },
+  "scan": {
+    "actions": {
+      "analyzing": "Wird analysiert",
+      "autoScanOff": "Auto-Scan aus",
+      "autoScanOn": "Auto-Scan an",
+      "clearPhoto": "Seite leeren",
+      "confirmAnyway": "Trotzdem bestätigen",
+      "confirmFace": "Seite bestätigen",
+      "nextFace": "Nächste Seite",
+      "previousFace": "Vorherige Seite",
+      "retakePhoto": "Erneut scannen",
+      "solveScannedCube": "Gescannten Würfel lösen",
+      "takePhoto": "Seite scannen",
+      "updateFace": "Seite aktualisieren"
+    },
+    "camera": {
+      "capturedFaceAlt": "Erkannte Würfelseite",
+      "errorManualFallback": "{{message}} Du kannst das Raster trotzdem manuell ausfüllen.",
+      "holdSteady": "ruhig halten {{count}}/{{target}}",
+      "lookingForCube": "suche Würfel",
+      "modes": {
+        "rejected": "abgelehnt",
+        "reviewed_stickers": "geprüfte Farben",
+        "tile_detector": "Sticker-Detektor"
+      },
+      "opening": "Kamera wird geöffnet",
+      "statusWithConfidence": "{{mode}} {{confidence}}%",
+      "stickerConfidence": "Sticker {{confidence}}%",
+      "stickersFound": "{{count}}/{{total}} Sticker gefunden",
+      "stickersReady": "{{count}}/{{total}} Sticker bereit",
+      "temporalCollecting": "Konsens {{count}}/{{target}}",
+      "temporalColorDisagreement": "Farbe instabil {{count}} Frames",
+      "temporalReady": "Konsens {{agreement}}% {{count}} Frames",
+      "temporalUnstable": "Geometrie instabil {{count}} Frames",
+      "tracking": "Tracking {{count}}/{{target}}"
+    },
+    "carousel": {
+      "faceConfirmed": "bestätigt",
+      "faceDraft": "Entwurf",
+      "faceInvalid": "ungültig",
+      "faceNeedsReview": "Prüfung",
+      "facePending": "ausstehend",
+      "goToFace": "Zu {{face}}, {{status}} wechseln",
+      "next": "Weiter",
+      "previous": "Zurück"
+    },
+    "colors": {
+      "B": "Blau",
+      "D": "Gelb",
+      "F": "Grün",
+      "L": "Orange",
+      "R": "Rot",
+      "U": "Weiß"
+    },
+    "centerMismatch": {
+      "dismiss": "Zentrumsbestätigung schließen",
+      "kicker": "Anderes Zentrum",
+      "title": "Erwartete Seite bestätigen"
+    },
+    "editor": {
+      "colorCount": "Farbanzahl",
+      "orAlternative": "oder {{colorInitial}}",
+      "paletteLabel": "Farbpalette",
+      "pickColor": "Eine Farbe wählen",
+      "needsConfirmation": "braucht Bestätigung",
+      "reviewColors": "Farben prüfen",
+      "reviewGroupLabel": "Gescannte Seitenfarben",
+      "selectSquareHint": "Wähle ein Feld und dann eine Farbe, um es zu korrigieren.",
+      "stickerLabel": "Sticker {{index}}{{color}}",
+      "uncertainColor": "unsichere Farbe",
+      "uncertainMaybe": "vielleicht {{color}}"
+    },
+    "evenReview": {
+      "autoFit": "Automatische Anpassung versuchen",
+      "autoFitambiguous": "Mehr als eine Anpassung ist möglich. Passe das Netz manuell an.",
+      "autoFitnone": "Anpassung nur durch Drehen von Seiten nicht möglich. Tausche Positionen oder prüfe Sticker.",
+      "autoFitsuggested": "Eine wahrscheinliche Anpassung mit weniger Änderungen wurde gefunden. Wende sie erst nach Prüfung des Netzes an.",
+      "autoFitunique": "Anpassung gefunden und angewendet. Prüfe das Netz vor dem Lösen.",
+      "applySuggestion": "Vorschlag anwenden",
+      "back": "Zurück und bearbeiten",
+      "capturedFace": "Erfasst: {{face}}",
+      "description": "Prüfe, ob dieses Kociemba-Netz zum physischen Würfel passt. Ziehe Seiten, um Positionen zu tauschen, und wähle eine Seite aus, um sie vor dem Lösen zu drehen.",
+      "dragInstructions": "Ziehe eine Seite auf einen anderen Slot oder verwende die Tausch-Schaltflächen. Verwende Dreh-Schaltflächen, um die Ausrichtung der erfassten Seite zu korrigieren.",
+      "invalidDescription": "Einige Ecken kombinieren gegenüberliegende oder unmögliche Farben. Drehe Seiten oder gehe zurück, um Sticker zu korrigieren.",
+      "invalidSolveDisabled": "Korrigiere die hervorgehobenen unmöglichen Ecken vor dem Lösen.",
+      "invalidTitle": "Unmögliche Ecken",
+      "kicker": "Abschlussprüfung",
+      "oppositePair": "{{first}} und {{second}} sind gegenüberliegende Seiten.",
+      "reviewAction": "Zusammengesetzten Würfel prüfen",
+      "rotate90": "Um 90° drehen",
+      "rotate180": "Um 180° drehen",
+      "rotate270": "Um -90° drehen",
+      "selectedFace": "Ausgewählter Slot: {{face}} · erfasste Seite: {{capturedFace}}",
+      "solve": "Akzeptieren und lösen",
+      "swapTitle": "Ausgewählte Seite tauschen mit",
+      "title": "Zusammengesetzten Würfel prüfen",
+      "validMessage": "Die 2x2-Ecken sind strukturell gültig. Bestätige, dass die Vorschau zum physischen Würfel passt."
+    },
+    "faces": {
+      "B": {
+        "instruction": "Zeige die blaue Seite mit der weißen Seite oben im Kamerabild.",
+        "label": "Blaue Seite",
+        "top": "Weiß"
+      },
+      "D": {
+        "instruction": "Zeige die gelbe Seite mit der grünen Seite oben im Kamerabild.",
+        "label": "Gelbe Seite",
+        "top": "Grün"
+      },
+      "F": {
+        "instruction": "Zeige die grüne Seite mit der weißen Seite oben im Kamerabild.",
+        "label": "Grüne Seite",
+        "top": "Weiß"
+      },
+      "L": {
+        "instruction": "Zeige die orange Seite mit der weißen Seite oben im Kamerabild.",
+        "label": "Orange Seite",
+        "top": "Weiß"
+      },
+      "R": {
+        "instruction": "Zeige die rote Seite mit der weißen Seite oben im Kamerabild.",
+        "label": "Rote Seite",
+        "top": "Weiß"
+      },
+      "U": {
+        "instruction": "Zeige die weiße Seite mit der grünen Seite oben im Kamerabild.",
+        "label": "Weiße Seite",
+        "top": "Grün"
+      }
+    },
+    "faces2": {
+      "B": {
+        "instruction": "Drehe den Würfel, um die Rückseite zu zeigen, ohne zu ändern, welche Seite oben ist.",
+        "label": "Rückseite",
+        "top": "Oben"
+      },
+      "D": {
+        "instruction": "Zeige die Unterseite und halte die Vorderseite oben im Kamerabild.",
+        "label": "Unterseite",
+        "top": "Vorne"
+      },
+      "F": {
+        "instruction": "Wähle die Vorderseite. Halte den Würfel mit der Oberseite oben im Kamerabild.",
+        "label": "Vorderseite",
+        "top": "Oben"
+      },
+      "L": {
+        "instruction": "Drehe den Würfel, um die linke Seite zu zeigen, ohne zu ändern, welche Seite oben ist.",
+        "label": "Linke Seite",
+        "top": "Oben"
+      },
+      "R": {
+        "instruction": "Drehe den Würfel, um die rechte Seite zu zeigen, ohne zu ändern, welche Seite oben ist.",
+        "label": "Rechte Seite",
+        "top": "Oben"
+      },
+      "U": {
+        "instruction": "Zeige die Oberseite und halte die Vorderseite oben im Kamerabild.",
+        "label": "Oberseite",
+        "top": "Vorne"
+      }
+    },
+    "live": {
+      "cameraDenied": "Die Kameraberechtigung wurde verweigert oder es wurde keine Kamera gefunden.",
+      "cameraUnavailable": "Kamerazugriff ist in diesem Browser nicht verfügbar.",
+      "centerMismatch": "Eine andere Zentrumsfarbe wurde erkannt. Drehe zur erwarteten Seite.",
+      "detectingStickers": "Sticker werden erkannt: {{count}}/{{total}} gefunden.",
+      "faceDetected": "Seite erkannt. Ruhig halten.",
+      "gridReady": "{{count}}/{{total}} Sticker fixiert. Ruhig halten.",
+      "imageBlurry": "Das Bild ist unscharf. Halte den Würfel ruhig.",
+      "looking": "Suche nach Würfelseite.",
+      "lookingKeepVisible": "Suche nach Würfelseite. Halte den Würfel vollständig sichtbar.",
+      "partialGrid": "{{count}}/9 Sticker gefunden. Zeige eine flache Seite.",
+      "scanFailed": "Live-Scan-Analyse fehlgeschlagen.",
+      "stableCapturing": "Alle Sticker sind stabil. Prüfe die Farben.",
+      "tooBright": "Zu starke Blendung. Reduziere helle Reflexionen.",
+      "tooDark": "Zu dunkel. Füge mehr Licht hinzu."
+    },
+    "messages": {
+      "allFacesConfirmed": "Alle Seiten sind bestätigt. Löse den gescannten Würfel, wenn du bereit bist.",
+      "analysisFailed": "Die Scan-Analyseanfrage ist fehlgeschlagen.",
+      "analyzingFace": "Würfelseite wird analysiert...",
+      "apiNotReady": "Die API ist noch nicht bereit.",
+      "autoCaptured": "Automatisch erfasst. Prüfe die Farben, bevor du diese Seite bestätigst.",
+      "autoCapturing": "Stabile Seite wird automatisch erfasst...",
+      "autoPaused": "Auto-Scan pausiert. Schalte ihn ein, wenn die Seite sichtbar ist.",
+      "cameraFrameFailed": "Kamerabild konnte nicht gelesen werden. Versuche es erneut.",
+      "cameraNotReady": "Die Kamera ist noch nicht bereit.",
+      "captured": "Foto erfasst. Prüfe die Farben, bevor du diese Seite bestätigst.",
+      "capturingPhoto": "Foto wird erfasst...",
+      "centerMismatchFallback": "Das erfasste Zentrum passt nicht zu diesem Scan-Schritt. Nimm das Foto erneut auf.",
+      "centerMismatchConfirmQuestion": "Bist du sicher, dass dies die erwartete Seite ist?",
+      "centerMismatchWithColors": "Das Zentrum sieht aus wie {{detectedColor}}{{confidence}}, aber dieser Schritt erwartet {{expectedColor}}. Drehe zur erwarteten Seite, bevor du bestätigst.",
+      "confirmAllFaces": "Bestätige alle sechs Seiten und stelle sicher, dass jede Farbe genau 9-mal vorkommt.",
+      "confidenceSuffix": " ({{confidence}}% Sicherheit)",
+      "detectedUncertain": "{{count}} erkannte Farben sind unsicher. Prüfe die hervorgehobenen Felder oder leere die Seite, um erneut zu scannen.",
+      "faceNeedsReview": "Prüfe diese Seite vor dem Lösen.",
+      "faceUpdated": "Seite aktualisiert. Prüfe die anderen Seiten oder löse, wenn du bereit bist.",
+      "genericRejected": "Der gescannte Würfel wurde abgelehnt. Prüfe die bestätigten Farben.",
+      "lowConfidence": "Die Erkennungssicherheit ist niedrig.",
+      "manualDetectionFailed": "Es konnte keine Würfelseite erkannt werden. Nimm das Foto erneut auf oder fülle das Raster manuell aus.",
+      "qualityBlurry": "Halte den Würfel für ein schärferes Foto ruhig.",
+      "qualityBright": "Reduziere Blendung vor dem Scannen.",
+      "qualityDark": "Füge vor dem Scannen mehr Licht hinzu.",
+      "sessionAmbiguous": "Das Backend hat mehr als einen gültigen Würfelzustand gefunden. Prüfe die hervorgehobenen Sticker oder scanne unklare Seiten erneut.",
+      "sessionBlurRescan": "Das Bild ist auf den Seiten {{faces}} unscharf. Halte den Würfel ruhig und scanne diese Seiten erneut.",
+      "sessionGlareRescan": "Zu starke Blendung auf den Seiten {{faces}}. Reduziere Reflexionen und scanne diese Seiten erneut.",
+      "sessionInvalidCornerTargets": "Der Scan hat eine unmögliche 2x2-Ecke erstellt. Prüfe die hervorgehobenen Sticker und versuche erneut zu lösen.",
+      "sessionInvalidCubeState": "Der Scan beschreibt keinen gültigen Würfel. Prüfe die Seiten und scanne unklare Sticker erneut.",
+      "sessionIncompleteStickers": "Vervollständige alle 9 Sticker auf den Seiten {{faces}}, bevor du löst.",
+      "sessionMissingConfirmedFaces": "Bestätige diese Seiten vor dem Lösen: {{faces}}.",
+      "sessionMissingPhotos": "Erkenne diese Seiten vor dem Lösen: {{faces}}.",
+      "sessionNeedsManualConfirmation": "Bestätige die hervorgehobenen Sticker vor dem Lösen.",
+      "sessionNeedsRescan": "Eine oder mehrere Seiten müssen erneut gescannt werden.",
+      "sessionRejected": "Die Scan-Sitzung wurde abgelehnt. Prüfe die Seiten vor dem Lösen.",
+      "sessionShadowRescan": "Zu viel Schatten auf den Seiten {{faces}}. Füge gleichmäßigeres Licht hinzu und scanne diese Seiten erneut.",
+      "sessionVisionUnavailable": "Der Vision-Dienst konnte die Sitzung nicht abschließen. Versuche es erneut, nachdem der Vision-Dienst verfügbar ist.",
+      "solveFailed": "Die Scan-Löseanfrage ist fehlgeschlagen.",
+      "submittingSession": "Der vollständige Scan wird mit Würfelbedingungen geprüft...",
+      "stillLooking": "Suche immer noch nach der Würfelseite. Halte die ganze Seite sichtbar und lass den Auto-Scan erneut versuchen.",
+      "liveReviewReady": "{{count}} Sticker erkannt. Prüfe die Farben, korrigiere bei Bedarf ein Feld und bestätige dann diese Seite."
+    },
+    "modal": {
+      "cnnEvidenceActive": "CNN-Evidenz aktiv",
+      "cnnReasonUnknown": "nicht konfiguriert",
+      "colorFallbackActive": "Nur-Farb-Fallback: {{reason}}",
+      "confirmed": "{{count}} bestätigt",
+      "description": "Zeige jeweils eine Seite mit der angeforderten oberen Farbe. Die Lösung verwendet die Farben, die du bestätigst.",
+      "dismiss": "Würfelscan schließen",
+      "cancelExit": "Verlassen des Würfelscans abbrechen",
+      "exitAction": "Verlassen",
+      "exitDescription": "Du hast Scan-Fortschritt, der verloren geht, wenn du jetzt gehst.",
+      "exitKicker": "Ungespeicherter Scan",
+      "exitTitle": "Scan verlassen?",
+      "expectedCenter": "Erwartetes Zentrum: {{color}}",
+      "faceProgress": "Seite {{current}} von {{total}}",
+      "keepAtTop": "Oben halten: {{color}}",
+      "tileDetectorActive": "Sticker-Detektor aktiv",
+      "tileDetectorFallbackActive": "Sticker-Detektor-Fallback: {{reason}}",
+      "tileDetectorReasonUnknown": "nicht konfiguriert",
+      "title": "Würfel scannen",
+      "visionStatusUnavailable": "Vision-Status nicht verfügbar"
+    },
+    "validation": {
+      "centerColorMismatch": "Die Zentrumsfarbe muss zur gescannten Seite passen.",
+      "colorAppearsMoreThanNine": "{{color}} erscheint mehr als 9-mal.",
+      "confirmAllNineColors": "Bestätige alle 9 Farben, bevor du fortfährst."
+    },
+    "warnings": {
+      "tile_detector_rejected": "Der Vorschlag des Sticker-Detektors wurde abgelehnt. Halte die Würfelseite flach und sichtbar.",
+      "image_blurry": "Das Bild ist unscharf. Halte den Würfel ruhig.",
+      "image_too_bright": "Zu starke Blendung. Reduziere helle Reflexionen.",
+      "image_too_dark": "Zu dunkel. Füge mehr Licht hinzu.",
+      "low_confidence_sticker": "Ein oder mehrere Sticker sind unsicher. Prüfe die hervorgehobenen Felder."
+    }
+  },
+  "solve": {
+    "details": {
+      "columns": {
+        "meaning": "Bedeutung",
+        "text": "Text"
+      },
+      "dismiss": "Solver-Details schließen",
+      "elapsedLabel": "Antwort in {{elapsed}}",
+      "elapsedMeaning": "Die gesamte Löseanfragezeit, gemessen im Browser. Sie enthält den API-Roundtrip und das Parsen der Antwort und kann daher von der Backend-Suchzeit abweichen.",
+      "maxNodesConfigured": "{{nodes}}-Knotenlimit",
+      "maxNodesUnlimited": "kein konfiguriertes Knotenlimit",
+      "movesLabel": "{{count}} Züge",
+      "nodesLabel": "{{nodes}} Knoten",
+      "nodesMeaning": "Der Solver hat so viele interne Suchknoten untersucht, bevor er die Lösung gefunden hat. Dieser Lauf verwendete {{maxNodesLabel}}.",
+      "replayNotVerified": "Replay nicht verifiziert",
+      "replayVerified": "Replay verifiziert",
+      "replayVerifiedMeaning": "Nachdem die Züge gefunden wurden, hat das Backend sie auf dem gescrambleten Würfel wiederholt und bestätigt, dass der Würfel gelöst wird.",
+      "search": "Suche",
+      "solution": "Lösung",
+      "solutionLengthMeaning": "Die zurückgegebene Lösungslänge. Jedes Notationstoken zählt als ein Zug, einschließlich Half Turns wie R2 oder B2.",
+      "subtitle": "Diese Metriken beschreiben die zurückgegebene Lösung, das Anfrage-Timing und die Backend-Verifizierung.",
+      "tables": {
+        "available": {
+          "label": "Tabellen verfügbar",
+          "meaning": "Die von dieser Strategie benötigten vorgenerierten Pruning-Tabellen waren verfügbar. Sie helfen, die Suche zu beschneiden."
+        },
+        "corrupt_or_incompatible": {
+          "label": "Tabellen beschädigt oder inkompatibel",
+          "meaning": "Die benötigten Pruning-Tabellen existieren, passen aber nicht zum erwarteten Format oder den erwarteten Metadaten und sollten daher neu generiert werden."
+        },
+        "not_required": {
+          "label": "Tabellen nicht erforderlich",
+          "meaning": "Diese Strategie benötigt keine generierten Pruning-Tabellen."
+        },
+        "not_applicable": {
+          "label": "Tabellen nicht anwendbar",
+          "meaning": "Diese Puzzle-Strategie verwendet keine generierten 3x3-Pruning-Table-Artefakte."
+        },
+        "unavailable": {
+          "label": "Tabellen nicht verfügbar",
+          "meaning": "Die benötigten Pruning-Tabellen waren auf dem API-Server nicht verfügbar."
+        }
+      },
+      "time": "Zeit",
+      "title": "Solver-Details"
+    },
+    "noSolution": {
+      "attempted": "{{strategy}} hat bis zu {{maxDepth}} Züge und {{maxNodes}} Knoten versucht.",
+      "description": "Der Solver hat mit den aktuellen Limits kein replay-verifiziertes Ergebnis gefunden. Erhöhe die Limits und versuche denselben Würfel erneut.",
+      "dismiss": "Dialog für Löselimits schließen",
+      "previousAttempt": "Vorheriger Versuch",
+      "retry": "Mit diesen Limits versuchen",
+      "title": "Andere Limits versuchen"
+    },
+    "errors": {
+      "detail": {
+        "generated_tables_corrupt": "Generiere native Pruning-Tabellen neu; die aktuellen API-Artefakte passen nicht zur Rust-Engine.",
+        "generated_tables_unavailable": "Generiere native Pruning-Tabellen und starte npm run api:dev vor dem Lösen.",
+        "invalid_input_orientation_hint": "Prüfe die Scan-Ausrichtung: Erfasse grün, rot, blau und orange mit weiß oben; erfasse weiß und gelb mit grün oben.",
+        "not_found_within_limits": "{{strategy}} hat {{nodes}} Knoten bei maximal {{maxDepth}} Zügen untersucht."
+      },
+      "errorKind": {
+        "duplicate_corner": "Der gescannte Würfel hat ein doppeltes Eckteil.",
+        "duplicate_corner_stickers": "Der gescannte Würfel hat doppelte Ecksticker.",
+        "duplicate_edge": "Der gescannte Würfel hat ein doppeltes Kantenteil.",
+        "duplicate_edge_stickers": "Der gescannte Würfel hat doppelte Kantensticker.",
+        "generated_tables_unavailable": "Die API hat die von dieser Strategie benötigten generierten Pruning-Tabellen nicht geladen.",
+        "invalid_center_sticker": "Ein oder mehrere Center-Sticker passen nicht zu einem gültigen Würfellayout.",
+        "invalid_corner_orientation": "Die Orientierung der gescannten Ecke ist ungültig.",
+        "invalid_corner_orientation_sum": "Die gescannten Eckverdrehungen ergeben keinen lösbaren Würfel.",
+        "invalid_corner_sticker_order": "Eine gescannte Ecke hat eine ungültige Sticker-Reihenfolge.",
+        "invalid_edge_orientation": "Die Orientierung der gescannten Kante ist ungültig.",
+        "invalid_edge_orientation_sum": "Die gescannten Kantenflips ergeben keinen lösbaren Würfel.",
+        "invalid_face_count": "Die Würfelfarben müssen jeweils genau 9-mal vorkommen.",
+        "invalid_length": "Der Würfelzustand hat die falsche Anzahl von Stickern.",
+        "invalid_move_notation": "Verwende Standard-Zugnotation wie R, U, R' oder U2.",
+        "invalid_permutation_parity": "Die gescannten Teile haben eine unmögliche Permutationsparität.",
+        "invalid_symbol": "Der Würfelzustand enthält ein ungültiges Farbsymbol.",
+        "max_depth_exceeds_limit": "Maximale Züge überschreiten das Sicherheitslimit der API.",
+        "max_nodes_exceeds_limit": "Maximale Knoten überschreiten das Sicherheitslimit der API.",
+        "missing_corner": "Dem gescannten Würfel fehlt ein Eckteil.",
+        "missing_edge": "Dem gescannten Würfel fehlt ein Kantenteil.",
+        "node_limit_exceeded": "Der Solver wurde nach Erreichen des konfigurierten Knotenlimits gestoppt.",
+        "notation_too_large": "Die Scramble-Notation ist zu groß.",
+        "strategy_puzzle_mismatch": "Die ausgewählte Solver-Strategie gehört nicht zu diesem Puzzle.",
+        "unknown_corner_stickers": "Der gescannte Würfel enthält eine unbekannte Eck-Farbkombination.",
+        "unknown_edge_stickers": "Der gescannte Würfel enthält eine unbekannte Kanten-Farbkombination.",
+        "unsupported_input_kind": "Dieser Puzzle-Eingabetyp wird vom Solve-Endpunkt nicht unterstützt.",
+        "unsupported_metric": "Diese Zugmetrik wird vom Solve-Endpunkt nicht unterstützt.",
+        "unsupported_puzzle": "Dieses Puzzle wird vom Solve-Endpunkt noch nicht unterstützt.",
+        "unsupported_strategy": "Die ausgewählte Solver-Strategie wird von dieser API nicht unterstützt.",
+        "unverified_solution": "Der Solver hat eine Lösung zurückgegeben, die die Replay-Verifizierung nicht bestanden hat."
+      },
+      "status": {
+        "api_error": "API-Löseanfrage fehlgeschlagen",
+        "generated_tables_corrupt": "Generierte Two-Phase-API-Tabellen beschädigt oder inkompatibel",
+        "generated_tables_unavailable": "Generierte Two-Phase-Tabellen auf der API nicht verfügbar",
+        "invalid_input": "Ungültiger Würfelzustand",
+        "invalid_limits": "Solver-Limits überschreiten API-Sicherheitsgrenzen",
+        "invalid_notation": "Ungültiger Scramble",
+        "node_limit_exceeded": "Knotenlimit überschritten",
+        "not_found_within_limits": "Keine Lösung innerhalb der konfigurierten Limits",
+        "request_too_large": "Löseanfrage ist zu groß",
+        "strategy_puzzle_mismatch": "Strategie passt nicht zum Puzzle",
+        "unknown_puzzle": "Unbekanntes Puzzle",
+        "unsupported_input_kind": "Nicht unterstützte Puzzle-Eingabe",
+        "unsupported_metric": "Nicht unterstützte Zugmetrik",
+        "unsupported_puzzle": "Nicht unterstütztes Puzzle",
+        "unsupported_strategy": "Nicht unterstützte Solver-Strategie",
+        "unverified_solution": "Solver-Lösung hat Replay-Verifizierung nicht bestanden"
+      }
+    },
+    "form": {
+      "maxMoves": "Maximale Züge",
+      "maxNodesMillion": "Maximale Knoten (M)",
+      "puzzle": "Puzzle",
+      "scanCube": "Würfel mit Kamera scannen",
+      "scanUnavailableForPuzzle": "Kamerascan ist derzeit nur für 3x3 verfügbar.",
+      "scramble": "Scramble",
+      "solve": "Lösen"
+    },
+    "playback": {
+      "ariaLabel": "Lösungswiedergabe",
+      "currentMove": "Zug {{step}}: {{move}}",
+      "nextMove": "Nächster Zug",
+      "previousMove": "Vorheriger Zug",
+      "scramble": "Scramble",
+      "solutionStep": "Lösungsschritt",
+      "solved": " gelöst"
+    },
+    "result": {
+      "foundIn": "Antwort in {{elapsed}}",
+      "seeMore": "mehr anzeigen",
+      "solved": "Gelöst",
+      "successMeta": "{{count}} Züge - {{elapsed}} -"
+    },
+    "strategies": {
+      "generated-two-phase": "Generierter Two-Phase-Solver",
+      "generated-two-phase-multiprobe": "Generierter Two-Phase-Multiprobe-Solver",
+      "generated-two-phase-quality": "Generierter Two-Phase-Quality-Solver",
+      "cube2-bounded-ida-star": "2x2 bounded IDA*",
+      "cube2-pdb-ida-star": "2x2 PDB IDA*",
+      "meaningDefault": "Die deterministische Backend-Solver-Strategie, die für diese Anfrage verwendet wurde. Es ist Suchlogik, keine generative AI.",
+      "meaningGeneratedTwoPhase": "Die verwendete Strategie. Generiert bedeutet nicht generative AI; dies ist ein Two-Phase-Solver, der auf vorgenerierten Pruning-Tabellen basiert. Quality-Modi versuchen kürzere Lösungstiefen, bevor sie auf das konfigurierte Maximum zurückfallen."
+    },
+    "validation": {
+      "oneOf": "{{label}} muss einer von {{options}} sein",
+      "required": "{{label}} ist erforderlich",
+      "wholeNumber": "{{label}} muss eine ganze Zahl sein",
+      "withinLimit": "{{label}} muss {{limit}} oder weniger sein"
+    }
+  },
+  "timer": {
+    "displayLabel": "Speedsolve-Timer",
+    "instructions": {
+      "space": "Leertaste oder Berührung: halten, loslassen zum Starten, drücken zum Stoppen."
+    },
+    "inspection": {
+      "title": "WCA Inspection"
+    },
+    "penalty": {
+      "dnf": "DNF",
+      "label": "Penalty-Steuerung",
+      "latest": "Penalty des letzten Solves",
+      "ok": "OK",
+      "plus2": "+2"
+    },
+    "scramble": {
+      "copied": "Kopiert",
+      "copy": "Scramble kopieren",
+      "copyFailed": "Scramble konnte nicht kopiert werden",
+      "event": "Event",
+      "next": "Nächster Scramble",
+      "previous": "Vorheriger Scramble",
+      "title": "Scramble"
+    },
+    "session": {
+      "defaultName": "Standardsitzung",
+      "solveCount": "{{count}} Solves"
+    },
+    "settings": {
+      "inspection": "Inspection",
+      "label": "Timer-Einstellungen",
+      "milliseconds": "Millisekunden"
+    },
+    "solves": {
+      "actions": "Aktionen",
+      "delete": "Löschen",
+      "empty": "Noch keine Solves",
+      "label": "Solves",
+      "penalty": "Penalty",
+      "scramble": "Scramble",
+      "time": "Zeit"
+    },
+    "stats": {
+      "ao12": "ao12",
+      "ao5": "ao5",
+      "best": "Beste",
+      "mean": "Mittelwert"
+    },
+    "status": {
+      "holding": "Halten",
+      "idle": "Bereit zum Halten",
+      "inspection": "Inspection",
+      "ready": "Bereit",
+      "running": "Läuft",
+      "stopped": "Gestoppt"
+    }
+  }
+}

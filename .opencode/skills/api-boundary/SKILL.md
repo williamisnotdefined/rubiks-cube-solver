@@ -126,7 +126,8 @@ Rules for the web visualization and frontend-to-API boundary.
 - Keep one-off UI inline when extraction would add indirection without reuse or state-boundary value.
 - Keep route or screen files readable as composition; `App.tsx` should stay thin as the UI grows.
 - Use React Router through the current `HashRouter` route setup; do not switch to `BrowserRouter` without a server fallback requirement.
-- Keep frontend route paths and URL segments in English stable slugs; translate visible menu labels, headings, and copy through `react-i18next` locale files.
+- Keep frontend route paths and URL segments in English stable slugs; translate visible menu labels, headings, and copy through `react-i18next` locale files under `apps/web/src/i18n/locales`.
+- Keep supported locale resources in key and interpolation-placeholder parity across `en`, `es`, `pt-BR`, `it`, `de`, `fr`, `ru`, `zh` for Simplified Chinese, and `ja`.
 - Keep page-level route code-splitting in `App.tsx` with React `lazy`/`Suspense` when route bundles grow.
 - Keep page-specific components, hooks, and helpers under the owning page folder until reused elsewhere.
 - Keep shared reusable components under `apps/web/src/components` only after there is a real shared consumer.
@@ -145,7 +146,7 @@ Rules for the web visualization and frontend-to-API boundary.
 - Do not make browser clients submit facelets to the API; client-facing solve requests use move notation only.
 - Do not copy API data into broad mutable stores just to pass it through the UI.
 - Do not add new frontend state, form, routing, animation, styling, or component dependencies while the existing stack can satisfy the current need.
-- Do not add localized route paths such as Portuguese or Spanish URL segments; URLs stay English while labels are localized.
+- Do not add localized route paths; URLs stay English while labels are localized.
 - Do not use native-select assumptions such as Playwright `selectOption()` for Radix Select controls.
 - Do not turn a large component into a hidden god hook or god provider.
 - Do not import raw request functions into UI once a project-level hook/client boundary exists for that operation.

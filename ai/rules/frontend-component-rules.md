@@ -5,7 +5,8 @@ Rules for React component boundaries in `apps/web`.
 ## Always
 
 - Keep route or screen files readable as composition.
-- Keep frontend route paths and URL segments in English stable slugs; translate menu labels, headings, and copy through `react-i18next` instead of localizing URLs.
+- Keep frontend route paths and URL segments in English stable slugs; translate menu labels, headings, and copy through `react-i18next` locale files under `apps/web/src/i18n/locales` instead of localizing URLs.
+- When adding or changing translation keys, update every supported locale file: `en`, `es`, `pt-BR`, `it`, `de`, `fr`, `ru`, `zh` for Simplified Chinese, and `ja`, preserving interpolation placeholders.
 - Extract components when UI repeats or a named component clarifies ownership, state boundaries, or screen structure.
 - Keep one-off UI inline when extraction only adds indirection.
 - Keep page-level screens under `apps/web/src/pages`.
@@ -28,7 +29,7 @@ Rules for React component boundaries in `apps/web`.
 - Do not turn every extraction into a broad component library.
 - Do not move page, cube, solver, API, or visualization-specific helpers into shared utilities before reuse exists.
 - Do not let `App.tsx`, page files, or hooks become god modules.
-- Do not add localized route paths such as Portuguese or Spanish URL segments; user-visible navigation text belongs in locale files.
+- Do not add localized route paths; user-visible navigation text belongs in locale files.
 - Do not fix a god component by moving all state and effects into a god provider or god hook.
 - Do not create React Context for mutable UI state.
 - Do not render short fixed control groups through artificial arrays when direct JSX is clearer.
