@@ -2,7 +2,620 @@
   "common": {
     "cancel": "Cancel",
     "close": "Close",
-    "loading": "Loading"
+    "loading": "Loading",
+    "loadingRoute": "Loading route"
+  },
+  "algorithms": {
+    "index": {
+      "description": "Static algorithm sheets: case image plus algorithm. No API, no trainer state, no editorial text.",
+      "kicker": "Algorithm sheets",
+      "puzzle": "Puzzle",
+      "puzzleList": "Puzzle algorithm categories",
+      "title": "Algorithms"
+    },
+    "table": {
+      "algorithm": "Algorithm",
+      "case": "Case",
+      "name": "Name",
+      "source": "Source"
+    },
+    "methods": {
+      "cfop": {
+        "algorithmCount": "4 steps, 78 full last-layer algorithms",
+        "cases": {
+          "sexyMove": {
+            "name": "F2L basic trigger",
+            "note": "A small trigger used to pair and insert many F2L cases. Learn the effect before memorizing long lists."
+          },
+          "sune": {
+            "name": "Sune OLL",
+            "note": "One of the most important OLL shapes. It appears in 2-look OLL, full OLL, 2x2 Ortega, and CLL-style sets."
+          },
+          "tPerm": {
+            "name": "T permutation",
+            "note": "A fast PLL that swaps one pair of corners and one pair of edges. It is a useful benchmark for last-layer execution."
+          },
+          "uPerm": {
+            "name": "U permutation",
+            "note": "An edge-only PLL. Many solvers learn U permutations early because they finish many beginner PLL cases."
+          }
+        },
+        "images": {
+          "hero": "CFOP method diagram showing first two layers information"
+        },
+        "level": "Beginner to advanced",
+        "recommendedFor": "3x3 speedsolving and big-cube 3x3 stage",
+        "steps": {
+          "cross": {
+            "body": "Solve four bottom edges around the chosen color, usually while planning the whole cross during inspection. The goal is not only to solve it, but to finish with a stable grip and a predictable first F2L pair.",
+            "title": "Cross"
+          },
+          "f2l": {
+            "body": "Pair each first-layer corner with its matching middle-layer edge and insert the pair into one slot. Efficient F2L is mostly understanding piece movement, not memorizing every case first.",
+            "title": "F2L"
+          },
+          "oll": {
+            "body": "Orient the last layer so the top face has one color. Beginners can split this into 2-look OLL; full OLL has 57 cases.",
+            "title": "OLL"
+          },
+          "pll": {
+            "body": "Permute the already oriented last-layer pieces. 2-look PLL is enough to start; full PLL has 21 cases and is one of the best first advanced sets to learn.",
+            "title": "PLL"
+          }
+        },
+        "summary": "CFOP solves the cube through Cross, F2L, OLL, and PLL. It is the most documented 3x3 speedsolving path and the easiest upgrade from layer-by-layer.",
+        "title": "CFOP"
+      },
+      "cll": {
+        "algorithmCount": "42 cases after a solved 2x2 layer",
+        "cases": {
+          "antisune": {
+            "name": "Antisune group",
+            "note": "The inverse-looking partner of Sune. It is common and worth recognizing by top stickers and side bars."
+          },
+          "hCase": {
+            "name": "H group",
+            "note": "A compact group with distinctive opposite patterns. Some cases have very short algorithms."
+          },
+          "sune": {
+            "name": "Sune group",
+            "note": "One of the first CLL groups most solvers recognize because it relates directly to familiar OLL shapes."
+          },
+          "tCase": {
+            "name": "T group",
+            "note": "This group rewards clean bar recognition. Avoid mixing it with similar Pi and U cases."
+          }
+        },
+        "images": {
+          "hero": "CLL method diagram"
+        },
+        "level": "Advanced 2x2",
+        "recommendedFor": "2x2 solvers who already solve a layer quickly",
+        "steps": {
+          "oneLookCorners": {
+            "body": "Use one algorithm to solve all remaining corners. This removes the OLL plus PBL split from Ortega and makes the last layer one look.",
+            "title": "Solve the last layer in one look"
+          },
+          "recognition": {
+            "body": "Recognition is organized by corner orientation families such as Sune, Antisune, T, U, L, Pi, and H. Learn one group at a time and drill similar cases together.",
+            "title": "Group recognition"
+          },
+          "solvedLayer": {
+            "body": "CLL starts from a completely solved layer, not just a solved face. The first layer is usually planned during inspection on easy scrambles.",
+            "title": "Solved first layer"
+          }
+        },
+        "summary": "CLL solves the remaining four 2x2 corners in one algorithm after a solved layer. It is the natural step after Ortega.",
+        "title": "2x2 CLL"
+      },
+      "clockBeginner": {
+        "algorithmCount": "Procedure-based, not algorithm-heavy",
+        "cases": {
+          "pins": {
+            "name": "Pin notation",
+            "note": "UR, DR, DL, and UL identify which pins are up. A method description only makes sense after pin positions are unambiguous."
+          },
+          "twelve": {
+            "name": "Solved clock target",
+            "note": "Every dial must point to 12:00 on both sides. The puzzle is about controlled dial offsets, not piece permutation."
+          }
+        },
+        "level": "Beginner",
+        "recommendedFor": "Learning Clock notation before speed methods",
+        "steps": {
+          "corners": {
+            "body": "After the crosses, bring each remaining corner dial to 12 without disturbing solved groups. The exact wheel order depends on the chosen method.",
+            "title": "Corners"
+          },
+          "crosses": {
+            "body": "Most beginner methods first align a set of center and edge dials on one side, then repeat on the other side after flipping the puzzle.",
+            "title": "Build dial groups"
+          },
+          "flip": {
+            "body": "Flipping the Clock changes which dials are linked by each wheel. Good notation keeps the front and back operations readable.",
+            "title": "Flip and finish"
+          },
+          "notation": {
+            "body": "Clock uses pins and wheel turns instead of cube face turns. Learn how pin positions connect dials before trying to memorize a method.",
+            "title": "Notation first"
+          }
+        },
+        "summary": "Clock methods solve dial groups using pins and wheel turns. Start with notation and a reliable beginner procedure before optimizing move count.",
+        "title": "Clock basic method"
+      },
+      "eg": {
+        "algorithmCount": "128 cases including PBL ideas",
+        "cases": {
+          "eg0": {
+            "name": "EG-0 / CLL base",
+            "note": "The bottom layer is fully solved. These are the CLL cases you already know if you learned 2x2 CLL first."
+          },
+          "eg1": {
+            "name": "EG-1",
+            "note": "The first face has an adjacent swap pattern. Recognition must include where the paired bottom pieces sit before the algorithm."
+          },
+          "eg2": {
+            "name": "EG-2",
+            "note": "The first face has a diagonal swap pattern. It is powerful, but only useful when inspection can cover the full solve."
+          }
+        },
+        "images": {
+          "eg0": "EG-0 first face case",
+          "eg1": "EG-1 first face case",
+          "eg2": "EG-2 first face case",
+          "hero": "EG method representation"
+        },
+        "level": "Expert 2x2",
+        "recommendedFor": "One-look 2x2 solving and advanced inspection",
+        "steps": {
+          "auf": {
+            "body": "EG often needs both pre-AUF and post-AUF. That makes recognition harder than CLL even when the final algorithm is fast.",
+            "title": "Control AUF"
+          },
+          "caseGroup": {
+            "body": "Classify the first face into EG-0, EG-1, or EG-2. This tells you whether the bottom layer is solved, adjacent-swapped, or diagonal-swapped.",
+            "title": "Identify the EG group"
+          },
+          "face": {
+            "body": "Build one face, not necessarily a full layer. The value of EG comes from choosing a face that makes the rest visible during inspection.",
+            "title": "Build a face"
+          }
+        },
+        "summary": "EG is a high-algorithm 2x2 method: solve one face, then solve the whole cube in one algorithm. It is strongest when the entire solve can be planned in inspection.",
+        "title": "2x2 EG"
+      },
+      "fourByFour": {
+        "algorithmCount": "Reduction flow plus parity algorithms",
+        "cases": {
+          "ollParity": {
+            "name": "OLL parity",
+            "note": "A reduced 4x4 can show a single flipped dedge, a state impossible on a real 3x3. Learn this separately from normal OLL."
+          },
+          "pllParity": {
+            "name": "PLL parity",
+            "note": "PLL parity swaps two dedges after the 3x3 stage. Recognition is simple, but execution must be controlled."
+          }
+        },
+        "level": "Intermediate",
+        "recommendedFor": "First 4x4 method and transition to Yau",
+        "steps": {
+          "centers": {
+            "body": "Build the six 2x2 centers. In reduction, this is usually done before edge pairing; in Yau, some cross edges are solved earlier for better lookahead.",
+            "title": "Centers"
+          },
+          "edgePairing": {
+            "body": "Pair matching wing edges into dedges. Once all dedges are paired, the puzzle behaves like a 3x3 with possible parity cases.",
+            "title": "Pair edges"
+          },
+          "parity": {
+            "body": "Parity cases are not mistakes. They happen because reduction hides internal 4x4 information that a normal 3x3 does not have.",
+            "title": "Handle parity"
+          },
+          "threeByThreeStage": {
+            "body": "Solve the reduced cube with a 3x3 method such as CFOP. Keep parity algorithms separate from the 3x3 last-layer algorithms.",
+            "title": "3x3 stage"
+          }
+        },
+        "summary": "4x4 reduction turns the puzzle into a 3x3 by solving centers and pairing edges, then handles parity cases that do not exist on 3x3.",
+        "title": "4x4 reduction and Yau"
+      },
+      "megaminxBeginner": {
+        "algorithmCount": "Mostly intuitive F2L-style solving",
+        "cases": {
+          "lastLayerSune": {
+            "name": "Last-layer Sune idea",
+            "note": "Many Megaminx last-layer ideas resemble 3x3 triggers, but recognition happens on a five-sided last layer."
+          },
+          "s2lInsert": {
+            "name": "Pair insertion idea",
+            "note": "Second-layer and later-layer inserts are easier if you think in pairs, not isolated pieces."
+          }
+        },
+        "images": {
+          "hero": "Megaminx puzzle photo"
+        },
+        "level": "Beginner to intermediate",
+        "recommendedFor": "3x3 solvers learning Megaminx",
+        "steps": {
+          "lastLayerCorners": {
+            "body": "Finish by orienting and permuting the final corners. Keep the top color and side colors separate in your recognition.",
+            "title": "Last-layer corners"
+          },
+          "lastLayerEdges": {
+            "body": "Orient and permute the final edges. Some 3x3 last-layer ideas transfer, but the five-edge layout changes the cases."
+            ,"title": "Last-layer edges"
+          },
+          "s2l": {
+            "body": "Continue around the puzzle with corner-edge pairs. The method feels like extended F2L with more slots and more color tracking.",
+            "title": "Second layers"
+          },
+          "star": {
+            "body": "Start with a five-edge star around one center. This is the Megaminx equivalent of planning a stable base before pair solving.",
+            "title": "Star"
+          }
+        },
+        "summary": "Megaminx is usually solved with a 3x3-inspired layer method: star, pairs around the puzzle, then a last layer adapted to five sides.",
+        "title": "Megaminx beginner method"
+      },
+      "ortega": {
+        "algorithmCount": "3 steps, about 12 algorithms",
+        "cases": {
+          "adjacentPbl": {
+            "name": "Adjacent PBL",
+            "note": "Both layers need permutation, with bars that can be aligned before the algorithm."
+          },
+          "antisune": {
+            "name": "Antisune OLL",
+            "note": "The inverse partner of Sune. Drill it together with Sune to avoid recognition hesitation."
+          },
+          "diagonalPbl": {
+            "name": "Diagonal PBL",
+            "note": "A compact PBL case that swaps diagonal corners across layers."
+          },
+          "sune": {
+            "name": "Sune OLL",
+            "note": "A core orientation case for the opposite face."
+          }
+        },
+        "images": {
+          "hero": "Ortega method animation"
+        },
+        "level": "Intermediate 2x2",
+        "recommendedFor": "Moving beyond beginner 2x2 without learning full CLL",
+        "steps": {
+          "firstFace": {
+            "body": "Build one face intuitively. The side colors do not need to match, which makes the first step faster than a full layer.",
+            "title": "First face"
+          },
+          "oppositeFace": {
+            "body": "Orient the opposite face with a small OLL set. The result is two solved-color faces with pieces not necessarily permuted.",
+            "title": "Opposite face"
+          },
+          "pbl": {
+            "body": "Permute both layers at once. PBL recognition is the main Ortega skill after the first face becomes easy.",
+            "title": "PBL"
+          }
+        },
+        "summary": "Ortega solves a 2x2 by making one face, orienting the opposite face, then permuting both layers with PBL.",
+        "title": "2x2 Ortega"
+      },
+      "petrus": {
+        "algorithmCount": "5 steps, mostly intuitive before last layer",
+        "cases": {
+          "blockExpansion": {
+            "name": "Block expansion",
+            "note": "Petrus rewards seeing how a 2x2x2 block can become 2x2x3 without breaking solved pieces."
+          },
+          "edgeOrientation": {
+            "name": "Edge orientation trigger",
+            "note": "After the 2x2x3 block, orienting edges lets the rest of F2L be solved with a reduced move set."
+          }
+        },
+        "images": {
+          "hero": "Petrus method animation"
+        },
+        "level": "Intermediate blockbuilding",
+        "recommendedFor": "Fewest-move thinking and blockbuilding practice",
+        "steps": {
+          "edgeOrientation": {
+            "body": "Orient the remaining unsolved edges. This is the identity of Petrus: do EO early so the rest becomes simpler.",
+            "title": "Orient edges"
+          },
+          "finishF2l": {
+            "body": "Finish the first two layers with the oriented-edge constraint. This can be very move-efficient, but it requires flexible lookahead.",
+            "title": "Finish F2L"
+          },
+          "lastLayer": {
+            "body": "Use any last-layer system. Since edges are oriented, OCLL plus PLL, COLL plus EPLL, or ZBLL-style approaches are possible.",
+            "title": "Last layer"
+          },
+          "twoByThreeBlock": {
+            "body": "Expand the block to 2x2x3. The expansion choice affects both edge orientation and the ergonomics of the rest of the solve.",
+            "title": "2x2x3 block"
+          },
+          "twoByTwoBlock": {
+            "body": "Build a 2x2x2 block anywhere. This is not a layer: it is a compact solved block that leaves many turns available.",
+            "title": "2x2x2 block"
+          }
+        },
+        "summary": "Petrus builds blocks first, orients edges early, and finishes F2L with fewer restrictions than layer-by-layer methods.",
+        "title": "Petrus"
+      },
+      "pyraminxVFirst": {
+        "algorithmCount": "Beginner set plus L4E-style cases",
+        "cases": {
+          "beginnerCycleA": {
+            "name": "Three-edge cycle A",
+            "note": "A basic Pyraminx cycle used in beginner methods to move edges without needing many algorithms."
+          },
+          "beginnerCycleB": {
+            "name": "Three-edge cycle B",
+            "note": "The mirror cycle. Learn it as a pair with the first cycle."
+          },
+          "twoEdgeFlip": {
+            "name": "Two-edge flip",
+            "note": "A common last-edge case. Faster solvers often rework the notation for better fingertricks."
+          }
+        },
+        "level": "Beginner to intermediate",
+        "recommendedFor": "Pyraminx solvers learning option select",
+        "steps": {
+          "lastEdges": {
+            "body": "Finish the last edges with a small algorithm set. Advanced V First approaches focus heavily on recognizing these cases without pauses.",
+            "title": "Last edges"
+          },
+          "optionSelect": {
+            "body": "Strong Pyraminx solvers compare V First and Top First starts during inspection. Choose the option with the cleanest finish, not only the first one you see.",
+            "title": "Option select"
+          },
+          "tips": {
+            "body": "Tips are independent and should be solved without thought. Do them during the solve only when they do not interrupt lookahead.",
+            "title": "Tips and centers"
+          },
+          "v": {
+            "body": "Build a V: two edges solved around one corner area. This gives a stable base for the last-edge set.",
+            "title": "V First"
+          }
+        },
+        "summary": "Pyraminx speed methods usually revolve around V First and Top First choices. V First is common because it is intuitive and easy to inspect.",
+        "title": "Pyraminx V First"
+      },
+      "roux": {
+        "algorithmCount": "4 steps, 9 to 42 CMLL algorithms",
+        "cases": {
+          "cmllSune": {
+            "name": "CMLL Sune-style case",
+            "note": "CMLL solves the last four corners while ignoring most edge positions. Some cases resemble COLL or OLLCP ideas."
+          },
+          "lseo": {
+            "name": "LSE orientation pattern",
+            "note": "Roux ends with MU turning. Edge orientation recognition is more important than raw algorithm count."
+          },
+          "mSliceEdgeFlip": {
+            "name": "M-slice edge control",
+            "note": "Clean M and U turns are essential. Roux is fast only when the slice moves are reliable."
+          }
+        },
+        "images": {
+          "hero": "Roux method representation"
+        },
+        "level": "Intermediate to advanced",
+        "recommendedFor": "Low-move 3x3 solving and one-handed practice",
+        "steps": {
+          "cmll": {
+            "body": "Solve the four last-layer corners in one step while leaving edges mostly free. Full CMLL has 42 cases, but a two-look version is enough to start.",
+            "title": "CMLL"
+          },
+          "firstBlock": {
+            "body": "Build a 1x2x3 block on one side. This is the hardest part for new Roux solvers because it is true blockbuilding, not slot insertion.",
+            "title": "First block"
+          },
+          "lse": {
+            "body": "Solve the last six edges with M and U moves: orient edges, solve UL and UR, then finish the M slice. This is where Roux becomes very move-efficient.",
+            "title": "Last six edges"
+          },
+          "secondBlock": {
+            "body": "Build the opposite 1x2x3 block without destroying the first one. After this, the U layer and M slice remain available for the finish.",
+            "title": "Second block"
+          }
+        },
+        "summary": "Roux solves two side blocks, then corners, then the last six edges. It uses fewer moves than CFOP and depends on blockbuilding plus M-slice control.",
+        "title": "Roux"
+      },
+      "sarahSkewb": {
+        "algorithmCount": "Beginner: two core 4-move triggers",
+        "cases": {
+          "hedgeslammer": {
+            "name": "Hedgeslammer",
+            "note": "Sarah's notation uses this trigger as the counterpart to sledgehammer. Pick grips that fit your Skewb hardware."
+          },
+          "lastCenters": {
+            "name": "Last centers",
+            "note": "The last step repeats the same trigger ideas after rotations. Keep track of centers, not only corners."
+          },
+          "sledgehammer": {
+            "name": "Sledgehammer",
+            "note": "One of the two core 4-move triggers in Sarah's method. Many Skewb cases reduce to repeated sledgehammer or hedgeslammer."
+          }
+        },
+        "images": {
+          "hero": "Sarah's Skewb method corner step",
+          "step1": "Sarah's Skewb first-side diagram",
+          "step4": "Sarah's Skewb last-centers diagram"
+        },
+        "level": "Beginner to advanced",
+        "recommendedFor": "Skewb solvers who want a clear path from beginner to L2L",
+        "steps": {
+          "corners": {
+            "body": "Use the two 4-move triggers to solve the remaining corners. Recognition is simple at first and becomes more algorithmic in the intermediate version.",
+            "title": "Remaining corners"
+          },
+          "firstSide": {
+            "body": "Solve one side intuitively. The final corner may require temporarily moving a solved corner, which is normal on Skewb.",
+            "title": "First side"
+          },
+          "lastCenters": {
+            "body": "Solve the remaining centers by matching one of the known cases, rotating the puzzle if needed, and applying the same trigger structure.",
+            "title": "Remaining centers"
+          },
+          "topCenter": {
+            "body": "Solve the opposite center after corners. The beginner version separates this from the last centers to keep recognition easy.",
+            "title": "Opposite center"
+          }
+        },
+        "summary": "Sarah's Skewb method is built around two short triggers. The beginner version has four steps, then combines steps as recognition improves.",
+        "title": "Sarah's Skewb method"
+      },
+      "squareOneShape": {
+        "algorithmCount": "Shape-first method with notation cases",
+        "cases": {
+          "kiteScallop": {
+            "name": "Shape example",
+            "note": "Cubeshape cases are best learned by shape families. Do not treat every sequence as an unrelated algorithm."
+          },
+          "notation": {
+            "name": "Square-1 notation",
+            "note": "(x,y) turns the top and bottom layers by 30-degree units, then / swaps the right half in classic notation."
+          }
+        },
+        "images": {
+          "hero": "Square-1 puzzle in solved shape"
+        },
+        "level": "Intermediate",
+        "recommendedFor": "Learning Square-1 notation and cubeshape",
+        "steps": {
+          "parity": {
+            "body": "Square-1 parity-like cases are part of the method flow. Keep the parity fix separate from cubeshape so recognition stays clean.",
+            "title": "Parity handling"
+          },
+          "permutation": {
+            "body": "Permute corners and edges after separation. Many speed methods reduce this into compact algorithm sets.",
+            "title": "Permute pieces"
+          },
+          "separation": {
+            "body": "Separate corners and edges into their correct layers after the cube shape is restored. Some methods call this orientation, even though Square-1 pieces do not orient like cube pieces.",
+            "title": "Separate layers"
+          },
+          "shape": {
+            "body": "Return the puzzle to cube shape first. This makes later recognition possible and is the biggest early barrier for new Square-1 solvers.",
+            "title": "Cubeshape"
+          }
+        },
+        "summary": "Square-1 solving starts by restoring cube shape, then separating and permuting pieces with notation that is unique to the puzzle.",
+        "title": "Square-1 cubeshape"
+      },
+      "zz": {
+        "algorithmCount": "3 or 4 steps depending on last layer",
+        "cases": {
+          "edgeOrientation": {
+            "name": "Edge orientation trigger",
+            "note": "This trigger demonstrates what an edge-orientation algorithm changes, but ZZ EO is usually planned intuitively during inspection."
+          },
+          "twoGenLastLayer": {
+            "name": "Two-generator finish idea",
+            "note": "Once edges are oriented, many finishes can use fast R, U, and L style turning with fewer awkward cases."
+          }
+        },
+        "images": {
+          "hero": "EOLine animation for ZZ"
+        },
+        "level": "Intermediate to advanced",
+        "recommendedFor": "Rotationless 3x3 solving and one-handed ergonomics",
+        "steps": {
+          "eoLineOrCross": {
+            "body": "Orient all edges while placing either a line or a cross on the bottom. Modern ZZ often favors EOCross because it improves lookahead after inspection.",
+            "title": "EOLine or EOCross"
+          },
+          "lastLayer": {
+            "body": "Finish with a last-layer system that benefits from oriented edges: OCLL plus PLL, COLL plus EPLL, or eventually ZBLL."
+            ,"title": "Last layer"
+          },
+          "zzF2l": {
+            "body": "Complete F2L mostly with R, U, and L moves. Edge orientation reduces cases and keeps the cube grip stable.",
+            "title": "ZZ F2L"
+          }
+        },
+        "summary": "ZZ orients edges at the start, then solves F2L with a reduced move set. It trades a harder inspection for smoother turning later.",
+        "title": "ZZ"
+      }
+    },
+    "page": {
+      "algorithmCount": "Algorithms",
+      "backToIndex": "Algorithms",
+      "essentialCases": "Essential cases",
+      "imageSource": "Image source:",
+      "level": "Level",
+      "methods": "Methods",
+      "recommendedFor": "Recommended for",
+      "references": "Original references",
+      "stepNumber": "Step {{count}}",
+      "steps": "Method steps"
+    },
+    "puzzles": {
+      "2x2": {
+        "description": "Pocket Cube methods focused on face-first solving, last-layer corners, and one-look finishes.",
+        "title": "2x2"
+      },
+      "3x3": {
+        "description": "Core 3x3 speed methods: layer-based, blockbuilding, edge-orientation, and low-move approaches.",
+        "title": "3x3"
+      },
+      "4x4": {
+        "description": "Big-cube reduction, Yau-style flow, and parity cases before returning to a 3x3 stage.",
+        "title": "4x4"
+      },
+      "clock": {
+        "description": "Clock notation, pin logic, and beginner solving structure for the WCA Clock event.",
+        "title": "Clock"
+      },
+      "megaminx": {
+        "description": "Dodecahedron methods inspired by 3x3 pair solving, adapted to a five-sided last layer.",
+        "title": "Megaminx"
+      },
+      "pyraminx": {
+        "description": "Pyraminx methods built around tips, V First, Top First, and fast last-edge recognition.",
+        "title": "Pyraminx"
+      },
+      "skewb": {
+        "description": "Skewb methods that combine short triggers, corner control, and center cycles.",
+        "title": "Skewb"
+      },
+      "square1": {
+        "description": "Shape-shifting Square-1 solving: cubeshape, separation, permutation, and notation.",
+        "title": "Square-1"
+      }
+    },
+    "sources": {
+      "jaapClock": "Jaap's Puzzle Page: Clock",
+      "jaapPyraminx": "Jaap's Puzzle Page: Pyraminx",
+      "jaapSquareOne": "Jaap's Puzzle Page: Square-1",
+      "jpermEgOne": "J Perm: 2x2 EG-1 algorithms",
+      "jpermFourByFour": "J Perm: 4x4 tutorial",
+      "jpermFourByFourOll": "J Perm: 4x4 OLL parity algorithms",
+      "jpermFourByFourPll": "J Perm: 4x4 PLL parity algorithms",
+      "jpermOll": "J Perm: OLL algorithms",
+      "jpermPll": "J Perm: PLL algorithms",
+      "jpermTwoByTwo": "J Perm: 2x2 tutorial",
+      "jpermTwoByTwoCll": "J Perm: 2x2 CLL algorithms",
+      "larsPetrus": "Lars Petrus tutorial",
+      "rouxCommunity": "Roux Speed Solvers community guide",
+      "ruwixCfop": "Ruwix: advanced CFOP method",
+      "sarahSkewb": "Sarah's Cubing: Skewb method",
+      "speedsolvingCfop": "Speedsolving Wiki: CFOP method",
+      "speedsolvingClock": "Speedsolving Wiki: Rubik's Clock",
+      "speedsolvingCll": "Speedsolving Wiki: CLL",
+      "speedsolvingEg": "Speedsolving Wiki: EG method",
+      "speedsolvingMegaminx": "Speedsolving Wiki: Megaminx",
+      "speedsolvingOrtega": "Speedsolving Wiki: Ortega method",
+      "speedsolvingPetrus": "Speedsolving Wiki: Petrus method",
+      "speedsolvingPyraminx": "Speedsolving Wiki: Pyraminx methods",
+      "speedsolvingRoux": "Speedsolving Wiki: Roux method",
+      "speedsolvingSkewb": "Speedsolving Wiki: list of Skewb methods",
+      "speedsolvingSquareOne": "Speedsolving Wiki: Square-1",
+      "speedsolvingZz": "Speedsolving Wiki: ZZ method",
+      "wcaRegulations": "WCA Regulations",
+      "zzMethod": "ZZ Method website"
+    }
   },
   "cube": {
     "visualization": "Cube visualization",
@@ -15,6 +628,8 @@
     "title": "Something went wrong"
   },
   "navigation": {
+    "algorithms": "Algorithms",
+    "algorithmsMenu": "Puzzle methods",
     "closeMenu": "Close menu",
     "github": "Open project on GitHub",
     "menu": "Menu",

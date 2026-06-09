@@ -1,0 +1,25 @@
+import type { AlgorithmCase } from '../types'
+
+export const threeByThreeOhPllCases: AlgorithmCase[] = [
+  { name: "Aa", image: "/algorithms/3x3/oh-pll/oh-pll-aa.png", algorithm: "x R' U R' D2 R U' R' D2 R2" },
+  { name: "Ab", image: "/algorithms/3x3/oh-pll/oh-pll-ab.png", algorithm: "x R2 D2 R U R' D2 R U' R" },
+  { name: "F", image: "/algorithms/3x3/oh-pll/oh-pll-f.png", algorithm: "R U R' U' R' U R U2 R' L' U R U' L U' R U' R'" },
+  { name: "Ga", image: "/algorithms/3x3/oh-pll/oh-pll-ga.png", algorithm: "R2 U R' U R' U' R U' R2 U' D R' U R D'" },
+  { name: "Gb", image: "/algorithms/3x3/oh-pll/oh-pll-gb.png", algorithm: "R' U' R U D' R2 U R' U R U' R U' R2 D" },
+  { name: "Gc", image: "/algorithms/3x3/oh-pll/oh-pll-gc.png", algorithm: "R2 U' R U' R U R' U R2 U D' R U' R' D" },
+  { name: "Gd", image: "/algorithms/3x3/oh-pll/oh-pll-gd.png", algorithm: "R U R' U' D R2 U' R U' R' U R' U R2 D'" },
+  { name: "Ja", image: "/algorithms/3x3/oh-pll/oh-pll-ja.png", algorithm: "R' U2 R U R' U2 L U' R U L'" },
+  { name: "Jb", image: "/algorithms/3x3/oh-pll/oh-pll-jb.png", algorithm: "R U2 R' U' R U2 L' U R' U' r" },
+  { name: "Ra", image: "/algorithms/3x3/oh-pll/oh-pll-ra.png", algorithm: "R U' R' U' R U R D R' U' R D' R' U2 R'" },
+  { name: "Rb", image: "/algorithms/3x3/oh-pll/oh-pll-rb.png", algorithm: "R' U2 R' D' R U' R' D R U R U' R' U' R" },
+  { name: "T", image: "/algorithms/3x3/oh-pll/oh-pll-t.png", algorithm: "R U R' U' R' F R2 U' R' U' R U R' F'" },
+  { name: "E", image: "/algorithms/3x3/oh-pll/oh-pll-e.png", algorithm: "x' R U' R' D R U R' D' R U R' D R U' R' D'" },
+  { name: "Na", image: "/algorithms/3x3/oh-pll/oh-pll-na.png", algorithm: "R U R' U R U2 R' U' R U2 L' U R' U' L U' R U' R'" },
+  { name: "Nb", image: "/algorithms/3x3/oh-pll/oh-pll-nb.png", algorithm: "R' U' R U' R' U2 R U R' U2 L U' R U L' U R' U R" },
+  { name: "V", image: "/algorithms/3x3/oh-pll/oh-pll-v.png", algorithm: "R' U R U' x' U R U2 R' U' R U' R' U2 R U R' U'" },
+  { name: "Y", image: "/algorithms/3x3/oh-pll/oh-pll-y.png", algorithm: "R2 U' R' U R U' x' U' z' U' R U' R' U' r B" },
+  { name: "H", image: "/algorithms/3x3/oh-pll/oh-pll-h.png", algorithm: "R2 U2 R U2 R2 U2 R2 U2 R U2 R2" },
+  { name: "Ua", image: "/algorithms/3x3/oh-pll/oh-pll-ua.png", algorithm: "R U' R U R U R U' R' U' R2" },
+  { name: "Ub", image: "/algorithms/3x3/oh-pll/oh-pll-ub.png", algorithm: "L' U L' U' L' U' L' U L U L2" },
+  { name: "Z", image: "/algorithms/3x3/oh-pll/oh-pll-z.png", algorithm: "R' U' R U' R U R U' R' U R U R2 U' R'" },
+]
