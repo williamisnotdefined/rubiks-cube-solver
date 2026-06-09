@@ -7,8 +7,9 @@ import { siGithub } from 'simple-icons/icons'
 import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from '@components/Dialog'
 import { Popover, PopoverContent, PopoverTrigger } from '@components/Popover'
 import { useThemePreferenceSync, useThemeStore, type ThemePreference } from '@core/theme/themeStore'
+import { algorithmPuzzles, setsForPuzzle } from '@pages/AlgorithmsPage/sets/algorithmSetMetadata'
 
-export type PageNavRoute = 'solve' | 'timer'
+export type PageNavRoute = 'algorithms' | 'solve' | 'timer'
 
 const githubUrl = 'https://github.com/williamisnotdefined/rubiks-cube-solver'
 
@@ -24,9 +25,9 @@ export function PageNav({ activeRoute }: PageNavProps) {
     <>
       <Dialog open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
         <div className="flex min-h-14 shrink-0 items-center justify-between border-b border-app-border bg-app-nav px-3 md:hidden">
-          <span className="text-sm font-black uppercase tracking-[0.2em] text-app-text">
-            {activeRoute === 'timer' ? t('navigation.timer') : t('navigation.solve')}
-          </span>
+            <span className="text-sm font-black uppercase tracking-[0.2em] text-app-text">
+              {t(activeRouteLabelKey(activeRoute))}
+            </span>
           <DialogTrigger asChild>
             <button
               aria-expanded={mobileMenuOpen}
@@ -96,6 +97,7 @@ function NavContent({ activeRoute, onNavigate }: NavContentProps) {
         <PageNavLink active={activeRoute === 'timer'} to="/timer" onClick={onNavigate}>
           {t('navigation.timer')}
         </PageNavLink>
+        <AlgorithmsMenu active={activeRoute === 'algorithms'} onNavigate={onNavigate} />
       </div>
       <div className="mt-auto flex gap-2">
         <ThemeMenu />
@@ -118,6 +120,86 @@ function NavContent({ activeRoute, onNavigate }: NavContentProps) {
         </a>
       </div>
     </div>
+  )
+}
+
+function activeRouteLabelKey(activeRoute: PageNavRoute) {
+  if (activeRoute === 'algorithms') {
+    return 'navigation.algorithms'
+  }
+
+  if (activeRoute === 'timer') {
+    return 'navigation.timer'
+  }
+
+  return 'navigation.solve'
+}
+
+function AlgorithmsMenu({
+  active,
+  onNavigate,
+}: {
+  active: boolean
+  onNavigate?: () => void
+}) {
+  const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
+
+  function handleNavigate() {
+    setOpen(false)
+    onNavigate?.()
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          aria-current={active ? 'page' : undefined}
+          className={cls(
+            'border border-app-border px-4 py-3 text-left text-xs font-extrabold uppercase tracking-[0.16em] outline-none focus-visible:ring-2 focus-visible:ring-app-focus/50',
+            {
+              'bg-app-text text-app-inverse': active,
+              'bg-app-surface text-app-muted hover:bg-app-surface-raised hover:text-app-text': !active,
+            },
+          )}
+          type="button"
+        >
+          {t('navigation.algorithms')}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="grid w-80 gap-3 p-2" side="right">
+        <div className="border border-app-border bg-app-control px-3 py-2 text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
+          {t('navigation.algorithmsMenu')}
+        </div>
+        <div className="grid max-h-[70dvh] gap-2 overflow-y-auto pr-1">
+          {algorithmPuzzles.map((puzzle) => (
+            <section key={puzzle.id} className="border border-app-border bg-app-surface p-2">
+              <h3 className="px-2 py-1 text-xs font-black uppercase tracking-[0.16em] text-app-text">
+                {puzzle.title}
+              </h3>
+              <div className="grid gap-1">
+                {setsForPuzzle(puzzle.id).map((set) => (
+                  <RouterNavLink
+                    key={set.path}
+                    className={({ isActive }) => cls(
+                      'block px-2 py-2 text-xs font-extrabold uppercase tracking-[0.12em] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-app-focus/50',
+                      {
+                        'bg-app-text text-app-inverse': isActive,
+                        'text-app-muted hover:bg-app-control hover:text-app-text': !isActive,
+                      },
+                    )}
+                    to={set.path}
+                    onClick={handleNavigate}
+                  >
+                    {set.title}
+                  </RouterNavLink>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
   )
 }
 

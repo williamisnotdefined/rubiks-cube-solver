@@ -1,0 +1,26 @@
+import type { AlgorithmCase } from '../types'
+
+export const fourByFourPllParityCases: AlgorithmCase[] = [
+  { name: "OPP Parity", image: "/algorithms/4x4/pll-parity/pll-parity-opp-parity.svg", algorithm: "2R2 U2 2R2 Uw2 2R2 Uw2" },
+  { name: "Adj Parity", image: "/algorithms/4x4/pll-parity/pll-parity-adj-parity.svg", algorithm: "R' U R U' 2R2 U2' 2R2 Uw2' 2R2 Uw2' U' R' U' R" },
+  { name: "CwO", image: "/algorithms/4x4/pll-parity/pll-parity-cwo.svg", algorithm: "<span class=" },
+  { name: "CcwO", image: "/algorithms/4x4/pll-parity/pll-parity-ccwo.svg", algorithm: "Uw2 2L2 Uw2 2L2 U2 3Rw' Rw2 R' U2 M2 U2 M' U M2 U M2" },
+  { name: "W", image: "/algorithms/4x4/pll-parity/pll-parity-w.svg", algorithm: "R' U R' U' R' U' R' U R U Rw2 U2 2R2 Uw2 2R2 Uw2" },
+  { name: "Pj", image: "/algorithms/4x4/pll-parity/pll-parity-pj.svg", algorithm: "R U R' U' R' F R2 U' R' U' R U R' F' U' 2L2 U2 2L2 Uw2 2L2 Uw2" },
+  { name: "Ba", image: "/algorithms/4x4/pll-parity/pll-parity-ba.svg", algorithm: "Uw2 2L2 Uw2 2L2 U2 2L2 U R U R' F' R U R' U' R' F R2 U' R'" },
+  { name: "Bb", image: "/algorithms/4x4/pll-parity/pll-parity-bb.svg", algorithm: "y x Rw2 U2 Rw2 Uw2 2R2 Uw2 B 3Rw' U R' U2 L U' R" },
+  { name: "Ca", image: "/algorithms/4x4/pll-parity/pll-parity-ca.svg", algorithm: "y2 Uw2 2R2 Uw2 2R2 U2 Rw2 F R U R U' R' F' R U2 R' U2 R" },
+  { name: "Cb", image: "/algorithms/4x4/pll-parity/pll-parity-cb.svg", algorithm: "y R' U2 R U2 R' F R U R' U' R' F' Rw2 U2 2R2 Uw2 2R2 Uw2" },
+  { name: "Da", image: "/algorithms/4x4/pll-parity/pll-parity-da.svg", algorithm: "R' U L' U2 R U' 3Rw B Rw2 U2 Rw2 Uw2 2R2 Uw2 x'" },
+  { name: "Db", image: "/algorithms/4x4/pll-parity/pll-parity-db.svg", algorithm: "R U R' F' R U R' U' R' F R2 U' R' u2 2R2 u2 2R2 U2 2R2" },
+  { name: "Ka", image: "/algorithms/4x4/pll-parity/pll-parity-ka.svg", algorithm: "y 3Lw' U R' D2 R U' R' D2 x' Rw2 U2 2R2 Uw2 2R2 Uw2" },
+  { name: "Kb", image: "/algorithms/4x4/pll-parity/pll-parity-kb.svg", algorithm: "r2 F2 U2 r2 R2 U2 x R' D' R U2 R' D R r2 x' U'" },
+  { name: "M", image: "/algorithms/4x4/pll-parity/pll-parity-m.svg", algorithm: "y2 Rw2 F2 U2 2R2 U R' U' R U R' D R D' R F2 U Rw2" },
+  { name: "Pa", image: "/algorithms/4x4/pll-parity/pll-parity-pa.svg", algorithm: "R U R' F' R U R' U' R' F R2 U' R' U' 2R2 U2 2R2 u2 2R2 u2" },
+  { name: "Pb", image: "/algorithms/4x4/pll-parity/pll-parity-pb.svg", algorithm: "2R2 U2 2R2 u2 2R2 u2 R U R' F' R U R' U' R' F R2 U' R'" },
+  { name: "Diag C", image: "/algorithms/4x4/pll-parity/pll-parity-diag-c.svg", algorithm: "F R U' R' U' R U R' F' U' 2R2 U2 2R2 u2 2R2 u2 U' R U R' U' R' F R F'" },
+  { name: "Q", image: "/algorithms/4x4/pll-parity/pll-parity-q.svg", algorithm: "z Rw2 Uw2' R2' Uw2' F R U R' U' R U R' U' R U R' U' F' U2' R2 Uw2' Rw2' z'" },
+  { name: "Sa", image: "/algorithms/4x4/pll-parity/pll-parity-sa.svg", algorithm: "F R U' R' U' R U R' F' R U R' U' R' F R F' U' 2R2 U2 2R2 u2 2R2 u2" },
+  { name: "Sb", image: "/algorithms/4x4/pll-parity/pll-parity-sb.svg", algorithm: "F R U' R' U' R U R' F' R U R' U' R' F R F' 2R2 U2 2R2 u2 2R2 u2" },
+  { name: "X", image: "/algorithms/4x4/pll-parity/pll-parity-x.svg", algorithm: "Rw2 F2 U2 Rw2 F' U' R' U R U' R' U R U' R' U R F R2 U2 F2 Rw2" },
+]

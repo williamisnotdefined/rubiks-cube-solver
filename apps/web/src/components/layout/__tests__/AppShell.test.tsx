@@ -48,6 +48,22 @@ describe('PageNav', () => {
     expect(screen.getByRole('link', { name: 'Solver' })).toHaveClass('bg-app-surface')
   })
 
+  it('marks algorithms as active and opens method links', async () => {
+    const user = userEvent.setup()
+    renderWithRouter(<PageNav activeRoute="algorithms" />, '/algoritmos')
+
+    const algorithmsButton = screen.getByRole('button', { name: 'Algorithms' })
+    expect(algorithmsButton).toHaveClass('bg-app-text')
+
+    await user.click(algorithmsButton)
+
+    expect(screen.getByRole('link', { name: '3x3 OLL' })).toHaveAttribute('href', '/algoritmos/3x3/oll')
+    expect(screen.getByRole('link', { name: '2x2 CLL' })).toHaveAttribute('href', '/algoritmos/2x2/cll')
+    expect(screen.getByRole('link', { name: '4x4 PLL' })).toHaveAttribute('href', '/algoritmos/4x4/pll')
+    expect(screen.getByRole('link', { name: 'Square-1 Cubeshape' })).toHaveAttribute('href', '/algoritmos/sq1/cubeshape')
+    expect(screen.getByRole('link', { name: 'Megaminx OLL' })).toHaveAttribute('href', '/algoritmos/megaminx/oll')
+  })
+
   it('links to the project on GitHub', () => {
     renderWithRouter(<PageNav activeRoute="solve" />)
 
