@@ -775,6 +775,7 @@
       "copy": "Copiar scramble",
       "copyFailed": "No se pudo copiar el scramble",
       "event": "Evento",
+      "generating": "Generando scramble...",
       "next": "Siguiente scramble",
       "previous": "Scramble anterior",
       "title": "Scramble"

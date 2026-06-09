@@ -24,6 +24,7 @@ import {
   generateScrambleForEvent,
   scrambleEvents,
 } from '@core/scramble/catalog'
+import { generateHighQualityScrambleForEvent } from '@core/scramble/highQuality'
 import { finalTimeMs } from '@core/timer/penalties'
 import { timerStats } from '@core/timer/statistics'
 import type { GeneratedScramble, ScrambleEvent } from '@core/scramble/types'
@@ -47,7 +48,9 @@ export function TimerPage() {
     return { index: 0, items: [initialScramble] }
   })
   const [copied, setCopied] = useState(false)
+  const [isScramblePending, setIsScramblePending] = useState(true)
   const [timerResetSignal, setTimerResetSignal] = useState(0)
+  const scrambleRequestIdRef = useRef(0)
   const sessions = useTimerStore((state) => state.sessions)
   const activeSessionId = useTimerStore((state) => state.activeSessionId)
   const addSolve = useTimerStore((state) => state.addSolve)
@@ -73,10 +76,31 @@ export function TimerPage() {
     [solves],
   )
   const stats = timerStats(solves)
+
+  useEffect(() => () => {
+    scrambleRequestIdRef.current += 1
+  }, [])
+
   useEffect(() => {
+    const requestId = ++scrambleRequestIdRef.current
+
     setActiveSessionEvent(selectedEventId)
-    setScrambleHistory({ index: 0, items: [generateScrambleForEvent(selectedEventId)] })
+    setIsScramblePending(true)
     setCopied(false)
+
+    void generateHighQualityScrambleForEvent(selectedEventId)
+      .then((scramble) => {
+        if (scrambleRequestIdRef.current !== requestId) {
+          return
+        }
+
+        setScrambleHistory({ index: 0, items: [scramble] })
+      })
+      .finally(() => {
+        if (scrambleRequestIdRef.current === requestId) {
+          setIsScramblePending(false)
+        }
+      })
   }, [selectedEventId, setActiveSessionEvent])
 
   function handleSolveComplete(rawTimeMs: number, penalty: TimerPenalty) {
@@ -94,26 +118,26 @@ export function TimerPage() {
     }
 
     addSolve(solve)
-    setScrambleHistory((history) => {
-      const retainedHistory = history.items.slice(0, history.index + 1)
-
-      return {
-        index: retainedHistory.length,
-        items: [...retainedHistory, generateScrambleForEvent(selectedEventId)],
-      }
-    })
+    queueNextScramble(selectedEventId)
     setCopied(false)
   }
 
   function handleNextScramble() {
-    setScrambleHistory((history) => {
-      if (history.index < history.items.length - 1) {
-        return { ...history, index: history.index + 1 }
-      }
+    if (isScramblePending) {
+      return
+    }
 
+    if (scrambleHistory.index >= scrambleHistory.items.length - 1) {
+      queueNextScramble(selectedEventId)
+      setCopied(false)
+      setTimerResetSignal((signal) => signal + 1)
+      return
+    }
+
+    setScrambleHistory((history) => {
       return {
-        index: history.items.length,
-        items: [...history.items, generateScrambleForEvent(selectedEventId)],
+        ...history,
+        index: history.index + 1,
       }
     })
     setCopied(false)
@@ -121,6 +145,10 @@ export function TimerPage() {
   }
 
   function handlePreviousScramble() {
+    if (isScramblePending) {
+      return
+    }
+
     setScrambleHistory((history) => ({
       ...history,
       index: Math.max(0, history.index - 1),
@@ -130,6 +158,10 @@ export function TimerPage() {
   }
 
   async function handleCopyScramble() {
+    if (isScramblePending) {
+      return
+    }
+
     const copySucceeded = await copyToClipboard(generatedScramble.scramble)
 
     setCopied(copySucceeded)
@@ -149,13 +181,40 @@ export function TimerPage() {
     updateSolvePenalty(lastSolve.id, penalty)
   }
 
+  function queueNextScramble(eventId: string) {
+    const requestId = ++scrambleRequestIdRef.current
+
+    setIsScramblePending(true)
+
+    void generateHighQualityScrambleForEvent(eventId)
+      .then((scramble) => {
+        if (scrambleRequestIdRef.current !== requestId) {
+          return
+        }
+
+        setScrambleHistory((history) => {
+          const retainedHistory = history.items.slice(0, history.index + 1)
+
+          return {
+            index: retainedHistory.length,
+            items: [...retainedHistory, scramble],
+          }
+        })
+      })
+      .finally(() => {
+        if (scrambleRequestIdRef.current === requestId) {
+          setIsScramblePending(false)
+        }
+      })
+  }
+
   return (
     <main className="flex h-full min-h-0 flex-1 overflow-hidden px-3 py-2 sm:px-5 sm:py-3">
       <section className="mx-auto grid h-full min-h-0 w-full max-w-7xl grid-rows-[auto_minmax(0,1fr)] gap-2">
         <div className="grid min-h-0 shrink-0 gap-2">
           <ScrambleViewer
             className="min-h-0"
-            canGoPrevious={scrambleHistory.index > 0}
+            canGoPrevious={!isScramblePending && scrambleHistory.index > 0}
             copied={copied}
             eventControl={(
               <CompactScrambleEventSelect
@@ -165,10 +224,12 @@ export function TimerPage() {
               />
             )}
             eventLabel={generatedScramble.event.label}
-            scramble={generatedScramble.scramble}
-            onCopy={handleCopyScramble}
-            onNext={handleNextScramble}
-            onPrevious={handlePreviousScramble}
+            scramble={isScramblePending
+              ? t('timer.scramble.generating')
+              : generatedScramble.scramble}
+            onCopy={isScramblePending ? undefined : handleCopyScramble}
+            onNext={isScramblePending ? undefined : handleNextScramble}
+            onPrevious={isScramblePending ? undefined : handlePreviousScramble}
           />
           <Panel className="grid min-h-0 grid-cols-2 gap-2 p-2 sm:grid-cols-[auto_auto_minmax(14rem,1fr)] sm:items-center" aria-label={t('timer.settings.label')}>
             <label className="flex min-h-9 items-center gap-2 border border-app-border bg-app-control px-3 py-2 text-xs font-extrabold uppercase tracking-[0.16em] text-app-text">
@@ -202,6 +263,7 @@ export function TimerPage() {
         </div>
         <div className="grid min-h-0 grid-rows-[minmax(12rem,2fr)_minmax(7rem,1fr)] gap-2 overflow-hidden lg:grid-cols-[minmax(0,1fr)_24rem] lg:grid-rows-none xl:grid-cols-[minmax(0,1fr)_30rem]">
           <TimerRuntime
+            disabled={isScramblePending}
             holdToStartMs={holdToStartMs}
             inspectionEnabled={inspectionEnabled}
             resetSignal={timerResetSignal}
@@ -233,6 +295,7 @@ export function TimerPage() {
 }
 
 type TimerRuntimeProps = {
+  disabled: boolean
   holdToStartMs: number
   inspectionEnabled: boolean
   resetSignal: number
@@ -241,6 +304,7 @@ type TimerRuntimeProps = {
 }
 
 function TimerRuntime({
+  disabled,
   holdToStartMs,
   inspectionEnabled,
   resetSignal,
@@ -255,9 +319,9 @@ function TimerRuntime({
   })
   const timerRef = useRef(timer)
   timerRef.current = timer
-  const touchHandlers = useTouchTimer(timer)
+  const touchHandlers = useTouchTimer(timer, disabled)
 
-  useKeyboardTimer(timer)
+  useKeyboardTimer(timer, disabled)
 
   useEffect(() => {
     if (resetSignal > 0) {
@@ -269,6 +333,7 @@ function TimerRuntime({
     <section className="grid min-h-0 grid-rows-[minmax(0,1fr)_auto_auto] gap-2 overflow-hidden">
       <TimerDisplay
         aria-label={t('timer.displayLabel')}
+        aria-disabled={disabled}
         className="h-full"
         elapsedMs={timer.elapsedMs}
         showMilliseconds={showMilliseconds}
