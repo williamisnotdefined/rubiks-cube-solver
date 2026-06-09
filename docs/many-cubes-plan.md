@@ -202,7 +202,6 @@ cube/2x2x2
 pyraminx
 clock
 skewb
-cube/nxn
 square1
 megaminx
 ```
@@ -215,12 +214,13 @@ cube-2x2x2
 pyraminx
 clock
 skewb
-cube-nxn
 square1
 megaminx
 ```
 
 The internal ID is the semantic identity. The slug is only an API routing convenience.
+
+Cubic big cubes should use concrete size identities such as `cube/4x4x4` and `cube-4x4x4` when they become implementation targets; `NxNxN` remains a planning term, not a public puzzle ID.
 
 ## Puzzle Definition Metadata
 

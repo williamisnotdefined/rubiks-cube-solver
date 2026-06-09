@@ -263,7 +263,8 @@ Current puzzle IDs and slugs:
 
 - `cube/3x3x3` -> `cube-3x3x3`, stable.
 - `cube/2x2x2` -> `cube-2x2x2`, experimental.
-- Pyraminx, Clock, Skewb, NxNxN cubes, Square-1, and Megaminx are registered as planned metadata only.
+- Pyraminx, Clock, Skewb, Square-1, and Megaminx are registered as planned metadata only.
+- Future big-cube solver support should expose concrete sizes such as `cube/4x4x4`, not a generic `cube/nxn` catalog entry.
 
 2x2 support includes a puzzle-specific Rust state, move model, notation parser, replay verification, dedicated bounded IDA*, in-memory PDB-backed IDA*, puzzle registry metadata, puzzle-aware API solving, 2x2 scan-session handling, web selection, visualization, and inverse-solution playback.
 

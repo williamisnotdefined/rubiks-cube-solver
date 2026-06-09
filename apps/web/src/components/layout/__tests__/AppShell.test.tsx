@@ -48,6 +48,15 @@ describe('PageNav', () => {
     expect(screen.getByRole('link', { name: 'Solver' })).toHaveClass('bg-app-surface')
   })
 
+  it('marks YT Channels as active and keeps the English route', () => {
+    renderWithRouter(<PageNav activeRoute="channels" />, '/channels')
+
+    const channelsLink = screen.getByRole('link', { name: 'YT Channels' })
+
+    expect(channelsLink).toHaveAttribute('href', '/channels')
+    expect(channelsLink).toHaveClass('bg-app-text')
+  })
+
   it('marks algorithms as active and opens method links', async () => {
     const user = userEvent.setup()
     renderWithRouter(<PageNav activeRoute="algorithms" />, '/algoritmos')

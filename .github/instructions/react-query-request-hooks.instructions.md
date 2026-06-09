@@ -294,6 +294,7 @@ The solve form defaults to an empty scramble so the visualization starts solved;
 
 - `App.tsx` should stay thin and delegate the product screen to page-level modules.
 - Route-level code-splitting belongs in `App.tsx`; keep page-specific lazy chunks behind the current `HashRouter` routes.
+- Route paths use English stable slugs such as `/solve`, `/timer`, and `/channels`; translate visible navigation labels and page copy with `react-i18next`, not localized URLs.
 - Keep route or screen components readable as composition as the UI grows.
 - Extract named components for repeated panels, controls, result sections, or visualization shells when the extraction clarifies ownership.
 - Keep page-specific pieces colocated near the owning screen until reused elsewhere.

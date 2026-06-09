@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@components/Popover'
 import { useThemePreferenceSync, useThemeStore, type ThemePreference } from '@core/theme/themeStore'
 import { algorithmPuzzles, setsForPuzzle } from '@pages/AlgorithmsPage/sets/algorithmSetMetadata'
 
-export type PageNavRoute = 'algorithms' | 'solve' | 'timer'
+export type PageNavRoute = 'algorithms' | 'channels' | 'solve' | 'timer'
 
 const githubUrl = 'https://github.com/williamisnotdefined/rubiks-cube-solver'
 
@@ -97,6 +97,9 @@ function NavContent({ activeRoute, onNavigate }: NavContentProps) {
         <PageNavLink active={activeRoute === 'timer'} to="/timer" onClick={onNavigate}>
           {t('navigation.timer')}
         </PageNavLink>
+        <PageNavLink active={activeRoute === 'channels'} to="/channels" onClick={onNavigate}>
+          {t('navigation.channels')}
+        </PageNavLink>
         <AlgorithmsMenu active={activeRoute === 'algorithms'} onNavigate={onNavigate} />
       </div>
       <div className="mt-auto flex gap-2">
@@ -132,6 +135,10 @@ function activeRouteLabelKey(activeRoute: PageNavRoute) {
     return 'navigation.timer'
   }
 
+  if (activeRoute === 'channels') {
+    return 'navigation.channels'
+  }
+
   return 'navigation.solve'
 }
 
@@ -156,7 +163,7 @@ function AlgorithmsMenu({
         <button
           aria-current={active ? 'page' : undefined}
           className={cls(
-            'border border-app-border px-4 py-3 text-left text-xs font-extrabold uppercase tracking-[0.16em] outline-none focus-visible:ring-2 focus-visible:ring-app-focus/50',
+            'border border-app-border px-4 py-3 text-left font-sans text-xs font-extrabold uppercase tracking-[0.16em] outline-none focus-visible:ring-2 focus-visible:ring-app-focus/50',
             {
               'bg-app-text text-app-inverse': active,
               'bg-app-surface text-app-muted hover:bg-app-surface-raised hover:text-app-text': !active,
@@ -286,7 +293,7 @@ function PageNavLink({ active, children, onClick, to }: PageNavLinkProps) {
   return (
     <RouterNavLink
       className={cls(
-        'border border-app-border px-4 py-3 text-xs font-extrabold uppercase tracking-[0.16em] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus/50',
+        'border border-app-border px-4 py-3 font-sans text-xs font-extrabold uppercase tracking-[0.16em] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus/50',
         {
           'bg-app-text text-app-inverse': active,
           'bg-app-surface text-app-muted hover:bg-app-surface-raised hover:text-app-text': !active,

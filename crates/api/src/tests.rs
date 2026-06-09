@@ -223,6 +223,7 @@ async fn puzzles_route_lists_current_and_experimental_puzzles() {
         .find(|puzzle| puzzle.slug == "cube-2x2x2")
         .expect("2x2 puzzle should be listed");
 
+    assert!(puzzles.iter().all(|puzzle| puzzle.slug != "cube-nxn"));
     assert_eq!(cube3.id, "cube/3x3x3");
     assert_eq!(cube3.status, "stable");
     assert_eq!(

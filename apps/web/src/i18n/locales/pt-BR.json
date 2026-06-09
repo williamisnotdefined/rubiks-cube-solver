@@ -5,6 +5,14 @@
     "loading": "Carregando",
     "loadingRoute": "Carregando rota"
   },
+  "channels": {
+    "bannerAlt": "Banner do canal {{channel}}",
+    "description": "Uma grade curada com {{count}} canais do YouTube para tutoriais, speedcubing, reviews, recordes e cultura cuber.",
+    "kicker": "Diretório cuber no YouTube",
+    "openChannel": "Abrir {{channel}} no YouTube",
+    "openInYouTube": "Abrir no YouTube",
+    "title": "Canais YT"
+  },
   "algorithms": {
     "index": {
       "description": "Folhas estáticas de algoritmos: imagem do caso e algoritmo. Sem API, sem estado de treino e sem texto editorial.",
@@ -326,6 +334,7 @@
   "navigation": {
     "algorithms": "Algoritmos",
     "algorithmsMenu": "Métodos por puzzle",
+    "channels": "Canais YT",
     "closeMenu": "Fechar menu",
     "github": "Abrir projeto no GitHub",
     "menu": "Menu",

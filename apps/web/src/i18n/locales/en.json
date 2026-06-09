@@ -5,6 +5,14 @@
     "loading": "Loading",
     "loadingRoute": "Loading route"
   },
+  "channels": {
+    "bannerAlt": "{{channel}} channel banner",
+    "description": "A curated grid of {{count}} YouTube channels for tutorials, speedcubing, reviews, records, and puzzle culture.",
+    "kicker": "YouTube cubing directory",
+    "openChannel": "Open {{channel}} on YouTube",
+    "openInYouTube": "Open on YouTube",
+    "title": "YT Channels"
+  },
   "algorithms": {
     "index": {
       "description": "Static algorithm sheets: case image plus algorithm. No API, no trainer state, no editorial text.",
@@ -630,6 +638,7 @@
   "navigation": {
     "algorithms": "Algorithms",
     "algorithmsMenu": "Puzzle methods",
+    "channels": "YT Channels",
     "closeMenu": "Close menu",
     "github": "Open project on GitHub",
     "menu": "Menu",

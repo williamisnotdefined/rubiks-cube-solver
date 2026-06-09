@@ -34,7 +34,7 @@ const CUBE2_STRATEGY_IDS: [&str; 2] = [
     CUBE2_PDB_IDA_STAR_STRATEGY_ID,
 ];
 
-const PUZZLES: [PuzzleDefinition; 8] = [
+const PUZZLES: [PuzzleDefinition; 7] = [
     PuzzleDefinition {
         id: PuzzleId::Cube3x3x3,
         slug: PuzzleId::Cube3x3x3.slug(),
@@ -64,7 +64,6 @@ const PUZZLES: [PuzzleDefinition; 8] = [
     planned_puzzle(PuzzleId::Pyraminx, "Pyraminx", PuzzleFamily::Pyraminx),
     planned_puzzle(PuzzleId::Clock, "Clock", PuzzleFamily::Clock),
     planned_puzzle(PuzzleId::Skewb, "Skewb", PuzzleFamily::Skewb),
-    planned_puzzle(PuzzleId::CubeNxN, "NxNxN Cube", PuzzleFamily::Cube),
     planned_puzzle(PuzzleId::Square1, "Square-1", PuzzleFamily::Square1),
     planned_puzzle(PuzzleId::Megaminx, "Megaminx", PuzzleFamily::Megaminx),
 ];
@@ -199,15 +198,26 @@ mod tests {
     use crate::solver::SolverStrategy;
 
     #[test]
-    fn puzzle_registry_contains_initial_many_cubes_scope() {
+    fn puzzle_registry_contains_current_public_catalog_scope() {
         let definitions = all_puzzle_definitions();
+        let catalog_ids = definitions
+            .iter()
+            .map(|definition| definition.id)
+            .collect::<Vec<_>>();
 
-        assert_eq!(definitions.len(), PuzzleId::ALL.len());
-        for puzzle_id in PuzzleId::ALL {
-            assert!(definitions
-                .iter()
-                .any(|definition| definition.id == puzzle_id));
-        }
+        assert_eq!(
+            catalog_ids,
+            vec![
+                PuzzleId::Cube3x3x3,
+                PuzzleId::Cube2x2x2,
+                PuzzleId::Pyraminx,
+                PuzzleId::Clock,
+                PuzzleId::Skewb,
+                PuzzleId::Square1,
+                PuzzleId::Megaminx,
+            ]
+        );
+        assert!(puzzle_definition_by_slug("cube-nxn").is_none());
     }
 
     #[test]
