@@ -1,0 +1,1119 @@
+{
+  "common": {
+    "cancel": "キャンセル",
+    "close": "閉じる",
+    "loading": "読み込み中",
+    "loadingRoute": "搬入経路"
+  },
+  "channels": {
+    "bannerAlt": "{{channel}} チャンネル バナー",
+    "description": "チュートリアル、スピードキューブ、レビュー、記録、パズル文化のための {{count}} YouTube チャンネルの厳選されたグリッド。",
+    "kicker": "YouTube キューブディレクトリ",
+    "openChannel": "YouTube で {{channel}} を開く",
+    "openInYouTube": "YouTubeで開く",
+    "title": "YT チャンネル"
+  },
+  "algorithms": {
+    "index": {
+      "description": "静的アルゴリズム シート: 症例画像とアルゴリズム。 API、トレーナーの状態、編集テキストはありません。",
+      "kicker": "アルゴリズムシート",
+      "puzzle": "パズル",
+      "puzzleList": "パズルアルゴリズムのカテゴリ",
+      "title": "アルゴリズム"
+    },
+    "table": {
+      "algorithm": "アルゴリズム",
+      "case": "ケース",
+      "name": "名前",
+      "source": "ソース"
+    },
+    "methods": {
+      "cfop": {
+        "algorithmCount": "4 ステップ、78 の完全な最終層アルゴリズム",
+        "cases": {
+          "sexyMove": {
+            "name": "F2L 基本トリガー",
+            "note": "多くのF2Lケースをペアにして挿入するために使用される小さなトリガー。長いリストを暗記する前に、その効果を学びましょう。"
+          },
+          "sune": {
+            "name": "スネ OLL",
+            "note": "最も重要な OLL シェイプの 1 つ。 2 ルック OLL、フル OLL、2x2 Ortega、および CLL スタイルのセットで表示されます。"
+          },
+          "tPerm": {
+            "name": "T 順列",
+            "note": "1 組のコーナーと 1 組のエッジを交換する高速 PLL。これは、最終層の実行に役立つベンチマークです。"
+          },
+          "uPerm": {
+            "name": "U 順列",
+            "note": "エッジ専用のPLL。多くのソルバーは、多くの初心者の PLL ケースを完了しているため、早期に U 順列を学習します。"
+          }
+        },
+        "images": {
+          "hero": "最初の 2 つのレイヤー情報を示す CFOP メソッド図"
+        },
+        "level": "初心者から上級者まで",
+        "recommendedFor": "3x3 スピードソルビングとビッグキューブ 3x3 ステージ",
+        "steps": {
+          "cross": {
+            "body": "通常、検査中に十字全体を計画しながら、選択した色の周囲の 4 つの下部エッジを解決します。目標は、それを解決するだけではなく、安定したグリップと予測可能な最初の F2L ペアでフィニッシュすることです。",
+            "title": "クロス"
+          },
+          "f2l": {
+            "body": "第 1 層の各コーナーと対応する中間層のエッジをペアにして、そのペアを 1 つのスロットに挿入します。効率的な F2L は、最初にすべてのケースを暗記するのではなく、駒の動きをほとんど理解することです。",
+            "title": "F2L"
+          },
+          "oll": {
+            "body": "上面が 1 色になるように最後のレイヤーの向きを変えます。初心者はこれを 2 つのルック OLL に分割できます。フル OLL には 57 件のケースがあります。",
+            "title": "OLL"
+          },
+          "pll": {
+            "body": "すでに配向されている最後の層の部分を並べ替えます。始めるには 2-look PLL だけで十分です。フル PLL には 21 のケースがあり、最初に学ぶのに最適な上級セットの 1 つです。",
+            "title": "PLL"
+          }
+        },
+        "summary": "CFOP は、Cross、F2L、OLL、および PLL を通じて立方体を解きます。これは、最も文書化されている 3x3 スピード解決パスであり、レイヤーごとのアップグレードが最も簡単です。",
+        "title": "CFOP"
+      },
+      "cll": {
+        "algorithmCount": "2x2 レイヤーを解決した後の 42 件のケース",
+        "cases": {
+          "antisune": {
+            "name": "アンチスネグループ",
+            "note": "スネの逆姿のパートナー。これは一般的であり、上部のステッカーとサイド バーで認識する価値があります。"
+          },
+          "hCase": {
+            "name": "Hグループ",
+            "note": "反対のパターンが特徴的なコンパクトなグループ。場合によっては、アルゴリズムが非常に短い場合があります。"
+          },
+          "sune": {
+            "name": "スネグループ",
+            "note": "馴染みのある OLL 形状に直接関連しているため、ほとんどのソルバーが認識する最初の CLL グループの 1 つ。"
+          },
+          "tCase": {
+            "name": "Tグループ",
+            "note": "このグループは、クリーン バーの評価に報酬を与えます。同様の Pi および U ケースと混合しないでください。"
+          }
+        },
+        "images": {
+          "hero": "CLLメソッド図"
+        },
+        "level": "アドバンスト 2x2",
+        "recommendedFor": "すでにレイヤーを迅速に解決している 2x2 ソルバー",
+        "steps": {
+          "oneLookCorners": {
+            "body": "1 つのアルゴリズムを使用して、残りのコーナーをすべて解決します。これにより、Ortega から OLL と PBL の分割が削除され、最後のレイヤー 1 が表示されます。",
+            "title": "最後のレイヤーを一度に解決する"
+          },
+          "recognition": {
+            "body": "認識は、Sune、Antisune、T、U、L、Pi、H などのコーナー方向ファミリーによって編成されます。一度に 1 つのグループを学習し、同様のケースを一緒にドリルします。",
+            "title": "グループの認識"
+          },
+          "solvedLayer": {
+            "body": "CLL は、解決された面だけではなく、完全に解決されたレイヤーから開始します。最初の層は通常、簡単なスクランブルの検査中に計画されます。",
+            "title": "最初の層を解決しました"
+          }
+        },
+        "summary": "CLL は、レイヤーを解決した後、残りの 4 つの 2x2 コーナーを 1 つのアルゴリズムで解決します。 Ortega の後の自然なステップです。",
+        "title": "2x2 CLL"
+      },
+      "clockBeginner": {
+        "algorithmCount": "アルゴリズムを多用せず、手順ベース",
+        "cases": {
+          "pins": {
+            "name": "ピン表記",
+            "note": "UR、DR、DL、および UL は、どのピンが稼働しているかを識別します。メソッドの説明は、ピンの位置が明確になって初めて意味を持ちます。"
+          },
+          "twelve": {
+            "name": "解決されたクロックターゲット",
+            "note": "すべてのダイヤルは両側で 12:00 を指している必要があります。このパズルは、ピースの並べ替えではなく、制御されたダイヤル オフセットに関するものです。"
+          }
+        },
+        "level": "初心者",
+        "recommendedFor": "速度メソッドの前に Clock 記法を学習する",
+        "steps": {
+          "corners": {
+            "body": "十字を切った後、解決済みのグループを妨げずに、残りの隅のダイヤルをそれぞれ 12 に合わせます。正確なホイールの順序は、選択した方法によって異なります。",
+            "title": "コーナー"
+          },
+          "crosses": {
+            "body": "初心者向けの方法のほとんどは、まず片側で中央と端のダイヤルのセットを揃え、パズルを裏返した後、反対側でも同じ手順を繰り返します。",
+            "title": "ダイヤルグループを構築する"
+          },
+          "flip": {
+            "body": "Clock を反転すると、各ホイールにリンクされているダイヤルが変わります。適切な表記により、前後の操作が読みやすくなります。",
+            "title": "ひっくり返して終了"
+          },
+          "notation": {
+            "body": "Clock は、キューブ フェイス ターンの代わりにピンとホイール ターンを使用します。方法を覚える前に、ピンの位置がどのようにダイヤルを接続するかを学びましょう。",
+            "title": "最初に表記"
+          }
+        },
+        "summary": "Clock メソッドは、ピンとホイール ターンを使用してダイヤル グループを解決します。手数を最適化する前に、記法と信頼できる初心者向けの手順から始めてください。",
+        "title": "Clock 基本的な方法"
+      },
+      "eg": {
+        "algorithmCount": "PBL アイデアを含む 128 件",
+        "cases": {
+          "eg0": {
+            "name": "EG-0 / CLLベース",
+            "note": "最下層は完全に解決されています。これらは、2x2 CLL を最初に学習した場合はすでに知っている CLL ケースです。"
+          },
+          "eg1": {
+            "name": "EG-1",
+            "note": "最初の面には隣接スワップ パターンがあります。認識には、アルゴリズムの前にペアになっている下部の部分がどこに位置するかを含める必要があります。"
+          },
+          "eg2": {
+            "name": "EG-2",
+            "note": "最初の面には斜めのスワップ パターンがあります。これは強力ですが、検査で完全な解決をカバーできる場合にのみ役立ちます。"
+          }
+        },
+        "images": {
+          "eg0": "EG-0 初顔ケース",
+          "eg1": "EG-1 ファーストフェイスケース",
+          "eg2": "EG-2 ファーストフェイスケース",
+          "hero": "EG メソッドの表現"
+        },
+        "level": "エキスパート 2x2",
+        "recommendedFor": "一目で分かる 2x2 の解決と高度な検査",
+        "steps": {
+          "auf": {
+            "body": "EG には、多くの場合、AUF 前と AUF 後の両方が必要です。そのため、最終的なアルゴリズムが高速であっても、認識は CLL よりも困難になります。",
+            "title": "コントロール AUF"
+          },
+          "caseGroup": {
+            "body": "最初の面を EG-0、EG-1、または EG-2 に分類します。これにより、最下層が解決されているか、隣接交換されているか、対角交換されているかがわかります。",
+            "title": "EG グループを特定する"
+          },
+          "face": {
+            "body": "必ずしも完全なレイヤーではなく、1 つの面を作成します。 EG の値は、検査中に残りの部分が見える面を選択することによって決まります。",
+            "title": "顔を構築する"
+          }
+        },
+        "summary": "EG は高度なアルゴリズムの 2x2 メソッドです。1 つのアルゴリズムで 1 つの面を解決し、次に立方体全体を解決します。検査で解決全体を計画できる場合、最も強力です。",
+        "title": "2x2 EG"
+      },
+      "fourByFour": {
+        "algorithmCount": "リダクションフロープラスパリティアルゴリズム",
+        "cases": {
+          "ollParity": {
+            "name": "OLL パリティ",
+            "note": "縮小された 4x4 では、1 つの反転したエッジが表示されることがあります。これは、実際の 3x3 では不可能な状態です。通常の OLL とは別に学習してください。"
+          },
+          "pllParity": {
+            "name": "PLL パリティ",
+            "note": "PLL パリティは、3x3 ステージの後に 2 つのデッジをスワップします。認識は簡単ですが、実行は制御する必要があります。"
+          }
+        },
+        "level": "中級者",
+        "recommendedFor": "最初の 4x4 メソッドと Yau への移行",
+        "steps": {
+          "centers": {
+            "body": "6 つの 2x2 センターを構築します。リダクションでは、これは通常、エッジのペアリングの前に行われます。 Yau では、先読みを改善するために、いくつかのクロス エッジが早期に解決されます。",
+            "title": "センター"
+          },
+          "edgePairing": {
+            "body": "一致するウィングエッジをペアにしてエッジにします。すべてのエッジがペアになると、パズルはパリティの可能性がある 3x3 のように動作します。",
+            "title": "ペアエッジ"
+          },
+          "parity": {
+            "body": "パリティの場合は間違いではありません。これらは、リダクションにより、通常の 3x3 にはない内部の 4x4 情報が隠蔽されるために発生します。",
+            "title": "ハンドルパリティ"
+          },
+          "threeByThreeStage": {
+            "body": "縮小立方体を CFOP などの 3x3 法で解きます。パリティ アルゴリズムを 3x3 の最終層アルゴリズムから分離してください。",
+            "title": "3×3ステージ"
+          }
+        },
+        "summary": "4x4 リダクションは、中心を解決してエッジをペアにすることによってパズルを 3x3 に変換し、3x3 に存在しないパリティ ケースを処理します。",
+        "title": "4x4 リダクションと Yau"
+      },
+      "megaminxBeginner": {
+        "algorithmCount": "ほぼ直観的な F2L スタイルの解決法",
+        "cases": {
+          "lastLayerSune": {
+            "name": "最終層Suneのアイデア",
+            "note": "多くの Megaminx 最終層のアイデアは 3x3 トリガーに似ていますが、認識は 5 面の最終層で行われます。"
+          },
+          "s2lInsert": {
+            "name": "ペア挿入のアイデア",
+            "note": "2 層目以降のインサートは、単独のピースではなく、ペアで考えると簡単です。"
+          }
+        },
+        "images": {
+          "hero": "Megaminx パズルの写真"
+        },
+        "level": "初心者から中級者まで",
+        "recommendedFor": "Megaminx を学習する 3x3 ソルバー",
+        "steps": {
+          "lastLayerCorners": {
+            "body": "最終コーナーの向きを調整して並べ替えて終了します。上部の色と側面の色を分けて認識してください。",
+            "title": "最終層のコーナー"
+          },
+          "lastLayerEdges": {
+            "body": "最終エッジの向きを変えて並べ替えます。一部の 3x3 の最終層のアイデアは継承されますが、5 エッジのレイアウトでは状況が変わります。",
+            "title": "最終層のエッジ"
+          },
+          "s2l": {
+            "body": "コーナーとエッジのペアでパズルを続けます。この方法は、より多くのスロットとより多くのカラー トラッキングを備えた拡張 F2L のような感じです。",
+            "title": "2層目"
+          },
+          "star": {
+            "body": "1 つの中心の周りに 5 つのエッジの星から始めます。これは、ペアを解決する前に安定したベースを計画することと同等の Megaminx です。",
+            "title": "スター"
+          }
+        },
+        "summary": "Megaminx は通常、3x3 にインスピレーションを得たレイヤー方法で解決されます。星、パズルの周りのペア、そして 5 つの面に合わせた最後のレイヤーです。",
+        "title": "Megaminx 初心者向けの方法"
+      },
+      "ortega": {
+        "algorithmCount": "3ステップ、約12アルゴリズム",
+        "cases": {
+          "adjacentPbl": {
+            "name": "隣接するPBL",
+            "note": "どちらのレイヤーも並べ替えが必要で、アルゴリズムの前にバーを揃えることができます。"
+          },
+          "antisune": {
+            "name": "アンチスネ OLL",
+            "note": "スネの逆パートナー。認識のための迷いを避けるために、Sune と一緒にドリルしてください。"
+          },
+          "diagonalPbl": {
+            "name": "対角線 PBL",
+            "note": "レイヤー間で対角のコーナーを入れ替えたコンパクトな PBL ケース。"
+          },
+          "sune": {
+            "name": "スネ OLL",
+            "note": "反対面のコア志向のケース。"
+          }
+        },
+        "images": {
+          "hero": "Ortega メソッドのアニメーション"
+        },
+        "level": "中級 2x2",
+        "recommendedFor": "CLL を完全に学習せずに初心者 2x2 を超える",
+        "steps": {
+          "firstFace": {
+            "body": "直感的に 1 つの顔を作成します。側面の色を一致させる必要がないため、最初のステップがレイヤー全体よりも速くなります。",
+            "title": "最初の顔"
+          },
+          "oppositeFace": {
+            "body": "小さい OLL セットを反対側の面に向けます。その結果、必ずしも並べ替えられていないピースを含む 2 つの解決されたカラー面が生成されます。",
+            "title": "反対側の顔"
+          },
+          "pbl": {
+            "body": "両方のレイヤーを一度に並べ替えます。 PBL 認識は、最初の顔が簡単になった後のメインの Ortega スキルです。",
+            "title": "PBL"
+          }
+        },
+        "summary": "Ortega は、一方の面を作成し、反対側の面の向きを変えて、PBL で両方のレイヤーを並べ替えることによって 2x2 を解決します。",
+        "title": "2x2 Ortega"
+      },
+      "petrus": {
+        "algorithmCount": "5 つのステップ、最後のレイヤーまではほとんど直感的",
+        "cases": {
+          "blockExpansion": {
+            "name": "ブロック拡張",
+            "note": "Petrus は、2x2x2 ブロックが、解決されたピースを壊さずに 2x2x3 になる様子を見て報酬を与えます。"
+          },
+          "edgeOrientation": {
+            "name": "エッジ方向トリガー",
+            "note": "2x2x3 ブロックの後、エッジの方向を設定すると、F2L の残りの部分を削減された移動セットで解決できるようになります。"
+          }
+        },
+        "images": {
+          "hero": "Petrus メソッドのアニメーション"
+        },
+        "level": "中間ブロックビルディング",
+        "recommendedFor": "最小手思考とブロック構築の練習",
+        "steps": {
+          "edgeOrientation": {
+            "body": "残りの未解決のエッジの方向を調整します。これが Petrus の正体です。EO を早めに実行すると、残りが簡単になります。",
+            "title": "エッジの向きを変える"
+          },
+          "finishF2l": {
+            "body": "最初の 2 つのレイヤーを指向性エッジ制約で終了します。これは移動効率が非常に優れていますが、柔軟な先読みが必要です。",
+            "title": "F2Lを終了"
+          },
+          "lastLayer": {
+            "body": "任意の最終層システムを使用します。エッジは方向付けされているため、OCLL と PLL、COLL と EPLL、または ZBLL スタイルのアプローチが可能です。",
+            "title": "最後の層"
+          },
+          "twoByThreeBlock": {
+            "body": "ブロックを 2x2x3 に拡張します。拡張の選択は、エッジの方向とソルブの残りの部分の人間工学の両方に影響します。",
+            "title": "2x2x3ブロック"
+          },
+          "twoByTwoBlock": {
+            "body": "どこにでも 2x2x2 のブロックを構築します。これはレイヤーではありません。多くのターンを利用できるコンパクトな解決済みブロックです。",
+            "title": "2x2x2ブロック"
+          }
+        },
+        "summary": "Petrus は、最初にブロックを構築し、エッジの方向を早めに設定し、レイヤーごとの方法よりも少ない制限で F2L を終了します。",
+        "title": "Petrus"
+      },
+      "pyraminxVFirst": {
+        "algorithmCount": "初心者セットと L4E スタイルのケース",
+        "cases": {
+          "beginnerCycleA": {
+            "name": "3 エッジサイクル A",
+            "note": "多くのアルゴリズムを必要とせずにエッジを移動するための初心者向けの方法で使用される基本的な Pyraminx サイクル。"
+          },
+          "beginnerCycleB": {
+            "name": "3 エッジサイクル B",
+            "note": "ミラーサイクル。最初のサイクルとペアで学習します。"
+          },
+          "twoEdgeFlip": {
+            "name": "両エッジフリップ",
+            "note": "よくあるギリギリのケース。より高速なソルバーは、より優れたフィンガートリックのために表記法を再加工することがよくあります。"
+          }
+        },
+        "level": "初心者から中級者まで",
+        "recommendedFor": "Pyraminx ソルバー学習オプションの選択",
+        "steps": {
+          "lastEdges": {
+            "body": "最後のエッジを小さなアルゴリズムセットで仕上げます。高度な V First アプローチは、これらのケースを中断することなく認識することに重点を置いています。",
+            "title": "最後のエッジ"
+          },
+          "optionSelect": {
+            "body": "強力な Pyraminx ソルバーは、検査中に V First と Top First の開始を比較します。最初に目に入るものだけでなく、最もきれいな仕上がりのオプションを選択してください。",
+            "title": "オプション選択"
+          },
+          "tips": {
+            "body": "ヒントは独立しているため、何も考えずに解決する必要があります。これらは、先読みを中断しない場合にのみ、ソルブ中に実行してください。",
+            "title": "ヒントとセンター"
+          },
+          "v": {
+            "body": "V を構築します。1 つのコーナー領域の周囲に 2 つのエッジが解決されます。これにより、最後のエッジセットの安定したベースが得られます。",
+            "title": "Vファースト"
+          }
+        },
+        "summary": "Pyraminx の速度メソッドは通常、V First と Top First の選択を中心に展開します。 V First は直感的で検査が簡単なため、一般的です。",
+        "title": "Pyraminx Vファースト"
+      },
+      "roux": {
+        "algorithmCount": "4 ステップ、9 ～ 42 CMLL アルゴリズム",
+        "cases": {
+          "cmllSune": {
+            "name": "CMLL スネ風ケース",
+            "note": "CMLL は、ほとんどのエッジ位置を無視して最後の 4 つのコーナーを解決します。一部のケースは、COLL または OLLCP のアイデアに似ています。"
+          },
+          "lseo": {
+            "name": "LSE 方向パターン",
+            "note": "RouxはMUを回すと終了します。エッジ方向の認識は、生のアルゴリズム数よりも重要です。"
+          },
+          "mSliceEdgeFlip": {
+            "name": "M-スライスエッジ制御",
+            "note": "きれいな M および U ターンが不可欠です。 Roux は、スライスの動きが信頼できる場合にのみ高速になります。"
+          }
+        },
+        "images": {
+          "hero": "Roux メソッドの表現"
+        },
+        "level": "中級者から上級者まで",
+        "recommendedFor": "低手3x3の解き方と片手練習",
+        "steps": {
+          "cmll": {
+            "body": "エッジをほとんど自由なままにして、最後のレイヤーの 4 つのコーナーを 1 ステップで解決します。フル CMLL には 42 のケースがありますが、開始するには 2 ルック バージョンで十分です。",
+            "title": "CMLL"
+          },
+          "firstBlock": {
+            "body": "片面に1x2x3のブロックを作ります。これはスロット挿入ではなく真のブロック構築であるため、新しい Roux ソルバーにとって最も難しい部分です。",
+            "title": "最初のブロック"
+          },
+          "lse": {
+            "body": "M および U の動きで最後の 6 つのエッジを解決します。エッジの方向を決め、UL と UR を解決してから、M スライスを終了します。ここで、Roux の移動効率が非常に高まります。",
+            "title": "最後の 6 つのエッジ"
+          },
+          "secondBlock": {
+            "body": "最初のブロックを破壊せずに、反対側の 1x2x3 ブロックを構築します。この後、U レイヤーと M スライスは仕上げに利用可能なままになります。",
+            "title": "2ブロック目"
+          }
+        },
+        "summary": "Roux は 2 つのサイド ブロック、次にコーナー、そして最後の 6 つのエッジを解決します。 CFOP よりも少ない動きを使用し、ブロック構築と M スライス制御に依存します。",
+        "title": "Roux"
+      },
+      "sarahSkewb": {
+        "algorithmCount": "初心者: 2 つのコア 4 移動トリガー",
+        "cases": {
+          "hedgeslammer": {
+            "name": "ヘッジスラマー",
+            "note": "サラの表記では、このトリガーがスレッジハンマーに相当するものとして使用されます。 Skewb ハードウェアに適合するグリップを選択してください。"
+          },
+          "lastCenters": {
+            "name": "最終センター",
+            "note": "最後のステップでは、ローテーション後に同じトリガーのアイデアを繰り返します。コーナーだけでなく中心も追跡してください。"
+          },
+          "sledgehammer": {
+            "name": "スレッジハンマー",
+            "note": "サラのメソッドの 2 つのコア 4 移動トリガーの 1 つ。 Skewb の多くのケースでは、大ハンマーやヘッジスラマーが繰り返されることになります。"
+          }
+        },
+        "images": {
+          "hero": "サラのSkewbメソッドコーナーステップ",
+          "step1": "Sarah の Skewb の第一面図",
+          "step4": "サラの Skewb 最終中心図"
+        },
+        "level": "初心者から上級者まで",
+        "recommendedFor": "初心者から L2L への明確な道筋を求めている Skewb ソルバー",
+        "steps": {
+          "corners": {
+            "body": "2 つの 4 移動トリガーを使用して、残りのコーナーを解決します。認識は最初は単純ですが、中間バージョンではよりアルゴリズム的になります。",
+            "title": "残りのコーナー"
+          },
+          "firstSide": {
+            "body": "片側を直感的に解決します。最終コーナーでは、解決されたコーナーを一時的に移動する必要がある場合がありますが、これは Skewb では正常です。",
+            "title": "最初の面"
+          },
+          "lastCenters": {
+            "body": "既知のケースの 1 つを照合し、必要に応じてパズルを回転し、同じトリガー構造を適用して、残りの中心を解決します。",
+            "title": "残りのセンター"
+          },
+          "topCenter": {
+            "body": "コーナーの後の反対側の中心を解決します。初心者バージョンでは、認識を容易にするために、これを最後の中心から分離しています。",
+            "title": "反対側のセンター"
+          }
+        },
+        "summary": "Sarah の Skewb メソッドは、2 つの短いトリガーを中心に構築されています。初心者バージョンには 4 つのステップがあり、認識が向上するにつれてステップを組み合わせます。",
+        "title": "サラの Skewb メソッド"
+      },
+      "squareOneShape": {
+        "algorithmCount": "記法ケースを使用した形状優先法",
+        "cases": {
+          "kiteScallop": {
+            "name": "形状例",
+            "note": "Cubeshape のケースは、形状ファミリーによって最もよく学習されます。すべてのシーケンスを無関係なアルゴリズムとして扱わないでください。"
+          },
+          "notation": {
+            "name": "Square-1表記",
+            "note": "(x,y) は、上部と下部のレイヤーを 30 度単位で回転し、次に、古典的な記法で右半分を / 交換します。"
+          }
+        },
+        "images": {
+          "hero": "解決された形の Square-1 パズル"
+        },
+        "level": "中級者",
+        "recommendedFor": "Square-1 記法と立方体形状の学習",
+        "steps": {
+          "parity": {
+            "body": "Square-1 パリティのようなケースはメソッド フローの一部です。認識がクリーンな状態を保つように、パリティ修正を cubeshape とは別にしておきます。",
+            "title": "パリティ処理"
+          },
+          "permutation": {
+            "body": "分離後にコーナーとエッジを並べ替えます。多くの高速化メソッドは、これをコンパクトなアルゴリズム セットに削減します。",
+            "title": "ピースを並べ替える"
+          },
+          "separation": {
+            "body": "立方体の形状が復元された後、コーナーとエッジを正しいレイヤーに分離します。 Square-1 ピースが立方体ピースのように方向を向いていない場合でも、一部のメソッドはこの方向を呼び出します。",
+            "title": "レイヤーを分ける"
+          },
+          "shape": {
+            "body": "まずパズルを立方体の形に戻します。これにより、後の認識が可能になりますが、新しい Square-1 ソルバーにとって初期の最大の障壁となります。",
+            "title": "立方体形状"
+          }
+        },
+        "summary": "Square-1 の解決は、立方体の形状を復元することから始まり、次にパズル固有の表記法でピースを分離および並べ替えます。",
+        "title": "Square-1 立方体形状"
+      },
+      "zz": {
+        "algorithmCount": "最後のレイヤーに応じて 3 つまたは 4 つのステップ",
+        "cases": {
+          "edgeOrientation": {
+            "name": "エッジ方向トリガー",
+            "note": "このトリガーは、エッジ方向アルゴリズムがどのように変化するかを示しますが、ZZ EO は通常、検査中に直感的に計画されます。"
+          },
+          "twoGenLastLayer": {
+            "name": "2 つのジェネレーターによる仕上げのアイデア",
+            "note": "エッジの方向を決めると、多くの仕上げで、ぎこちないケースが少なく、高速 R、U、L スタイルの旋削を使用できるようになります。"
+          }
+        },
+        "images": {
+          "hero": "ZZのEOLineアニメーション"
+        },
+        "level": "中級者から上級者まで",
+        "recommendedFor": "回転のない 3x3 ソルビングと片手で操作できるエルゴノミクス",
+        "steps": {
+          "eoLineOrCross": {
+            "body": "下部に線または十字を配置しながら、すべてのエッジの方向を合わせます。最新の ZZ では、検査後の先読みが向上するため、EOCross が優先されることがよくあります。",
+            "title": "EOLine または EOCross"
+          },
+          "lastLayer": {
+            "body": "指向性エッジの恩恵を受ける最終層システムで仕上げます: OCLL と PLL、COLL と EPLL、または最終的には ZBLL。",
+            "title": "最後の層"
+          },
+          "zzF2l": {
+            "body": "主に R、U、L の動きで F2L を完了します。エッジの向きによりケースが軽減され、キューブのグリップが安定します。",
+            "title": "ZZ F2L"
+          }
+        },
+        "summary": "ZZ は開始時にエッジの方向を設定し、削減された移動セットを使用して F2L を解決します。検査が厳しくなる代わりに、後の回転がスムーズになります。",
+        "title": "ZZ"
+      }
+    },
+    "page": {
+      "algorithmCount": "アルゴリズム",
+      "backToIndex": "アルゴリズム",
+      "essentialCases": "必須のケース",
+      "imageSource": "画像出典:",
+      "level": "レベル",
+      "methods": "メソッド",
+      "recommendedFor": "こんな方におすすめ",
+      "references": "オリジナルの参考文献",
+      "stepNumber": "ステップ{{count}}",
+      "steps": "メソッドのステップ"
+    },
+    "puzzles": {
+      "2x2": {
+        "description": "Pocket Cube のメソッドは、フェースファーストの解決、最後のレイヤーのコーナー、ワンルックフィニッシュに重点を置いています。",
+        "title": "2x2"
+      },
+      "3x3": {
+        "description": "コア 3x3 速度メソッド: レイヤーベース、ブロックビルディング、エッジ指向、および低移動アプローチ。",
+        "title": "3x3"
+      },
+      "4x4": {
+        "description": "ビッグ キューブ リダクション、Yau スタイルのフロー、および 3x3 ステージに戻る前のパリティ ケース。",
+        "title": "4x4"
+      },
+      "clock": {
+        "description": "Clock 表記、ピン ロジック、および WCA Clock イベントの初心者向けの解決構造。",
+        "title": "Clock"
+      },
+      "megaminx": {
+        "description": "3x3 のペア解決からインスピレーションを受け、5 面の最後の層に適応した十二面体メソッド。",
+        "title": "Megaminx"
+      },
+      "pyraminx": {
+        "description": "Pyraminx メソッドは、チップ、V ファースト、トップ ファースト、および高速な最終エッジ認識を中心に構築されています。",
+        "title": "Pyraminx"
+      },
+      "skewb": {
+        "description": "短いトリガー、コーナーコントロール、センターサイクルを組み合わせたSkewbメソッド。",
+        "title": "Skewb"
+      },
+      "square1": {
+        "description": "形状シフト Square-1 解決: 立方体の形状、分離、順列、表記。",
+        "title": "Square-1"
+      }
+    },
+    "sources": {
+      "jaapClock": "Jaap's Puzzle Page: Clock",
+      "jaapPyraminx": "Jaap's Puzzle Page: Pyraminx",
+      "jaapSquareOne": "Jaap's Puzzle Page: Square-1",
+      "jpermEgOne": "J Perm: 2x2 EG-1 アルゴリズム",
+      "jpermFourByFour": "J Perm: 4x4 チュートリアル",
+      "jpermFourByFourOll": "J Perm: 4x4 OLL パリティ アルゴリズム",
+      "jpermFourByFourPll": "J Perm: 4x4 PLL パリティ アルゴリズム",
+      "jpermOll": "J Perm: OLL アルゴリズム",
+      "jpermPll": "J Perm: PLL アルゴリズム",
+      "jpermTwoByTwo": "J Perm: 2x2 チュートリアル",
+      "jpermTwoByTwoCll": "J Perm: 2x2 CLL アルゴリズム",
+      "larsPetrus": "ラース Petrus チュートリアル",
+      "rouxCommunity": "Roux スピード ソルバー コミュニティ ガイド",
+      "ruwixCfop": "Ruwix: 高度な CFOP メソッド",
+      "sarahSkewb": "Sarah's Cubing: Skewbメソッド",
+      "speedsolvingCfop": "Speedsolving Wiki: CFOPメソッド",
+      "speedsolvingClock": "Speedsolving Wiki: ルービック Clock",
+      "speedsolvingCll": "Speedsolving Wiki: CLL",
+      "speedsolvingEg": "Speedsolving Wiki: EGメソッド",
+      "speedsolvingMegaminx": "Speedsolving Wiki: Megaminx",
+      "speedsolvingOrtega": "Speedsolving Wiki: Ortegaメソッド",
+      "speedsolvingPetrus": "Speedsolving Wiki: Petrusメソッド",
+      "speedsolvingPyraminx": "Speedsolving Wiki: Pyraminx メソッド",
+      "speedsolvingRoux": "Speedsolving Wiki: Rouxメソッド",
+      "speedsolvingSkewb": "Speedsolving Wiki: Skewb メソッドのリスト",
+      "speedsolvingSquareOne": "Speedsolving Wiki: Square-1",
+      "speedsolvingZz": "Speedsolving Wiki：ZZ方式",
+      "wcaRegulations": "WCAレギュレーション",
+      "zzMethod": "ZZメソッドWebサイト"
+    }
+  },
+  "cube": {
+    "visualization": "キューブの視覚化",
+    "visualizationUnavailable": "このパズルでは視覚化はまだ利用できません。"
+  },
+  "errorBoundary": {
+    "description": "現在のビューが予期せずクラッシュしました。もう一度試すか、ルートを切り替えてリロードしてください。",
+    "kicker": "予期しないエラー",
+    "retry": "もう一度試してください",
+    "title": "何か問題が発生しました"
+  },
+  "navigation": {
+    "algorithms": "アルゴリズム",
+    "algorithmsMenu": "パズルの方法",
+    "channels": "YT チャンネル",
+    "closeMenu": "メニューを閉じる",
+    "github": "GitHub でプロジェクトを開く",
+    "menu": "メニュー",
+    "openMenu": "メニューを開く",
+    "primary": "プライマリナビゲーション",
+    "solve": "ソルバー",
+    "theme": "テーマ",
+    "themeDark": "暗い",
+    "themeLight": "ライト",
+    "themeSystem": "システム",
+    "timer": "タイマー"
+  },
+  "scan": {
+    "actions": {
+      "analyzing": "分析中",
+      "autoScanOff": "自動スキャンオフ",
+      "autoScanOn": "自動スキャンがオンになっている",
+      "clearPhoto": "すっきりとした顔立ち",
+      "confirmAnyway": "とにかく確認してください",
+      "confirmFace": "顔を確認する",
+      "nextFace": "次の顔",
+      "previousFace": "以前の顔",
+      "retakePhoto": "再度スキャンしてください",
+      "solveScannedCube": "スキャンされた立方体を解決する",
+      "takePhoto": "顔をスキャンします",
+      "updateFace": "顔を更新"
+    },
+    "camera": {
+      "capturedFaceAlt": "認識された立方体面",
+      "errorManualFallback": "{{message}} グリッドを手動で埋めることもできます。",
+      "holdSteady": "安定したまま {{count}}/{{target}}",
+      "lookingForCube": "キューブを探しています",
+      "modes": {
+        "rejected": "拒否されました",
+        "reviewed_stickers": "色を見直した",
+        "tile_detector": "ステッカー検出器"
+      },
+      "opening": "カメラを開く",
+      "statusWithConfidence": "{{mode}} {{confidence}}%",
+      "stickerConfidence": "ステッカー {{confidence}}%",
+      "stickersFound": "{{count}}/{{total}} ステッカーが見つかりました",
+      "stickersReady": "{{count}}/{{total}} ステッカー準備完了",
+      "temporalCollecting": "コンセンサス {{count}}/{{target}}",
+      "temporalColorDisagreement": "色が不安定な {{count}} フレーム",
+      "temporalReady": "コンセンサス {{agreement}}% {{count}} フレーム",
+      "temporalUnstable": "ジオメトリが不安定な {{count}} フレーム",
+      "tracking": "{{count}}/{{target}}を追跡しています"
+    },
+    "carousel": {
+      "faceConfirmed": "確認された",
+      "faceDraft": "ドラフト",
+      "faceInvalid": "無効な",
+      "faceNeedsReview": "レビュー",
+      "facePending": "保留中",
+      "goToFace": "{{face}}、{{status}}に移動",
+      "next": "次へ",
+      "previous": "前へ"
+    },
+    "colors": {
+      "B": "ブルー",
+      "D": "黄色",
+      "F": "緑",
+      "L": "オレンジ",
+      "R": "赤",
+      "U": "ホワイト"
+    },
+    "centerMismatch": {
+      "dismiss": "センターの確認を解除する",
+      "kicker": "異なるセンター",
+      "title": "期待される顔を確認する"
+    },
+    "editor": {
+      "colorCount": "色数",
+      "orAlternative": "または {{colorInitial}}",
+      "paletteLabel": "カラーパレット",
+      "pickColor": "色を選択してください",
+      "needsConfirmation": "確認が必要です",
+      "reviewColors": "カラーを確認する",
+      "reviewGroupLabel": "スキャンされた顔の色",
+      "selectSquareHint": "正方形を選択し、色を選択して修正します。",
+      "stickerLabel": "ステッカー {{index}}{{color}}",
+      "uncertainColor": "不確かな色",
+      "uncertainMaybe": "たぶん{{color}}"
+    },
+    "evenReview": {
+      "autoFit": "自動フィットを試す",
+      "autoFitambiguous": "複数のフィッティングが可能です。ネットを手動で調整してください。",
+      "autoFitnone": "面だけを回転してもフィットしませんでした。位置を交換したり、ステッカーを確認したりできます。",
+      "autoFitsuggested": "より少ない変更で適合する可能性が高いものが見つかりました。ネットを調べてから応募してください。",
+      "autoFitunique": "フィット感を見つけて適用しました。解決する前にネットを調べてください。",
+      "applySuggestion": "提案を適用する",
+      "back": "戻って編集する",
+      "capturedFace": "キャプチャ: {{face}}",
+      "description": "この Kociemba ネットが物理キューブと一致するかどうかを確認します。面をドラッグして位置を交換し、解決する前に面を選択して回転させます。",
+      "dragInstructions": "面を別のスロットにドラッグするか、交換ボタンを使用します。回転ボタンを使用して、キャプチャされた顔の向きを固定します。",
+      "invalidDescription": "いくつかのコーナーは反対の色や不可能な色を組み合わせています。面を回転するか、正しいステッカーに戻ります。",
+      "invalidSolveDisabled": "解決する前に、強調表示された不可能なコーナーを修正してください。",
+      "invalidTitle": "不可能なコーナー",
+      "kicker": "最終レビュー",
+      "oppositePair": "{{first}} と {{second}} は反対面です。",
+      "reviewAction": "組み立てたキューブを確認する",
+      "rotate90": "90°回転",
+      "rotate180": "180°回転",
+      "rotate270": "Rotate -90°",
+      "selectedFace": "選択したスロット: {{face}} · キャプチャされた顔: {{capturedFace}}",
+      "solve": "受け入れて解決する",
+      "swapTitle": "選択した顔を次のものと交換します",
+      "title": "組み立てたキューブを確認する",
+      "validMessage": "2x2 のコーナーは構造的に有効です。プレビューが物理キューブと一致していることを確認します。"
+    },
+    "faces": {
+      "B": {
+        "instruction": "カメラ ビューの上部に青い顔と白い顔が表示されます。",
+        "label": "青い顔",
+        "top": "ホワイト"
+      },
+      "D": {
+        "instruction": "カメラ ビューの上部に黄色の面と緑色の面を表示します。",
+        "label": "黄色い顔",
+        "top": "緑"
+      },
+      "F": {
+        "instruction": "カメラ ビューの上部に緑色の顔と白い顔が表示されます。",
+        "label": "緑色の顔",
+        "top": "ホワイト"
+      },
+      "L": {
+        "instruction": "カメラ ビューの上部にオレンジ色の顔と白い顔が表示されます。",
+        "label": "オレンジ色の顔",
+        "top": "ホワイト"
+      },
+      "R": {
+        "instruction": "カメラビューの上部に白い顔と一緒に赤い顔を表示します。",
+        "label": "赤い顔",
+        "top": "ホワイト"
+      },
+      "U": {
+        "instruction": "カメラ ビューの上部に白い顔と緑の顔が表示されます。",
+        "label": "白い顔",
+        "top": "緑"
+      }
+    },
+    "faces2": {
+      "B": {
+        "instruction": "どちらの面が上であるかを変えずに、立方体を回転させて背面を表示します。",
+        "label": "裏側",
+        "top": "上へ"
+      },
+      "D": {
+        "instruction": "下側を表示し、前側をカメラビューの上部に保ちます。",
+        "label": "ダウンサイド",
+        "top": "フロント"
+      },
+      "F": {
+        "instruction": "前面を選択します。カメラビューの上部を上にして立方体を持ちます。",
+        "label": "前面",
+        "top": "上へ"
+      },
+      "L": {
+        "instruction": "どちらが上であるかを変えずに、立方体を回転させて左側を表示します。",
+        "label": "左側",
+        "top": "上へ"
+      },
+      "R": {
+        "instruction": "どちらが上であるかを変更せずに、立方体を回転して右側を表示します。",
+        "label": "右側",
+        "top": "上へ"
+      },
+      "U": {
+        "instruction": "上側を表示し、前面をカメラビューの上部に保ちます。",
+        "label": "上側",
+        "top": "フロント"
+      }
+    },
+    "live": {
+      "cameraDenied": "カメラの許可が拒否されたか、カメラが見つかりませんでした。",
+      "cameraUnavailable": "このブラウザではカメラにアクセスできません。",
+      "centerMismatch": "別の中心色を検出しました。予想される面に回転します。",
+      "detectingStickers": "ステッカーの検出: {{count}}/{{total}} が見つかりました。",
+      "faceDetected": "顔が検出されました。しっかりと保持してください。",
+      "gridReady": "{{count}}/{{total}} ステッカーはロックされています。しっかりと保持してください。",
+      "imageBlurry": "画像がぼやけています。キューブをしっかりと持ちます。",
+      "looking": "キューブフェイスを探しています。",
+      "lookingKeepVisible": "キューブフェイスを探しています。立方体が完全に見えるようにしてください。",
+      "partialGrid": "{{count}}/9 個のステッカーが見つかりました。 1 つの平らな面を表示します。",
+      "scanFailed": "ライブスキャン分析が失敗しました。",
+      "stableCapturing": "すべてのステッカーは安定しています。色を見直します。",
+      "tooBright": "眩しすぎる。明るい反射を軽減します。",
+      "tooDark": "暗すぎます。さらに光を加えます。"
+    },
+    "messages": {
+      "allFacesConfirmed": "全員の顔が確認されました。準備ができたら、スキャンした立方体を解決します。",
+      "analysisFailed": "スキャン分析リクエストは失敗しました。",
+      "analyzingFace": "立方体の面を分析中...",
+      "apiNotReady": "API はまだ準備ができていません。",
+      "autoCaptured": "自動的にキャプチャされます。この顔を確認する前に、色を確認してください。",
+      "autoCapturing": "安定した顔を自動でキャプチャ...",
+      "autoPaused": "自動スキャンが一時停止されました。顔が映っているときにオンにします。",
+      "cameraFrameFailed": "カメラフレームを読み取れませんでした。もう一度やり直してください。",
+      "cameraNotReady": "カメラはまだ準備ができていません。",
+      "captured": "写真を撮影しました。この顔を確認する前に、色を確認してください。",
+      "capturingPhoto": "写真をキャプチャ中...",
+      "centerMismatchFallback": "キャプチャされた中心はこのスキャン ステップと一致しません。写真を撮り直します。",
+      "centerMismatchConfirmQuestion": "本当にこれが予想通りの顔ですか？",
+      "centerMismatchWithColors": "中心は {{detectedColor}}{{confidence}} のように見えますが、このステップでは {{expectedColor}} が予想されます。確認する前に、想定された面に回してください。",
+      "confirmAllFaces": "6 面すべてを確認し、各色が正確に 9 回ずつ現れることを確認してください。",
+      "confidenceSuffix": "({{confidence}}% の信頼度)",
+      "detectedUncertain": "検出された {{count}} 個の色が不確かです。ハイライトされたマスを確認するか、面をクリアして再スキャンしてください。",
+      "faceNeedsReview": "解く前にこの顔を確認してください。",
+      "faceUpdated": "顔が更新されました。他の面を確認するか、準備ができたら解決してください。",
+      "genericRejected": "スキャンされたキューブは拒否されました。確認した色を確認します。",
+      "lowConfidence": "検出の信頼性は低いです。",
+      "manualDetectionFailed": "立方体面を検出できませんでした。写真を撮り直すか、グリッドを手動で塗りつぶします。",
+      "qualityBlurry": "より鮮明な写真を撮るには、キューブをしっかりと固定してください。",
+      "qualityBright": "スキャンする前に映り込みを軽減します。",
+      "qualityDark": "スキャンする前にさらに光を追加します。",
+      "sessionAmbiguous": "バックエンドは複数の有効なキューブ状態を見つけました。ハイライト表示されたステッカーを確認するか、不鮮明な顔を再スキャンします。",
+      "sessionBlurRescan": "{{faces}} の顔では画像がぼやけています。立方体をしっかりと保持し、それらの面を再スキャンします。",
+      "sessionGlareRescan": "{{faces}}の顔が眩しすぎる。反射を軽減し、それらの顔を再スキャンします。",
+      "sessionInvalidCornerTargets": "スキャン結果にありえない 2x2 コーナーが含まれています。ハイライト表示されたステッカーを確認し、もう一度解いてみてください。",
+      "sessionInvalidCubeState": "スキャンでは有効なキューブが記述されていません。顔を確認し、不明瞭なステッカーを再スキャンします。",
+      "sessionIncompleteStickers": "解決する前に、顔 {{faces}} にある 9 つのステッカーをすべて完成させてください。",
+      "sessionMissingConfirmedFaces": "解く前にこれらの顔を確認してください: {{faces}}。",
+      "sessionMissingPhotos": "解く前に次の顔を認識してください: {{faces}}。",
+      "sessionNeedsManualConfirmation": "解く前に、強調表示されたステッカーを確認してください。",
+      "sessionNeedsRescan": "1 つ以上の顔を再スキャンする必要があります。",
+      "sessionRejected": "スキャン セッションが拒否されました。解く前に顔を確認してください。",
+      "sessionShadowRescan": "{{faces}} の顔に影が多すぎます。さらに均一な光を追加して、それらの顔を再スキャンします。",
+      "sessionVisionUnavailable": "ビジョン サービスはセッションを完了できませんでした。ビジョン サービスが利用可能になってから再試行してください。",
+      "solveFailed": "スキャン解決リクエストは失敗しました。",
+      "submittingSession": "キューブ制約を使用したフル スキャンを確認しています...",
+      "stillLooking": "まだキューブフェイスを探しています。顔全体を表示したままにして、自動スキャンを再試行してください。",
+      "liveReviewReady": "{{count}} ステッカーが認識されました。色を確認し、必要に応じて四角形を修正し、この面を確認します。"
+    },
+    "modal": {
+      "cnnEvidenceActive": "CNN 証拠が有効です",
+      "cnnReasonUnknown": "設定されていません",
+      "colorFallbackActive": "カラーのみのフォールバック: {{reason}}",
+      "confirmed": "{{count}} 件確認済み",
+      "description": "要求されたトップカラーで一度に 1 つの顔を表示します。ソリューションでは、確認した色が使用されます。",
+      "dismiss": "スキャンキューブを閉じる",
+      "cancelExit": "スキャンキューブからの退出をキャンセルします",
+      "exitAction": "休暇を取る",
+      "exitDescription": "スキャンの進行状況が残っていますが、今すぐ終了すると失われます。",
+      "exitKicker": "未保存のスキャン",
+      "exitTitle": "スキャンを終了しますか?",
+      "expectedCenter": "予想センター: {{color}}",
+      "faceProgress": "{{total}} の {{current}} の顔",
+      "keepAtTop": "先頭に維持: {{color}}",
+      "tileDetectorActive": "ステッカー検出器がアクティブです",
+      "tileDetectorFallbackActive": "ステッカー検出器のフォールバック: {{reason}}",
+      "tileDetectorReasonUnknown": "設定されていません",
+      "title": "スキャンキューブ",
+      "visionStatusUnavailable": "視力ステータスが不明"
+    },
+    "validation": {
+      "centerColorMismatch": "中心の色はスキャンされる顔と一致する必要があります。",
+      "colorAppearsMoreThanNine": "{{color}} が 9 回以上出現します。",
+      "confirmAllNineColors": "続行する前に 9 個すべての色を確認してください。"
+    },
+    "warnings": {
+      "tile_detector_rejected": "ステッカー検出器の提案は拒否されました。立方体の面を平らにして見えるようにしてください。",
+      "image_blurry": "画像がぼやけています。キューブをしっかりと持ちます。",
+      "image_too_bright": "眩しすぎる。明るい反射を軽減します。",
+      "image_too_dark": "暗すぎます。さらに光を加えます。",
+      "low_confidence_sticker": "1 つ以上のステッカーが不明です。ハイライト表示された四角形を確認します。"
+    }
+  },
+  "solve": {
+    "details": {
+      "columns": {
+        "meaning": "意味",
+        "text": "テキスト"
+      },
+      "dismiss": "ソルバーの詳細を無視する",
+      "elapsedLabel": "{{elapsed}} での応答",
+      "elapsedMeaning": "ブラウザーで測定されたリクエストの合計時間。これには、API ラウンド トリップと応答の解析が含まれるため、バックエンドの検索時間とは異なる場合があります。",
+      "maxNodesConfigured": "{{nodes}} ノード キャップ",
+      "maxNodesUnlimited": "ノードキャップが構成されていません",
+      "movesLabel": "{{count}} が移動します",
+      "nodesLabel": "{{nodes}} ノード",
+      "nodesMeaning": "ソルバーは解を見つけるまでにこの数の内部探索ノードを探索しました。この実行では {{maxNodesLabel}} を使用しました。",
+      "replayNotVerified": "リプレイ未確認",
+      "replayVerified": "リプレイ確認済み",
+      "replayVerifiedMeaning": "動きを見つけた後、バックエンドはスクランブルされたキューブ上でそれらを再生し、キューブが解決されることを確認しました。",
+      "search": "検索",
+      "solution": "解決策",
+      "solutionLengthMeaning": "返されたソリューションの長さ。各表記トークンは、R2 や B2 などの半回転も含めて 1 手としてカウントされます。",
+      "subtitle": "これらのメトリクスは、返されたソリューション、リクエストのタイミング、バックエンドの検証を表します。",
+      "tables": {
+        "available": {
+          "label": "テーブルが利用可能",
+          "meaning": "この戦略に必要な、事前に生成された枝刈りテーブルが利用可能でした。これらは検索を絞り込むのに役立ちます。"
+        },
+        "corrupt_or_incompatible": {
+          "label": "テーブルが壊れているか、互換性がありません",
+          "meaning": "必要なプルーニング テーブルは存在しますが、予期された形式またはメタデータと一致しないため、再生成する必要があります。"
+        },
+        "not_required": {
+          "label": "テーブルは不要です",
+          "meaning": "この戦略では、生成されたプルーニング テーブルは必要ありません。"
+        },
+        "not_applicable": {
+          "label": "表は適用されません",
+          "meaning": "このパズル戦略は、生成された 3x3 枝刈りテーブル アーティファクトを使用しません。"
+        },
+        "unavailable": {
+          "label": "テーブルが使用不可",
+          "meaning": "必要なプルーニング テーブルが API サーバーでは利用できませんでした。"
+        }
+      },
+      "time": "時間",
+      "title": "ソルバーの詳細"
+    },
+    "noSolution": {
+      "attempted": "{{strategy}} は {{maxDepth}} までの移動と {{maxNodes}} ノードを試しました。",
+      "description": "ソルバーは、現在の制限でリプレイ検証された結果を見つけられませんでした。制限を増やして、同じキューブをもう一度試してください。",
+      "dismiss": "ソルブ制限ダイアログを閉じる",
+      "previousAttempt": "前回の試み",
+      "retry": "これらの制限を試してください",
+      "title": "さまざまな制限を試してみる"
+    },
+    "errors": {
+      "detail": {
+        "generated_tables_corrupt": "ネイティブの枝刈りテーブルを再生成します。現在の API アーティファクトは Rust エンジンと一致しません。",
+        "generated_tables_unavailable": "ネイティブ プルーニング テーブルを生成し、解決する前に npm run api:dev を開始します。",
+        "invalid_input_orientation_hint": "スキャンの方向を確認します。緑、赤、青、オレンジをキャプチャし、その上に白を置きます。白と黄色をキャプチャし、その上に緑を置きます。",
+        "not_found_within_limits": "{{strategy}} は、最大移動数 {{maxDepth}} で {{nodes}} ノードを探索しました。"
+      },
+      "errorKind": {
+        "duplicate_corner": "スキャンされた立方体には、複製されたコーナーピースがあります。",
+        "duplicate_corner_stickers": "スキャンされたキューブに重複したコーナーステッカーがあります。",
+        "duplicate_edge": "スキャンされた立方体には、複製されたエッジ部分があります。",
+        "duplicate_edge_stickers": "スキャンされた立方体には、重複したエッジ ステッカーがあります。",
+        "generated_tables_unavailable": "API は、この戦略で必要な、生成された枝刈りテーブルをロードしていません。",
+        "invalid_center_sticker": "1 つ以上の中央ステッカーが有効なキューブ レイアウトと一致しません。",
+        "invalid_corner_orientation": "スキャンされたコーナーの方向が無効です。",
+        "invalid_corner_orientation_sum": "スキャンされたコーナーのねじれは、解決可能な立方体を形成しません。",
+        "invalid_corner_sticker_order": "スキャンされたコーナーに無効なステッカーの注文があります。",
+        "invalid_edge_orientation": "スキャンされたエッジの方向が無効です。",
+        "invalid_edge_orientation_sum": "スキャンされたエッジ フリップは、解決可能な立方体を形成しません。",
+        "invalid_face_count": "立方体の色はそれぞれ正確に 9 回出現する必要があります。",
+        "invalid_length": "キューブの状態にあるステッカーの数が間違っています。",
+        "invalid_move_notation": "R、U、R'、U2 などの標準的な移動表記を使用します。",
+        "invalid_permutation_parity": "スキャンされた部分には、不可能な順列パリティがあります。",
+        "invalid_symbol": "キューブ状態に無効な色記号が含まれています。",
+        "max_depth_exceeds_limit": "最大移動数が API の安全制限を超えています。",
+        "max_nodes_exceeds_limit": "最大ノード数が API の安全制限を超えています。",
+        "missing_corner": "スキャンされた立方体には角の部分がありません。",
+        "missing_edge": "スキャンされた立方体にはエッジ部分がありません。",
+        "node_limit_exceeded": "構成されたノード キャップに達すると、ソルバーが停止しました。",
+        "notation_too_large": "スクランブル表記が大きすぎます。",
+        "strategy_puzzle_mismatch": "選択したソルバー戦略はこのパズルに属していません。",
+        "unknown_corner_stickers": "スキャンされた立方体には、未知の角の色の組み合わせが含まれています。",
+        "unknown_edge_stickers": "スキャンされた立方体には、未知のエッジ色の組み合わせが含まれています。",
+        "unsupported_input_kind": "このパズル入力タイプは、ソルブ エンドポイントではサポートされていません。",
+        "unsupported_metric": "この移動メトリックは、解決エンドポイントではサポートされていません。",
+        "unsupported_puzzle": "このパズルは解決エンドポイントではまだサポートされていません。",
+        "unsupported_strategy": "選択したソルバー戦略は、この API ではサポートされていません。",
+        "unverified_solution": "ソルバーは、リプレイ検証に失敗したソリューションを返しました。"
+      },
+      "status": {
+        "api_error": "API 解決リクエストが失敗しました",
+        "generated_tables_corrupt": "生成された 2 フェーズ API テーブルが壊れているか、互換性がありません",
+        "generated_tables_unavailable": "生成された 2 フェーズ テーブルは API では使用できません",
+        "invalid_input": "無効なキューブ状態です",
+        "invalid_limits": "ソルバーの制限が API の安全上限を超えています",
+        "invalid_notation": "無効なスクランブル",
+        "node_limit_exceeded": "ノード制限を超えました",
+        "not_found_within_limits": "構成された制限内に解決策がありません",
+        "request_too_large": "解決リクエストが大きすぎます",
+        "strategy_puzzle_mismatch": "戦略がパズルと合っていない",
+        "unknown_puzzle": "未知のパズル",
+        "unsupported_input_kind": "サポートされていないパズル入力",
+        "unsupported_metric": "サポートされていない移動メトリック",
+        "unsupported_puzzle": "サポートされていないパズル",
+        "unsupported_strategy": "サポートされていないソルバー戦略",
+        "unverified_solution": "ソルバー ソリューションがリプレイ検証に失敗しました"
+      }
+    },
+    "form": {
+      "maxMoves": "最大移動数",
+      "maxNodesMillion": "最大ノード数 (M)",
+      "puzzle": "パズル",
+      "scanCube": "カメラでキューブをスキャン",
+      "scanUnavailableForPuzzle": "カメラ スキャンは現在 3x3 でのみ利用可能です。",
+      "scramble": "スクランブル",
+      "solve": "解決する"
+    },
+    "playback": {
+      "ariaLabel": "ソリューションの再生",
+      "currentMove": "{{step}}を移動: {{move}}",
+      "nextMove": "次の動き",
+      "previousMove": "前の手順",
+      "scramble": "スクランブル",
+      "solutionStep": "解決ステップ",
+      "solved": "解決しました"
+    },
+    "result": {
+      "foundIn": "{{elapsed}} での応答",
+      "seeMore": "もっと見る",
+      "solved": "解決済み",
+      "successMeta": "{{count}} が動きます - {{elapsed}} -"
+    },
+    "strategies": {
+      "generated-two-phase": "生成された 2 相ソルバー",
+      "generated-two-phase-multiprobe": "生成された 2 フェーズ マルチプローブ ソルバー",
+      "generated-two-phase-quality": "生成された 2 フェーズ品質ソルバー",
+      "cube2-bounded-ida-star": "2x2 有界 IDA*",
+      "cube2-pdb-ida-star": "2x2 PDB IDA*",
+      "meaningDefault": "このリクエストに使用される決定論的なバックエンド ソルバー戦略。これは検索ロジックであり、生成 AI ではありません。",
+      "meaningGeneratedTwoPhase": "使用された戦略。 Generated は生成 AI を意味するものではありません。これは、事前に生成された枝刈りテーブルに基づいた 2 フェーズ ソルバーです。品質モードは、設定された最大値にフォールバックする前に、より短いソリューション深度を試行します。"
+    },
+    "validation": {
+      "oneOf": "{{label}} は {{options}} のいずれかである必要があります",
+      "required": "{{label}} is required",
+      "wholeNumber": "{{label}} は整数でなければなりません",
+      "withinLimit": "{{label}} は {{limit}} 以下でなければなりません"
+    }
+  },
+  "timer": {
+    "displayLabel": "スピードソルブタイマー",
+    "instructions": {
+      "space": "スペースまたはタッチ: 押し続けると開始し、押すと停止します。"
+    },
+    "inspection": {
+      "title": "WCA検査"
+    },
+    "penalty": {
+      "dnf": "DNF",
+      "label": "ペナルティコントロール",
+      "latest": "最新のソルブペナルティ",
+      "ok": "OK",
+      "plus2": "+2"
+    },
+    "scramble": {
+      "copied": "Copied",
+      "copy": "コピースクランブル",
+      "copyFailed": "スクランブルをコピーできませんでした",
+      "event": "イベント",
+      "next": "次のスクランブル",
+      "previous": "前回のスクランブル",
+      "title": "スクランブル"
+    },
+    "session": {
+      "defaultName": "デフォルトセッション",
+      "solveCount": "{{count}} で解決します"
+    },
+    "settings": {
+      "inspection": "検査",
+      "label": "タイマー設定",
+      "milliseconds": "ミリ秒"
+    },
+    "solves": {
+      "actions": "アクション",
+      "delete": "削除",
+      "empty": "まだ解決策はありません",
+      "label": "解決します",
+      "penalty": "ペナルティ",
+      "scramble": "スクランブル",
+      "time": "時間"
+    },
+    "stats": {
+      "ao12": "あお12",
+      "ao5": "あお5",
+      "best": "ベスト",
+      "mean": "平均"
+    },
+    "status": {
+      "holding": "保持",
+      "idle": "すぐに持ち運べる",
+      "inspection": "検査",
+      "ready": "準備完了",
+      "running": "解決中",
+      "stopped": "停止しました"
+    }
+  }
+}

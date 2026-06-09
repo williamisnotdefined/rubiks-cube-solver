@@ -226,9 +226,7 @@ Translation keys to add:
 Files expected to change:
 
 - `apps/web/src/pages/SolvePage/ScanFaceCarousel.tsx`
-- `apps/web/src/i18n/locales/en.json`
-- `apps/web/src/i18n/locales/pt-BR.json`
-- `apps/web/src/i18n/locales/es.json`
+- Supported locale files under `apps/web/src/i18n/locales/`
 
 Tests:
 

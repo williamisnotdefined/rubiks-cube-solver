@@ -1,0 +1,1119 @@
+{
+  "common": {
+    "cancel": "Annuler",
+    "close": "Fermer",
+    "loading": "Chargement",
+    "loadingRoute": "Chargement de la route"
+  },
+  "channels": {
+    "bannerAlt": "Bannière de la chaîne {{channel}}",
+    "description": "Une grille sélectionnée de {{count}} chaînes YouTube pour les tutoriels, le speedcubing, les avis, les records et la culture des puzzles.",
+    "kicker": "Annuaire YouTube du cubing",
+    "openChannel": "Ouvrir {{channel}} sur YouTube",
+    "openInYouTube": "Ouvrir sur YouTube",
+    "title": "Chaînes YT"
+  },
+  "algorithms": {
+    "index": {
+      "description": "Fiches d'algorithmes statiques : image du cas plus algorithme. Pas d'API, pas d'état d'entraîneur, pas de texte éditorial.",
+      "kicker": "Fiches d'algorithmes",
+      "puzzle": "Puzzle",
+      "puzzleList": "Catégories d'algorithmes de puzzle",
+      "title": "Algorithmes"
+    },
+    "table": {
+      "algorithm": "Algorithme",
+      "case": "Cas",
+      "name": "Nom",
+      "source": "Source"
+    },
+    "methods": {
+      "cfop": {
+        "algorithmCount": "4 étapes, 78 algorithmes complets de dernière couche",
+        "cases": {
+          "sexyMove": {
+            "name": "Déclencheur F2L de base",
+            "note": "Un petit déclencheur utilisé pour apparier et insérer de nombreux cas F2L. Apprenez son effet avant de mémoriser de longues listes."
+          },
+          "sune": {
+            "name": "Sune OLL",
+            "note": "L'une des formes OLL les plus importantes. Elle apparaît dans le OLL en 2 étapes, le OLL complet, Ortega 2x2 et les ensembles de style CLL."
+          },
+          "tPerm": {
+            "name": "Permutation T",
+            "note": "Un PLL rapide qui échange une paire de coins et une paire d'arêtes. C'est un repère utile pour l'exécution de la dernière couche."
+          },
+          "uPerm": {
+            "name": "Permutation U",
+            "note": "Un PLL uniquement sur les arêtes. Beaucoup de solveurs apprennent tôt les permutations U parce qu'elles terminent de nombreux cas PLL débutants."
+          }
+        },
+        "images": {
+          "hero": "Diagramme de la méthode CFOP montrant les informations des deux premières couches"
+        },
+        "level": "Débutant à avancé",
+        "recommendedFor": "Speedsolving 3x3 et étape 3x3 des grands cubes",
+        "steps": {
+          "cross": {
+            "body": "Résolvez les quatre arêtes du bas autour de la couleur choisie, généralement en planifiant toute la croix pendant l'inspection. Le but n'est pas seulement de la résoudre, mais de finir avec une prise stable et une première paire F2L prévisible.",
+            "title": "Croix"
+          },
+          "f2l": {
+            "body": "Associez chaque coin de première couche avec son arête correspondante de couche intermédiaire et insérez la paire dans un slot. Un F2L efficace consiste surtout à comprendre le mouvement des pièces, pas à mémoriser tous les cas d'abord.",
+            "title": "F2L"
+          },
+          "oll": {
+            "body": "Orientez la dernière couche afin que la face du haut ait une seule couleur. Les débutants peuvent diviser cela en OLL en 2 étapes ; le OLL complet compte 57 cas.",
+            "title": "OLL"
+          },
+          "pll": {
+            "body": "Permutez les pièces de dernière couche déjà orientées. Le PLL en 2 étapes suffit pour commencer ; le PLL complet compte 21 cas et est l'un des meilleurs premiers ensembles avancés à apprendre.",
+            "title": "PLL"
+          }
+        },
+        "summary": "CFOP résout le cube avec Croix, F2L, OLL et PLL. C'est le parcours de speedsolving 3x3 le plus documenté et l'amélioration la plus facile depuis la méthode couche par couche.",
+        "title": "CFOP"
+      },
+      "cll": {
+        "algorithmCount": "42 cas après une couche 2x2 résolue",
+        "cases": {
+          "antisune": {
+            "name": "Groupe Antisune",
+            "note": "Le partenaire de Sune qui semble inversé. Il est courant et mérite d'être reconnu par les stickers du haut et les barres latérales."
+          },
+          "hCase": {
+            "name": "Groupe H",
+            "note": "Un groupe compact avec des motifs opposés distinctifs. Certains cas ont des algorithmes très courts."
+          },
+          "sune": {
+            "name": "Groupe Sune",
+            "note": "L'un des premiers groupes CLL que la plupart des solveurs reconnaissent, car il se rapporte directement à des formes OLL familières."
+          },
+          "tCase": {
+            "name": "Groupe T",
+            "note": "Ce groupe récompense une reconnaissance nette des barres. Évitez de le confondre avec les cas Pi et U similaires."
+          }
+        },
+        "images": {
+          "hero": "Diagramme de la méthode CLL"
+        },
+        "level": "2x2 avancé",
+        "recommendedFor": "Solveurs 2x2 qui résolvent déjà une couche rapidement",
+        "steps": {
+          "oneLookCorners": {
+            "body": "Utilisez un algorithme pour résoudre tous les coins restants. Cela supprime la séparation OLL plus PBL d'Ortega et rend la dernière couche visible en un seul regard.",
+            "title": "Résoudre la dernière couche en un regard"
+          },
+          "recognition": {
+            "body": "La reconnaissance est organisée par familles d'orientation des coins comme Sune, Antisune, T, U, L, Pi et H. Apprenez un groupe à la fois et entraînez les cas similaires ensemble.",
+            "title": "Reconnaissance des groupes"
+          },
+          "solvedLayer": {
+            "body": "CLL commence depuis une couche complètement résolue, pas seulement une face résolue. La première couche est généralement planifiée pendant l'inspection sur les mélanges faciles.",
+            "title": "Première couche résolue"
+          }
+        },
+        "summary": "CLL résout les quatre coins 2x2 restants avec un algorithme après une couche résolue. C'est l'étape naturelle après Ortega.",
+        "title": "2x2 CLL"
+      },
+      "clockBeginner": {
+        "algorithmCount": "Basé sur une procédure, pas centré sur les algorithmes",
+        "cases": {
+          "pins": {
+            "name": "Notation des broches",
+            "note": "UR, DR, DL et UL indiquent quelles broches sont levées. Une description de méthode n'a de sens que lorsque les positions des broches sont sans ambiguïté."
+          },
+          "twelve": {
+            "name": "Cible Clock résolue",
+            "note": "Chaque cadran doit pointer vers 12:00 des deux côtés. Le puzzle porte sur des décalages contrôlés des cadrans, pas sur la permutation de pièces."
+          }
+        },
+        "level": "Débutant",
+        "recommendedFor": "Apprendre la notation Clock avant les méthodes rapides",
+        "steps": {
+          "corners": {
+            "body": "Après les croix, amenez chaque cadran de coin restant à 12 sans perturber les groupes résolus. L'ordre exact des roues dépend de la méthode choisie.",
+            "title": "Coins"
+          },
+          "crosses": {
+            "body": "La plupart des méthodes débutantes alignent d'abord un ensemble de cadrans centraux et d'arêtes d'un côté, puis répètent de l'autre côté après avoir retourné le puzzle.",
+            "title": "Construire des groupes de cadrans"
+          },
+          "flip": {
+            "body": "Retourner le Clock change les cadrans liés par chaque roue. Une bonne notation garde les opérations avant et arrière lisibles.",
+            "title": "Retourner et terminer"
+          },
+          "notation": {
+            "body": "Clock utilise des broches et des tours de roues au lieu de rotations de faces de cube. Apprenez comment les positions des broches relient les cadrans avant d'essayer de mémoriser une méthode.",
+            "title": "La notation d'abord"
+          }
+        },
+        "summary": "Les méthodes Clock résolvent des groupes de cadrans avec des broches et des tours de roues. Commencez par la notation et une procédure débutante fiable avant d'optimiser le nombre de mouvements.",
+        "title": "Méthode Clock de base"
+      },
+      "eg": {
+        "algorithmCount": "128 cas incluant des idées PBL",
+        "cases": {
+          "eg0": {
+            "name": "Base EG-0 / CLL",
+            "note": "La couche du bas est entièrement résolue. Ce sont les cas CLL que vous connaissez déjà si vous avez d'abord appris le CLL 2x2."
+          },
+          "eg1": {
+            "name": "EG-1",
+            "note": "La première face présente un motif d'échange adjacent. La reconnaissance doit inclure l'emplacement des pièces appariées du bas avant l'algorithme."
+          },
+          "eg2": {
+            "name": "EG-2",
+            "note": "La première face présente un motif d'échange diagonal. C'est puissant, mais utile seulement lorsque l'inspection peut couvrir toute la résolution."
+          }
+        },
+        "images": {
+          "eg0": "Cas de première face EG-0",
+          "eg1": "Cas de première face EG-1",
+          "eg2": "Cas de première face EG-2",
+          "hero": "Représentation de la méthode EG"
+        },
+        "level": "2x2 expert",
+        "recommendedFor": "Résolution 2x2 en un regard et inspection avancée",
+        "steps": {
+          "auf": {
+            "body": "EG nécessite souvent à la fois un pré-AUF et un post-AUF. Cela rend la reconnaissance plus difficile que CLL même quand l'algorithme final est rapide.",
+            "title": "Contrôler AUF"
+          },
+          "caseGroup": {
+            "body": "Classez la première face en EG-0, EG-1 ou EG-2. Cela vous indique si la couche du bas est résolue, échangée adjacentement ou échangée diagonalement.",
+            "title": "Identifier le groupe EG"
+          },
+          "face": {
+            "body": "Construisez une face, pas nécessairement une couche complète. La valeur d'EG vient du choix d'une face qui rend le reste visible pendant l'inspection.",
+            "title": "Construire une face"
+          }
+        },
+        "summary": "EG est une méthode 2x2 avec beaucoup d'algorithmes : résoudre une face, puis résoudre tout le cube avec un algorithme. Elle est la plus forte quand toute la résolution peut être planifiée pendant l'inspection.",
+        "title": "2x2 EG"
+      },
+      "fourByFour": {
+        "algorithmCount": "Flux de réduction plus algorithmes de parité",
+        "cases": {
+          "ollParity": {
+            "name": "Parité OLL",
+            "note": "Un 4x4 réduit peut montrer une seule double-arête retournée, un état impossible sur un vrai 3x3. Apprenez cela séparément du OLL normal."
+          },
+          "pllParity": {
+            "name": "Parité PLL",
+            "note": "La parité PLL échange deux double-arêtes après l'étape 3x3. La reconnaissance est simple, mais l'exécution doit être contrôlée."
+          }
+        },
+        "level": "Intermédiaire",
+        "recommendedFor": "Première méthode 4x4 et transition vers Yau",
+        "steps": {
+          "centers": {
+            "body": "Construisez les six centres 2x2. En réduction, cela se fait généralement avant l'appariement des arêtes ; en Yau, certaines arêtes de croix sont résolues plus tôt pour un meilleur lookahead.",
+            "title": "Centres"
+          },
+          "edgePairing": {
+            "body": "Associez les arêtes ailes correspondantes en double-arêtes. Une fois toutes les double-arêtes appariées, le puzzle se comporte comme un 3x3 avec des cas de parité possibles.",
+            "title": "Apparier les arêtes"
+          },
+          "parity": {
+            "body": "Les cas de parité ne sont pas des erreurs. Ils arrivent parce que la réduction cache des informations internes du 4x4 qu'un 3x3 normal n'a pas.",
+            "title": "Gérer la parité"
+          },
+          "threeByThreeStage": {
+            "body": "Résolvez le cube réduit avec une méthode 3x3 comme CFOP. Gardez les algorithmes de parité séparés des algorithmes de dernière couche 3x3.",
+            "title": "Étape 3x3"
+          }
+        },
+        "summary": "La réduction 4x4 transforme le puzzle en 3x3 en résolvant les centres et en appariant les arêtes, puis gère les cas de parité qui n'existent pas sur 3x3.",
+        "title": "Réduction 4x4 et Yau"
+      },
+      "megaminxBeginner": {
+        "algorithmCount": "Résolution surtout intuitive de style F2L",
+        "cases": {
+          "lastLayerSune": {
+            "name": "Idée Sune de dernière couche",
+            "note": "Beaucoup d'idées de dernière couche Megaminx ressemblent aux déclencheurs 3x3, mais la reconnaissance se fait sur une dernière couche à cinq côtés."
+          },
+          "s2lInsert": {
+            "name": "Idée d'insertion de paire",
+            "note": "Les insertions de deuxième couche et de couches suivantes sont plus faciles si vous pensez en paires, pas en pièces isolées."
+          }
+        },
+        "images": {
+          "hero": "Photo du puzzle Megaminx"
+        },
+        "level": "Débutant à intermédiaire",
+        "recommendedFor": "Solveurs 3x3 apprenant le Megaminx",
+        "steps": {
+          "lastLayerCorners": {
+            "body": "Terminez en orientant et en permutant les derniers coins. Gardez la couleur du haut et les couleurs latérales séparées dans votre reconnaissance.",
+            "title": "Coins de dernière couche"
+          },
+          "lastLayerEdges": {
+            "body": "Orientez et permutez les dernières arêtes. Certaines idées de dernière couche 3x3 se transfèrent, mais la disposition à cinq arêtes change les cas.",
+            "title": "Arêtes de dernière couche"
+          },
+          "s2l": {
+            "body": "Continuez autour du puzzle avec des paires coin-arête. La méthode ressemble à un F2L étendu avec plus de slots et plus de suivi des couleurs.",
+            "title": "Deuxièmes couches"
+          },
+          "star": {
+            "body": "Commencez par une étoile de cinq arêtes autour d'un centre. C'est l'équivalent Megaminx de la planification d'une base stable avant la résolution des paires.",
+            "title": "Étoile"
+          }
+        },
+        "summary": "Le Megaminx se résout généralement avec une méthode par couches inspirée du 3x3 : étoile, paires autour du puzzle, puis une dernière couche adaptée à cinq côtés.",
+        "title": "Méthode Megaminx débutant"
+      },
+      "ortega": {
+        "algorithmCount": "3 étapes, environ 12 algorithmes",
+        "cases": {
+          "adjacentPbl": {
+            "name": "PBL adjacent",
+            "note": "Les deux couches doivent être permutées, avec des barres qui peuvent être alignées avant l'algorithme."
+          },
+          "antisune": {
+            "name": "Antisune OLL",
+            "note": "Le partenaire inverse de Sune. Entraînez-le avec Sune pour éviter les hésitations de reconnaissance."
+          },
+          "diagonalPbl": {
+            "name": "PBL diagonal",
+            "note": "Un cas PBL compact qui échange des coins diagonaux entre les couches."
+          },
+          "sune": {
+            "name": "Sune OLL",
+            "note": "Un cas d'orientation essentiel pour la face opposée."
+          }
+        },
+        "images": {
+          "hero": "Animation de la méthode Ortega"
+        },
+        "level": "2x2 intermédiaire",
+        "recommendedFor": "Aller au-delà du 2x2 débutant sans apprendre le CLL complet",
+        "steps": {
+          "firstFace": {
+            "body": "Construisez une face intuitivement. Les couleurs latérales n'ont pas besoin de correspondre, ce qui rend la première étape plus rapide qu'une couche complète.",
+            "title": "Première face"
+          },
+          "oppositeFace": {
+            "body": "Orientez la face opposée avec un petit ensemble OLL. Le résultat est deux faces de couleur résolue avec des pièces pas nécessairement permutées.",
+            "title": "Face opposée"
+          },
+          "pbl": {
+            "body": "Permutez les deux couches en même temps. La reconnaissance PBL est la compétence principale d'Ortega après que la première face devient facile.",
+            "title": "PBL"
+          }
+        },
+        "summary": "Ortega résout un 2x2 en créant une face, en orientant la face opposée, puis en permutant les deux couches avec PBL.",
+        "title": "2x2 Ortega"
+      },
+      "petrus": {
+        "algorithmCount": "5 étapes, surtout intuitives avant la dernière couche",
+        "cases": {
+          "blockExpansion": {
+            "name": "Expansion de bloc",
+            "note": "Petrus récompense la capacité à voir comment un bloc 2x2x2 peut devenir 2x2x3 sans casser les pièces résolues."
+          },
+          "edgeOrientation": {
+            "name": "Déclencheur d'orientation des arêtes",
+            "note": "Après le bloc 2x2x3, orienter les arêtes permet de résoudre le reste de F2L avec un ensemble de mouvements réduit."
+          }
+        },
+        "images": {
+          "hero": "Animation de la méthode Petrus"
+        },
+        "level": "Construction de blocs intermédiaire",
+        "recommendedFor": "Réflexion en nombre minimal de mouvements et pratique du blockbuilding",
+        "steps": {
+          "edgeOrientation": {
+            "body": "Orientez les arêtes non résolues restantes. C'est l'identité de Petrus : faire EO tôt pour que le reste devienne plus simple.",
+            "title": "Orienter les arêtes"
+          },
+          "finishF2l": {
+            "body": "Terminez les deux premières couches avec la contrainte des arêtes orientées. Cela peut être très efficace en mouvements, mais exige un lookahead flexible.",
+            "title": "Terminer F2L"
+          },
+          "lastLayer": {
+            "body": "Utilisez n'importe quel système de dernière couche. Comme les arêtes sont orientées, OCLL plus PLL, COLL plus EPLL ou des approches de style ZBLL sont possibles.",
+            "title": "Dernière couche"
+          },
+          "twoByThreeBlock": {
+            "body": "Étendez le bloc à 2x2x3. Le choix d'expansion affecte à la fois l'orientation des arêtes et l'ergonomie du reste de la résolution.",
+            "title": "Bloc 2x2x3"
+          },
+          "twoByTwoBlock": {
+            "body": "Construisez un bloc 2x2x2 n'importe où. Ce n'est pas une couche : c'est un bloc résolu compact qui laisse de nombreux tours disponibles.",
+            "title": "Bloc 2x2x2"
+          }
+        },
+        "summary": "Petrus construit d'abord des blocs, oriente les arêtes tôt et termine F2L avec moins de restrictions que les méthodes couche par couche.",
+        "title": "Petrus"
+      },
+      "pyraminxVFirst": {
+        "algorithmCount": "Ensemble débutant plus cas de style L4E",
+        "cases": {
+          "beginnerCycleA": {
+            "name": "Cycle de trois arêtes A",
+            "note": "Un cycle Pyraminx de base utilisé dans les méthodes débutantes pour déplacer les arêtes sans nécessiter beaucoup d'algorithmes."
+          },
+          "beginnerCycleB": {
+            "name": "Cycle de trois arêtes B",
+            "note": "Le cycle miroir. Apprenez-le en paire avec le premier cycle."
+          },
+          "twoEdgeFlip": {
+            "name": "Retournement de deux arêtes",
+            "note": "Un cas courant de dernière arête. Les solveurs plus rapides retravaillent souvent la notation pour de meilleurs fingertricks."
+          }
+        },
+        "level": "Débutant à intermédiaire",
+        "recommendedFor": "Solveurs Pyraminx apprenant la sélection d'option",
+        "steps": {
+          "lastEdges": {
+            "body": "Terminez les dernières arêtes avec un petit ensemble d'algorithmes. Les approches V First avancées se concentrent fortement sur la reconnaissance de ces cas sans pause.",
+            "title": "Dernières arêtes"
+          },
+          "optionSelect": {
+            "body": "Les bons solveurs Pyraminx comparent les départs V First et Top First pendant l'inspection. Choisissez l'option avec la fin la plus propre, pas seulement la première que vous voyez.",
+            "title": "Sélection d'option"
+          },
+          "tips": {
+            "body": "Les pointes sont indépendantes et doivent être résolues sans réfléchir. Faites-les pendant la résolution seulement quand elles n'interrompent pas le lookahead.",
+            "title": "Pointes et centres"
+          },
+          "v": {
+            "body": "Construisez un V : deux arêtes résolues autour d'une zone de coin. Cela donne une base stable pour l'ensemble de dernière arête.",
+            "title": "V First"
+          }
+        },
+        "summary": "Les méthodes rapides Pyraminx tournent généralement autour des choix V First et Top First. V First est courant parce qu'il est intuitif et facile à inspecter.",
+        "title": "Pyraminx V First"
+      },
+      "roux": {
+        "algorithmCount": "4 étapes, 9 à 42 algorithmes CMLL",
+        "cases": {
+          "cmllSune": {
+            "name": "Cas CMLL de style Sune",
+            "note": "CMLL résout les quatre derniers coins en ignorant la plupart des positions d'arêtes. Certains cas ressemblent à des idées COLL ou OLLCP."
+          },
+          "lseo": {
+            "name": "Motif d'orientation LSE",
+            "note": "Roux se termine par des tours MU. La reconnaissance de l'orientation des arêtes est plus importante que le nombre brut d'algorithmes."
+          },
+          "mSliceEdgeFlip": {
+            "name": "Contrôle des arêtes de tranche M",
+            "note": "Des tours M et U propres sont essentiels. Roux n'est rapide que lorsque les mouvements de tranche sont fiables."
+          }
+        },
+        "images": {
+          "hero": "Représentation de la méthode Roux"
+        },
+        "level": "Intermédiaire à avancé",
+        "recommendedFor": "Résolution 3x3 en peu de mouvements et pratique à une main",
+        "steps": {
+          "cmll": {
+            "body": "Résolvez les quatre coins de dernière couche en une étape tout en laissant les arêtes principalement libres. Le CMLL complet compte 42 cas, mais une version en deux regards suffit pour commencer.",
+            "title": "CMLL"
+          },
+          "firstBlock": {
+            "body": "Construisez un bloc 1x2x3 sur un côté. C'est la partie la plus difficile pour les nouveaux solveurs Roux car c'est du vrai blockbuilding, pas une insertion dans un slot.",
+            "title": "Premier bloc"
+          },
+          "lse": {
+            "body": "Résolvez les six dernières arêtes avec des mouvements M et U : orientez les arêtes, résolvez UL et UR, puis terminez la tranche M. C'est là que Roux devient très efficace en mouvements.",
+            "title": "Six dernières arêtes"
+          },
+          "secondBlock": {
+            "body": "Construisez le bloc 1x2x3 opposé sans détruire le premier. Ensuite, la couche U et la tranche M restent disponibles pour la fin.",
+            "title": "Deuxième bloc"
+          }
+        },
+        "summary": "Roux résout deux blocs latéraux, puis les coins, puis les six dernières arêtes. Il utilise moins de mouvements que CFOP et dépend du blockbuilding plus du contrôle de la tranche M.",
+        "title": "Roux"
+      },
+      "sarahSkewb": {
+        "algorithmCount": "Débutant : deux déclencheurs principaux de 4 mouvements",
+        "cases": {
+          "hedgeslammer": {
+            "name": "Hedgeslammer",
+            "note": "La notation de Sarah utilise ce déclencheur comme pendant du sledgehammer. Choisissez des prises adaptées à votre matériel Skewb."
+          },
+          "lastCenters": {
+            "name": "Derniers centres",
+            "note": "La dernière étape répète les mêmes idées de déclencheur après rotations. Suivez les centres, pas seulement les coins."
+          },
+          "sledgehammer": {
+            "name": "Sledgehammer",
+            "note": "L'un des deux déclencheurs principaux de 4 mouvements dans la méthode de Sarah. Beaucoup de cas Skewb se réduisent à des sledgehammer ou hedgeslammer répétés."
+          }
+        },
+        "images": {
+          "hero": "Étape des coins de la méthode Skewb de Sarah",
+          "step1": "Diagramme du premier côté du Skewb de Sarah",
+          "step4": "Diagramme des derniers centres du Skewb de Sarah"
+        },
+        "level": "Débutant à avancé",
+        "recommendedFor": "Solveurs Skewb qui veulent un chemin clair de débutant à L2L",
+        "steps": {
+          "corners": {
+            "body": "Utilisez les deux déclencheurs de 4 mouvements pour résoudre les coins restants. La reconnaissance est simple au début et devient plus algorithmique dans la version intermédiaire.",
+            "title": "Coins restants"
+          },
+          "firstSide": {
+            "body": "Résolvez un côté intuitivement. Le dernier coin peut nécessiter de déplacer temporairement un coin résolu, ce qui est normal sur Skewb.",
+            "title": "Premier côté"
+          },
+          "lastCenters": {
+            "body": "Résolvez les centres restants en faisant correspondre l'un des cas connus, en tournant le puzzle si nécessaire et en appliquant la même structure de déclencheur.",
+            "title": "Centres restants"
+          },
+          "topCenter": {
+            "body": "Résolvez le centre opposé après les coins. La version débutante le sépare des derniers centres pour garder la reconnaissance facile.",
+            "title": "Centre opposé"
+          }
+        },
+        "summary": "La méthode Skewb de Sarah est construite autour de deux déclencheurs courts. La version débutante a quatre étapes, puis combine les étapes à mesure que la reconnaissance s'améliore.",
+        "title": "Méthode Skewb de Sarah"
+      },
+      "squareOneShape": {
+        "algorithmCount": "Méthode shape-first avec cas de notation",
+        "cases": {
+          "kiteScallop": {
+            "name": "Exemple de forme",
+            "note": "Les cas de cubeshape s'apprennent mieux par familles de formes. Ne traitez pas chaque séquence comme un algorithme sans rapport."
+          },
+          "notation": {
+            "name": "Notation Square-1",
+            "note": "(x,y) tourne les couches supérieure et inférieure par unités de 30 degrés, puis / échange la moitié droite dans la notation classique."
+          }
+        },
+        "images": {
+          "hero": "Puzzle Square-1 en forme résolue"
+        },
+        "level": "Intermédiaire",
+        "recommendedFor": "Apprendre la notation Square-1 et le cubeshape",
+        "steps": {
+          "parity": {
+            "body": "Les cas de type parité Square-1 font partie du flux de la méthode. Gardez la correction de parité séparée du cubeshape pour que la reconnaissance reste claire.",
+            "title": "Gestion de la parité"
+          },
+          "permutation": {
+            "body": "Permutez les coins et les arêtes après la séparation. Beaucoup de méthodes rapides réduisent cela à des ensembles d'algorithmes compacts.",
+            "title": "Permuter les pièces"
+          },
+          "separation": {
+            "body": "Séparez les coins et les arêtes dans leurs couches correctes après que la forme de cube est restaurée. Certaines méthodes appellent cela orientation, même si les pièces Square-1 ne s'orientent pas comme des pièces de cube.",
+            "title": "Séparer les couches"
+          },
+          "shape": {
+            "body": "Ramenez d'abord le puzzle à la forme de cube. Cela rend la reconnaissance ultérieure possible et constitue le plus grand obstacle initial pour les nouveaux solveurs Square-1.",
+            "title": "Cubeshape"
+          }
+        },
+        "summary": "La résolution du Square-1 commence par restaurer la forme de cube, puis par séparer et permuter les pièces avec une notation propre au puzzle.",
+        "title": "Cubeshape Square-1"
+      },
+      "zz": {
+        "algorithmCount": "3 ou 4 étapes selon la dernière couche",
+        "cases": {
+          "edgeOrientation": {
+            "name": "Déclencheur d'orientation des arêtes",
+            "note": "Ce déclencheur montre ce qu'un algorithme d'orientation des arêtes change, mais ZZ EO est généralement planifié intuitivement pendant l'inspection."
+          },
+          "twoGenLastLayer": {
+            "name": "Idée de finition à deux générateurs",
+            "note": "Une fois les arêtes orientées, beaucoup de fins peuvent utiliser des tours rapides de style R, U et L avec moins de cas gênants."
+          }
+        },
+        "images": {
+          "hero": "Animation EOLine pour ZZ"
+        },
+        "level": "Intermédiaire à avancé",
+        "recommendedFor": "Résolution 3x3 sans rotations et ergonomie à une main",
+        "steps": {
+          "eoLineOrCross": {
+            "body": "Orientez toutes les arêtes tout en plaçant soit une ligne, soit une croix en bas. Le ZZ moderne favorise souvent EOCross car il améliore le lookahead après inspection.",
+            "title": "EOLine ou EOCross"
+          },
+          "lastLayer": {
+            "body": "Terminez avec un système de dernière couche qui bénéficie des arêtes orientées : OCLL plus PLL, COLL plus EPLL ou finalement ZBLL.",
+            "title": "Dernière couche"
+          },
+          "zzF2l": {
+            "body": "Complétez F2L surtout avec des mouvements R, U et L. L'orientation des arêtes réduit les cas et garde la prise du cube stable.",
+            "title": "ZZ F2L"
+          }
+        },
+        "summary": "ZZ oriente les arêtes au début, puis résout F2L avec un ensemble de mouvements réduit. Il échange une inspection plus difficile contre des rotations plus fluides ensuite.",
+        "title": "ZZ"
+      }
+    },
+    "page": {
+      "algorithmCount": "Algorithmes",
+      "backToIndex": "Algorithmes",
+      "essentialCases": "Cas essentiels",
+      "imageSource": "Source de l'image :",
+      "level": "Niveau",
+      "methods": "Méthodes",
+      "recommendedFor": "Recommandé pour",
+      "references": "Références originales",
+      "stepNumber": "Étape {{count}}",
+      "steps": "Étapes de la méthode"
+    },
+    "puzzles": {
+      "2x2": {
+        "description": "Méthodes Pocket Cube axées sur la résolution face d'abord, les coins de dernière couche et les fins en un regard.",
+        "title": "2x2"
+      },
+      "3x3": {
+        "description": "Méthodes rapides 3x3 principales : par couches, blockbuilding, orientation des arêtes et approches à faible nombre de mouvements.",
+        "title": "3x3"
+      },
+      "4x4": {
+        "description": "Réduction de grands cubes, flux de style Yau et cas de parité avant le retour à une étape 3x3.",
+        "title": "4x4"
+      },
+      "clock": {
+        "description": "Notation Clock, logique des broches et structure de résolution débutante pour l'épreuve Clock WCA.",
+        "title": "Clock"
+      },
+      "megaminx": {
+        "description": "Méthodes de dodécaèdre inspirées par la résolution de paires 3x3, adaptées à une dernière couche à cinq côtés.",
+        "title": "Megaminx"
+      },
+      "pyraminx": {
+        "description": "Méthodes Pyraminx construites autour des pointes, V First, Top First et de la reconnaissance rapide des dernières arêtes.",
+        "title": "Pyraminx"
+      },
+      "skewb": {
+        "description": "Méthodes Skewb qui combinent déclencheurs courts, contrôle des coins et cycles de centres.",
+        "title": "Skewb"
+      },
+      "square1": {
+        "description": "Résolution Square-1 à changement de forme : cubeshape, séparation, permutation et notation.",
+        "title": "Square-1"
+      }
+    },
+    "sources": {
+      "jaapClock": "Jaap's Puzzle Page: Clock",
+      "jaapPyraminx": "Jaap's Puzzle Page: Pyraminx",
+      "jaapSquareOne": "Jaap's Puzzle Page: Square-1",
+      "jpermEgOne": "J Perm: algorithmes 2x2 EG-1",
+      "jpermFourByFour": "J Perm: tutoriel 4x4",
+      "jpermFourByFourOll": "J Perm: algorithmes de parité OLL 4x4",
+      "jpermFourByFourPll": "J Perm: algorithmes de parité PLL 4x4",
+      "jpermOll": "J Perm: algorithmes OLL",
+      "jpermPll": "J Perm: algorithmes PLL",
+      "jpermTwoByTwo": "J Perm: tutoriel 2x2",
+      "jpermTwoByTwoCll": "J Perm: algorithmes 2x2 CLL",
+      "larsPetrus": "Tutoriel Lars Petrus",
+      "rouxCommunity": "Guide communautaire Roux Speed Solvers",
+      "ruwixCfop": "Ruwix: méthode CFOP avancée",
+      "sarahSkewb": "Sarah's Cubing: méthode Skewb",
+      "speedsolvingCfop": "Speedsolving Wiki: méthode CFOP",
+      "speedsolvingClock": "Speedsolving Wiki: Rubik's Clock",
+      "speedsolvingCll": "Speedsolving Wiki: CLL",
+      "speedsolvingEg": "Speedsolving Wiki: méthode EG",
+      "speedsolvingMegaminx": "Speedsolving Wiki: Megaminx",
+      "speedsolvingOrtega": "Speedsolving Wiki: méthode Ortega",
+      "speedsolvingPetrus": "Speedsolving Wiki: méthode Petrus",
+      "speedsolvingPyraminx": "Speedsolving Wiki: méthodes Pyraminx",
+      "speedsolvingRoux": "Speedsolving Wiki: méthode Roux",
+      "speedsolvingSkewb": "Speedsolving Wiki: liste des méthodes Skewb",
+      "speedsolvingSquareOne": "Speedsolving Wiki: Square-1",
+      "speedsolvingZz": "Speedsolving Wiki: méthode ZZ",
+      "wcaRegulations": "Règlements WCA",
+      "zzMethod": "Site web ZZ Method"
+    }
+  },
+  "cube": {
+    "visualization": "Visualisation du cube",
+    "visualizationUnavailable": "La visualisation n'est pas encore disponible pour ce puzzle."
+  },
+  "errorBoundary": {
+    "description": "La vue actuelle a planté de manière inattendue. Réessayez ou changez de route pour la recharger.",
+    "kicker": "Erreur inattendue",
+    "retry": "Réessayer",
+    "title": "Un problème est survenu"
+  },
+  "navigation": {
+    "algorithms": "Algorithmes",
+    "algorithmsMenu": "Méthodes de puzzle",
+    "channels": "Chaînes YT",
+    "closeMenu": "Fermer le menu",
+    "github": "Ouvrir le projet sur GitHub",
+    "menu": "Menu",
+    "openMenu": "Ouvrir le menu",
+    "primary": "Navigation principale",
+    "solve": "Solveur",
+    "theme": "Thème",
+    "themeDark": "Sombre",
+    "themeLight": "Clair",
+    "themeSystem": "Système",
+    "timer": "Timer"
+  },
+  "scan": {
+    "actions": {
+      "analyzing": "Analyse",
+      "autoScanOff": "Scan auto désactivé",
+      "autoScanOn": "Scan auto activé",
+      "clearPhoto": "Effacer la face",
+      "confirmAnyway": "Confirmer quand même",
+      "confirmFace": "Confirmer la face",
+      "nextFace": "Face suivante",
+      "previousFace": "Face précédente",
+      "retakePhoto": "Scanner à nouveau",
+      "solveScannedCube": "Résoudre le cube scanné",
+      "takePhoto": "Scanner la face",
+      "updateFace": "Mettre à jour la face"
+    },
+    "camera": {
+      "capturedFaceAlt": "Face de cube reconnue",
+      "errorManualFallback": "{{message}} Vous pouvez encore remplir la grille manuellement.",
+      "holdSteady": "restez immobile {{count}}/{{target}}",
+      "lookingForCube": "recherche du cube",
+      "modes": {
+        "rejected": "rejeté",
+        "reviewed_stickers": "couleurs vérifiées",
+        "tile_detector": "détecteur de stickers"
+      },
+      "opening": "Ouverture de la caméra",
+      "statusWithConfidence": "{{mode}} {{confidence}}%",
+      "stickerConfidence": "stickers {{confidence}}%",
+      "stickersFound": "{{count}}/{{total}} stickers trouvés",
+      "stickersReady": "{{count}}/{{total}} stickers prêts",
+      "temporalCollecting": "consensus {{count}}/{{target}}",
+      "temporalColorDisagreement": "couleur instable {{count}} images",
+      "temporalReady": "consensus {{agreement}}% {{count}} images",
+      "temporalUnstable": "géométrie instable {{count}} images",
+      "tracking": "suivi {{count}}/{{target}}"
+    },
+    "carousel": {
+      "faceConfirmed": "confirmée",
+      "faceDraft": "brouillon",
+      "faceInvalid": "invalide",
+      "faceNeedsReview": "à vérifier",
+      "facePending": "en attente",
+      "goToFace": "Aller à {{face}}, {{status}}",
+      "next": "Suivant",
+      "previous": "Précédent"
+    },
+    "colors": {
+      "B": "Bleu",
+      "D": "Jaune",
+      "F": "Vert",
+      "L": "Orange",
+      "R": "Rouge",
+      "U": "Blanc"
+    },
+    "centerMismatch": {
+      "dismiss": "Ignorer la confirmation du centre",
+      "kicker": "Centre différent",
+      "title": "Confirmer la face attendue"
+    },
+    "editor": {
+      "colorCount": "Nombre de couleurs",
+      "orAlternative": "ou {{colorInitial}}",
+      "paletteLabel": "Palette de couleurs",
+      "pickColor": "Choisir une couleur",
+      "needsConfirmation": "nécessite confirmation",
+      "reviewColors": "Vérifier les couleurs",
+      "reviewGroupLabel": "Couleurs de la face scannée",
+      "selectSquareHint": "Sélectionnez une case, puis choisissez une couleur pour la corriger.",
+      "stickerLabel": "Sticker {{index}}{{color}}",
+      "uncertainColor": "couleur incertaine",
+      "uncertainMaybe": "peut-être {{color}}"
+    },
+    "evenReview": {
+      "autoFit": "Essayer l'ajustement automatique",
+      "autoFitambiguous": "Plusieurs ajustements sont possibles. Ajustez le patron manuellement.",
+      "autoFitnone": "Impossible d'ajuster en tournant seulement les faces. Échangez les positions ou vérifiez les stickers.",
+      "autoFitsuggested": "Un ajustement probable avec moins de changements a été trouvé. Appliquez-le seulement après avoir vérifié le patron.",
+      "autoFitunique": "Ajustement trouvé et appliqué. Vérifiez le patron avant de résoudre.",
+      "applySuggestion": "Appliquer la suggestion",
+      "back": "Retour et modifier",
+      "capturedFace": "Capturée : {{face}}",
+      "description": "Vérifiez si ce patron Kociemba correspond au cube physique. Faites glisser les faces pour échanger les positions et sélectionnez une face pour la tourner avant de résoudre.",
+      "dragInstructions": "Faites glisser une face vers un autre emplacement ou utilisez les boutons d'échange. Utilisez les boutons de rotation pour corriger l'orientation de la face capturée.",
+      "invalidDescription": "Certains coins combinent des couleurs opposées ou impossibles. Tournez les faces ou revenez corriger les stickers.",
+      "invalidSolveDisabled": "Corrigez les coins impossibles mis en évidence avant de résoudre.",
+      "invalidTitle": "Coins impossibles",
+      "kicker": "Vérification finale",
+      "oppositePair": "{{first}} et {{second}} sont des faces opposées.",
+      "reviewAction": "Vérifier le cube assemblé",
+      "rotate90": "Tourner de 90°",
+      "rotate180": "Tourner de 180°",
+      "rotate270": "Tourner de -90°",
+      "selectedFace": "Emplacement sélectionné : {{face}} · face capturée : {{capturedFace}}",
+      "solve": "Accepter et résoudre",
+      "swapTitle": "Échanger la face sélectionnée avec",
+      "title": "Vérifier le cube assemblé",
+      "validMessage": "Les coins 2x2 sont structurellement valides. Confirmez que l'aperçu correspond au cube physique."
+    },
+    "faces": {
+      "B": {
+        "instruction": "Montrez la face bleue avec la face blanche en haut de la vue caméra.",
+        "label": "Face bleue",
+        "top": "Blanc"
+      },
+      "D": {
+        "instruction": "Montrez la face jaune avec la face verte en haut de la vue caméra.",
+        "label": "Face jaune",
+        "top": "Vert"
+      },
+      "F": {
+        "instruction": "Montrez la face verte avec la face blanche en haut de la vue caméra.",
+        "label": "Face verte",
+        "top": "Blanc"
+      },
+      "L": {
+        "instruction": "Montrez la face orange avec la face blanche en haut de la vue caméra.",
+        "label": "Face orange",
+        "top": "Blanc"
+      },
+      "R": {
+        "instruction": "Montrez la face rouge avec la face blanche en haut de la vue caméra.",
+        "label": "Face rouge",
+        "top": "Blanc"
+      },
+      "U": {
+        "instruction": "Montrez la face blanche avec la face verte en haut de la vue caméra.",
+        "label": "Face blanche",
+        "top": "Vert"
+      }
+    },
+    "faces2": {
+      "B": {
+        "instruction": "Tournez le cube pour montrer le côté arrière sans changer le côté qui est en haut.",
+        "label": "Côté arrière",
+        "top": "Haut"
+      },
+      "D": {
+        "instruction": "Montrez le côté bas et gardez le côté avant en haut de la vue caméra.",
+        "label": "Côté bas",
+        "top": "Avant"
+      },
+      "F": {
+        "instruction": "Choisissez le côté avant. Tenez le cube avec le côté haut en haut de la vue caméra.",
+        "label": "Côté avant",
+        "top": "Haut"
+      },
+      "L": {
+        "instruction": "Tournez le cube pour montrer le côté gauche sans changer le côté qui est en haut.",
+        "label": "Côté gauche",
+        "top": "Haut"
+      },
+      "R": {
+        "instruction": "Tournez le cube pour montrer le côté droit sans changer le côté qui est en haut.",
+        "label": "Côté droit",
+        "top": "Haut"
+      },
+      "U": {
+        "instruction": "Montrez le côté haut et gardez le côté avant en haut de la vue caméra.",
+        "label": "Côté haut",
+        "top": "Avant"
+      }
+    },
+    "live": {
+      "cameraDenied": "L'autorisation de caméra a été refusée ou aucune caméra n'a été trouvée.",
+      "cameraUnavailable": "L'accès à la caméra n'est pas disponible dans ce navigateur.",
+      "centerMismatch": "Une autre couleur de centre a été détectée. Tournez vers la face attendue.",
+      "detectingStickers": "Détection des stickers : {{count}}/{{total}} trouvés.",
+      "faceDetected": "Face détectée. Restez immobile.",
+      "gridReady": "{{count}}/{{total}} stickers verrouillés. Restez immobile.",
+      "imageBlurry": "L'image est floue. Tenez le cube immobile.",
+      "looking": "Recherche de la face du cube.",
+      "lookingKeepVisible": "Recherche de la face du cube. Gardez le cube entièrement visible.",
+      "partialGrid": "{{count}}/9 stickers trouvés. Montrez une face plane.",
+      "scanFailed": "L'analyse du scan en direct a échoué.",
+      "stableCapturing": "Tous les stickers sont stables. Vérifiez les couleurs.",
+      "tooBright": "Trop de reflets. Réduisez les reflets lumineux.",
+      "tooDark": "Trop sombre. Ajoutez plus de lumière."
+    },
+    "messages": {
+      "allFacesConfirmed": "Toutes les faces sont confirmées. Résolvez le cube scanné quand vous êtes prêt.",
+      "analysisFailed": "La requête d'analyse du scan a échoué.",
+      "analyzingFace": "Analyse de la face du cube...",
+      "apiNotReady": "L'API n'est pas encore prête.",
+      "autoCaptured": "Capturé automatiquement. Vérifiez les couleurs avant de confirmer cette face.",
+      "autoCapturing": "Capture automatique de la face stable...",
+      "autoPaused": "Scan auto en pause. Activez-le quand la face est visible.",
+      "cameraFrameFailed": "Impossible de lire une image caméra. Réessayez.",
+      "cameraNotReady": "La caméra n'est pas encore prête.",
+      "captured": "Photo capturée. Vérifiez les couleurs avant de confirmer cette face.",
+      "capturingPhoto": "Capture de la photo...",
+      "centerMismatchFallback": "Le centre capturé ne correspond pas à cette étape de scan. Reprenez la photo.",
+      "centerMismatchConfirmQuestion": "Êtes-vous sûr que c'est la face attendue ?",
+      "centerMismatchWithColors": "Le centre semble {{detectedColor}}{{confidence}}, mais cette étape attend {{expectedColor}}. Tournez vers la face attendue avant de confirmer.",
+      "confirmAllFaces": "Confirmez les six faces et assurez-vous que chaque couleur apparaît exactement 9 fois.",
+      "confidenceSuffix": " (confiance {{confidence}}%)",
+      "detectedUncertain": "{{count}} couleurs détectées sont incertaines. Vérifiez les cases mises en évidence ou effacez la face pour scanner à nouveau.",
+      "faceNeedsReview": "Vérifiez cette face avant de résoudre.",
+      "faceUpdated": "Face mise à jour. Vérifiez les autres faces ou résolvez quand vous êtes prêt.",
+      "genericRejected": "Le cube scanné a été rejeté. Vérifiez les couleurs confirmées.",
+      "lowConfidence": "La confiance de détection est faible.",
+      "manualDetectionFailed": "Impossible de détecter une face de cube. Reprenez la photo ou remplissez la grille manuellement.",
+      "qualityBlurry": "Tenez le cube immobile pour une photo plus nette.",
+      "qualityBright": "Réduisez les reflets avant de scanner.",
+      "qualityDark": "Ajoutez plus de lumière avant de scanner.",
+      "sessionAmbiguous": "Le backend a trouvé plusieurs états de cube valides. Vérifiez les stickers mis en évidence ou rescanner les faces peu claires.",
+      "sessionBlurRescan": "L'image est floue sur les faces {{faces}}. Tenez le cube immobile et rescanner ces faces.",
+      "sessionGlareRescan": "Trop de reflets sur les faces {{faces}}. Réduisez les reflets et rescanner ces faces.",
+      "sessionInvalidCornerTargets": "Le scan a construit un coin 2x2 impossible. Vérifiez les stickers mis en évidence et essayez de résoudre à nouveau.",
+      "sessionInvalidCubeState": "Le scan ne décrit pas un cube valide. Vérifiez les faces et rescanner les stickers peu clairs.",
+      "sessionIncompleteStickers": "Complétez les 9 stickers sur les faces {{faces}} avant de résoudre.",
+      "sessionMissingConfirmedFaces": "Confirmez ces faces avant de résoudre : {{faces}}.",
+      "sessionMissingPhotos": "Reconnaissez ces faces avant de résoudre : {{faces}}.",
+      "sessionNeedsManualConfirmation": "Confirmez les stickers mis en évidence avant de résoudre.",
+      "sessionNeedsRescan": "Une ou plusieurs faces doivent être scannées à nouveau.",
+      "sessionRejected": "La session de scan a été rejetée. Vérifiez les faces avant de résoudre.",
+      "sessionShadowRescan": "Trop d'ombre sur les faces {{faces}}. Ajoutez une lumière plus uniforme et rescanner ces faces.",
+      "sessionVisionUnavailable": "Le service de vision n'a pas pu terminer la session. Réessayez une fois le service de vision disponible.",
+      "solveFailed": "La requête de résolution du scan a échoué.",
+      "submittingSession": "Vérification du scan complet avec les contraintes du cube...",
+      "stillLooking": "Recherche toujours de la face du cube. Gardez toute la face visible et laissez le scan auto réessayer.",
+      "liveReviewReady": "{{count}} stickers reconnus. Vérifiez les couleurs, corrigez toute case si nécessaire, puis confirmez cette face."
+    },
+    "modal": {
+      "cnnEvidenceActive": "Preuve CNN active",
+      "cnnReasonUnknown": "non configuré",
+      "colorFallbackActive": "Repli couleur seule : {{reason}}",
+      "confirmed": "{{count}} confirmées",
+      "description": "Montrez une face à la fois avec la couleur du haut demandée. La solution utilise les couleurs que vous confirmez.",
+      "dismiss": "Fermer le scan du cube",
+      "cancelExit": "Annuler la sortie du scan du cube",
+      "exitAction": "Quitter",
+      "exitDescription": "Vous avez une progression de scan qui sera perdue si vous quittez maintenant.",
+      "exitKicker": "Scan non enregistré",
+      "exitTitle": "Quitter le scan ?",
+      "expectedCenter": "Centre attendu : {{color}}",
+      "faceProgress": "Face {{current}} sur {{total}}",
+      "keepAtTop": "Garder en haut : {{color}}",
+      "tileDetectorActive": "Détecteur de stickers actif",
+      "tileDetectorFallbackActive": "Repli du détecteur de stickers : {{reason}}",
+      "tileDetectorReasonUnknown": "non configuré",
+      "title": "Scanner le cube",
+      "visionStatusUnavailable": "Statut de vision indisponible"
+    },
+    "validation": {
+      "centerColorMismatch": "La couleur du centre doit correspondre à la face scannée.",
+      "colorAppearsMoreThanNine": "{{color}} apparaît plus de 9 fois.",
+      "confirmAllNineColors": "Confirmez les 9 couleurs avant de continuer."
+    },
+    "warnings": {
+      "tile_detector_rejected": "La proposition du détecteur de stickers a été rejetée. Gardez la face du cube plane et visible.",
+      "image_blurry": "L'image est floue. Tenez le cube immobile.",
+      "image_too_bright": "Trop de reflets. Réduisez les reflets lumineux.",
+      "image_too_dark": "Trop sombre. Ajoutez plus de lumière.",
+      "low_confidence_sticker": "Un ou plusieurs stickers sont incertains. Vérifiez les cases mises en évidence."
+    }
+  },
+  "solve": {
+    "details": {
+      "columns": {
+        "meaning": "Signification",
+        "text": "Texte"
+      },
+      "dismiss": "Fermer les détails du solveur",
+      "elapsedLabel": "réponse en {{elapsed}}",
+      "elapsedMeaning": "Le temps total de la requête de résolution mesuré dans le navigateur. Il inclut l'aller-retour API et l'analyse de la réponse, donc il peut différer du temps de recherche backend.",
+      "maxNodesConfigured": "limite de {{nodes}} nœuds",
+      "maxNodesUnlimited": "aucune limite de nœuds configurée",
+      "movesLabel": "{{count}} mouvements",
+      "nodesLabel": "{{nodes}} nœuds",
+      "nodesMeaning": "Le solveur a exploré autant de nœuds de recherche internes avant de trouver la solution. Cette exécution a utilisé {{maxNodesLabel}}.",
+      "replayNotVerified": "relecture non vérifiée",
+      "replayVerified": "relecture vérifiée",
+      "replayVerifiedMeaning": "Après avoir trouvé les mouvements, le backend les a rejoués sur le cube mélangé et a confirmé que le cube devient résolu.",
+      "search": "Recherche",
+      "solution": "Solution",
+      "solutionLengthMeaning": "La longueur de solution renvoyée. Chaque jeton de notation compte comme un mouvement, y compris les demi-tours comme R2 ou B2.",
+      "subtitle": "Ces métriques décrivent la solution renvoyée, le temps de requête et la vérification backend.",
+      "tables": {
+        "available": {
+          "label": "tables disponibles",
+          "meaning": "Les tables d'élagage pré-générées requises par cette stratégie étaient disponibles. Elles aident à élaguer la recherche."
+        },
+        "corrupt_or_incompatible": {
+          "label": "tables corrompues ou incompatibles",
+          "meaning": "Les tables d'élagage requises existent mais ne correspondent pas au format ou aux métadonnées attendus, elles doivent donc être régénérées."
+        },
+        "not_required": {
+          "label": "tables non requises",
+          "meaning": "Cette stratégie ne nécessite pas de tables d'élagage générées."
+        },
+        "not_applicable": {
+          "label": "tables non applicables",
+          "meaning": "Cette stratégie de puzzle n'utilise pas d'artefacts de tables d'élagage 3x3 générées."
+        },
+        "unavailable": {
+          "label": "tables indisponibles",
+          "meaning": "Les tables d'élagage requises n'étaient pas disponibles sur le serveur API."
+        }
+      },
+      "time": "Temps",
+      "title": "Détails du solveur"
+    },
+    "noSolution": {
+      "attempted": "{{strategy}} a essayé jusqu'à {{maxDepth}} mouvements et {{maxNodes}} nœuds.",
+      "description": "Le solveur n'a pas trouvé de résultat vérifié par relecture avec les limites actuelles. Augmentez les limites et réessayez le même cube.",
+      "dismiss": "Fermer la boîte de dialogue des limites de résolution",
+      "previousAttempt": "Tentative précédente",
+      "retry": "Essayer avec ces limites",
+      "title": "Essayer d'autres limites"
+    },
+    "errors": {
+      "detail": {
+        "generated_tables_corrupt": "Régénérez les tables d'élagage natives ; les artefacts API actuels ne correspondent pas au moteur Rust.",
+        "generated_tables_unavailable": "Générez les tables d'élagage natives et démarrez npm run api:dev avant de résoudre.",
+        "invalid_input_orientation_hint": "Vérifiez l'orientation du scan : capturez vert, rouge, bleu et orange avec blanc en haut ; capturez blanc et jaune avec vert en haut.",
+        "not_found_within_limits": "{{strategy}} a exploré {{nodes}} nœuds avec un maximum de {{maxDepth}} mouvements."
+      },
+      "errorKind": {
+        "duplicate_corner": "Le cube scanné a une pièce de coin dupliquée.",
+        "duplicate_corner_stickers": "Le cube scanné a des stickers de coin dupliqués.",
+        "duplicate_edge": "Le cube scanné a une pièce d'arête dupliquée.",
+        "duplicate_edge_stickers": "Le cube scanné a des stickers d'arête dupliqués.",
+        "generated_tables_unavailable": "L'API n'a pas chargé les tables d'élagage générées requises par cette stratégie.",
+        "invalid_center_sticker": "Un ou plusieurs stickers centraux ne correspondent pas à une disposition de cube valide.",
+        "invalid_corner_orientation": "L'orientation du coin scanné est invalide.",
+        "invalid_corner_orientation_sum": "Les torsions des coins scannés ne forment pas un cube solvable.",
+        "invalid_corner_sticker_order": "Un coin scanné a un ordre de stickers invalide.",
+        "invalid_edge_orientation": "L'orientation de l'arête scannée est invalide.",
+        "invalid_edge_orientation_sum": "Les retournements d'arêtes scannés ne forment pas un cube solvable.",
+        "invalid_face_count": "Les couleurs du cube doivent apparaître exactement 9 fois chacune.",
+        "invalid_length": "L'état du cube a le mauvais nombre de stickers.",
+        "invalid_move_notation": "Utilisez une notation de mouvement standard comme R, U, R' ou U2.",
+        "invalid_permutation_parity": "Les pièces scannées ont une parité de permutation impossible.",
+        "invalid_symbol": "L'état du cube contient un symbole de couleur invalide.",
+        "max_depth_exceeds_limit": "Le nombre max de mouvements dépasse la limite de sécurité de l'API.",
+        "max_nodes_exceeds_limit": "Le nombre max de nœuds dépasse la limite de sécurité de l'API.",
+        "missing_corner": "Il manque une pièce de coin au cube scanné.",
+        "missing_edge": "Il manque une pièce d'arête au cube scanné.",
+        "node_limit_exceeded": "Le solveur s'est arrêté après avoir atteint la limite de nœuds configurée.",
+        "notation_too_large": "La notation du mélange est trop grande.",
+        "strategy_puzzle_mismatch": "La stratégie de solveur sélectionnée ne correspond pas à ce puzzle.",
+        "unknown_corner_stickers": "Le cube scanné contient une combinaison inconnue de couleurs de coin.",
+        "unknown_edge_stickers": "Le cube scanné contient une combinaison inconnue de couleurs d'arête.",
+        "unsupported_input_kind": "Ce type d'entrée de puzzle n'est pas pris en charge par l'endpoint de résolution.",
+        "unsupported_metric": "Cette métrique de mouvement n'est pas prise en charge par l'endpoint de résolution.",
+        "unsupported_puzzle": "Ce puzzle n'est pas encore pris en charge par l'endpoint de résolution.",
+        "unsupported_strategy": "La stratégie de solveur sélectionnée n'est pas prise en charge par cette API.",
+        "unverified_solution": "Le solveur a renvoyé une solution qui a échoué à la vérification par relecture."
+      },
+      "status": {
+        "api_error": "La requête de résolution API a échoué",
+        "generated_tables_corrupt": "Tables API two-phase générées corrompues ou incompatibles",
+        "generated_tables_unavailable": "Tables two-phase générées indisponibles sur l'API",
+        "invalid_input": "État de cube invalide",
+        "invalid_limits": "Les limites du solveur dépassent les plafonds de sécurité de l'API",
+        "invalid_notation": "Mélange invalide",
+        "node_limit_exceeded": "Limite de nœuds dépassée",
+        "not_found_within_limits": "Aucune solution dans les limites configurées",
+        "request_too_large": "La requête de résolution est trop grande",
+        "strategy_puzzle_mismatch": "La stratégie ne correspond pas au puzzle",
+        "unknown_puzzle": "Puzzle inconnu",
+        "unsupported_input_kind": "Entrée de puzzle non prise en charge",
+        "unsupported_metric": "Métrique de mouvement non prise en charge",
+        "unsupported_puzzle": "Puzzle non pris en charge",
+        "unsupported_strategy": "Stratégie de solveur non prise en charge",
+        "unverified_solution": "La solution du solveur a échoué à la vérification par relecture"
+      }
+    },
+    "form": {
+      "maxMoves": "Mouvements max",
+      "maxNodesMillion": "Nœuds max (M)",
+      "puzzle": "Puzzle",
+      "scanCube": "Scanner le cube avec la caméra",
+      "scanUnavailableForPuzzle": "Le scan par caméra n'est disponible que pour le 3x3 pour l'instant.",
+      "scramble": "Mélange",
+      "solve": "Résoudre"
+    },
+    "playback": {
+      "ariaLabel": "Lecture de la solution",
+      "currentMove": "Mouvement {{step}} : {{move}}",
+      "nextMove": "Mouvement suivant",
+      "previousMove": "Mouvement précédent",
+      "scramble": "Mélange",
+      "solutionStep": "Étape de solution",
+      "solved": " résolu"
+    },
+    "result": {
+      "foundIn": "réponse en {{elapsed}}",
+      "seeMore": "voir plus",
+      "solved": "Résolu",
+      "successMeta": "{{count}} mouvements - {{elapsed}} -"
+    },
+    "strategies": {
+      "generated-two-phase": "Solveur two-phase généré",
+      "generated-two-phase-multiprobe": "Solveur two-phase multiprobe généré",
+      "generated-two-phase-quality": "Solveur two-phase qualité généré",
+      "cube2-bounded-ida-star": "IDA* borné 2x2",
+      "cube2-pdb-ida-star": "IDA* PDB 2x2",
+      "meaningDefault": "La stratégie de solveur backend déterministe utilisée pour cette requête. C'est une logique de recherche, pas de l'IA générative.",
+      "meaningGeneratedTwoPhase": "La stratégie utilisée. Généré ne signifie pas IA générative ; il s'agit d'un solveur two-phase soutenu par des tables d'élagage pré-générées. Les modes qualité essaient des profondeurs de solution plus courtes avant de revenir au maximum configuré."
+    },
+    "validation": {
+      "oneOf": "{{label}} doit être l'une des valeurs suivantes : {{options}}",
+      "required": "{{label}} est requis",
+      "wholeNumber": "{{label}} doit être un nombre entier",
+      "withinLimit": "{{label}} doit être inférieur ou égal à {{limit}}"
+    }
+  },
+  "timer": {
+    "displayLabel": "Timer de speedsolve",
+    "instructions": {
+      "space": "Espace ou toucher : maintenir, relâcher pour démarrer, appuyer pour arrêter."
+    },
+    "inspection": {
+      "title": "Inspection WCA"
+    },
+    "penalty": {
+      "dnf": "DNF",
+      "label": "Contrôles de pénalité",
+      "latest": "Dernière pénalité de résolution",
+      "ok": "OK",
+      "plus2": "+2"
+    },
+    "scramble": {
+      "copied": "Copié",
+      "copy": "Copier le mélange",
+      "copyFailed": "Impossible de copier le mélange",
+      "event": "Épreuve",
+      "next": "Mélange suivant",
+      "previous": "Mélange précédent",
+      "title": "Mélange"
+    },
+    "session": {
+      "defaultName": "Session par défaut",
+      "solveCount": "{{count}} résolutions"
+    },
+    "settings": {
+      "inspection": "Inspection",
+      "label": "Paramètres du timer",
+      "milliseconds": "Millisecondes"
+    },
+    "solves": {
+      "actions": "Actions",
+      "delete": "Supprimer",
+      "empty": "Aucune résolution pour le moment",
+      "label": "Résolutions",
+      "penalty": "Pénalité",
+      "scramble": "Mélange",
+      "time": "Temps"
+    },
+    "stats": {
+      "ao12": "ao12",
+      "ao5": "ao5",
+      "best": "Meilleur",
+      "mean": "Moyenne"
+    },
+    "status": {
+      "holding": "Maintien",
+      "idle": "Prêt à maintenir",
+      "inspection": "Inspection",
+      "ready": "Prêt",
+      "running": "Résolution",
+      "stopped": "Arrêté"
+    }
+  }
+}

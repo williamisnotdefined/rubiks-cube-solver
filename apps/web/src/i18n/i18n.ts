@@ -1,10 +1,17 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
+import de from './locales/de.json'
 import en from './locales/en.json'
 import es from './locales/es.json'
+import fr from './locales/fr.json'
+import it from './locales/it.json'
+import ja from './locales/ja.json'
 import ptBr from './locales/pt-BR.json'
+import ru from './locales/ru.json'
+import zh from './locales/zh.json'
 
-export type SupportedLanguage = 'en' | 'es' | 'pt-BR'
+export const supportedLanguages = ['en', 'es', 'pt-BR', 'it', 'de', 'fr', 'ru', 'zh', 'ja'] as const
+export type SupportedLanguage = (typeof supportedLanguages)[number]
 
 export const fallbackLanguage: SupportedLanguage = 'en'
 
@@ -27,11 +34,17 @@ i18n.use(initReactI18next).init({
   },
   lng: languageFromBrowser(),
   resources: {
+    de: { translation: de },
     en: { translation: en },
     es: { translation: es },
+    fr: { translation: fr },
+    it: { translation: it },
+    ja: { translation: ja },
     'pt-BR': { translation: ptBr },
+    ru: { translation: ru },
+    zh: { translation: zh },
   },
-  supportedLngs: ['en', 'es', 'pt-BR'],
+  supportedLngs: supportedLanguages,
 })
 
 export default i18n
@@ -49,18 +62,43 @@ function browserLanguages(): readonly string[] {
 }
 
 function supportedLanguageFromTag(language: string): SupportedLanguage | undefined {
-  const normalized = language.toLowerCase()
+  const normalized = language.toLowerCase().replace('_', '-')
+  const baseLanguage = normalized.split('-')[0]
 
   if (normalized === 'pt-br' || normalized.startsWith('pt-')) {
     return 'pt-BR'
   }
 
-  if (normalized === 'es' || normalized.startsWith('es-')) {
+  if (baseLanguage === 'es') {
     return 'es'
   }
 
-  if (normalized === 'en' || normalized.startsWith('en-')) {
+  if (baseLanguage === 'en') {
     return 'en'
+  }
+
+  if (baseLanguage === 'it') {
+    return 'it'
+  }
+
+  if (baseLanguage === 'de') {
+    return 'de'
+  }
+
+  if (baseLanguage === 'fr') {
+    return 'fr'
+  }
+
+  if (baseLanguage === 'ru') {
+    return 'ru'
+  }
+
+  if (baseLanguage === 'zh') {
+    return 'zh'
+  }
+
+  if (baseLanguage === 'ja') {
+    return 'ja'
   }
 
   return undefined

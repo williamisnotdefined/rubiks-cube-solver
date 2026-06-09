@@ -1,0 +1,1119 @@
+{
+  "common": {
+    "cancel": "取消",
+    "close": "关闭",
+    "loading": "正在加载",
+    "loadingRoute": "正在加载路由"
+  },
+  "channels": {
+    "bannerAlt": "{{channel}} 频道横幅",
+    "description": "精选 {{count}} 个 YouTube 频道，涵盖教程、速拧、评测、纪录和魔方文化。",
+    "kicker": "YouTube 魔方频道目录",
+    "openChannel": "在 YouTube 打开 {{channel}}",
+    "openInYouTube": "在 YouTube 打开",
+    "title": "YT Channels"
+  },
+  "algorithms": {
+    "index": {
+      "description": "静态公式表：案例图加公式。无 API、无训练器状态、无编辑说明。",
+      "kicker": "公式表",
+      "puzzle": "项目",
+      "puzzleList": "项目公式分类",
+      "title": "Algorithms"
+    },
+    "table": {
+      "algorithm": "公式",
+      "case": "案例",
+      "name": "名称",
+      "source": "来源"
+    },
+    "methods": {
+      "cfop": {
+        "algorithmCount": "4 个步骤，78 个完整最后一层公式",
+        "cases": {
+          "sexyMove": {
+            "name": "F2L 基础触发",
+            "note": "一个用于配对并插入许多 F2L 案例的小触发。先理解效果，再背长列表。"
+          },
+          "sune": {
+            "name": "Sune OLL",
+            "note": "最重要的 OLL 形态之一。它会出现在二步 OLL、完整 OLL、2x2 Ortega 和 CLL 风格公式组中。"
+          },
+          "tPerm": {
+            "name": "T permutation",
+            "note": "一个快速 PLL，用于交换一对角块和一对棱块。它是衡量最后一层执行速度的实用基准。"
+          },
+          "uPerm": {
+            "name": "U permutation",
+            "note": "一个仅处理棱块的 PLL。许多玩家会较早学习 U permutations，因为它们能完成很多初学 PLL 案例。"
+          }
+        },
+        "images": {
+          "hero": "显示前两层信息的 CFOP 方法示意图"
+        },
+        "level": "初学到高级",
+        "recommendedFor": "3x3 速拧和高阶魔方的 3x3 阶段",
+        "steps": {
+          "cross": {
+            "body": "围绕选定颜色还原底部四条棱，通常在观察时规划完整 Cross。目标不只是还原，还要以稳定握法和可预测的第一个 F2L 对结束。",
+            "title": "Cross"
+          },
+          "f2l": {
+            "body": "将每个第一层角块与匹配的中层棱块配对，并把这一对插入一个槽。高效 F2L 主要靠理解块的运动，而不是一开始就记住所有案例。",
+            "title": "F2L"
+          },
+          "oll": {
+            "body": "定向最后一层，让顶面成为同一种颜色。初学者可拆成二步 OLL；完整 OLL 有 57 个案例。",
+            "title": "OLL"
+          },
+          "pll": {
+            "body": "置换已经定向的最后一层块。二步 PLL 足够入门；完整 PLL 有 21 个案例，是最值得先学的高级公式组之一。",
+            "title": "PLL"
+          }
+        },
+        "summary": "CFOP 通过 Cross、F2L、OLL 和 PLL 还原魔方。它是文档最完整的 3x3 速拧路线，也是从层先法升级最容易的路径。",
+        "title": "CFOP"
+      },
+      "cll": {
+        "algorithmCount": "2x2 一层已还原后有 42 个案例",
+        "cases": {
+          "antisune": {
+            "name": "Antisune 组",
+            "note": "看起来像 Sune 反向的对应组。它很常见，值得通过顶面贴纸和侧面条形识别。"
+          },
+          "hCase": {
+            "name": "H 组",
+            "note": "一个紧凑的组，具有明显的对向图案。有些案例公式很短。"
+          },
+          "sune": {
+            "name": "Sune 组",
+            "note": "大多数玩家最先能识别的 CLL 组之一，因为它与熟悉的 OLL 形态直接相关。"
+          },
+          "tCase": {
+            "name": "T 组",
+            "note": "这个组很考验清晰识别条形。避免与相似的 Pi 和 U 案例混淆。"
+          }
+        },
+        "images": {
+          "hero": "CLL 方法示意图"
+        },
+        "level": "高级 2x2",
+        "recommendedFor": "已经能快速还原一层的 2x2 玩家",
+        "steps": {
+          "oneLookCorners": {
+            "body": "用一个公式还原所有剩余角块。这会去掉 Ortega 中 OLL 加 PBL 的拆分，让最后一层一眼完成。",
+            "title": "一眼还原最后一层"
+          },
+          "recognition": {
+            "body": "识别按角块定向族组织，例如 Sune、Antisune、T、U、L、Pi 和 H。一次学习一组，并把相似案例一起练。",
+            "title": "分组识别"
+          },
+          "solvedLayer": {
+            "body": "CLL 从完全还原的一层开始，而不只是还原一个面。简单打乱下，第一层通常会在观察时规划好。",
+            "title": "已还原第一层"
+          }
+        },
+        "summary": "CLL 在一层已还原后，用一个公式还原剩余四个 2x2 角块。它是 Ortega 之后的自然进阶。",
+        "title": "2x2 CLL"
+      },
+      "clockBeginner": {
+        "algorithmCount": "基于流程，不偏重公式",
+        "cases": {
+          "pins": {
+            "name": "针位记法",
+            "note": "UR、DR、DL 和 UL 表示哪些针向上。只有针位明确后，方法说明才有意义。"
+          },
+          "twelve": {
+            "name": "已还原时钟目标",
+            "note": "两面每个表盘都必须指向 12:00。这个项目关注受控的表盘偏移，而不是块置换。"
+          }
+        },
+        "level": "初学",
+        "recommendedFor": "学习速拧方法前先掌握 Clock 记法",
+        "steps": {
+          "corners": {
+            "body": "完成十字后，把每个剩余角表盘调到 12，同时不打乱已还原的组。具体拨轮顺序取决于所选方法。",
+            "title": "角位"
+          },
+          "crosses": {
+            "body": "大多数初学方法会先在一面校准一组中心和边缘表盘，然后翻面后在另一面重复。",
+            "title": "建立表盘组"
+          },
+          "flip": {
+            "body": "翻转 Clock 会改变每个拨轮关联的表盘。好的记法能让正反面的操作都清楚易读。",
+            "title": "翻面并完成"
+          },
+          "notation": {
+            "body": "Clock 使用针位和拨轮转动，而不是魔方面转。先学习针位如何连接表盘，再尝试记忆方法。",
+            "title": "先学记法"
+          }
+        },
+        "summary": "Clock 方法通过针位和拨轮转动还原表盘组。先从记法和可靠的初学流程开始，再优化步数。",
+        "title": "Clock 基础方法"
+      },
+      "eg": {
+        "algorithmCount": "128 个案例，包含 PBL 思路",
+        "cases": {
+          "eg0": {
+            "name": "EG-0 / CLL 基础",
+            "note": "底层完全还原。如果你先学过 2x2 CLL，这些就是你已经知道的 CLL 案例。"
+          },
+          "eg1": {
+            "name": "EG-1",
+            "note": "第一面具有相邻交换图案。识别必须包含成对底层块在公式前的位置。"
+          },
+          "eg2": {
+            "name": "EG-2",
+            "note": "第一面具有对角交换图案。它很强大，但只有在观察能覆盖完整还原时才真正有用。"
+          }
+        },
+        "images": {
+          "eg0": "EG-0 第一面案例",
+          "eg1": "EG-1 第一面案例",
+          "eg2": "EG-2 第一面案例",
+          "hero": "EG 方法表现图"
+        },
+        "level": "专家级 2x2",
+        "recommendedFor": "一眼 2x2 还原和高级观察",
+        "steps": {
+          "auf": {
+            "body": "EG 经常同时需要前 AUF 和后 AUF。这让识别比 CLL 更难，即使最终公式很快。",
+            "title": "控制 AUF"
+          },
+          "caseGroup": {
+            "body": "把第一面分类为 EG-0、EG-1 或 EG-2。这会告诉你底层是已还原、相邻交换还是对角交换。",
+            "title": "识别 EG 组"
+          },
+          "face": {
+            "body": "构建一个面，不一定是完整一层。EG 的价值来自选择一个能在观察时让剩余状态可见的面。",
+            "title": "构建一个面"
+          }
+        },
+        "summary": "EG 是高公式量的 2x2 方法：先还原一个面，再用一个公式还原整个魔方。当完整还原能在观察中规划出来时，它最强。",
+        "title": "2x2 EG"
+      },
+      "fourByFour": {
+        "algorithmCount": "降阶流程加 parity 公式",
+        "cases": {
+          "ollParity": {
+            "name": "OLL parity",
+            "note": "降阶后的 4x4 可能出现单个翻转的 dedge，这是真实 3x3 上不可能的状态。需要与普通 OLL 分开学习。"
+          },
+          "pllParity": {
+            "name": "PLL parity",
+            "note": "PLL parity 会在 3x3 阶段后交换两条 dedges。识别简单，但执行必须可控。"
+          }
+        },
+        "level": "中级",
+        "recommendedFor": "第一个 4x4 方法和过渡到 Yau",
+        "steps": {
+          "centers": {
+            "body": "构建六个 2x2 中心。在降阶中通常先于棱块配对完成；在 Yau 中，会更早还原部分 Cross 棱以获得更好观察。",
+            "title": "中心"
+          },
+          "edgePairing": {
+            "body": "把匹配的翼棱配成 dedges。所有 dedges 配对后，谜题表现得像一个可能带有 parity 案例的 3x3。",
+            "title": "棱块配对"
+          },
+          "parity": {
+            "body": "Parity 案例不是错误。它们出现是因为降阶隐藏了普通 3x3 没有的内部 4x4 信息。",
+            "title": "处理 parity"
+          },
+          "threeByThreeStage": {
+            "body": "用 CFOP 等 3x3 方法还原降阶后的魔方。把 parity 公式与 3x3 最后一层公式分开。",
+            "title": "3x3 阶段"
+          }
+        },
+        "summary": "4x4 降阶通过还原中心和配对棱块把谜题变成 3x3，然后处理 3x3 上不存在的 parity 案例。",
+        "title": "4x4 降阶和 Yau"
+      },
+      "megaminxBeginner": {
+        "algorithmCount": "主要是直觉式 F2L 风格还原",
+        "cases": {
+          "lastLayerSune": {
+            "name": "最后一层 Sune 思路",
+            "note": "许多 Megaminx 最后一层思路类似 3x3 触发，但识别发生在五边形最后一层上。"
+          },
+          "s2lInsert": {
+            "name": "配对插入思路",
+            "note": "如果按配对而不是孤立块来思考，第二层和后续层的插入会更容易。"
+          }
+        },
+        "images": {
+          "hero": "Megaminx 谜题照片"
+        },
+        "level": "初学到中级",
+        "recommendedFor": "学习 Megaminx 的 3x3 玩家",
+        "steps": {
+          "lastLayerCorners": {
+            "body": "最后定向并置换最终角块。识别时要把顶面颜色和侧面颜色分开。",
+            "title": "最后一层角块"
+          },
+          "lastLayerEdges": {
+            "body": "定向并置换最终棱块。一些 3x3 最后一层思路可以迁移，但五条棱的布局会改变案例。",
+            "title": "最后一层棱块"
+          },
+          "s2l": {
+            "body": "围绕谜题继续处理角棱配对。这个方法像扩展版 F2L，但有更多槽位和更多颜色跟踪。",
+            "title": "第二层组"
+          },
+          "star": {
+            "body": "从围绕一个中心的五棱星开始。这相当于 Megaminx 中在配对还原前规划稳定底座。",
+            "title": "Star"
+          }
+        },
+        "summary": "Megaminx 通常用受 3x3 启发的层式方法还原：star、围绕谜题配对，然后处理适配五边的最后一层。",
+        "title": "Megaminx 初学方法"
+      },
+      "ortega": {
+        "algorithmCount": "3 个步骤，约 12 个公式",
+        "cases": {
+          "adjacentPbl": {
+            "name": "Adjacent PBL",
+            "note": "两层都需要置换，并且有可在公式前对齐的条形。"
+          },
+          "antisune": {
+            "name": "Antisune OLL",
+            "note": "Sune 的反向对应。和 Sune 一起练，避免识别迟疑。"
+          },
+          "diagonalPbl": {
+            "name": "Diagonal PBL",
+            "note": "一个紧凑的 PBL 案例，会跨层交换对角角块。"
+          },
+          "sune": {
+            "name": "Sune OLL",
+            "note": "用于对面定向的核心案例。"
+          }
+        },
+        "images": {
+          "hero": "Ortega 方法动画"
+        },
+        "level": "中级 2x2",
+        "recommendedFor": "不学习完整 CLL 也想超越 2x2 初学方法的玩家",
+        "steps": {
+          "firstFace": {
+            "body": "直觉式构建一个面。侧面颜色不需要匹配，因此第一步比完整一层更快。",
+            "title": "第一面"
+          },
+          "oppositeFace": {
+            "body": "用一小组 OLL 定向对面。结果是两个颜色已还原的面，但块不一定已经置换。",
+            "title": "对面"
+          },
+          "pbl": {
+            "body": "同时置换两层。当第一面变得容易后，PBL 识别是 Ortega 的主要技能。",
+            "title": "PBL"
+          }
+        },
+        "summary": "Ortega 通过先做一个面、定向对面，再用 PBL 置换两层来还原 2x2。",
+        "title": "2x2 Ortega"
+      },
+      "petrus": {
+        "algorithmCount": "5 个步骤，最后一层前主要靠直觉",
+        "cases": {
+          "blockExpansion": {
+            "name": "块扩展",
+            "note": "Petrus 奖励你看清 2x2x2 块如何在不破坏已还原块的情况下扩展成 2x2x3。"
+          },
+          "edgeOrientation": {
+            "name": "棱块定向触发",
+            "note": "在 2x2x3 块之后，定向棱块能让剩余 F2L 用更少的转动集合完成。"
+          }
+        },
+        "images": {
+          "hero": "Petrus 方法动画"
+        },
+        "level": "中级块构建",
+        "recommendedFor": "最少步思维和块构建练习",
+        "steps": {
+          "edgeOrientation": {
+            "body": "定向剩余未还原棱块。这是 Petrus 的身份标识：提前做 EO，让后续更简单。",
+            "title": "定向棱块"
+          },
+          "finishF2l": {
+            "body": "在棱块已定向的约束下完成前两层。这可以非常省步，但需要灵活观察。",
+            "title": "完成 F2L"
+          },
+          "lastLayer": {
+            "body": "使用任意最后一层系统。由于棱块已定向，可以使用 OCLL 加 PLL、COLL 加 EPLL，或 ZBLL 风格方法。",
+            "title": "最后一层"
+          },
+          "twoByThreeBlock": {
+            "body": "把块扩展到 2x2x3。扩展选择会同时影响棱块定向和剩余还原的人体工学。",
+            "title": "2x2x3 块"
+          },
+          "twoByTwoBlock": {
+            "body": "在任意位置构建一个 2x2x2 块。这不是一层，而是一个紧凑的已还原块，保留许多可用转动。",
+            "title": "2x2x2 块"
+          }
+        },
+        "summary": "Petrus 先构建块，提前定向棱块，再以比层式方法更少限制完成 F2L。",
+        "title": "Petrus"
+      },
+      "pyraminxVFirst": {
+        "algorithmCount": "初学公式组加 L4E 风格案例",
+        "cases": {
+          "beginnerCycleA": {
+            "name": "三棱循环 A",
+            "note": "初学方法中用于移动棱块的基础 Pyraminx 循环，不需要很多公式。"
+          },
+          "beginnerCycleB": {
+            "name": "三棱循环 B",
+            "note": "镜像循环。和第一个循环成对学习。"
+          },
+          "twoEdgeFlip": {
+            "name": "两棱翻转",
+            "note": "常见的最后棱案例。更快的玩家通常会重写记法以获得更好的手法。"
+          }
+        },
+        "level": "初学到中级",
+        "recommendedFor": "学习选项选择的 Pyraminx 玩家",
+        "steps": {
+          "lastEdges": {
+            "body": "用一小组公式完成最后的棱块。高级 V First 方法非常重视无停顿识别这些案例。",
+            "title": "最后棱"
+          },
+          "optionSelect": {
+            "body": "强的 Pyraminx 玩家会在观察时比较 V First 和 Top First 开局。选择收尾最干净的选项，而不只是看到的第一个。",
+            "title": "选项选择"
+          },
+          "tips": {
+            "body": "尖角是独立的，应该不经思考就能还原。只有在不打断观察时，才在还原过程中处理它们。",
+            "title": "尖角和中心"
+          },
+          "v": {
+            "body": "构建一个 V：围绕一个角区域还原两条棱。这为最后棱公式组提供稳定底座。",
+            "title": "V First"
+          }
+        },
+        "summary": "Pyraminx 速拧方法通常围绕 V First 和 Top First 的选择展开。V First 很常见，因为它直觉且容易观察。",
+        "title": "Pyraminx V First"
+      },
+      "roux": {
+        "algorithmCount": "4 个步骤，9 到 42 个 CMLL 公式",
+        "cases": {
+          "cmllSune": {
+            "name": "CMLL Sune 风格案例",
+            "note": "CMLL 在基本忽略棱块位置的情况下还原最后四个角块。有些案例类似 COLL 或 OLLCP 思路。"
+          },
+          "lseo": {
+            "name": "LSE 定向图案",
+            "note": "Roux 以 MU 转动结束。棱块定向识别比纯公式数量更重要。"
+          },
+          "mSliceEdgeFlip": {
+            "name": "M-slice 棱块控制",
+            "note": "干净的 M 和 U 转动至关重要。只有切片转动可靠时，Roux 才会快。"
+          }
+        },
+        "images": {
+          "hero": "Roux 方法表现图"
+        },
+        "level": "中级到高级",
+        "recommendedFor": "低步数 3x3 还原和单手练习",
+        "steps": {
+          "cmll": {
+            "body": "一步还原最后一层四个角块，同时让棱块大多保持自由。完整 CMLL 有 42 个案例，但二步版本足够入门。",
+            "title": "CMLL"
+          },
+          "firstBlock": {
+            "body": "在一侧构建一个 1x2x3 块。对新的 Roux 玩家来说这是最难部分，因为它是真正的块构建，而不是槽位插入。",
+            "title": "第一块"
+          },
+          "lse": {
+            "body": "用 M 和 U 转动还原最后六条棱：定向棱块、还原 UL 和 UR，然后完成 M slice。这是 Roux 变得非常省步的地方。",
+            "title": "最后六棱"
+          },
+          "secondBlock": {
+            "body": "在不破坏第一块的情况下构建对侧 1x2x3 块。之后 U 层和 M slice 会保留下来用于收尾。",
+            "title": "第二块"
+          }
+        },
+        "summary": "Roux 先还原两个侧块，然后还原角块，最后还原六条棱。它比 CFOP 用步更少，并依赖块构建加 M-slice 控制。",
+        "title": "Roux"
+      },
+      "sarahSkewb": {
+        "algorithmCount": "初学：两个核心 4 步触发",
+        "cases": {
+          "hedgeslammer": {
+            "name": "Hedgeslammer",
+            "note": "Sarah's 记法用这个触发作为 sledgehammer 的对应项。选择适合你 Skewb 硬件的握法。"
+          },
+          "lastCenters": {
+            "name": "最后中心",
+            "note": "最后一步在旋转后重复同样的触发思路。跟踪中心，而不只是角块。"
+          },
+          "sledgehammer": {
+            "name": "Sledgehammer",
+            "note": "Sarah's 方法中的两个核心 4 步触发之一。许多 Skewb 案例会化简为重复 sledgehammer 或 hedgeslammer。"
+          }
+        },
+        "images": {
+          "hero": "Sarah's Skewb 方法角块步骤",
+          "step1": "Sarah's Skewb 第一面示意图",
+          "step4": "Sarah's Skewb 最后中心示意图"
+        },
+        "level": "初学到高级",
+        "recommendedFor": "想要从初学到 L2L 清晰路径的 Skewb 玩家",
+        "steps": {
+          "corners": {
+            "body": "使用两个 4 步触发还原剩余角块。起初识别很简单，在中级版本中会变得更公式化。",
+            "title": "剩余角块"
+          },
+          "firstSide": {
+            "body": "直觉式还原一面。最后一个角可能需要暂时移动一个已还原角，这在 Skewb 上很正常。",
+            "title": "第一面"
+          },
+          "lastCenters": {
+            "body": "通过匹配已知案例还原剩余中心，必要时旋转谜题，并应用相同触发结构。",
+            "title": "剩余中心"
+          },
+          "topCenter": {
+            "body": "在角块之后还原对侧中心。初学版本把它与最后中心分开，以保持识别简单。",
+            "title": "对侧中心"
+          }
+        },
+        "summary": "Sarah's Skewb 方法围绕两个短触发构建。初学版本有四步，随后随着识别提升而合并步骤。",
+        "title": "Sarah's Skewb 方法"
+      },
+      "squareOneShape": {
+        "algorithmCount": "形状优先方法，包含记法案例",
+        "cases": {
+          "kiteScallop": {
+            "name": "形状示例",
+            "note": "Cubeshape 案例最好按形状族学习。不要把每个序列都当成互不相关的公式。"
+          },
+          "notation": {
+            "name": "Square-1 记法",
+            "note": "(x,y) 表示顶层和底层按 30 度单位转动，然后 / 按经典记法交换右半部分。"
+          }
+        },
+        "images": {
+          "hero": "已还原形状的 Square-1 谜题"
+        },
+        "level": "中级",
+        "recommendedFor": "学习 Square-1 记法和 cubeshape",
+        "steps": {
+          "parity": {
+            "body": "Square-1 类 parity 案例是方法流程的一部分。把 parity 修正与 cubeshape 分开，让识别保持清晰。",
+            "title": "Parity 处理"
+          },
+          "permutation": {
+            "body": "分离后置换角块和棱块。许多速拧方法会把这部分压缩成紧凑的公式组。",
+            "title": "置换块"
+          },
+          "separation": {
+            "body": "在恢复立方体形状后，将角块和棱块分离到正确层。有些方法称之为定向，尽管 Square-1 的块不像魔方块那样定向。",
+            "title": "分离层"
+          },
+          "shape": {
+            "body": "先让谜题恢复立方体形状。这使后续识别成为可能，也是新 Square-1 玩家早期最大的障碍。",
+            "title": "Cubeshape"
+          }
+        },
+        "summary": "Square-1 还原从恢复立方体形状开始，然后用该谜题独有的记法分离并置换块。",
+        "title": "Square-1 cubeshape"
+      },
+      "zz": {
+        "algorithmCount": "根据最后一层不同，为 3 或 4 个步骤",
+        "cases": {
+          "edgeOrientation": {
+            "name": "棱块定向触发",
+            "note": "这个触发展示棱块定向公式会改变什么，但 ZZ EO 通常在观察时凭直觉规划。"
+          },
+          "twoGenLastLayer": {
+            "name": "双轴收尾思路",
+            "note": "一旦棱块已定向，许多收尾可以使用快速的 R、U 和 L 风格转动，尴尬案例更少。"
+          }
+        },
+        "images": {
+          "hero": "ZZ 的 EOLine 动画"
+        },
+        "level": "中级到高级",
+        "recommendedFor": "无换手 3x3 还原和单手人体工学",
+        "steps": {
+          "eoLineOrCross": {
+            "body": "定向所有棱块，同时在底部放置一条线或一个 Cross。现代 ZZ 常偏向 EOCross，因为它改善观察后的预判。",
+            "title": "EOLine 或 EOCross"
+          },
+          "lastLayer": {
+            "body": "用能受益于棱块已定向的最后一层系统收尾：OCLL 加 PLL、COLL 加 EPLL，或最终使用 ZBLL。",
+            "title": "最后一层"
+          },
+          "zzF2l": {
+            "body": "主要用 R、U 和 L 转动完成 F2L。棱块定向会减少案例，并保持魔方握法稳定。",
+            "title": "ZZ F2L"
+          }
+        },
+        "summary": "ZZ 在开始时定向棱块，然后用减少的转动集合还原 F2L。它用更难的观察换取后续更顺滑的转动。",
+        "title": "ZZ"
+      }
+    },
+    "page": {
+      "algorithmCount": "公式",
+      "backToIndex": "Algorithms",
+      "essentialCases": "核心案例",
+      "imageSource": "图片来源：",
+      "level": "级别",
+      "methods": "方法",
+      "recommendedFor": "推荐给",
+      "references": "原始参考",
+      "stepNumber": "步骤 {{count}}",
+      "steps": "方法步骤"
+    },
+    "puzzles": {
+      "2x2": {
+        "description": "口袋魔方方法，重点是先做面、最后一层角块和一眼收尾。",
+        "title": "2x2"
+      },
+      "3x3": {
+        "description": "核心 3x3 速拧方法：层式、块构建、棱块定向和低步数路线。",
+        "title": "3x3"
+      },
+      "4x4": {
+        "description": "高阶魔方降阶、Yau 风格流程，以及回到 3x3 阶段前的 parity 案例。",
+        "title": "4x4"
+      },
+      "clock": {
+        "description": "WCA Clock 项目的 Clock 记法、针位逻辑和初学还原结构。",
+        "title": "Clock"
+      },
+      "megaminx": {
+        "description": "受 3x3 配对还原启发、适配五边最后一层的十二面体方法。",
+        "title": "Megaminx"
+      },
+      "pyraminx": {
+        "description": "围绕尖角、V First、Top First 和快速最后棱识别构建的 Pyraminx 方法。",
+        "title": "Pyraminx"
+      },
+      "skewb": {
+        "description": "结合短触发、角块控制和中心循环的 Skewb 方法。",
+        "title": "Skewb"
+      },
+      "square1": {
+        "description": "变形 Square-1 还原：cubeshape、分离、置换和记法。",
+        "title": "Square-1"
+      }
+    },
+    "sources": {
+      "jaapClock": "Jaap's Puzzle Page: Clock",
+      "jaapPyraminx": "Jaap's Puzzle Page: Pyraminx",
+      "jaapSquareOne": "Jaap's Puzzle Page: Square-1",
+      "jpermEgOne": "J Perm: 2x2 EG-1 公式",
+      "jpermFourByFour": "J Perm: 4x4 教程",
+      "jpermFourByFourOll": "J Perm: 4x4 OLL parity 公式",
+      "jpermFourByFourPll": "J Perm: 4x4 PLL parity 公式",
+      "jpermOll": "J Perm: OLL 公式",
+      "jpermPll": "J Perm: PLL 公式",
+      "jpermTwoByTwo": "J Perm: 2x2 教程",
+      "jpermTwoByTwoCll": "J Perm: 2x2 CLL 公式",
+      "larsPetrus": "Lars Petrus 教程",
+      "rouxCommunity": "Roux Speed Solvers 社区指南",
+      "ruwixCfop": "Ruwix: advanced CFOP method",
+      "sarahSkewb": "Sarah's Cubing: Skewb 方法",
+      "speedsolvingCfop": "Speedsolving Wiki: CFOP method",
+      "speedsolvingClock": "Speedsolving Wiki: Rubik's Clock",
+      "speedsolvingCll": "Speedsolving Wiki: CLL",
+      "speedsolvingEg": "Speedsolving Wiki: EG method",
+      "speedsolvingMegaminx": "Speedsolving Wiki: Megaminx",
+      "speedsolvingOrtega": "Speedsolving Wiki: Ortega method",
+      "speedsolvingPetrus": "Speedsolving Wiki: Petrus method",
+      "speedsolvingPyraminx": "Speedsolving Wiki: Pyraminx methods",
+      "speedsolvingRoux": "Speedsolving Wiki: Roux method",
+      "speedsolvingSkewb": "Speedsolving Wiki: list of Skewb methods",
+      "speedsolvingSquareOne": "Speedsolving Wiki: Square-1",
+      "speedsolvingZz": "Speedsolving Wiki: ZZ method",
+      "wcaRegulations": "WCA Regulations",
+      "zzMethod": "ZZ Method website"
+    }
+  },
+  "cube": {
+    "visualization": "魔方可视化",
+    "visualizationUnavailable": "此项目暂不可用可视化。"
+  },
+  "errorBoundary": {
+    "description": "当前视图意外崩溃。请重试或切换路由以重新加载。",
+    "kicker": "意外错误",
+    "retry": "重试",
+    "title": "出现问题"
+  },
+  "navigation": {
+    "algorithms": "公式",
+    "algorithmsMenu": "项目方法",
+    "channels": "YT Channels",
+    "closeMenu": "关闭菜单",
+    "github": "在 GitHub 打开项目",
+    "menu": "菜单",
+    "openMenu": "打开菜单",
+    "primary": "主导航",
+    "solve": "求解器",
+    "theme": "主题",
+    "themeDark": "深色",
+    "themeLight": "浅色",
+    "themeSystem": "系统",
+    "timer": "计时器"
+  },
+  "scan": {
+    "actions": {
+      "analyzing": "正在分析",
+      "autoScanOff": "自动扫描关闭",
+      "autoScanOn": "自动扫描开启",
+      "clearPhoto": "清除面",
+      "confirmAnyway": "仍然确认",
+      "confirmFace": "确认面",
+      "nextFace": "下一面",
+      "previousFace": "上一面",
+      "retakePhoto": "重新扫描",
+      "solveScannedCube": "求解扫描的魔方",
+      "takePhoto": "扫描面",
+      "updateFace": "更新面"
+    },
+    "camera": {
+      "capturedFaceAlt": "已识别的魔方面",
+      "errorManualFallback": "{{message}} 你仍可手动填写网格。",
+      "holdSteady": "保持稳定 {{count}}/{{target}}",
+      "lookingForCube": "正在寻找魔方",
+      "modes": {
+        "rejected": "已拒绝",
+        "reviewed_stickers": "已复核颜色",
+        "tile_detector": "贴纸检测器"
+      },
+      "opening": "正在打开相机",
+      "statusWithConfidence": "{{mode}} {{confidence}}%",
+      "stickerConfidence": "贴纸 {{confidence}}%",
+      "stickersFound": "找到 {{count}}/{{total}} 个贴纸",
+      "stickersReady": "{{count}}/{{total}} 个贴纸就绪",
+      "temporalCollecting": "共识 {{count}}/{{target}}",
+      "temporalColorDisagreement": "颜色不稳定 {{count}} 帧",
+      "temporalReady": "共识 {{agreement}}% {{count}} 帧",
+      "temporalUnstable": "几何不稳定 {{count}} 帧",
+      "tracking": "跟踪 {{count}}/{{target}}"
+    },
+    "carousel": {
+      "faceConfirmed": "已确认",
+      "faceDraft": "草稿",
+      "faceInvalid": "无效",
+      "faceNeedsReview": "复核",
+      "facePending": "待处理",
+      "goToFace": "前往 {{face}}，{{status}}",
+      "next": "下一项",
+      "previous": "上一项"
+    },
+    "colors": {
+      "B": "蓝色",
+      "D": "黄色",
+      "F": "绿色",
+      "L": "橙色",
+      "R": "红色",
+      "U": "白色"
+    },
+    "centerMismatch": {
+      "dismiss": "关闭中心确认",
+      "kicker": "中心不同",
+      "title": "确认预期面"
+    },
+    "editor": {
+      "colorCount": "颜色数量",
+      "orAlternative": "或 {{colorInitial}}",
+      "paletteLabel": "颜色面板",
+      "pickColor": "选择颜色",
+      "needsConfirmation": "需要确认",
+      "reviewColors": "复核颜色",
+      "reviewGroupLabel": "已扫描面颜色",
+      "selectSquareHint": "选择一个方格，然后选择颜色来更正它。",
+      "stickerLabel": "贴纸 {{index}}{{color}}",
+      "uncertainColor": "不确定颜色",
+      "uncertainMaybe": "可能是 {{color}}"
+    },
+    "evenReview": {
+      "autoFit": "尝试自动拟合",
+      "autoFitambiguous": "可能有多个拟合。请手动调整展开图。",
+      "autoFitnone": "仅通过旋转面无法拟合。请交换位置或复核贴纸。",
+      "autoFitsuggested": "找到一个可能的拟合，改动更少。请只在复核展开图后应用。",
+      "autoFitunique": "已找到并应用拟合。求解前请复核展开图。",
+      "applySuggestion": "应用建议",
+      "back": "返回并编辑",
+      "capturedFace": "已捕获：{{face}}",
+      "description": "检查此 Kociemba 展开图是否匹配实体魔方。拖动面来交换位置，并在求解前选择一个面旋转它。",
+      "dragInstructions": "将一个面拖到另一个槽位，或使用交换按钮。使用旋转按钮修正已捕获面的方向。",
+      "invalidDescription": "一些角块组合了对面颜色或不可能的颜色。请旋转面或返回更正贴纸。",
+      "invalidSolveDisabled": "先修复高亮的不可能角块再求解。",
+      "invalidTitle": "不可能的角块",
+      "kicker": "最终复核",
+      "oppositePair": "{{first}} 和 {{second}} 是对面。",
+      "reviewAction": "复核组装后的魔方",
+      "rotate90": "旋转 90°",
+      "rotate180": "旋转 180°",
+      "rotate270": "旋转 -90°",
+      "selectedFace": "已选槽位：{{face}} · 已捕获面：{{capturedFace}}",
+      "solve": "接受并求解",
+      "swapTitle": "将已选面交换到",
+      "title": "复核组装后的魔方",
+      "validMessage": "2x2 角块结构有效。请确认预览与实体魔方匹配。"
+    },
+    "faces": {
+      "B": {
+        "instruction": "展示蓝色面，并让白色面位于相机视图顶部。",
+        "label": "蓝色面",
+        "top": "白色"
+      },
+      "D": {
+        "instruction": "展示黄色面，并让绿色面位于相机视图顶部。",
+        "label": "黄色面",
+        "top": "绿色"
+      },
+      "F": {
+        "instruction": "展示绿色面，并让白色面位于相机视图顶部。",
+        "label": "绿色面",
+        "top": "白色"
+      },
+      "L": {
+        "instruction": "展示橙色面，并让白色面位于相机视图顶部。",
+        "label": "橙色面",
+        "top": "白色"
+      },
+      "R": {
+        "instruction": "展示红色面，并让白色面位于相机视图顶部。",
+        "label": "红色面",
+        "top": "白色"
+      },
+      "U": {
+        "instruction": "展示白色面，并让绿色面位于相机视图顶部。",
+        "label": "白色面",
+        "top": "绿色"
+      }
+    },
+    "faces2": {
+      "B": {
+        "instruction": "旋转魔方以展示背面，不改变哪一侧朝上。",
+        "label": "背面",
+        "top": "上"
+      },
+      "D": {
+        "instruction": "展示下面，并让前面位于相机视图顶部。",
+        "label": "下面",
+        "top": "前"
+      },
+      "F": {
+        "instruction": "选择前面。握住魔方，让上面位于相机视图顶部。",
+        "label": "前面",
+        "top": "上"
+      },
+      "L": {
+        "instruction": "旋转魔方以展示左面，不改变哪一侧朝上。",
+        "label": "左面",
+        "top": "上"
+      },
+      "R": {
+        "instruction": "旋转魔方以展示右面，不改变哪一侧朝上。",
+        "label": "右面",
+        "top": "上"
+      },
+      "U": {
+        "instruction": "展示上面，并让前面位于相机视图顶部。",
+        "label": "上面",
+        "top": "前"
+      }
+    },
+    "live": {
+      "cameraDenied": "相机权限被拒绝，或未找到相机。",
+      "cameraUnavailable": "此浏览器不支持相机访问。",
+      "centerMismatch": "检测到另一个中心颜色。请旋转到预期面。",
+      "detectingStickers": "正在检测贴纸：已找到 {{count}}/{{total}}。",
+      "faceDetected": "检测到面。请保持稳定。",
+      "gridReady": "{{count}}/{{total}} 个贴纸已锁定。请保持稳定。",
+      "imageBlurry": "图像模糊。请保持魔方稳定。",
+      "looking": "正在寻找魔方面。",
+      "lookingKeepVisible": "正在寻找魔方面。请让整个魔方完全可见。",
+      "partialGrid": "已找到 {{count}}/9 个贴纸。请展示一个平整的面。",
+      "scanFailed": "实时扫描分析失败。",
+      "stableCapturing": "所有贴纸都稳定。请复核颜色。",
+      "tooBright": "反光过强。请减少明亮反射。",
+      "tooDark": "太暗。请增加光线。"
+    },
+    "messages": {
+      "allFacesConfirmed": "所有面都已确认。准备好后求解扫描的魔方。",
+      "analysisFailed": "扫描分析请求失败。",
+      "analyzingFace": "正在分析魔方面...",
+      "apiNotReady": "API 尚未就绪。",
+      "autoCaptured": "已自动捕获。确认此面前请复核颜色。",
+      "autoCapturing": "正在自动捕获稳定面...",
+      "autoPaused": "自动扫描已暂停。面可见时请开启。",
+      "cameraFrameFailed": "无法读取相机帧。请重试。",
+      "cameraNotReady": "相机尚未就绪。",
+      "captured": "照片已捕获。确认此面前请复核颜色。",
+      "capturingPhoto": "正在拍照...",
+      "centerMismatchFallback": "捕获的中心与此扫描步骤不匹配。请重拍照片。",
+      "centerMismatchConfirmQuestion": "你确定这是预期面吗？",
+      "centerMismatchWithColors": "中心看起来是 {{detectedColor}}{{confidence}}，但此步骤期望 {{expectedColor}}。确认前请旋转到预期面。",
+      "confirmAllFaces": "确认全部六个面，并确保每种颜色恰好出现 9 次。",
+      "confidenceSuffix": "（{{confidence}}% 置信度）",
+      "detectedUncertain": "{{count}} 个检测到的颜色不确定。请复核高亮方格或清除此面后重新扫描。",
+      "faceNeedsReview": "求解前请复核此面。",
+      "faceUpdated": "面已更新。请复核其他面，或准备好后求解。",
+      "genericRejected": "扫描的魔方被拒绝。请复核已确认颜色。",
+      "lowConfidence": "检测置信度较低。",
+      "manualDetectionFailed": "无法检测到魔方面。请重拍照片或手动填写网格。",
+      "qualityBlurry": "保持魔方稳定，以获得更清晰的照片。",
+      "qualityBright": "扫描前减少眩光。",
+      "qualityDark": "扫描前增加光线。",
+      "sessionAmbiguous": "后端找到了多个有效魔方状态。请复核高亮贴纸或重新扫描不清楚的面。",
+      "sessionBlurRescan": "面 {{faces}} 上图像模糊。请保持魔方稳定并重新扫描这些面。",
+      "sessionGlareRescan": "面 {{faces}} 上反光过强。请减少反射并重新扫描这些面。",
+      "sessionInvalidCornerTargets": "扫描构建了一个不可能的 2x2 角块。请复核高亮贴纸并再次尝试求解。",
+      "sessionInvalidCubeState": "扫描结果没有描述有效魔方。请复核各面并重新扫描不清楚的贴纸。",
+      "sessionIncompleteStickers": "求解前请完成面 {{faces}} 上全部 9 个贴纸。",
+      "sessionMissingConfirmedFaces": "求解前请确认这些面：{{faces}}。",
+      "sessionMissingPhotos": "求解前请识别这些面：{{faces}}。",
+      "sessionNeedsManualConfirmation": "求解前请确认高亮贴纸。",
+      "sessionNeedsRescan": "一个或多个面需要重新扫描。",
+      "sessionRejected": "扫描会话被拒绝。求解前请复核各面。",
+      "sessionShadowRescan": "面 {{faces}} 上阴影过重。请增加更均匀的光线并重新扫描这些面。",
+      "sessionVisionUnavailable": "视觉服务无法完成会话。请在视觉服务可用后重试。",
+      "solveFailed": "扫描求解请求失败。",
+      "submittingSession": "正在用魔方约束检查完整扫描...",
+      "stillLooking": "仍在寻找魔方面。请保持完整面可见，并让自动扫描重试。",
+      "liveReviewReady": "已识别 {{count}} 个贴纸。请复核颜色，必要时更正任何方格，然后确认此面。"
+    },
+    "modal": {
+      "cnnEvidenceActive": "CNN 证据启用",
+      "cnnReasonUnknown": "未配置",
+      "colorFallbackActive": "仅颜色回退：{{reason}}",
+      "confirmed": "已确认 {{count}} 个",
+      "description": "按要求的顶部颜色一次展示一个面。解法会使用你确认的颜色。",
+      "dismiss": "关闭扫描魔方",
+      "cancelExit": "取消离开扫描魔方",
+      "exitAction": "离开",
+      "exitDescription": "你有扫描进度，若现在离开将会丢失。",
+      "exitKicker": "未保存的扫描",
+      "exitTitle": "离开扫描？",
+      "expectedCenter": "预期中心：{{color}}",
+      "faceProgress": "第 {{current}}/{{total}} 面",
+      "keepAtTop": "保持在顶部：{{color}}",
+      "tileDetectorActive": "贴纸检测器启用",
+      "tileDetectorFallbackActive": "贴纸检测器回退：{{reason}}",
+      "tileDetectorReasonUnknown": "未配置",
+      "title": "扫描魔方",
+      "visionStatusUnavailable": "视觉状态不可用"
+    },
+    "validation": {
+      "centerColorMismatch": "中心颜色必须匹配正在扫描的面。",
+      "colorAppearsMoreThanNine": "{{color}} 出现超过 9 次。",
+      "confirmAllNineColors": "继续前请确认全部 9 个颜色。"
+    },
+    "warnings": {
+      "tile_detector_rejected": "贴纸检测器提议被拒绝。请让魔方面平整且可见。",
+      "image_blurry": "图像模糊。请保持魔方稳定。",
+      "image_too_bright": "反光过强。请减少明亮反射。",
+      "image_too_dark": "太暗。请增加光线。",
+      "low_confidence_sticker": "一个或多个贴纸不确定。请复核高亮方格。"
+    }
+  },
+  "solve": {
+    "details": {
+      "columns": {
+        "meaning": "含义",
+        "text": "文本"
+      },
+      "dismiss": "关闭求解器详情",
+      "elapsedLabel": "响应用时 {{elapsed}}",
+      "elapsedMeaning": "浏览器测得的总求解请求时间。它包含 API 往返和响应解析，因此可能不同于后端搜索时间。",
+      "maxNodesConfigured": "{{nodes}} 节点上限",
+      "maxNodesUnlimited": "未配置节点上限",
+      "movesLabel": "{{count}} 步",
+      "nodesLabel": "{{nodes}} 个节点",
+      "nodesMeaning": "求解器在找到解法前探索了这么多内部搜索节点。本次运行使用了 {{maxNodesLabel}}。",
+      "replayNotVerified": "回放未验证",
+      "replayVerified": "回放已验证",
+      "replayVerifiedMeaning": "找到步骤后，后端在打乱后的魔方上回放它们，并确认魔方变为已还原状态。",
+      "search": "搜索",
+      "solution": "解法",
+      "solutionLengthMeaning": "返回解法的长度。每个记法 token 算作一步，包括 R2 或 B2 这样的半转。",
+      "subtitle": "这些指标描述返回的解法、请求计时和后端验证。",
+      "tables": {
+        "available": {
+          "label": "表可用",
+          "meaning": "此策略所需的预生成剪枝表可用。它们有助于剪枝搜索。"
+        },
+        "corrupt_or_incompatible": {
+          "label": "表损坏或不兼容",
+          "meaning": "所需剪枝表存在，但与预期格式或元数据不匹配，因此应重新生成。"
+        },
+        "not_required": {
+          "label": "不需要表",
+          "meaning": "此策略不需要生成的剪枝表。"
+        },
+        "not_applicable": {
+          "label": "表不适用",
+          "meaning": "此项目策略不使用生成的 3x3 剪枝表产物。"
+        },
+        "unavailable": {
+          "label": "表不可用",
+          "meaning": "API 服务器上没有可用的所需剪枝表。"
+        }
+      },
+      "time": "时间",
+      "title": "求解器详情"
+    },
+    "noSolution": {
+      "attempted": "{{strategy}} 已尝试最多 {{maxDepth}} 步和 {{maxNodes}} 个节点。",
+      "description": "求解器在当前限制下没有找到经回放验证的结果。请提高限制并再次尝试同一个魔方。",
+      "dismiss": "关闭求解限制对话框",
+      "previousAttempt": "上次尝试",
+      "retry": "使用这些限制重试",
+      "title": "尝试不同限制"
+    },
+    "errors": {
+      "detail": {
+        "generated_tables_corrupt": "重新生成原生剪枝表；当前 API 产物与 Rust 引擎不匹配。",
+        "generated_tables_unavailable": "生成原生剪枝表，并在求解前启动 npm run api:dev。",
+        "invalid_input_orientation_hint": "检查扫描方向：拍摄绿色、红色、蓝色和橙色时让白色在上；拍摄白色和黄色时让绿色在上。",
+        "not_found_within_limits": "{{strategy}} 在最大步数 {{maxDepth}} 下探索了 {{nodes}} 个节点。"
+      },
+      "errorKind": {
+        "duplicate_corner": "扫描的魔方有重复的角块。",
+        "duplicate_corner_stickers": "扫描的魔方有重复的角块贴纸。",
+        "duplicate_edge": "扫描的魔方有重复的棱块。",
+        "duplicate_edge_stickers": "扫描的魔方有重复的棱块贴纸。",
+        "generated_tables_unavailable": "API 尚未加载此策略所需的生成剪枝表。",
+        "invalid_center_sticker": "一个或多个中心贴纸不符合有效魔方布局。",
+        "invalid_corner_orientation": "扫描的角块定向无效。",
+        "invalid_corner_orientation_sum": "扫描的角块扭转无法形成可解魔方。",
+        "invalid_corner_sticker_order": "扫描的角块贴纸顺序无效。",
+        "invalid_edge_orientation": "扫描的棱块定向无效。",
+        "invalid_edge_orientation_sum": "扫描的棱块翻转无法形成可解魔方。",
+        "invalid_face_count": "魔方颜色必须各出现恰好 9 次。",
+        "invalid_length": "魔方状态的贴纸数量不正确。",
+        "invalid_move_notation": "使用标准转动记法，例如 R、U、R' 或 U2。",
+        "invalid_permutation_parity": "扫描的块存在不可能的置换 parity。",
+        "invalid_symbol": "魔方状态包含无效颜色符号。",
+        "max_depth_exceeds_limit": "最大步数超过 API 安全限制。",
+        "max_nodes_exceeds_limit": "最大节点数超过 API 安全限制。",
+        "missing_corner": "扫描的魔方缺少一个角块。",
+        "missing_edge": "扫描的魔方缺少一个棱块。",
+        "node_limit_exceeded": "求解器在达到配置的节点上限后停止。",
+        "notation_too_large": "打乱记法过大。",
+        "strategy_puzzle_mismatch": "所选求解器策略不属于此项目。",
+        "unknown_corner_stickers": "扫描的魔方包含未知的角块颜色组合。",
+        "unknown_edge_stickers": "扫描的魔方包含未知的棱块颜色组合。",
+        "unsupported_input_kind": "此项目输入类型不受求解端点支持。",
+        "unsupported_metric": "此转动度量不受求解端点支持。",
+        "unsupported_puzzle": "求解端点尚不支持此项目。",
+        "unsupported_strategy": "此 API 不支持所选求解器策略。",
+        "unverified_solution": "求解器返回的解法未通过回放验证。"
+      },
+      "status": {
+        "api_error": "API 求解请求失败",
+        "generated_tables_corrupt": "生成的 two-phase API 表损坏或不兼容",
+        "generated_tables_unavailable": "生成的 two-phase 表在 API 上不可用",
+        "invalid_input": "无效魔方状态",
+        "invalid_limits": "求解器限制超过 API 安全上限",
+        "invalid_notation": "无效打乱",
+        "node_limit_exceeded": "节点限制已超过",
+        "not_found_within_limits": "配置限制内没有解法",
+        "request_too_large": "求解请求过大",
+        "strategy_puzzle_mismatch": "策略与项目不匹配",
+        "unknown_puzzle": "未知项目",
+        "unsupported_input_kind": "不支持的项目输入",
+        "unsupported_metric": "不支持的转动度量",
+        "unsupported_puzzle": "不支持的项目",
+        "unsupported_strategy": "不支持的求解器策略",
+        "unverified_solution": "求解器解法未通过回放验证"
+      }
+    },
+    "form": {
+      "maxMoves": "最大步数",
+      "maxNodesMillion": "最大节点数（M）",
+      "puzzle": "项目",
+      "scanCube": "用相机扫描魔方",
+      "scanUnavailableForPuzzle": "目前相机扫描仅适用于 3x3。",
+      "scramble": "打乱",
+      "solve": "求解"
+    },
+    "playback": {
+      "ariaLabel": "解法回放",
+      "currentMove": "第 {{step}} 步：{{move}}",
+      "nextMove": "下一步",
+      "previousMove": "上一步",
+      "scramble": "打乱",
+      "solutionStep": "解法步骤",
+      "solved": " 已还原"
+    },
+    "result": {
+      "foundIn": "响应用时 {{elapsed}}",
+      "seeMore": "查看更多",
+      "solved": "已还原",
+      "successMeta": "{{count}} 步 - {{elapsed}} -"
+    },
+    "strategies": {
+      "generated-two-phase": "生成式 two-phase 求解器",
+      "generated-two-phase-multiprobe": "生成式 two-phase multiprobe 求解器",
+      "generated-two-phase-quality": "生成式 two-phase quality 求解器",
+      "cube2-bounded-ida-star": "2x2 bounded IDA*",
+      "cube2-pdb-ida-star": "2x2 PDB IDA*",
+      "meaningDefault": "本次请求使用的确定性后端求解器策略。它是搜索逻辑，不是生成式 AI。",
+      "meaningGeneratedTwoPhase": "所使用的策略。Generated 不表示生成式 AI；这是一个由预生成剪枝表支持的 two-phase 求解器。Quality 模式会先尝试更短解法深度，然后回退到配置的最大值。"
+    },
+    "validation": {
+      "oneOf": "{{label}} 必须是 {{options}} 之一",
+      "required": "{{label}} 为必填项",
+      "wholeNumber": "{{label}} 必须是整数",
+      "withinLimit": "{{label}} 必须小于或等于 {{limit}}"
+    }
+  },
+  "timer": {
+    "displayLabel": "速拧计时器",
+    "instructions": {
+      "space": "空格或触摸：按住，松开开始，按下停止。"
+    },
+    "inspection": {
+      "title": "WCA 观察"
+    },
+    "penalty": {
+      "dnf": "DNF",
+      "label": "罚时控制",
+      "latest": "最近一次还原罚时",
+      "ok": "OK",
+      "plus2": "+2"
+    },
+    "scramble": {
+      "copied": "已复制",
+      "copy": "复制打乱",
+      "copyFailed": "无法复制打乱",
+      "event": "项目",
+      "next": "下一组打乱",
+      "previous": "上一组打乱",
+      "title": "打乱"
+    },
+    "session": {
+      "defaultName": "默认会话",
+      "solveCount": "{{count}} 次还原"
+    },
+    "settings": {
+      "inspection": "观察",
+      "label": "计时器设置",
+      "milliseconds": "毫秒"
+    },
+    "solves": {
+      "actions": "操作",
+      "delete": "删除",
+      "empty": "还没有还原记录",
+      "label": "还原记录",
+      "penalty": "罚时",
+      "scramble": "打乱",
+      "time": "时间"
+    },
+    "stats": {
+      "ao12": "ao12",
+      "ao5": "ao5",
+      "best": "最佳",
+      "mean": "平均"
+    },
+    "status": {
+      "holding": "按住中",
+      "idle": "准备按住",
+      "inspection": "观察",
+      "ready": "就绪",
+      "running": "还原中",
+      "stopped": "已停止"
+    }
+  }
+}
