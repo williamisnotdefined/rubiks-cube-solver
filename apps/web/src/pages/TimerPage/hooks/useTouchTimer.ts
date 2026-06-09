@@ -8,9 +8,11 @@ type TouchTimerHandlers = {
   onPointerUp: (event: PointerEvent<HTMLElement>) => void
 }
 
-export function useTouchTimer(timer: TimerMachine): TouchTimerHandlers {
+export function useTouchTimer(timer: TimerMachine, disabled = false): TouchTimerHandlers {
   const timerRef = useRef(timer)
+  const disabledRef = useRef(disabled)
   timerRef.current = timer
+  disabledRef.current = disabled
 
   return useMemo(() => ({
     onPointerCancel() {
@@ -18,6 +20,11 @@ export function useTouchTimer(timer: TimerMachine): TouchTimerHandlers {
     },
     onPointerDown(event) {
       event.preventDefault()
+
+      if (disabledRef.current) {
+        return
+      }
+
       event.currentTarget.setPointerCapture?.(event.pointerId)
       timerRef.current.beginHold()
     },

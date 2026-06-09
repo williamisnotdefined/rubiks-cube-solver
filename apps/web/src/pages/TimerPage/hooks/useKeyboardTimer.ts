@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'react'
 import type { TimerMachine } from './useTimerMachine'
 
-export function useKeyboardTimer(timer: TimerMachine) {
+export function useKeyboardTimer(timer: TimerMachine, disabled = false) {
   const timerRef = useRef(timer)
+  const disabledRef = useRef(disabled)
   timerRef.current = timer
+  disabledRef.current = disabled
 
   useEffect(() => {
     let spaceDown = false
@@ -18,6 +20,10 @@ export function useKeyboardTimer(timer: TimerMachine) {
       if (currentTimer.status === 'running') {
         event.preventDefault()
         currentTimer.stopTimer()
+        return
+      }
+
+      if (disabledRef.current) {
         return
       }
 

@@ -1,6 +1,6 @@
 import cls from 'classnames'
 import * as SelectPrimitive from '@radix-ui/react-select'
-import { Check, ChevronDown } from 'lucide-react'
+import { Check, ChevronDown, ChevronUp } from 'lucide-react'
 import { motion, useReducedMotion } from 'motion/react'
 import type { ComponentPropsWithoutRef } from 'react'
 
@@ -39,15 +39,21 @@ export function SelectContent({ children, className, ...props }: SelectContentPr
         <motion.div
           animate={{ opacity: 1, y: 0 }}
           className={cls(
-            'z-[90] max-h-72 min-w-[var(--radix-select-trigger-width)] overflow-hidden border border-app-border bg-app-surface-raised text-app-text shadow-2xl',
+            'z-[90] min-w-[var(--radix-select-trigger-width)] overflow-hidden border border-app-border bg-app-surface-raised text-app-text shadow-2xl',
             className,
           )}
           initial={reduceMotion ? false : { opacity: 0, y: -4 }}
           transition={{ duration: reduceMotion ? 0 : 0.12, ease: 'easeOut' }}
         >
-          <SelectPrimitive.Viewport className="p-1">
+          <SelectPrimitive.ScrollUpButton className="flex h-6 cursor-default items-center justify-center border-b border-app-border bg-app-surface-raised text-app-muted">
+            <ChevronUp aria-hidden="true" className="size-4" strokeWidth={2.6} />
+          </SelectPrimitive.ScrollUpButton>
+          <SelectPrimitive.Viewport className="max-h-[min(18rem,var(--radix-select-content-available-height))] overflow-y-scroll overscroll-contain p-1 [scrollbar-gutter:stable] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-app-muted [&::-webkit-scrollbar-track]:bg-app-surface-raised">
             {children}
           </SelectPrimitive.Viewport>
+          <SelectPrimitive.ScrollDownButton className="flex h-6 cursor-default items-center justify-center border-t border-app-border bg-app-surface-raised text-app-muted">
+            <ChevronDown aria-hidden="true" className="size-4" strokeWidth={2.6} />
+          </SelectPrimitive.ScrollDownButton>
         </motion.div>
       </SelectPrimitive.Content>
     </SelectPrimitive.Portal>

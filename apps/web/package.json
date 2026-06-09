@@ -31,6 +31,7 @@
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.14.2",
     "classnames": "^2.5.1",
+    "cubing": "^0.63.3",
     "embla-carousel-react": "^8.6.0",
     "i18next": "^26.3.0",
     "lucide-react": "^1.17.0",

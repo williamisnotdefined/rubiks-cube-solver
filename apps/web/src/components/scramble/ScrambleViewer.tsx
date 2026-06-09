@@ -72,7 +72,7 @@ export function ScrambleViewer({
           <span aria-hidden="true" />
         )}
       </div>
-      <p className="mx-auto max-h-16 max-w-5xl overflow-auto whitespace-pre-wrap font-mono text-base font-black leading-relaxed tracking-[0.08em] text-app-text sm:max-h-20 sm:text-lg">
+      <p className="mx-auto max-w-5xl whitespace-pre-wrap font-mono text-base font-black leading-relaxed tracking-[0.08em] text-app-text sm:text-lg">
         {scramble}
       </p>
     </section>

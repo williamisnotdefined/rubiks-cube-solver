@@ -1079,6 +1079,7 @@
       "copy": "复制打乱",
       "copyFailed": "无法复制打乱",
       "event": "项目",
+      "generating": "正在生成打乱...",
       "next": "下一组打乱",
       "previous": "上一组打乱",
       "title": "打乱"

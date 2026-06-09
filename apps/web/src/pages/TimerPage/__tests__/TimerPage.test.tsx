@@ -2,23 +2,47 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ToastProvider } from '@components/Toast'
+import { scrambleEventById, scrambleEvents } from '@core/scramble/catalog'
 import { TimerPage } from '../TimerPage'
 import { useTimerSettingsStore } from '../timerSettingsStore'
 import { useTimerStore } from '../timerStore'
+
+const highQualityMocks = vi.hoisted(() => ({
+  generateHighQualityScrambleForEvent: vi.fn(),
+}))
+
+vi.mock('@core/scramble/highQuality', () => ({
+  generateHighQualityScrambleForEvent: highQualityMocks.generateHighQualityScrambleForEvent,
+}))
 
 describe('TimerPage', () => {
   beforeEach(() => {
     localStorage.clear()
     vi.restoreAllMocks()
+    highQualityMocks.generateHighQualityScrambleForEvent.mockReset()
+    let scrambleCount = 0
+    highQualityMocks.generateHighQualityScrambleForEvent.mockImplementation(async (eventId: string) => {
+      const event = scrambleEventById(eventId)
+      scrambleCount += 1
+
+      return {
+        event,
+        scramble: event.id === '333mbld'
+          ? Array.from({ length: event.defaultLength }, (_, index) => `${index + 1}. MBLD scramble ${index + 1}`).join('\n')
+          : `${event.label} high-quality scramble ${scrambleCount}`,
+      }
+    })
     useTimerStore.getState().resetTimerStore()
     useTimerSettingsStore.getState().resetTimerSettings()
     useTimerSettingsStore.getState().setHoldToStartMs(0)
   })
 
-  it('renders the timer workspace with a scramble and empty solve list', () => {
+  it('renders the timer workspace with a scramble and empty solve list', async () => {
     renderTimerPage()
 
     expect(screen.getByRole('timer', { name: 'Speedsolve timer' })).toBeInTheDocument()
+    expect(screen.getByText('Generating scramble...')).toBeInTheDocument()
+    await waitForScrambleReady()
     expect(screen.getAllByText(/3x3x3/).length).toBeGreaterThan(0)
     expect(screen.getByText('No solves yet')).toBeInTheDocument()
     expect(screen.queryByText('Default Session')).not.toBeInTheDocument()
@@ -44,6 +68,7 @@ describe('TimerPage', () => {
 
   it('records a solve with the keyboard timer', async () => {
     renderTimerPage()
+    await waitForScrambleReady()
 
     fireEvent.keyDown(window, { code: 'Space', key: ' ' })
     fireEvent.keyUp(window, { code: 'Space', key: ' ' })
@@ -59,6 +84,7 @@ describe('TimerPage', () => {
   it('updates the latest solve penalty between +2, DNF, and OK', async () => {
     const user = userEvent.setup()
     renderTimerPage()
+    await waitForScrambleReady()
 
     fireEvent.keyDown(window, { code: 'Space', key: ' ' })
     fireEvent.keyUp(window, { code: 'Space', key: ' ' })
@@ -82,10 +108,12 @@ describe('TimerPage', () => {
   it('switches WCA events and stores the selected event on the solve', async () => {
     const user = userEvent.setup()
     renderTimerPage()
+    await waitForScrambleReady()
 
     await chooseSelectOption(user, 'Event', 'Pyraminx')
 
-    await waitFor(() => expect(screen.getAllByText(/Pyraminx/).length).toBeGreaterThan(0))
+    await waitForScrambleReady()
+    expect(screen.getAllByText(/Pyraminx/).length).toBeGreaterThan(0)
 
     fireEvent.keyDown(window, { code: 'Space', key: ' ' })
     fireEvent.keyUp(window, { code: 'Space', key: ' ' })
@@ -101,6 +129,7 @@ describe('TimerPage', () => {
   it('renders multiline MBLD scrambles', async () => {
     const user = userEvent.setup()
     renderTimerPage()
+    await waitForScrambleReady()
 
     await chooseSelectOption(user, 'Event', '3x3 MBLD')
 
@@ -117,6 +146,7 @@ describe('TimerPage', () => {
       value: { writeText },
     })
     renderTimerPage()
+    await waitForScrambleReady()
 
     expect(screen.getByRole('button', { name: 'Previous scramble' })).toBeDisabled()
     await user.click(screen.getByRole('button', { name: 'Copy scramble' }))
@@ -125,6 +155,7 @@ describe('TimerPage', () => {
     expect(screen.getByText('Copied')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Next scramble' }))
+    await waitForScrambleReady()
     expect(screen.getByRole('button', { name: 'Copy scramble' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Previous scramble' })).toBeEnabled()
 
@@ -139,6 +170,7 @@ describe('TimerPage', () => {
       value: { writeText: vi.fn().mockRejectedValue(new Error('denied')) },
     })
     renderTimerPage()
+    await waitForScrambleReady()
 
     await user.click(screen.getByRole('button', { name: 'Copy scramble' }))
 
@@ -149,6 +181,7 @@ describe('TimerPage', () => {
   it('toggles inspection and millisecond display settings', async () => {
     const user = userEvent.setup()
     renderTimerPage()
+    await waitForScrambleReady()
 
     await user.click(screen.getByRole('switch', { name: 'Inspection' }))
     expect(screen.getByText('WCA inspection')).toBeInTheDocument()
@@ -169,6 +202,7 @@ describe('TimerPage', () => {
   it('deletes recorded solves from the table', async () => {
     const user = userEvent.setup()
     renderTimerPage()
+    await waitForScrambleReady()
 
     fireEvent.keyDown(window, { code: 'Space', key: ' ' })
     fireEvent.keyUp(window, { code: 'Space', key: ' ' })
@@ -179,6 +213,21 @@ describe('TimerPage', () => {
     await user.click(screen.getByRole('button', { name: 'Delete' }))
 
     await waitFor(() => expect(screen.getByText('No solves yet')).toBeInTheDocument())
+  })
+
+  it('lists every WCA event in a scrollable event selector', async () => {
+    const user = userEvent.setup()
+    renderTimerPage()
+    await waitForScrambleReady()
+
+    await user.click(screen.getByRole('combobox', { name: 'Event' }))
+
+    const selectViewport = screen.getByRole('listbox').querySelector('[data-radix-select-viewport]')
+
+    expect(selectViewport).toHaveClass('overflow-y-scroll')
+    for (const event of scrambleEvents) {
+      expect(screen.getByRole('option', { name: event.label })).toBeInTheDocument()
+    }
   })
 })
 
@@ -195,4 +244,8 @@ type TestUser = ReturnType<typeof userEvent.setup>
 async function chooseSelectOption(user: TestUser, label: string, optionName: string) {
   await user.click(screen.getByRole('combobox', { name: label }))
   await user.click(screen.getByRole('option', { name: optionName }))
+}
+
+async function waitForScrambleReady() {
+  await waitFor(() => expect(screen.queryByText('Generating scramble...')).not.toBeInTheDocument())
 }
