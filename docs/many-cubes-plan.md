@@ -62,7 +62,7 @@ Current 3x3-specific anchors:
 - `crates/cube-engine/src/search/heuristics.rs` is typed around `Cube` and `CubieState`.
 - `crates/cube-engine/src/solver/strategy.rs` exposes 3x3 strategy metadata.
 - `crates/api/src/solve.rs` receives notation or scan input and builds a 3x3 `Cube`.
-- `apps/web/src/pages/SolvePage/CubeStage.tsx` renders `<rubiks-cube cube-type="Three">`.
+- `web/src/pages/SolvePage/CubeStage.tsx` renders `<rubiks-cube cube-type="Three">`.
 - `ml/data.py` and `crates/cube-engine/src/search/hybrid/encoding.rs` encode 3x3 `cp/co/ep/eo` as 40 features.
 
 This is not a weakness. The current 3x3 path should be treated as the first puzzle implementation, not as a generic engine.
@@ -447,8 +447,8 @@ Initial UI behavior:
 Visualization adapters:
 
 ```txt
-cube3: current @houstonp/rubiks-cube adapter
-cube2: try @houstonp/rubiks-cube if cube-type Two is supported, otherwise fallback
+cube3: current @rubiks-cube-solver/rubiks-cube adapter
+cube2: try @rubiks-cube-solver/rubiks-cube if cube-type Two is supported, otherwise fallback
 nxn: future sticker/net or Three.js adapter
 pyraminx: future puzzle-specific adapter
 clock: future 2D dial adapter

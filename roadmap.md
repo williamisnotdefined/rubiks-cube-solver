@@ -129,7 +129,7 @@ Objetivo: entregar o fluxo principal do produto no navegador.
 
 Entregas:
 
-- Aplicação React/TypeScript buildável em `apps/web`.
+- Aplicação React/TypeScript buildável em `web`.
 - Cliente HTTP API isolado de componentes React.
 - Input `Scramble` somente; facelets/Kociemba não aparecem na interface.
 - Botão de solve com limites visíveis.

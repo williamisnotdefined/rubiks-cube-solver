@@ -16,7 +16,7 @@ Build a visualization layer that renders cube state and controls playback withou
 - `ai/rules/frontend-styling-rules.md`
 - `ai/architecture/project-architecture.md`
 - `ai/architecture/frontend-visualization.md`
-- `ai/architecture/houstonp-rubiks-cube.md`
+- `ai/architecture/rubiks-cube-visualization-package.md`
 - `ai/glossary/cube-terms.md`
 
 ## Workflow
@@ -24,7 +24,7 @@ Build a visualization layer that renders cube state and controls playback withou
 - Confirm the task belongs to the frontend phase before adding frontend dependencies.
 - Keep solver behavior behind the Rust HTTP API.
 - Keep client-facing solve flows notation-only; do not add facelet or Kociemba UI inputs.
-- Keep API request/response code and React Query hooks in `apps/web/src/api`, with React components focused on interaction and rendering.
+- Keep API request/response code and React Query hooks in `web/src/api`, with React components focused on interaction and rendering.
 - Keep API load state, solve result state, form input state, and visualization playback state separately owned.
 - Extract React components only when reuse, naming clarity, or state boundaries justify the new file.
 - Keep `App.tsx` thin and move page composition, page-specific components, hooks, and helpers under the owning page folder as UI grows.
@@ -34,10 +34,10 @@ Build a visualization layer that renders cube state and controls playback withou
 - Use the existing React Hook Form/Zod, Zustand, TanStack Table/Virtual, and Motion patterns instead of adding new frontend libraries.
 - Use focused hooks for imperative custom-element synchronization instead of broad page effects.
 - Use the current Tailwind CSS v4 stack and `classnames` conventions for visual work.
-- Keep reusable context-independent helpers under `apps/web/src/core` and import them directly.
+- Keep reusable context-independent helpers under `web/src/core` and import them directly.
 - Add one Storybook story per component when component surfaces are introduced or changed.
 - Evaluate visualization libraries as adapters, not engine replacements.
-- If using `@houstonp/rubiks-cube`, verify headless move-option behavior before relying on it.
+- If using `@rubiks-cube-solver/rubiks-cube`, verify headless move-option behavior before relying on it.
 - Ensure desktop and mobile rendering are considered when UI exists, with the cube no larger than 350px by 350px.
 
 ## Expected Output

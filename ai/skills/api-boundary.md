@@ -1,6 +1,6 @@
 # API Boundary
 
-Use this skill when adding or changing `crates/api`, Axum routes, request or response structs, API validation, CORS, generated solver loading, solve-status contracts, or `apps/web/src/api` client behavior.
+Use this skill when adding or changing `crates/api`, Axum routes, request or response structs, API validation, CORS, generated solver loading, solve-status contracts, or `web/src/api` client behavior.
 
 ## Goal
 
@@ -22,7 +22,7 @@ Keep the HTTP API as a thin, typed boundary around the Rust solver engine while 
 - Keep handlers focused on HTTP extraction, validation, solver dispatch, and response mapping.
 - Keep search, cube validation, notation semantics, heuristics, and pruning logic in `cube-engine`.
 - Preserve notation-only solve requests; do not add browser-facing facelet or Kociemba input modes.
-- Update `apps/web/src/api` request functions, React Query hooks, and normalization when API response fields, status strings, or error kinds change.
+- Update `web/src/api` request functions, React Query hooks, and normalization when API response fields, status strings, or error kinds change.
 - Add or update API tests around observable contract behavior, especially error responses consumed by the frontend.
 
 ## Expected Output
@@ -38,5 +38,5 @@ Keep the HTTP API as a thin, typed boundary around the Rust solver engine while 
 
 - Run `npm run api:test` or `cargo test -p rubiks-cube-solver-api` for API changes.
 - Run `cargo test -p cube-engine` when API behavior depends on engine changes.
-- Run `npm run build` and `npm run lint -w @rubiks-cube-solver/web` when `apps/web/src/api` changes.
+- Run `npm run build` and `npm run lint -w @rubiks-cube-solver/web` when `web/src/api` changes.
 - Run `npm run ai:check` after AI knowledge changes.

@@ -494,9 +494,9 @@ OBB migration requires:
 | `vision_ml/tile_yolo_dataset.py` | Converts COCO/LabelMe tile labels to YOLO format. |
 | `vision_ml/scan_export_tile_yolo_dataset.py` | Converts reviewed scanner exports into YOLO sticker labels. |
 | `vision_ml/evaluate_scan_sessions.py` | Measures scanner export quality and wrong accepts. |
-| `apps/web/src/pages/SolvePage/ScanCameraFrame.tsx` | Draws live detection boxes in the scanner UI. |
-| `apps/web/src/pages/SolvePage/scanTileDetections.ts` | Filters and assigns tile detections into a 3x3 face. |
-| `apps/web/src/pages/SolvePage/scanTemporalConsensus.ts` | Applies temporal consensus gates before auto-capture. |
+| `web/src/pages/SolvePage/ScanCameraFrame.tsx` | Draws live detection boxes in the scanner UI. |
+| `web/src/pages/SolvePage/scanTileDetections.ts` | Filters and assigns tile detections into a 3x3 face. |
+| `web/src/pages/SolvePage/scanTemporalConsensus.ts` | Applies temporal consensus gates before auto-capture. |
 | `package.json` | Contains scanner, dataset, test, and tunnel scripts. |
 
 ## Final Rule

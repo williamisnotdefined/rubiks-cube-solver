@@ -6,7 +6,7 @@ The target is a hybrid Rubik's Cube solver with a Rust engine, search algorithms
 
 - `crates/cube-engine`: Rust crate for cube representation, moves, notation, scramble handling, search, and heuristics.
 - `crates/api`: Axum HTTP API around the Rust engine and generated pruning-table artifacts.
-- `apps/web`: Vite React app for notation-only solve requests, cube visualization, and playback-oriented UI.
+- `web`: Vite React app for notation-only solve requests, cube visualization, and playback-oriented UI.
 - `datasets`: generated and fixture data for solver/ML experiments.
 - `ml`: Python training and smoke-test code for learned value baselines.
 - `ai`: canonical AI knowledge base and route generation system.

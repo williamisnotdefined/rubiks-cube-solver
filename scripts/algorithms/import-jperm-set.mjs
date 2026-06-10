@@ -182,7 +182,7 @@ function importSet(set) {
   const html = renderPage(url)
   const document = new JSDOM(html).window.document
   const rows = [...document.querySelectorAll('#main-algTable-container .tbody > .tr')]
-  const outputDir = join(repoRoot, 'apps/web/public/algorithms', set.imageDir)
+  const outputDir = join(repoRoot, 'web/public/algorithms', set.imageDir)
   const fileSlugCounts = new Map()
   const cases = rows.map((row, index) => extractCase(row, set, outputDir, index, fileSlugCounts)).filter((item) => item !== undefined)
 
@@ -242,7 +242,7 @@ function extractCase(row, set, outputDir, index, fileSlugCounts) {
 }
 
 function writeSetFile(set, cases) {
-  const tsPath = join(repoRoot, 'apps/web/src/pages/AlgorithmsPage/sets', set.tsPath)
+  const tsPath = join(repoRoot, 'web/src/pages/AlgorithmsPage/sets', set.tsPath)
   mkdirSync(dirname(tsPath), { recursive: true })
   const lines = [
     "import type { AlgorithmCase } from '../types'",

@@ -1,0 +1,58 @@
+{
+    "name": "@rubiks-cube-solver/rubiks-cube",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "description": "Rubik's Cube visualization package for Rubik's Cube Solver",
+    "license": "MIT",
+    "keywords": [
+        "rubik's cube",
+        "twisty puzzle",
+        "3x3",
+        "renderer",
+        "threejs"
+    ],
+    "exports": {
+        "./view": {
+            "types": "./types/webComponent/index.d.ts",
+            "default": "./src/webComponent/index.js"
+        },
+        "./player": {
+            "types": "./types/player/index.d.ts",
+            "default": "./src/player/index.js"
+        },
+        "./three": {
+            "types": "./types/rubiksCube3D/index.d.ts",
+            "default": "./src/rubiksCube3D/index.js"
+        },
+        "./controller": {
+            "types": "./types/rubiksCube/index.d.ts",
+            "default": "./src/rubiksCube/index.js"
+        },
+        "./core": {
+            "types": "./types/core/index.d.ts",
+            "default": "./src/core/index.js"
+        },
+        "./state": {
+            "types": "./types/state/index.d.ts",
+            "default": "./src/state/index.js"
+        }
+    },
+    "scripts": {
+        "playground": "vite --host 0.0.0.0 ./playground",
+        "build:types": "tsc",
+        "watch:types": "tsc --watch",
+        "test": "vitest run --config vitest.config.ts --passWithNoTests"
+    },
+    "dependencies": {
+        "gsap": "^3.14.2",
+        "three": "^0.182.0"
+    },
+    "devDependencies": {
+        "@types/three": "^0.182.0",
+        "jsdom": "^29.1.1",
+        "typescript": "^5.8.0",
+        "vite": "^7.0.0",
+        "vitest": "^4.1.7"
+    }
+}

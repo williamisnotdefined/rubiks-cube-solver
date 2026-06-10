@@ -10,11 +10,11 @@ Rules for the Axum HTTP API and the frontend API contract.
 - Keep client-facing solve requests notation-only through `/solve-notation`.
 - Validate API safety limits before parsing notation or invoking search.
 - Use named constants for public API caps such as maximum depth, maximum nodes, notation bytes, and JSON body bytes.
-- Preserve stable response status strings, error kinds, and metadata fields because `apps/web/src/api` normalizes them.
+- Preserve stable response status strings, error kinds, and metadata fields because `web/src/api` normalizes them.
 - Verify returned solutions by replay before reporting success.
 - Keep generated pruning-table availability and corruption errors explicit in API responses.
 - Keep CORS origins narrow to known local web development and preview origins unless deployment requirements change.
-- Update `apps/web/src/api` types and normalization when API response fields or status values change.
+- Update `web/src/api` types and normalization when API response fields or status values change.
 
 ## Never
 
@@ -23,7 +23,7 @@ Rules for the Axum HTTP API and the frontend API contract.
 - Do not let handlers panic or leak internal errors when a stable error response can represent the failure.
 - Do not accept unbounded request depth, node count, notation length, or JSON body size.
 - Do not add broad authentication, tenants, tokens, rate-limit frameworks, or OpenAPI layers without a current product requirement.
-- Do not make the frontend duplicate API status parsing or solver response normalization outside `apps/web/src/api`.
+- Do not make the frontend duplicate API status parsing or solver response normalization outside `web/src/api`.
 
 ## Verification
 
