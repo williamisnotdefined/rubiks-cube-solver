@@ -248,7 +248,7 @@ The frontend renders and controls solver interaction. It must not become the sou
 - TypeScript
 - React
 - Vite
-- React Router 7 with `HashRouter` for `#/solve` and `#/timer` routes, with page-level route code-splitting through React `lazy`/`Suspense`
+- React Router 7 with `BrowserRouter` for clean `/solve` and `/timer` routes, with page-level route code-splitting through React `lazy`/`Suspense`
 - `@tanstack/react-query` for API health, strategy metadata, and solve mutation state
 - `@houstonp/rubiks-cube` as a visualization custom element
 - Tailwind CSS v4 through `@tailwindcss/vite` and the single `apps/web/src/index.css` entrypoint for Tailwind import, resets, and semantic theme/color variables
@@ -294,7 +294,7 @@ The solve form defaults to an empty scramble so the visualization starts solved;
 ## UI Composition
 
 - `App.tsx` should stay thin and delegate the product screen to page-level modules.
-- Route-level code-splitting belongs in `App.tsx`; keep page-specific lazy chunks behind the current `HashRouter` routes.
+- Route-level code-splitting belongs in `App.tsx`; keep page-specific lazy chunks behind the current `BrowserRouter` routes.
 - Route paths use English stable slugs such as `/solve`, `/timer`, and `/channels`; translate visible navigation labels and page copy with `react-i18next`, not localized URLs.
 - Supported locale files must preserve the same translation keys and interpolation placeholders as `en.json`.
 - Keep route or screen components readable as composition as the UI grows.

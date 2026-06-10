@@ -28,7 +28,7 @@ Build a visualization layer that renders cube state and controls playback withou
 - Keep API load state, solve result state, form input state, and visualization playback state separately owned.
 - Extract React components only when reuse, naming clarity, or state boundaries justify the new file.
 - Keep `App.tsx` thin and move page composition, page-specific components, hooks, and helpers under the owning page folder as UI grows.
-- Keep route behavior on the existing React Router `HashRouter` setup unless server fallback requirements change.
+- Keep route behavior on the existing React Router `BrowserRouter` setup and preserve server fallback for frontend routes.
 - Keep page-level lazy route chunks in `App.tsx` when route bundles grow.
 - Use existing shared primitives for Radix-backed dialogs, selects, switches, checkboxes, toasts, popovers, and tooltips.
 - Use the existing React Hook Form/Zod, Zustand, TanStack Table/Virtual, and Motion patterns instead of adding new frontend libraries.

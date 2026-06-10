@@ -38,7 +38,7 @@ Environment notes for this run:
 
 - Date: 2026-06-05
 - Status: Passed for the frontend rollout scope; this section does not replace the full `npm run product:gate` result above.
-- Scope: React Router `HashRouter`, Radix-backed primitives, React Hook Form/Zod solve controls, Zustand scoped UI stores, TanStack Table/Virtual timer table, Motion transitions, route code-splitting, timer E2E coverage, responsive/reduced-motion smoke coverage, and updated AI route guidance.
+- Scope: React Router `BrowserRouter`, Radix-backed primitives, React Hook Form/Zod solve controls, Zustand scoped UI stores, TanStack Table/Virtual timer table, Motion transitions, route code-splitting, timer E2E coverage, responsive/reduced-motion smoke coverage, and updated AI route guidance.
 
 | Command | Latest outcome | Evidence and notes |
 | --- | --- | --- |
