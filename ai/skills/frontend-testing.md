@@ -1,6 +1,6 @@
 # Frontend Testing
 
-Use this skill when adding or changing `apps/web` Vitest tests, Testing Library tests, React Query hook tests, coverage configuration, or Storybook stories.
+Use this skill when adding or changing `web` Vitest tests, Testing Library tests, React Query hook tests, coverage configuration, or Storybook stories.
 
 ## Goal
 
@@ -20,9 +20,9 @@ Protect observable frontend behavior with Vitest, Testing Library, Storybook, an
 - Use Testing Library accessibility queries for React components.
 - Use Playwright accessibility queries for E2E flows.
 - Use `tests/e2e/select-helpers.ts` for Radix Select controls instead of native `selectOption()` assumptions.
-- Use shared web test helpers under `apps/web/src/test` for React Query providers and fetch mocks.
+- Use shared web test helpers under `web/src/test` for React Query providers and fetch mocks.
 - Test API request functions and hooks with mocked success and API-error responses.
-- Keep core helper tests under `apps/web/src/core/<category>/__tests__`.
+- Keep core helper tests under `web/src/core/<category>/__tests__`.
 - Add or update one Storybook story per component, using controls for prop variation.
 - Keep coverage thresholds at 95% or higher when changing coverage configuration.
 

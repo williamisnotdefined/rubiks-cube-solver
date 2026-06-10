@@ -1,5 +1,5 @@
 ---
-applyTo: "crates/api/**/*.{rs,toml},apps/web/src/api/**/*.{ts,tsx},roadmap.md,PRODUCT_VALIDATION.md"
+applyTo: "crates/api/**/*.{rs,toml},web/src/api/**/*.{ts,tsx},roadmap.md,PRODUCT_VALIDATION.md"
 ---
 
 Generated from `ai/registry.json`. Do not edit manually.
@@ -23,7 +23,7 @@ This file is compiled from canonical AI knowledge files. Edit canonical files un
 
 # API Boundary
 
-Use this skill when adding or changing `crates/api`, Axum routes, request or response structs, API validation, CORS, generated solver loading, solve-status contracts, or `apps/web/src/api` client behavior.
+Use this skill when adding or changing `crates/api`, Axum routes, request or response structs, API validation, CORS, generated solver loading, solve-status contracts, or `web/src/api` client behavior.
 
 ## Goal
 
@@ -45,7 +45,7 @@ Keep the HTTP API as a thin, typed boundary around the Rust solver engine while 
 - Keep handlers focused on HTTP extraction, validation, solver dispatch, and response mapping.
 - Keep search, cube validation, notation semantics, heuristics, and pruning logic in `cube-engine`.
 - Preserve notation-only solve requests; do not add browser-facing facelet or Kociemba input modes.
-- Update `apps/web/src/api` request functions, React Query hooks, and normalization when API response fields, status strings, or error kinds change.
+- Update `web/src/api` request functions, React Query hooks, and normalization when API response fields, status strings, or error kinds change.
 - Add or update API tests around observable contract behavior, especially error responses consumed by the frontend.
 
 ## Expected Output
@@ -61,7 +61,7 @@ Keep the HTTP API as a thin, typed boundary around the Rust solver engine while 
 
 - Run `npm run api:test` or `cargo test -p rubiks-cube-solver-api` for API changes.
 - Run `cargo test -p cube-engine` when API behavior depends on engine changes.
-- Run `npm run build` and `npm run lint -w @rubiks-cube-solver/web` when `apps/web/src/api` changes.
+- Run `npm run build` and `npm run lint -w @rubiks-cube-solver/web` when `web/src/api` changes.
 - Run `npm run ai:check` after AI knowledge changes.
 
 # Referenced Context
@@ -80,11 +80,11 @@ Rules for the Axum HTTP API and the frontend API contract.
 - Keep client-facing solve requests notation-only through `/solve-notation`.
 - Validate API safety limits before parsing notation or invoking search.
 - Use named constants for public API caps such as maximum depth, maximum nodes, notation bytes, and JSON body bytes.
-- Preserve stable response status strings, error kinds, and metadata fields because `apps/web/src/api` normalizes them.
+- Preserve stable response status strings, error kinds, and metadata fields because `web/src/api` normalizes them.
 - Verify returned solutions by replay before reporting success.
 - Keep generated pruning-table availability and corruption errors explicit in API responses.
 - Keep CORS origins narrow to known local web development and preview origins unless deployment requirements change.
-- Update `apps/web/src/api` types and normalization when API response fields or status values change.
+- Update `web/src/api` types and normalization when API response fields or status values change.
 
 ## Never
 
@@ -93,7 +93,7 @@ Rules for the Axum HTTP API and the frontend API contract.
 - Do not let handlers panic or leak internal errors when a stable error response can represent the failure.
 - Do not accept unbounded request depth, node count, notation length, or JSON body size.
 - Do not add broad authentication, tenants, tokens, rate-limit frameworks, or OpenAPI layers without a current product requirement.
-- Do not make the frontend duplicate API status parsing or solver response normalization outside `apps/web/src/api`.
+- Do not make the frontend duplicate API status parsing or solver response normalization outside `web/src/api`.
 
 ## Verification
 
@@ -116,7 +116,7 @@ Rules for the web visualization and frontend-to-API boundary.
 - Keep playback and visualization state separate from solver state.
 - Evaluate visualization-only libraries by whether they preserve this boundary.
 - Keep the rendered 3x3 cube no larger than 350px by 350px in the web UI.
-- Keep API request and response normalization in `apps/web/src/api`, not inline in React components.
+- Keep API request and response normalization in `web/src/api`, not inline in React components.
 - Keep request functions free of React imports; React Query hooks are the UI-facing API boundary.
 - Use React Query for API health, strategy metadata, solve mutations, and future server-state operations.
 - Keep server/API load state, solve result state, form input state, and visualization playback state separately owned.
@@ -125,23 +125,23 @@ Rules for the web visualization and frontend-to-API boundary.
 - Keep one-off UI inline when extraction would add indirection without reuse or state-boundary value.
 - Keep route or screen files readable as composition; `App.tsx` should stay thin as the UI grows.
 - Use React Router through the current `BrowserRouter` route setup; keep server/static hosting configured to fall back to `index.html` for frontend routes.
-- Keep frontend route paths and URL segments in English stable slugs; translate visible menu labels, headings, and copy through `react-i18next` locale files under `apps/web/src/i18n/locales`.
+- Keep frontend route paths and URL segments in English stable slugs; translate visible menu labels, headings, and copy through `react-i18next` locale files under `web/src/i18n/locales`.
 - Keep supported locale resources in key and interpolation-placeholder parity across `en`, `es`, `pt-BR`, `it`, `de`, `fr`, `ru`, `zh` for Simplified Chinese, and `ja`.
 - Keep page-level route code-splitting in `App.tsx` with React `lazy`/`Suspense` when route bundles grow.
 - Keep page-specific components, hooks, and helpers under the owning page folder until reused elsewhere.
-- Keep shared reusable components under `apps/web/src/components` only after there is a real shared consumer.
+- Keep shared reusable components under `web/src/components` only after there is a real shared consumer.
 - Use existing shared Radix-backed primitives for dialogs, selects, switches, checkboxes, toasts, popovers, and tooltips instead of importing Radix directly in feature code.
 - Prefer explicit props and children for reusable layout wrappers.
 - Use the existing React Hook Form and Zod setup for solve-form schema validation and submission shaping; keep cube semantics and notation validity in Rust/API code.
 - Use existing Zustand stores only for scoped client state that is shared beyond one component, such as timer sessions/settings, solve settings, theme, and toasts.
-- Use Tailwind utility classes for styling; keep Tailwind import, resets, and semantic theme/color variables in the single `apps/web/src/index.css` entrypoint.
+- Use Tailwind utility classes for styling; keep Tailwind import, resets, and semantic theme/color variables in the single `web/src/index.css` entrypoint.
 
 ## Never
 
 - Do not implement solver algorithms in the frontend.
 - Do not make a Three.js/web-component sticker state the canonical engine state.
 - Do not expose facelets, Kociemba strings, or facelet input modes in the UI.
-- Do not add or import `.css` files outside the single Tailwind/theme entrypoint `apps/web/src/index.css`.
+- Do not add or import `.css` files outside the single Tailwind/theme entrypoint `web/src/index.css`.
 - Do not make browser clients submit facelets to the API; client-facing solve requests use move notation only.
 - Do not copy API data into broad mutable stores just to pass it through the UI.
 - Do not add new frontend state, form, routing, animation, styling, or component dependencies while the existing stack can satisfy the current need.
@@ -154,7 +154,7 @@ Rules for the web visualization and frontend-to-API boundary.
 
 ## External Library Note
 
-- `@houstonp/rubiks-cube` is acceptable as a visualization or comparison tool, not as the Rust solver core.
+- `@rubiks-cube-solver/rubiks-cube` is acceptable as a visualization or comparison tool, not as the Rust solver core.
 
 ## Verification
 
@@ -166,12 +166,12 @@ Rules for the web visualization and frontend-to-API boundary.
 
 # Frontend API Hook Rules
 
-Rules for React Query API operations in `apps/web/src/api`.
+Rules for React Query API operations in `web/src/api`.
 
 ## Always
 
-- Group frontend API code by domain under `apps/web/src/api`.
-- Keep shared HTTP details in `apps/web/src/api/client.ts`, including base URL resolution, JSON headers, request helpers, and transport error mapping.
+- Group frontend API code by domain under `web/src/api`.
+- Keep shared HTTP details in `web/src/api/client.ts`, including base URL resolution, JSON headers, request helpers, and transport error mapping.
 - Split every operation into a raw request function, a React Query hook, and an operation `index.ts` when the operation is consumed by UI.
 - Keep request functions free of React imports.
 - Use `useQuery` for cached server state such as API health and strategy metadata.
@@ -189,7 +189,7 @@ Rules for React Query API operations in `apps/web/src/api`.
 - Do not call raw request functions from React components.
 - Do not expose request functions from barrels consumed by UI components.
 - Do not import query keys into components.
-- Do not call `fetch` directly outside `apps/web/src/api/client.ts` unless the request is intentionally outside the app API contract.
+- Do not call `fetch` directly outside `web/src/api/client.ts` unless the request is intentionally outside the app API contract.
 - Do not duplicate API status parsing or solve response normalization inside React components.
 - Do not create fake fallback solve metadata for transport errors.
 - Do not use React Query as the canonical solver state; the Rust API and engine remain authoritative.
@@ -197,12 +197,12 @@ Rules for React Query API operations in `apps/web/src/api`.
 
 ## Layout
 
-- Request file: `apps/web/src/api/<domain>/<operation>/<operation>.ts`.
-- Hook file: `apps/web/src/api/<domain>/<operation>/use<Operation>.ts`.
-- Operation barrel: `apps/web/src/api/<domain>/<operation>/index.ts`.
-- Domain barrel: `apps/web/src/api/<domain>/index.ts`.
-- Query keys: `apps/web/src/api/<domain>/queryKeys.ts`.
-- Domain types: `apps/web/src/api/<domain>/types.ts` when multiple operations share API types.
+- Request file: `web/src/api/<domain>/<operation>/<operation>.ts`.
+- Hook file: `web/src/api/<domain>/<operation>/use<Operation>.ts`.
+- Operation barrel: `web/src/api/<domain>/<operation>/index.ts`.
+- Domain barrel: `web/src/api/<domain>/index.ts`.
+- Query keys: `web/src/api/<domain>/queryKeys.ts`.
+- Domain types: `web/src/api/<domain>/types.ts` when multiple operations share API types.
 
 ## Verification
 
@@ -228,13 +228,13 @@ Testing rules for this repository.
 - Test ML and dataset code with deterministic fixtures or fixed seeds.
 - Keep algorithm tests deterministic.
 - Run the narrowest test first, then the affected crate test command.
-- Use Vitest APIs such as `describe`, `it`, `expect`, `vi.fn`, and `vi.spyOn` for `apps/web` unit and component tests.
-- Keep `apps/web` tests in `__tests__/` folders beside the source area they cover.
+- Use Vitest APIs such as `describe`, `it`, `expect`, `vi.fn`, and `vi.spyOn` for `web` unit and component tests.
+- Keep `web` tests in `__tests__/` folders beside the source area they cover.
 - Use Testing Library for React component behavior and public accessibility queries.
 - Use Playwright accessibility queries for E2E flows and shared E2E helpers for non-native controls such as Radix Select.
-- Keep `apps/web/src/api` request and hook tests in `apps/web/src/api/__tests__`, using shared fetch and React Query helpers under `apps/web/src/test`.
-- Keep `apps/web/src/core` tests under `apps/web/src/core/<category>/__tests__/<name>.test.ts`.
-- Keep `apps/web` coverage thresholds at 95% or higher for statements, branches, functions, and lines when coverage is configured.
+- Keep `web/src/api` request and hook tests in `web/src/api/__tests__`, using shared fetch and React Query helpers under `web/src/test`.
+- Keep `web/src/core` tests under `web/src/core/<category>/__tests__/<name>.test.ts`.
+- Keep `web` coverage thresholds at 95% or higher for statements, branches, functions, and lines when coverage is configured.
 
 ## Never
 
@@ -244,8 +244,8 @@ Testing rules for this repository.
 - Do not add duplicate test helpers when nearby crate, web, API, or ML helpers already cover the setup.
 - Do not add tests for future surfaces that do not exist yet.
 - Do not use Jest-only APIs or `jest.mock` patterns in Vitest tests.
-- Do not place `apps/web` tests as loose sibling `*.test.ts(x)` files when a nearby `__tests__/` folder is available.
-- Do not add duplicate web test helpers when `apps/web/src/test/render.tsx` or `apps/web/src/test/api.ts` already covers the setup.
+- Do not place `web` tests as loose sibling `*.test.ts(x)` files when a nearby `__tests__/` folder is available.
+- Do not add duplicate web test helpers when `web/src/test/render.tsx` or `web/src/test/api.ts` already covers the setup.
 - Do not use Playwright `selectOption()` or `locator('option')` for Radix Select controls; use helpers under `tests/e2e/select-helpers.ts`.
 
 ## Verification
@@ -273,7 +273,7 @@ The target is a hybrid Rubik's Cube solver with a Rust engine, search algorithms
 
 - `crates/cube-engine`: Rust crate for cube representation, moves, notation, scramble handling, search, and heuristics.
 - `crates/api`: Axum HTTP API around the Rust engine and generated pruning-table artifacts.
-- `apps/web`: Vite React app for notation-only solve requests, cube visualization, and playback-oriented UI.
+- `web`: Vite React app for notation-only solve requests, cube visualization, and playback-oriented UI.
 - `datasets`: generated and fixture data for solver/ML experiments.
 - `ml`: Python training and smoke-test code for learned value baselines.
 - `ai`: canonical AI knowledge base and route generation system.
@@ -316,7 +316,7 @@ The target is a hybrid Rubik's Cube solver with a Rust engine, search algorithms
 
 - Requests use move notation, `maxDepth`, optional `maxNodes`, and optional `strategyId`.
 - Responses include `ok`, `status`, strategy metadata, generated-table status, effective limits, solution moves, explored nodes, replay verification, optional visualization state, and optional error metadata.
-- Status strings and error kinds are part of the frontend contract and should change only with matching updates in `apps/web/src/api`.
+- Status strings and error kinds are part of the frontend contract and should change only with matching updates in `web/src/api`.
 - The API may return visualization adapter state, but browser clients should not submit facelet or Kociemba payloads.
 
 ## Validation And Safety
@@ -328,7 +328,7 @@ The target is a hybrid Rubik's Cube solver with a Rust engine, search algorithms
 
 ## Frontend Boundary
 
-- `apps/web/src/api` owns base URL handling, health/strategy probing, solve request construction, response normalization, and API error fallback.
+- `web/src/api` owns base URL handling, health/strategy probing, solve request construction, response normalization, and API error fallback.
 - React components should consume normalized API-client results instead of parsing raw HTTP responses.
 - UI copy should describe scrambles, moves, limits, strategies, and solver statuses, not internal facelet/Kociemba representations.
 

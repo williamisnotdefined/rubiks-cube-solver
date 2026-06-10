@@ -15,7 +15,7 @@
 
 - Requests use move notation, `maxDepth`, optional `maxNodes`, and optional `strategyId`.
 - Responses include `ok`, `status`, strategy metadata, generated-table status, effective limits, solution moves, explored nodes, replay verification, optional visualization state, and optional error metadata.
-- Status strings and error kinds are part of the frontend contract and should change only with matching updates in `apps/web/src/api`.
+- Status strings and error kinds are part of the frontend contract and should change only with matching updates in `web/src/api`.
 - The API may return visualization adapter state, but browser clients should not submit facelet or Kociemba payloads.
 
 ## Validation And Safety
@@ -27,7 +27,7 @@
 
 ## Frontend Boundary
 
-- `apps/web/src/api` owns base URL handling, health/strategy probing, solve request construction, response normalization, and API error fallback.
+- `web/src/api` owns base URL handling, health/strategy probing, solve request construction, response normalization, and API error fallback.
 - React components should consume normalized API-client results instead of parsing raw HTTP responses.
 - UI copy should describe scrambles, moves, limits, strategies, and solver statuses, not internal facelet/Kociemba representations.
 

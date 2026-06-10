@@ -10,7 +10,7 @@ The project is method-agnostic. Generated two-phase search is a current classica
 
 - Rust workspace scaffolded.
 - `cube-engine` contains cubie state, moves, notation parsing, scrambles, validation, bounded IDA*, generated two-phase search, solver datasets, and quality reporting.
-- `apps/web` uses `react-i18next` locale resources with browser-language detection for English, Spanish, Brazilian Portuguese, Italian, German, French, Russian, Simplified Chinese, and Japanese.
+- `web` uses `react-i18next` locale resources with browser-language detection for English, Spanish, Brazilian Portuguese, Italian, German, French, Russian, Simplified Chinese, and Japanese.
 - AI knowledge routing is managed from canonical files under `ai/`.
 
 ## Quick Start
@@ -231,7 +231,7 @@ Defaults:
 
 - `RUBIKS_API_ADDR=127.0.0.1:8787`
 - `RUBIKS_PRUNING_TABLE_DIR=crates/cube-engine/pruning-tables`
-- `RUBIKS_WEB_DIST_DIR=apps/web/dist`
+- `RUBIKS_WEB_DIST_DIR=web/dist`
 
 API endpoints:
 
@@ -337,7 +337,7 @@ npm run pruning:native
 - If solving returns `unsupported_strategy`, use one of the IDs from `GET /strategies`.
 - If the client gets `invalid_notation` or `invalid_limits`, send shorter notation and keep limits within `maxDepth <= 30` and `maxNodes <= 25000000`.
 - If image scan fails, check `RUBIKS_VISION_URL` and restart both `npm run vision:dev` and the API.
-- If startup logs show web missing, ensure `npm run build` produced `apps/web/dist/index.html`.
+- If startup logs show web missing, ensure `npm run build` produced `web/dist/index.html`.
 
 ## API-Backed Web App
 
@@ -347,12 +347,12 @@ Current frontend stack:
 
 - React 19, TypeScript, Vite, and React Router 7 with `BrowserRouter` for clean `/solve` and `/timer` routes.
 - TanStack React Query for API health, puzzle metadata, strategy metadata, and solve mutation state.
-- Radix-backed shared primitives for dialogs, alert dialogs, selects, switches, checkboxes, toasts, popovers, and tooltips; feature code should use wrappers in `apps/web/src/components` instead of direct Radix imports.
+- Radix-backed shared primitives for dialogs, alert dialogs, selects, switches, checkboxes, toasts, popovers, and tooltips; feature code should use wrappers in `web/src/components` instead of direct Radix imports.
 - React Hook Form plus Zod for solve-form limit validation and submission shaping; Rust remains responsible for notation semantics, cube validity, and solver correctness.
 - Zustand for scoped client state such as timer sessions/settings, solve settings, theme, and toast notifications.
 - TanStack Table and TanStack Virtual for the timer solve table.
 - Motion for small overlay, select, toast, and error-boundary transitions with reduced-motion support.
-- Tailwind CSS v4 through the single `apps/web/src/index.css` entrypoint and semantic `app-*` tokens. The UI stays square: do not add `rounded-*` utilities.
+- Tailwind CSS v4 through the single `web/src/index.css` entrypoint and semantic `app-*` tokens. The UI stays square: do not add `rounded-*` utilities.
 - Storybook for component inspection and Playwright for product/timer E2E flows.
 
 Start the full development environment with one command:
@@ -429,7 +429,7 @@ Production defaults:
 - `RUBIKS_API_ADDR=127.0.0.1:3001` in `npm start`
 - `RUBIKS_VISION_PORT=8791` in `npm run vision:start`
 - `RUBIKS_VISION_URL=http://127.0.0.1:$RUBIKS_VISION_PORT` in `npm start` unless explicitly overridden
-- `RUBIKS_WEB_DIST_DIR=apps/web/dist`
+- `RUBIKS_WEB_DIST_DIR=web/dist`
 - The production web build uses the same origin for API calls when `VITE_RUBIKS_API_URL` is not set
 
 ## Dataset Generation
@@ -541,6 +541,6 @@ The report keeps the deterministic classical rows unchanged and appends `Hybrid 
 
 Missing artifacts report `artifact_unavailable`. PyTorch dependency-fallback artifacts report `artifact_dependency_fallback` instead of being treated as learned guidance. Malformed artifacts report `artifact_malformed`. A hybrid row is reported as `success` only when Rust replay verification proves the returned moves solve the fixture. The experiment does not claim optimality or a 20-move guarantee.
 
-## External Visualization Library
+## Local Visualization Package
 
-`@houstonp/rubiks-cube` is used for frontend visualization, but it is not the solver core. This project keeps the solver engine in Rust with cubie representation so search, heuristics, pattern databases, and the HTTP API can evolve without depending on a Three.js/web-component state model.
+`@rubiks-cube-solver/rubiks-cube` is used for frontend visualization, but it is not the solver core. This project keeps the solver engine in Rust with cubie representation so search, heuristics, pattern databases, and the HTTP API can evolve without depending on a Three.js/web-component state model.

@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Rubiks Cube Dev Playground</title>
+        <link rel="stylesheet" href="./styles.css" />
+        <script type="module" src="./main.js"></script>
+    </head>
+    <body>
+        <main class="shell">
+            <section class="stage" aria-label="Rubiks cube preview">
+                <div class="stage-header">
+                    <div>
+                        <p class="eyebrow">Local Source Playground</p>
+                        <h1>Rubiks Cube</h1>
+                    </div>
+                    <div class="status-pill" id="status">idle</div>
+                </div>
+                <div class="cube-frame" id="cube-frame"></div>
+            </section>
+
+            <aside class="panel" aria-label="Development controls">
+                <section class="card">
+                    <h2>Cube Settings</h2>
+                    <div class="grid two">
+                        <label>
+                            Cube type
+                            <select id="cube-type">
+                                <option>Two</option>
+                                <option selected>Three</option>
+                                <option>Four</option>
+                                <option>Five</option>
+                                <option>Six</option>
+                                <option>Seven</option>
+                            </select>
+                        </label>
+                        <label>
+                            Animation style
+                            <select id="animation-style">
+                                <option selected>linear</option>
+                                <option>exponential</option>
+                                <option>next</option>
+                                <option>fixed</option>
+                                <option>match</option>
+                            </select>
+                        </label>
+                        <label>
+                            Animation ms
+                            <input id="animation-speed-ms" type="number" min="0" step="10" value="100" />
+                        </label>
+                        <label>
+                            Piece gap
+                            <input id="piece-gap" type="number" min="1" max="1.1" step="0.01" value="1.04" />
+                        </label>
+                        <label>
+                            Camera radius
+                            <input id="camera-radius" type="number" min="4" step="0.1" value="5" />
+                        </label>
+                        <label>
+                            Camera FOV
+                            <input id="camera-field-of-view" type="number" min="30" max="100" step="1" value="75" />
+                        </label>
+                        <label>
+                            Camera speed ms
+                            <input id="camera-speed-ms" type="number" min="0" step="10" value="100" />
+                        </label>
+                        <label>
+                            Peek horizontal
+                            <input id="camera-peek-angle-horizontal" type="number" min="0" max="1" step="0.05" value="0.6" />
+                        </label>
+                        <label>
+                            Peek vertical
+                            <input id="camera-peek-angle-vertical" type="number" min="0" max="1" step="0.05" value="0.6" />
+                        </label>
+                        <label>
+                            Logo URL
+                            <input id="logo" type="url" placeholder="optional" />
+                        </label>
+                        <label>
+                            Max DPR
+                            <select id="max-device-pixel-ratio">
+                                <option selected>1</option>
+                                <option>1.5</option>
+                                <option>2</option>
+                            </select>
+                        </label>
+                        <label>
+                            Antialias
+                            <select id="antialias">
+                                <option selected>false</option>
+                                <option>true</option>
+                            </select>
+                        </label>
+                        <label>
+                            Profile CSS
+                            <select id="profile-css">
+                                <option value="off" selected>off</option>
+                                <option value="on">on</option>
+                            </select>
+                        </label>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h2>Actions</h2>
+                    <div class="button-grid" id="quick-actions"></div>
+                    <div class="button-row">
+                        <button id="reset" type="button">Reset</button>
+                        <button id="get-state" type="button">Get state</button>
+                        <button id="set-state" type="button">Set state</button>
+                        <button id="remount" type="button">Remount cube</button>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h2>Algorithm Runner</h2>
+                    <label>
+                        Algorithm / scramble
+                        <textarea id="algorithm" spellcheck="false">R U R' U'</textarea>
+                    </label>
+                    <div class="grid two compact">
+                        <label>
+                            Repeats
+                            <input id="repeat-count" type="number" min="1" step="1" value="1" />
+                        </label>
+                        <label>
+                            Stress loop
+                            <select id="stress-loop">
+                                <option value="off" selected>off</option>
+                                <option value="on">on</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="button-row">
+                        <button id="run-algorithm" type="button">Run</button>
+                        <button id="stop-stress" type="button">Stop stress</button>
+                    </div>
+                </section>
+
+                <section class="card metrics">
+                    <h2>Perf / State</h2>
+                    <label>
+                        FPS monitor
+                        <select id="fps-monitor">
+                            <option value="off" selected>off</option>
+                            <option value="on">on</option>
+                        </select>
+                    </label>
+                    <dl>
+                        <div><dt>FPS</dt><dd id="fps">0</dd></div>
+                        <div><dt>Moves</dt><dd id="move-count">0</dd></div>
+                        <div><dt>Last move</dt><dd id="last-move-ms">0 ms</dd></div>
+                        <div><dt>Last run</dt><dd id="last-run-ms">0 ms</dd></div>
+                        <div><dt>Renders/sec</dt><dd id="renders-per-second">0</dd></div>
+                        <div><dt>Total renders</dt><dd id="total-renders">0</dd></div>
+                    </dl>
+                    <label>
+                        State
+                        <textarea id="state-output" readonly spellcheck="false"></textarea>
+                    </label>
+                    <label>
+                        State input
+                        <textarea id="state-input" spellcheck="false" placeholder="Paste a kociemba state string"></textarea>
+                    </label>
+                </section>
+            </aside>
+        </main>
+    </body>
+</html>

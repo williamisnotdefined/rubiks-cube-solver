@@ -1,0 +1,49 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "allowImportingTsExtensions": true,
+    "module": "ESNext",
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": {
+      "@api/*": ["src/api/*"],
+      "@components/*": ["src/components/*"],
+      "@core/*": ["src/core/*"],
+      "@pages/*": ["src/pages/*"],
+      "@rubiks-cube-solver/rubiks-cube/controller": [
+        "../packages/rubiks-cube/types/rubiksCube/index.d.ts"
+      ],
+      "@rubiks-cube-solver/rubiks-cube/core": [
+        "../packages/rubiks-cube/types/core/index.d.ts"
+      ],
+      "@rubiks-cube-solver/rubiks-cube/player": [
+        "../packages/rubiks-cube/types/player/index.d.ts"
+      ],
+      "@rubiks-cube-solver/rubiks-cube/state": [
+        "../packages/rubiks-cube/types/state/index.d.ts"
+      ],
+      "@rubiks-cube-solver/rubiks-cube/three": [
+        "../packages/rubiks-cube/types/rubiksCube3D/index.d.ts"
+      ],
+      "@rubiks-cube-solver/rubiks-cube/view": [
+        "../packages/rubiks-cube/types/webComponent/index.d.ts"
+      ],
+      "@src/*": ["src/*"]
+    },
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  },
+  "include": ["src"]
+}

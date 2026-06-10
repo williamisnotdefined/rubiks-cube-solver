@@ -150,7 +150,7 @@
     },
     {
       "name": "api-boundary",
-      "description": "Use when adding or changing the Axum HTTP API, API validation, generated solver loading, solve-status contracts, or apps/web API client.",
+      "description": "Use when adding or changing the Axum HTTP API, API validation, generated solver loading, solve-status contracts, or web API client.",
       "canonicalPath": "ai/skills/api-boundary.md",
       "references": [
         "ai/rules/api-rules.md",
@@ -168,11 +168,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "crates/api/**/*.{rs,toml},apps/web/src/api/**/*.{ts,tsx},roadmap.md,PRODUCT_VALIDATION.md",
+          "globs": "crates/api/**/*.{rs,toml},web/src/api/**/*.{ts,tsx},roadmap.md,PRODUCT_VALIDATION.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "crates/api/**/*.{rs,toml},apps/web/src/api/**/*.{ts,tsx},roadmap.md,PRODUCT_VALIDATION.md"
+          "applyTo": "crates/api/**/*.{rs,toml},web/src/api/**/*.{ts,tsx},roadmap.md,PRODUCT_VALIDATION.md"
         }
       }
     },
@@ -189,7 +189,7 @@
         "ai/rules/frontend-styling-rules.md",
         "ai/architecture/project-architecture.md",
         "ai/architecture/frontend-visualization.md",
-        "ai/architecture/houstonp-rubiks-cube.md",
+        "ai/architecture/rubiks-cube-visualization-package.md",
         "ai/glossary/cube-terms.md"
       ],
       "routes": {
@@ -199,17 +199,17 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "apps/web/**/*.{ts,tsx,css},crates/api/**/*,roadmap.md",
+          "globs": "web/**/*.{ts,tsx,css},crates/api/**/*,roadmap.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "apps/web/**/*.{ts,tsx,css},crates/api/**/*,roadmap.md"
+          "applyTo": "web/**/*.{ts,tsx,css},crates/api/**/*,roadmap.md"
         }
       }
     },
     {
       "name": "frontend-componentization",
-      "description": "Use when adding, changing, extracting, or reusing React components, Storybook stories, page-level screens, large frontend files, or repeated UI in apps/web.",
+      "description": "Use when adding, changing, extracting, or reusing React components, Storybook stories, page-level screens, large frontend files, or repeated UI in web.",
       "canonicalPath": "ai/skills/frontend-componentization.md",
       "references": [
         "ai/rules/frontend-component-rules.md",
@@ -226,17 +226,17 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "apps/web/**/*.{ts,tsx,css},roadmap.md",
+          "globs": "web/**/*.{ts,tsx,css},roadmap.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "apps/web/**/*.{ts,tsx,css},roadmap.md"
+          "applyTo": "web/**/*.{ts,tsx,css},roadmap.md"
         }
       }
     },
     {
       "name": "frontend-state-management",
-      "description": "Use when adding or changing client-side state, custom hooks, visualization synchronization, or API load/result flow in apps/web.",
+      "description": "Use when adding or changing client-side state, custom hooks, visualization synchronization, or API load/result flow in web.",
       "canonicalPath": "ai/skills/frontend-state-management.md",
       "references": [
         "ai/rules/frontend-state-rules.md",
@@ -253,17 +253,17 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "apps/web/**/*.{ts,tsx},roadmap.md",
+          "globs": "web/**/*.{ts,tsx},roadmap.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "apps/web/**/*.{ts,tsx},roadmap.md"
+          "applyTo": "web/**/*.{ts,tsx},roadmap.md"
         }
       }
     },
     {
       "name": "frontend-form-validation",
-      "description": "Use when adding or changing solve controls, scramble inputs, frontend limit validation, or form behavior in apps/web.",
+      "description": "Use when adding or changing solve controls, scramble inputs, frontend limit validation, or form behavior in web.",
       "canonicalPath": "ai/skills/frontend-form-validation.md",
       "references": [
         "ai/rules/frontend-form-rules.md",
@@ -279,17 +279,17 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "apps/web/**/*.{ts,tsx},crates/api/**/*.{rs,toml},roadmap.md",
+          "globs": "web/**/*.{ts,tsx},crates/api/**/*.{rs,toml},roadmap.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "apps/web/**/*.{ts,tsx},crates/api/**/*.{rs,toml},roadmap.md"
+          "applyTo": "web/**/*.{ts,tsx},crates/api/**/*.{rs,toml},roadmap.md"
         }
       }
     },
     {
       "name": "frontend-styling",
-      "description": "Use when changing Tailwind CSS v4 utilities, theme/color variables, responsive layout, visual treatment, classnames usage, or cube visualization sizing in apps/web.",
+      "description": "Use when changing Tailwind CSS v4 utilities, theme/color variables, responsive layout, visual treatment, classnames usage, or cube visualization sizing in web.",
       "canonicalPath": "ai/skills/frontend-styling.md",
       "references": [
         "ai/rules/frontend-styling-rules.md",
@@ -303,17 +303,17 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "apps/web/**/*.{ts,tsx,css},roadmap.md",
+          "globs": "web/**/*.{ts,tsx,css},roadmap.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "apps/web/**/*.{ts,tsx,css},roadmap.md"
+          "applyTo": "web/**/*.{ts,tsx,css},roadmap.md"
         }
       }
     },
     {
       "name": "react-query-request-hooks",
-      "description": "Use when adding or changing apps/web API query hooks, mutation hooks, request functions, query keys, or response normalization.",
+      "description": "Use when adding or changing web API query hooks, mutation hooks, request functions, query keys, or response normalization.",
       "canonicalPath": "ai/skills/react-query-request-hooks.md",
       "references": [
         "ai/rules/frontend-api-hook-rules.md",
@@ -329,17 +329,17 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "apps/web/src/api/**/*.{ts,tsx},apps/web/src/pages/**/*.{ts,tsx},crates/api/**/*.{rs,toml},roadmap.md",
+          "globs": "web/src/api/**/*.{ts,tsx},web/src/pages/**/*.{ts,tsx},crates/api/**/*.{rs,toml},roadmap.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "apps/web/src/api/**/*.{ts,tsx},apps/web/src/pages/**/*.{ts,tsx},crates/api/**/*.{rs,toml},roadmap.md"
+          "applyTo": "web/src/api/**/*.{ts,tsx},web/src/pages/**/*.{ts,tsx},crates/api/**/*.{rs,toml},roadmap.md"
         }
       }
     },
     {
       "name": "frontend-testing",
-      "description": "Use when adding or changing apps/web Vitest tests, Testing Library tests, React Query hook tests, coverage configuration, or Storybook stories.",
+      "description": "Use when adding or changing web Vitest tests, Testing Library tests, React Query hook tests, coverage configuration, or Storybook stories.",
       "canonicalPath": "ai/skills/frontend-testing.md",
       "references": [
         "ai/rules/testing-rules.md",
@@ -354,11 +354,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "apps/web/**/*.{ts,tsx,css},apps/web/.storybook/**/*,roadmap.md",
+          "globs": "web/**/*.{ts,tsx,css},web/.storybook/**/*,roadmap.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "apps/web/**/*.{ts,tsx,css},apps/web/.storybook/**/*,roadmap.md"
+          "applyTo": "web/**/*.{ts,tsx,css},web/.storybook/**/*,roadmap.md"
         }
       }
     }

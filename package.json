@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "workspaces": [
-    "apps/web"
+    "web",
+    "packages/rubiks-cube"
   ],
   "scripts": {
     "dev": "npm run pruning:native && RUBIKS_VISION_TILE_DETECTOR_MODEL=vision_ml/local-models/tile-detector.onnx RUBIKS_VISION_TILE_DETECTOR_INPUT_SIZE=640 RUBIKS_VISION_TILE_DETECTOR_CONFIDENCE=0.5 concurrently -k -n api,vision,web -c blue,magenta,green \"npm run api:dev\" \"npm run vision:dev\" \"npm run web:dev\"",

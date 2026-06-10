@@ -1,0 +1,40 @@
+:host {
+    display: flex;
+    flex-direction: column;
+}
+
+rubiks-cube {
+    flex: 1 1 auto;
+}
+
+.playback-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.playback-options {
+    flex: 0 0 auto;
+    margin: 10px 0 10px 0;
+    display: flex;
+    justify-content: center;
+}
+
+.playback-icon {
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px 0 5px;
+    margin: 0 5px 0 5px;
+    border-radius: 5px;
+    border: none;
+    background: transparent;
+}
+
+.playback-icon:active {
+    background-color: #d7d7d7;
+}
+
+.playback-icon > svg {
+    fill: #2c2c2c;
+    display: block;
+}

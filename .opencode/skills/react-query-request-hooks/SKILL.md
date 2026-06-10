@@ -1,6 +1,6 @@
 ---
 name: "react-query-request-hooks"
-description: "Use when adding or changing apps/web API query hooks, mutation hooks, request functions, query keys, or response normalization."
+description: "Use when adding or changing web API query hooks, mutation hooks, request functions, query keys, or response normalization."
 ---
 
 Generated from `ai/registry.json`. Do not edit manually.
@@ -22,7 +22,7 @@ This file is compiled from canonical AI knowledge files. Edit canonical files un
 
 # React Query Request Hooks
 
-Use this skill when adding or changing `apps/web` API query hooks, mutation hooks, request functions, query keys, or response normalization.
+Use this skill when adding or changing `web` API query hooks, mutation hooks, request functions, query keys, or response normalization.
 
 ## Goal
 
@@ -51,8 +51,8 @@ Keep React Query as the frontend server-state boundary while keeping raw HTTP de
 
 - UI-facing barrels export hooks, not raw request functions.
 - Components do not import `fetch`, raw requests, or query keys.
-- Request details stay behind `apps/web/src/api/client.ts`.
-- Solve response status parsing stays in `apps/web/src/api`, not page components.
+- Request details stay behind `web/src/api/client.ts`.
+- Solve response status parsing stays in `web/src/api`, not page components.
 - Browser clients still submit move notation and limits, never facelets or sticker state.
 - Request functions and hooks have Vitest coverage for success, API failure payloads, disabled queries, and mutation behavior when changed.
 
@@ -70,12 +70,12 @@ Keep React Query as the frontend server-state boundary while keeping raw HTTP de
 
 # Frontend API Hook Rules
 
-Rules for React Query API operations in `apps/web/src/api`.
+Rules for React Query API operations in `web/src/api`.
 
 ## Always
 
-- Group frontend API code by domain under `apps/web/src/api`.
-- Keep shared HTTP details in `apps/web/src/api/client.ts`, including base URL resolution, JSON headers, request helpers, and transport error mapping.
+- Group frontend API code by domain under `web/src/api`.
+- Keep shared HTTP details in `web/src/api/client.ts`, including base URL resolution, JSON headers, request helpers, and transport error mapping.
 - Split every operation into a raw request function, a React Query hook, and an operation `index.ts` when the operation is consumed by UI.
 - Keep request functions free of React imports.
 - Use `useQuery` for cached server state such as API health and strategy metadata.
@@ -93,7 +93,7 @@ Rules for React Query API operations in `apps/web/src/api`.
 - Do not call raw request functions from React components.
 - Do not expose request functions from barrels consumed by UI components.
 - Do not import query keys into components.
-- Do not call `fetch` directly outside `apps/web/src/api/client.ts` unless the request is intentionally outside the app API contract.
+- Do not call `fetch` directly outside `web/src/api/client.ts` unless the request is intentionally outside the app API contract.
 - Do not duplicate API status parsing or solve response normalization inside React components.
 - Do not create fake fallback solve metadata for transport errors.
 - Do not use React Query as the canonical solver state; the Rust API and engine remain authoritative.
@@ -101,12 +101,12 @@ Rules for React Query API operations in `apps/web/src/api`.
 
 ## Layout
 
-- Request file: `apps/web/src/api/<domain>/<operation>/<operation>.ts`.
-- Hook file: `apps/web/src/api/<domain>/<operation>/use<Operation>.ts`.
-- Operation barrel: `apps/web/src/api/<domain>/<operation>/index.ts`.
-- Domain barrel: `apps/web/src/api/<domain>/index.ts`.
-- Query keys: `apps/web/src/api/<domain>/queryKeys.ts`.
-- Domain types: `apps/web/src/api/<domain>/types.ts` when multiple operations share API types.
+- Request file: `web/src/api/<domain>/<operation>/<operation>.ts`.
+- Hook file: `web/src/api/<domain>/<operation>/use<Operation>.ts`.
+- Operation barrel: `web/src/api/<domain>/<operation>/index.ts`.
+- Domain barrel: `web/src/api/<domain>/index.ts`.
+- Query keys: `web/src/api/<domain>/queryKeys.ts`.
+- Domain types: `web/src/api/<domain>/types.ts` when multiple operations share API types.
 
 ## Verification
 
@@ -119,12 +119,12 @@ Rules for React Query API operations in `apps/web/src/api`.
 
 # Frontend State Rules
 
-Rules for client-side state ownership in `apps/web`.
+Rules for client-side state ownership in `web`.
 
 ## Always
 
 - Classify state as API load state, solve result state, form state, visualization state, page workflow state, or component-only UI state before moving it.
-- Keep API request details and response normalization in `apps/web/src/api`.
+- Keep API request details and response normalization in `web/src/api`.
 - Use React Query as the owner for API health, strategy metadata, solve mutation state, and future server-state operations.
 - Keep API load state separate from solve result state.
 - Keep form input state separate from visualization playback state.
@@ -147,8 +147,8 @@ Rules for client-side state ownership in `apps/web`.
 
 ## Ownership Order
 
-1. `apps/web/src/api/client.ts` for shared HTTP details.
-2. React Query hooks under `apps/web/src/api/<domain>` for server/cache and mutation state.
+1. `web/src/api/client.ts` for shared HTTP details.
+2. React Query hooks under `web/src/api/<domain>` for server/cache and mutation state.
 3. Nearest page or screen component for coordinated product workflow state.
 4. Focused hooks for repeated or stateful UI behavior.
 5. Component-local `useState` for component-only state.
@@ -175,11 +175,11 @@ Rules for the Axum HTTP API and the frontend API contract.
 - Keep client-facing solve requests notation-only through `/solve-notation`.
 - Validate API safety limits before parsing notation or invoking search.
 - Use named constants for public API caps such as maximum depth, maximum nodes, notation bytes, and JSON body bytes.
-- Preserve stable response status strings, error kinds, and metadata fields because `apps/web/src/api` normalizes them.
+- Preserve stable response status strings, error kinds, and metadata fields because `web/src/api` normalizes them.
 - Verify returned solutions by replay before reporting success.
 - Keep generated pruning-table availability and corruption errors explicit in API responses.
 - Keep CORS origins narrow to known local web development and preview origins unless deployment requirements change.
-- Update `apps/web/src/api` types and normalization when API response fields or status values change.
+- Update `web/src/api` types and normalization when API response fields or status values change.
 
 ## Never
 
@@ -188,7 +188,7 @@ Rules for the Axum HTTP API and the frontend API contract.
 - Do not let handlers panic or leak internal errors when a stable error response can represent the failure.
 - Do not accept unbounded request depth, node count, notation length, or JSON body size.
 - Do not add broad authentication, tenants, tokens, rate-limit frameworks, or OpenAPI layers without a current product requirement.
-- Do not make the frontend duplicate API status parsing or solver response normalization outside `apps/web/src/api`.
+- Do not make the frontend duplicate API status parsing or solver response normalization outside `web/src/api`.
 
 ## Verification
 
@@ -216,7 +216,7 @@ Rules for the Axum HTTP API and the frontend API contract.
 
 - Requests use move notation, `maxDepth`, optional `maxNodes`, and optional `strategyId`.
 - Responses include `ok`, `status`, strategy metadata, generated-table status, effective limits, solution moves, explored nodes, replay verification, optional visualization state, and optional error metadata.
-- Status strings and error kinds are part of the frontend contract and should change only with matching updates in `apps/web/src/api`.
+- Status strings and error kinds are part of the frontend contract and should change only with matching updates in `web/src/api`.
 - The API may return visualization adapter state, but browser clients should not submit facelet or Kociemba payloads.
 
 ## Validation And Safety
@@ -228,7 +228,7 @@ Rules for the Axum HTTP API and the frontend API contract.
 
 ## Frontend Boundary
 
-- `apps/web/src/api` owns base URL handling, health/strategy probing, solve request construction, response normalization, and API error fallback.
+- `web/src/api` owns base URL handling, health/strategy probing, solve request construction, response normalization, and API error fallback.
 - React components should consume normalized API-client results instead of parsing raw HTTP responses.
 - UI copy should describe scrambles, moves, limits, strategies, and solver statuses, not internal facelet/Kociemba representations.
 
@@ -251,14 +251,14 @@ The frontend renders and controls solver interaction. It must not become the sou
 - Vite
 - React Router 7 with `BrowserRouter` for clean `/solve` and `/timer` routes, with page-level route code-splitting through React `lazy`/`Suspense`
 - `@tanstack/react-query` for API health, strategy metadata, and solve mutation state
-- `@houstonp/rubiks-cube` as a visualization custom element
-- Tailwind CSS v4 through `@tailwindcss/vite` and the single `apps/web/src/index.css` entrypoint for Tailwind import, resets, and semantic theme/color variables
+- `@rubiks-cube-solver/rubiks-cube` as a local visualization custom element package
+- Tailwind CSS v4 through `@tailwindcss/vite` and the single `web/src/index.css` entrypoint for Tailwind import, resets, and semantic theme/color variables
 - `classnames` imported as `cls` for conditional class composition
 - `lucide-react` for UI icons; local SVG icon components and custom icon path data are not part of the frontend icon surface
-- Radix-backed shared primitives for dialogs, alert dialogs, selects, switches, checkboxes, toasts, popovers, and tooltips rendered through the wrappers in `apps/web/src/components`
+- Radix-backed shared primitives for dialogs, alert dialogs, selects, switches, checkboxes, toasts, popovers, and tooltips rendered through the wrappers in `web/src/components`
 - React Hook Form and Zod for solve-form limit validation and submission shaping
 - Zustand for scoped timer, solve-settings, theme, and toast state
-- `react-i18next` locale resources under `apps/web/src/i18n/locales` for `en`, `es`, `pt-BR`, `it`, `de`, `fr`, `ru`, `zh` for Simplified Chinese, and `ja`
+- `react-i18next` locale resources under `web/src/i18n/locales` for `en`, `es`, `pt-BR`, `it`, `de`, `fr`, `ru`, `zh` for Simplified Chinese, and `ja`
 - TanStack Table and TanStack Virtual for timer solve-table rendering
 - Motion for small overlay, select, toast, and error-boundary transitions with reduced-motion support
 - Vitest, Testing Library, and V8 coverage for unit/component/API-hook tests
@@ -282,8 +282,8 @@ The solve form defaults to an empty scramble so the visualization starts solved;
 
 ## Data And State Flow
 
-- `apps/web/src/api` owns HTTP request details, response normalization, typed results, API base URL handling, and API error mapping.
-- API operations are grouped by domain under `apps/web/src/api/<domain>` with request functions, React Query hooks, operation barrels, domain barrels, and domain query keys.
+- `web/src/api` owns HTTP request details, response normalization, typed results, API base URL handling, and API error mapping.
+- API operations are grouped by domain under `web/src/api/<domain>` with request functions, React Query hooks, operation barrels, domain barrels, and domain query keys.
 - React Query owns API health, strategy metadata, solve mutation pending/error/data state, and future server-state operations.
 - Zustand owns only scoped client state that is already shared across components or routes, such as timer sessions/settings, solve settings, theme, and toasts.
 - React components own local form inputs, loading indicators, result display, and visualization playback state.
@@ -301,8 +301,8 @@ The solve form defaults to an empty scramble so the visualization starts solved;
 - Keep route or screen components readable as composition as the UI grows.
 - Extract named components for repeated panels, controls, result sections, or visualization shells when the extraction clarifies ownership.
 - Keep page-specific pieces colocated near the owning screen until reused elsewhere.
-- Shared reusable UI should live under `apps/web/src/components` only when there is a real shared consumer.
-- Context-independent helpers live under `apps/web/src/core/<category>/<name>.ts` and are imported directly without core barrels.
+- Shared reusable UI should live under `web/src/components` only when there is a real shared consumer.
+- Context-independent helpers live under `web/src/core/<category>/<name>.ts` and are imported directly without core barrels.
 - Keep page-specific hooks, validation helpers, message mapping, and constants under the owning page folder until reuse exists.
 - Use shared component primitives for repeated interaction patterns; feature code should consume wrappers such as `Dialog`, `AlertDialog`, `Select`, `Switch`, `Checkbox`, `Toast`, `Popover`, and `Tooltip` rather than direct Radix imports or hand-rolled portal/focus/outside-click handling.
 - Keep new or substantially changed React component files at or below 400 lines where practical.
@@ -311,7 +311,7 @@ The solve form defaults to an empty scramble so the visualization starts solved;
 
 ## API Hooks
 
-- `apps/web/src/api/client.ts` owns base URL handling, JSON request helpers, and transport error mapping.
+- `web/src/api/client.ts` owns base URL handling, JSON request helpers, and transport error mapping.
 - Request functions contain no React imports.
 - React Query hooks are the UI-facing API boundary and live beside their operation request function.
 - Domain barrels should export hooks for UI consumption; components should not import raw request functions or query keys.
@@ -320,13 +320,13 @@ The solve form defaults to an empty scramble so the visualization starts solved;
 
 ## Styling
 
-- `apps/web/src/index.css` is the only allowed CSS file and owns Tailwind import, project-level CSS resets, semantic theme/color variables, Tailwind v4 token mappings, and minimal root theme selectors.
+- `web/src/index.css` is the only allowed CSS file and owns Tailwind import, project-level CSS resets, semantic theme/color variables, Tailwind v4 token mappings, and minimal root theme selectors.
 - Component layout, visual treatment, animations, and state styles should use Tailwind utilities.
-- Reusable color values must be defined as semantic CSS variables in `apps/web/src/index.css` and consumed through semantic Tailwind utilities such as `bg-app-bg`, `bg-app-nav`, `bg-app-stage`, `bg-app-surface`, `bg-app-surface-raised`, `bg-app-control`, `text-app-text`, `text-app-muted`, `text-app-inverse`, `border-app-border`, `border-app-border-strong`, and `ring-app-focus`.
-- Do not use hardcoded arbitrary Tailwind hex color utilities in components, stories, tests, or `apps/web/index.html`.
-- Do not add raw hex colors outside `apps/web/src/index.css`; SVG `fill`/`stroke` and dynamic inline styles should use semantic CSS variables such as `var(--app-text)` or scan-specific variables such as `var(--scan-u-bg)`.
+- Reusable color values must be defined as semantic CSS variables in `web/src/index.css` and consumed through semantic Tailwind utilities such as `bg-app-bg`, `bg-app-nav`, `bg-app-stage`, `bg-app-surface`, `bg-app-surface-raised`, `bg-app-control`, `text-app-text`, `text-app-muted`, `text-app-inverse`, `border-app-border`, `border-app-border-strong`, and `ring-app-focus`.
+- Do not use hardcoded arbitrary Tailwind hex color utilities in components, stories, tests, or `web/index.html`.
+- Do not add raw hex colors outside `web/src/index.css`; SVG `fill`/`stroke` and dynamic inline styles should use semantic CSS variables such as `var(--app-text)` or scan-specific variables such as `var(--scan-u-bg)`.
 - Theme behavior defaults to the user's system preference; the `dark` theme preserves the current visual palette, and the `light` theme should be gray/not-so-dark rather than white.
-- `npm run theme-colors:check` enforces that raw hex colors stay in `apps/web/src/index.css` and that docs do not reintroduce literal arbitrary hex utility markers.
+- `npm run theme-colors:check` enforces that raw hex colors stay in `web/src/index.css` and that docs do not reintroduce literal arbitrary hex utility markers.
 - The current web UI is intentionally square; do not add `border-radius` or Tailwind `rounded-*` utilities.
 - Conditional class composition uses `classnames` as `cls`.
 - Icons use `lucide-react` components styled with semantic Tailwind classes; React components should not include inline SVG icon markup.
@@ -335,7 +335,7 @@ The solve form defaults to an empty scramble so the visualization starts solved;
 
 ## Tests And Stories
 
-- Shared web test setup lives under `apps/web/src/test`.
+- Shared web test setup lives under `web/src/test`.
 - React Query hook tests use test `QueryClient` providers with retry disabled.
 - API request tests mock fetch success and API error payloads.
 - Coverage runs with `npm run test:coverage -w @rubiks-cube-solver/web` and keeps thresholds at 95% or higher.

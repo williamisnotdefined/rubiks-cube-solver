@@ -16,7 +16,7 @@ blob-report/
 
 # Generated pruning tables are local artifacts; commit only tiny fixtures.
 crates/cube-engine/pruning-tables/
-apps/web/public/generated-pruning-tables/
+web/public/generated-pruning-tables/
 
 # Generated datasets are local artifacts; commit only small fixtures.
 datasets/generated/

@@ -71,24 +71,24 @@ React/Vite scanner
 
 Frontend scanner:
 
-- `apps/web/src/pages/SolvePage/ScanCubeModal.tsx`
-- `apps/web/src/pages/SolvePage/ScanCameraFrame.tsx`
-- `apps/web/src/pages/SolvePage/ScanFaceColorEditor.tsx`
-- `apps/web/src/pages/SolvePage/ScanFaceReviewGrid.tsx`
-- `apps/web/src/pages/SolvePage/ScanColorPalette.tsx`
-- `apps/web/src/pages/SolvePage/scanState.ts`
-- `apps/web/src/pages/SolvePage/scanCapture.ts`
-- `apps/web/src/pages/SolvePage/hooks/useCameraStream.ts`
-- `apps/web/src/pages/SolvePage/hooks/useLiveScanPreview.ts`
+- `web/src/pages/SolvePage/ScanCubeModal.tsx`
+- `web/src/pages/SolvePage/ScanCameraFrame.tsx`
+- `web/src/pages/SolvePage/ScanFaceColorEditor.tsx`
+- `web/src/pages/SolvePage/ScanFaceReviewGrid.tsx`
+- `web/src/pages/SolvePage/ScanColorPalette.tsx`
+- `web/src/pages/SolvePage/scanState.ts`
+- `web/src/pages/SolvePage/scanCapture.ts`
+- `web/src/pages/SolvePage/hooks/useCameraStream.ts`
+- `web/src/pages/SolvePage/hooks/useLiveScanPreview.ts`
 
 Frontend API:
 
-- `apps/web/src/api/scan/types.ts`
-- `apps/web/src/api/scan/analyzeFace/analyzeFace.ts`
-- `apps/web/src/api/scan/analyzeFace/useAnalyzeScanFace.ts`
-- `apps/web/src/api/solver/solveScan/solveScan.ts`
-- `apps/web/src/api/solver/solveScan/useSolveScan.ts`
-- `apps/web/src/api/__tests__/solver.test.tsx`
+- `web/src/api/scan/types.ts`
+- `web/src/api/scan/analyzeFace/analyzeFace.ts`
+- `web/src/api/scan/analyzeFace/useAnalyzeScanFace.ts`
+- `web/src/api/solver/solveScan/solveScan.ts`
+- `web/src/api/solver/solveScan/useSolveScan.ts`
+- `web/src/api/__tests__/solver.test.tsx`
 
 Vision service:
 
@@ -156,7 +156,7 @@ npm install embla-carousel-react -w @rubiks-cube-solver/web
 
 Files expected to change:
 
-- `apps/web/package.json`
+- `web/package.json`
 - `package-lock.json`
 
 Verification:
@@ -177,7 +177,7 @@ Goal: create a focused page-specific carousel component for the six scan faces.
 
 New file:
 
-- `apps/web/src/pages/SolvePage/ScanFaceCarousel.tsx`
+- `web/src/pages/SolvePage/ScanFaceCarousel.tsx`
 
 Component responsibility:
 
@@ -225,8 +225,8 @@ Translation keys to add:
 
 Files expected to change:
 
-- `apps/web/src/pages/SolvePage/ScanFaceCarousel.tsx`
-- Supported locale files under `apps/web/src/i18n/locales/`
+- `web/src/pages/SolvePage/ScanFaceCarousel.tsx`
+- Supported locale files under `web/src/i18n/locales/`
 
 Tests:
 
@@ -404,9 +404,9 @@ type ScanCapture = {
 
 Files expected to change:
 
-- `apps/web/src/pages/SolvePage/hooks/useCameraStream.ts`
-- `apps/web/src/pages/SolvePage/scanCapture.ts`
-- `apps/web/src/pages/SolvePage/ScanCubeModal.tsx`
+- `web/src/pages/SolvePage/hooks/useCameraStream.ts`
+- `web/src/pages/SolvePage/scanCapture.ts`
+- `web/src/pages/SolvePage/ScanCubeModal.tsx`
 - Related tests.
 
 Verification:
@@ -446,7 +446,7 @@ Tasks in schemas:
 
 Tasks in frontend API types:
 
-- Add optional probability and quality fields in `apps/web/src/api/scan/types.ts`.
+- Add optional probability and quality fields in `web/src/api/scan/types.ts`.
 - Do not require the UI to consume all fields immediately.
 
 Verification:
@@ -510,7 +510,7 @@ Tasks:
 - Add Rust route in `crates/api/src/routes.rs`.
 - Add Python `AnalyzeSessionRequest` and `AnalyzeSessionResponse` schemas.
 - Add proxy from Rust API to Python vision service.
-- Add new frontend API request/hook under `apps/web/src/api/scan/solveSession`.
+- Add new frontend API request/hook under `web/src/api/scan/solveSession`.
 - Keep request functions free of React imports.
 
 Verification:

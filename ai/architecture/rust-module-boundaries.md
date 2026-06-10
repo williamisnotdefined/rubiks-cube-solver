@@ -6,7 +6,7 @@ Rust module structure should make the cube domain and solver flow easier to read
 
 - `crates/cube-engine` owns cube state, moves, validation, search, heuristics, pruning tables, solver orchestration, reports, and dataset generation helpers.
 - `crates/api` owns HTTP routing, request and response types, CORS, API safety caps, generated solver loading, and HTTP error mapping.
-- `apps/web` renders UI and calls the API; it should not receive solver internals.
+- `web` renders UI and calls the API; it should not receive solver internals.
 - `ml` consumes generated datasets and should not become a runtime solver dependency.
 
 ## Module Shape

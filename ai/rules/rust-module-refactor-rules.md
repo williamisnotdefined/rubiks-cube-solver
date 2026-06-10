@@ -17,7 +17,7 @@ Rules for splitting Rust files, tightening module boundaries, and reducing refac
 - Do not change algorithms, heuristics, budgets, status strings, artifact formats, or API contracts as part of a file split.
 - Do not introduce generic repositories, base services, traits, or compatibility layers without a concrete current boundary.
 - Do not make private search or cube helpers public only to avoid arranging modules correctly.
-- Do not move solver logic into `crates/api`, `apps/web`, `ml`, or AI tooling.
+- Do not move solver logic into `crates/api`, `web`, `ml`, or AI tooling.
 - Do not combine large search-performance changes with mechanical module extraction.
 
 ## Verification

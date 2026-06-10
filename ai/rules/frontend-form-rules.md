@@ -1,6 +1,6 @@
 # Frontend Form Rules
 
-Rules for forms and local validation in `apps/web`.
+Rules for forms and local validation in `web`.
 
 ## Always
 
