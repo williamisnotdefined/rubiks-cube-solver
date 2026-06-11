@@ -4,6 +4,7 @@ import { useCopyToClipboard } from 'usehooks-ts'
 import { AverageCards } from '@components/timer/AverageCards'
 import { InspectionBar } from '@components/timer/InspectionBar'
 import { PenaltyControls } from '@components/timer/PenaltyControls'
+import { PuzzleReplayStage } from '@components/puzzle/PuzzleReplayStage'
 import { SolveTable } from '@components/timer/SolveTable'
 import { TimerDisplay } from '@components/timer/TimerDisplay'
 import { TimerStatusBar } from '@components/timer/TimerStatusBar'
@@ -230,6 +231,16 @@ export function TimerPage() {
             onCopy={isScramblePending ? undefined : handleCopyScramble}
             onNext={isScramblePending ? undefined : handleNextScramble}
             onPrevious={isScramblePending ? undefined : handlePreviousScramble}
+          />
+          <PuzzleReplayStage
+            active={!isScramblePending}
+            alg={isScramblePending ? '' : generatedScramble.scramble}
+            className="h-48 w-full max-w-sm justify-self-center sm:h-56"
+            label={`${generatedScramble.event.label} replay`}
+            loadingLabel={t('common.loading')}
+            puzzleSlug={generatedScramble.event.puzzleSlug}
+            replaySupported={generatedScramble.event.replaySupported}
+            unavailableLabel={t('cube.visualizationUnavailable')}
           />
           <Panel className="grid min-h-0 grid-cols-2 gap-2 p-2 sm:grid-cols-[auto_auto_minmax(14rem,1fr)] sm:items-center" aria-label={t('timer.settings.label')}>
             <label className="flex min-h-9 items-center gap-2 border border-app-border bg-app-control px-3 py-2 text-xs font-extrabold uppercase tracking-[0.16em] text-app-text">

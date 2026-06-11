@@ -17,7 +17,9 @@ export const scrambleEvents = [
     id: '333',
     label: '3x3x3',
     puzzle: '3x3x3',
+    puzzleSlug: 'cube-3x3x3',
     quality: 'wcaLike',
+    replaySupported: true,
   },
   {
     defaultLength: 11,
@@ -26,7 +28,9 @@ export const scrambleEvents = [
     id: '222',
     label: '2x2x2',
     puzzle: '2x2x2',
+    puzzleSlug: 'cube-2x2x2',
     quality: 'wcaLike',
+    replaySupported: true,
   },
   {
     defaultLength: 40,
@@ -35,7 +39,9 @@ export const scrambleEvents = [
     id: '444',
     label: '4x4x4',
     puzzle: '4x4x4',
+    puzzleSlug: 'cube-4x4x4',
     quality: 'wcaLike',
+    replaySupported: true,
   },
   {
     defaultLength: 60,
@@ -44,7 +50,9 @@ export const scrambleEvents = [
     id: '555',
     label: '5x5x5',
     puzzle: '5x5x5',
+    puzzleSlug: 'cube-5x5x5',
     quality: 'wcaLike',
+    replaySupported: true,
   },
   {
     defaultLength: 80,
@@ -53,7 +61,9 @@ export const scrambleEvents = [
     id: '666',
     label: '6x6x6',
     puzzle: '6x6x6',
+    puzzleSlug: 'cube-6x6x6',
     quality: 'wcaLike',
+    replaySupported: true,
   },
   {
     defaultLength: 100,
@@ -62,7 +72,9 @@ export const scrambleEvents = [
     id: '777',
     label: '7x7x7',
     puzzle: '7x7x7',
+    puzzleSlug: 'cube-7x7x7',
     quality: 'wcaLike',
+    replaySupported: true,
   },
   {
     defaultLength: 25,
@@ -71,7 +83,9 @@ export const scrambleEvents = [
     id: '333bld',
     label: '3x3 BLD',
     puzzle: '3x3x3',
+    puzzleSlug: 'cube-3x3x3',
     quality: 'wcaLike',
+    replaySupported: true,
   },
   {
     defaultLength: 25,
@@ -80,7 +94,9 @@ export const scrambleEvents = [
     id: '333fm',
     label: '3x3 FMC',
     puzzle: '3x3x3',
+    puzzleSlug: 'cube-3x3x3',
     quality: 'wcaLike',
+    replaySupported: true,
   },
   {
     defaultLength: 25,
@@ -89,7 +105,9 @@ export const scrambleEvents = [
     id: '333oh',
     label: '3x3 OH',
     puzzle: '3x3x3',
+    puzzleSlug: 'cube-3x3x3',
     quality: 'wcaLike',
+    replaySupported: true,
   },
   {
     defaultLength: 0,
@@ -98,7 +116,9 @@ export const scrambleEvents = [
     id: 'clock',
     label: 'Clock',
     puzzle: 'Clock',
+    puzzleSlug: 'clock',
     quality: 'wcaLike',
+    replaySupported: true,
   },
   {
     defaultLength: 70,
@@ -107,7 +127,9 @@ export const scrambleEvents = [
     id: 'megaminx',
     label: 'Megaminx',
     puzzle: 'Megaminx',
+    puzzleSlug: 'megaminx',
     quality: 'wcaLike',
+    replaySupported: true,
   },
   {
     defaultLength: 10,
@@ -116,7 +138,9 @@ export const scrambleEvents = [
     id: 'pyraminx',
     label: 'Pyraminx',
     puzzle: 'Pyraminx',
+    puzzleSlug: 'pyraminx',
     quality: 'wcaLike',
+    replaySupported: true,
   },
   {
     defaultLength: 11,
@@ -125,7 +149,9 @@ export const scrambleEvents = [
     id: 'skewb',
     label: 'Skewb',
     puzzle: 'Skewb',
+    puzzleSlug: 'skewb',
     quality: 'wcaLike',
+    replaySupported: true,
   },
   {
     defaultLength: 15,
@@ -134,7 +160,9 @@ export const scrambleEvents = [
     id: 'square1',
     label: 'Square-1',
     puzzle: 'Square-1',
+    puzzleSlug: 'square1',
     quality: 'wcaLike',
+    replaySupported: true,
   },
   {
     defaultLength: 40,
@@ -143,7 +171,9 @@ export const scrambleEvents = [
     id: '444bld',
     label: '4x4 BLD',
     puzzle: '4x4x4',
+    puzzleSlug: 'cube-4x4x4',
     quality: 'wcaLike',
+    replaySupported: true,
   },
   {
     defaultLength: 60,
@@ -152,7 +182,9 @@ export const scrambleEvents = [
     id: '555bld',
     label: '5x5 BLD',
     puzzle: '5x5x5',
+    puzzleSlug: 'cube-5x5x5',
     quality: 'wcaLike',
+    replaySupported: true,
   },
   {
     defaultLength: 5,
@@ -161,7 +193,9 @@ export const scrambleEvents = [
     id: '333mbld',
     label: '3x3 MBLD',
     puzzle: '3x3x3',
+    puzzleSlug: 'cube-3x3x3',
     quality: 'wcaLike',
+    replaySupported: false,
   },
 ] as const satisfies readonly ScrambleEvent[]
 

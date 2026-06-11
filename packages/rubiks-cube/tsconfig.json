@@ -1,17 +1,14 @@
 {
-    "compilerOptions": {
-        "module": "esnext",
-        "skipLibCheck": true,
-        "allowJs": true,
-        "checkJs": false,
-        "declaration": true,
-        "emitDeclarationOnly": true,
-        "stripInternal": true,
-        "moduleResolution": "bundler",
-        "outDir": "./types",
-        "rootDir": "./src",
-        "lib": ["DOM", "ESNext"]
-    },
-    "include": ["./src/**/*"],
-    "exclude": ["node_modules", "tests"]
+  "compilerOptions": {
+    "module": "esnext",
+    "skipLibCheck": true,
+    "allowJs": false,
+    "checkJs": false,
+    "noEmit": true,
+    "moduleResolution": "bundler",
+    "rootDir": "./src",
+    "lib": ["DOM", "ESNext"]
+  },
+  "include": ["./src/**/*"],
+  "exclude": ["node_modules", "tests"]
 }

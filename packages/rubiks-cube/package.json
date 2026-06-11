@@ -1,58 +1,70 @@
 {
-    "name": "@rubiks-cube-solver/rubiks-cube",
-    "version": "0.1.0",
-    "private": true,
-    "type": "module",
-    "description": "Rubik's Cube visualization package for Rubik's Cube Solver",
-    "license": "MIT",
-    "keywords": [
-        "rubik's cube",
-        "twisty puzzle",
-        "3x3",
-        "renderer",
-        "threejs"
-    ],
-    "exports": {
-        "./view": {
-            "types": "./types/webComponent/index.d.ts",
-            "default": "./src/webComponent/index.js"
-        },
-        "./player": {
-            "types": "./types/player/index.d.ts",
-            "default": "./src/player/index.js"
-        },
-        "./three": {
-            "types": "./types/rubiksCube3D/index.d.ts",
-            "default": "./src/rubiksCube3D/index.js"
-        },
-        "./controller": {
-            "types": "./types/rubiksCube/index.d.ts",
-            "default": "./src/rubiksCube/index.js"
-        },
-        "./core": {
-            "types": "./types/core/index.d.ts",
-            "default": "./src/core/index.js"
-        },
-        "./state": {
-            "types": "./types/state/index.d.ts",
-            "default": "./src/state/index.js"
-        }
+  "name": "@rubiks-cube-solver/rubiks-cube",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Rubik's Cube visualization package for Rubik's Cube Solver",
+  "license": "MIT",
+  "keywords": [
+    "rubik's cube",
+    "twisty puzzle",
+    "3x3",
+    "renderer",
+    "threejs"
+  ],
+  "exports": {
+    "./view": {
+      "types": "./src/webComponent/index.ts",
+      "default": "./src/webComponent/index.ts"
     },
-    "scripts": {
-        "playground": "vite --host 0.0.0.0 ./playground",
-        "build:types": "tsc",
-        "watch:types": "tsc --watch",
-        "test": "vitest run --config vitest.config.ts --passWithNoTests"
+    "./player": {
+      "types": "./src/player/index.ts",
+      "default": "./src/player/index.ts"
     },
-    "dependencies": {
-        "gsap": "^3.14.2",
-        "three": "^0.182.0"
+    "./puzzle": {
+      "types": "./src/puzzle/index.ts",
+      "default": "./src/puzzle/index.ts"
     },
-    "devDependencies": {
-        "@types/three": "^0.182.0",
-        "jsdom": "^29.1.1",
-        "typescript": "^5.8.0",
-        "vite": "^7.0.0",
-        "vitest": "^4.1.7"
+    "./three": {
+      "types": "./src/rubiksCube3D/index.ts",
+      "default": "./src/rubiksCube3D/index.ts"
+    },
+    "./controller": {
+      "types": "./src/rubiksCube/index.ts",
+      "default": "./src/rubiksCube/index.ts"
+    },
+    "./core": {
+      "types": "./src/core/index.ts",
+      "default": "./src/core/index.ts"
+    },
+    "./state": {
+      "types": "./src/state/index.ts",
+      "default": "./src/state/index.ts"
     }
+  },
+  "scripts": {
+    "playground": "vite --host 0.0.0.0 ./playground",
+    "build:types": "tsc",
+    "check": "biome check .",
+    "format": "biome format . --write",
+    "format:check": "biome format .",
+    "lint": "biome lint . --error-on-warnings",
+    "watch:types": "tsc --watch",
+    "test": "vitest run --config vitest.config.ts --passWithNoTests",
+    "test:coverage": "vitest run --config vitest.config.ts --coverage --passWithNoTests"
+  },
+  "dependencies": {
+    "cubing": "^0.63.3",
+    "gsap": "^3.14.2",
+    "three": "^0.182.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.16",
+    "@types/three": "^0.182.0",
+    "@vitest/coverage-v8": "^4.1.7",
+    "jsdom": "^29.1.1",
+    "typescript": "^5.8.0",
+    "vite": "^7.0.0",
+    "vitest": "^4.1.7"
+  }
 }

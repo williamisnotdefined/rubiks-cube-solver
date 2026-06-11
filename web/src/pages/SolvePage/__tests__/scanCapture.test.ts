@@ -2,14 +2,22 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { captureScanImage, captureScanPreviewImage } from '../scanCapture'
 
 const drawImage = vi.fn()
+const canvasContext = { drawImage } as unknown as CanvasRenderingContext2D
+
+type CanvasGetContextSpy = {
+  mockReturnValue(value: CanvasRenderingContext2D | null): CanvasGetContextSpy
+  mockReturnValueOnce(value: CanvasRenderingContext2D | null): CanvasGetContextSpy
+}
+
+function spyOnCanvasGetContext(): CanvasGetContextSpy {
+  return vi.spyOn(HTMLCanvasElement.prototype, 'getContext') as unknown as CanvasGetContextSpy
+}
 
 describe('scan capture helpers', () => {
   beforeEach(() => {
     drawImage.mockReset()
     vi.spyOn(Date, 'now').mockReturnValue(123)
-    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
-      drawImage,
-    } as unknown as CanvasRenderingContext2D)
+    spyOnCanvasGetContext().mockReturnValue(canvasContext)
     vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue(
       'data:image/jpeg;base64,capture',
     )
@@ -51,7 +59,7 @@ describe('scan capture helpers', () => {
   })
 
   it('returns undefined when canvas context is unavailable', async () => {
-    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
+    spyOnCanvasGetContext().mockReturnValue(null)
     const video = videoElementWithSize(640, 480)
 
     await expect(captureScanImage(video)).resolves.toBeUndefined()
@@ -203,8 +211,8 @@ describe('scan capture helpers', () => {
 
   it('keeps the original canvas when resize context is unavailable', async () => {
     const longDataUrl = `data:image/jpeg;base64,${'a'.repeat(1_800_001)}`
-    vi.spyOn(HTMLCanvasElement.prototype, 'getContext')
-      .mockReturnValueOnce({ drawImage } as unknown as CanvasRenderingContext2D)
+    spyOnCanvasGetContext()
+      .mockReturnValueOnce(canvasContext)
       .mockReturnValue(null)
     vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL')
       .mockReturnValueOnce(longDataUrl)
