@@ -776,10 +776,8 @@
       "copyFailed": "Não foi possível copiar o scramble",
       "event": "Evento",
       "generating": "Gerando scramble...",
-      "hideReplay": "Ocultar replay",
       "next": "Próximo scramble",
       "previous": "Scramble anterior",
-      "showReplay": "Mostrar replay",
       "title": "Scramble"
     },
     "session": {

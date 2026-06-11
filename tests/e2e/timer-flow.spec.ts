@@ -64,25 +64,12 @@ test.describe('timer flow', () => {
 
     await chooseRadixSelectOption(page, 'Event', 'Pyraminx')
     await expect(page.getByText(/Pyraminx/)).toBeVisible()
-    await dispatchClick(page.getByRole('button', { name: 'Show replay' }))
-    await expect(page.locator('twisty-puzzle')).toHaveAttribute('puzzle', 'pyraminx')
 
     await recordKeyboardSolve(page)
 
     const state = await persistedTimerState(page)
     expect(state.sessions[0]?.eventId).toBe('pyraminx')
     expect(state.sessions[0]?.solves.at(-1)?.eventId).toBe('pyraminx')
-  })
-
-  test('shows replay fallback for unsupported multi-blind events', async ({ page }) => {
-    await page.goto('/timer')
-
-    await chooseRadixSelectOption(page, 'Event', '3x3 MBLD')
-
-    await expect(page.getByText(/3x3 MBLD/)).toBeVisible()
-    await dispatchClick(page.getByRole('button', { name: 'Show replay' }))
-    await expect(page.locator('twisty-puzzle')).toHaveCount(0)
-    await expect(page.getByText('Visualization is not available for this puzzle yet.')).toBeVisible()
   })
 
   test('supports inspection and millisecond display settings', async ({ page }) => {

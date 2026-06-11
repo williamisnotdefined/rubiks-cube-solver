@@ -37,7 +37,7 @@ describe('WCA scramble catalog', () => {
     expect(scrambleEvents.every((event) => event.quality === 'wcaLike')).toBe(true)
   })
 
-  it('assigns replay puzzle slugs to every event', () => {
+  it('assigns puzzle slugs to every event', () => {
     expect(scrambleEvents.map((event) => [event.id, event.puzzleSlug])).toEqual([
       ['333', 'cube-3x3x3'],
       ['222', 'cube-2x2x2'],
@@ -57,10 +57,6 @@ describe('WCA scramble catalog', () => {
       ['555bld', 'cube-5x5x5'],
       ['333mbld', 'cube-3x3x3'],
     ])
-  })
-
-  it('only disables replay for multi-blind scrambles', () => {
-    expect(scrambleEvents.filter((event) => !event.replaySupported).map((event) => event.id)).toEqual(['333mbld'])
   })
 
   it('generates a non-empty scramble for every event', () => {
