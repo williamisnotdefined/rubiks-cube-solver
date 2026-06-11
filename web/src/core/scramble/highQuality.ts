@@ -1,6 +1,9 @@
-import { randomScrambleForEvent } from 'cubing/scramble'
 import { generateScrambleForEvent, scrambleEventById } from './catalog'
 import type { GeneratedScramble } from './types'
+
+type RandomScrambleForEvent = typeof import('cubing/scramble').randomScrambleForEvent
+
+let randomScrambleForEventPromise: Promise<RandomScrambleForEvent> | undefined
 
 const cubingEventIds: Partial<Record<string, string>> = {
   '222': '222',
@@ -38,6 +41,7 @@ export async function generateHighQualityScrambleForEvent(eventId: string): Prom
       return generateScrambleForEvent(event.id)
     }
 
+    const randomScrambleForEvent = await loadRandomScrambleForEvent()
     const scramble = await randomScrambleForEvent(cubingEventId)
 
     return {
@@ -50,6 +54,7 @@ export async function generateHighQualityScrambleForEvent(eventId: string): Prom
 }
 
 async function generateMultiBlindScramble(count: number): Promise<string> {
+  const randomScrambleForEvent = await loadRandomScrambleForEvent()
   const scrambles = await Promise.all(
     Array.from({ length: count }, async (_, index) => {
       const scramble = await randomScrambleForEvent('333bf')
@@ -59,4 +64,11 @@ async function generateMultiBlindScramble(count: number): Promise<string> {
   )
 
   return scrambles.join('\n')
+}
+
+function loadRandomScrambleForEvent(): Promise<RandomScrambleForEvent> {
+  randomScrambleForEventPromise ??= import('cubing/scramble')
+    .then((module) => module.randomScrambleForEvent)
+
+  return randomScrambleForEventPromise
 }
