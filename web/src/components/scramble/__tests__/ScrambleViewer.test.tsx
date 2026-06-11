@@ -27,6 +27,7 @@ describe('ScrambleViewer', () => {
     const onCopy = vi.fn()
     const onNext = vi.fn()
     const onPrevious = vi.fn()
+    const onToggleReplay = vi.fn()
 
     render(
       <ScrambleViewer
@@ -36,16 +37,44 @@ describe('ScrambleViewer', () => {
         onCopy={onCopy}
         onNext={onNext}
         onPrevious={onPrevious}
+        onToggleReplay={onToggleReplay}
       />,
     )
 
     await user.click(screen.getByRole('button', { name: 'Previous scramble' }))
     await user.click(screen.getByRole('button', { name: 'Next scramble' }))
     await user.click(screen.getByRole('button', { name: 'Copy scramble' }))
+    await user.click(screen.getByRole('button', { name: 'Show replay' }))
 
     expect(onPrevious).toHaveBeenCalledTimes(1)
     expect(onNext).toHaveBeenCalledTimes(1)
     expect(onCopy).toHaveBeenCalledTimes(1)
+    expect(onToggleReplay).toHaveBeenCalledTimes(1)
     expect(screen.queryByText('Copy scramble')).not.toBeInTheDocument()
+  })
+
+  it('labels the replay toggle by open state', () => {
+    const onToggleReplay = vi.fn()
+    const { rerender } = render(
+      <ScrambleViewer
+        eventLabel="3x3x3"
+        replayOpen={false}
+        scramble="R U R' U'"
+        onToggleReplay={onToggleReplay}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: 'Show replay' })).toHaveAttribute('aria-pressed', 'false')
+
+    rerender(
+      <ScrambleViewer
+        eventLabel="3x3x3"
+        replayOpen
+        scramble="R U R' U'"
+        onToggleReplay={onToggleReplay}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: 'Hide replay' })).toHaveAttribute('aria-pressed', 'true')
   })
 })

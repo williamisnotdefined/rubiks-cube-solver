@@ -1080,8 +1080,10 @@
       "copyFailed": "Impossibile copiare scramble",
       "event": "Evento",
       "generating": "Generazione scramble...",
+      "hideReplay": "Nascondi replay",
       "next": "Scramble successivo",
       "previous": "Scramble precedente",
+      "showReplay": "Mostra replay",
       "title": "Scramble"
     },
     "session": {

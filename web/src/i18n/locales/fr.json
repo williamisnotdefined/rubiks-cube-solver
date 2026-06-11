@@ -1080,8 +1080,10 @@
       "copyFailed": "Impossible de copier le mélange",
       "event": "Épreuve",
       "generating": "Génération du mélange...",
+      "hideReplay": "Masquer le replay",
       "next": "Mélange suivant",
       "previous": "Mélange précédent",
+      "showReplay": "Afficher le replay",
       "title": "Mélange"
     },
     "session": {
