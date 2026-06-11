@@ -19,7 +19,6 @@ export const scrambleEvents = [
     puzzle: '3x3x3',
     puzzleSlug: 'cube-3x3x3',
     quality: 'wcaLike',
-    replaySupported: true,
   },
   {
     defaultLength: 11,
@@ -30,7 +29,6 @@ export const scrambleEvents = [
     puzzle: '2x2x2',
     puzzleSlug: 'cube-2x2x2',
     quality: 'wcaLike',
-    replaySupported: true,
   },
   {
     defaultLength: 40,
@@ -41,7 +39,6 @@ export const scrambleEvents = [
     puzzle: '4x4x4',
     puzzleSlug: 'cube-4x4x4',
     quality: 'wcaLike',
-    replaySupported: true,
   },
   {
     defaultLength: 60,
@@ -52,7 +49,6 @@ export const scrambleEvents = [
     puzzle: '5x5x5',
     puzzleSlug: 'cube-5x5x5',
     quality: 'wcaLike',
-    replaySupported: true,
   },
   {
     defaultLength: 80,
@@ -63,7 +59,6 @@ export const scrambleEvents = [
     puzzle: '6x6x6',
     puzzleSlug: 'cube-6x6x6',
     quality: 'wcaLike',
-    replaySupported: true,
   },
   {
     defaultLength: 100,
@@ -74,7 +69,6 @@ export const scrambleEvents = [
     puzzle: '7x7x7',
     puzzleSlug: 'cube-7x7x7',
     quality: 'wcaLike',
-    replaySupported: true,
   },
   {
     defaultLength: 25,
@@ -85,7 +79,6 @@ export const scrambleEvents = [
     puzzle: '3x3x3',
     puzzleSlug: 'cube-3x3x3',
     quality: 'wcaLike',
-    replaySupported: true,
   },
   {
     defaultLength: 25,
@@ -96,7 +89,6 @@ export const scrambleEvents = [
     puzzle: '3x3x3',
     puzzleSlug: 'cube-3x3x3',
     quality: 'wcaLike',
-    replaySupported: true,
   },
   {
     defaultLength: 25,
@@ -107,7 +99,6 @@ export const scrambleEvents = [
     puzzle: '3x3x3',
     puzzleSlug: 'cube-3x3x3',
     quality: 'wcaLike',
-    replaySupported: true,
   },
   {
     defaultLength: 0,
@@ -118,7 +109,6 @@ export const scrambleEvents = [
     puzzle: 'Clock',
     puzzleSlug: 'clock',
     quality: 'wcaLike',
-    replaySupported: true,
   },
   {
     defaultLength: 70,
@@ -129,7 +119,6 @@ export const scrambleEvents = [
     puzzle: 'Megaminx',
     puzzleSlug: 'megaminx',
     quality: 'wcaLike',
-    replaySupported: true,
   },
   {
     defaultLength: 10,
@@ -140,7 +129,6 @@ export const scrambleEvents = [
     puzzle: 'Pyraminx',
     puzzleSlug: 'pyraminx',
     quality: 'wcaLike',
-    replaySupported: true,
   },
   {
     defaultLength: 11,
@@ -151,7 +139,6 @@ export const scrambleEvents = [
     puzzle: 'Skewb',
     puzzleSlug: 'skewb',
     quality: 'wcaLike',
-    replaySupported: true,
   },
   {
     defaultLength: 15,
@@ -162,7 +149,6 @@ export const scrambleEvents = [
     puzzle: 'Square-1',
     puzzleSlug: 'square1',
     quality: 'wcaLike',
-    replaySupported: true,
   },
   {
     defaultLength: 40,
@@ -173,7 +159,6 @@ export const scrambleEvents = [
     puzzle: '4x4x4',
     puzzleSlug: 'cube-4x4x4',
     quality: 'wcaLike',
-    replaySupported: true,
   },
   {
     defaultLength: 60,
@@ -184,7 +169,6 @@ export const scrambleEvents = [
     puzzle: '5x5x5',
     puzzleSlug: 'cube-5x5x5',
     quality: 'wcaLike',
-    replaySupported: true,
   },
   {
     defaultLength: 5,
@@ -195,7 +179,6 @@ export const scrambleEvents = [
     puzzle: '3x3x3',
     puzzleSlug: 'cube-3x3x3',
     quality: 'wcaLike',
-    replaySupported: false,
   },
 ] as const satisfies readonly ScrambleEvent[]
 

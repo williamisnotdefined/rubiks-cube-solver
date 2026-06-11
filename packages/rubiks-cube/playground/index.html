@@ -18,15 +18,6 @@
                     <div class="status-pill" id="status">idle</div>
                 </div>
                 <div class="cube-frame" id="cube-frame"></div>
-                <section class="twisty-card" aria-label="Twisty puzzle replay preview">
-                    <div class="twisty-card-header">
-                        <div>
-                            <p class="eyebrow">Cubing Replay</p>
-                            <h2>Twisty Puzzle</h2>
-                        </div>
-                    </div>
-                    <div class="twisty-frame" id="twisty-frame"></div>
-                </section>
             </section>
 
             <aside class="panel" aria-label="Development controls">
@@ -144,44 +135,6 @@
                     <div class="button-row">
                         <button id="run-algorithm" type="button">Run</button>
                         <button id="stop-stress" type="button">Stop stress</button>
-                    </div>
-                </section>
-
-                <section class="card">
-                    <h2>Twisty Replay</h2>
-                    <div class="grid two">
-                        <label>
-                            Puzzle
-                            <select id="twisty-puzzle">
-                                <option value="cube-2x2x2">2x2x2</option>
-                                <option value="cube-3x3x3" selected>3x3x3</option>
-                                <option value="cube-4x4x4">4x4x4</option>
-                                <option value="cube-5x5x5">5x5x5</option>
-                                <option value="cube-6x6x6">6x6x6</option>
-                                <option value="cube-7x7x7">7x7x7</option>
-                                <option value="megaminx">Megaminx</option>
-                                <option value="pyraminx">Pyraminx</option>
-                                <option value="square1">Square-1</option>
-                                <option value="clock">Clock</option>
-                                <option value="skewb">Skewb</option>
-                            </select>
-                        </label>
-                        <label>
-                            Camera distance
-                            <input id="twisty-camera-distance" type="number" min="1" step="0.5" value="7" />
-                        </label>
-                    </div>
-                    <label>
-                        Algorithm
-                        <textarea id="twisty-alg" spellcheck="false">R U R' U'</textarea>
-                    </label>
-                    <label>
-                        Setup algorithm
-                        <textarea id="twisty-setup-alg" spellcheck="false" placeholder="optional"></textarea>
-                    </label>
-                    <div class="button-row">
-                        <button id="twisty-apply" type="button">Apply replay</button>
-                        <button id="twisty-reset" type="button">Reset replay</button>
                     </div>
                 </section>
 

@@ -21,10 +21,6 @@
       "types": "./src/player/index.ts",
       "default": "./src/player/index.ts"
     },
-    "./puzzle": {
-      "types": "./src/puzzle/index.ts",
-      "default": "./src/puzzle/index.ts"
-    },
     "./three": {
       "types": "./src/rubiksCube3D/index.ts",
       "default": "./src/rubiksCube3D/index.ts"
@@ -54,7 +50,6 @@
     "test:coverage": "vitest run --config vitest.config.ts --coverage --passWithNoTests"
   },
   "dependencies": {
-    "cubing": "^0.63.3",
     "gsap": "^3.14.2",
     "three": "^0.182.0"
   },

@@ -9,8 +9,6 @@ const meta = {
     onCopy: () => undefined,
     onNext: () => undefined,
     onPrevious: () => undefined,
-    onToggleReplay: () => undefined,
-    replayOpen: false,
     scramble: "R2 D2 F2 D L2 F2 U' R2 D B2 L2 U' B' R' B' R2 B2 L B U'",
   },
   component: ScrambleViewer,

@@ -32,7 +32,6 @@ export type ScrambleEvent = {
   puzzle: string
   puzzleSlug: ScramblePuzzleSlug
   quality: ScrambleQuality
-  replaySupported: boolean
 }
 
 export type GeneratedScramble = {

@@ -10,22 +10,9 @@ import { useTimerStore } from '../timerStore'
 const highQualityMocks = vi.hoisted(() => ({
   generateHighQualityScrambleForEvent: vi.fn(),
 }))
-const puzzleMocks = vi.hoisted(() => ({
-  register: vi.fn((tagName = 'twisty-puzzle') => {
-    if (!customElements.get(tagName)) {
-      customElements.define(tagName, class extends HTMLElement {})
-    }
-  }),
-}))
 
 vi.mock('@core/scramble/highQuality', () => ({
   generateHighQualityScrambleForEvent: highQualityMocks.generateHighQualityScrambleForEvent,
-}))
-
-vi.mock('@rubiks-cube-solver/rubiks-cube/puzzle', () => ({
-  TwistyPuzzleElement: {
-    register: puzzleMocks.register,
-  },
 }))
 
 describe('TimerPage', () => {
@@ -33,7 +20,6 @@ describe('TimerPage', () => {
     localStorage.clear()
     vi.restoreAllMocks()
     highQualityMocks.generateHighQualityScrambleForEvent.mockReset()
-    puzzleMocks.register.mockClear()
     let scrambleCount = 0
     highQualityMocks.generateHighQualityScrambleForEvent.mockImplementation(async (eventId: string) => {
       const event = scrambleEventById(eventId)
@@ -52,24 +38,12 @@ describe('TimerPage', () => {
   })
 
   it('renders the timer workspace with a scramble and empty solve list', async () => {
-    const user = userEvent.setup()
     renderTimerPage()
 
     expect(screen.getByRole('timer', { name: 'Speedsolve timer' })).toBeInTheDocument()
     expect(screen.getByText('Generating scramble...')).toBeInTheDocument()
     await waitForScrambleReady()
     expect(screen.getAllByText(/3x3x3/).length).toBeGreaterThan(0)
-    expect(screen.queryByLabelText('3x3x3 replay')).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Show replay' })).toHaveAttribute('aria-pressed', 'false')
-
-    await user.click(screen.getByRole('button', { name: 'Show replay' }))
-
-    expect(screen.getByRole('button', { name: 'Hide replay' })).toHaveAttribute('aria-pressed', 'true')
-    await waitForReplay('3x3x3 replay', 'cube-3x3x3')
-
-    await user.click(screen.getByRole('button', { name: 'Hide replay' }))
-
-    expect(screen.queryByLabelText('3x3x3 replay')).not.toBeInTheDocument()
     expect(screen.getByText('No solves yet')).toBeInTheDocument()
     expect(screen.queryByText('Default Session')).not.toBeInTheDocument()
   })
@@ -141,10 +115,6 @@ describe('TimerPage', () => {
     await waitForScrambleReady()
     expect(screen.getAllByText(/Pyraminx/).length).toBeGreaterThan(0)
 
-    await user.click(screen.getByRole('button', { name: 'Show replay' }))
-
-    await waitForReplay('Pyraminx replay', 'pyraminx')
-
     fireEvent.keyDown(window, { code: 'Space', key: ' ' })
     fireEvent.keyUp(window, { code: 'Space', key: ' ' })
     await waitFor(() => expect(screen.getByText('Solving')).toBeInTheDocument())
@@ -166,12 +136,6 @@ describe('TimerPage', () => {
     expect(
       await screen.findByText((content) => content.includes('1. ') && content.includes('5. ')),
     ).toBeInTheDocument()
-
-    await user.click(screen.getByRole('button', { name: 'Show replay' }))
-
-    expect(screen.getByLabelText('3x3 MBLD replay')).toHaveTextContent(
-      'Visualization is not available for this puzzle yet.',
-    )
   })
 
   it('copies and advances scrambles', async () => {
@@ -284,10 +248,4 @@ async function chooseSelectOption(user: TestUser, label: string, optionName: str
 
 async function waitForScrambleReady() {
   await waitFor(() => expect(screen.queryByText('Generating scramble...')).not.toBeInTheDocument())
-}
-
-async function waitForReplay(label: string, puzzleSlug: string) {
-  const replay = screen.getByLabelText(label)
-
-  await waitFor(() => expect(replay.querySelector('twisty-puzzle')).toHaveAttribute('puzzle', puzzleSlug))
 }

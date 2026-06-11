@@ -1,5 +1,5 @@
 import cls from 'classnames'
-import { ChevronLeft, ChevronRight, Copy, Play } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Copy } from 'lucide-react'
 import type { MouseEvent, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -12,8 +12,6 @@ type ScrambleViewerProps = {
   onCopy?: () => void
   onNext?: () => void
   onPrevious?: () => void
-  onToggleReplay?: () => void
-  replayOpen?: boolean
   scramble: string
 }
 
@@ -26,15 +24,12 @@ export function ScrambleViewer({
   onCopy,
   onNext,
   onPrevious,
-  onToggleReplay,
-  replayOpen = false,
   scramble,
 }: ScrambleViewerProps) {
   const { t } = useTranslation()
   const hasActions = onCopy !== undefined
     || onNext !== undefined
     || onPrevious !== undefined
-    || onToggleReplay !== undefined
 
   return (
     <section className={cls('grid min-h-0 gap-2 border border-app-border bg-app-surface px-3 py-2 text-center', className)}>
@@ -74,21 +69,6 @@ export function ScrambleViewer({
             >
               <Copy aria-hidden="true" size={17} strokeWidth={2.6} />
             </button>
-            {onToggleReplay !== undefined ? (
-              <button
-                aria-label={replayOpen
-                  ? t('timer.scramble.hideReplay')
-                  : t('timer.scramble.showReplay')}
-                aria-pressed={replayOpen}
-                className={cls(scrambleActionButtonClassName, {
-                  'border-app-border-strong bg-app-surface-raised text-app-text': replayOpen,
-                })}
-                type="button"
-                onClick={(event) => handleActionClick(event, onToggleReplay)}
-              >
-                <Play aria-hidden="true" size={17} strokeWidth={2.6} />
-              </button>
-            ) : null}
           </div>
         ) : (
           <span aria-hidden="true" />

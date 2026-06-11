@@ -1,5 +1,4 @@
 import type { RubiksCubeElement } from '@rubiks-cube-solver/rubiks-cube/view'
-import type { TwistyPuzzleElement } from '@rubiks-cube-solver/rubiks-cube/puzzle'
 import type { DetailedHTMLProps, HTMLAttributes } from 'react'
 
 declare module 'react' {
@@ -16,18 +15,6 @@ declare module 'react' {
         'camera-radius'?: string
         'cube-type'?: string
         'piece-gap'?: string
-      }
-      'twisty-puzzle': DetailedHTMLProps<
-        HTMLAttributes<TwistyPuzzleElement>,
-        TwistyPuzzleElement
-      > & {
-        alg?: string
-        background?: string
-        'camera-distance'?: string
-        'control-panel'?: string
-        puzzle?: string
-        'setup-alg'?: string
-        visualization?: string
       }
     }
   }

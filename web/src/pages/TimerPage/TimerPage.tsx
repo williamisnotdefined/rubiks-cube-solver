@@ -4,7 +4,6 @@ import { useCopyToClipboard } from 'usehooks-ts'
 import { AverageCards } from '@components/timer/AverageCards'
 import { InspectionBar } from '@components/timer/InspectionBar'
 import { PenaltyControls } from '@components/timer/PenaltyControls'
-import { PuzzleReplayStage } from '@components/puzzle/PuzzleReplayStage'
 import { SolveTable } from '@components/timer/SolveTable'
 import { TimerDisplay } from '@components/timer/TimerDisplay'
 import { TimerStatusBar } from '@components/timer/TimerStatusBar'
@@ -50,7 +49,6 @@ export function TimerPage() {
   })
   const [copied, setCopied] = useState(false)
   const [isScramblePending, setIsScramblePending] = useState(true)
-  const [isReplayOpen, setIsReplayOpen] = useState(false)
   const [timerResetSignal, setTimerResetSignal] = useState(0)
   const scrambleRequestIdRef = useRef(0)
   const sessions = useTimerStore((state) => state.sessions)
@@ -232,8 +230,6 @@ export function TimerPage() {
             onCopy={isScramblePending ? undefined : handleCopyScramble}
             onNext={isScramblePending ? undefined : handleNextScramble}
             onPrevious={isScramblePending ? undefined : handlePreviousScramble}
-            replayOpen={isReplayOpen}
-            onToggleReplay={() => setIsReplayOpen((open) => !open)}
           />
           <Panel className="grid min-h-0 grid-cols-2 gap-2 p-2 sm:grid-cols-[auto_auto_minmax(14rem,1fr)] sm:items-center" aria-label={t('timer.settings.label')}>
             <label className="flex min-h-9 items-center gap-2 border border-app-border bg-app-control px-3 py-2 text-xs font-extrabold uppercase tracking-[0.16em] text-app-text">
@@ -294,18 +290,6 @@ export function TimerPage() {
           </aside>
         </div>
       </section>
-      {isReplayOpen ? (
-        <PuzzleReplayStage
-          active={!isScramblePending}
-          alg={isScramblePending ? '' : generatedScramble.scramble}
-          className="fixed right-3 top-24 z-30 h-[min(calc(100vh-7rem),350px)] w-[min(calc(100vw-1.5rem),350px)] shadow-2xl sm:right-5 sm:top-28"
-          label={`${generatedScramble.event.label} replay`}
-          loadingLabel={t('common.loading')}
-          puzzleSlug={generatedScramble.event.puzzleSlug}
-          replaySupported={generatedScramble.event.replaySupported}
-          unavailableLabel={t('cube.visualizationUnavailable')}
-        />
-      ) : null}
     </main>
   )
 }
