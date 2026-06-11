@@ -64,6 +64,7 @@ test.describe('timer flow', () => {
 
     await chooseRadixSelectOption(page, 'Event', 'Pyraminx')
     await expect(page.getByText(/Pyraminx/)).toBeVisible()
+    await expect(page.locator('twisty-puzzle')).toHaveAttribute('puzzle', 'pyraminx')
 
     await recordKeyboardSolve(page)
 
