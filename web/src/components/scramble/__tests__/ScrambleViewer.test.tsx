@@ -77,4 +77,22 @@ describe('ScrambleViewer', () => {
 
     expect(screen.getByRole('button', { name: 'Hide replay' })).toHaveAttribute('aria-pressed', 'true')
   })
+
+  it('keeps active action buttons on the surface instead of the text color', () => {
+    render(
+      <ScrambleViewer
+        copied
+        eventLabel="3x3x3"
+        replayOpen
+        scramble="R U R' U'"
+        onCopy={() => undefined}
+        onToggleReplay={() => undefined}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: 'Copied' })).toHaveClass('bg-app-surface-raised')
+    expect(screen.getByRole('button', { name: 'Copied' })).not.toHaveClass('bg-app-text')
+    expect(screen.getByRole('button', { name: 'Hide replay' })).toHaveClass('bg-app-surface-raised')
+    expect(screen.getByRole('button', { name: 'Hide replay' })).not.toHaveClass('bg-app-text')
+  })
 })
