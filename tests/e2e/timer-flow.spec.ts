@@ -73,6 +73,16 @@ test.describe('timer flow', () => {
     expect(state.sessions[0]?.solves.at(-1)?.eventId).toBe('pyraminx')
   })
 
+  test('shows replay fallback for unsupported multi-blind events', async ({ page }) => {
+    await page.goto('/timer')
+
+    await chooseRadixSelectOption(page, 'Event', '3x3 MBLD')
+
+    await expect(page.getByText(/3x3 MBLD/)).toBeVisible()
+    await expect(page.locator('twisty-puzzle')).toHaveCount(0)
+    await expect(page.getByText('Visualization is not available for this puzzle yet.')).toBeVisible()
+  })
+
   test('supports inspection and millisecond display settings', async ({ page }) => {
     await page.goto('/timer')
 

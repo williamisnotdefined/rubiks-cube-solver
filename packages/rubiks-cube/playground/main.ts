@@ -1,11 +1,16 @@
 import { IsRotation, isMovement } from '../src/core';
+import { TwistyPuzzleAttributeNames, TwistyPuzzleElement } from '../src/puzzle';
 import { AttributeNames, PeekActions, RubiksCubeElement } from '../src/webComponent';
 
 if (!customElements.get('rubiks-cube')) {
   RubiksCubeElement.register();
 }
+if (!customElements.get('twisty-puzzle')) {
+  TwistyPuzzleElement.register();
+}
 
 const frame = /** @type {HTMLDivElement} */ (document.getElementById('cube-frame'));
+const twistyFrame = /** @type {HTMLDivElement} */ (document.getElementById('twisty-frame'));
 const status = /** @type {HTMLDivElement} */ (document.getElementById('status'));
 const quickActions = /** @type {HTMLDivElement} */ (document.getElementById('quick-actions'));
 const stateOutput = /** @type {HTMLTextAreaElement} */ (document.getElementById('state-output'));
@@ -35,6 +40,13 @@ const inputs = {
   repeatCount: /** @type {HTMLInputElement} */ (document.getElementById('repeat-count')),
   stressLoop: /** @type {HTMLSelectElement} */ (document.getElementById('stress-loop')),
   fpsMonitor: /** @type {HTMLSelectElement} */ (document.getElementById('fps-monitor')),
+};
+
+const twistyInputs = {
+  alg: /** @type {HTMLTextAreaElement} */ (document.getElementById('twisty-alg')),
+  cameraDistance: /** @type {HTMLInputElement} */ (document.getElementById('twisty-camera-distance')),
+  puzzle: /** @type {HTMLSelectElement} */ (document.getElementById('twisty-puzzle')),
+  setupAlg: /** @type {HTMLTextAreaElement} */ (document.getElementById('twisty-setup-alg')),
 };
 
 const attributeInputs = [
@@ -79,6 +91,7 @@ let lastRenderAt = 0;
 let renderIdleTimer = 0;
 
 cube = createCube();
+const twistyPuzzle = createTwistyPuzzle();
 
 for (const action of actionButtons) {
   const button = document.createElement('button');
@@ -106,6 +119,11 @@ document.getElementById('set-state')?.addEventListener('click', () => {
 });
 document.getElementById('remount')?.addEventListener('click', remountCube);
 document.getElementById('run-algorithm')?.addEventListener('click', () => runAlgorithm());
+document.getElementById('twisty-apply')?.addEventListener('click', () => syncTwistyPuzzle());
+document.getElementById('twisty-reset')?.addEventListener('click', () => resetTwistyPuzzle());
+for (const input of Object.values(twistyInputs)) {
+  input.addEventListener('input', () => syncTwistyPuzzle());
+}
 inputs.fpsMonitor.addEventListener('change', () => {
   if (inputs.fpsMonitor.value === 'on') {
     startFpsMonitor();
@@ -122,6 +140,7 @@ document.getElementById('stop-stress')?.addEventListener('click', () => {
 
 updateProfileCss();
 updateState();
+syncTwistyPuzzle();
 
 function createCube() {
   cube?.removeEventListener('rubiks-cube-render', onCubeRender);
@@ -141,6 +160,37 @@ function remountCube() {
   cube = createCube();
   updateState();
   setStatus('remounted');
+}
+
+function createTwistyPuzzle() {
+  const nextPuzzle = document.createElement('twisty-puzzle');
+  nextPuzzle.setAttribute(TwistyPuzzleAttributeNames.controlPanel, 'bottom-row');
+  nextPuzzle.setAttribute(TwistyPuzzleAttributeNames.background, 'none');
+  nextPuzzle.setAttribute(TwistyPuzzleAttributeNames.visualization, '3D');
+  twistyFrame.replaceChildren(nextPuzzle);
+  return /** @type {TwistyPuzzleElement} */ (nextPuzzle);
+}
+
+function syncTwistyPuzzle() {
+  twistyPuzzle.setAttribute(TwistyPuzzleAttributeNames.puzzle, twistyInputs.puzzle.value);
+  twistyPuzzle.setAttribute(TwistyPuzzleAttributeNames.alg, twistyInputs.alg.value);
+  twistyPuzzle.setAttribute(TwistyPuzzleAttributeNames.cameraDistance, twistyInputs.cameraDistance.value);
+
+  const setupAlg = twistyInputs.setupAlg.value.trim();
+  if (setupAlg) {
+    twistyPuzzle.setAttribute(TwistyPuzzleAttributeNames.setupAlg, setupAlg);
+  } else {
+    twistyPuzzle.removeAttribute(TwistyPuzzleAttributeNames.setupAlg);
+  }
+  setStatus('twisty replay updated');
+}
+
+function resetTwistyPuzzle() {
+  twistyInputs.alg.value = '';
+  twistyInputs.setupAlg.value = '';
+  twistyPuzzle.reset();
+  syncTwistyPuzzle();
+  setStatus('twisty replay reset');
 }
 
 /**

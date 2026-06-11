@@ -83,7 +83,8 @@ textarea {
 }
 
 .stage-header,
-.card {
+.card,
+.twisty-card {
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 20px;
   background: rgba(7, 10, 18, 0.72);
@@ -92,7 +93,8 @@ textarea {
 }
 
 body.profile-css .stage-header,
-body.profile-css .card {
+body.profile-css .card,
+body.profile-css .twisty-card {
   box-shadow: none;
   backdrop-filter: none;
 }
@@ -168,6 +170,30 @@ body.profile-css .cube-frame {
   width: 100%;
   height: 100%;
   min-height: 34rem;
+}
+
+.twisty-card {
+  display: grid;
+  gap: 1rem;
+  min-height: 24rem;
+  padding: 1rem;
+}
+
+.twisty-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.twisty-frame {
+  min-height: 20rem;
+}
+
+.twisty-frame twisty-puzzle {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 20rem;
 }
 
 .panel {
