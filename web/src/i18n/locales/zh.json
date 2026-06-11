@@ -1080,8 +1080,10 @@
       "copyFailed": "无法复制打乱",
       "event": "项目",
       "generating": "正在生成打乱...",
+      "hideReplay": "隐藏回放",
       "next": "下一组打乱",
       "previous": "上一组打乱",
+      "showReplay": "显示回放",
       "title": "打乱"
     },
     "session": {

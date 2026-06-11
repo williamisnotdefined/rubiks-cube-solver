@@ -1080,8 +1080,10 @@
       "copyFailed": "スクランブルをコピーできませんでした",
       "event": "イベント",
       "generating": "スクランブルを生成中...",
+      "hideReplay": "リプレイを非表示",
       "next": "次のスクランブル",
       "previous": "前回のスクランブル",
+      "showReplay": "リプレイを表示",
       "title": "スクランブル"
     },
     "session": {

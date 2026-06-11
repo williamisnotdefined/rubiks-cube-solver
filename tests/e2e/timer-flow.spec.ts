@@ -64,6 +64,7 @@ test.describe('timer flow', () => {
 
     await chooseRadixSelectOption(page, 'Event', 'Pyraminx')
     await expect(page.getByText(/Pyraminx/)).toBeVisible()
+    await dispatchClick(page.getByRole('button', { name: 'Show replay' }))
     await expect(page.locator('twisty-puzzle')).toHaveAttribute('puzzle', 'pyraminx')
 
     await recordKeyboardSolve(page)
@@ -79,6 +80,7 @@ test.describe('timer flow', () => {
     await chooseRadixSelectOption(page, 'Event', '3x3 MBLD')
 
     await expect(page.getByText(/3x3 MBLD/)).toBeVisible()
+    await dispatchClick(page.getByRole('button', { name: 'Show replay' }))
     await expect(page.locator('twisty-puzzle')).toHaveCount(0)
     await expect(page.getByText('Visualization is not available for this puzzle yet.')).toBeVisible()
   })
@@ -124,6 +126,7 @@ test.describe('timer flow', () => {
     await page.goto('/timer')
 
     await expect(page.getByRole('button', { name: 'Previous scramble' })).toBeDisabled()
+    await expect(page.getByRole('button', { name: 'Copy scramble' })).toBeEnabled()
     await dispatchClick(page.getByRole('button', { name: 'Copy scramble' }))
     await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible()
     await expect.poll(() => page.evaluate(() => localStorage.getItem('rubiks-test-copied-scramble'))).not.toBeNull()
