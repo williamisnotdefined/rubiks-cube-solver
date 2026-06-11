@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  check:
+  rust:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,14 +18,6 @@ jobs:
         with:
           components: clippy, rustfmt
 
-      - name: Install Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Check AI routes
-        run: npm run ai:check
-
       - name: Check Rust formatting
         run: cargo fmt --check
 
@@ -34,3 +26,71 @@ jobs:
 
       - name: Run Clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
+
+  node:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check AI routes
+        run: npm run ai:check
+
+      - name: Check rubiks cube package
+        run: npm run check -w @rubiks-cube-solver/rubiks-cube
+
+      - name: Lint rubiks cube package
+        run: npm run lint -w @rubiks-cube-solver/rubiks-cube
+
+      - name: Typecheck rubiks cube package
+        run: npm run build:types -w @rubiks-cube-solver/rubiks-cube
+
+      - name: Test rubiks cube package coverage
+        run: npm run test:coverage -w @rubiks-cube-solver/rubiks-cube
+
+      - name: Test web
+        run: npm run test -w @rubiks-cube-solver/web
+
+      - name: Lint web
+        run: npm run lint -w @rubiks-cube-solver/web
+
+      - name: Build web
+        run: npm run build
+
+      - name: Build Storybook
+        run: npm run storybook:build -w @rubiks-cube-solver/web
+
+  e2e-smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run smoke E2E
+        run: npm run test:e2e:smoke
