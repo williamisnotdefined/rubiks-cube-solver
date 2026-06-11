@@ -9,14 +9,10 @@ const rubiksCubeSourceMarker = '/packages/rubiks-cube/src/'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   build: {
-    chunkSizeWarningLimit: 550,
+    chunkSizeWarningLimit: 800,
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('/node_modules/cubing/')) {
-            return 'vendor-cubing'
-          }
-
           if (id.includes('/node_modules/three/examples/')) {
             return 'vendor-three-examples'
           }
@@ -93,12 +89,6 @@ export default defineConfig({
         find: /^@rubiks-cube-solver\/rubiks-cube\/player$/,
         replacement: fileURLToPath(
           new URL('../packages/rubiks-cube/src/player/index.ts', import.meta.url),
-        ),
-      },
-      {
-        find: /^@rubiks-cube-solver\/rubiks-cube\/puzzle$/,
-        replacement: fileURLToPath(
-          new URL('../packages/rubiks-cube/src/puzzle/index.ts', import.meta.url),
         ),
       },
       {
