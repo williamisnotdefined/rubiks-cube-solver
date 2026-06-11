@@ -1,5 +1,5 @@
 import cls from 'classnames'
-import { ChevronLeft, ChevronRight, Copy, RotateCcw } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Copy, Play } from 'lucide-react'
 import type { MouseEvent, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -66,7 +66,7 @@ export function ScrambleViewer({
             <button
               aria-label={copied ? t('timer.scramble.copied') : t('timer.scramble.copy')}
               className={cls(scrambleActionButtonClassName, {
-                'border-app-text bg-app-text text-app-inverse': copied,
+                'border-app-border-strong bg-app-surface-raised text-app-text': copied,
               })}
               disabled={onCopy === undefined}
               type="button"
@@ -81,12 +81,12 @@ export function ScrambleViewer({
                   : t('timer.scramble.showReplay')}
                 aria-pressed={replayOpen}
                 className={cls(scrambleActionButtonClassName, {
-                  'border-app-text bg-app-text text-app-inverse': replayOpen,
+                  'border-app-border-strong bg-app-surface-raised text-app-text': replayOpen,
                 })}
                 type="button"
                 onClick={(event) => handleActionClick(event, onToggleReplay)}
               >
-                <RotateCcw aria-hidden="true" size={17} strokeWidth={2.6} />
+                <Play aria-hidden="true" size={17} strokeWidth={2.6} />
               </button>
             ) : null}
           </div>
