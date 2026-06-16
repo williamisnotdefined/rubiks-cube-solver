@@ -759,6 +759,22 @@ fn notation_request_defaults_missing_max_nodes_to_default_budget() {
 }
 
 #[test]
+fn notation_request_defaults_missing_max_depth_to_twenty() {
+    let request: SolveNotationRequest = serde_json::from_value(serde_json::json!({
+        "moves": "",
+        "maxNodes": 1_000,
+        "strategyId": "bounded-ida-star"
+    }))
+    .expect("request should deserialize with default max depth");
+
+    let (status, response) = solve_notation_request(&ApiState::without_generated_solver(), request);
+
+    assert_eq!(status, StatusCode::OK);
+    assert!(response.ok);
+    assert_eq!(response.max_depth, 20);
+}
+
+#[test]
 fn notation_request_accepts_explicit_max_nodes_up_to_api_cap() {
     let request = SolveNotationRequest {
         moves: String::new(),

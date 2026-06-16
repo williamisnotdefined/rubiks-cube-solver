@@ -151,10 +151,10 @@ test.describe('product solve flow', () => {
     await page.getByLabel('Max moves').fill('46')
 
     await expect(page.getByRole('button', { name: 'Solve' })).toBeDisabled()
-    await expect(page.locator('.result')).toContainText('Max moves must be 20 or less')
+    await expect(page.locator('.result')).toContainText('Max moves must be 23 or less')
     expect(solveRequests).toBe(0)
 
-    await page.getByLabel('Max moves').fill('20')
+    await page.getByLabel('Max moves').fill('23')
     await chooseRadixSelectOption(page, 'Max nodes (M)', '25')
 
     await expect(page.getByRole('button', { name: 'Solve' })).toBeEnabled()

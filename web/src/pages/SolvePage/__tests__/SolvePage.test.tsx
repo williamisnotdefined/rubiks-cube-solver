@@ -462,10 +462,10 @@ describe('SolvePage', () => {
     })
   })
 
-  it('uses a 20 move cap for 3x3 local validation', () => {
+  it('uses a 23 move cap for 3x3 local validation', () => {
     render(<SolvePage />)
 
-    expect(screen.getByLabelText('Max moves')).toHaveAttribute('max', '20')
+    expect(screen.getByLabelText('Max moves')).toHaveAttribute('max', '23')
   })
 
   it('rejects 2x2 max moves above 11 before sending requests', async () => {
