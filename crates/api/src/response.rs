@@ -679,7 +679,7 @@ fn max_nodes_label(max_nodes: Option<usize>) -> String {
 }
 
 fn default_max_depth() -> usize {
-    30
+    20
 }
 
 fn default_grid_size() -> usize {

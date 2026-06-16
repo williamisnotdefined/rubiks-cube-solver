@@ -1,13 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { SolveForm } from '../SolveForm'
-import { scramblePlaceholder } from '../constants'
+import { cube3MaxMovesLimit, scramblePlaceholder } from '../constants'
 
 const meta = {
   args: {
     buttonLoading: false,
     disabled: false,
     maxMovesInput: '20',
-    maxMovesLimit: 20,
+    maxMovesLimit: cube3MaxMovesLimit,
     maxNodesMillionInput: '10',
     notation: '',
     puzzleOptions: [

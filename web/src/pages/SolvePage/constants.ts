@@ -1,7 +1,7 @@
 export const defaultNotation = ''
 export const scramblePlaceholder =
   "R2 D2 F2 D L2 F2 U' R2 D B2 L2 U' B' R' B' R2 B2 L B U'"
-export const cube3MaxMovesLimit = 20
+export const cube3MaxMovesLimit = 23
 export const cube2MaxMovesLimit = 11
 export const maxMovesLimit = cube3MaxMovesLimit
 export const defaultMaxMoves = 20
