@@ -10,9 +10,11 @@ use cube_engine::puzzles::cube2::{
     CUBE2_BOUNDED_IDA_STAR_STRATEGY_ID, CUBE2_PDB_IDA_STAR_STRATEGY_ID,
 };
 use cube_engine::{
-    all_strategy_definitions, infer_scan, Facelet, FaceletConversionError, PuzzleId,
-    ScanInferenceInput, ScanInferenceResult, ScanInferenceStatus, ScanManualOverride,
-    SCAN_FACELET_COUNT, SCAN_FACELET_SYMBOL_COUNT, SCAN_STICKERS_PER_FACE,
+    all_strategy_definitions, Facelet, FaceletConversionError, PuzzleId, SCAN_STICKERS_PER_FACE,
+};
+#[cfg(test)]
+use cube_engine::{
+    ScanInferenceInput, ScanManualOverride, SCAN_FACELET_COUNT, SCAN_FACELET_SYMBOL_COUNT,
 };
 
 use crate::config::{CUBE2_MAX_API_DEPTH, DEFAULT_API_NODES, MAX_API_NODES, MAX_SCAN_IMAGE_BYTES};
@@ -20,13 +22,9 @@ use crate::response::{
     AnalyzeScanFaceRequest, AnalyzeScanFaceResponse, AnalyzeScanSessionResponse,
     AnalyzedSessionFaceResponse, AnalyzedStickerResponse, ColorProbabilitiesResponse,
     ImageQualityResponse, RgbColorRequest, ScanFacesRequest, ScanSessionFaceRequest,
-    ScanSessionInferenceResponse, ScanSessionInvalidCornerResponse,
-    ScanSessionInvalidCornerTargetResponse, ScanSessionManualTargetResponse, ScanSessionRequest,
-    ScanSessionResponse, ScanSessionTimingsResponse, SolveScanRequest, VisualStateResponse,
-};
-use crate::scan_quality_gate::{
-    evaluate_obvious_scan_quality_with_overrides, evaluate_scan_quality_with_overrides,
-    ScanQualityGateDecision, ScanQualityOverrides,
+    ScanSessionInvalidCornerResponse, ScanSessionInvalidCornerTargetResponse,
+    ScanSessionManualTargetResponse, ScanSessionRequest, ScanSessionResponse,
+    ScanSessionTimingsResponse, SolveScanRequest, VisualStateResponse,
 };
 use crate::solve::solve_scan_request;
 use crate::state::ApiState;
@@ -67,13 +65,6 @@ impl ScanSessionTimingRecorder {
             solve_elapsed_ms: self.solve_elapsed_ms,
         }
     }
-}
-
-#[derive(serde::Serialize)]
-struct VisionScanSessionRequest<'a> {
-    faces: &'a [ScanSessionFaceRequest],
-    #[serde(rename = "gridSize")]
-    grid_size: usize,
 }
 
 pub async fn analyze_scan_face_request(
@@ -195,151 +186,21 @@ async fn solve_cube3_scan_session_request(
         return (StatusCode::BAD_REQUEST, Json(response));
     }
 
-    let vision_started = Instant::now();
-    let scan = match request_scan_session_analysis(state, &request).await {
-        Ok(scan) => scan,
-        Err((status, mut response)) => {
-            timings.vision_elapsed_ms = Some(vision_started.elapsed().as_millis());
-            response.timings = Some(timings.finish());
-            return (status, Json(response));
-        }
-    };
-    timings.vision_elapsed_ms = Some(vision_started.elapsed().as_millis());
+    solve_reviewed_cube3_scan_session(state, &request, &mut timings)
+}
 
-    let quality_overrides = ScanQualityOverrides::from_request(&request);
-    let rescan_faces = rescan_faces_from_session(&scan, &quality_overrides);
-    if !rescan_faces.is_empty()
-        || (!scan.ok && scan.faces.len() != REQUIRED_SCAN_SESSION_FACE_COUNT)
-    {
-        return (
-            StatusCode::OK,
-            Json(ScanSessionResponse {
-                ok: false,
-                status: "needs_rescan_face".to_owned(),
-                message: Some(
-                    scan.message
-                        .clone()
-                        .unwrap_or_else(|| "One or more faces need to be rescanned.".to_owned()),
-                ),
-                timings: Some(timings.finish()),
-                scan: Some(scan),
-                solve: None,
-                inference: None,
-                rescan_faces,
-                manual_targets: Vec::new(),
-                invalid_corners: Vec::new(),
-            }),
+fn solve_reviewed_cube3_scan_session(
+    state: &ApiState,
+    request: &ScanSessionRequest,
+    timings: &mut ScanSessionTimingRecorder,
+) -> (StatusCode, Json<ScanSessionResponse>) {
+    let Some(faces) = scan_faces_from_reviewed_stickers(request, SCAN_STICKERS_PER_FACE) else {
+        let mut response = scan_session_error(
+            "invalid_session",
+            "3x3 scan sessions must include 9 reviewedStickers per face".to_owned(),
         );
-    }
-
-    let early_quality_gate_started = Instant::now();
-    let early_quality_gate =
-        evaluate_obvious_scan_quality_with_overrides(&scan, &quality_overrides);
-    timings.early_quality_gate_elapsed_ms = Some(early_quality_gate_started.elapsed().as_millis());
-    if let Some(quality_gate) = early_quality_gate {
-        return (
-            StatusCode::OK,
-            Json(ScanSessionResponse {
-                ok: false,
-                status: quality_gate.status.as_str().to_owned(),
-                message: Some(scan_quality_gate_message(quality_gate.status).to_owned()),
-                timings: Some(timings.finish()),
-                scan: Some(scan),
-                solve: None,
-                inference: Some(scan_session_early_quality_response(&quality_gate)),
-                rescan_faces: quality_gate
-                    .rescan_faces
-                    .iter()
-                    .map(|facelet| facelet.symbol().to_string())
-                    .collect(),
-                manual_targets: Vec::new(),
-                invalid_corners: Vec::new(),
-            }),
-        );
-    }
-
-    let Some(inference_input) = scan_inference_input_from_session(&scan, &request) else {
-        return (
-            StatusCode::OK,
-            Json(ScanSessionResponse {
-                ok: false,
-                status: "invalid_session".to_owned(),
-                message: Some("vision session did not return all 6 complete faces".to_owned()),
-                timings: Some(timings.finish()),
-                scan: Some(scan),
-                solve: None,
-                inference: None,
-                rescan_faces: Vec::new(),
-                manual_targets: Vec::new(),
-                invalid_corners: Vec::new(),
-            }),
-        );
-    };
-
-    let inference_started = Instant::now();
-    let inference = infer_scan(&inference_input);
-    timings.inference_elapsed_ms = Some(inference_started.elapsed().as_millis());
-    let quality_gate_started = Instant::now();
-    let quality_gate = evaluate_scan_quality_with_overrides(&scan, &inference, &quality_overrides);
-    timings.quality_gate_elapsed_ms = Some(quality_gate_started.elapsed().as_millis());
-    let inference_response = scan_session_inference_response(&inference, &quality_gate);
-
-    if quality_gate.status != ScanInferenceStatus::Accepted {
-        return (
-            StatusCode::OK,
-            Json(ScanSessionResponse {
-                ok: false,
-                status: quality_gate.status.as_str().to_owned(),
-                message: Some(scan_quality_gate_message(quality_gate.status).to_owned()),
-                timings: Some(timings.finish()),
-                scan: Some(scan),
-                solve: None,
-                inference: Some(inference_response),
-                rescan_faces: quality_gate
-                    .rescan_faces
-                    .iter()
-                    .map(|facelet| facelet.symbol().to_string())
-                    .collect(),
-                manual_targets: quality_gate.manual_targets,
-                invalid_corners: Vec::new(),
-            }),
-        );
-    }
-
-    let Some(candidate) = inference.best_candidate.as_ref() else {
-        return (
-            StatusCode::OK,
-            Json(ScanSessionResponse {
-                ok: false,
-                status: "invalid_cube_state".to_owned(),
-                message: Some("scan inference did not return an accepted candidate".to_owned()),
-                timings: Some(timings.finish()),
-                scan: Some(scan),
-                solve: None,
-                inference: Some(inference_response),
-                rescan_faces: Vec::new(),
-                manual_targets: Vec::new(),
-                invalid_corners: Vec::new(),
-            }),
-        );
-    };
-
-    let Some(faces) = scan_faces_from_facelets(&candidate.facelets) else {
-        return (
-            StatusCode::OK,
-            Json(ScanSessionResponse {
-                ok: false,
-                status: "invalid_cube_state".to_owned(),
-                message: Some("scan inference returned an invalid facelet candidate".to_owned()),
-                timings: Some(timings.finish()),
-                scan: Some(scan),
-                solve: None,
-                inference: Some(inference_response),
-                rescan_faces: Vec::new(),
-                manual_targets: Vec::new(),
-                invalid_corners: Vec::new(),
-            }),
-        );
+        response.timings = Some(timings.finish());
+        return (StatusCode::BAD_REQUEST, Json(response));
     };
 
     let solve_started = Instant::now();
@@ -349,7 +210,7 @@ async fn solve_cube3_scan_session_request(
             faces,
             max_depth: request.max_depth,
             max_nodes: request.max_nodes,
-            strategy_id: request.strategy_id,
+            strategy_id: request.strategy_id.clone(),
         },
     );
     timings.solve_elapsed_ms = Some(solve_started.elapsed().as_millis());
@@ -363,9 +224,9 @@ async fn solve_cube3_scan_session_request(
                 status: "accepted".to_owned(),
                 message: None,
                 timings: Some(timings.finish()),
-                scan: Some(scan),
+                scan: None,
                 solve: Some(solve),
-                inference: Some(inference_response),
+                inference: None,
                 rescan_faces: Vec::new(),
                 manual_targets: Vec::new(),
                 invalid_corners: Vec::new(),
@@ -386,9 +247,9 @@ async fn solve_cube3_scan_session_request(
             status: status.to_owned(),
             message: solve.message.clone(),
             timings: Some(timings.finish()),
-            scan: Some(scan),
+            scan: None,
             solve: Some(solve),
-            inference: Some(inference_response),
+            inference: None,
             rescan_faces: Vec::new(),
             manual_targets: Vec::new(),
             invalid_corners: Vec::new(),
@@ -927,55 +788,6 @@ fn cube2_solver_mode(strategy_id: &str) -> String {
         )
 }
 
-async fn request_scan_session_analysis(
-    state: &ApiState,
-    request: &ScanSessionRequest,
-) -> Result<AnalyzeScanSessionResponse, (StatusCode, ScanSessionResponse)> {
-    if let Some(scan) =
-        scan_session_analysis_from_reviewed_stickers(request, SCAN_STICKERS_PER_FACE)
-    {
-        return Ok(scan);
-    }
-
-    let url = format!("{}/analyze-session", state.vision_url.trim_end_matches('/'));
-    let response = reqwest::Client::new()
-        .post(url)
-        .timeout(VISION_TIMEOUT)
-        .json(&VisionScanSessionRequest {
-            faces: &request.faces,
-            grid_size: request.grid_size,
-        })
-        .send()
-        .await;
-
-    let response = response.map_err(|error| {
-        (
-            StatusCode::SERVICE_UNAVAILABLE,
-            scan_session_error(
-                "vision_unavailable",
-                format!("vision service is unavailable: {error}"),
-            ),
-        )
-    })?;
-    let status = response.status();
-    let body = response.json::<AnalyzeScanSessionResponse>().await;
-
-    match body {
-        Ok(body) => Ok(body),
-        Err(error) => Err((
-            if status.is_server_error() {
-                StatusCode::BAD_GATEWAY
-            } else {
-                StatusCode::BAD_REQUEST
-            },
-            scan_session_error(
-                "vision_error",
-                format!("vision service returned an invalid response: {error}"),
-            ),
-        )),
-    }
-}
-
 fn validate_scan_session_request(
     request: &ScanSessionRequest,
     stickers_per_face: usize,
@@ -989,18 +801,9 @@ fn validate_scan_session_request(
         if !is_scan_symbol(&face.symbol) {
             return Some("face symbols must be one of U, R, F, D, L, B".to_owned());
         }
-        if let Some(image) = &face.image {
-            if image.len() > MAX_SCAN_IMAGE_BYTES * 2 {
-                return Some(format!(
-                    "scan image payload for face {} is {} bytes; API limit is {} bytes",
-                    face.symbol,
-                    image.len(),
-                    MAX_SCAN_IMAGE_BYTES * 2
-                ));
-            }
-        } else if face.reviewed_stickers.len() != stickers_per_face {
+        if face.reviewed_stickers.len() != stickers_per_face {
             return Some(format!(
-                "face {} must include image or {stickers_per_face} reviewedStickers",
+                "face {} must include {stickers_per_face} reviewedStickers",
                 face.symbol,
             ));
         }
@@ -1187,37 +990,42 @@ fn validate_manual_overrides(
     None
 }
 
-fn rescan_faces_from_session(
-    scan: &AnalyzeScanSessionResponse,
-    overrides: &ScanQualityOverrides,
-) -> Vec<String> {
-    scan.faces
-        .iter()
-        .filter(|face| {
-            face.analysis.stickers.len() != 9
-                || !(face.analysis.ok
-                    || face.analysis.center_mismatch
-                        && overrides.center_mismatch_overridden(&face.symbol))
-        })
-        .map(|face| face.symbol.clone())
-        .collect()
-}
-
-fn scan_faces_from_facelets(facelets: &str) -> Option<ScanFacesRequest> {
-    if facelets.len() != SCAN_FACELET_COUNT {
-        return None;
-    }
-
+fn scan_faces_from_reviewed_stickers(
+    request: &ScanSessionRequest,
+    stickers_per_face: usize,
+) -> Option<ScanFacesRequest> {
     Some(ScanFacesRequest {
-        u: facelets[0..9].to_owned(),
-        r: facelets[9..18].to_owned(),
-        f: facelets[18..27].to_owned(),
-        d: facelets[27..36].to_owned(),
-        l: facelets[36..45].to_owned(),
-        b: facelets[45..54].to_owned(),
+        u: reviewed_face_symbols(request, "U", stickers_per_face)?,
+        r: reviewed_face_symbols(request, "R", stickers_per_face)?,
+        f: reviewed_face_symbols(request, "F", stickers_per_face)?,
+        d: reviewed_face_symbols(request, "D", stickers_per_face)?,
+        l: reviewed_face_symbols(request, "L", stickers_per_face)?,
+        b: reviewed_face_symbols(request, "B", stickers_per_face)?,
     })
 }
 
+fn reviewed_face_symbols(
+    request: &ScanSessionRequest,
+    symbol: &str,
+    stickers_per_face: usize,
+) -> Option<String> {
+    let face = request.faces.iter().find(|face| face.symbol == symbol)?;
+    if face.reviewed_stickers.len() != stickers_per_face {
+        return None;
+    }
+
+    let mut stickers = face.reviewed_stickers.clone();
+    stickers.sort_by_key(|sticker| sticker.index);
+
+    let mut symbols = String::new();
+    for sticker in stickers {
+        symbols.push_str(&sticker.symbol);
+    }
+
+    Some(symbols)
+}
+
+#[cfg(test)]
 pub(crate) fn scan_inference_input_from_session(
     scan: &AnalyzeScanSessionResponse,
     request: &ScanSessionRequest,
@@ -1277,6 +1085,7 @@ pub(crate) fn scan_inference_input_from_session(
     })
 }
 
+#[cfg(test)]
 fn probabilities_from_sticker(
     sticker: &AnalyzedStickerResponse,
 ) -> Option<[f64; SCAN_FACELET_SYMBOL_COUNT]> {
@@ -1291,6 +1100,7 @@ fn probabilities_from_sticker(
     )
 }
 
+#[cfg(test)]
 fn probabilities_from_response(
     probabilities: &ColorProbabilitiesResponse,
 ) -> Option<[f64; SCAN_FACELET_SYMBOL_COUNT]> {
@@ -1304,46 +1114,6 @@ fn probabilities_from_response(
     ])
 }
 
-fn scan_session_inference_response(
-    inference: &ScanInferenceResult,
-    quality_gate: &ScanQualityGateDecision,
-) -> ScanSessionInferenceResponse {
-    ScanSessionInferenceResponse {
-        status: quality_gate.status.as_str().to_owned(),
-        margin: inference.margin,
-        state_confidence: inference.state_confidence,
-        candidate_facelets: inference
-            .best_candidate
-            .as_ref()
-            .map(|candidate| candidate.facelets.clone()),
-        rescan_faces: inference
-            .rescan_faces
-            .iter()
-            .map(|facelet| facelet.symbol().to_string())
-            .collect(),
-        manual_targets: quality_gate.manual_targets.clone(),
-        quality_reasons: quality_gate.quality_reasons.clone(),
-    }
-}
-
-fn scan_session_early_quality_response(
-    quality_gate: &ScanQualityGateDecision,
-) -> ScanSessionInferenceResponse {
-    ScanSessionInferenceResponse {
-        status: quality_gate.status.as_str().to_owned(),
-        margin: None,
-        state_confidence: 0.0,
-        candidate_facelets: None,
-        rescan_faces: quality_gate
-            .rescan_faces
-            .iter()
-            .map(|facelet| facelet.symbol().to_string())
-            .collect(),
-        manual_targets: Vec::new(),
-        quality_reasons: quality_gate.quality_reasons.clone(),
-    }
-}
-
 fn facelet_from_str(symbol: &str) -> Option<Facelet> {
     let mut chars = symbol.chars();
     let symbol = chars.next()?;
@@ -1352,20 +1122,6 @@ fn facelet_from_str(symbol: &str) -> Option<Facelet> {
     }
 
     Facelet::from_symbol(symbol)
-}
-
-fn scan_quality_gate_message(status: ScanInferenceStatus) -> &'static str {
-    match status {
-        ScanInferenceStatus::NeedsRescanFace => "One or more faces need to be rescanned.",
-        ScanInferenceStatus::NeedsManualConfirmation => {
-            "Confirm the highlighted stickers before solving."
-        }
-        ScanInferenceStatus::StateAmbiguous => {
-            "The scanned stickers match more than one valid cube state."
-        }
-        ScanInferenceStatus::InvalidCubeState => "The scan does not describe a valid cube state.",
-        ScanInferenceStatus::Accepted => "",
-    }
 }
 
 fn scan_session_error(status: &str, message: String) -> ScanSessionResponse {

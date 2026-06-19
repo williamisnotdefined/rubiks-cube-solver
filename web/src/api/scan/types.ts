@@ -105,7 +105,6 @@ export type ScanSessionReviewedSticker = {
 export type ScanSessionFaceRequest = {
   symbol: ScanFaceSymbol
   expectedTop?: ScanFaceSymbol
-  image?: string
   manualOverrides?: Partial<Record<number, ScanFaceSymbol>>
   reviewedStickers?: ScanSessionReviewedSticker[]
   clientRotation?: 0 | 90 | 180 | 270

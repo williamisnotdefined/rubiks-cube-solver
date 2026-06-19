@@ -1082,18 +1082,16 @@ async fn solve_scan_session_route_rejects_incomplete_session() {
 }
 
 #[tokio::test]
-async fn solve_scan_session_reports_unavailable_vision_service() {
-    let state = ApiState::without_generated_solver().with_vision_url("http://127.0.0.1:9");
-
+async fn solve_scan_session_rejects_missing_reviewed_stickers() {
     let (status, response) = solve_scan_session_request(
-        &state,
+        &ApiState::without_generated_solver(),
         solved_scan_session_request_without_reviewed_stickers(),
     )
     .await;
 
-    assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+    assert_eq!(status, StatusCode::BAD_REQUEST);
     assert!(!response.ok);
-    assert_eq!(response.status, "vision_unavailable");
+    assert_eq!(response.status, "invalid_session");
 }
 
 #[tokio::test]
@@ -1112,6 +1110,39 @@ async fn solve_scan_session_rejects_3x3_depth_above_puzzle_cap() {
     assert!(!solve.ok);
     assert_eq!(solve.status, "invalid_limits");
     assert_eq!(solve.error_kind.as_deref(), Some("max_depth_exceeds_limit"));
+}
+
+#[tokio::test]
+async fn solve_scan_session_skips_scan_analysis_for_reviewed_stickers() {
+    let mut request = solved_scan_session_request();
+    for face in &mut request.faces {
+        face.client_rotation = None;
+    }
+
+    let (status, response) =
+        solve_scan_session_request(&ApiState::without_generated_solver(), request).await;
+
+    assert_eq!(status, StatusCode::OK);
+    let response = response.0;
+    assert!(response.ok);
+    assert_eq!(response.status, "accepted");
+    assert!(response.scan.is_none());
+    assert!(response.inference.is_none());
+    let timings = response.timings.expect("timings should be reported");
+    assert!(timings.vision_elapsed_ms.is_none());
+    assert!(timings.early_quality_gate_elapsed_ms.is_none());
+    assert!(timings.inference_elapsed_ms.is_none());
+    assert!(timings.quality_gate_elapsed_ms.is_none());
+    assert!(timings.solve_elapsed_ms.is_some());
+    let solve = response.solve.expect("reviewed scan should solve");
+    assert!(solve.ok);
+    assert_eq!(
+        solve
+            .visual_state
+            .as_ref()
+            .map(|state| state.value.as_str()),
+        Some("UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB")
+    );
 }
 
 #[tokio::test]
@@ -1228,105 +1259,6 @@ async fn solve_cube2_scan_session_highlights_invalid_corner_stickers() {
     assert_eq!(invalid_corner.reason, "opposite_faces");
     assert_eq!(invalid_corner.targets[0].face, "U");
     assert_eq!(invalid_corner.targets[0].index, 3);
-}
-
-#[tokio::test]
-async fn solve_scan_session_rescans_obvious_glare_before_inference() {
-    let mut scan = solved_scan_session_analysis();
-    scan.faces[0]
-        .analysis
-        .image_quality
-        .as_mut()
-        .expect("image quality should exist")
-        .glare_ratio = 0.50;
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
-        .await
-        .expect("vision listener should bind");
-    let addr = listener
-        .local_addr()
-        .expect("vision addr should be available");
-    let vision_app = axum::Router::new().route(
-        "/analyze-session",
-        axum::routing::post(move || {
-            let scan = scan.clone();
-            async move { axum::Json(scan) }
-        }),
-    );
-    let vision_server = tokio::spawn(async move {
-        axum::serve(listener, vision_app)
-            .await
-            .expect("vision server should run")
-    });
-    let state = ApiState::without_generated_solver().with_vision_url(format!("http://{addr}"));
-
-    let (status, response) = solve_scan_session_request(
-        &state,
-        solved_scan_session_request_without_reviewed_stickers(),
-    )
-    .await;
-
-    vision_server.abort();
-    assert_eq!(status, StatusCode::OK);
-    assert!(!response.ok);
-    assert_eq!(response.status, "needs_rescan_face");
-    assert_eq!(response.rescan_faces, vec!["U"]);
-    assert!(response.solve.is_none());
-    let inference = response
-        .inference
-        .as_ref()
-        .expect("early quality gate should return inference-shaped metadata");
-    assert!(inference.candidate_facelets.is_none());
-    assert_eq!(inference.quality_reasons, vec!["image_glare:U"]);
-    let timings = response
-        .timings
-        .as_ref()
-        .expect("timings should be reported");
-    assert!(timings.vision_elapsed_ms.is_some());
-    assert!(timings.early_quality_gate_elapsed_ms.is_some());
-    assert!(timings.inference_elapsed_ms.is_none());
-    assert!(timings.solve_elapsed_ms.is_none());
-}
-
-#[tokio::test]
-async fn solve_scan_session_accepts_explicit_center_override() {
-    let mut scan = solved_scan_session_analysis();
-    scan.ok = false;
-    scan.status = "partial_failure".to_owned();
-    scan.message = Some("One or more faces need to be rescanned.".to_owned());
-    scan.faces[0].analysis.ok = false;
-    scan.faces[0].analysis.status = "center_mismatch".to_owned();
-    scan.faces[0].analysis.center_mismatch = true;
-    scan.faces[0].analysis.detected_center = Some("R".to_owned());
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
-        .await
-        .expect("vision listener should bind");
-    let addr = listener
-        .local_addr()
-        .expect("vision addr should be available");
-    let vision_app = axum::Router::new().route(
-        "/analyze-session",
-        axum::routing::post(move || {
-            let scan = scan.clone();
-            async move { axum::Json(scan) }
-        }),
-    );
-    let vision_server = tokio::spawn(async move {
-        axum::serve(listener, vision_app)
-            .await
-            .expect("vision server should run")
-    });
-    let state = ApiState::without_generated_solver().with_vision_url(format!("http://{addr}"));
-    let mut request = solved_scan_session_request();
-    request.faces[0].manual_overrides.insert(4, "U".to_owned());
-
-    let (status, response) = solve_scan_session_request(&state, request).await;
-
-    vision_server.abort();
-    assert_eq!(status, StatusCode::OK);
-    assert!(response.ok);
-    assert_eq!(response.status, "accepted");
-    assert!(response.solve.is_some());
-    assert!(response.rescan_faces.is_empty());
 }
 
 #[test]
@@ -1696,7 +1628,6 @@ fn solved_scan_session_request() -> ScanSessionRequest {
             .map(|symbol| ScanSessionFaceRequest {
                 symbol: symbol.to_owned(),
                 expected_top: None,
-                image: Some("data:image/jpeg;base64,AAAA".to_owned()),
                 manual_overrides: Default::default(),
                 reviewed_stickers: reviewed_stickers(symbol),
                 client_rotation: Some(0),
@@ -1724,7 +1655,6 @@ fn solved_cube2_scan_session_request() -> ScanSessionRequest {
             .map(|symbol| ScanSessionFaceRequest {
                 symbol: symbol.to_owned(),
                 expected_top: None,
-                image: Some("data:image/jpeg;base64,AAAA".to_owned()),
                 manual_overrides: Default::default(),
                 reviewed_stickers: reviewed_cube2_stickers(symbol),
                 client_rotation: Some(0),
@@ -1748,7 +1678,6 @@ fn cube2_scan_session_request_from_visual_state(visual_state: &str) -> ScanSessi
             .map(|(face_index, symbol)| ScanSessionFaceRequest {
                 symbol: symbol.to_owned(),
                 expected_top: None,
-                image: Some("data:image/jpeg;base64,AAAA".to_owned()),
                 manual_overrides: Default::default(),
                 reviewed_stickers: chars[face_index * 4..face_index * 4 + 4]
                     .iter()

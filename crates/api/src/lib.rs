@@ -4,6 +4,7 @@ mod puzzle;
 mod response;
 mod routes;
 mod scan_analysis;
+#[cfg(test)]
 mod scan_quality_gate;
 mod solve;
 mod state;

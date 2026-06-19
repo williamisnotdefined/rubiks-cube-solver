@@ -5,6 +5,7 @@ import { renderHookWithProviders } from '@src/test/render'
 import { apiRequest } from '../client'
 import { analyzeScanFace } from '../scan/analyzeFace/analyzeFace'
 import { solveScanSession } from '../scan/solveSession/solveSession'
+import type { ScanSessionFaceRequest } from '../scan/types'
 import { useAnalyzeScanFace } from '../scan/analyzeFace/useAnalyzeScanFace'
 import { useSolveScanSession } from '../scan/solveSession/useSolveScanSession'
 import { getHealth } from '../solver/getHealth/getHealth'
@@ -41,14 +42,24 @@ const successPayload: ApiSolveResponse = {
   length: 2,
 }
 
-const scanSessionFaces = [
-  { symbol: 'U', image: 'data:image/jpeg;base64,U' },
-  { symbol: 'R', image: 'data:image/jpeg;base64,R' },
-  { symbol: 'F', image: 'data:image/jpeg;base64,F' },
-  { symbol: 'D', image: 'data:image/jpeg;base64,D' },
-  { symbol: 'L', image: 'data:image/jpeg;base64,L' },
-  { symbol: 'B', image: 'data:image/jpeg;base64,B' },
+const scanSessionSymbols = [
+  'U',
+  'R',
+  'F',
+  'D',
+  'L',
+  'B',
 ] as const
+
+const scanSessionFaces: ScanSessionFaceRequest[] = scanSessionSymbols.map((symbol) => ({
+  reviewedStickers: Array.from({ length: 9 }, (_, index) => ({
+    confidence: 1,
+    index,
+    source: index === 4 ? 'center' as const : 'detected' as const,
+    symbol,
+  })),
+  symbol,
+}))
 
 describe('solver API operations', () => {
   it('uses response status text when error payloads have no message', async () => {
@@ -328,26 +339,14 @@ describe('solver API operations', () => {
 
   it('posts scan sessions through the request client', async () => {
     const payload = {
-      inference: {
-        candidateFacelets: 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB',
-        manualTargets: [],
-        qualityReasons: [],
-        rescanFaces: [],
-        stateConfidence: 1,
-        status: 'accepted',
-      },
       manualTargets: [],
       ok: true,
       rescanFaces: [],
       solve: successPayload,
       status: 'accepted',
       timings: {
-        earlyQualityGateElapsedMs: 1,
-        inferenceElapsedMs: 2,
-        qualityGateElapsedMs: 1,
         solveElapsedMs: 3,
         totalElapsedMs: 12,
-        visionElapsedMs: 5,
       },
     }
     const fetchMock = mockApiSuccess(payload)
@@ -360,7 +359,6 @@ describe('solver API operations', () => {
         strategyId: 'bounded-ida-star',
       }),
     ).resolves.toMatchObject({
-      inference: payload.inference,
       manualTargets: [],
       ok: true,
       rescanFaces: [],

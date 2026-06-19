@@ -102,7 +102,6 @@ export function evenCubeScanSessionFacesFromDrafts(
 
     faces.push({
       expectedTop: expectedTopForScanFace(symbol),
-      image: draft.photoDataUrl,
       manualOverrides: Object.keys(manualOverrides).length > 0 ? manualOverrides : undefined,
       reviewedStickers,
       symbol,
