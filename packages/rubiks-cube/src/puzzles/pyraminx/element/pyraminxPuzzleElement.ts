@@ -1,54 +1,35 @@
 import { gsap } from 'gsap';
 import { AmbientLight, DirectionalLight, PerspectiveCamera, Scene, Spherical, WebGLRenderer } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { type AnimationStyle, AnimationStyles } from '../../shared/animation';
-import { CameraState } from '../../shared/cameraState';
-import { debounce } from '../../shared/debouncer';
-import type { PyraminxAnimationOptions } from './pyraminx3D';
-import { DEFAULT_PYRAMINX_ANIMATION_SPEED_MS, Pyraminx3D } from './pyraminx3D';
-import type { PyraminxMove } from './types';
+import type { AnimationStyle } from '../../../shared/animation';
+import { CameraState } from '../../../shared/cameraState';
+import { debounce } from '../../../shared/debouncer';
+import type { PyraminxMove } from '../core/types';
+import type { PyraminxAnimationOptions } from '../three/pyraminx3D';
+import { Pyraminx3D } from '../three/pyraminx3D';
+import {
+  InternalEvents,
+  maxAzimuthAngle,
+  maxPolarAngle,
+  notInitialisedMessage,
+  PyraminxAttributeNames,
+  polarAngleOffset,
+  renderEventName,
+} from './constants';
+import {
+  createDefaultPyraminxElementSettings,
+  setPyraminxAnimationSpeed,
+  setPyraminxAnimationStyle,
+  setPyraminxAntialias,
+  setPyraminxCameraFieldOfView,
+  setPyraminxCameraPeekAngleHorizontal,
+  setPyraminxCameraPeekAngleVertical,
+  setPyraminxCameraRadius,
+  setPyraminxCameraSpeed,
+  setPyraminxMaxDevicePixelRatio,
+} from './settings';
 
 type RenderLoopStarter = (updateControls?: boolean) => () => void;
-
-const notInitialisedMessage =
-  'PyraminxPuzzleElement is not initialised - element must be connected to the DOM before calling this method.';
-const renderEventName = 'pyraminx-render';
-const defaultSettings = {
-  animationSpeedMs: DEFAULT_PYRAMINX_ANIMATION_SPEED_MS,
-  animationStyle: AnimationStyles.Linear,
-  antialias: true,
-  cameraFieldOfView: 75,
-  cameraPeekAngleHorizontal: 0.6,
-  cameraPeekAngleVertical: 0.6,
-  cameraRadius: 5,
-  cameraSpeedMs: 100,
-  maxDevicePixelRatio: 2,
-};
-const maxAzimuthAngle = (5 * Math.PI) / 16;
-const polarAngleOffset = Math.PI / 2;
-const maxPolarAngle = (5 * Math.PI) / 16;
-const minFieldOfView = 30;
-const maxFieldOfView = 100;
-const minCameraRadius = 4;
-const minDevicePixelRatio = 0.25;
-const maxDevicePixelRatio = 4;
-const InternalEvents = Object.freeze({
-  cameraFieldOfViewChanged: 'pyraminxCameraFieldOfViewChanged',
-  cameraRadiusChanged: 'pyraminxCameraRadiusChanged',
-  cameraSettingsChanged: 'pyraminxCameraSettingsChanged',
-});
-
-export const PyraminxAttributeNames = {
-  animationSpeed: 'animation-speed-ms',
-  animationStyle: 'animation-style',
-  antialias: 'antialias',
-  cameraFieldOfView: 'camera-field-of-view',
-  cameraPeekAngleHorizontal: 'camera-peek-angle-horizontal',
-  cameraPeekAngleVertical: 'camera-peek-angle-vertical',
-  cameraRadius: 'camera-radius',
-  cameraSpeed: 'camera-speed-ms',
-  maxDevicePixelRatio: 'max-device-pixel-ratio',
-} as const;
 
 export class PyraminxPuzzleElement extends HTMLElement {
   canvas: HTMLCanvasElement;
@@ -73,15 +54,16 @@ export class PyraminxPuzzleElement extends HTMLElement {
     const root = this.shadowRoot as ShadowRoot;
     root.innerHTML = `<canvas id="pyraminx-canvas" style="display:block;"></canvas>`;
     this.canvas = root.getElementById('pyraminx-canvas') as HTMLCanvasElement;
-    this.animationSpeedMs = defaultSettings.animationSpeedMs;
-    this.animationStyle = defaultSettings.animationStyle;
-    this.antialias = defaultSettings.antialias;
-    this.cameraFieldOfView = defaultSettings.cameraFieldOfView;
-    this.cameraPeekAngleHorizontal = defaultSettings.cameraPeekAngleHorizontal;
-    this.cameraPeekAngleVertical = defaultSettings.cameraPeekAngleVertical;
-    this.cameraRadius = defaultSettings.cameraRadius;
-    this.cameraSpeedMs = defaultSettings.cameraSpeedMs;
-    this.maxDevicePixelRatio = defaultSettings.maxDevicePixelRatio;
+    const settings = createDefaultPyraminxElementSettings();
+    this.animationSpeedMs = settings.animationSpeedMs;
+    this.animationStyle = settings.animationStyle;
+    this.antialias = settings.antialias;
+    this.cameraFieldOfView = settings.cameraFieldOfView;
+    this.cameraPeekAngleHorizontal = settings.cameraPeekAngleHorizontal;
+    this.cameraPeekAngleVertical = settings.cameraPeekAngleVertical;
+    this.cameraRadius = settings.cameraRadius;
+    this.cameraSpeedMs = settings.cameraSpeedMs;
+    this.maxDevicePixelRatio = settings.maxDevicePixelRatio;
     this._pyraminx = null;
     this._renderOnce = null;
     this._startRenderLoop = null;
@@ -111,51 +93,51 @@ export class PyraminxPuzzleElement extends HTMLElement {
   attributeChangedCallback(name: string, oldVal: string | null, newVal: string | null): void {
     switch (name) {
       case PyraminxAttributeNames.animationSpeed:
-        this.setAnimationSpeed(newVal);
+        setPyraminxAnimationSpeed(this, newVal);
         if (this._pyraminx) {
           this._pyraminx.animationSpeedMs = this.animationSpeedMs;
         }
         break;
       case PyraminxAttributeNames.animationStyle:
-        this.setAnimationStyle(newVal);
+        setPyraminxAnimationStyle(this, newVal);
         if (this._pyraminx) {
           this._pyraminx.animationStyle = this.animationStyle;
         }
         break;
       case PyraminxAttributeNames.cameraRadius:
-        this.setCameraRadius(newVal);
+        setPyraminxCameraRadius(this, newVal);
         if (oldVal !== newVal && oldVal !== null) {
           this.animateCameraRadius();
         }
         break;
       case PyraminxAttributeNames.cameraFieldOfView:
-        this.setCameraFieldOfView(newVal);
+        setPyraminxCameraFieldOfView(this, newVal);
         if (oldVal !== newVal && oldVal !== null) {
           this.updateCameraFOV();
         }
         break;
       case PyraminxAttributeNames.cameraPeekAngleHorizontal:
-        this.setCameraPeekAngleHorizontal(newVal);
+        setPyraminxCameraPeekAngleHorizontal(this, newVal);
         if (oldVal !== newVal && oldVal !== null) {
           this.animateCameraSetting();
         }
         break;
       case PyraminxAttributeNames.cameraPeekAngleVertical:
-        this.setCameraPeekAngleVertical(newVal);
+        setPyraminxCameraPeekAngleVertical(this, newVal);
         if (oldVal !== newVal && oldVal !== null) {
           this.animateCameraSetting();
         }
         break;
       case PyraminxAttributeNames.cameraSpeed:
-        this.setCameraSpeed(newVal);
+        setPyraminxCameraSpeed(this, newVal);
         break;
       case PyraminxAttributeNames.maxDevicePixelRatio:
-        this.setMaxDevicePixelRatio(newVal);
+        setPyraminxMaxDevicePixelRatio(this, newVal);
         this._updatePixelRatio?.();
         this._renderOnce?.();
         break;
       case PyraminxAttributeNames.antialias:
-        this.setAntialias(newVal);
+        setPyraminxAntialias(this, newVal);
         if (oldVal !== newVal && oldVal !== null) {
           this.rebuildPreservingState();
         }
@@ -243,104 +225,6 @@ export class PyraminxPuzzleElement extends HTMLElement {
     const state = this._pyraminx.getState();
     this.init();
     this.setState(state);
-  }
-
-  private setAnimationSpeed(value: string | null): void {
-    const speed = Number(value);
-    if (speed >= 0 && value != null) {
-      this.animationSpeedMs = speed;
-      return;
-    }
-    console.warn(`Invalid Pyraminx animation speed value. Min is 0. Value is ${value}`);
-  }
-
-  private setAnimationStyle(value: unknown): void {
-    if (value && Object.values(AnimationStyles).includes(value as AnimationStyle)) {
-      this.animationStyle = value as AnimationStyle;
-      return;
-    }
-    console.warn(
-      `Invalid Pyraminx animation style value. Accepted Values are [${Object.values(AnimationStyles).join(', ')}] Value is ${value}`,
-    );
-  }
-
-  private setCameraSpeed(value: string | null): void {
-    const speed = Number(value);
-    if (speed >= 0 && value != null) {
-      this.cameraSpeedMs = speed;
-      return;
-    }
-    console.warn(`Invalid Pyraminx camera speed value. Min is 0. Value is ${value}`);
-  }
-
-  private setCameraRadius(value: string | null): void {
-    const radius = Number(value);
-    if (radius >= minCameraRadius && value != null) {
-      this.cameraRadius = radius;
-      return;
-    }
-    console.warn(`Invalid Pyraminx camera radius value. Min is ${minCameraRadius}. Value is ${value}`);
-  }
-
-  private setCameraFieldOfView(value: string | null): void {
-    const fov = Number(value);
-    if (fov >= minFieldOfView && fov <= maxFieldOfView && value != null) {
-      this.cameraFieldOfView = fov;
-      return;
-    }
-    console.warn(
-      `Invalid Pyraminx camera FOV value. Min is ${minFieldOfView} Max is ${maxFieldOfView}. Value is ${value}.`,
-    );
-  }
-
-  private setCameraPeekAngleHorizontal(value: string | null): void {
-    const angle = Number(value);
-    if (angle >= 0 && angle <= 1 && value != null) {
-      this.cameraPeekAngleHorizontal = angle;
-      return;
-    }
-    console.warn(`Invalid Pyraminx camera peek angle horizontal value. Min is 0, Max is 1. Value is ${value}`);
-  }
-
-  private setCameraPeekAngleVertical(value: string | null): void {
-    const angle = Number(value);
-    if (angle >= 0 && angle <= 1 && value != null) {
-      this.cameraPeekAngleVertical = angle;
-      return;
-    }
-    console.warn(`Invalid Pyraminx camera peek angle vertical value. Min is 0, Max is 1. Value is ${value}`);
-  }
-
-  private setMaxDevicePixelRatio(value: string | null): void {
-    if (value == null || value === '') {
-      this.maxDevicePixelRatio = defaultSettings.maxDevicePixelRatio;
-      return;
-    }
-    const ratio = Number(value);
-    if (ratio >= minDevicePixelRatio && ratio <= maxDevicePixelRatio) {
-      this.maxDevicePixelRatio = ratio;
-      return;
-    }
-    console.warn(
-      `Invalid Pyraminx max device pixel ratio value. Min is ${minDevicePixelRatio}, Max is ${maxDevicePixelRatio}. Value is ${value}`,
-    );
-  }
-
-  private setAntialias(value: string | null): void {
-    if (value == null) {
-      this.antialias = defaultSettings.antialias;
-      return;
-    }
-    const normalized = String(value).toLowerCase();
-    if (['', 'true', '1', 'yes', 'on'].includes(normalized)) {
-      this.antialias = true;
-      return;
-    }
-    if (['false', '0', 'no', 'off'].includes(normalized)) {
-      this.antialias = false;
-      return;
-    }
-    console.warn(`Invalid Pyraminx antialias value. Accepted values are true/false. Value is ${value}`);
   }
 
   private init(): void {
