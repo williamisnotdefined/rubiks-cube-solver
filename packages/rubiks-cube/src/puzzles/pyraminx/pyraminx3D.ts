@@ -5,9 +5,8 @@ import {
   DoubleSide,
   Float32BufferAttribute,
   Group,
-  LineBasicMaterial,
-  LineSegments,
   Mesh,
+  MeshBasicMaterial,
   MeshStandardMaterial,
   Object3D,
   Quaternion,
@@ -49,9 +48,9 @@ type StickerSlot = {
 const PYRAMINX_FACE_SIZE = 3;
 const TETRA_RADIUS = 1.55;
 const BACKING_SCALE = 1;
-const BACKING_OFFSET = 0.032;
-const STICKER_SCALE = 0.97;
-const STICKER_OFFSET = 0.028;
+const BACKING_OFFSET = 0.018;
+const STICKER_SCALE = 0.82;
+const STICKER_OFFSET = 0.04;
 const LAYER_EPSILON = 0.04;
 const TURN_ANGLE_RADIANS = (2 * Math.PI) / 3;
 export const DEFAULT_PYRAMINX_ANIMATION_SPEED_MS = 220;
@@ -82,7 +81,7 @@ export const PyraminxFaceColors = {
 } satisfies Record<PyraminxFace, ColorRepresentation>;
 
 export class PyraminxSticker extends Mesh<BufferGeometry, MeshStandardMaterial> {
-  backing: LineSegments<BufferGeometry, LineBasicMaterial>;
+  backing: Mesh<BufferGeometry, MeshBasicMaterial>;
   stickerId: string;
   slotIndex: number;
   face: PyraminxFace;
@@ -99,14 +98,21 @@ export class PyraminxSticker extends Mesh<BufferGeometry, MeshStandardMaterial> 
       new MeshStandardMaterial({
         color: PyraminxFaceColors[face],
         metalness: 0,
+        polygonOffset: true,
+        polygonOffsetFactor: -1,
+        polygonOffsetUnits: -1,
         roughness: 0.4,
         side: DoubleSide,
       }),
     );
-    this.backing = new LineSegments(
+    this.backing = new Mesh(
       backingGeometry,
-      new LineBasicMaterial({
+      new MeshBasicMaterial({
         color: 'black',
+        polygonOffset: true,
+        polygonOffsetFactor: 1,
+        polygonOffsetUnits: 1,
+        side: DoubleSide,
       }),
     );
     this.stickerId = stickerId;
@@ -452,7 +458,7 @@ function createFaceStickers(face: PyraminxFace, startIndex: number): PyraminxSti
       startIndex + stickers.length,
       face,
       createTriangleGeometry(vertices, position),
-      createTriangleOutlineGeometry(backingVertices, backingPosition),
+      createTriangleGeometry(backingVertices, backingPosition),
     );
     sticker.backing.position.copy(backingPosition);
     sticker.position.copy(position);
@@ -528,19 +534,6 @@ function createTriangleGeometry(vertices: readonly Vector3[], origin = new Vecto
 
   geometry.setAttribute('position', new Float32BufferAttribute(values, 3));
   geometry.computeVertexNormals();
-
-  return geometry;
-}
-
-function createTriangleOutlineGeometry(vertices: readonly Vector3[], origin = new Vector3()): BufferGeometry {
-  const geometry = new BufferGeometry();
-  const orderedVertices = [vertices[0], vertices[1], vertices[1], vertices[2], vertices[2], vertices[0]];
-  const values = orderedVertices.flatMap((vertex) => {
-    const local = vertex.clone().sub(origin);
-    return [local.x, local.y, local.z];
-  });
-
-  geometry.setAttribute('position', new Float32BufferAttribute(values, 3));
 
   return geometry;
 }
