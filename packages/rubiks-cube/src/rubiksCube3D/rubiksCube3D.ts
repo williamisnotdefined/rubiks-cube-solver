@@ -1,7 +1,7 @@
 import { gsap } from 'gsap';
 import type { ColorRepresentation } from 'three';
 import { Group, Mesh, MeshBasicMaterial, Object3D, Vector3 } from 'three';
-import { RoundedBoxGeometry } from 'three/examples/jsm/Addons.js';
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import type { CubeType } from '../core';
 import { CubeTypes, Faces } from '../core';
 import type { RubiksCubeViewInterface } from '../rubiksCube/rubiksCubeController';

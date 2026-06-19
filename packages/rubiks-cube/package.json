@@ -36,6 +36,10 @@
     "./state": {
       "types": "./src/state/index.ts",
       "default": "./src/state/index.ts"
+    },
+    "./pyraminx": {
+      "types": "./src/puzzles/pyraminx/index.ts",
+      "default": "./src/puzzles/pyraminx/index.ts"
     }
   },
   "scripts": {

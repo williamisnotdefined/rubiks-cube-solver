@@ -441,7 +441,12 @@ fn puzzle_aware_solve_request_solves_2x2_with_default_strategy() {
     assert_eq!(response.generated_table_status, "not_applicable");
     assert_eq!(response.moves, vec!["F'"]);
     assert_eq!(response.replay_verified, Some(true));
-    assert!(response.visual_state.is_none());
+    let visual_state = response
+        .visual_state
+        .expect("2x2 notation solve should return visual state");
+    assert_eq!(visual_state.kind, "cube2-facelets-v1");
+    assert_ne!(visual_state.value, "UUUURRRRFFFFDDDDLLLLBBBB");
+    assert_eq!(visual_state.value.len(), 24);
 }
 
 #[tokio::test]
@@ -478,7 +483,12 @@ async fn puzzle_aware_solve_route_solves_2x2_notation_with_pdb_strategy() {
     assert_eq!(response.metric, "htm");
     assert_eq!(response.length, Some(3));
     assert_eq!(response.replay_verified, Some(true));
-    assert!(response.visual_state.is_none());
+    let visual_state = response
+        .visual_state
+        .expect("2x2 notation solve should return visual state");
+    assert_eq!(visual_state.kind, "cube2-facelets-v1");
+    assert_ne!(visual_state.value, "UUUURRRRFFFFDDDDLLLLBBBB");
+    assert_eq!(visual_state.value.len(), 24);
 }
 
 #[test]

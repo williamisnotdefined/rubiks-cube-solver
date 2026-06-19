@@ -1,6 +1,6 @@
 import { gsap } from 'gsap';
 import { AmbientLight, DirectionalLight, PerspectiveCamera, Scene, Spherical, WebGLRenderer } from 'three';
-import { OrbitControls } from 'three/examples/jsm/Addons.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { CubeType, Movement, Rotation } from '../core';
 import type { AnimationOptions } from '../rubiksCube';
 import { RubiksCubeController } from '../rubiksCube';

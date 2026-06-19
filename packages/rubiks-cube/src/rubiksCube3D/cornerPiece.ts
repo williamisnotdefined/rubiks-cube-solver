@@ -9,7 +9,7 @@ import {
   SRGBColorSpace,
   TextureLoader,
 } from 'three';
-import { SVGLoader } from 'three/examples/jsm/Addons.js';
+import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
 import type { Face } from '../core';
 import { Faces } from '../core';
 import { Sticker } from './sticker';

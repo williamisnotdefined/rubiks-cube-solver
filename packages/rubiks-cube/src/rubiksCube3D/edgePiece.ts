@@ -1,5 +1,5 @@
 import { BoxGeometry, ExtrudeGeometry, Mesh, MeshBasicMaterial, Object3D } from 'three';
-import { SVGLoader } from 'three/examples/jsm/Addons.js';
+import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
 import { Sticker } from './sticker';
 
 export class EdgePiece extends Object3D {

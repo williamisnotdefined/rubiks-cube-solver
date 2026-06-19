@@ -1,0 +1,407 @@
+import './setup';
+import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+  defaultPyraminxStickerState,
+  DEFAULT_PYRAMINX_ANIMATION_SPEED_MS,
+  PyraminxAttributeNames,
+  Pyraminx3D,
+  PyraminxFaces,
+  PyraminxMoves,
+  PyraminxPuzzleElement,
+} from '../src/puzzles/pyraminx';
+
+const rendererMocks = vi.hoisted(() => ({
+  dispose: vi.fn(),
+  render: vi.fn(),
+  setPixelRatio: vi.fn(),
+  setSize: vi.fn(),
+}));
+
+const gsapMocks = vi.hoisted(() => ({
+  progress: vi.fn(),
+  to: vi.fn(
+    (
+      target: Record<string, number>,
+      options: { rotation?: number; onUpdate?: () => void; onComplete?: () => void },
+    ) => {
+      if (typeof options.rotation === 'number') {
+        target.rotation = options.rotation;
+      }
+      options.onUpdate?.();
+      options.onComplete?.();
+      return { progress: gsapMocks.progress };
+    },
+  ),
+}));
+
+const controlsMocks = vi.hoisted(() => ({
+  dispose: vi.fn(),
+  removeEventListener: vi.fn(),
+  update: vi.fn(() => false),
+  instances: [] as Array<{
+    dispatch: (type: string) => void;
+    enableDamping: boolean;
+    enablePan: boolean;
+    enableZoom: boolean;
+  }>,
+}));
+
+vi.mock('gsap', () => ({
+  gsap: {
+    to: gsapMocks.to,
+  },
+}));
+
+vi.mock('three', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('three')>();
+
+  return {
+    ...actual,
+    WebGLRenderer: class MockWebGLRenderer {
+      domElement: HTMLCanvasElement;
+
+      constructor(options: { canvas: HTMLCanvasElement }) {
+        this.domElement = options.canvas;
+      }
+
+      dispose = rendererMocks.dispose;
+      render = rendererMocks.render;
+      setPixelRatio = rendererMocks.setPixelRatio;
+      setSize = rendererMocks.setSize;
+    },
+  };
+});
+
+vi.mock('three/examples/jsm/controls/OrbitControls.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('three/examples/jsm/controls/OrbitControls.js')>();
+
+  return {
+    ...actual,
+    OrbitControls: class MockOrbitControls {
+      enableDamping = true;
+      enablePan = true;
+      enableZoom = true;
+      listeners = new Map<string, Set<() => void>>();
+
+      constructor() {
+        controlsMocks.instances.push(this);
+      }
+
+      addEventListener(type: string, listener: () => void) {
+        const listeners = this.listeners.get(type) ?? new Set<() => void>();
+        listeners.add(listener);
+        this.listeners.set(type, listeners);
+      }
+
+      removeEventListener(type: string, listener: () => void) {
+        controlsMocks.removeEventListener(type, listener);
+        this.listeners.get(type)?.delete(listener);
+      }
+
+      dispatch(type: string) {
+        for (const listener of this.listeners.get(type) ?? []) {
+          listener();
+        }
+      }
+
+      update = controlsMocks.update;
+      dispose = controlsMocks.dispose;
+    },
+  };
+});
+
+type ResizeObserverCallback = ConstructorParameters<typeof ResizeObserver>[0];
+
+class MockResizeObserver {
+  static instances: MockResizeObserver[] = [];
+  callback: ResizeObserverCallback;
+  disconnect = vi.fn();
+  observe = vi.fn();
+
+  constructor(callback: ResizeObserverCallback) {
+    this.callback = callback;
+    MockResizeObserver.instances.push(this);
+  }
+
+  resize(width = 320, height = 240) {
+    this.callback([{ contentRect: { width, height } } as ResizeObserverEntry], this as unknown as ResizeObserver);
+  }
+}
+
+const tagName = 'pyraminx-puzzle-test';
+let rafCallbacks: FrameRequestCallback[] = [];
+
+function flushAnimationFrames() {
+  const [callback] = rafCallbacks.splice(0, 1);
+  callback?.(performance.now());
+}
+
+function createElement(): PyraminxPuzzleElement {
+  return document.createElement(tagName) as PyraminxPuzzleElement;
+}
+
+beforeAll(() => {
+  PyraminxPuzzleElement.register(tagName);
+});
+
+beforeEach(() => {
+  document.body.replaceChildren();
+  MockResizeObserver.instances = [];
+  controlsMocks.instances = [];
+  controlsMocks.dispose.mockClear();
+  controlsMocks.removeEventListener.mockClear();
+  gsapMocks.to.mockClear();
+  gsapMocks.progress.mockClear();
+  rendererMocks.dispose.mockClear();
+  rendererMocks.render.mockClear();
+  rendererMocks.setPixelRatio.mockClear();
+  rendererMocks.setSize.mockClear();
+  rafCallbacks = [];
+  vi.stubGlobal('ResizeObserver', MockResizeObserver);
+  vi.stubGlobal(
+    'requestAnimationFrame',
+    vi.fn((callback: FrameRequestCallback) => {
+      rafCallbacks.push(callback);
+      return rafCallbacks.length;
+    }),
+  );
+  vi.stubGlobal('cancelAnimationFrame', vi.fn());
+  Object.defineProperty(window, 'devicePixelRatio', { configurable: true, value: 3 });
+});
+
+afterEach(() => {
+  document.body.replaceChildren();
+  vi.unstubAllGlobals();
+});
+
+describe('PyraminxPuzzleElement', () => {
+  test('register is idempotent and methods reject before connection', async () => {
+    PyraminxPuzzleElement.register(tagName);
+    const element = createElement();
+
+    await expect(element.move(PyraminxMoves.U)).rejects.toThrow('not initialised');
+    await expect(element.do('U')).rejects.toThrow('not initialised');
+    expect(() => element.reset()).toThrow('not initialised');
+    expect(() => element.setState(defaultPyraminxStickerState())).toThrow('not initialised');
+    expect(() => element.getState()).toThrow('not initialised');
+  });
+
+  test('initializes, responds to attributes, renders, and cleans up', () => {
+    const element = createElement();
+    element.setAttribute(PyraminxAttributeNames.animationSpeed, '0');
+    element.setAttribute(PyraminxAttributeNames.animationStyle, 'linear');
+    element.setAttribute(PyraminxAttributeNames.cameraSpeed, '80');
+    element.setAttribute(PyraminxAttributeNames.cameraRadius, '5');
+    element.setAttribute(PyraminxAttributeNames.cameraFieldOfView, '70');
+    element.setAttribute(PyraminxAttributeNames.cameraPeekAngleHorizontal, '0.4');
+    element.setAttribute(PyraminxAttributeNames.cameraPeekAngleVertical, '0.5');
+    element.setAttribute(PyraminxAttributeNames.maxDevicePixelRatio, '2');
+    element.setAttribute(PyraminxAttributeNames.antialias, 'true');
+    element.setAttribute('render-events', '');
+    const renderListener = vi.fn();
+    element.addEventListener('pyraminx-render', renderListener);
+
+    document.body.append(element);
+    flushAnimationFrames();
+
+    expect(rendererMocks.setSize).toHaveBeenCalled();
+    expect(rendererMocks.setPixelRatio).toHaveBeenCalledWith(2);
+    expect(rendererMocks.render).toHaveBeenCalled();
+    expect(renderListener).toHaveBeenCalledTimes(1);
+    expect(element.cameraSpeedMs).toBe(80);
+    expect(element.cameraPeekAngleHorizontal).toBe(0.4);
+    expect(element.cameraPeekAngleVertical).toBe(0.5);
+
+    MockResizeObserver.instances[0].resize(240, 120);
+    controlsMocks.instances.at(-1)?.dispatch('change');
+    element.setAttribute(PyraminxAttributeNames.maxDevicePixelRatio, '4');
+    expect(rendererMocks.setPixelRatio).toHaveBeenCalledWith(3);
+
+    gsapMocks.to.mockClear();
+    element.setAttribute(PyraminxAttributeNames.cameraSpeed, '60');
+    element.setAttribute(PyraminxAttributeNames.cameraRadius, '6');
+    element.setAttribute(PyraminxAttributeNames.cameraFieldOfView, '72');
+    element.setAttribute(PyraminxAttributeNames.cameraPeekAngleHorizontal, '0.7');
+    element.setAttribute(PyraminxAttributeNames.cameraPeekAngleVertical, '0.8');
+    expect(element.cameraSpeedMs).toBe(60);
+    expect(gsapMocks.to).toHaveBeenCalled();
+    element.setAttribute(PyraminxAttributeNames.antialias, 'false');
+
+    document.body.removeChild(element);
+    expect(MockResizeObserver.instances.at(-1)?.disconnect).toHaveBeenCalled();
+    expect(controlsMocks.dispose).toHaveBeenCalled();
+    expect(rendererMocks.dispose).toHaveBeenCalled();
+  });
+
+  test('moves, applies algorithms, resets, and sets visual state', async () => {
+    const element = createElement();
+    element.setAttribute(PyraminxAttributeNames.animationSpeed, '0');
+    document.body.append(element);
+    const solved = element.getState();
+
+    await expect(element.move(PyraminxMoves.U)).resolves.toHaveLength(solved.length);
+    expect(element.getState()).not.toBe(solved);
+    await expect(element.move(PyraminxMoves.UP)).resolves.toBe(solved);
+    await expect(element.do("U l' b")).resolves.toHaveLength(solved.length);
+    expect(element.reset()).toBe(solved);
+
+    const customState = [
+      PyraminxFaces.B.repeat(9),
+      PyraminxFaces.R.repeat(9),
+      PyraminxFaces.L.repeat(9),
+      PyraminxFaces.U.repeat(9),
+    ].join('');
+    expect(element.setState(customState)).toBe(true);
+    expect(element.getState()).toBe(customState);
+    expect(element.setState('invalid')).toBe(false);
+  });
+
+  test('uses animated path and preserves defaults on removed attributes', async () => {
+    const element = createElement();
+    document.body.append(element);
+
+    expect(element.animationSpeedMs).toBe(DEFAULT_PYRAMINX_ANIMATION_SPEED_MS);
+    expect(element.animationStyle).toBe('linear');
+    expect(element.cameraRadius).toBe(5);
+    expect(element.cameraFieldOfView).toBe(75);
+    expect(element.cameraSpeedMs).toBe(100);
+    expect(element.cameraPeekAngleHorizontal).toBe(0.6);
+    expect(element.cameraPeekAngleVertical).toBe(0.6);
+
+    await expect(element.move(PyraminxMoves.R)).resolves.toHaveLength(defaultPyraminxStickerState().length);
+    expect(gsapMocks.to).toHaveBeenCalled();
+
+    element.removeAttribute(PyraminxAttributeNames.maxDevicePixelRatio);
+    element.removeAttribute(PyraminxAttributeNames.antialias);
+    element.attributeChangedCallback(PyraminxAttributeNames.antialias, 'false', null);
+    element.attributeChangedCallback(PyraminxAttributeNames.cameraRadius, '5', '5');
+    element.attributeChangedCallback(PyraminxAttributeNames.cameraFieldOfView, '70', '70');
+    element.attributeChangedCallback(PyraminxAttributeNames.antialias, 'true', 'true');
+
+    expect(element.maxDevicePixelRatio).toBe(2);
+    expect(element.antialias).toBe(true);
+  });
+
+  test('renders active animation loops and cancels them on disconnect', async () => {
+    const element = createElement();
+    document.body.append(element);
+    let completeMove: (() => void) | undefined;
+    gsapMocks.to.mockImplementationOnce(
+      (
+        target: Record<string, number>,
+        options: { rotation?: number; onUpdate?: () => void; onComplete?: () => void },
+      ) => {
+        if (typeof options.rotation === 'number') {
+          target.rotation = options.rotation;
+        }
+        options.onUpdate?.();
+        completeMove = options.onComplete;
+        return { progress: gsapMocks.progress };
+      },
+    );
+
+    const movePromise = element.move(PyraminxMoves.U);
+    await Promise.resolve();
+    const pyraminx = (element as unknown as { _pyraminx: Pyraminx3D })._pyraminx;
+    expect(pyraminx._animationGroup.children.length).toBeGreaterThan(0);
+    flushAnimationFrames();
+    expect(rendererMocks.render).toHaveBeenCalled();
+    completeMove?.();
+    await movePromise;
+    expect(pyraminx._animationGroup.children).toHaveLength(0);
+
+    let completePendingMove: (() => void) | undefined;
+    gsapMocks.to.mockImplementationOnce(
+      (
+        target: Record<string, number>,
+        options: { rotation?: number; onUpdate?: () => void; onComplete?: () => void },
+      ) => {
+        if (typeof options.rotation === 'number') {
+          target.rotation = options.rotation;
+        }
+        options.onUpdate?.();
+        completePendingMove = options.onComplete;
+        return { progress: gsapMocks.progress };
+      },
+    );
+
+    const pendingMove = element.move(PyraminxMoves.L);
+    await Promise.resolve();
+    flushAnimationFrames();
+    document.body.removeChild(element);
+    expect(cancelAnimationFrame).toHaveBeenCalled();
+    completePendingMove?.();
+    await pendingMove;
+  });
+
+  test('serializes overlapping moves before starting the next turn', async () => {
+    const element = createElement();
+    document.body.append(element);
+    let completeFirstMove: (() => void) | undefined;
+    gsapMocks.to.mockImplementationOnce(
+      (
+        target: Record<string, number>,
+        options: { rotation?: number; onUpdate?: () => void; onComplete?: () => void },
+      ) => {
+        if (typeof options.rotation === 'number') {
+          target.rotation = options.rotation;
+        }
+        options.onUpdate?.();
+        completeFirstMove = options.onComplete;
+        return { progress: gsapMocks.progress };
+      },
+    );
+
+    const firstMove = element.move(PyraminxMoves.U);
+    const secondMove = element.move(PyraminxMoves.L);
+
+    await Promise.resolve();
+    expect(gsapMocks.to).toHaveBeenCalledTimes(1);
+    completeFirstMove?.();
+    await firstMove;
+    await Promise.resolve();
+    await secondMove;
+
+    expect(gsapMocks.to).toHaveBeenCalledTimes(2);
+    expect(element.getState()).toHaveLength(defaultPyraminxStickerState().length);
+  });
+
+  test('keeps rendering while damped controls settle', () => {
+    const element = createElement();
+    document.body.append(element);
+    flushAnimationFrames();
+
+    const controls = controlsMocks.instances.at(-1);
+    expect(controls?.enableDamping).toBe(true);
+
+    controls?.dispatch('start');
+    flushAnimationFrames();
+    expect(controlsMocks.update).toHaveBeenCalled();
+
+    controls?.dispatch('end');
+    flushAnimationFrames();
+    flushAnimationFrames();
+    flushAnimationFrames();
+
+    expect(cancelAnimationFrame).toHaveBeenCalled();
+  });
+
+  test('warns on invalid attributes without replacing defaults', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const element = createElement();
+    document.body.append(element);
+
+    element.setAttribute(PyraminxAttributeNames.animationSpeed, '-1');
+    element.setAttribute(PyraminxAttributeNames.animationStyle, 'sine');
+    element.setAttribute(PyraminxAttributeNames.cameraSpeed, '-1');
+    element.setAttribute(PyraminxAttributeNames.cameraRadius, '1');
+    element.setAttribute(PyraminxAttributeNames.cameraFieldOfView, '200');
+    element.setAttribute(PyraminxAttributeNames.cameraPeekAngleHorizontal, '2');
+    element.setAttribute(PyraminxAttributeNames.cameraPeekAngleVertical, '-1');
+    element.setAttribute(PyraminxAttributeNames.maxDevicePixelRatio, '10');
+    element.setAttribute(PyraminxAttributeNames.antialias, 'maybe');
+
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+});
