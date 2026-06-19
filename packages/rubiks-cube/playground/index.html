@@ -9,11 +9,11 @@
     </head>
     <body>
         <main class="shell">
-            <section class="stage" aria-label="Rubiks cube preview">
+            <section class="stage" aria-label="Twisty puzzle preview">
                 <div class="stage-header">
                     <div>
                         <p class="eyebrow">Local Source Playground</p>
-                        <h1>Rubiks Cube</h1>
+                        <h1 id="puzzle-title">Rubiks Cube</h1>
                     </div>
                     <div class="status-pill" id="status">idle</div>
                 </div>
@@ -22,9 +22,16 @@
 
             <aside class="panel" aria-label="Development controls">
                 <section class="card">
-                    <h2>Cube Settings</h2>
+                    <h2>Puzzle Settings</h2>
                     <div class="grid two">
                         <label>
+                            Puzzle
+                            <select id="puzzle-kind">
+                                <option value="cube" selected>Rubiks Cube</option>
+                                <option value="pyraminx">Pyraminx</option>
+                            </select>
+                        </label>
+                        <label data-cube-only>
                             Cube type
                             <select id="cube-type">
                                 <option>Two</option>
@@ -49,7 +56,7 @@
                             Animation ms
                             <input id="animation-speed-ms" type="number" min="0" step="10" value="100" />
                         </label>
-                        <label>
+                        <label data-cube-only>
                             Piece gap
                             <input id="piece-gap" type="number" min="1" max="1.1" step="0.01" value="1.04" />
                         </label>
@@ -73,7 +80,7 @@
                             Peek vertical
                             <input id="camera-peek-angle-vertical" type="number" min="0" max="1" step="0.05" value="0.6" />
                         </label>
-                        <label>
+                        <label data-cube-only>
                             Logo URL
                             <input id="logo" type="url" placeholder="optional" />
                         </label>
@@ -109,7 +116,7 @@
                         <button id="reset" type="button">Reset</button>
                         <button id="get-state" type="button">Get state</button>
                         <button id="set-state" type="button">Set state</button>
-                        <button id="remount" type="button">Remount cube</button>
+                        <button id="remount" type="button">Remount puzzle</button>
                     </div>
                 </section>
 
@@ -161,7 +168,7 @@
                     </label>
                     <label>
                         State input
-                        <textarea id="state-input" spellcheck="false" placeholder="Paste a kociemba state string"></textarea>
+                        <textarea id="state-input" spellcheck="false" placeholder="Paste a visual state string"></textarea>
                     </label>
                 </section>
             </aside>

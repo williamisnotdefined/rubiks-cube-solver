@@ -16,10 +16,14 @@ The package is TypeScript source-only. Workspace consumers import `.ts` source e
 | `@rubiks-cube-solver/rubiks-cube/three` | Three.js cube object and settings |
 | `@rubiks-cube-solver/rubiks-cube/controller` | State/view controller |
 | `@rubiks-cube-solver/rubiks-cube/player` | Playback custom element |
+| `@rubiks-cube-solver/rubiks-cube/pyraminx` | Pyraminx custom element, 3D object, notation, and sticker-state helpers |
 
 ## Custom Elements
 
 `<rubiks-cube>` is the native NxN cube renderer used for current cube visualization and playback.
+
+`<pyraminx-puzzle>` is the Pyraminx renderer. It uses Pyraminx-specific notation, sticker state, geometry,
+and 120-degree vertex turns instead of cube `CubeType`, Kociemba, or slice moves.
 
 ## Boundaries
 

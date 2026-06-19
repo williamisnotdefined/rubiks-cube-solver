@@ -66,8 +66,8 @@ vi.mock('three', async (importOriginal) => {
   };
 });
 
-vi.mock('three/examples/jsm/Addons.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('three/examples/jsm/Addons.js')>();
+vi.mock('three/examples/jsm/controls/OrbitControls.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('three/examples/jsm/controls/OrbitControls.js')>();
 
   return {
     ...actual,

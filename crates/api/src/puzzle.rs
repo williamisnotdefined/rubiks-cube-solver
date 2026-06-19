@@ -3,8 +3,8 @@ use std::time::Instant;
 use axum::http::StatusCode;
 use axum::Json;
 use cube_engine::puzzles::cube2::{
-    solve_cube2_bounded_ida_star, solve_cube2_pdb_ida_star, Cube2, Cube2Algorithm,
-    Cube2SearchBudget, Cube2SearchOutcome, CUBE2_BOUNDED_IDA_STAR_STRATEGY_ID,
+    cube2_visual_state, solve_cube2_bounded_ida_star, solve_cube2_pdb_ida_star, Cube2,
+    Cube2Algorithm, Cube2SearchBudget, Cube2SearchOutcome, CUBE2_BOUNDED_IDA_STAR_STRATEGY_ID,
     CUBE2_PDB_IDA_STAR_STRATEGY_ID,
 };
 use cube_engine::{
@@ -20,7 +20,7 @@ use crate::config::{
 use crate::response::{
     generated_table_status, PuzzleApiErrorResponse, PuzzleResponse, PuzzleSolveLimitsRequest,
     PuzzleSolveRequest, PuzzleSolveResponse, PuzzleStrategyResponse, SolveNotationRequest,
-    SolveResponse,
+    SolveResponse, VisualStateResponse,
 };
 use crate::solve::solve_notation_request;
 use crate::state::ApiState;
@@ -233,6 +233,7 @@ fn solve_cube2_puzzle_request(
     };
     let mut cube = Cube2::solved();
     algorithm.apply_to(&mut cube);
+    let visual_state = cube2_visual_state(&cube);
 
     let budget = Cube2SearchBudget {
         max_depth: request.limits.max_depth,
@@ -270,7 +271,10 @@ fn solve_cube2_puzzle_request(
                 explored_nodes: Some(solution.explored_nodes),
                 elapsed_ms: Some(elapsed_ms),
                 replay_verified: Some(solution.replay_verified),
-                visual_state: None,
+                visual_state: Some(VisualStateResponse {
+                    kind: VisualizationKind::Cube2FaceletsV1.as_str().to_owned(),
+                    value: visual_state,
+                }),
                 error_kind: None,
                 message: None,
             },

@@ -1,12 +1,23 @@
 import { IsRotation, isMovement } from '../src/core';
+import {
+  DEFAULT_PYRAMINX_ANIMATION_SPEED_MS,
+  isPyraminxMove,
+  PyraminxAttributeNames,
+  PyraminxMoves,
+  PyraminxPuzzleElement,
+} from '../src/puzzles/pyraminx';
 import { AttributeNames, PeekActions, RubiksCubeElement } from '../src/webComponent';
 
 if (!customElements.get('rubiks-cube')) {
   RubiksCubeElement.register();
 }
+if (!customElements.get('pyraminx-puzzle')) {
+  PyraminxPuzzleElement.register();
+}
 
 const frame = /** @type {HTMLDivElement} */ (document.getElementById('cube-frame'));
 const status = /** @type {HTMLDivElement} */ (document.getElementById('status'));
+const puzzleTitle = /** @type {HTMLHeadingElement} */ (document.getElementById('puzzle-title'));
 const quickActions = /** @type {HTMLDivElement} */ (document.getElementById('quick-actions'));
 const stateOutput = /** @type {HTMLTextAreaElement} */ (document.getElementById('state-output'));
 const fpsOutput = /** @type {HTMLElement} */ (document.getElementById('fps'));
@@ -16,8 +27,14 @@ const lastRunOutput = /** @type {HTMLElement} */ (document.getElementById('last-
 const rendersPerSecondOutput = /** @type {HTMLElement} */ (document.getElementById('renders-per-second'));
 const totalRendersOutput = /** @type {HTMLElement} */ (document.getElementById('total-renders'));
 const stateInput = /** @type {HTMLTextAreaElement} */ (document.getElementById('state-input'));
+const cubeOnlySettings = Array.from(document.querySelectorAll<HTMLElement>('[data-cube-only]'));
+const runAlgorithmButton = /** @type {HTMLButtonElement} */ (document.getElementById('run-algorithm'));
+
+type PuzzleKind = 'cube' | 'pyraminx';
+type PlaygroundPuzzle = RubiksCubeElement | PyraminxPuzzleElement;
 
 const inputs = {
+  puzzleKind: /** @type {HTMLSelectElement} */ (document.getElementById('puzzle-kind')),
   cubeType: /** @type {HTMLSelectElement} */ (document.getElementById('cube-type')),
   animationStyle: /** @type {HTMLSelectElement} */ (document.getElementById('animation-style')),
   animationSpeed: /** @type {HTMLInputElement} */ (document.getElementById('animation-speed-ms')),
@@ -37,22 +54,37 @@ const inputs = {
   fpsMonitor: /** @type {HTMLSelectElement} */ (document.getElementById('fps-monitor')),
 };
 
-const attributeInputs = [
+const cubeAttributeInputs = [
   [AttributeNames.cubeType, inputs.cubeType],
+  [AttributeNames.pieceGap, inputs.pieceGap],
+  [AttributeNames.logo, inputs.logo],
+] as const;
+
+const sharedCubeAttributeInputs = [
   [AttributeNames.animationStyle, inputs.animationStyle],
   [AttributeNames.animationSpeed, inputs.animationSpeed],
-  [AttributeNames.pieceGap, inputs.pieceGap],
+  [AttributeNames.cameraSpeed, inputs.cameraSpeed],
   [AttributeNames.cameraRadius, inputs.cameraRadius],
   [AttributeNames.cameraFieldOfView, inputs.cameraFieldOfView],
-  [AttributeNames.cameraSpeed, inputs.cameraSpeed],
   [AttributeNames.cameraPeekAngleHorizontal, inputs.cameraPeekAngleHorizontal],
   [AttributeNames.cameraPeekAngleVertical, inputs.cameraPeekAngleVertical],
-  [AttributeNames.logo, inputs.logo],
   [AttributeNames.maxDevicePixelRatio, inputs.maxDevicePixelRatio],
   [AttributeNames.antialias, inputs.antialias],
-];
+] as const;
 
-const actionButtons = [
+const pyraminxAttributeInputs = [
+  [PyraminxAttributeNames.animationStyle, inputs.animationStyle],
+  [PyraminxAttributeNames.animationSpeed, inputs.animationSpeed],
+  [PyraminxAttributeNames.cameraSpeed, inputs.cameraSpeed],
+  [PyraminxAttributeNames.cameraRadius, inputs.cameraRadius],
+  [PyraminxAttributeNames.cameraFieldOfView, inputs.cameraFieldOfView],
+  [PyraminxAttributeNames.cameraPeekAngleHorizontal, inputs.cameraPeekAngleHorizontal],
+  [PyraminxAttributeNames.cameraPeekAngleVertical, inputs.cameraPeekAngleVertical],
+  [PyraminxAttributeNames.maxDevicePixelRatio, inputs.maxDevicePixelRatio],
+  [PyraminxAttributeNames.antialias, inputs.antialias],
+] as const;
+
+const cubeActions = [
   'R',
   "R'",
   'R2',
@@ -70,42 +102,57 @@ const actionButtons = [
   PeekActions.Up,
 ];
 
-let cube: RubiksCubeElement;
+const pyraminxActions = Object.values(PyraminxMoves);
+
+const defaultAlgorithms: Record<PuzzleKind, string> = {
+  cube: "R U R' U'",
+  pyraminx: "U L R' u b'",
+};
+
+const defaultAnimationSpeeds: Record<PuzzleKind, number> = {
+  cube: 100,
+  pyraminx: DEFAULT_PYRAMINX_ANIMATION_SPEED_MS,
+};
+
+let puzzle: PlaygroundPuzzle;
 let moveCount = 0;
 let stressRunning = false;
+let algorithmRunning = false;
 let fpsFrameId = 0;
 let totalRenders = 0;
 let lastRenderAt = 0;
 let renderIdleTimer = 0;
 
-cube = createCube();
+puzzle = createPuzzle();
 
-for (const action of actionButtons) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.textContent = action;
-  button.addEventListener('click', () => runAction(action));
-  quickActions.append(button);
+for (const [attributeName, input] of [...sharedCubeAttributeInputs, ...cubeAttributeInputs]) {
+  input.addEventListener('input', () => setAttributeFromInput(attributeName, input));
 }
-
-for (const [attributeName, input] of attributeInputs) {
+for (const [attributeName, input] of pyraminxAttributeInputs) {
   input.addEventListener('input', () => setAttributeFromInput(attributeName, input));
 }
 
+inputs.puzzleKind.addEventListener('change', () => {
+  const puzzleKind = getPuzzleKind();
+  inputs.algorithm.value = defaultAlgorithms[puzzleKind];
+  inputs.animationSpeed.value = String(defaultAnimationSpeeds[puzzleKind]);
+  remountPuzzle();
+});
+
 document.getElementById('reset')?.addEventListener('click', () => {
-  cube.reset();
+  puzzle.reset();
   updateState();
   setStatus('reset');
 });
 
 document.getElementById('get-state')?.addEventListener('click', updateState);
 document.getElementById('set-state')?.addEventListener('click', () => {
-  const updated = cube.setState(stateInput.value.trim());
+  const updated = puzzle.setState(stateInput.value.trim());
   setStatus(updated ? 'state applied' : 'invalid state');
   updateState();
 });
-document.getElementById('remount')?.addEventListener('click', remountCube);
-document.getElementById('run-algorithm')?.addEventListener('click', () => runAlgorithm());
+document.getElementById('remount')?.addEventListener('click', remountPuzzle);
+runAlgorithmButton.addEventListener('click', () => runAlgorithm());
 inputs.fpsMonitor.addEventListener('change', () => {
   if (inputs.fpsMonitor.value === 'on') {
     startFpsMonitor();
@@ -123,24 +170,75 @@ document.getElementById('stop-stress')?.addEventListener('click', () => {
 updateProfileCss();
 updateState();
 
-function createCube() {
-  cube?.removeEventListener('rubiks-cube-render', onCubeRender);
+function getPuzzleKind(): PuzzleKind {
+  return inputs.puzzleKind.value === 'pyraminx' ? 'pyraminx' : 'cube';
+}
+
+function createPuzzle(): PlaygroundPuzzle {
+  puzzle?.removeEventListener('rubiks-cube-render', onPuzzleRender);
+  puzzle?.removeEventListener('pyraminx-render', onPuzzleRender);
+  const puzzleKind = getPuzzleKind();
+  updatePlaygroundChrome(puzzleKind);
+  renderQuickActions();
+
+  const nextPuzzle = puzzleKind === 'pyraminx' ? createPyraminx() : createCube();
+  frame.replaceChildren(nextPuzzle);
+  return nextPuzzle;
+}
+
+function createCube(): RubiksCubeElement {
   const nextCube = document.createElement('rubiks-cube');
   nextCube.setAttribute('render-events', '');
-  for (const [attributeName, input] of attributeInputs) {
-    if (input.value.trim() !== '') {
-      nextCube.setAttribute(attributeName, input.value);
-    }
-  }
-  nextCube.addEventListener('rubiks-cube-render', onCubeRender);
-  frame.replaceChildren(nextCube);
+  applyAttributes(nextCube, [...sharedCubeAttributeInputs, ...cubeAttributeInputs]);
+  nextCube.addEventListener('rubiks-cube-render', onPuzzleRender);
   return /** @type {RubiksCubeElement} */ (nextCube);
 }
 
-function remountCube() {
-  cube = createCube();
+function createPyraminx(): PyraminxPuzzleElement {
+  const pyraminx = document.createElement('pyraminx-puzzle');
+  pyraminx.setAttribute('render-events', '');
+  applyAttributes(pyraminx, pyraminxAttributeInputs);
+  pyraminx.addEventListener('pyraminx-render', onPuzzleRender);
+  return /** @type {PyraminxPuzzleElement} */ (pyraminx);
+}
+
+function remountPuzzle() {
+  puzzle = createPuzzle();
+  moveCount = 0;
+  moveCountOutput.textContent = '0';
+  stateInput.value = '';
   updateState();
   setStatus('remounted');
+}
+
+function renderQuickActions() {
+  const actions = getPuzzleKind() === 'pyraminx' ? pyraminxActions : cubeActions;
+  quickActions.replaceChildren(
+    ...actions.map((action) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = action;
+      button.addEventListener('click', () => runAction(action));
+      return button;
+    }),
+  );
+}
+
+function updatePlaygroundChrome(puzzleKind: PuzzleKind) {
+  const isPyraminx = puzzleKind === 'pyraminx';
+  puzzleTitle.textContent = isPyraminx ? 'Pyraminx' : 'Rubiks Cube';
+  stateInput.placeholder = isPyraminx ? 'Paste a pyraminx-stickers-v1 state string' : 'Paste a Kociemba state string';
+  for (const setting of cubeOnlySettings) {
+    setting.hidden = isPyraminx;
+  }
+}
+
+function applyAttributes(element: HTMLElement, attributeInputPairs) {
+  for (const [attributeName, input] of attributeInputPairs) {
+    if (input.value.trim() !== '') {
+      element.setAttribute(attributeName, input.value);
+    }
+  }
 }
 
 /**
@@ -149,10 +247,10 @@ function remountCube() {
  */
 function setAttributeFromInput(attributeName, input) {
   if (attributeName === AttributeNames.logo && input.value.trim() === '') {
-    cube.removeAttribute(attributeName);
+    puzzle.removeAttribute(attributeName);
     return;
   }
-  cube.setAttribute(attributeName, input.value);
+  puzzle.setAttribute(attributeName, input.value);
 }
 
 /**
@@ -162,12 +260,17 @@ async function runAction(action) {
   const startedAt = performance.now();
   setStatus(`running ${action}`);
   try {
-    if (isMovement(action)) {
-      await cube.move(action);
+    if (getPuzzleKind() === 'pyraminx') {
+      if (!isPyraminxMove(action)) {
+        throw new Error(`Unsupported Pyraminx action: ${action}`);
+      }
+      await (puzzle as PyraminxPuzzleElement).move(action);
+    } else if (isMovement(action)) {
+      await (puzzle as RubiksCubeElement).move(action);
     } else if (IsRotation(action)) {
-      await cube.rotate(action);
+      await (puzzle as RubiksCubeElement).rotate(action);
     } else if (Object.values(PeekActions).includes(action)) {
-      await cube.peek(action);
+      await (puzzle as RubiksCubeElement).peek(action);
     } else {
       throw new Error(`Unsupported action: ${action}`);
     }
@@ -183,6 +286,11 @@ async function runAction(action) {
 }
 
 async function runAlgorithm() {
+  if (algorithmRunning) {
+    setStatus('already running');
+    return;
+  }
+
   const startedAt = performance.now();
   const repeatCount = Math.max(1, Number(inputs.repeatCount.value) || 1);
   const stress = inputs.stressLoop.value === 'on';
@@ -191,6 +299,8 @@ async function runAlgorithm() {
     setStatus('no valid actions');
     return;
   }
+  algorithmRunning = true;
+  runAlgorithmButton.disabled = true;
   stressRunning = stress;
   setStatus(stress ? 'stress running' : 'algorithm running');
   try {
@@ -208,6 +318,8 @@ async function runAlgorithm() {
     setStatus('error');
     console.error(error);
   } finally {
+    algorithmRunning = false;
+    runAlgorithmButton.disabled = false;
     if (!stressRunning) {
       inputs.stressLoop.value = 'off';
     }
@@ -219,6 +331,7 @@ async function runAlgorithm() {
  * @returns {string[]}
  */
 function parseAlgorithm(value) {
+  const puzzleKind = getPuzzleKind();
   return value
     .replace(/\s*\/\/.*$/gm, '')
     .replace(/\s+/gm, ' ')
@@ -226,7 +339,7 @@ function parseAlgorithm(value) {
     .split(' ')
     .filter((action) => action.length > 0)
     .filter((action) => {
-      const valid = isMovement(action) || IsRotation(action);
+      const valid = puzzleKind === 'pyraminx' ? isPyraminxMove(action) : isMovement(action) || IsRotation(action);
       if (!valid) {
         console.warn(`Ignoring invalid action: ${action}`);
       }
@@ -236,7 +349,7 @@ function parseAlgorithm(value) {
 
 function updateState() {
   try {
-    stateOutput.value = cube.getState();
+    stateOutput.value = puzzle.getState();
     if (stateInput.value.trim() === '') {
       stateInput.value = stateOutput.value;
     }
@@ -256,7 +369,7 @@ function updateProfileCss() {
   document.body.classList.toggle('profile-css', inputs.profileCss.value === 'on');
 }
 
-function onCubeRender() {
+function onPuzzleRender() {
   const now = performance.now();
   totalRenders++;
   totalRendersOutput.textContent = String(totalRenders);
