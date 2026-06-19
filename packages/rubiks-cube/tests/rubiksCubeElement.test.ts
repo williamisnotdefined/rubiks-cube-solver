@@ -1,7 +1,7 @@
 import './setup';
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
-import { CubeTypes, Movements, Rotations } from '../src/core';
-import { AttributeNames, PeekActions, PeekStates, RubiksCubeElement } from '../src/webComponent';
+import { CubeTypes, Movements, Rotations } from '../src/puzzles/cube/core';
+import { AttributeNames, PeekActions, PeekStates, RubiksCubeElement } from '../src/puzzles/cube/element';
 
 const rendererMocks = vi.hoisted(() => ({
   render: vi.fn(),

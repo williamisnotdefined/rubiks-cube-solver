@@ -1,10 +1,10 @@
 import './setup';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { CubeTypes } from '../src/core';
-import { CameraState } from '../src/webComponent/cameraState';
-import { AnimationStyles, PeekActions, PeekStates } from '../src/webComponent/constants';
-import { debounce } from '../src/webComponent/debouncer';
-import Settings from '../src/webComponent/settings';
+import { CubeTypes } from '../src/puzzles/cube/core';
+import { AnimationStyles, PeekActions, PeekStates } from '../src/puzzles/cube/element/constants';
+import Settings from '../src/puzzles/cube/element/settings';
+import { CameraState } from '../src/shared/cameraState';
+import { debounce } from '../src/shared/debouncer';
 
 describe('CameraState', () => {
   test.each([

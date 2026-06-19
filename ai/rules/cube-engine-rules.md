@@ -10,12 +10,14 @@ Rules for the Rust cube engine.
 - Validate state invariants before solver algorithms depend on them.
 - Keep notation parsing separate from state mutation.
 - Keep serialization explicit and stable once external consumers exist.
+- When adding puzzles beyond 3x3, keep each puzzle's state representation, move model, notation parser, validator, and solver strategy puzzle-specific.
 
 ## Never
 
 - Do not represent the primary engine as face colors, sticker arrays, or strings.
 - Do not depend on JavaScript visualization libraries in the Rust core.
 - Do not let search code mutate cube state through hidden global state.
+- Do not create a generic puzzle engine, universal move type, universal state type, `BaseMove`, `BaseState`, `BasePuzzle`, or inheritance-style puzzle hierarchy.
 - Do not add ML heuristics before classic move tables and deterministic search are correct.
 
 ## Verification

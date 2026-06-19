@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { CubeTypes, IsRotation, isMovement, Movements, Rotations, reverse, translate } from '../src/core';
+import { CubeTypes, IsRotation, isMovement, Movements, Rotations, reverse, translate } from '../src/puzzles/cube/core';
 
 test("reverse 5B -> 5B'", () => {
   expect(Movements.Five.B).toBe(reverse(Movements.Five.BP));

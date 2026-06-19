@@ -1,10 +1,10 @@
 import './setup';
 import { expect, test } from 'vitest';
-import type { Movement, Rotation } from '../src/core';
-import { CubeTypes, IsRotation, reverse, translate } from '../src/core';
-import { RubiksCubeState } from '../src/state/rubiksCubeState';
-import { GetMovementSlice, GetRotationSlice } from '../src/state/slice';
-import { toKociemba } from '../src/state/stickerState';
+import type { Movement, Rotation } from '../src/puzzles/cube/core';
+import { CubeTypes, IsRotation, reverse, translate } from '../src/puzzles/cube/core';
+import { RubiksCubeState } from '../src/puzzles/cube/state/rubiksCubeState';
+import { GetMovementSlice, GetRotationSlice } from '../src/puzzles/cube/state/slice';
+import { toKociemba } from '../src/puzzles/cube/state/stickerState';
 import { createTestCube } from './common';
 import { scrambles } from './testScrambles';
 

@@ -9,6 +9,7 @@ Rules for the web visualization and frontend-to-API boundary.
 - Use the Rust HTTP API as the source of truth for solver behavior.
 - Keep playback and visualization state separate from solver state.
 - Evaluate visualization-only libraries by whether they preserve this boundary.
+- Keep visualization package sharing limited to rendering infrastructure such as camera, animation, and web-component helpers; puzzle notation, visual state adapters, and renderers remain puzzle-specific.
 - Keep the rendered 3x3 cube no larger than 350px by 350px in the web UI.
 - Keep API request and response normalization in `web/src/api`, not inline in React components.
 - Keep request functions free of React imports; React Query hooks are the UI-facing API boundary.
@@ -34,6 +35,7 @@ Rules for the web visualization and frontend-to-API boundary.
 
 - Do not implement solver algorithms in the frontend.
 - Do not make a Three.js/web-component sticker state the canonical engine state.
+- Do not add a frontend or visualization-package generic puzzle engine, universal move type, `BaseMove`, `BaseState`, or shared puzzle-state abstraction.
 - Do not expose facelets, Kociemba strings, or facelet input modes in the UI.
 - Do not add or import `.css` files outside the single Tailwind/theme entrypoint `web/src/index.css`.
 - Do not make browser clients submit facelets to the API; client-facing solve requests use move notation only.

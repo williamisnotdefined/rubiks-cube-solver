@@ -1,7 +1,7 @@
 // @ts-check
-import { CubeTypes } from '../src/core';
+import { CubeTypes } from '../src/puzzles/cube/core';
 
-/** @type {{cubeType: import("../src/core").CubeType, scramble: string, solution: string}[]} */
+/** @type {{cubeType: import("../src/puzzles/cube/core").CubeType, scramble: string, solution: string}[]} */
 export const scrambles = [
   {
     cubeType: CubeTypes.Two,

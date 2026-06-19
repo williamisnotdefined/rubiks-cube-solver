@@ -76,37 +76,37 @@ export default defineConfig({
       {
         find: /^@rubiks-cube-solver\/rubiks-cube\/controller$/,
         replacement: fileURLToPath(
-          new URL('../packages/rubiks-cube/src/rubiksCube/index.ts', import.meta.url),
+          new URL('../packages/rubiks-cube/src/puzzles/cube/controller/index.ts', import.meta.url),
         ),
       },
       {
         find: /^@rubiks-cube-solver\/rubiks-cube\/core$/,
         replacement: fileURLToPath(
-          new URL('../packages/rubiks-cube/src/core/index.ts', import.meta.url),
+          new URL('../packages/rubiks-cube/src/puzzles/cube/core/index.ts', import.meta.url),
         ),
       },
       {
         find: /^@rubiks-cube-solver\/rubiks-cube\/player$/,
         replacement: fileURLToPath(
-          new URL('../packages/rubiks-cube/src/player/index.ts', import.meta.url),
+          new URL('../packages/rubiks-cube/src/puzzles/cube/player/index.ts', import.meta.url),
         ),
       },
       {
         find: /^@rubiks-cube-solver\/rubiks-cube\/state$/,
         replacement: fileURLToPath(
-          new URL('../packages/rubiks-cube/src/state/index.ts', import.meta.url),
+          new URL('../packages/rubiks-cube/src/puzzles/cube/state/index.ts', import.meta.url),
         ),
       },
       {
         find: /^@rubiks-cube-solver\/rubiks-cube\/three$/,
         replacement: fileURLToPath(
-          new URL('../packages/rubiks-cube/src/rubiksCube3D/index.ts', import.meta.url),
+          new URL('../packages/rubiks-cube/src/puzzles/cube/three/index.ts', import.meta.url),
         ),
       },
       {
         find: /^@rubiks-cube-solver\/rubiks-cube\/view$/,
         replacement: fileURLToPath(
-          new URL('../packages/rubiks-cube/src/webComponent/index.ts', import.meta.url),
+          new URL('../packages/rubiks-cube/src/puzzles/cube/element/index.ts', import.meta.url),
         ),
       },
       { find: '@api', replacement: fileURLToPath(new URL('./src/api', import.meta.url)) },

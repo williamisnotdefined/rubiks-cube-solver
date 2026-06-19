@@ -14,28 +14,36 @@
   ],
   "exports": {
     "./view": {
-      "types": "./src/webComponent/index.ts",
-      "default": "./src/webComponent/index.ts"
+      "types": "./src/puzzles/cube/element/index.ts",
+      "default": "./src/puzzles/cube/element/index.ts"
     },
     "./player": {
-      "types": "./src/player/index.ts",
-      "default": "./src/player/index.ts"
+      "types": "./src/puzzles/cube/player/index.ts",
+      "default": "./src/puzzles/cube/player/index.ts"
     },
     "./three": {
-      "types": "./src/rubiksCube3D/index.ts",
-      "default": "./src/rubiksCube3D/index.ts"
+      "types": "./src/puzzles/cube/three/index.ts",
+      "default": "./src/puzzles/cube/three/index.ts"
     },
     "./controller": {
-      "types": "./src/rubiksCube/index.ts",
-      "default": "./src/rubiksCube/index.ts"
+      "types": "./src/puzzles/cube/controller/index.ts",
+      "default": "./src/puzzles/cube/controller/index.ts"
     },
     "./core": {
-      "types": "./src/core/index.ts",
-      "default": "./src/core/index.ts"
+      "types": "./src/puzzles/cube/core/index.ts",
+      "default": "./src/puzzles/cube/core/index.ts"
     },
     "./state": {
-      "types": "./src/state/index.ts",
-      "default": "./src/state/index.ts"
+      "types": "./src/puzzles/cube/state/index.ts",
+      "default": "./src/puzzles/cube/state/index.ts"
+    },
+    "./puzzles/cube": {
+      "types": "./src/puzzles/cube/index.ts",
+      "default": "./src/puzzles/cube/index.ts"
+    },
+    "./puzzles/pyraminx": {
+      "types": "./src/puzzles/pyraminx/index.ts",
+      "default": "./src/puzzles/pyraminx/index.ts"
     },
     "./pyraminx": {
       "types": "./src/puzzles/pyraminx/index.ts",

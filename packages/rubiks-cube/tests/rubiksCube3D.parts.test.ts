@@ -1,15 +1,15 @@
 import './setup';
 import { TextureLoader } from 'three';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { CubeTypes, Faces } from '../src/core';
-import { CenterPiece } from '../src/rubiksCube3D/centerPiece';
-import { CornerPiece } from '../src/rubiksCube3D/cornerPiece';
-import { ColorToFace, FaceColors, getCubeConfig } from '../src/rubiksCube3D/cubeConfig';
-import RubiksCube3DSettings from '../src/rubiksCube3D/cubeSettings';
-import { EdgePiece } from '../src/rubiksCube3D/edgePiece';
-import RubiksCube3D from '../src/rubiksCube3D/rubiksCube3D';
-import { Sticker } from '../src/rubiksCube3D/sticker';
-import { Axi } from '../src/state/slice';
+import { CubeTypes, Faces } from '../src/puzzles/cube/core';
+import { Axi } from '../src/puzzles/cube/state/slice';
+import { CenterPiece } from '../src/puzzles/cube/three/centerPiece';
+import { CornerPiece } from '../src/puzzles/cube/three/cornerPiece';
+import { ColorToFace, FaceColors, getCubeConfig } from '../src/puzzles/cube/three/cubeConfig';
+import RubiksCube3DSettings from '../src/puzzles/cube/three/cubeSettings';
+import { EdgePiece } from '../src/puzzles/cube/three/edgePiece';
+import RubiksCube3D from '../src/puzzles/cube/three/rubiksCube3D';
+import { Sticker } from '../src/puzzles/cube/three/sticker';
 
 describe('rubiksCube3D pieces', () => {
   beforeEach(() => {

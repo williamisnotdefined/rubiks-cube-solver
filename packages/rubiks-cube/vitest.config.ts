@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     coverage: {
       all: true,
-      exclude: ['src/css-inline.d.ts', 'src/webComponent/globals.ts'],
+      exclude: ['src/css-inline.d.ts', 'src/puzzles/cube/element/globals.ts'],
       include: ['src/**/*.ts'],
       provider: 'v8',
       reporter: ['text', 'json-summary'],

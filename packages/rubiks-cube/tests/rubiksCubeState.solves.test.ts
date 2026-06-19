@@ -1,8 +1,8 @@
 import './setup';
 import { expect, test } from 'vitest';
-import type { Movement, Rotation } from '../src/core';
-import { RubiksCubeState } from '../src/state/rubiksCubeState';
-import { toKociemba } from '../src/state/stickerState';
+import type { Movement, Rotation } from '../src/puzzles/cube/core';
+import { RubiksCubeState } from '../src/puzzles/cube/state/rubiksCubeState';
+import { toKociemba } from '../src/puzzles/cube/state/stickerState';
 import { scrambles } from './testScrambles';
 
 test.each(scrambles)('RubiksCubeState solve on $cubeType with scramble = $scramble', ({

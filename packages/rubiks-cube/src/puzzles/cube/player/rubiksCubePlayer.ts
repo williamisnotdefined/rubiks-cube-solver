@@ -1,7 +1,7 @@
 import type { CubeType, Movement, Rotation } from '../core';
 import { CubeTypes, IsRotation, isMovement, reverse } from '../core';
+import { RubiksCubeElement } from '../element/rubiksCubeElement';
 import { RubiksCubeState } from '../state';
-import { RubiksCubeElement } from '../webComponent/rubiksCubeElement';
 import styles from './styles.css?inline';
 
 const sheet = new CSSStyleSheet();

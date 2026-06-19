@@ -60,6 +60,7 @@ Other exclusions:
 - scanner support for all puzzles in the initial track;
 - a universal state type;
 - a universal move type;
+- `BaseMove`, `BaseState`, or a base puzzle engine;
 - a universal IDA* requirement;
 - ML as a required product solver;
 - optimality claims without proof boundaries and tests.
@@ -67,6 +68,8 @@ Other exclusions:
 ## Architectural Direction
 
 The multi-puzzle architecture is registry based.
+
+It is not inheritance based. Do not introduce `BaseMove`, `BasePuzzle`, `BaseState`, `GenericPuzzleEngine`, or a universal puzzle engine abstraction.
 
 Each puzzle gets its own implementation:
 

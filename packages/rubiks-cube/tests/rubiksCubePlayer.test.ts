@@ -1,8 +1,8 @@
 import './setup';
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
-import { CubeTypes, Movements, Rotations } from '../src/core';
-import { RubiksCubePlayer, RubiksCubePlayerAttributes } from '../src/player/rubiksCubePlayer';
-import { RubiksCubeElement } from '../src/webComponent/rubiksCubeElement';
+import { CubeTypes, Movements, Rotations } from '../src/puzzles/cube/core';
+import { RubiksCubeElement } from '../src/puzzles/cube/element/rubiksCubeElement';
+import { RubiksCubePlayer, RubiksCubePlayerAttributes } from '../src/puzzles/cube/player/rubiksCubePlayer';
 
 const rendererMocks = vi.hoisted(() => ({
   render: vi.fn(),
