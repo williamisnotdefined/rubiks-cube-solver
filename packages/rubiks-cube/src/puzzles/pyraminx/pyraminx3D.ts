@@ -15,8 +15,8 @@ import {
 import type { TurnPlan } from '../turnPlan';
 import { parsePyraminxAlgorithm, pyraminxMoveToTurn, reversePyraminxMove } from './notation';
 import { defaultPyraminxStickerState, parsePyraminxStickerState } from './stickerState';
-import { PyraminxFaceOrder, PyraminxFaces } from './types';
 import type { PyraminxFace, PyraminxMove, PyraminxTurn } from './types';
+import { PyraminxFaceOrder, PyraminxFaces } from './types';
 
 type Pyraminx3DOptions = {
   animationSpeedMs?: number;

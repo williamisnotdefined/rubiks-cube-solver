@@ -1,5 +1,5 @@
-import { PyraminxFaceOrder, PYRAMINX_FACE_STICKER_COUNT, PYRAMINX_STICKER_COUNT } from './types';
 import type { PyraminxFace } from './types';
+import { PYRAMINX_FACE_STICKER_COUNT, PYRAMINX_STICKER_COUNT, PyraminxFaceOrder } from './types';
 
 const faceSymbols = new Set<string>(PyraminxFaceOrder);
 

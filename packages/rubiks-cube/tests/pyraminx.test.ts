@@ -1,21 +1,21 @@
 import './setup';
 import { describe, expect, test } from 'vitest';
 import {
+  DEFAULT_PYRAMINX_ANIMATION_SPEED_MS,
   defaultPyraminxStickerState,
   invertPyraminxAlgorithm,
   isPyraminxMove,
   isPyraminxStickerState,
-  parsePyraminxAlgorithm,
-  parsePyraminxStickerState,
-  pyraminxMoveToTurn,
-  pyraminxVertexForMove,
+  PYRAMINX_STICKER_COUNT,
+  PYRAMINX_VISUAL_STATE_KIND,
   Pyraminx3D,
   PyraminxFaces,
   PyraminxMoves,
   PyraminxNotationError,
-  DEFAULT_PYRAMINX_ANIMATION_SPEED_MS,
-  PYRAMINX_STICKER_COUNT,
-  PYRAMINX_VISUAL_STATE_KIND,
+  parsePyraminxAlgorithm,
+  parsePyraminxStickerState,
+  pyraminxMoveToTurn,
+  pyraminxVertexForMove,
   reversePyraminxMove,
 } from '../src/puzzles/pyraminx';
 

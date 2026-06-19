@@ -1,5 +1,5 @@
-import { PyraminxFaces, PyraminxMoves } from './types';
 import type { PyraminxFace, PyraminxMove, PyraminxTurn } from './types';
+import { PyraminxFaces, PyraminxMoves } from './types';
 
 const moveToTurn = new Map<PyraminxMove, PyraminxTurn>([
   [PyraminxMoves.U, { vertex: PyraminxFaces.U, tip: false, prime: false }],

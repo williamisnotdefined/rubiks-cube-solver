@@ -1,10 +1,10 @@
 import './setup';
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import {
-  defaultPyraminxStickerState,
   DEFAULT_PYRAMINX_ANIMATION_SPEED_MS,
-  PyraminxAttributeNames,
+  defaultPyraminxStickerState,
   Pyraminx3D,
+  PyraminxAttributeNames,
   PyraminxFaces,
   PyraminxMoves,
   PyraminxPuzzleElement,
