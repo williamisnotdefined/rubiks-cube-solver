@@ -70,12 +70,14 @@ Rules for the Rust cube engine.
 - Validate state invariants before solver algorithms depend on them.
 - Keep notation parsing separate from state mutation.
 - Keep serialization explicit and stable once external consumers exist.
+- When adding puzzles beyond 3x3, keep each puzzle's state representation, move model, notation parser, validator, and solver strategy puzzle-specific.
 
 ## Never
 
 - Do not represent the primary engine as face colors, sticker arrays, or strings.
 - Do not depend on JavaScript visualization libraries in the Rust core.
 - Do not let search code mutate cube state through hidden global state.
+- Do not create a generic puzzle engine, universal move type, universal state type, `BaseMove`, `BaseState`, `BasePuzzle`, or inheritance-style puzzle hierarchy.
 - Do not add ML heuristics before classic move tables and deterministic search are correct.
 
 ## Verification
@@ -159,6 +161,12 @@ The target is a hybrid Rubik's Cube solver with a Rust engine, search algorithms
 - Solver quality reports and real-scramble gates are executable verification artifacts, not frontend behavior.
 - ML datasets should be generated from deterministic Rust solver behavior before training code consumes them.
 
+## Multi-Puzzle Direction
+
+- Additional puzzles must own puzzle-specific state, move models, notation parsers, validators, solvers, heuristics, coordinates, and artifact rules.
+- Shared multi-puzzle code is limited to metadata, registries, budgets, results, compatibility checks, API contracts, and visualization adapter selection.
+- Do not introduce a generic puzzle engine, universal move type, universal state type, `BaseMove`, `BaseState`, `BasePuzzle`, or inheritance-style puzzle hierarchy.
+
 ## Future Or Optional Boundaries
 
 - `crates/wasm`: optional future wasm-bindgen bridge around the Rust engine if browser-local solving becomes a concrete roadmap item.
@@ -196,6 +204,12 @@ The primary representation is cubie based:
 - edge orientation
 
 Sticker strings, Kociemba strings, and visual states can be adapters later, but they should not replace the core model.
+
+## Multi-Puzzle Boundary
+
+Future puzzles should live in puzzle-specific modules with their own state, move model, notation parser, validation, search, heuristics, coordinates, and artifacts.
+
+Do not add a generic puzzle engine, universal move type, universal state type, `BaseMove`, `BaseState`, `BasePuzzle`, or inheritance-style hierarchy. Shared Rust code should be limited to puzzle-neutral metadata, budgets, results, registries, compatibility checks, and artifact plumbing.
 
 ## Bootstrap Boundary
 

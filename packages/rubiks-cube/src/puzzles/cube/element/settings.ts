@@ -1,6 +1,6 @@
 import type { CubeType } from '../core';
 import { CubeTypes } from '../core';
-import RubiksCube3DSettings from '../rubiksCube3D/cubeSettings';
+import RubiksCube3DSettings from '../three/cubeSettings';
 import type { AnimationStyle } from './constants';
 import { AnimationStyles } from './constants';
 

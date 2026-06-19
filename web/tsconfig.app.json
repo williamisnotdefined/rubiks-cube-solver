@@ -16,22 +16,22 @@
       "@core/*": ["src/core/*"],
       "@pages/*": ["src/pages/*"],
       "@rubiks-cube-solver/rubiks-cube/controller": [
-        "../packages/rubiks-cube/src/rubiksCube/index.ts"
+        "../packages/rubiks-cube/src/puzzles/cube/controller/index.ts"
       ],
       "@rubiks-cube-solver/rubiks-cube/core": [
-        "../packages/rubiks-cube/src/core/index.ts"
+        "../packages/rubiks-cube/src/puzzles/cube/core/index.ts"
       ],
       "@rubiks-cube-solver/rubiks-cube/player": [
-        "../packages/rubiks-cube/src/player/index.ts"
+        "../packages/rubiks-cube/src/puzzles/cube/player/index.ts"
       ],
       "@rubiks-cube-solver/rubiks-cube/state": [
-        "../packages/rubiks-cube/src/state/index.ts"
+        "../packages/rubiks-cube/src/puzzles/cube/state/index.ts"
       ],
       "@rubiks-cube-solver/rubiks-cube/three": [
-        "../packages/rubiks-cube/src/rubiksCube3D/index.ts"
+        "../packages/rubiks-cube/src/puzzles/cube/three/index.ts"
       ],
       "@rubiks-cube-solver/rubiks-cube/view": [
-        "../packages/rubiks-cube/src/webComponent/index.ts"
+        "../packages/rubiks-cube/src/puzzles/cube/element/index.ts"
       ],
       "@src/*": ["src/*"]
     },

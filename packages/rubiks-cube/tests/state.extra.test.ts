@@ -1,16 +1,15 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { CubeTypes, Faces, Movements, Rotations } from '../src/core';
-import type { RubiksCubeViewInterface } from '../src/rubiksCube';
-import { RubiksCubeController } from '../src/rubiksCube';
-import { RubiksCubeState } from '../src/state';
-import { Axi, GetMovementSlice, GetRotationSlice } from '../src/state/slice';
+import { RubiksCubeController, type RubiksCubeViewInterface } from '../src/puzzles/cube/controller';
+import { CubeTypes, Faces, Movements, Rotations } from '../src/puzzles/cube/core';
+import { RubiksCubeState } from '../src/puzzles/cube/state';
+import { Axi, GetMovementSlice, GetRotationSlice } from '../src/puzzles/cube/state/slice';
 import {
   defaultStickerState,
   fromKociemba,
   getEmptyStickerState,
   getStickerFaceIndex,
   toKociemba,
-} from '../src/state/stickerState';
+} from '../src/puzzles/cube/state/stickerState';
 
 describe('slice helpers', () => {
   let error: ReturnType<typeof vi.spyOn>;

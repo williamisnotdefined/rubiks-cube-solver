@@ -18,6 +18,12 @@ The target is a hybrid Rubik's Cube solver with a Rust engine, search algorithms
 - Solver quality reports and real-scramble gates are executable verification artifacts, not frontend behavior.
 - ML datasets should be generated from deterministic Rust solver behavior before training code consumes them.
 
+## Multi-Puzzle Direction
+
+- Additional puzzles must own puzzle-specific state, move models, notation parsers, validators, solvers, heuristics, coordinates, and artifact rules.
+- Shared multi-puzzle code is limited to metadata, registries, budgets, results, compatibility checks, API contracts, and visualization adapter selection.
+- Do not introduce a generic puzzle engine, universal move type, universal state type, `BaseMove`, `BaseState`, `BasePuzzle`, or inheritance-style puzzle hierarchy.
+
 ## Future Or Optional Boundaries
 
 - `crates/wasm`: optional future wasm-bindgen bridge around the Rust engine if browser-local solving becomes a concrete roadmap item.

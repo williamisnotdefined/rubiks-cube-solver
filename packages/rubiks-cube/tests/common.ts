@@ -1,6 +1,6 @@
-import type { CubeType } from '../src/core';
-import RubiksCube3DSettings from '../src/rubiksCube3D/cubeSettings';
-import RubiksCube3D from '../src/rubiksCube3D/rubiksCube3D';
+import type { CubeType } from '../src/puzzles/cube/core';
+import RubiksCube3DSettings from '../src/puzzles/cube/three/cubeSettings';
+import RubiksCube3D from '../src/puzzles/cube/three/rubiksCube3D';
 
 /**
  * @returns {RubiksCube3D}

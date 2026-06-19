@@ -10,6 +10,7 @@ Global rules for changes anywhere in this repository.
 - Keep the implementation order aligned with the roadmap: cube representation, moves, search, heuristics, pattern databases, ML, then hybrid search.
 - Keep solver logic in Rust engine code, not in frontend or AI tooling.
 - Use cubie representation as the primary engine model.
+- For multi-puzzle work, keep state, move models, notation, validation, and solver strategy puzzle-specific unless a shared type is strictly metadata or infrastructure.
 - Keep workspace-specific code inside the owning workspace unless there is a current cross-workspace consumer.
 - Use repository-root commands such as `npm run ai:check`, `npm run api:test`, `npm run build`, and `cargo test` so paths and workspaces resolve consistently.
 - For `web`, use Biome through workspace scripts for linting and formatting; do not add ESLint or Prettier configs unless explicitly requested.
@@ -22,6 +23,7 @@ Global rules for changes anywhere in this repository.
 - Do not start with machine learning, reinforcement learning, or Transformers.
 - Do not use sticker/color arrays as the primary solver representation.
 - Do not mix UI rendering logic with cube engine logic.
+- Do not add a generic puzzle engine, universal state type, universal move type, `BaseMove`, `BaseState`, `BasePuzzle`, or inheritance-style puzzle abstraction.
 - Do not commit `.env` files, raw secrets, API tokens, model artifacts with private data, or local solver output that is not intended for source control.
 - Do not edit `.opencode/skills`, `.cursor/rules`, or `.github/instructions` AI route files manually.
 - Do not add compatibility layers or future abstractions without a concrete current consumer.

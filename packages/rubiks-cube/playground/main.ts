@@ -1,4 +1,5 @@
-import { IsRotation, isMovement } from '../src/core';
+import { IsRotation, isMovement } from '../src/puzzles/cube/core';
+import { AttributeNames, PeekActions, RubiksCubeElement } from '../src/puzzles/cube/element';
 import {
   DEFAULT_PYRAMINX_ANIMATION_SPEED_MS,
   isPyraminxMove,
@@ -6,7 +7,6 @@ import {
   PyraminxMoves,
   PyraminxPuzzleElement,
 } from '../src/puzzles/pyraminx';
-import { AttributeNames, PeekActions, RubiksCubeElement } from '../src/webComponent';
 
 if (!customElements.get('rubiks-cube')) {
   RubiksCubeElement.register();

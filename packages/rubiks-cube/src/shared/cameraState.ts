@@ -1,5 +1,5 @@
-import type { PeekAction, PeekState } from './constants';
-import { PeekActions, PeekStates } from './constants';
+import type { PeekAction, PeekState } from './cameraPeek';
+import { PeekActions, PeekStates } from './cameraPeek';
 
 export class CameraState {
   Up: boolean;

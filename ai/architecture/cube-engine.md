@@ -22,6 +22,12 @@ The primary representation is cubie based:
 
 Sticker strings, Kociemba strings, and visual states can be adapters later, but they should not replace the core model.
 
+## Multi-Puzzle Boundary
+
+Future puzzles should live in puzzle-specific modules with their own state, move model, notation parser, validation, search, heuristics, coordinates, and artifacts.
+
+Do not add a generic puzzle engine, universal move type, universal state type, `BaseMove`, `BaseState`, `BasePuzzle`, or inheritance-style hierarchy. Shared Rust code should be limited to puzzle-neutral metadata, budgets, results, registries, compatibility checks, and artifact plumbing.
+
 ## Bootstrap Boundary
 
 The initial crate may expose API skeletons before move tables are complete. Any unimplemented behavior must fail explicitly instead of pretending to mutate cube state.

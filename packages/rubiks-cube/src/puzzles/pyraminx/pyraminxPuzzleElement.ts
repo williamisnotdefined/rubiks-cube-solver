@@ -1,10 +1,9 @@
 import { gsap } from 'gsap';
 import { AmbientLight, DirectionalLight, PerspectiveCamera, Scene, Spherical, WebGLRenderer } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { CameraState } from '../../webComponent/cameraState';
-import type { AnimationStyle } from '../../webComponent/constants';
-import { AnimationStyles } from '../../webComponent/constants';
-import { debounce } from '../../webComponent/debouncer';
+import { type AnimationStyle, AnimationStyles } from '../../shared/animation';
+import { CameraState } from '../../shared/cameraState';
+import { debounce } from '../../shared/debouncer';
 import type { PyraminxAnimationOptions } from './pyraminx3D';
 import { DEFAULT_PYRAMINX_ANIMATION_SPEED_MS, Pyraminx3D } from './pyraminx3D';
 import type { PyraminxMove } from './types';

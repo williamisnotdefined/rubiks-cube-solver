@@ -12,7 +12,7 @@ import {
   Quaternion,
   Vector3,
 } from 'three';
-import type { TurnPlan } from '../turnPlan';
+import type { TurnPlan } from '../../shared/turnPlan';
 import { parsePyraminxAlgorithm, pyraminxMoveToTurn, reversePyraminxMove } from './notation';
 import { defaultPyraminxStickerState, parsePyraminxStickerState } from './stickerState';
 import type { PyraminxFace, PyraminxMove, PyraminxTurn } from './types';

@@ -1,14 +1,14 @@
 import { gsap } from 'gsap';
 import { AmbientLight, DirectionalLight, PerspectiveCamera, Scene, Spherical, WebGLRenderer } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { CameraState } from '../../../shared/cameraState';
+import { debounce } from '../../../shared/debouncer';
+import type { AnimationOptions } from '../controller';
+import { RubiksCubeController } from '../controller';
 import type { CubeType, Movement, Rotation } from '../core';
-import type { AnimationOptions } from '../rubiksCube';
-import { RubiksCubeController } from '../rubiksCube';
-import RubiksCube3D from '../rubiksCube3D/rubiksCube3D';
-import { CameraState } from './cameraState';
+import RubiksCube3D from '../three/rubiksCube3D';
 import type { CameraOptions, PeekAction, PeekState } from './constants';
 import { AttributeNames, PeekActions } from './constants';
-import { debounce } from './debouncer';
 import Settings from './settings';
 
 type RenderLoopStarter = (updateControls?: boolean) => () => void;

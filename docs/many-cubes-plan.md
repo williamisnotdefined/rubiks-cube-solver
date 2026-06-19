@@ -42,6 +42,7 @@ Examples of cuboids that must not drive this design yet:
 Other non-goals:
 
 - No universal `CubieState` that pretends to model every puzzle.
+- No universal `Move`, `BaseMove`, `BaseState`, or base puzzle engine.
 - No universal solver that all puzzles must use.
 - No ML-first solver path.
 - No scanner generalization before the non-scanner solve paths work.
@@ -69,7 +70,9 @@ This is not a weakness. The current 3x3 path should be treated as the first puzz
 
 ## Core Architectural Decision
 
-Do not build one generic puzzle state.
+Do not build one generic puzzle state, one generic move type, or one base engine.
+
+Names such as `BaseMove`, `BasePuzzle`, `BaseState`, `GenericPuzzleEngine`, or a universal `PuzzleEngine<TMove, TState>` should not exist in this repository. Shared code is allowed only when it is genuinely puzzle-neutral infrastructure and does not encode puzzle semantics.
 
 Each puzzle owns:
 
@@ -97,6 +100,8 @@ Shared layers are allowed only where they stay puzzle-neutral:
 - artifact metadata format;
 - dataset/model compatibility metadata;
 - frontend puzzle selection and rendering adapters.
+
+Shared layers must not own puzzle state transitions, legal move semantics, solvability rules, or solver correctness.
 
 ## Dedicated Search Per Puzzle
 

@@ -104,6 +104,7 @@ Rules for the web visualization and frontend-to-API boundary.
 - Use the Rust HTTP API as the source of truth for solver behavior.
 - Keep playback and visualization state separate from solver state.
 - Evaluate visualization-only libraries by whether they preserve this boundary.
+- Keep visualization package sharing limited to rendering infrastructure such as camera, animation, and web-component helpers; puzzle notation, visual state adapters, and renderers remain puzzle-specific.
 - Keep the rendered 3x3 cube no larger than 350px by 350px in the web UI.
 - Keep API request and response normalization in `web/src/api`, not inline in React components.
 - Keep request functions free of React imports; React Query hooks are the UI-facing API boundary.
@@ -129,6 +130,7 @@ Rules for the web visualization and frontend-to-API boundary.
 
 - Do not implement solver algorithms in the frontend.
 - Do not make a Three.js/web-component sticker state the canonical engine state.
+- Do not add a frontend or visualization-package generic puzzle engine, universal move type, `BaseMove`, `BaseState`, or shared puzzle-state abstraction.
 - Do not expose facelets, Kociemba strings, or facelet input modes in the UI.
 - Do not add or import `.css` files outside the single Tailwind/theme entrypoint `web/src/index.css`.
 - Do not make browser clients submit facelets to the API; client-facing solve requests use move notation only.
@@ -421,6 +423,12 @@ The target is a hybrid Rubik's Cube solver with a Rust engine, search algorithms
 - Solver quality reports and real-scramble gates are executable verification artifacts, not frontend behavior.
 - ML datasets should be generated from deterministic Rust solver behavior before training code consumes them.
 
+## Multi-Puzzle Direction
+
+- Additional puzzles must own puzzle-specific state, move models, notation parsers, validators, solvers, heuristics, coordinates, and artifact rules.
+- Shared multi-puzzle code is limited to metadata, registries, budgets, results, compatibility checks, API contracts, and visualization adapter selection.
+- Do not introduce a generic puzzle engine, universal move type, universal state type, `BaseMove`, `BaseState`, `BasePuzzle`, or inheritance-style puzzle hierarchy.
+
 ## Future Or Optional Boundaries
 
 - `crates/wasm`: optional future wasm-bindgen bridge around the Rust engine if browser-local solving becomes a concrete roadmap item.
@@ -548,7 +556,7 @@ If a visualization library requires a facelet or sticker-state string, keep that
 
 # Rubik's Cube Visualization Package
 
-`@rubiks-cube-solver/rubiks-cube` is a private local workspace package under `packages/rubiks-cube`. It provides Three.js/web-component visualization code with subpath exports for view, 3D object, controller, core notation constants, and headless sticker state.
+`@rubiks-cube-solver/rubiks-cube` is a private local workspace package under `packages/rubiks-cube`. It provides Three.js/web-component visualization code with subpath exports for cube view, cube 3D object, cube controller, cube notation constants, cube headless sticker state, and puzzle-specific visualization modules.
 
 ## Useful Later
 
@@ -556,6 +564,16 @@ If a visualization library requires a facelet or sticker-state string, keep that
 - `@rubiks-cube-solver/rubiks-cube/three` can provide a Three.js object.
 - `@rubiks-cube-solver/rubiks-cube/state` can provide headless sticker-state experiments and Kociemba string helpers.
 - `@rubiks-cube-solver/rubiks-cube/core` can provide notation constants and parsing helpers.
+- `@rubiks-cube-solver/rubiks-cube/puzzles/cube` can provide the cube visualization module barrel.
+- `@rubiks-cube-solver/rubiks-cube/puzzles/pyraminx` can provide the Pyraminx visualization module barrel.
+
+## Layout
+
+- `src/puzzles/cube`: cube and cubic NxN visualization-specific code.
+- `src/puzzles/pyraminx`: Pyraminx visualization-specific code.
+- `src/shared`: visualization-only helpers such as animation styles, camera state, debouncing, and turn plans.
+
+`src/shared` must not become a generic puzzle engine. Do not add universal puzzle state, universal move types, `BaseMove`, `BaseState`, `BasePuzzle`, or solver abstractions there.
 
 ## Not The Solver Core
 
@@ -563,14 +581,13 @@ If a visualization library requires a facelet or sticker-state string, keep that
 - The state model is sticker/Kociemba oriented, not the Rust cubie representation required by the roadmap.
 - It depends on `three` and `gsap`, which are not appropriate for the Rust engine.
 - It should not be used by `crates/cube-engine`.
+- It must not define canonical puzzle semantics through a generic engine or base move abstraction.
 
 ## Integration Decision
 
 Treat it as a visualization adapter around Rust API state, not as the canonical engine.
 
-## Observed Risk
-
-In `RubiksCubeState.move`, the package appears to compute an `action` with `reverse` and `translate` options but then calls `GetMovementSlice(movement, ...)` with the original move. Verify this behavior before relying on headless move options.
+Each supported puzzle should own its notation helpers, visual state adapter, and renderer. Shared package utilities are limited to rendering infrastructure.
 
 ## Reference: `ai/glossary/cube-terms.md`
 

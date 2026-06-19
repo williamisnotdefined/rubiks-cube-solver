@@ -1,11 +1,11 @@
 import './setup';
 import { expect, test } from 'vitest';
-import type { Movement, Rotation } from '../src/core';
-import { IsRotation } from '../src/core';
-import { RubiksCubeController } from '../src/rubiksCube';
-import RubiksCube3DSettings from '../src/rubiksCube3D/cubeSettings';
-import RubiksCube3D from '../src/rubiksCube3D/rubiksCube3D';
-import { toKociemba } from '../src/state/stickerState';
+import { RubiksCubeController } from '../src/puzzles/cube/controller';
+import type { Movement, Rotation } from '../src/puzzles/cube/core';
+import { IsRotation } from '../src/puzzles/cube/core';
+import { toKociemba } from '../src/puzzles/cube/state/stickerState';
+import RubiksCube3DSettings from '../src/puzzles/cube/three/cubeSettings';
+import RubiksCube3D from '../src/puzzles/cube/three/rubiksCube3D';
 import { scrambles } from './testScrambles';
 
 test.each(scrambles)('RubiksCube with 3D view $cubeType solve with scramble = $scramble', ({
