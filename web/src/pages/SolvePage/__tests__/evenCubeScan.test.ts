@@ -29,6 +29,7 @@ describe('evenCubeScan', () => {
     expect(faceStickers(sessionFaces, 'D')).toEqual(['D', 'F', 'R', 'U'])
     expect(faceStickers(sessionFaces, 'L')).toEqual(['R', 'R', 'R', 'R'])
     expect(faceStickers(sessionFaces, 'R')).toEqual(['L', 'L', 'L', 'L'])
+    expect(sessionFaces?.find((face) => face.symbol === 'D')).not.toHaveProperty('image')
   })
 
   it('scores the corrected 2x2 defaults as no autofit change', () => {
@@ -54,6 +55,7 @@ function scanDraftsWithStickers(
       symbol,
       {
         confirmed: true,
+        photoDataUrl: `data:image/jpeg;base64,${symbol}`,
         stickers: scanStickers(overrides[symbol] ?? [symbol, symbol, symbol, symbol]),
         symbol,
       },

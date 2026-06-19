@@ -289,7 +289,6 @@ export function scanSessionFacesFromDrafts(
     faces.push({
       clientRotation: reviewedStickers.every(isManuallyReviewedSticker) ? 0 : undefined,
       expectedTop: expectedTopForScanFace(symbol),
-      image: draft.photoDataUrl,
       manualOverrides: Object.keys(manualOverrides).length > 0 ? manualOverrides : undefined,
       reviewedStickers,
       symbol,

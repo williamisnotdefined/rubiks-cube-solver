@@ -160,24 +160,21 @@ describe('scan state helpers', () => {
     }, drafts)
     const editedDrafts = replaceScanFaceDraftSticker(confirmedDrafts, 'F', 0, 'R')
 
-    expect(scanSessionFacesFromDrafts(editedDrafts)).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          expectedTop: 'U',
-          image: 'data:image/jpeg;base64,F',
-          manualOverrides: { 0: 'R' },
-          reviewedStickers: expect.arrayContaining([
-            expect.objectContaining({ index: 0, source: 'manual', symbol: 'R' }),
-          ]),
-          symbol: 'F',
-        }),
-        expect.objectContaining({
-          expectedTop: 'F',
-          image: 'data:image/jpeg;base64,U',
-          symbol: 'U',
-        }),
+    const sessionFaces = scanSessionFacesFromDrafts(editedDrafts)
+    const frontFace = sessionFaces?.find((face) => face.symbol === 'F')
+    const topFace = sessionFaces?.find((face) => face.symbol === 'U')
+
+    expect(frontFace).toMatchObject({
+      expectedTop: 'U',
+      manualOverrides: { 0: 'R' },
+      reviewedStickers: expect.arrayContaining([
+        expect.objectContaining({ index: 0, source: 'manual', symbol: 'R' }),
       ]),
-    )
+      symbol: 'F',
+    })
+    expect(frontFace).not.toHaveProperty('image')
+    expect(topFace).toMatchObject({ expectedTop: 'F', symbol: 'U' })
+    expect(topFace).not.toHaveProperty('image')
   })
 
   it('pins face rotation only for fully manual scan session faces', () => {
@@ -201,15 +198,19 @@ describe('scan state helpers', () => {
       },
     }
 
-    expect(scanSessionFacesFromDrafts(confirmedDrafts)?.find((face) => face.symbol === 'F')).toMatchObject({
+    const manualFace = scanSessionFacesFromDrafts(confirmedDrafts)?.find((face) => face.symbol === 'F')
+    const detectedFace = scanSessionFacesFromDrafts(mixedDrafts)?.find((face) => face.symbol === 'F')
+
+    expect(manualFace).toMatchObject({
       clientRotation: 0,
-      image: undefined,
       symbol: 'F',
     })
-    expect(scanSessionFacesFromDrafts(mixedDrafts)?.find((face) => face.symbol === 'F')).toMatchObject({
+    expect(manualFace).not.toHaveProperty('image')
+    expect(detectedFace).toMatchObject({
       clientRotation: undefined,
       symbol: 'F',
     })
+    expect(detectedFace).not.toHaveProperty('image')
   })
 
   it('includes explicit center overrides in scan session payloads', () => {

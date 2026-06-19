@@ -231,8 +231,6 @@ pub struct ScanSessionFaceRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub expected_top: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub image: Option<String>,
     #[serde(rename = "manualOverrides", default)]
     pub manual_overrides: HashMap<usize, String>,
     #[serde(rename = "reviewedStickers", default)]

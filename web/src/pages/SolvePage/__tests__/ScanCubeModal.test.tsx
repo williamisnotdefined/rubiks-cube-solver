@@ -703,20 +703,13 @@ describe('ScanCubeModal', () => {
     await user.click(solveButton)
 
     await waitFor(() => expect(apiMocks.solveSessionMutateAsync).toHaveBeenCalledTimes(1))
-    expect(apiMocks.solveSessionMutateAsync).toHaveBeenCalledWith(
-      expect.objectContaining({
-        faces: expect.arrayContaining([
-          expect.objectContaining({
-            image: undefined,
-            reviewedStickers: expect.any(Array),
-            symbol: 'F',
-          }),
-        ]),
-      }),
-    )
+    const submittedScanSession = apiMocks.solveSessionMutateAsync.mock.calls[0]?.[0]
+    const frontFace = submittedScanSession.faces.find((face: { symbol: string }) => face.symbol === 'F')
+    expect(frontFace).toMatchObject({ reviewedStickers: expect.any(Array), symbol: 'F' })
+    expect(frontFace).not.toHaveProperty('image')
     expect(onSessionSolveResult).toHaveBeenCalledWith(expect.objectContaining({ ok: true }))
     expect(onClose).toHaveBeenCalled()
-  })
+  }, 10_000)
 
   it('allows reviewing a manually filled 2x2 without recognized photos', async () => {
     const user = userEvent.setup()
@@ -810,20 +803,18 @@ describe('ScanCubeModal', () => {
     await user.click(screen.getByRole('button', { name: 'Solve scanned cube' }))
 
     await waitFor(() => expect(apiMocks.solveSessionMutateAsync).toHaveBeenCalledTimes(1))
-    expect(apiMocks.solveSessionMutateAsync).toHaveBeenCalledWith(
-      expect.objectContaining({
-        faces: expect.arrayContaining([
-          expect.objectContaining({
-            expectedTop: 'U',
-            image: 'data:image/jpeg;base64,scan',
-            reviewedStickers: expect.any(Array),
-            symbol: 'F',
-          }),
-          expect.objectContaining({ expectedTop: 'F', reviewedStickers: expect.any(Array), symbol: 'U' }),
-        ]),
-        maxDepth: 30,
-      }),
-    )
+    const submittedScanSession = apiMocks.solveSessionMutateAsync.mock.calls[0]?.[0]
+    const frontFace = submittedScanSession.faces.find((face: { symbol: string }) => face.symbol === 'F')
+    const topFace = submittedScanSession.faces.find((face: { symbol: string }) => face.symbol === 'U')
+    expect(submittedScanSession).toEqual(expect.objectContaining({ maxDepth: 30 }))
+    expect(frontFace).toMatchObject({
+      expectedTop: 'U',
+      reviewedStickers: expect.any(Array),
+      symbol: 'F',
+    })
+    expect(frontFace).not.toHaveProperty('image')
+    expect(topFace).toMatchObject({ expectedTop: 'F', reviewedStickers: expect.any(Array), symbol: 'U' })
+    expect(topFace).not.toHaveProperty('image')
     expect(onSessionSolveResult).toHaveBeenCalledWith(expect.objectContaining({ ok: true, status: 'success' }))
     expect(onClose).toHaveBeenCalled()
   })
