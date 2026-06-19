@@ -8,8 +8,9 @@ import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from '
 import { Popover, PopoverContent, PopoverTrigger } from '@components/Popover'
 import { useThemePreferenceSync, useThemeStore, type ThemePreference } from '@core/theme/themeStore'
 import { algorithmPuzzles, setsForPuzzle } from '@pages/AlgorithmsPage/sets/algorithmSetMetadata'
+import { notationPuzzleGroups } from '@pages/NotationsPage/notationGuides'
 
-export type PageNavRoute = 'algorithms' | 'channels' | 'solve' | 'timer'
+export type PageNavRoute = 'algorithms' | 'channels' | 'notations' | 'solve' | 'timer'
 
 const githubUrl = 'https://github.com/williamisnotdefined/rubiks-cube-solver'
 
@@ -100,6 +101,7 @@ function NavContent({ activeRoute, onNavigate }: NavContentProps) {
         <PageNavLink active={activeRoute === 'channels'} to="/channels" onClick={onNavigate}>
           {t('navigation.channels')}
         </PageNavLink>
+        <NotationsMenu active={activeRoute === 'notations'} onNavigate={onNavigate} />
         <AlgorithmsMenu active={activeRoute === 'algorithms'} onNavigate={onNavigate} />
       </div>
       <div className="mt-auto flex gap-2">
@@ -131,6 +133,10 @@ function activeRouteLabelKey(activeRoute: PageNavRoute) {
     return 'navigation.algorithms'
   }
 
+  if (activeRoute === 'notations') {
+    return 'navigation.notations'
+  }
+
   if (activeRoute === 'timer') {
     return 'navigation.timer'
   }
@@ -140,6 +146,74 @@ function activeRouteLabelKey(activeRoute: PageNavRoute) {
   }
 
   return 'navigation.solve'
+}
+
+function NotationsMenu({
+  active,
+  onNavigate,
+}: {
+  active: boolean
+  onNavigate?: () => void
+}) {
+  const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
+
+  function handleNavigate() {
+    setOpen(false)
+    onNavigate?.()
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          aria-current={active ? 'page' : undefined}
+          className={cls(
+            'border border-app-border px-4 py-3 text-left font-sans text-xs font-extrabold uppercase tracking-[0.16em] outline-none focus-visible:ring-2 focus-visible:ring-app-focus/50',
+            {
+              'bg-app-text text-app-inverse': active,
+              'bg-app-surface text-app-muted hover:bg-app-surface-raised hover:text-app-text': !active,
+            },
+          )}
+          type="button"
+        >
+          {t('navigation.notations')}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="grid w-72 gap-3 p-2" side="right">
+        <div className="border border-app-border bg-app-control px-3 py-2 text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
+          {t('navigation.notationsMenu')}
+        </div>
+        <div className="grid max-h-[70dvh] gap-2 overflow-y-auto pr-1">
+          {notationPuzzleGroups.map((group) => (
+            <section key={group.id} className="border border-app-border bg-app-surface p-2">
+              <h3 className="px-2 py-1 text-xs font-black uppercase tracking-[0.16em] text-app-text">
+                {t(group.titleKey)}
+              </h3>
+              <div className="grid gap-1">
+                {group.puzzles.map((guide) => (
+                  <RouterNavLink
+                    key={guide.path}
+                    className={({ isActive }) => cls(
+                      'block px-2 py-2 text-xs font-extrabold uppercase tracking-[0.12em] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-app-focus/50',
+                      {
+                        'bg-app-text text-app-inverse': isActive,
+                        'text-app-muted hover:bg-app-control hover:text-app-text': !isActive,
+                      },
+                    )}
+                    to={guide.path}
+                    onClick={handleNavigate}
+                  >
+                    {guide.puzzle}
+                  </RouterNavLink>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
 }
 
 function AlgorithmsMenu({

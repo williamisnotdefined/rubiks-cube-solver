@@ -73,6 +73,21 @@ describe('PageNav', () => {
     expect(screen.getByRole('link', { name: 'Megaminx OLL' })).toHaveAttribute('href', '/algoritmos/megaminx/oll')
   })
 
+  it('marks notations as active and opens puzzle notation links', async () => {
+    const user = userEvent.setup()
+    renderWithRouter(<PageNav activeRoute="notations" />, '/notations/3x3')
+
+    const notationsButton = screen.getByRole('button', { name: 'Notations' })
+    expect(notationsButton).toHaveClass('bg-app-text')
+
+    await user.click(notationsButton)
+
+    expect(screen.getByRole('link', { name: '3x3' })).toHaveAttribute('href', '/notations/3x3')
+    expect(screen.getByRole('link', { name: 'Pyraminx' })).toHaveAttribute('href', '/notations/pyraminx')
+    expect(screen.getByRole('link', { name: 'Square-1' })).toHaveAttribute('href', '/notations/square-1')
+    expect(screen.getByRole('link', { name: 'Clock' })).toHaveAttribute('href', '/notations/clock')
+  })
+
   it('links to the project on GitHub', () => {
     renderWithRouter(<PageNav activeRoute="solve" />)
 

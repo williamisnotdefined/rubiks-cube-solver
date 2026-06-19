@@ -10,12 +10,15 @@ const TimerPage = lazy(() => import('./pages/TimerPage/TimerPage').then((module)
 const AlgorithmsIndexPage = lazy(() => import('./pages/AlgorithmsPage/AlgorithmsIndexPage').then((module) => ({ default: module.AlgorithmsIndexPage })))
 const AlgorithmsPuzzlePage = lazy(() => import('./pages/AlgorithmsPage/AlgorithmsPuzzlePage').then((module) => ({ default: module.AlgorithmsPuzzlePage })))
 const AlgorithmSetPage = lazy(() => import('./pages/AlgorithmsPage/AlgorithmSetPage').then((module) => ({ default: module.AlgorithmSetPage })))
+const NotationGuidePage = lazy(() => import('./pages/NotationsPage/NotationGuidePage').then((module) => ({ default: module.NotationGuidePage })))
 const YouTubeChannelsPage = lazy(() => import('./pages/YouTubeChannelsPage/YouTubeChannelsPage').then((module) => ({ default: module.YouTubeChannelsPage })))
 
 function App() {
   const location = useLocation()
   const route: PageNavRoute = location.pathname === '/channels'
     ? 'channels'
+    : location.pathname.startsWith('/notations')
+    ? 'notations'
     : location.pathname.startsWith('/algoritmos')
     ? 'algorithms'
     : location.pathname === '/timer'
@@ -34,6 +37,8 @@ function App() {
             <Route path="/algoritmos" element={<AlgorithmsIndexPage />} />
             <Route path="/algoritmos/:puzzleId" element={<AlgorithmsPuzzlePage />} />
             <Route path="/algoritmos/:puzzleId/:methodId" element={<AlgorithmSetPage />} />
+            <Route path="/notations" element={<Navigate replace to="/notations/3x3" />} />
+            <Route path="/notations/:puzzleId" element={<NotationGuidePage />} />
             <Route path="*" element={<Navigate replace to="/solve" />} />
           </Routes>
         </Suspense>

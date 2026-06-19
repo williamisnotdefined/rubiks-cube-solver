@@ -338,6 +338,8 @@
     "closeMenu": "Fechar menu",
     "github": "Abrir projeto no GitHub",
     "menu": "Menu",
+    "notations": "Notações",
+    "notationsMenu": "Notações por puzzle",
     "openMenu": "Abrir menu",
     "primary": "Navegação principal",
     "solve": "Solver",
@@ -346,6 +348,183 @@
     "themeLight": "Claro",
     "themeSystem": "Sistema",
     "timer": "Timer"
+  },
+  "notations": {
+    "groups": {
+      "nxn": "Cubos NxN",
+      "other": "Outros puzzles"
+    },
+    "page": {
+      "example": "Exemplo",
+      "guideNav": "Guias de notação",
+      "howToRead": "Como ler os movimentos",
+      "imageUnavailable": "Imagem indisponível",
+      "kicker": "Tutorial de notação",
+      "meaning": "Significado",
+      "readingIntro": "Um token de notação diz qual camada ou parte girar, a direção do giro e, às vezes, quantas camadas se movem juntas. Segure o puzzle com a face referenciada à sua frente, a menos que o guia diga outra coisa.",
+      "source": "Fonte",
+      "symbol": "Símbolo",
+      "symbolsTitle": "Símbolos principais",
+      "title": "Notação {{puzzle}}"
+    },
+    "puzzles": {
+      "2x2": {
+        "imageAlt": "Diagrama gerado de cubo 2x2",
+        "summary": "A notação do 2x2 usa os mesmos giros externos do 3x3. Como o puzzle só tem cantos, você acompanha principalmente faces, rotações e orientação final dos cantos."
+      },
+      "3x3": {
+        "imageAlt": "Diagrama gerado de cubo 3x3",
+        "summary": "A notação do 3x3 é a base da maioria dos tutoriais de cubing: seis letras de faces, sufixos de direção, movimentos de fatia opcionais, wide moves e rotações do cubo inteiro."
+      },
+      "4x4": {
+        "imageAlt": "Diagrama gerado de cubo 4x4",
+        "summary": "A notação do 4x4 expande a do 3x3 com giros wide e giros de camadas internas. Isso é essencial para montar centros, parear arestas e executar algoritmos de paridade."
+      },
+      "5x5": {
+        "imageAlt": "Diagrama gerado de cubo 5x5",
+        "summary": "A notação do 5x5 mantém as letras de faces do 3x3, mas adiciona giros wide de várias camadas. Os centros fixos tornam a orientação mais fácil que em cubos grandes pares."
+      },
+      "6x6": {
+        "imageAlt": "Diagrama gerado de cubo 6x6",
+        "summary": "A notação do 6x6 usa giros wide e grupos de camadas numeradas para descrever quais camadas externas e internas se movem na redução e nos casos de paridade."
+      },
+      "7x7": {
+        "imageAlt": "Diagrama gerado de cubo 7x7",
+        "summary": "A notação do 7x7 é um sistema expandido de cubos grandes: faces padrão, giros wide e movimentos numerados de várias camadas para centros e arestas."
+      },
+      "clock": {
+        "imageAlt": "Puzzle Rubik's Clock",
+        "summary": "A notação de Clock descreve posições de pinos e giros de mostradores em vez de giros de faces. O objetivo é alinhar todos os relógios em doze dos dois lados."
+      },
+      "megaminx": {
+        "imageAlt": "Puzzle Megaminx",
+        "summary": "A notação de Megaminx nomeia faces em um dodecaedro. Muitos métodos iniciantes usam giros no estilo R++ e D-- porque são fáceis de repetir mantendo a pegada."
+      },
+      "pyraminx": {
+        "imageAlt": "Puzzle Pyraminx",
+        "summary": "A notação de Pyraminx separa giros das faces principais dos pequenos giros de ponta. Letras minúsculas normalmente indicam pontas, enquanto maiúsculas giram camadas maiores."
+      },
+      "skewb": {
+        "imageAlt": "Puzzle Skewb",
+        "summary": "A notação de Skewb descreve rotações em torno de eixos de canto. O puzzle gira em diagonal, então a pegada e o canto referenciado importam mais que em um 3x3."
+      },
+      "square-1": {
+        "imageAlt": "Puzzle Square-1 resolvido",
+        "summary": "A notação de Square-1 usa pares de coordenadas para giros das camadas de cima e de baixo, depois uma barra para trocar a metade direita do puzzle."
+      }
+    },
+    "sections": {
+      "bigCubeLayers": {
+        "body": "Em cubos grandes, um número antes de um wide move pode especificar quantas camadas giram juntas. Por exemplo, 3Rw gira as três camadas da direita como um bloco.",
+        "title": "Camadas numeradas"
+      },
+      "clockDials": {
+        "body": "Giros de Clock são escritos como quantidades de mostrador, muitas vezes com mais ou menos. O número diz quanto os relógios conectados se movem.",
+        "title": "Giros de mostrador"
+      },
+      "clockFlip": {
+        "body": "Depois de resolver um lado, os métodos viram o puzzle e usam a mesma lógica de pinos atrás. Sempre observe se a instrução é para a frente atual ou para trás após virar.",
+        "title": "Frente e verso"
+      },
+      "clockPins": {
+        "body": "UR, DR, DL e UL nomeiam os quatro pinos. Pinos levantados ou abaixados conectam grupos diferentes de relógios, então o estado dos pinos faz parte do movimento.",
+        "title": "Pinos primeiro"
+      },
+      "evenCubeCenters": {
+        "body": "Cubos grandes pares não têm centros físicos fixos. A notação ainda assume um esquema de cores e uma orientação escolhida, então mantenha a mesma frente e topo ao ler algoritmos.",
+        "title": "Centros de cubos pares"
+      },
+      "megaminxDoubleTurns": {
+        "body": "R++ e D-- normalmente significam dois cliques de quinto de volta nessa face. Eles são comuns porque muitos algoritmos iniciantes de Megaminx repetem giros de direita e baixo.",
+        "title": "Sinais duplos"
+      },
+      "megaminxFaces": {
+        "body": "Megaminx tem doze faces, mas tutoriais costumam focar nas faces de trabalho de cima, direita e baixo. Mantenha a mesma área frontal ao seguir triggers repetidos.",
+        "title": "Faces do dodecaedro"
+      },
+      "nxnFaces": {
+        "body": "U é cima, D é baixo, R é direita, L é esquerda, F é frente e B é trás. Leia uma letra sem sufixo como um giro horário olhando diretamente para essa face.",
+        "title": "Letras das faces"
+      },
+      "oddCubeCenters": {
+        "body": "Cubos grandes ímpares têm peças centrais fixas, então os adesivos centrais definem cada face. Use-os como âncoras quando um algoritmo longo muda muitas camadas.",
+        "title": "Centros fixos"
+      },
+      "parityNotation": {
+        "body": "Algoritmos de paridade não usam uma sintaxe especial; eles usam a mesma notação wide e de camadas internas. A palavra paridade descreve o caso, não um novo tipo de movimento.",
+        "title": "Algoritmos de paridade"
+      },
+      "pyraminxFaces": {
+        "body": "U, L, R e B maiúsculos giram as camadas principais do Pyraminx. A direção é lida a partir do ponto de vista do canto ou área de face nomeada.",
+        "title": "Camadas principais"
+      },
+      "pyraminxTips": {
+        "body": "u, l, r e b minúsculos giram apenas as pequenas pontas. Pontas não movem outras peças, então muitos solvers as ajustam durante a inspeção ou no final.",
+        "title": "Pontas"
+      },
+      "rotations": {
+        "body": "x, y e z giram o cubo inteiro em torno dos eixos R, U e F. Rotações mudam sua pegada e ponto de vista; elas não contam como um giro de uma única camada de face.",
+        "title": "Rotações do cubo"
+      },
+      "skewbCorners": {
+        "body": "Giros de Skewb rotacionam metade do puzzle em torno de um canto. R, L, U e B nomeiam a área de canto usada como eixo do movimento.",
+        "title": "Giros por eixo de canto"
+      },
+      "skewbGrip": {
+        "body": "Como cada movimento desloca vários centros e cantos, uma pegada estável importa. Aprenda primeiro o canto referenciado, depois aplique o apóstrofo ou sufixo de meia-volta.",
+        "title": "A pegada importa"
+      },
+      "slices": {
+        "body": "M, E e S são fatias do meio paralelas a L/R, U/D e F/B. Elas aparecem em algoritmos avançados de 3x3 e em notação de uma mão.",
+        "title": "Movimentos de fatia"
+      },
+      "squareOnePairs": {
+        "body": "Um par como (1,-3) gira a camada de cima em 1 unidade e a de baixo em -3 unidades. Valores positivos e negativos movem em direções opostas.",
+        "title": "Pares de coordenadas"
+      },
+      "squareOneShape": {
+        "body": "Square-1 pode mudar de forma, então o mesmo par de coordenadas só faz sentido quando a camada consegue girar fisicamente até aquela posição. Se travar, confira o formato primeiro.",
+        "title": "O formato importa"
+      },
+      "squareOneSlash": {
+        "body": "Uma barra significa fazer o giro da fatia vertical que troca a metade direita do puzzle. Algoritmos alternam pares de coordenadas e barras.",
+        "title": "Giro de barra"
+      },
+      "suffixes": {
+        "body": "Um apóstrofo inverte a direção. Um 2 significa girar a mesma camada duas vezes, formando uma meia-volta de 180 graus.",
+        "title": "Sufixos"
+      },
+      "twoByTwo": {
+        "body": "Um 2x2 não tem centros fixos visíveis, então mantenha sua orientação escolhida consistente. Muitos algoritmos ainda usam nomes herdados do 3x3, como R, U e F.",
+        "title": "Sem centros visíveis"
+      },
+      "wideMoves": {
+        "body": "Um wide move gira a face externa e a camada interna adjacente juntas. Rw é um giro wide da direita; Rw' inverte, e Rw2 é meia-volta.",
+        "title": "Wide moves"
+      }
+    },
+    "symbols": {
+      "clockAll": "ALL significa que todo pino ou grupo de mostradores está incluído nesse giro.",
+      "clockDial": "Mais e menos mostram a direção de um giro de mostrador; o número indica a quantidade.",
+      "clockPin": "Rótulos de pino identificam qual pino de canto está levantado ou selecionado.",
+      "counterClockwise": "Um apóstrofo significa girar no sentido anti-horário a partir do ponto de vista da face ou parte nomeada.",
+      "face": "Uma letra de face nomeia a camada a girar: U cima, D baixo, R direita, L esquerda, F frente, B trás.",
+      "halfTurn": "2 significa meia-volta: gire essa camada ou parte em 180 graus.",
+      "innerLayer": "Um número inicial de camada pode identificar uma fatia interna contada a partir do lado nomeado.",
+      "megaminxDoubleMinus": "-- significa dois cliques de quinto de volta na direção negativa na notação de Megaminx.",
+      "megaminxDoublePlus": "++ significa dois cliques de quinto de volta na direção positiva na notação de Megaminx.",
+      "megaminxFace": "Letras de face do Megaminx nomeiam a face de trabalho girada no dodecaedro.",
+      "multiLayer": "Um número antes de um wide move diz quantas camadas se movem juntas.",
+      "pyraminxFace": "Letras maiúsculas do Pyraminx giram a camada principal ao redor daquela área de canto.",
+      "pyraminxTip": "Letras minúsculas do Pyraminx giram apenas a pequena ponta.",
+      "rotation": "x, y e z giram o cubo inteiro, não apenas uma camada.",
+      "skewbFace": "Letras de Skewb nomeiam o giro por eixo de canto a executar.",
+      "slice": "M, E e S são fatias centrais dentro de um 3x3.",
+      "squareOneNegative": "Um número negativo gira essa camada do Square-1 na direção oposta.",
+      "squareOnePair": "O primeiro número gira a camada de cima; o segundo gira a camada de baixo.",
+      "squareOneSlash": "Uma barra gira a fatia vertical do Square-1.",
+      "wide": "w significa que a face externa e a camada interna adjacente giram juntas."
+    }
   },
   "scan": {
     "actions": {

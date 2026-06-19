@@ -642,6 +642,8 @@
     "closeMenu": "Close menu",
     "github": "Open project on GitHub",
     "menu": "Menu",
+    "notations": "Notations",
+    "notationsMenu": "Puzzle notations",
     "openMenu": "Open menu",
     "primary": "Primary navigation",
     "solve": "Solver",
@@ -650,6 +652,183 @@
     "themeLight": "Light",
     "themeSystem": "System",
     "timer": "Timer"
+  },
+  "notations": {
+    "groups": {
+      "nxn": "NxN cubes",
+      "other": "Other puzzles"
+    },
+    "page": {
+      "example": "Example",
+      "guideNav": "Notation guides",
+      "howToRead": "How to read the moves",
+      "imageUnavailable": "Image unavailable",
+      "kicker": "Notation tutorial",
+      "meaning": "Meaning",
+      "readingIntro": "A notation token tells you which layer or part to turn, the direction of that turn, and sometimes how many layers move together. Hold the puzzle with the referenced face in front of you unless the guide says otherwise.",
+      "source": "Source",
+      "symbol": "Symbol",
+      "symbolsTitle": "Core symbols",
+      "title": "{{puzzle}} notation"
+    },
+    "puzzles": {
+      "2x2": {
+        "imageAlt": "Generated 2x2 cube diagram",
+        "summary": "2x2 notation uses the same outside face turns as 3x3. Because the puzzle only has corners, you mainly track faces, rotations, and final corner orientation."
+      },
+      "3x3": {
+        "imageAlt": "Generated 3x3 cube diagram",
+        "summary": "3x3 notation is the baseline for most cubing tutorials: six face letters, suffixes for direction, optional slice moves, wide moves, and whole-cube rotations."
+      },
+      "4x4": {
+        "imageAlt": "Generated 4x4 cube diagram",
+        "summary": "4x4 notation extends 3x3 notation with wide turns and inner-layer turns. These are essential for center building, edge pairing, and parity algorithms."
+      },
+      "5x5": {
+        "imageAlt": "Generated 5x5 cube diagram",
+        "summary": "5x5 notation keeps the 3x3 face letters but adds multi-layer wide turns. The fixed center pieces make orientation easier than even big cubes."
+      },
+      "6x6": {
+        "imageAlt": "Generated 6x6 cube diagram",
+        "summary": "6x6 notation uses wide turns and numbered layer groups to describe which outer and inner layers move during reduction and parity cases."
+      },
+      "7x7": {
+        "imageAlt": "Generated 7x7 cube diagram",
+        "summary": "7x7 notation is an expanded big-cube system: standard faces, wide turns, and numbered multi-layer turns for center and edge work."
+      },
+      "clock": {
+        "imageAlt": "Rubik's Clock puzzle",
+        "summary": "Clock notation describes pin positions and dial turns instead of face turns. The goal is to align all clocks to twelve on both sides."
+      },
+      "megaminx": {
+        "imageAlt": "Megaminx puzzle",
+        "summary": "Megaminx notation names faces on a dodecahedron. Many beginner methods use R++ and D-- style turns because they are easy to repeat while preserving grip."
+      },
+      "pyraminx": {
+        "imageAlt": "Pyraminx puzzle",
+        "summary": "Pyraminx notation separates main face turns from small tip turns. Lowercase letters usually mean tips, while uppercase letters turn the larger layers."
+      },
+      "skewb": {
+        "imageAlt": "Skewb puzzle",
+        "summary": "Skewb notation describes rotations around corner axes. The puzzle turns diagonally, so grip and the referenced corner matter more than on a 3x3."
+      },
+      "square-1": {
+        "imageAlt": "Solved Square-1 puzzle",
+        "summary": "Square-1 notation uses coordinate pairs for top and bottom layer turns, then a slash to swap the right half of the puzzle."
+      }
+    },
+    "sections": {
+      "bigCubeLayers": {
+        "body": "For large cubes, a number before a wide move can specify how many layers turn together. For example, 3Rw turns the three right-side layers as one block.",
+        "title": "Numbered layers"
+      },
+      "clockDials": {
+        "body": "Clock turns are written as dial amounts, often with plus or minus. The number tells how far the selected connected clocks move.",
+        "title": "Dial turns"
+      },
+      "clockFlip": {
+        "body": "After one side is solved, methods flip the puzzle and use the same pin logic on the back. Always note whether the instruction is for the current front or the back after a flip.",
+        "title": "Front and back"
+      },
+      "clockPins": {
+        "body": "UR, DR, DL and UL name the four pins. Raised or lowered pins connect different groups of clocks, so the pin state is part of the move.",
+        "title": "Pins first"
+      },
+      "evenCubeCenters": {
+        "body": "Even big cubes do not have fixed physical centers. Notation still assumes a color scheme and a chosen orientation, so keep the same front and top while reading algorithms.",
+        "title": "Even-cube centers"
+      },
+      "megaminxDoubleTurns": {
+        "body": "R++ and D-- usually mean two fifth-turn clicks on that face. They are common because many Megaminx beginner algorithms repeat right and down turns.",
+        "title": "Double signs"
+      },
+      "megaminxFaces": {
+        "body": "Megaminx has twelve faces, but tutorials often focus on the upper, right, and down working faces. Keep the same front area while following repeated triggers.",
+        "title": "Dodecahedron faces"
+      },
+      "nxnFaces": {
+        "body": "U is up, D is down, R is right, L is left, F is front, and B is back. Read a bare letter as a clockwise turn while looking directly at that face.",
+        "title": "Face letters"
+      },
+      "oddCubeCenters": {
+        "body": "Odd big cubes have fixed center pieces, so the center stickers define each face. Use them as anchors when a long algorithm changes many layers.",
+        "title": "Fixed centers"
+      },
+      "parityNotation": {
+        "body": "Parity algorithms are not special syntax; they use the same wide and inner-layer notation. The word parity describes the case, not a new kind of move.",
+        "title": "Parity algorithms"
+      },
+      "pyraminxFaces": {
+        "body": "Uppercase U, L, R and B turn the main Pyraminx layers. The direction is read from the viewpoint of the named corner or face area.",
+        "title": "Main layers"
+      },
+      "pyraminxTips": {
+        "body": "Lowercase u, l, r and b turn only the small tips. Tips do not move other pieces, so many solvers adjust them during inspection or at the end.",
+        "title": "Tips"
+      },
+      "rotations": {
+        "body": "x, y and z rotate the whole cube around the R, U and F axes. Rotations change your grip and viewpoint; they do not count as a single face layer turn.",
+        "title": "Cube rotations"
+      },
+      "skewbCorners": {
+        "body": "Skewb turns rotate half of the puzzle around a corner. R, L, U and B name the corner area used as the axis for the move.",
+        "title": "Corner-axis turns"
+      },
+      "skewbGrip": {
+        "body": "Because every move shifts several centers and corners, stable grip matters. Learn the referenced corner first, then apply the apostrophe or half-turn suffix.",
+        "title": "Grip matters"
+      },
+      "slices": {
+        "body": "M, E and S are middle slices parallel to L/R, U/D and F/B. They are common in advanced 3x3 algorithms and one-handed notation.",
+        "title": "Slice moves"
+      },
+      "squareOnePairs": {
+        "body": "A pair such as (1,-3) turns the top layer by 1 unit and the bottom layer by -3 units. Positive and negative values move in opposite directions.",
+        "title": "Coordinate pairs"
+      },
+      "squareOneShape": {
+        "body": "Square-1 can change shape, so the same coordinate pair only makes sense when the layer can physically turn to that position. If it blocks, check the shape first.",
+        "title": "Shape matters"
+      },
+      "squareOneSlash": {
+        "body": "A slash means make the vertical slice turn that swaps the right half of the puzzle. Algorithms alternate coordinate pairs and slashes.",
+        "title": "Slash turn"
+      },
+      "suffixes": {
+        "body": "An apostrophe reverses the direction. A 2 means turn the same layer twice, making a 180-degree half turn.",
+        "title": "Suffixes"
+      },
+      "twoByTwo": {
+        "body": "A 2x2 has no visible fixed centers, so keep your chosen orientation consistent. Many algorithms still borrow 3x3 names like R, U and F.",
+        "title": "No visible centers"
+      },
+      "wideMoves": {
+        "body": "A wide move turns the outer face and the adjacent inner layer together. Rw is a right wide turn; Rw' reverses it, and Rw2 is a half turn.",
+        "title": "Wide moves"
+      }
+    },
+    "symbols": {
+      "clockAll": "ALL means every pin or dial group is included for that turn.",
+      "clockDial": "Plus and minus show the direction of a clock dial turn; the number gives the amount.",
+      "clockPin": "Pin labels identify which corner pin is raised or selected.",
+      "counterClockwise": "An apostrophe means turn counterclockwise from the viewpoint of the named face or part.",
+      "face": "A face letter names the layer to turn: U up, D down, R right, L left, F front, B back.",
+      "halfTurn": "2 means a half turn: rotate that layer or part 180 degrees.",
+      "innerLayer": "A leading layer number can identify an inner slice counted from the named side.",
+      "megaminxDoubleMinus": "-- means two fifth-turn clicks in the negative direction on Megaminx notation.",
+      "megaminxDoublePlus": "++ means two fifth-turn clicks in the positive direction on Megaminx notation.",
+      "megaminxFace": "Megaminx face letters name the working face being turned around the dodecahedron.",
+      "multiLayer": "A number before a wide move tells how many layers move together.",
+      "pyraminxFace": "Uppercase Pyraminx letters turn the main layer around that corner area.",
+      "pyraminxTip": "Lowercase Pyraminx letters turn only the small tip.",
+      "rotation": "x, y and z rotate the whole cube, not just one layer.",
+      "skewbFace": "Skewb letters name the corner-axis turn to perform.",
+      "slice": "M, E and S are middle slices inside a 3x3.",
+      "squareOneNegative": "A negative number turns that Square-1 layer in the opposite direction.",
+      "squareOnePair": "The first number turns the top layer; the second turns the bottom layer.",
+      "squareOneSlash": "A slash turns the vertical slice of the Square-1.",
+      "wide": "w means the outside face and the adjacent inner layer turn together."
+    }
   },
   "scan": {
     "actions": {
