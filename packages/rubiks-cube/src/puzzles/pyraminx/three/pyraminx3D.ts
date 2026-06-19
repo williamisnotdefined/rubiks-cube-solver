@@ -1,22 +1,20 @@
 import { gsap } from 'gsap';
-import type { ColorRepresentation } from 'three';
+import { Group, Object3D, Quaternion, Vector3 } from 'three';
+import type { TurnPlan } from '../../../shared/turnPlan';
+import { parsePyraminxAlgorithm, pyraminxMoveToTurn, reversePyraminxMove } from '../core/notation';
+import type { PyraminxFace, PyraminxMove, PyraminxTurn } from '../core/types';
+import { PyraminxFaceOrder } from '../core/types';
+import { defaultPyraminxStickerState, parsePyraminxStickerState } from '../state/stickerState';
 import {
-  BufferGeometry,
-  DoubleSide,
-  Float32BufferAttribute,
-  Group,
-  Mesh,
-  MeshBasicMaterial,
-  MeshStandardMaterial,
-  Object3D,
-  Quaternion,
-  Vector3,
-} from 'three';
-import type { TurnPlan } from '../../shared/turnPlan';
-import { parsePyraminxAlgorithm, pyraminxMoveToTurn, reversePyraminxMove } from './notation';
-import { defaultPyraminxStickerState, parsePyraminxStickerState } from './stickerState';
-import type { PyraminxFace, PyraminxMove, PyraminxTurn } from './types';
-import { PyraminxFaceOrder, PyraminxFaces } from './types';
+  DEFAULT_PYRAMINX_ANIMATION_SPEED_MS,
+  LAYER_EPSILON,
+  MAIN_LAYER_PROJECTION,
+  TIP_LAYER_PROJECTION,
+  TURN_ANGLE_RADIANS,
+  vertexPositions,
+} from './config';
+import { createFaceStickers, type StickerSlot } from './geometry';
+import { PyraminxSticker } from './sticker';
 
 type Pyraminx3DOptions = {
   animationSpeedMs?: number;
@@ -27,104 +25,6 @@ type PyraminxAnimationOptions = {
   animationSpeedMs?: number;
   reverse?: boolean;
 };
-
-type BarycentricWeights = Record<PyraminxFace, number>;
-
-type BarycentricPoint = {
-  point: Vector3;
-  weights: BarycentricWeights;
-};
-
-type StickerSlot = {
-  backingPosition: Vector3;
-  backingQuaternion: Quaternion;
-  face: PyraminxFace;
-  id: string;
-  position: Vector3;
-  quaternion: Quaternion;
-  slotIndex: number;
-};
-
-const PYRAMINX_FACE_SIZE = 3;
-const TETRA_RADIUS = 1.55;
-const BACKING_SCALE = 1;
-const BACKING_OFFSET = 0.018;
-const STICKER_SCALE = 0.82;
-const STICKER_OFFSET = 0.04;
-const LAYER_EPSILON = 0.04;
-const TURN_ANGLE_RADIANS = (2 * Math.PI) / 3;
-export const DEFAULT_PYRAMINX_ANIMATION_SPEED_MS = 220;
-const MAIN_LAYER_PROJECTION = TETRA_RADIUS / 9;
-const TIP_LAYER_PROJECTION = (5 * TETRA_RADIUS) / 9;
-const BASE_Y = -TETRA_RADIUS / 3;
-const BASE_RADIUS = (2 * Math.sqrt(2) * TETRA_RADIUS) / 3;
-
-const vertexPositions: Record<PyraminxFace, Vector3> = {
-  [PyraminxFaces.U]: new Vector3(0, TETRA_RADIUS, 0),
-  [PyraminxFaces.L]: new Vector3((-Math.sqrt(3) * BASE_RADIUS) / 2, BASE_Y, BASE_RADIUS / 2),
-  [PyraminxFaces.R]: new Vector3((Math.sqrt(3) * BASE_RADIUS) / 2, BASE_Y, BASE_RADIUS / 2),
-  [PyraminxFaces.B]: new Vector3(0, BASE_Y, -BASE_RADIUS),
-};
-
-const faceVertices: Record<PyraminxFace, readonly [PyraminxFace, PyraminxFace, PyraminxFace]> = {
-  [PyraminxFaces.U]: [PyraminxFaces.L, PyraminxFaces.B, PyraminxFaces.R],
-  [PyraminxFaces.L]: [PyraminxFaces.U, PyraminxFaces.R, PyraminxFaces.B],
-  [PyraminxFaces.R]: [PyraminxFaces.U, PyraminxFaces.B, PyraminxFaces.L],
-  [PyraminxFaces.B]: [PyraminxFaces.U, PyraminxFaces.L, PyraminxFaces.R],
-};
-
-export const PyraminxFaceColors = {
-  [PyraminxFaces.U]: 'white',
-  [PyraminxFaces.L]: '#2cbf13',
-  [PyraminxFaces.R]: 'red',
-  [PyraminxFaces.B]: 'blue',
-} satisfies Record<PyraminxFace, ColorRepresentation>;
-
-export class PyraminxSticker extends Mesh<BufferGeometry, MeshStandardMaterial> {
-  backing: Mesh<BufferGeometry, MeshBasicMaterial>;
-  stickerId: string;
-  slotIndex: number;
-  face: PyraminxFace;
-
-  constructor(
-    stickerId: string,
-    slotIndex: number,
-    face: PyraminxFace,
-    geometry: BufferGeometry,
-    backingGeometry: BufferGeometry,
-  ) {
-    super(
-      geometry,
-      new MeshStandardMaterial({
-        color: PyraminxFaceColors[face],
-        metalness: 0,
-        polygonOffset: true,
-        polygonOffsetFactor: -1,
-        polygonOffsetUnits: -1,
-        roughness: 0.4,
-        side: DoubleSide,
-      }),
-    );
-    this.backing = new Mesh(
-      backingGeometry,
-      new MeshBasicMaterial({
-        color: 'black',
-        polygonOffset: true,
-        polygonOffsetFactor: 1,
-        polygonOffsetUnits: 1,
-        side: DoubleSide,
-      }),
-    );
-    this.stickerId = stickerId;
-    this.slotIndex = slotIndex;
-    this.face = face;
-  }
-
-  setFace(face: PyraminxFace): void {
-    this.face = face;
-    this.material.color.set(PyraminxFaceColors[face]);
-  }
-}
 
 export class Pyraminx3D extends Object3D {
   animationSpeedMs: number;
@@ -432,111 +332,7 @@ function angleForTurn(turn: PyraminxTurn): number {
   return (turn.prime ? -1 : 1) * TURN_ANGLE_RADIANS;
 }
 
-function createFaceStickers(face: PyraminxFace, startIndex: number): PyraminxSticker[] {
-  const stickers: PyraminxSticker[] = [];
-  const addSticker = (pointCoords: readonly [number, number, number][]) => {
-    const points = pointCoords.map((coords) => facePoint(face, coords));
-    const center = averagePoint(points.map((point) => point.point));
-    const normal = faceNormal(face);
-    const backingPosition = center.clone().add(normal.clone().multiplyScalar(BACKING_OFFSET));
-    const backingVertices = points.map((point) => {
-      return center
-        .clone()
-        .add(point.point.clone().sub(center).multiplyScalar(BACKING_SCALE))
-        .add(normal.clone().multiplyScalar(BACKING_OFFSET));
-    });
-    const position = center.clone().add(normal.clone().multiplyScalar(STICKER_OFFSET));
-    const vertices = points.map((point) => {
-      return center
-        .clone()
-        .add(point.point.clone().sub(center).multiplyScalar(STICKER_SCALE))
-        .add(normal.clone().multiplyScalar(STICKER_OFFSET));
-    });
-    const id = `pyraminx-${face}-${startIndex + stickers.length}`;
-    const sticker = new PyraminxSticker(
-      id,
-      startIndex + stickers.length,
-      face,
-      createTriangleGeometry(vertices, position),
-      createTriangleGeometry(backingVertices, backingPosition),
-    );
-    sticker.backing.position.copy(backingPosition);
-    sticker.position.copy(position);
-    stickers.push(sticker);
-  };
-
-  for (let a = 0; a < PYRAMINX_FACE_SIZE; a++) {
-    for (let b = 0; b < PYRAMINX_FACE_SIZE - a; b++) {
-      const c = PYRAMINX_FACE_SIZE - 1 - a - b;
-      addSticker([
-        [a + 1, b, c],
-        [a, b + 1, c],
-        [a, b, c + 1],
-      ]);
-    }
-  }
-
-  for (let a = 0; a < PYRAMINX_FACE_SIZE - 1; a++) {
-    for (let b = 0; b < PYRAMINX_FACE_SIZE - 1 - a; b++) {
-      const c = PYRAMINX_FACE_SIZE - 2 - a - b;
-      addSticker([
-        [a + 1, b + 1, c],
-        [a + 1, b, c + 1],
-        [a, b + 1, c + 1],
-      ]);
-    }
-  }
-
-  return stickers;
-}
-
-function facePoint(face: PyraminxFace, coords: readonly [number, number, number]): BarycentricPoint {
-  const vertices = faceVertices[face];
-  const weights = emptyWeights();
-  const point = new Vector3();
-
-  for (let index = 0; index < vertices.length; index++) {
-    const vertex = vertices[index];
-    const weight = coords[index] / PYRAMINX_FACE_SIZE;
-    weights[vertex] = weight;
-    point.add(vertexPositions[vertex].clone().multiplyScalar(weight));
-  }
-
-  return { point, weights };
-}
-
-function emptyWeights(): BarycentricWeights {
-  return {
-    [PyraminxFaces.U]: 0,
-    [PyraminxFaces.L]: 0,
-    [PyraminxFaces.R]: 0,
-    [PyraminxFaces.B]: 0,
-  };
-}
-
-function averagePoint(points: readonly Vector3[]): Vector3 {
-  return points.reduce((sum, point) => sum.add(point), new Vector3()).divideScalar(points.length);
-}
-
-function faceNormal(face: PyraminxFace): Vector3 {
-  const [a, b, c] = faceVertices[face].map((vertex) => vertexPositions[vertex]);
-  const normal = b.clone().sub(a).cross(c.clone().sub(a)).normalize();
-
-  return normal;
-}
-
-function createTriangleGeometry(vertices: readonly Vector3[], origin = new Vector3()): BufferGeometry {
-  const geometry = new BufferGeometry();
-  const values = vertices.flatMap((vertex) => {
-    const local = vertex.clone().sub(origin);
-    return [local.x, local.y, local.z];
-  });
-
-  geometry.setAttribute('position', new Float32BufferAttribute(values, 3));
-  geometry.computeVertexNormals();
-
-  return geometry;
-}
-
+export { DEFAULT_PYRAMINX_ANIMATION_SPEED_MS, PyraminxFaceColors } from './config';
+export { PyraminxSticker } from './sticker';
 export type { Pyraminx3DOptions, PyraminxAnimationOptions };
 export { defaultPyraminxStickerState };
