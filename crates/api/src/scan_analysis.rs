@@ -10,21 +10,23 @@ use cube_engine::puzzles::cube2::{
     CUBE2_BOUNDED_IDA_STAR_STRATEGY_ID, CUBE2_PDB_IDA_STAR_STRATEGY_ID,
 };
 use cube_engine::{
-    all_strategy_definitions, Facelet, FaceletConversionError, PuzzleId, SCAN_STICKERS_PER_FACE,
+    all_strategy_definitions, FaceletConversionError, PuzzleId, SCAN_STICKERS_PER_FACE,
 };
 #[cfg(test)]
 use cube_engine::{
-    ScanInferenceInput, ScanManualOverride, SCAN_FACELET_COUNT, SCAN_FACELET_SYMBOL_COUNT,
+    Facelet, ScanInferenceInput, ScanManualOverride, SCAN_FACELET_COUNT, SCAN_FACELET_SYMBOL_COUNT,
 };
 
 use crate::config::{CUBE2_MAX_API_DEPTH, DEFAULT_API_NODES, MAX_API_NODES, MAX_SCAN_IMAGE_BYTES};
 use crate::response::{
-    AnalyzeScanFaceRequest, AnalyzeScanFaceResponse, AnalyzeScanSessionResponse,
-    AnalyzedSessionFaceResponse, AnalyzedStickerResponse, ColorProbabilitiesResponse,
-    ImageQualityResponse, RgbColorRequest, ScanFacesRequest, ScanSessionFaceRequest,
+    AnalyzeScanFaceRequest, AnalyzeScanFaceResponse, ScanFacesRequest, ScanSessionFaceRequest,
     ScanSessionInvalidCornerResponse, ScanSessionInvalidCornerTargetResponse,
     ScanSessionManualTargetResponse, ScanSessionRequest, ScanSessionResponse,
     ScanSessionTimingsResponse, SolveScanRequest, VisualStateResponse,
+};
+#[cfg(test)]
+use crate::response::{
+    AnalyzeScanSessionResponse, AnalyzedStickerResponse, ColorProbabilitiesResponse,
 };
 use crate::solve::solve_scan_request;
 use crate::state::ApiState;
@@ -269,17 +271,6 @@ fn solve_cube2_scan_session_request(
         return (StatusCode::BAD_REQUEST, Json(response));
     }
 
-    let Some(scan) =
-        scan_session_analysis_from_reviewed_stickers(&request, CUBE2_SCAN_STICKERS_PER_FACE)
-    else {
-        let mut response = scan_session_error(
-            "invalid_session",
-            "2x2 scan sessions must include 4 reviewedStickers per face".to_owned(),
-        );
-        response.timings = Some(timings.finish());
-        return (StatusCode::BAD_REQUEST, Json(response));
-    };
-
     let Some(faces) = cube2_scan_faces_from_session(&request) else {
         return (
             StatusCode::BAD_REQUEST,
@@ -288,7 +279,7 @@ fn solve_cube2_scan_session_request(
                 status: "invalid_session".to_owned(),
                 message: Some("2x2 scan session reviewed stickers are incomplete".to_owned()),
                 timings: Some(timings.finish()),
-                scan: Some(scan),
+                scan: None,
                 solve: None,
                 inference: None,
                 rescan_faces: Vec::new(),
@@ -310,7 +301,7 @@ fn solve_cube2_scan_session_request(
                     status: "invalid_cube_state".to_owned(),
                     message: Some(error.to_string()),
                     timings: Some(timings.finish()),
-                    scan: Some(scan),
+                    scan: None,
                     solve: None,
                     inference: None,
                     rescan_faces: Vec::new(),
@@ -340,7 +331,7 @@ fn solve_cube2_scan_session_request(
             status: status.to_owned(),
             message: solve.message.clone(),
             timings: Some(timings.finish()),
-            scan: Some(scan),
+            scan: None,
             solve: Some(solve),
             inference: None,
             rescan_faces: Vec::new(),
@@ -880,97 +871,6 @@ fn validate_reviewed_stickers(
     None
 }
 
-fn scan_session_analysis_from_reviewed_stickers(
-    request: &ScanSessionRequest,
-    stickers_per_face: usize,
-) -> Option<AnalyzeScanSessionResponse> {
-    if request
-        .faces
-        .iter()
-        .any(|face| face.reviewed_stickers.len() != stickers_per_face)
-    {
-        return None;
-    }
-
-    Some(AnalyzeScanSessionResponse {
-        ok: true,
-        status: "reviewed".to_owned(),
-        message: None,
-        faces: request
-            .faces
-            .iter()
-            .map(|face| AnalyzedSessionFaceResponse {
-                symbol: face.symbol.clone(),
-                expected_top: face.expected_top.clone(),
-                analysis: reviewed_face_analysis(face, stickers_per_face),
-            })
-            .collect(),
-        warnings: Vec::new(),
-    })
-}
-
-fn reviewed_face_analysis(
-    face: &ScanSessionFaceRequest,
-    stickers_per_face: usize,
-) -> AnalyzeScanFaceResponse {
-    let confidence = face
-        .reviewed_stickers
-        .iter()
-        .map(|sticker| sticker.confidence.unwrap_or(1.0))
-        .sum::<f64>()
-        / stickers_per_face as f64;
-
-    AnalyzeScanFaceResponse {
-        ok: true,
-        status: "reviewed".to_owned(),
-        message: None,
-        center_mismatch: false,
-        detected_center: Some(face.symbol.clone()),
-        expected_center: Some(face.symbol.clone()),
-        confidence,
-        detected_center_confidence: 1.0,
-        face_confidence: 1.0,
-        detection_mode: Some("reviewed_stickers".to_owned()),
-        image_size: None,
-        image_quality: Some(ImageQualityResponse {
-            blur_score: 100.0,
-            mean_luminance: 128.0,
-            glare_ratio: 0.0,
-            shadow_ratio: 0.0,
-        }),
-        stickers: face
-            .reviewed_stickers
-            .iter()
-            .map(|sticker| AnalyzedStickerResponse {
-                index: sticker.index,
-                symbol: sticker.symbol.clone(),
-                confidence: sticker.confidence.unwrap_or(1.0),
-                rgb: RgbColorRequest { r: 0, g: 0, b: 0 },
-                polygon: Vec::new(),
-                alternatives: Vec::new(),
-                probabilities: reviewed_sticker_probabilities(&sticker.symbol),
-                quality: None,
-            })
-            .collect(),
-        tile_detections: Vec::new(),
-        quality_warnings: Vec::new(),
-        warnings: Vec::new(),
-    }
-}
-
-fn reviewed_sticker_probabilities(symbol: &str) -> Option<ColorProbabilitiesResponse> {
-    let facelet = facelet_from_str(symbol)?;
-
-    Some(ColorProbabilitiesResponse {
-        u: if facelet == Facelet::U { 1.0 } else { 0.0 },
-        r: if facelet == Facelet::R { 1.0 } else { 0.0 },
-        f: if facelet == Facelet::F { 1.0 } else { 0.0 },
-        d: if facelet == Facelet::D { 1.0 } else { 0.0 },
-        l: if facelet == Facelet::L { 1.0 } else { 0.0 },
-        b: if facelet == Facelet::B { 1.0 } else { 0.0 },
-    })
-}
-
 fn validate_manual_overrides(
     face: &ScanSessionFaceRequest,
     stickers_per_face: usize,
@@ -1114,6 +1014,7 @@ fn probabilities_from_response(
     ])
 }
 
+#[cfg(test)]
 fn facelet_from_str(symbol: &str) -> Option<Facelet> {
     let mut chars = symbol.chars();
     let symbol = chars.next()?;

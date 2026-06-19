@@ -1159,6 +1159,8 @@ async fn solve_cube2_scan_session_accepts_reviewed_stickers() {
     assert_eq!(status, StatusCode::OK);
     let response = response.0;
     assert_eq!(response.status, "accepted");
+    assert!(response.scan.is_none());
+    assert!(response.inference.is_none());
     let solve = response.solve.expect("2x2 scan should solve");
     assert!(solve.ok);
     assert_eq!(solve.strategy_id, "cube2-pdb-ida-star");
@@ -1191,6 +1193,8 @@ async fn solve_cube2_scan_session_returns_initial_scrambled_visual_state() {
     assert_eq!(status, StatusCode::OK);
     let response = response.0;
     assert_eq!(response.status, "accepted");
+    assert!(response.scan.is_none());
+    assert!(response.inference.is_none());
     let solve = response.solve.expect("2x2 scan should solve");
     assert!(solve.ok);
     assert_eq!(solve.replay_verified, Some(true));
@@ -1217,6 +1221,8 @@ async fn solve_cube2_scan_session_rejects_depth_above_puzzle_cap() {
     let response = response.0;
     assert!(!response.ok);
     assert_eq!(response.status, "api_error");
+    assert!(response.scan.is_none());
+    assert!(response.inference.is_none());
     let solve = response.solve.expect("2x2 scan should include solve error");
     assert!(!solve.ok);
     assert_eq!(solve.status, "invalid_limits");
@@ -1242,6 +1248,8 @@ async fn solve_cube2_scan_session_highlights_invalid_corner_stickers() {
     let response = response.0;
     assert!(!response.ok);
     assert_eq!(response.status, "invalid_cube_state");
+    assert!(response.scan.is_none());
+    assert!(response.inference.is_none());
     assert_eq!(
         response.message.as_deref(),
         Some("invalid 2x2 scan cube state: unknown corner stickers at position Urf: BRL")
