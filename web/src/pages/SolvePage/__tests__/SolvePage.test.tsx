@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PuzzleVisualizationKind, SolveResult } from '@api/solver/types'
@@ -170,6 +170,76 @@ vi.mock('../ScanCubeModal', () => ({
     </section>
   ),
 }))
+
+vi.mock('../NoSolutionLimitsModal', async () => {
+  const {
+    maxMovesLimitForPuzzle,
+    maxNodesMillionOptions,
+    nodesPerMillion,
+  } = await vi.importActual<typeof import('../constants')>('../constants')
+  const { useSolveSettingsStore } = await vi.importActual<typeof import('../solveSettingsStore')>('../solveSettingsStore')
+
+  return {
+    NoSolutionLimitsModal: ({
+      puzzleSlug,
+      result,
+      solving,
+      onRetry,
+    }: {
+      puzzleSlug: string
+      result: { exploredNodes?: number }
+      solving: boolean
+      onRetry: (limits: { maxDepth: number; maxNodes: number }) => void | Promise<void>
+    }) => {
+      const maxMovesInput = useSolveSettingsStore((state) => state.maxMovesInput)
+      const maxNodesMillionInput = useSolveSettingsStore((state) => state.maxNodesMillionInput)
+      const setMaxMovesInput = useSolveSettingsStore((state) => state.setMaxMovesInput)
+      const setMaxNodesMillionInput = useSolveSettingsStore((state) => state.setMaxNodesMillionInput)
+
+      return (
+        <section aria-label="Try different limits" role="dialog">
+          <p>Previous attempt</p>
+          <p>{(result.exploredNodes ?? 0).toLocaleString('en-US')} nodes explored</p>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault()
+              void onRetry({
+                maxDepth: Number(maxMovesInput.trim()),
+                maxNodes: Number(maxNodesMillionInput.trim()) * nodesPerMillion,
+              })
+            }}
+          >
+            <label>
+              Max moves
+              <input
+                max={maxMovesLimitForPuzzle(puzzleSlug)}
+                value={maxMovesInput}
+                onChange={(event) => setMaxMovesInput(event.target.value)}
+              />
+            </label>
+            <label>
+              Max nodes (M)
+              <select
+                aria-label="Max nodes (M)"
+                value={maxNodesMillionInput}
+                onChange={(event) => setMaxNodesMillionInput(event.target.value)}
+              >
+                {maxNodesMillionOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button type="submit" disabled={solving}>
+              Try with these limits
+            </button>
+          </form>
+        </section>
+      )
+    },
+  }
+})
 
 vi.mock('../CubeStage', async () => {
   const { useEffect } = await vi.importActual<typeof import('react')>('react')
@@ -357,7 +427,7 @@ describe('SolvePage', () => {
     apiMocks.solveData = limitFailure
     rerender(<SolvePage />)
 
-    const dialog = screen.getByRole('dialog', { name: 'Try different limits' })
+    const dialog = await screen.findByRole('dialog', { name: 'Try different limits' })
     expect(within(dialog).getByText('Previous attempt')).toBeInTheDocument()
     expect(within(dialog).getByText(/12,345 nodes/)).toBeInTheDocument()
   })
@@ -371,11 +441,10 @@ describe('SolvePage', () => {
     rerender(<SolvePage />)
     apiMocks.mutateAsync.mockClear()
 
-    const dialog = screen.getByRole('dialog', { name: 'Try different limits' })
+    const dialog = await screen.findByRole('dialog', { name: 'Try different limits' })
     await user.clear(within(dialog).getByLabelText('Max moves'))
     await user.type(within(dialog).getByLabelText('Max moves'), '18')
-    await user.click(within(dialog).getByRole('combobox', { name: 'Max nodes (M)' }))
-    await user.click(screen.getByRole('option', { name: '25' }))
+    await user.selectOptions(within(dialog).getByLabelText('Max nodes (M)'), '25')
     await user.click(within(dialog).getByRole('button', { name: 'Try with these limits' }))
 
     await waitFor(() => {
@@ -414,7 +483,7 @@ describe('SolvePage', () => {
     }
     rerender(<SolvePage />)
 
-    const dialog = screen.getByRole('dialog', { name: 'Try different limits' })
+    const dialog = await screen.findByRole('dialog', { name: 'Try different limits' })
     expect(within(dialog).getByLabelText('Max moves')).toHaveAttribute('max', '11')
   })
 
@@ -476,7 +545,7 @@ describe('SolvePage', () => {
     await user.type(screen.getByLabelText('Scramble'), 'R')
     await user.clear(screen.getByLabelText('Max moves'))
     await user.type(screen.getByLabelText('Max moves'), '12')
-    fireEvent.submit(screen.getByTestId('solve-form'))
+    await user.click(screen.getByRole('button', { name: 'Solve' }))
 
     expect(apiMocks.mutateAsync).not.toHaveBeenCalled()
   })
@@ -488,7 +557,7 @@ describe('SolvePage', () => {
     await user.type(screen.getByLabelText('Scramble'), 'R')
     await user.clear(screen.getByLabelText('Max moves'))
     await user.type(screen.getByLabelText('Max moves'), '46')
-    fireEvent.submit(screen.getByTestId('solve-form'))
+    await user.click(screen.getByRole('button', { name: 'Solve' }))
 
     expect(apiMocks.mutateAsync).not.toHaveBeenCalled()
   })
@@ -600,7 +669,9 @@ type TestUser = ReturnType<typeof userEvent.setup>
 
 async function chooseSelectOption(user: TestUser, label: string, optionName: string) {
   await user.click(screen.getByRole('combobox', { name: label }))
+  await screen.findByRole('listbox')
   await user.click(screen.getByRole('option', { name: optionName }))
+  await waitFor(() => expect(screen.queryByRole('listbox')).not.toBeInTheDocument())
 }
 
 function scanSuccessResult(

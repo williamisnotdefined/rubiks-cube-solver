@@ -57,10 +57,11 @@ describe('TimerPage', () => {
     expect(screen.getByText('No solves yet')).toBeInTheDocument()
   })
 
-  it('falls back to the first timer session when the active id is stale', () => {
+  it('falls back to the first timer session when the active id is stale', async () => {
     useTimerStore.getState().setActiveSessionId('missing-session')
 
     renderTimerPage()
+    await waitForScrambleReady()
 
     expect(screen.getByRole('timer', { name: 'Speedsolve timer' })).toBeInTheDocument()
     expect(screen.getByText('No solves yet')).toBeInTheDocument()
@@ -165,6 +166,7 @@ describe('TimerPage', () => {
 
   it('keeps copy button unchanged when clipboard write fails', async () => {
     const user = userEvent.setup()
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     Object.defineProperty(navigator, 'clipboard', {
       configurable: true,
       value: { writeText: vi.fn().mockRejectedValue(new Error('denied')) },
@@ -176,6 +178,7 @@ describe('TimerPage', () => {
 
     expect(screen.getByRole('button', { name: 'Copy scramble' })).toBeInTheDocument()
     expect(screen.getByText('Could not copy scramble')).toBeInTheDocument()
+    expect(consoleWarnSpy).toHaveBeenCalled()
   })
 
   it('toggles inspection and millisecond display settings', async () => {
@@ -222,12 +225,15 @@ describe('TimerPage', () => {
 
     await user.click(screen.getByRole('combobox', { name: 'Event' }))
 
-    const selectViewport = screen.getByRole('listbox').querySelector('[data-radix-select-viewport]')
+    const listbox = await screen.findByRole('listbox')
+    const selectViewport = listbox.querySelector('[data-radix-select-viewport]')
 
     expect(selectViewport).toHaveClass('overflow-y-scroll')
     for (const event of scrambleEvents) {
       expect(screen.getByRole('option', { name: event.label })).toBeInTheDocument()
     }
+    await user.keyboard('{Escape}')
+    await waitFor(() => expect(screen.queryByRole('listbox')).not.toBeInTheDocument())
   })
 })
 
@@ -243,7 +249,9 @@ type TestUser = ReturnType<typeof userEvent.setup>
 
 async function chooseSelectOption(user: TestUser, label: string, optionName: string) {
   await user.click(screen.getByRole('combobox', { name: label }))
+  await screen.findByRole('listbox')
   await user.click(screen.getByRole('option', { name: optionName }))
+  await waitFor(() => expect(screen.queryByRole('listbox')).not.toBeInTheDocument())
 }
 
 async function waitForScrambleReady() {

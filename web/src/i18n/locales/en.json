@@ -719,7 +719,7 @@
     },
     "sections": {
       "bigCubeLayers": {
-        "body": "For large cubes, a number before a wide move can specify how many layers turn together. For example, 3Rw turns the three right-side layers as one block.",
+        "body": "For large cubes, a number before a wide move tells how many layers turn together. 3Rw turns the three right-side layers as one block, in the R direction.",
         "title": "Numbered layers"
       },
       "clockDials": {
@@ -739,7 +739,7 @@
         "title": "Even-cube centers"
       },
       "megaminxDoubleTurns": {
-        "body": "R++ and D-- usually mean two fifth-turn clicks on that face. They are common because many Megaminx beginner algorithms repeat right and down turns.",
+        "body": "R++ and D-- usually mean a 144-degree turn on that face. They are common because many Megaminx beginner algorithms repeat right and down turns.",
         "title": "Double signs"
       },
       "megaminxFaces": {
@@ -767,7 +767,7 @@
         "title": "Tips"
       },
       "rotations": {
-        "body": "x, y and z rotate the whole cube around the R, U and F axes. Rotations change your grip and viewpoint; they do not count as a single face layer turn.",
+        "body": "x, y and z rotate the whole cube in the same directions as R, U and F. x' reverses x, y2 is a half cube turn, and rotations change your viewpoint instead of one layer.",
         "title": "Cube rotations"
       },
       "skewbCorners": {
@@ -779,7 +779,7 @@
         "title": "Grip matters"
       },
       "slices": {
-        "body": "M, E and S are middle slices parallel to L/R, U/D and F/B. They are common in advanced 3x3 algorithms and one-handed notation.",
+        "body": "M is the slice between L/R and turns like L. E is between U/D and turns like D. S is between F/B and turns like F. Prime marks reverse direction.",
         "title": "Slice moves"
       },
       "squareOnePairs": {
@@ -803,7 +803,7 @@
         "title": "No visible centers"
       },
       "wideMoves": {
-        "body": "A wide move turns the outer face and the adjacent inner layer together. Rw is a right wide turn; Rw' reverses it, and Rw2 is a half turn.",
+        "body": "A wide move turns the outer face and adjacent inner layer together. Rw turns the two right layers like R; on 3x3, Rw is the same as R plus M'.",
         "title": "Wide moves"
       }
     },
@@ -812,22 +812,25 @@
       "clockDial": "Plus and minus show the direction of a clock dial turn; the number gives the amount.",
       "clockPin": "Pin labels identify which corner pin is raised or selected.",
       "counterClockwise": "An apostrophe means turn counterclockwise from the viewpoint of the named face or part.",
-      "face": "A face letter names the layer to turn: U up, D down, R right, L left, F front, B back.",
+      "eSlice": "E is the equator slice between U/D and turns like D; E' turns like D'.",
+      "face": "A face letter names the layer to turn. A bare letter turns clockwise while looking directly at that face.",
       "halfTurn": "2 means a half turn: rotate that layer or part 180 degrees.",
-      "innerLayer": "A leading layer number can identify an inner slice counted from the named side.",
-      "megaminxDoubleMinus": "-- means two fifth-turn clicks in the negative direction on Megaminx notation.",
-      "megaminxDoublePlus": "++ means two fifth-turn clicks in the positive direction on Megaminx notation.",
+      "innerLayer": "2R turns only the second layer counted from the R side, in the R direction.",
+      "megaminxDoubleMinus": "-- means a 144-degree turn in the negative direction on Megaminx notation.",
+      "megaminxDoublePlus": "++ means a 144-degree turn in the positive direction on Megaminx notation.",
       "megaminxFace": "Megaminx face letters name the working face being turned around the dodecahedron.",
-      "multiLayer": "A number before a wide move tells how many layers move together.",
+      "mSlice": "M is the middle slice between L/R and turns like L; M' turns like L'.",
+      "multiLayer": "3Rw turns the three layers nearest R together, in the R direction.",
       "pyraminxFace": "Uppercase Pyraminx letters turn the main layer around that corner area.",
       "pyraminxTip": "Lowercase Pyraminx letters turn only the small tip.",
-      "rotation": "x, y and z rotate the whole cube, not just one layer.",
+      "rotation": "x turns the whole cube like R, y like U, and z like F; suffixes apply normally.",
+      "sSlice": "S is the standing slice between F/B and turns like F; S' turns like F'.",
       "skewbFace": "Skewb letters name the corner-axis turn to perform.",
       "slice": "M, E and S are middle slices inside a 3x3.",
       "squareOneNegative": "A negative number turns that Square-1 layer in the opposite direction.",
       "squareOnePair": "The first number turns the top layer; the second turns the bottom layer.",
       "squareOneSlash": "A slash turns the vertical slice of the Square-1.",
-      "wide": "w means the outside face and the adjacent inner layer turn together."
+      "wide": "Rw turns the R face and adjacent inner layer together like R; on 3x3 it equals R M'."
     }
   },
   "scan": {
