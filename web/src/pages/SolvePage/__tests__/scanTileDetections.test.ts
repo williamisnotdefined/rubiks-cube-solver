@@ -4,7 +4,7 @@ import {
   assignedTileDetectionsReady,
   assignTileDetectionsToReviewGrid,
   validStickerTileDetections,
-} from '../scanTileDetections'
+} from '../scan/scanTileDetections'
 
 describe('scanTileDetections', () => {
   it('keeps confident detector tiles by default', () => {

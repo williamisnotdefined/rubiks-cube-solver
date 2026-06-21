@@ -15,6 +15,17 @@ export type SupportedLanguage = (typeof supportedLanguages)[number]
 
 export const fallbackLanguage: SupportedLanguage = 'en'
 
+const supportedBaseLanguages: Partial<Record<string, SupportedLanguage>> = {
+  de: 'de',
+  en: 'en',
+  es: 'es',
+  fr: 'fr',
+  it: 'it',
+  ja: 'ja',
+  ru: 'ru',
+  zh: 'zh',
+}
+
 export function languageFromBrowser(languages: readonly string[] = browserLanguages()): SupportedLanguage {
   for (const language of languages) {
     const supportedLanguage = supportedLanguageFromTag(language)
@@ -69,37 +80,5 @@ function supportedLanguageFromTag(language: string): SupportedLanguage | undefin
     return 'pt-BR'
   }
 
-  if (baseLanguage === 'es') {
-    return 'es'
-  }
-
-  if (baseLanguage === 'en') {
-    return 'en'
-  }
-
-  if (baseLanguage === 'it') {
-    return 'it'
-  }
-
-  if (baseLanguage === 'de') {
-    return 'de'
-  }
-
-  if (baseLanguage === 'fr') {
-    return 'fr'
-  }
-
-  if (baseLanguage === 'ru') {
-    return 'ru'
-  }
-
-  if (baseLanguage === 'zh') {
-    return 'zh'
-  }
-
-  if (baseLanguage === 'ja') {
-    return 'ja'
-  }
-
-  return undefined
+  return supportedBaseLanguages[baseLanguage]
 }

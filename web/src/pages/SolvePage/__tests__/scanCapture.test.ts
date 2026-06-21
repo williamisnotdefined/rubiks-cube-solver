@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { captureScanImage, captureScanPreviewImage } from '../scanCapture'
+import { captureScanImage, captureScanPreviewImage } from '../scan/scanCapture'
 
 const drawImage = vi.fn()
 const canvasContext = { drawImage } as unknown as CanvasRenderingContext2D

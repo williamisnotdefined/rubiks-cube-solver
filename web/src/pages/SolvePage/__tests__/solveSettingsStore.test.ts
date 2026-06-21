@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { useSolveSettingsStore } from '../solveSettingsStore'
+import { useSolveSettingsStore } from '../solve/solveSettingsStore'
 
 describe('solve settings store', () => {
   beforeEach(() => {

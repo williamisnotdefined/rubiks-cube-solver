@@ -1,7 +1,7 @@
 import { createRef } from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { CubeStage } from '../CubeStage'
+import { CubeStage } from '../visualization/CubeStage'
 
 const register = vi.hoisted(() =>
   vi.fn(() => {

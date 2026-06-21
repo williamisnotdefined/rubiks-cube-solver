@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { ScanCameraFrame } from '../ScanCameraFrame'
+import { ScanCameraFrame } from '../scan/ScanCameraFrame'
 
 describe('ScanCameraFrame', () => {
   it('renders sticker detection boxes without the old fixed guide grid', () => {

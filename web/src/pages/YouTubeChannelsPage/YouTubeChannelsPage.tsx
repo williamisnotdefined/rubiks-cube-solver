@@ -1,24 +1,26 @@
 import type { SyntheticEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { PageHeader } from '@components/layout/PageHeader'
+import { PageScaffold } from '@components/layout/PageScaffold'
+import { PageTitle } from '@components/layout/PageTitle'
 import { youtubeChannels } from './channels'
 
 export function YouTubeChannelsPage() {
   const { t } = useTranslation()
 
   return (
-    <main className="h-full min-h-0 overflow-y-auto bg-app-bg px-3 py-4 text-app-text sm:px-5 sm:py-6">
-      <section className="mx-auto grid w-full max-w-7xl gap-5">
-        <header className="grid gap-3 border border-app-border bg-app-surface p-5">
+    <PageScaffold contentClassName="max-w-7xl gap-5">
+        <PageHeader>
           <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-app-muted">
             {t('channels.kicker')}
           </p>
-          <h1 className="text-3xl font-black uppercase tracking-[-0.04em] text-app-text sm:text-5xl">
+          <PageTitle>
             {t('channels.title')}
-          </h1>
+          </PageTitle>
           <p className="max-w-3xl text-sm font-semibold leading-6 text-app-muted">
             {t('channels.description', { count: youtubeChannels.length })}
           </p>
-        </header>
+        </PageHeader>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {youtubeChannels.map((channel) => (
             <a
@@ -54,8 +56,7 @@ export function YouTubeChannelsPage() {
             </a>
           ))}
         </div>
-      </section>
-    </main>
+    </PageScaffold>
   )
 }
 

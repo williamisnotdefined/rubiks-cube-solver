@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { ScanFaceColorEditor } from '../ScanFaceColorEditor'
-import type { ScanSticker } from '../scanState'
+import { ScanFaceColorEditor } from '../scan/ScanFaceColorEditor'
+import type { ScanSticker } from '../scan/scanState'
 
 describe('ScanFaceColorEditor', () => {
   it('keeps the center color fixed and edits non-center stickers from the palette', async () => {

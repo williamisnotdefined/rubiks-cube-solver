@@ -7,7 +7,7 @@ import {
   defaultTemporalConsensusOptions,
   isTemporalConsensusReady,
   type TemporalScanFrame,
-} from '../scanTemporalConsensus'
+} from '../scan/scanTemporalConsensus'
 
 describe('scanTemporalConsensus', () => {
   it('returns an empty consensus before any frames are available', () => {

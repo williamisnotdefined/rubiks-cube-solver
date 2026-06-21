@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { SolveResult } from '../SolveResult'
+import { SolveResult } from '../solve/SolveResult'
 import type { SolveResult as ApiSolveResult } from '@api/solver/types'
 
 const successResult: ApiSolveResult = {
