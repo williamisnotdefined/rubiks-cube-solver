@@ -5,6 +5,7 @@ import { defineConfig } from 'vitest/config'
 
 const threeSourceMarker = '/node_modules/three/src/'
 const rubiksCubeSourceMarker = '/packages/rubiks-cube/src/'
+const i18nLocaleMarker = '/web/src/i18n/locales/'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
@@ -13,6 +14,10 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
+          if (id.includes(i18nLocaleMarker)) {
+            return 'i18n-locales'
+          }
+
           if (id.includes('/node_modules/three/examples/')) {
             return 'vendor-three-examples'
           }
@@ -46,6 +51,30 @@ export default defineConfig({
 
           if (id.includes('/node_modules/@tanstack/')) {
             return 'vendor-react-query'
+          }
+
+          if (id.includes('/node_modules/@radix-ui/')) {
+            return 'vendor-radix'
+          }
+
+          if (id.includes('/node_modules/i18next/') || id.includes('/node_modules/react-i18next/')) {
+            return 'vendor-i18n'
+          }
+
+          if (id.includes('/node_modules/lucide-react/')) {
+            return 'vendor-icons'
+          }
+
+          if (id.includes('/node_modules/motion/')) {
+            return 'vendor-motion'
+          }
+
+          if (id.includes('/node_modules/react-router/')) {
+            return 'vendor-react-router'
+          }
+
+          if (id.includes('/node_modules/zustand/')) {
+            return 'vendor-zustand'
           }
 
           if (

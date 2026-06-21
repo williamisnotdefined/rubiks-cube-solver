@@ -415,7 +415,7 @@
     },
     "sections": {
       "bigCubeLayers": {
-        "body": "Em cubos grandes, um número antes de um wide move pode especificar quantas camadas giram juntas. Por exemplo, 3Rw gira as três camadas da direita como um bloco.",
+        "body": "Em cubos grandes, um número antes de um wide move diz quantas camadas giram juntas. 3Rw gira as três camadas da direita como um bloco, na direção de R.",
         "title": "Camadas numeradas"
       },
       "clockDials": {
@@ -435,7 +435,7 @@
         "title": "Centros de cubos pares"
       },
       "megaminxDoubleTurns": {
-        "body": "R++ e D-- normalmente significam dois cliques de quinto de volta nessa face. Eles são comuns porque muitos algoritmos iniciantes de Megaminx repetem giros de direita e baixo.",
+        "body": "R++ e D-- normalmente significam um giro de 144° nessa face. Eles são comuns porque muitos algoritmos iniciantes de Megaminx repetem giros de direita e baixo.",
         "title": "Sinais duplos"
       },
       "megaminxFaces": {
@@ -463,7 +463,7 @@
         "title": "Pontas"
       },
       "rotations": {
-        "body": "x, y e z giram o cubo inteiro em torno dos eixos R, U e F. Rotações mudam sua pegada e ponto de vista; elas não contam como um giro de uma única camada de face.",
+        "body": "x, y e z giram o cubo inteiro nas mesmas direções de R, U e F. x' inverte x, y2 é meia-volta do cubo, e rotações mudam o ponto de vista em vez de uma camada.",
         "title": "Rotações do cubo"
       },
       "skewbCorners": {
@@ -475,7 +475,7 @@
         "title": "A pegada importa"
       },
       "slices": {
-        "body": "M, E e S são fatias do meio paralelas a L/R, U/D e F/B. Elas aparecem em algoritmos avançados de 3x3 e em notação de uma mão.",
+        "body": "M é a fatia entre L/R e gira como L. E fica entre U/D e gira como D. S fica entre F/B e gira como F. Apóstrofo marca a direção inversa.",
         "title": "Movimentos de fatia"
       },
       "squareOnePairs": {
@@ -499,7 +499,7 @@
         "title": "Sem centros visíveis"
       },
       "wideMoves": {
-        "body": "Um wide move gira a face externa e a camada interna adjacente juntas. Rw é um giro wide da direita; Rw' inverte, e Rw2 é meia-volta.",
+        "body": "Um wide move gira a face externa e a camada interna adjacente juntas. Rw gira as duas camadas da direita como R; no 3x3, Rw é igual a R mais M'.",
         "title": "Wide moves"
       }
     },
@@ -508,22 +508,25 @@
       "clockDial": "Mais e menos mostram a direção de um giro de mostrador; o número indica a quantidade.",
       "clockPin": "Rótulos de pino identificam qual pino de canto está levantado ou selecionado.",
       "counterClockwise": "Um apóstrofo significa girar no sentido anti-horário a partir do ponto de vista da face ou parte nomeada.",
-      "face": "Uma letra de face nomeia a camada a girar: U cima, D baixo, R direita, L esquerda, F frente, B trás.",
+      "eSlice": "E é a fatia equatorial entre U/D e gira como D; E' gira como D'.",
+      "face": "Uma letra de face nomeia a camada. Uma letra sem sufixo gira no sentido horário olhando diretamente para essa face.",
       "halfTurn": "2 significa meia-volta: gire essa camada ou parte em 180 graus.",
-      "innerLayer": "Um número inicial de camada pode identificar uma fatia interna contada a partir do lado nomeado.",
-      "megaminxDoubleMinus": "-- significa dois cliques de quinto de volta na direção negativa na notação de Megaminx.",
-      "megaminxDoublePlus": "++ significa dois cliques de quinto de volta na direção positiva na notação de Megaminx.",
+      "innerLayer": "2R gira apenas a segunda camada contada a partir do lado R, na direção de R.",
+      "megaminxDoubleMinus": "-- significa um giro de 144° na direção negativa na notação de Megaminx.",
+      "megaminxDoublePlus": "++ significa um giro de 144° na direção positiva na notação de Megaminx.",
       "megaminxFace": "Letras de face do Megaminx nomeiam a face de trabalho girada no dodecaedro.",
-      "multiLayer": "Um número antes de um wide move diz quantas camadas se movem juntas.",
+      "mSlice": "M é a fatia central entre L/R e gira como L; M' gira como L'.",
+      "multiLayer": "3Rw gira juntas as três camadas mais próximas de R, na direção de R.",
       "pyraminxFace": "Letras maiúsculas do Pyraminx giram a camada principal ao redor daquela área de canto.",
       "pyraminxTip": "Letras minúsculas do Pyraminx giram apenas a pequena ponta.",
-      "rotation": "x, y e z giram o cubo inteiro, não apenas uma camada.",
+      "rotation": "x gira o cubo inteiro como R, y como U e z como F; sufixos funcionam normalmente.",
+      "sSlice": "S é a fatia central entre F/B e gira como F; S' gira como F'.",
       "skewbFace": "Letras de Skewb nomeiam o giro por eixo de canto a executar.",
       "slice": "M, E e S são fatias centrais dentro de um 3x3.",
       "squareOneNegative": "Um número negativo gira essa camada do Square-1 na direção oposta.",
       "squareOnePair": "O primeiro número gira a camada de cima; o segundo gira a camada de baixo.",
       "squareOneSlash": "Uma barra gira a fatia vertical do Square-1.",
-      "wide": "w significa que a face externa e a camada interna adjacente giram juntas."
+      "wide": "Rw gira a face R e a camada interna adjacente juntas como R; no 3x3 equivale a R M'."
     }
   },
   "scan": {
