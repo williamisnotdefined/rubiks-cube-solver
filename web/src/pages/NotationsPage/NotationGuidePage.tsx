@@ -1,6 +1,9 @@
 import cls from 'classnames'
 import { useTranslation } from 'react-i18next'
 import { NavLink, Navigate, useParams } from 'react-router'
+import { PageHeader } from '@components/layout/PageHeader'
+import { PageScaffold } from '@components/layout/PageScaffold'
+import { PageTitle } from '@components/layout/PageTitle'
 import { notationPuzzleGroups, getNotationGuide, type NotationGuide } from './notationGuides'
 
 export function NotationGuidePage() {
@@ -13,16 +16,15 @@ export function NotationGuidePage() {
   }
 
   return (
-    <main className="h-full min-h-0 overflow-y-auto bg-app-bg px-3 py-4 text-app-text sm:px-5 sm:py-6">
-      <section className="mx-auto grid w-full max-w-6xl gap-4">
-        <header className="grid gap-3 border border-app-border bg-app-surface p-5">
-          <h1 className="text-3xl font-black uppercase tracking-[-0.04em] text-app-text sm:text-5xl">
+    <PageScaffold contentClassName="max-w-6xl gap-4">
+        <PageHeader>
+          <PageTitle>
             {t('notations.page.title', { puzzle: guide.puzzle })}
-          </h1>
+          </PageTitle>
           <p className="max-w-3xl text-sm font-semibold leading-6 text-app-muted">
             {t(guide.summaryKey)}
           </p>
-        </header>
+        </PageHeader>
         <div className="grid min-h-0 gap-4 lg:grid-cols-[minmax(0,1fr)_16rem]">
           <div className="grid min-w-0 gap-4">
             <NotationSymbols guide={guide} />
@@ -30,8 +32,7 @@ export function NotationGuidePage() {
           </div>
           <NotationGuideNav />
         </div>
-      </section>
-    </main>
+    </PageScaffold>
   )
 }
 

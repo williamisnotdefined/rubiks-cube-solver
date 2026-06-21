@@ -3,7 +3,7 @@ import {
   colorSymbolToFaceSymbol,
   faceSymbolToColorSymbol,
   scanColorCode,
-} from '../scanColorSymbols'
+} from '../scan/scanColorSymbols'
 
 describe('scan color symbols', () => {
   it('maps internal face symbols to user-facing color codes', () => {

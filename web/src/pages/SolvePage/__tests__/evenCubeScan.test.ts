@@ -5,13 +5,13 @@ import {
   createDefaultEvenCubeNetAssignments,
   evenCubeFitSolution,
   evenCubeScanSessionFacesFromDrafts,
-} from '../evenCubeScan'
+} from '../scan/evenCubeScan'
 import {
   scan2StickersPerFace,
   scanFaceOrder,
   type ScanFaceDrafts,
   type ScanSticker,
-} from '../scanState'
+} from '../scan/scanState'
 
 describe('evenCubeScan', () => {
   it('uses corrected 2x2 defaults for left/right slots and the down face rotation', () => {

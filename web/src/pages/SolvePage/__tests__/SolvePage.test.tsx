@@ -3,9 +3,9 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PuzzleVisualizationKind, SolveResult } from '@api/solver/types'
 import { SolvePage } from '../SolvePage'
-import { useCubeVisualization } from '../hooks/useCubeVisualization'
-import { usePageActivity } from '../hooks/usePageActivity'
-import { useSolveSettingsStore } from '../solveSettingsStore'
+import { useSolveSettingsStore } from '../solve/solveSettingsStore'
+import { useCubeVisualization } from '../visualization/hooks/useCubeVisualization'
+import { usePageActivity } from '../visualization/hooks/usePageActivity'
 
 const scramblePlaceholder =
   "R2 D2 F2 D L2 F2 U' R2 D B2 L2 U' B' R' B' R2 B2 L B U'"
@@ -138,7 +138,7 @@ vi.mock('@api/solver', () => ({
   }),
 }))
 
-vi.mock('../ScanCubeModal', () => ({
+vi.mock('../scan/ScanCubeModal', () => ({
   ScanCubeModal: ({
     apiReady,
     onClose,
@@ -171,13 +171,13 @@ vi.mock('../ScanCubeModal', () => ({
   ),
 }))
 
-vi.mock('../NoSolutionLimitsModal', async () => {
+vi.mock('../solve/NoSolutionLimitsModal', async () => {
   const {
     maxMovesLimitForPuzzle,
     maxNodesMillionOptions,
     nodesPerMillion,
-  } = await vi.importActual<typeof import('../constants')>('../constants')
-  const { useSolveSettingsStore } = await vi.importActual<typeof import('../solveSettingsStore')>('../solveSettingsStore')
+  } = await vi.importActual<typeof import('../solve/constants')>('../solve/constants')
+  const { useSolveSettingsStore } = await vi.importActual<typeof import('../solve/solveSettingsStore')>('../solve/solveSettingsStore')
 
   return {
     NoSolutionLimitsModal: ({
@@ -241,7 +241,7 @@ vi.mock('../NoSolutionLimitsModal', async () => {
   }
 })
 
-vi.mock('../CubeStage', async () => {
+vi.mock('../visualization/CubeStage', async () => {
   const { useEffect } = await vi.importActual<typeof import('react')>('react')
 
   return {
@@ -273,11 +273,11 @@ vi.mock('../CubeStage', async () => {
   }
 })
 
-vi.mock('../hooks/useCubeVisualization', () => ({
+vi.mock('../visualization/hooks/useCubeVisualization', () => ({
   useCubeVisualization: vi.fn(),
 }))
 
-vi.mock('../hooks/usePageActivity', () => ({
+vi.mock('../visualization/hooks/usePageActivity', () => ({
   usePageActivity: vi.fn(),
 }))
 

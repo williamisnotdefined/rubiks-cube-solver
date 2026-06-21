@@ -9,29 +9,29 @@ import {
 } from '@api/solver'
 import type { SolveResult as ApiSolveResult } from '@api/solver/types'
 import { waitForPaint } from '@core/timing/waitForPaint'
-import { CubeStage, type CubeStageCubeType } from './CubeStage'
-import { NoSolutionLimitsModal, type NoSolutionRetryLimits } from './NoSolutionLimitsModal'
-import { isNoSolutionLimitFailure } from './noSolutionLimits'
-import { ScanCubeModal } from './ScanCubeModal'
-import { SolveForm } from './SolveForm'
-import { SolveResult } from './SolveResult'
-import { SolutionPlayback } from './SolutionPlayback'
+import { ScanCubeModal } from './scan/ScanCubeModal'
+import { NoSolutionLimitsModal, type NoSolutionRetryLimits } from './solve/NoSolutionLimitsModal'
+import { SolveForm } from './solve/SolveForm'
+import { SolveResult } from './solve/SolveResult'
+import { SolutionPlayback } from './solve/SolutionPlayback'
 import {
   defaultNotation,
   maxMovesLimitForPuzzle,
   nodesPerMillion,
   scramblePlaceholder,
-} from './constants'
-import { useCubeVisualization } from './hooks/useCubeVisualization'
-import { usePageActivity } from './hooks/usePageActivity'
-import { useSolveSettingsStore } from './solveSettingsStore'
-import { preferredStrategyId } from './strategy'
+} from './solve/constants'
+import { isNoSolutionLimitFailure } from './solve/noSolutionLimits'
+import { useSolveSettingsStore } from './solve/solveSettingsStore'
+import { preferredStrategyId } from './solve/strategy'
 import {
   validateMaxNodesMillionOption,
   validateWholeNumberLimit,
   validationErrorMessage,
   type SolveFormSubmit,
-} from './validation'
+} from './solve/validation'
+import { CubeStage, type CubeStageCubeType } from './visualization/CubeStage'
+import { useCubeVisualization } from './visualization/hooks/useCubeVisualization'
+import { usePageActivity } from './visualization/hooks/usePageActivity'
 
 const defaultPuzzleSlug = 'cube-3x3x3'
 const cube3VisualizationKind = 'cube3-facelets-v1'

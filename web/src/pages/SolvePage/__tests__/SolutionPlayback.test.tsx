@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { SolutionPlayback } from '../SolutionPlayback'
+import { SolutionPlayback } from '../solve/SolutionPlayback'
 
 describe('SolutionPlayback', () => {
   it('renders nothing without moves', () => {

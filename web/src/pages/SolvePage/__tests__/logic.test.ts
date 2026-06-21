@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import type { SolveResult } from '@api/solver/types'
 import i18n from '@src/i18n/i18n'
-import { preferredStrategyId } from '../strategy'
-import { solveErrorDetail, solveErrorMessage } from '../solveMessages'
+import { solveErrorDetail, solveErrorMessage } from '../solve/solveMessages'
+import { preferredStrategyId } from '../solve/strategy'
 import {
   validateMaxNodesMillionOption,
   validateWholeNumberLimit,
   validationErrorMessage,
-} from '../validation'
+} from '../solve/validation'
 
 function failure(status: Exclude<SolveResult, { ok: true }>['status']): Exclude<SolveResult, { ok: true }> {
   return {

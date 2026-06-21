@@ -3,10 +3,10 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AnalyzeScanFaceResponse, ScanSessionResult } from '@api/scan'
 import type { ScanFaceSymbol, SolveResult } from '@api/solver/types'
-import { ScanCubeModal } from '../ScanCubeModal'
-import { captureScanImage } from '../scanCapture'
-import { scanFaceOrder } from '../scanState'
-import { useSolveSettingsStore } from '../solveSettingsStore'
+import { ScanCubeModal } from '../scan/ScanCubeModal'
+import { captureScanImage } from '../scan/scanCapture'
+import { scanFaceOrder } from '../scan/scanState'
+import { useSolveSettingsStore } from '../solve/solveSettingsStore'
 
 const apiMocks = vi.hoisted(() => ({
   analyzeReset: vi.fn(),
@@ -54,17 +54,17 @@ vi.mock('@api/scan', async () => {
   }
 })
 
-vi.mock('../scanCapture', () => ({
+vi.mock('../scan/scanCapture', () => ({
   captureScanImage: vi.fn(),
 }))
 
 const captureScanImageMock = vi.mocked(captureScanImage)
 
-vi.mock('../hooks/useCameraStream', () => ({
+vi.mock('../scan/hooks/useCameraStream', () => ({
   useCameraStream: () => apiMocks.cameraState,
 }))
 
-vi.mock('../hooks/useLiveScanPreview', () => {
+vi.mock('../scan/hooks/useLiveScanPreview', () => {
   function buildCapturedScanImage() {
     return {
       capturedAt: 123,

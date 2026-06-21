@@ -9,7 +9,7 @@ import {
   swapEvenCubeNetAssignments,
   validateEvenCubeScan,
   type EvenCubeNetAssignments,
-} from '../evenCubeScan'
+} from '../scan/evenCubeScan'
 import {
   clearScanFaceDraft,
   confirmScanFaceDraft,
@@ -30,7 +30,7 @@ import {
   validateScanFaceDraft,
   type ScanFaces,
   type ScanSticker,
-} from '../scanState'
+} from '../scan/scanState'
 
 describe('scan state helpers', () => {
   it('keeps the center sticker fixed for a new face', () => {
