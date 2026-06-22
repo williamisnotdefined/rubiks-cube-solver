@@ -7,7 +7,7 @@ Global rules for changes anywhere in this repository.
 - Read `roadmap.md`, nearby code, and current tests before changing behavior.
 - Prefer the smallest correct change with the lowest surface area.
 - Follow existing naming, file layout, import style, error handling, and command style before introducing a new pattern.
-- Keep the implementation order aligned with the roadmap: cube representation, moves, search, heuristics, pattern databases, ML, then hybrid search.
+- Keep the implementation order aligned with the roadmap: cube representation, moves, search, heuristics, pattern databases, solver quality, then solver portfolios.
 - Keep solver logic in Rust engine code, not in frontend or AI tooling.
 - Use cubie representation as the primary engine model.
 - For multi-puzzle work, keep state, move models, notation, validation, and solver strategy puzzle-specific unless a shared type is strictly metadata or infrastructure.
@@ -20,7 +20,7 @@ Global rules for changes anywhere in this repository.
 
 ## Never
 
-- Do not start with machine learning, reinforcement learning, or Transformers.
+- Do not add machine learning, reinforcement learning, or Transformers without an explicit current product requirement.
 - Do not use sticker/color arrays as the primary solver representation.
 - Do not mix UI rendering logic with cube engine logic.
 - Do not add a generic puzzle engine, universal state type, universal move type, `BaseMove`, `BaseState`, `BasePuzzle`, or inheritance-style puzzle abstraction.

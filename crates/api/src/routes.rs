@@ -31,10 +31,6 @@ const HEALTH_VISION_TIMEOUT: Duration = Duration::from_millis(250);
 #[derive(serde::Deserialize)]
 struct VisionHealthResponse {
     ok: bool,
-    #[serde(rename = "cnnAvailable", default)]
-    cnn_available: bool,
-    #[serde(rename = "cnnReason", default)]
-    cnn_reason: Option<String>,
     #[serde(rename = "tileDetectorAvailable", default)]
     tile_detector_available: bool,
     #[serde(rename = "tileDetectorReason", default)]
@@ -95,9 +91,6 @@ fn allowed_web_origin(origin: &HeaderValue) -> bool {
 async fn health(State(state): State<ApiState>) -> Json<HealthResponse> {
     let vision_health = request_vision_health(&state).await;
     let vision_ok = vision_health.as_ref().is_some_and(|health| health.ok);
-    let vision_cnn_available = vision_health
-        .as_ref()
-        .is_some_and(|health| health.cnn_available);
     let vision_tile_detector_available = vision_health
         .as_ref()
         .is_some_and(|health| health.tile_detector_available);
@@ -106,10 +99,6 @@ async fn health(State(state): State<ApiState>) -> Json<HealthResponse> {
         ok: true,
         generated_two_phase_ready: state.generated_solver_ready(),
         vision_ok,
-        vision_cnn_available,
-        vision_cnn_reason: vision_health
-            .as_ref()
-            .and_then(|health| health.cnn_reason.clone()),
         vision_tile_detector_available,
         vision_tile_detector_reason: vision_health.and_then(|health| health.tile_detector_reason),
     })

@@ -332,8 +332,6 @@ export function SolvePage() {
             solving={solving}
             puzzleSlug={selectedPuzzleSlug}
             strategyId={strategyId}
-            visionCnnAvailable={healthQuery.data?.visionCnnAvailable}
-            visionCnnReason={healthQuery.data?.visionCnnReason}
             visionTileDetectorAvailable={healthQuery.data?.visionTileDetectorAvailable}
             visionTileDetectorReason={healthQuery.data?.visionTileDetectorReason}
             visionOk={healthQuery.data?.visionOk}

@@ -62,8 +62,6 @@ export type ScanCubeModalProps = {
   solving: boolean
   puzzleSlug?: string
   strategyId?: string
-  visionCnnAvailable?: boolean
-  visionCnnReason?: string
   visionTileDetectorAvailable?: boolean
   visionTileDetectorReason?: string
   visionOk?: boolean
@@ -79,8 +77,6 @@ export function EvenCubeScanModal({
   solveDisabledReason,
   solving,
   strategyId,
-  visionCnnAvailable,
-  visionCnnReason,
   visionTileDetectorAvailable,
   visionTileDetectorReason,
   visionOk,
@@ -355,8 +351,6 @@ export function EvenCubeScanModal({
     <>
       <ScanModalShell
         visionOk={visionOk}
-        visionCnnAvailable={visionCnnAvailable}
-        visionCnnReason={visionCnnReason}
         visionTileDetectorAvailable={visionTileDetectorAvailable}
         visionTileDetectorReason={visionTileDetectorReason}
         onClose={onClose}

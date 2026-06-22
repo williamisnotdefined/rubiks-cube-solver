@@ -6,7 +6,6 @@ import { captureScanImage } from '../scanCapture'
 import {
   canApplyLiveAutofill,
   currentDraftHasReviewContent,
-  knownCenterReferencesFromFaces,
   nextUnconfirmedFaceIndex,
   rejectedCaptureReason,
   scanAutoCaptureMetadata,
@@ -97,7 +96,6 @@ export function useScanCaptureWorkflow({
       }),
     [confirmedFaces, drafts, isReviewFace, stickersPerFace],
   )
-  const knownCenters = useMemo(() => knownCenterReferencesFromFaces(confirmedFaces), [confirmedFaces])
   const hasReviewCaptureContent =
     photoDataUrl !== undefined || stickers.some((sticker, index) => index !== centerIndex && sticker.symbol !== undefined)
   const hasReviewContent = currentDraftHasReviewContent(currentDraft, centerIndex)
@@ -105,7 +103,6 @@ export function useScanCaptureWorkflow({
     enabled: autoScanEnabled && camera.status === 'ready' && !capturing && !hasReviewCaptureContent,
     expectedCenter: currentFace.symbol,
     gridSize,
-    knownCenters,
     videoRef,
   })
   const {
@@ -266,7 +263,6 @@ export function useScanCaptureWorkflow({
         expectedCenter: currentFace.symbol,
         gridSize,
         image: capture.photoDataUrl,
-        knownCenters,
       })
       const nextStickers = scanStickersFromAnalysis(analysis, currentFace.symbol, stickersPerFace)
 

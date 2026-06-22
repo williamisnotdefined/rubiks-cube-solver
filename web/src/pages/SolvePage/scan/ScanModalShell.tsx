@@ -2,13 +2,11 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@components/Button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@components/Dialog'
-import { scanCnnStatusMessage, scanTileDetectorStatusMessage } from './scanSessionMessages'
+import { scanTileDetectorStatusMessage } from './scanSessionMessages'
 
 type ScanModalShellProps = {
   children: ReactNode
   visionOk?: boolean
-  visionCnnAvailable?: boolean
-  visionCnnReason?: string
   visionTileDetectorAvailable?: boolean
   visionTileDetectorReason?: string
   onClose: () => void
@@ -18,8 +16,6 @@ type ScanModalShellProps = {
 export function ScanModalShell({
   children,
   visionOk,
-  visionCnnAvailable,
-  visionCnnReason,
   visionTileDetectorAvailable,
   visionTileDetectorReason,
   onClose,
@@ -51,9 +47,6 @@ export function ScanModalShell({
                 {t('scan.modal.description')}
               </p>
             </DialogDescription>
-            <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
-              {scanCnnStatusMessage(t, visionOk, visionCnnAvailable, visionCnnReason)}
-            </p>
             <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
               {scanTileDetectorStatusMessage(
                 t,

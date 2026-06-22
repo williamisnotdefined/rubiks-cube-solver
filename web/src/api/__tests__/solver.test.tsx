@@ -90,8 +90,6 @@ describe('solver API operations', () => {
     const health = {
       generatedTwoPhaseReady: true,
       ok: true,
-      visionCnnAvailable: false,
-      visionCnnReason: 'cnn_model_not_configured',
       visionTileDetectorAvailable: false,
       visionTileDetectorReason: 'tile_detector_model_not_configured',
       visionOk: true,
@@ -294,7 +292,6 @@ describe('solver API operations', () => {
       analyzeScanFace({
         expectedCenter: 'U',
         image: 'data:image/jpeg;base64,scan',
-        knownCenters: { U: { r: 205, g: 210, b: 218 } },
         signal: controller.signal,
       }),
     ).resolves.toMatchObject(payload)
@@ -304,7 +301,6 @@ describe('solver API operations', () => {
         body: JSON.stringify({
           expectedCenter: 'U',
           image: 'data:image/jpeg;base64,scan',
-          knownCenters: { U: { r: 205, g: 210, b: 218 } },
         }),
         signal: controller.signal,
       }),
@@ -318,7 +314,6 @@ describe('solver API operations', () => {
       analyzeScanFace({
         expectedCenter: 'U',
         image: 'data:image/jpeg;base64,scan',
-        knownCenters: {},
       }),
     ).resolves.toMatchObject({
       message: 'The scan analysis request failed.',
@@ -332,7 +327,6 @@ describe('solver API operations', () => {
       analyzeScanFace({
         expectedCenter: 'U',
         image: 'data:image/jpeg;base64,scan',
-        knownCenters: {},
       }),
     ).resolves.toMatchObject({ ok: false, status: 'vision_unavailable' })
   })
@@ -586,7 +580,6 @@ describe('solver React Query hooks', () => {
     mockApiSuccess({
       generatedTwoPhaseReady: true,
       ok: true,
-      visionCnnAvailable: true,
       visionTileDetectorAvailable: true,
       visionOk: true,
     })
@@ -596,7 +589,6 @@ describe('solver React Query hooks', () => {
     expect(result.current.data).toEqual({
       generatedTwoPhaseReady: true,
       ok: true,
-      visionCnnAvailable: true,
       visionTileDetectorAvailable: true,
       visionOk: true,
     })
@@ -716,7 +708,6 @@ describe('solver React Query hooks', () => {
       result.current.mutateAsync({
         expectedCenter: 'U',
         image: 'data:image/jpeg;base64,scan',
-        knownCenters: {},
       }),
     ).resolves.toMatchObject({ ok: true, status: 'detected' })
   })

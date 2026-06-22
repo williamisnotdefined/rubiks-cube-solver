@@ -1,0 +1,8 @@
+pydantic>=2.0
+pytest>=8.0
+
+# Optional for --hf-repo dataset conversion:
+# huggingface_hub>=0.24
+
+# Optional local YOLO training/export for the tile detector:
+# ultralytics>=8.3

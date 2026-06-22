@@ -27,7 +27,7 @@ Add search behavior only on top of correct cube state and move semantics.
 
 - Search returns explicit move sequences and metrics.
 - Tests cover solved state and shallow known scrambles.
-- No ML heuristic is introduced before deterministic search is complete.
+- No learned or external inference heuristic is introduced without an explicit current product requirement.
 
 ## Verification
 

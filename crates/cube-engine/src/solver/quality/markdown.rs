@@ -60,39 +60,6 @@ Status counts are grouped by solver selection. Elapsed timing stays in the row t
             ));
         }
 
-        output.push_str(
-            "\n## Hybrid Move Ordering Experiment\n\n\
-Hybrid rows compare the isolated learned-value move-ordering experiment against the `default-bounded-ida-star` fixture budgets. Value outputs are local diagnostic artifacts, while value models can score unseen child states. Model artifacts use a capped per-fixture node budget in this report to keep the experiment bounded. The learned values only order legal child moves; they do not validate states, prune branches, change limits, claim admissibility, or replace Rust replay verification. Missing, fallback, or malformed artifacts are reported as experiment statuses without changing product solver defaults.\n\n\
-| fixture | group | input | expectation | scramble | baseline_selection | max_depth | max_nodes | artifact_path | artifact_status | artifact_metadata | status | solution_len | explored_nodes | elapsed_us | replay_verified | scored_move_lookups | missing_score_lookups | model_score_evals | solution |\n\
-| --- | --- | --- | --- | --- | --- | ---: | ---: | --- | --- | --- | --- | ---: | ---: | ---: | --- | ---: | ---: | ---: | --- |\n",
-        );
-
-        for row in self.hybrid_rows() {
-            output.push_str(&format!(
-                "| {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |\n",
-                row.fixture_id,
-                row.fixture_category.label(),
-                row.input_kind.label(),
-                row.expectation.label(),
-                scramble_label(row.scramble),
-                row.baseline_selection.label(),
-                row.max_depth,
-                max_nodes_label(row.max_nodes),
-                row.artifact_path,
-                row.artifact_status.label(),
-                optional_str_label(row.artifact_metadata.as_deref()),
-                row.status.label(),
-                optional_usize_label(row.solution_length),
-                row.explored_nodes,
-                row.elapsed.as_micros(),
-                replay_verified_label(row.replay_verified),
-                row.scored_move_lookups,
-                row.missing_score_lookups,
-                row.model_score_evals,
-                moves_label(&row.moves),
-            ));
-        }
-
         output
     }
 }

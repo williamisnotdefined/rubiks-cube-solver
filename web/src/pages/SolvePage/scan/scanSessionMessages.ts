@@ -119,25 +119,6 @@ export function scanColorCodes(symbols: readonly ScanFaceSymbol[]): string {
   return symbols.map((symbol) => scanColorCode(symbol)).join(', ')
 }
 
-export function scanCnnStatusMessage(
-  t: TFunction,
-  visionOk: boolean | undefined,
-  visionCnnAvailable: boolean | undefined,
-  visionCnnReason: string | undefined,
-): string {
-  if (visionOk === false) {
-    return t('scan.modal.visionStatusUnavailable')
-  }
-
-  if (visionCnnAvailable === true) {
-    return t('scan.modal.cnnEvidenceActive')
-  }
-
-  return t('scan.modal.colorFallbackActive', {
-    reason: visionCnnReason ?? t('scan.modal.cnnReasonUnknown'),
-  })
-}
-
 export function scanTileDetectorStatusMessage(
   t: TFunction,
   visionOk: boolean | undefined,

@@ -1,5 +1,4 @@
 pub mod cube;
-pub mod dataset;
 pub mod puzzle;
 pub mod puzzles;
 pub mod scan_inference;

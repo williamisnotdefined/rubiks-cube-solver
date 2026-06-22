@@ -19,18 +19,18 @@ Prioridades do produto:
 3. Resolver estados informados pelo usuário, não apenas scrambles gerados internamente.
 4. Melhorar qualidade de solução depois da correção, minimizando a quantidade de movimentos verificados e sendo honesto quando um limite configurado não for atingido.
 5. Entregar localmente por API HTTP nativa e UI web.
-6. Só depois expandir para datasets, Machine Learning e busca híbrida.
+6. Só depois expandir para portfólios de solver e pesquisas isoladas.
 
 ## Regras De Implementação
 
-- Não começar por Machine Learning, Reinforcement Learning ou Transformers.
+- Não adicionar Machine Learning, Reinforcement Learning ou Transformers sem requisito explícito de produto.
 - Não usar arrays de cores como representação principal do solver.
 - Usar representação por cubies no engine Rust.
 - Manter lógica de cubo, validação, busca e verificação no Rust.
 - Manter API HTTP e frontend como adapters finos.
 - Verificar toda solução retornada por replay antes de expor sucesso.
 - Não prometer otimalidade ou garantia de 20 movimentos sem algoritmo e testes que sustentem isso.
-- Não transformar uma técnica específica em objetivo do produto: two-phase, IDA*, PDBs, solver portfolios, algoritmos clássicos externos/portados, ML para ordenação e busca híbrida são caminhos válidos quando preservam validação, limites explícitos e replay verification.
+- Não transformar uma técnica específica em objetivo do produto: two-phase, IDA*, PDBs, solver portfolios e algoritmos clássicos externos/portados são caminhos válidos quando preservam validação, limites explícitos e replay verification.
 - Não commitar datasets grandes, pruning tables grandes, checkpoints de modelo ou logs de automação.
 
 ## Arquitetura Alvo
@@ -52,9 +52,6 @@ Deterministic solver baseline
         -> coordinates and pruning tables
         -> solver benchmarks
         -> bounded optimal attempts / solver portfolio
-        -> generated datasets
-        -> ML value / policy experiments
-        -> hybrid move ordering or guided search
 ```
 
 ## Estado Atual Do Projeto
@@ -171,81 +168,7 @@ Entregas:
 
 Critério de saída: existe um baseline clássico verificável, com métricas reais e sem promessa falsa de otimalidade, e o projeto está livre para adicionar estratégias alternativas que minimizem movimentos verificados.
 
-### Fase 8 - Datasets
-
-Objetivo: gerar dados confiáveis para pesquisa sem contaminar o produto ou o repositório com artefatos grandes.
-
-Pré-condições:
-
-- Fluxo web validado por E2E.
-- Solver clássico com baseline e métricas.
-- Formato estável de serialização de estado.
-
-Entregas:
-
-- Schema versionado para exemplos de treino.
-- Gerador determinístico com seed configurável.
-- Estados produzidos pelo engine e validados antes de salvar.
-- Labels com semântica explícita:
-  - `scramble_depth`: profundidade gerada conhecida, não necessariamente distância ótima.
-  - `verified_solution_length`: tamanho de solução encontrada por solver configurado.
-  - `best_move`: apenas quando derivado de solução verificada ou de scramble reversível documentado.
-- Deduplicação de estados.
-- Splits treino/validação/teste por seed ou hash para evitar vazamento.
-- Amostras pequenas para testes commitadas; datasets grandes ficam fora do git.
-
-Critério de saída: é possível gerar e validar um dataset pequeno de fixture e documentar como gerar datasets maiores localmente.
-
-### Fase 9 - Machine Learning
-
-Objetivo: experimentar heurísticas aprendidas sem substituir a correção do solver clássico.
-
-Pré-condições:
-
-- Dataset versionado e validado.
-- Baseline clássico medido.
-- Fallback determinístico funcionando.
-
-Primeiro modelo:
-
-- MLP simples em Python/PyTorch.
-- Entrada derivada da representação por cubies, não de arrays de cores como modelo primário do engine.
-- Saída inicial como Value Network: estimativa de distância ou bucket de distância.
-- Treino e avaliação reproduzíveis em fixture pequena.
-
-Métricas mínimas:
-
-- Erro médio por profundidade ou bucket.
-- Acurácia por bucket quando aplicável.
-- Tempo de inferência.
-- Comparação com heurísticas clássicas.
-- Impacto em nós expandidos quando usado para ordenar movimentos.
-
-Regras de segurança:
-
-- Modelo não valida estados.
-- Modelo não substitui replay da solução.
-- Modelo não deve ser usado como heurística admissível sem prova ou limite seguro.
-- Nenhum checkpoint grande deve ser commitado.
-- Transformers e Reinforcement Learning ficam fora até o MLP/value baseline demonstrar ganho claro.
-
-Critério de saída: existe um baseline ML pequeno, reproduzível e comparado contra o solver clássico, sem alterar o caminho padrão de produto.
-
-### Fase 10 - Hybrid Search
-
-Objetivo: usar ML para melhorar busca mantendo correção verificável.
-
-Ordem segura de integração:
-
-1. Usar o modelo apenas para ordenar movimentos.
-2. Comparar nós expandidos e tempo contra o baseline clássico.
-3. Manter fallback clássico configurável.
-4. Verificar toda solução por replay.
-5. Só considerar poda guiada por ML após benchmarks e regras claras de segurança.
-
-Critério de saída: a busca híbrida melhora métricas em fixtures conhecidas sem degradar correção, mensagens de erro ou comportamento padrão.
-
-### Fase 11 - Solver Portfolio E Soluções Mais Curtas
+### Fase 8 - Solver Portfolio E Soluções Mais Curtas
 
 Objetivo: combinar estratégias verificadas para retornar a melhor solução encontrada dentro dos limites configurados, sem depender de uma única técnica.
 
@@ -259,7 +182,7 @@ Possíveis linhas:
 
 Critério de saída: a API consegue expor uma estratégia de portfolio que retorna a menor solução replay-verificada encontrada no orçamento, registra qual estratégia venceu e nunca apresenta ausência de prova como garantia de inexistência de solução curta.
 
-### Fase 12 - Pesquisa Avançada
+### Fase 9 - Pesquisa Avançada
 
 Objetivo: explorar ideias que não bloqueiam o produto principal.
 
@@ -279,7 +202,6 @@ Critério de saída: cada experimento deve ter baseline, métrica, fallback e es
 - Solver core: Rust.
 - API: Rust HTTP server em `crates/api`.
 - Frontend: TypeScript, React, Vite e React Three Fiber quando a visualização 3D for implementada.
-- ML: Python e PyTorch, somente depois do fluxo web e baseline clássico.
 
 ## Ordem Operacional Resumida
 
@@ -292,11 +214,8 @@ Critério de saída: cada experimento deve ter baseline, métrica, fallback e es
 6. Playwright product flow
 7. Classical solver foundations and pruning tables
 8. Solver benchmarks
-9. Dataset generation
-10. ML value baseline
-11. Hybrid search
-12. Solver portfolio for short solutions
-13. Advanced research
+9. Solver portfolio for short solutions
+10. Advanced research
 ```
 
 ## Definição De Pronto Do Projeto
@@ -310,4 +229,4 @@ O projeto atinge seu objetivo principal quando:
 - a UI exibe notação, métricas e playback;
 - testes automatizados cobrem o fluxo completo.
 
-Datasets, Machine Learning e busca híbrida são extensões valiosas, mas não substituem essa definição de pronto.
+Pesquisa avançada é valiosa, mas não substitui essa definição de pronto.

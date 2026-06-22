@@ -42,13 +42,11 @@ describe('useLiveScanPreview', () => {
   it('requests preview frames and auto-fills review after stable sticker tracking', async () => {
     apiMocks.analyzeMutateAsync.mockResolvedValue(stableAnalysis())
     const videoRef = { current: document.createElement('video') }
-    const knownCenters = {}
 
     const { result } = renderHook(() =>
       useLiveScanPreview({
         enabled: true,
         expectedCenter: 'U',
-        knownCenters,
         videoRef,
       }),
     )
@@ -77,13 +75,11 @@ describe('useLiveScanPreview', () => {
       })
     })
     const videoRef = { current: document.createElement('video') }
-    const knownCenters = {}
 
     const { unmount } = renderHook(() =>
       useLiveScanPreview({
         enabled: true,
         expectedCenter: 'U',
-        knownCenters,
         videoRef,
       }),
     )
@@ -109,7 +105,6 @@ describe('useLiveScanPreview', () => {
       useLiveScanPreview({
         enabled: true,
         expectedCenter: 'U',
-        knownCenters: {},
         videoRef,
       }),
     )
@@ -128,13 +123,11 @@ describe('useLiveScanPreview', () => {
   it('does not auto-fill center mismatches', async () => {
     apiMocks.analyzeMutateAsync.mockResolvedValue(stableAnalysis({ centerMismatch: true }))
     const videoRef = { current: document.createElement('video') }
-    const knownCenters = {}
 
     const { result } = renderHook(() =>
       useLiveScanPreview({
         enabled: true,
         expectedCenter: 'U',
-        knownCenters,
         videoRef,
       }),
     )
@@ -154,13 +147,11 @@ describe('useLiveScanPreview', () => {
       stableAnalysis({ detectionMode: 'legacy_geometry', faceConfidence: 0.9 }),
     )
     const videoRef = { current: document.createElement('video') }
-    const knownCenters = {}
 
     const { result } = renderHook(() =>
       useLiveScanPreview({
         enabled: true,
         expectedCenter: 'U',
-        knownCenters,
         videoRef,
       }),
     )
@@ -182,13 +173,11 @@ describe('useLiveScanPreview', () => {
       stableAnalysis({ tileDetections: stableTileDetections().slice(0, 3) }),
     )
     const videoRef = { current: document.createElement('video') }
-    const knownCenters = {}
 
     const { result } = renderHook(() =>
       useLiveScanPreview({
         enabled: true,
         expectedCenter: 'U',
-        knownCenters,
         videoRef,
       }),
     )
@@ -205,13 +194,11 @@ describe('useLiveScanPreview', () => {
       stableAnalysis({ qualityWarnings: ['image_blurry'] }),
     )
     const videoRef = { current: document.createElement('video') }
-    const knownCenters = {}
 
     const { result } = renderHook(() =>
       useLiveScanPreview({
         enabled: true,
         expectedCenter: 'U',
-        knownCenters,
         videoRef,
       }),
     )
@@ -231,7 +218,6 @@ describe('useLiveScanPreview', () => {
       useLiveScanPreview({
         enabled: true,
         expectedCenter: 'U',
-        knownCenters: {},
         videoRef,
       }),
     )
@@ -253,7 +239,6 @@ describe('useLiveScanPreview', () => {
       useLiveScanPreview({
         enabled: false,
         expectedCenter: 'U',
-        knownCenters: {},
         videoRef,
       }),
     )
@@ -271,7 +256,6 @@ describe('useLiveScanPreview', () => {
       useLiveScanPreview({
         enabled: true,
         expectedCenter: 'U',
-        knownCenters: {},
         videoRef,
       }),
     )
@@ -291,7 +275,6 @@ describe('useLiveScanPreview', () => {
         useLiveScanPreview({
           enabled: true,
           expectedCenter: 'U',
-          knownCenters: {},
           videoRef: { current },
         }),
       { initialProps: { current: null as HTMLVideoElement | null } },
@@ -319,7 +302,6 @@ describe('useLiveScanPreview', () => {
       useLiveScanPreview({
         enabled: true,
         expectedCenter: 'U',
-        knownCenters: {},
         videoRef,
       }),
     )
@@ -347,7 +329,6 @@ describe('useLiveScanPreview', () => {
       useLiveScanPreview({
         enabled: true,
         expectedCenter: 'U',
-        knownCenters: {},
         videoRef,
       }),
     )
@@ -361,7 +342,7 @@ describe('useLiveScanPreview', () => {
 
     expect(apiMocks.analyzeMutateAsync).toHaveBeenCalled()
     expect(result.current.shouldAutoFill).toBe(false)
-    expect(result.current.status).toBe('searching')
+    expect(result.current.status).toBe('error')
   })
 
   it('uses a fallback message for non-error preview analysis failures', async () => {
@@ -371,7 +352,6 @@ describe('useLiveScanPreview', () => {
       useLiveScanPreview({
         enabled: true,
         expectedCenter: 'U',
-        knownCenters: {},
         videoRef,
       }),
     )
@@ -389,7 +369,6 @@ describe('useLiveScanPreview', () => {
       useLiveScanPreview({
         enabled: true,
         expectedCenter: 'U',
-        knownCenters: {},
         videoRef,
       }),
     )

@@ -1,0 +1,72 @@
+# Scanner YOLO Runbook
+
+## Current Baseline
+
+Active live scanner model path:
+
+```txt
+scanner/models/tile-detector.onnx
+```
+
+Current runtime path:
+
+```txt
+Web scanner -> Rust API -> scanner runtime -> YOLO ONNX tile detector -> tileDetections -> temporal consensus -> reviewed stickers -> Rust validation/solve
+```
+
+The scanner runtime is YOLO-only. It does not use a sticker CNN, face detector, or color-classifier fallback.
+
+## Quick Commands
+
+```bash
+npm run vision:install
+python -m pip install -r scanner/training/requirements.txt
+npm run scan:tile-yolo-roboflow-dataset
+npm run scan:tile-yolo-check
+npm run scan:tile-yolo-train
+npm run scan:tile-yolo-export
+npm run scan:tile-yolo-install
+```
+
+The training wrapper above runs the same Ultralytics commands shown below. It fine-tunes the YOLO base model configured by `RUBIKS_TILE_YOLO_BASE_MODEL`, defaulting to `yolo11n.pt`:
+
+```bash
+WANDB_DISABLED=true .venv/bin/yolo detect train model=yolo11n.pt data=scanner/outputs/tile-yolo-roboflow-v2/data.yaml imgsz=640 epochs=100 patience=25 batch=8 workers=2 device=0 project=$PWD/scanner/runs name=tile-detector-roboflow-v2 exist_ok=True seed=0 mosaic=0.2 mixup=0 copy_paste=0 degrees=10 translate=0.08 scale=0.25
+WANDB_DISABLED=true .venv/bin/yolo export model=scanner/runs/tile-detector-roboflow-v2/weights/best.pt format=onnx imgsz=640 opset=12 simplify=True
+mkdir -p scanner/models
+cp scanner/runs/tile-detector-roboflow-v2/weights/best.onnx scanner/models/tile-detector.onnx
+```
+
+Run the full local stack with the exported detector:
+
+```bash
+npm run dev
+```
+
+## Dataset Conversion
+
+Roboflow COCO conversion:
+
+```bash
+RUBIKS_ROBOFLOW_COCO_ZIP=/path/to/Rubiks\ Cube\ Colors.v2i.coco.zip npm run scan:tile-yolo-roboflow-dataset
+```
+
+Roboflow COCO exports contain `_annotations.coco.json` inside each split folder, usually `train/`, `valid/`, and `test/`. Those annotation files are local dataset inputs and are not versioned in this repository. The converter reads the COCO boxes and writes YOLO labels to `scanner/outputs/tile-yolo-roboflow-v2/labels/`.
+
+## Artifact Rules
+
+Do not commit model files, local camera captures, Roboflow exports, generated YOLO datasets, training runs, or references. Use ignored local paths under `scanner/outputs`, `scanner/runs`, `scanner/models`, and `scanner/references`.
+
+## Runtime Files
+
+| Path | Role |
+| --- | --- |
+| `scanner/runtime/detectors/tile_yolo_onnx.py` | Loads ONNX YOLO output and converts detections to runtime tile boxes. |
+| `scanner/runtime/face_analysis.py` | Runs `/analyze-face` and returns `tileDetections`. |
+| `scanner/contracts/vision_api.py` | Stable FastAPI/Rust/Web JSON contracts. |
+| `scanner/training/tile_detector/yolo_dataset.py` | Converts COCO/LabelMe tile labels to YOLO format. |
+| `scanner/training/scan_sessions/evaluate.py` | Measures scanner export quality and wrong accepts. |
+
+## Quality Bar
+
+Bad boxes on backgrounds are model-quality issues, not cube-solving issues. Treat a detector as usable only when it reliably returns nine plausible high-confidence sticker boxes arranged as a grid across local webcam sessions, with separate validation sessions and negative/background examples.
