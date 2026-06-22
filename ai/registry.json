@@ -16,7 +16,7 @@
   "skills": [
     {
       "name": "project-core",
-      "description": "Always-on repository baseline for Rubik's Cube solver engineering, roadmap alignment, and AI knowledge maintenance.",
+      "description": "Always-on repository baseline for Rubik's Cube solver engineering, boundaries, verification, and AI knowledge maintenance.",
       "global": true,
       "canonicalPath": "ai/skills/project-core.md",
       "references": [
@@ -36,33 +36,6 @@
         "cursor": {
           "globs": "**/*",
           "alwaysApply": true
-        },
-        "github": {
-          "applyTo": "**/*"
-        }
-      }
-    },
-    {
-      "name": "repository-engineering-guidelines",
-      "description": "Use for repository-wide engineering standards, workspace commands, and final verification.",
-      "canonicalPath": "ai/skills/repository-engineering-guidelines.md",
-      "references": [
-        "ai/rules/repository-rules.md",
-        "ai/rules/testing-rules.md",
-        "ai/rules/ai-rules.md",
-        "ai/architecture/project-architecture.md",
-        "ai/architecture/ai-knowledge-system.md",
-        "ai/glossary/cube-terms.md"
-      ],
-      "routes": {
-        "opencode": ".opencode/skills/repository-engineering-guidelines/SKILL.md",
-        "cursor": ".cursor/rules/repository-engineering-guidelines.mdc",
-        "github": ".github/instructions/repository-engineering-guidelines.instructions.md"
-      },
-      "toolConfig": {
-        "cursor": {
-          "globs": "**/*",
-          "alwaysApply": false
         },
         "github": {
           "applyTo": "**/*"

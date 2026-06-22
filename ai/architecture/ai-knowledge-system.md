@@ -7,7 +7,6 @@
 - `rules`: reusable constraints, conventions, and anti-patterns.
 - `architecture`: system boundaries and integration points.
 - `glossary`: cube and solver vocabulary.
-- `examples`: small real project examples that demonstrate conventions.
 - `skills`: task-oriented workflows that reference the other layers.
 
 ## Registry
@@ -28,8 +27,4 @@ Each skill entry defines the canonical skill file, its reusable references, gene
 
 Generated routes must not be edited manually.
 
-`npm run ai:sync` writes stale routes and removes orphan generated routes. `npm run ai:check` verifies registry shape, reference files, generated content, route collisions, `Read First` parity, registered canonical skill files, and example hashes.
-
-## Examples
-
-Files under `ai/examples` must point to real repository source with `Source: ` and a SHA-256 hash, then explain `Why this is canonical:`. When the source changes, review the example and update the hash only if the example still represents the project convention.
+`npm run ai:sync` writes stale routes and removes orphan generated routes. `npm run ai:check` verifies registry shape, reference files, generated content, route collisions, `Read First` parity, and registered canonical skill files.

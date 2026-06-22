@@ -4,7 +4,7 @@ Use this skill when adding or changing `crates/api`, Axum routes, request or res
 
 ## Goal
 
-Keep the HTTP API as a thin, typed boundary around the Rust solver engine while preserving the notation-only frontend contract.
+Keep the HTTP API as a thin, typed boundary around the Rust solver engine while preserving frontend API contracts.
 
 ## Read First
 
@@ -21,7 +21,7 @@ Keep the HTTP API as a thin, typed boundary around the Rust solver engine while 
 - Inspect nearby route, request, response, API-client, and test patterns before editing.
 - Keep handlers focused on HTTP extraction, validation, solver dispatch, and response mapping.
 - Keep search, cube validation, notation semantics, heuristics, and pruning logic in `cube-engine`.
-- Preserve notation-only solve requests; do not add browser-facing facelet or Kociemba input modes.
+- Keep notation solve requests on move notation and scan solve requests on scan-session contracts; do not add browser-facing facelet or Kociemba input modes.
 - Update `web/src/api` request functions, React Query hooks, and normalization when API response fields, status strings, or error kinds change.
 - Add or update API tests around observable contract behavior, especially error responses consumed by the frontend.
 
@@ -31,7 +31,7 @@ Keep the HTTP API as a thin, typed boundary around the Rust solver engine while 
 - Safety caps are enforced before expensive solver work.
 - Response statuses and metadata remain stable or are updated with matching frontend API-client changes.
 - React Query hooks continue to expose typed API state without leaking raw request functions into components.
-- Browser clients submit move notation and limits, never facelet strings.
+- Browser notation clients submit move notation and limits, never facelet strings.
 - Solver logic remains in Rust engine code.
 
 ## Verification

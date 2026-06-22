@@ -7,7 +7,7 @@ Global rules for changes anywhere in this repository.
 - Read `docs/project-plan.md`, nearby code, and current tests before changing behavior.
 - Prefer the smallest correct change with the lowest surface area.
 - Follow existing naming, file layout, import style, error handling, and command style before introducing a new pattern.
-- Keep the implementation order aligned with the roadmap: cube representation, moves, search, heuristics, pattern databases, solver quality, then solver portfolios.
+- Keep implementation aligned with the current priorities in `docs/project-plan.md` and the capabilities already present in code.
 - Keep solver logic in Rust engine code, not in frontend or AI tooling.
 - Use cubie representation as the primary engine model.
 - For multi-puzzle work, keep state, move models, notation, validation, and solver strategy puzzle-specific unless a shared type is strictly metadata or infrastructure.

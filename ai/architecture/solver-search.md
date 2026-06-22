@@ -2,11 +2,11 @@
 
 Search builds on top of a correct cube engine.
 
-## Planned Layers
+## Current Layers
 
 - Bounded IDA* for depth-limited deterministic search.
-- Generated two-phase search for the current classical solver path.
-- Pattern databases for fast admissible lower bounds.
+- Generated two-phase search for the current classical 3x3 solver path.
+- Pattern databases for fast admissible lower bounds where implemented.
 - Solver portfolios for comparing deterministic strategies within explicit budgets.
 
 ## Boundaries

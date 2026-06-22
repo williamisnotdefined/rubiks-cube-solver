@@ -2,7 +2,7 @@
 
 Rust-first puzzle solver with a native HTTP API, React web UI, replay verification, and optional YOLO-based camera scanner.
 
-The product goal is defined in `GOALS.md`: a web interface where a user can input a valid puzzle state and receive the shortest practical replay-verified solution found within explicit limits.
+The product goal is a web interface where a user can input a valid puzzle state and receive the shortest practical replay-verified solution found within explicit limits.
 
 ## Current Status
 
@@ -12,9 +12,9 @@ The product goal is defined in `GOALS.md`: a web interface where a user can inpu
 - `scanner` is Python-only and YOLO-only for camera analysis, training helpers, and ONNX export.
 - AI routing is generated from canonical files under `ai/`.
 
-## Project Plan
+## Project Docs
 
-- `docs/project-plan.md`: canonical technical roadmap, implementation rules, and multi-puzzle plan.
+- `docs/project-plan.md`: current technical direction, implementation rules, and puzzle boundaries.
 - `scanner/training/SCANNER_YOLO_RUNBOOK.md`: scanner dataset, training, export, and artifact workflow.
 - `scanner/runtime/README.md`: scanner runtime service details.
 
@@ -69,17 +69,7 @@ The repository tracks the current Roboflow COCO source export through Git LFS at
 scanner/datasets/roboflow/rubiks-cube-colors-v2.coco.zip
 ```
 
-Train and install a local runtime detector from scratch:
-
-```bash
-npm run vision:install
-npm run scan:tile-yolo-install-deps
-npm run scan:tile-yolo-roboflow-dataset
-npm run scan:tile-yolo-check
-npm run scan:tile-yolo-train
-npm run scan:tile-yolo-export
-npm run scan:tile-yolo-install
-```
+Train and install a local runtime detector from scratch with `scanner/training/SCANNER_YOLO_RUNBOOK.md`.
 
 The installed runtime model is local and ignored by git:
 

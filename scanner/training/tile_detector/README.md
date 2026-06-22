@@ -18,16 +18,7 @@ Those files describe images, classes, and bounding boxes. Generated YOLO dataset
 
 ## Pipeline
 
-```bash
-npm run scan:tile-yolo-roboflow-dataset
-npm run scan:tile-yolo-install-deps
-npm run scan:tile-yolo-check
-npm run scan:tile-yolo-train
-npm run scan:tile-yolo-export
-npm run scan:tile-yolo-install
-```
-
-The training command fine-tunes an Ultralytics YOLO model. The default base model is `yolo11n.pt`.
+Use `scanner/training/SCANNER_YOLO_RUNBOOK.md` for the current command order and training/export/install workflow. The training command fine-tunes an Ultralytics YOLO model; the default base model is `yolo11n.pt`.
 
 The runtime model is installed at:
 

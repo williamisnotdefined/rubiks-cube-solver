@@ -22,7 +22,7 @@
 ## Not The Solver Core
 
 - The package is JavaScript and rendering-oriented.
-- The state model is sticker/Kociemba oriented, not the Rust cubie representation required by the roadmap.
+- The state model is sticker/Kociemba oriented, not the Rust solver engine representation.
 - It depends on `three` and `gsap`, which are not appropriate for the Rust engine.
 - It should not be used by `crates/cube-engine`.
 - It must not define canonical puzzle semantics through a generic engine or base move abstraction.

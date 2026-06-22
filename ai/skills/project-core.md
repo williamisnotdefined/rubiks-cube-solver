@@ -4,7 +4,7 @@ Use this skill as the always-on repository baseline for AI-assisted changes anyw
 
 ## Goal
 
-Keep every change aligned with the roadmap order, Rust engine boundaries, cube domain language, verification flow, and AI knowledge maintenance rules.
+Keep every change aligned with Rust engine boundaries, cube domain language, current project priorities, verification flow, and AI knowledge maintenance rules.
 
 ## Read First
 
@@ -24,7 +24,7 @@ Keep every change aligned with the roadmap order, Rust engine boundaries, cube d
 
 ## Expected Output
 
-- Code follows the current repository boundary and roadmap phase.
+- Code follows the current repository boundaries and documented priorities.
 - Generated AI route files are never edited manually.
 - Final reporting names verification that was run or explains why it was blocked.
 

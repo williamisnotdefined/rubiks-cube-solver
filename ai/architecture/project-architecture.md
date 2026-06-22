@@ -6,10 +6,10 @@ The target is a Rubik's Cube solver with a Rust engine, search algorithms, heuri
 
 - `crates/cube-engine`: Rust crate for cube representation, moves, notation, scramble handling, search, and heuristics.
 - `crates/api`: Axum HTTP API around the Rust engine and generated pruning-table artifacts.
-- `web`: Vite React app for notation-only solve requests, cube visualization, and playback-oriented UI.
+- `web`: Vite React app for puzzle-aware solve flows, scan flows, visualization, playback, algorithms pages, notation pages, and timer flows.
 - `scanner`: Python scanner contracts, FastAPI runtime, and offline scanner training/evaluation tooling.
 - `ai`: canonical AI knowledge base and route generation system.
-- `docs/project-plan.md`: source roadmap, implementation order, and multi-puzzle direction.
+- `docs/project-plan.md`: current technical direction, implementation rules, and puzzle boundaries.
 
 ## Generated Artifacts
 
@@ -24,7 +24,7 @@ The target is a Rubik's Cube solver with a Rust engine, search algorithms, heuri
 
 ## Future Or Optional Boundaries
 
-- `crates/wasm`: optional future wasm-bindgen bridge around the Rust engine if browser-local solving becomes a concrete roadmap item.
+- `crates/wasm`: optional future wasm-bindgen bridge around the Rust engine if browser-local solving becomes a concrete product requirement.
 - Additional frontend routing, shared component libraries, or state managers should wait for current UI complexity to require them.
 
 ## Ownership

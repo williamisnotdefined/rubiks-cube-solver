@@ -38,7 +38,7 @@ Rules for the web visualization and frontend-to-API boundary.
 - Do not add a frontend or visualization-package generic puzzle engine, universal move type, `BaseMove`, `BaseState`, or shared puzzle-state abstraction.
 - Do not expose facelets, Kociemba strings, or facelet input modes in the UI.
 - Do not add or import `.css` files outside the single Tailwind/theme entrypoint `web/src/index.css`.
-- Do not make browser clients submit facelets to the API; client-facing solve requests use move notation only.
+- Do not make browser notation clients submit facelets to the API; notation solve requests use move notation.
 - Do not copy API data into broad mutable stores just to pass it through the UI.
 - Do not add new frontend state, form, routing, animation, styling, or component dependencies while the existing stack can satisfy the current need.
 - Do not add localized route paths; URLs stay English while labels are localized.

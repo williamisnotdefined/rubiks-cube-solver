@@ -18,25 +18,19 @@ The project no longer keeps scanner CNN or face-detector training code. Tile rec
 ## Commands
 
 ```bash
-npm run scan:tile-yolo-install-deps
 python -m pytest scanner/training
 npm run scan:label
 npm run scan:replay
 npm run scan:evaluate
-npm run scan:tile-yolo-roboflow-dataset
-npm run scan:tile-yolo-check
-npm run scan:tile-yolo-train
-npm run scan:tile-yolo-export
-npm run scan:tile-yolo-install
 ```
+
+Use `scanner/training/SCANNER_YOLO_RUNBOOK.md` for the YOLO dataset, training, export, and install pipeline.
 
 ## Tile Training
 
-Tile recognition is trained by fine-tuning an Ultralytics YOLO model. The default base model is `yolo11n.pt`, which Ultralytics can download locally if it is not already present.
+Tile recognition is trained by fine-tuning an Ultralytics YOLO model. The current source Roboflow COCO export is tracked through Git LFS at `scanner/datasets/roboflow/rubiks-cube-colors-v2.coco.zip`.
 
-The current source Roboflow COCO export is tracked through Git LFS at `scanner/datasets/roboflow/rubiks-cube-colors-v2.coco.zip`. For Roboflow COCO exports, `_annotations.coco.json` lives inside the export zip under split folders such as `train/`, `valid`, and `test`. The converter writes a YOLO dataset under `scanner/outputs/` with `data.yaml`, `images/`, and `labels/`.
-
-See `scanner/training/tile_detector/README.md` for the concrete pipeline.
+See `scanner/training/SCANNER_YOLO_RUNBOOK.md` for the concrete pipeline.
 
 ## Artifacts
 
@@ -51,4 +45,4 @@ Ignored local paths:
 - `scanner/references/`
 - `scanner/models/`
 
-See `scanner/training/SCANNER_YOLO_RUNBOOK.md` for the YOLO workflow.
+See `scanner/training/SCANNER_YOLO_RUNBOOK.md` for the YOLO workflow and artifact policy.

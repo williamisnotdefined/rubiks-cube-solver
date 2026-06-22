@@ -1,5 +1,5 @@
 ---
-description: "Always-on repository baseline for Rubik's Cube solver engineering, roadmap alignment, and AI knowledge maintenance."
+description: "Always-on repository baseline for Rubik's Cube solver engineering, boundaries, verification, and AI knowledge maintenance."
 globs: "**/*"
 alwaysApply: true
 ---
@@ -28,7 +28,7 @@ Use this skill as the always-on repository baseline for AI-assisted changes anyw
 
 ## Goal
 
-Keep every change aligned with the roadmap order, Rust engine boundaries, cube domain language, verification flow, and AI knowledge maintenance rules.
+Keep every change aligned with Rust engine boundaries, cube domain language, current project priorities, verification flow, and AI knowledge maintenance rules.
 
 ## Read First
 
@@ -48,7 +48,7 @@ Keep every change aligned with the roadmap order, Rust engine boundaries, cube d
 
 ## Expected Output
 
-- Code follows the current repository boundary and roadmap phase.
+- Code follows the current repository boundaries and documented priorities.
 - Generated AI route files are never edited manually.
 - Final reporting names verification that was run or explains why it was blocked.
 
@@ -70,7 +70,7 @@ Global rules for changes anywhere in this repository.
 - Read `docs/project-plan.md`, nearby code, and current tests before changing behavior.
 - Prefer the smallest correct change with the lowest surface area.
 - Follow existing naming, file layout, import style, error handling, and command style before introducing a new pattern.
-- Keep the implementation order aligned with the roadmap: cube representation, moves, search, heuristics, pattern databases, solver quality, then solver portfolios.
+- Keep implementation aligned with the current priorities in `docs/project-plan.md` and the capabilities already present in code.
 - Keep solver logic in Rust engine code, not in frontend or AI tooling.
 - Use cubie representation as the primary engine model.
 - For multi-puzzle work, keep state, move models, notation, validation, and solver strategy puzzle-specific unless a shared type is strictly metadata or infrastructure.
@@ -161,13 +161,11 @@ Rules for maintaining the AI knowledge base itself.
 ## Always
 
 - Treat `ai` as the source of truth for AI guidance.
-- Keep reusable knowledge in `rules`, `architecture`, `glossary`, and `examples`.
+- Keep reusable knowledge in `rules`, `architecture`, and `glossary`.
 - Keep `skills` task-oriented: each skill should orchestrate references instead of duplicating them.
 - Add every routed skill to `ai/registry.json`.
-- Use `references` in `ai/registry.json` for every rule, architecture, glossary, or example file a skill depends on.
+- Use `references` in `ai/registry.json` for every rule, architecture, or glossary file a skill depends on.
 - Keep each skill's `## Read First` list identical to its `registry.json` `references` list.
-- Add `Source: ` with a SHA-256 hash and `Why this is canonical:` to every file under `ai/examples`.
-- Review and update example hashes when the referenced source file changes.
 - Run `npm run ai:sync` after changing canonical skills, registry entries, or referenced knowledge files.
 - Run `npm run ai:check` before finishing AI knowledge changes.
 
@@ -177,7 +175,7 @@ Rules for maintaining the AI knowledge base itself.
 - Do not place long architecture explanations inside skills when they belong in `architecture`.
 - Do not place reusable coding rules inside skills when they belong in `rules`.
 - Do not teach generic programming knowledge; document how this project works.
-- Do not create a new skill when a new reference document or example would solve the context gap.
+- Do not create a new skill when a new reference document would solve the context gap.
 - Do not set Cursor `alwaysApply: true` outside the explicitly global `project-core` skill.
 
 ## Route Generation
@@ -196,10 +194,10 @@ The target is a Rubik's Cube solver with a Rust engine, search algorithms, heuri
 
 - `crates/cube-engine`: Rust crate for cube representation, moves, notation, scramble handling, search, and heuristics.
 - `crates/api`: Axum HTTP API around the Rust engine and generated pruning-table artifacts.
-- `web`: Vite React app for notation-only solve requests, cube visualization, and playback-oriented UI.
+- `web`: Vite React app for puzzle-aware solve flows, scan flows, visualization, playback, algorithms pages, notation pages, and timer flows.
 - `scanner`: Python scanner contracts, FastAPI runtime, and offline scanner training/evaluation tooling.
 - `ai`: canonical AI knowledge base and route generation system.
-- `docs/project-plan.md`: source roadmap, implementation order, and multi-puzzle direction.
+- `docs/project-plan.md`: current technical direction, implementation rules, and puzzle boundaries.
 
 ## Generated Artifacts
 
@@ -214,7 +212,7 @@ The target is a Rubik's Cube solver with a Rust engine, search algorithms, heuri
 
 ## Future Or Optional Boundaries
 
-- `crates/wasm`: optional future wasm-bindgen bridge around the Rust engine if browser-local solving becomes a concrete roadmap item.
+- `crates/wasm`: optional future wasm-bindgen bridge around the Rust engine if browser-local solving becomes a concrete product requirement.
 - Additional frontend routing, shared component libraries, or state managers should wait for current UI complexity to require them.
 
 ## Ownership
@@ -235,7 +233,6 @@ The target is a Rubik's Cube solver with a Rust engine, search algorithms, heuri
 - `rules`: reusable constraints, conventions, and anti-patterns.
 - `architecture`: system boundaries and integration points.
 - `glossary`: cube and solver vocabulary.
-- `examples`: small real project examples that demonstrate conventions.
 - `skills`: task-oriented workflows that reference the other layers.
 
 ## Registry
@@ -256,11 +253,7 @@ Each skill entry defines the canonical skill file, its reusable references, gene
 
 Generated routes must not be edited manually.
 
-`npm run ai:sync` writes stale routes and removes orphan generated routes. `npm run ai:check` verifies registry shape, reference files, generated content, route collisions, `Read First` parity, registered canonical skill files, and example hashes.
-
-## Examples
-
-Files under `ai/examples` must point to real repository source with `Source: ` and a SHA-256 hash, then explain `Why this is canonical:`. When the source changes, review the example and update the hash only if the example still represents the project convention.
+`npm run ai:sync` writes stale routes and removes orphan generated routes. `npm run ai:check` verifies registry shape, reference files, generated content, route collisions, `Read First` parity, and registered canonical skill files.
 
 ## Reference: `ai/glossary/cube-terms.md`
 

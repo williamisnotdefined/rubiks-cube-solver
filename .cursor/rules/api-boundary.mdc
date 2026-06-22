@@ -29,7 +29,7 @@ Use this skill when adding or changing `crates/api`, Axum routes, request or res
 
 ## Goal
 
-Keep the HTTP API as a thin, typed boundary around the Rust solver engine while preserving the notation-only frontend contract.
+Keep the HTTP API as a thin, typed boundary around the Rust solver engine while preserving frontend API contracts.
 
 ## Read First
 
@@ -46,7 +46,7 @@ Keep the HTTP API as a thin, typed boundary around the Rust solver engine while 
 - Inspect nearby route, request, response, API-client, and test patterns before editing.
 - Keep handlers focused on HTTP extraction, validation, solver dispatch, and response mapping.
 - Keep search, cube validation, notation semantics, heuristics, and pruning logic in `cube-engine`.
-- Preserve notation-only solve requests; do not add browser-facing facelet or Kociemba input modes.
+- Keep notation solve requests on move notation and scan solve requests on scan-session contracts; do not add browser-facing facelet or Kociemba input modes.
 - Update `web/src/api` request functions, React Query hooks, and normalization when API response fields, status strings, or error kinds change.
 - Add or update API tests around observable contract behavior, especially error responses consumed by the frontend.
 
@@ -56,7 +56,7 @@ Keep the HTTP API as a thin, typed boundary around the Rust solver engine while 
 - Safety caps are enforced before expensive solver work.
 - Response statuses and metadata remain stable or are updated with matching frontend API-client changes.
 - React Query hooks continue to expose typed API state without leaking raw request functions into components.
-- Browser clients submit move notation and limits, never facelet strings.
+- Browser notation clients submit move notation and limits, never facelet strings.
 - Solver logic remains in Rust engine code.
 
 ## Verification
@@ -79,7 +79,7 @@ Rules for the Axum HTTP API and the frontend API contract.
 - Keep route handlers thin: extract state and JSON, validate request limits, choose the solver strategy, delegate to Rust engine code, and map results to HTTP responses.
 - Keep solver behavior in `cube-engine`; `crates/api` owns HTTP shape, safety limits, generated-solver loading, CORS, and error/status mapping.
 - Use Serde request and response structs as the API contract.
-- Keep client-facing solve requests notation-only through `/solve-notation`.
+- Keep notation solve requests on move notation and route scan solves through scan-session contracts.
 - Validate API safety limits before parsing notation or invoking search.
 - Use named constants for public API caps such as maximum depth, maximum nodes, notation bytes, and JSON body bytes.
 - Preserve stable response status strings, error kinds, and metadata fields because `web/src/api` normalizes them.
@@ -90,7 +90,7 @@ Rules for the Axum HTTP API and the frontend API contract.
 
 ## Never
 
-- Do not add facelet, Kociemba, or raw sticker-state request payloads to browser-facing solve endpoints.
+- Do not add facelet, Kociemba, or raw sticker-state request payloads to browser-facing notation solve endpoints.
 - Do not implement search algorithms, heuristics, pruning table generation, or cube validation logic inside API handlers.
 - Do not let handlers panic or leak internal errors when a stable error response can represent the failure.
 - Do not accept unbounded request depth, node count, notation length, or JSON body size.
@@ -146,7 +146,7 @@ Rules for the web visualization and frontend-to-API boundary.
 - Do not add a frontend or visualization-package generic puzzle engine, universal move type, `BaseMove`, `BaseState`, or shared puzzle-state abstraction.
 - Do not expose facelets, Kociemba strings, or facelet input modes in the UI.
 - Do not add or import `.css` files outside the single Tailwind/theme entrypoint `web/src/index.css`.
-- Do not make browser clients submit facelets to the API; client-facing solve requests use move notation only.
+- Do not make browser notation clients submit facelets to the API; notation solve requests use move notation.
 - Do not copy API data into broad mutable stores just to pass it through the UI.
 - Do not add new frontend state, form, routing, animation, styling, or component dependencies while the existing stack can satisfy the current need.
 - Do not add localized route paths; URLs stay English while labels are localized.
@@ -276,10 +276,10 @@ The target is a Rubik's Cube solver with a Rust engine, search algorithms, heuri
 
 - `crates/cube-engine`: Rust crate for cube representation, moves, notation, scramble handling, search, and heuristics.
 - `crates/api`: Axum HTTP API around the Rust engine and generated pruning-table artifacts.
-- `web`: Vite React app for notation-only solve requests, cube visualization, and playback-oriented UI.
+- `web`: Vite React app for puzzle-aware solve flows, scan flows, visualization, playback, algorithms pages, notation pages, and timer flows.
 - `scanner`: Python scanner contracts, FastAPI runtime, and offline scanner training/evaluation tooling.
 - `ai`: canonical AI knowledge base and route generation system.
-- `docs/project-plan.md`: source roadmap, implementation order, and multi-puzzle direction.
+- `docs/project-plan.md`: current technical direction, implementation rules, and puzzle boundaries.
 
 ## Generated Artifacts
 
@@ -294,7 +294,7 @@ The target is a Rubik's Cube solver with a Rust engine, search algorithms, heuri
 
 ## Future Or Optional Boundaries
 
-- `crates/wasm`: optional future wasm-bindgen bridge around the Rust engine if browser-local solving becomes a concrete roadmap item.
+- `crates/wasm`: optional future wasm-bindgen bridge around the Rust engine if browser-local solving becomes a concrete product requirement.
 - Additional frontend routing, shared component libraries, or state managers should wait for current UI complexity to require them.
 
 ## Ownership

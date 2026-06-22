@@ -4,7 +4,7 @@ Use this skill when adding or changing solve controls, scramble inputs, frontend
 
 ## Goal
 
-Keep form state and lightweight validation clear while preserving the notation-only API boundary and Rust-owned cube semantics.
+Keep form state and lightweight validation clear while preserving Rust-owned puzzle semantics and API-owned validation.
 
 ## Read First
 
@@ -16,7 +16,7 @@ Keep form state and lightweight validation clear while preserving the notation-o
 
 ## Workflow
 
-- Keep browser-facing solve input as move notation.
+- Keep notation solve input as move notation.
 - Keep the default scramble empty so the cube starts solved; place sample scrambles in placeholders or examples.
 - Use the existing React Hook Form and Zod setup for solve-form required and numeric limit validation.
 - Keep simpler form-like controls local when RHF/Zod would add indirection without value.
