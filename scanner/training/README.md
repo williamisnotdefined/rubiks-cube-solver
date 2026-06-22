@@ -28,7 +28,7 @@ Use `scanner/training/SCANNER_YOLO_RUNBOOK.md` for the YOLO dataset, training, e
 
 ## Tile Training
 
-Tile recognition is trained by fine-tuning an Ultralytics YOLO model. The current source Roboflow COCO export is tracked through Git LFS at `scanner/datasets/roboflow/rubiks-cube-colors-v2.coco.zip`.
+Tile recognition is trained by fine-tuning an Ultralytics YOLO model. The current source Roboflow COCO export is tracked through Git LFS at `scanner/datasets/roboflow/rubiks-cube-colors-v2.coco.zip` and comes from <https://universe.roboflow.com/dhyan-thacker/rubiks-cube-colors>.
 
 See `scanner/training/SCANNER_YOLO_RUNBOOK.md` for the concrete pipeline.
 

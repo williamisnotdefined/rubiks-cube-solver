@@ -19,6 +19,7 @@ The scanner runtime is YOLO-only. It does not use a sticker CNN, face detector, 
 ## Quick Commands
 
 ```bash
+npm run zero:prepare
 npm run vision:install
 npm run scan:tile-yolo-install-deps
 npm run scan:tile-yolo-roboflow-dataset
@@ -28,7 +29,9 @@ npm run scan:tile-yolo-export
 npm run scan:tile-yolo-install
 ```
 
-The dependency command installs CPU-only Torch first, then Ultralytics and ONNX export helpers. Override `RUBIKS_PYTHON` if you want to install into a specific virtual environment.
+The zero prepare command builds the normal local runtime artifacts and converts the dataset when needed. Scanner training stays explicit; run `npm run zero:prepare -- --train-scanner` to train, export, and install the ONNX model as part of preparation.
+
+The dependency command installs CPU-only Torch by default, then Ultralytics and ONNX export helpers. Override `RUBIKS_PYTHON` if you want to install into a specific virtual environment. Use `npm run scan:tile-yolo-install-deps -- --torch cu128` for an explicit CUDA Torch install, or `--torch skip` when Torch is already managed externally.
 
 The training wrapper above runs the same Ultralytics commands shown below. It fine-tunes the YOLO base model configured by `RUBIKS_TILE_YOLO_BASE_MODEL`, defaulting to `yolo11n.pt`:
 
@@ -53,7 +56,7 @@ Roboflow COCO conversion:
 npm run scan:tile-yolo-roboflow-dataset
 ```
 
-The default source export is the Git LFS-backed `scanner/datasets/roboflow/rubiks-cube-colors-v2.coco.zip`. Override it with `RUBIKS_ROBOFLOW_COCO_ZIP=/path/to/export.zip` when testing another Roboflow export.
+The default source export is the Git LFS-backed `scanner/datasets/roboflow/rubiks-cube-colors-v2.coco.zip`, downloaded from the Roboflow Universe Rubik's Cube Colors project: <https://universe.roboflow.com/dhyan-thacker/rubiks-cube-colors>. Override it with `RUBIKS_ROBOFLOW_COCO_ZIP=/path/to/export.zip` when testing another Roboflow export.
 
 Roboflow COCO exports contain `_annotations.coco.json` inside each split folder, usually `train/`, `valid/`, and `test/`. The converter reads the COCO boxes and writes YOLO labels to `scanner/outputs/tile-yolo-roboflow-v2/labels/`.
 

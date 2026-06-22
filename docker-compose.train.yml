@@ -1,0 +1,29 @@
+x-trainer-base: &trainer-base
+  build:
+    context: .
+    dockerfile: Dockerfile.trainer
+  working_dir: /workspace
+  volumes:
+    - .:/workspace
+
+services:
+  trainer:
+    <<: *trainer-base
+    environment:
+      RUBIKS_TORCH_FLAVOR: cpu
+      RUBIKS_TILE_YOLO_DEVICE: cpu
+
+  trainer-gpu:
+    <<: *trainer-base
+    environment:
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+      NVIDIA_VISIBLE_DEVICES: all
+      RUBIKS_TORCH_FLAVOR: cu128
+      RUBIKS_TILE_YOLO_DEVICE: "0"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

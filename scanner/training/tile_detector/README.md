@@ -4,7 +4,7 @@ The live scanner recognizes visible cube tiles with a YOLO ONNX detector. Traini
 
 ## Inputs
 
-The default input is the Git LFS-backed Roboflow COCO export at `scanner/datasets/roboflow/rubiks-cube-colors-v2.coco.zip`. Override it with `RUBIKS_ROBOFLOW_COCO_ZIP` when testing another export.
+The default input is the Git LFS-backed Roboflow COCO export at `scanner/datasets/roboflow/rubiks-cube-colors-v2.coco.zip`. It comes from <https://universe.roboflow.com/dhyan-thacker/rubiks-cube-colors>. Override it with `RUBIKS_ROBOFLOW_COCO_ZIP` when testing another export.
 
 Roboflow COCO exports contain annotation files such as:
 
