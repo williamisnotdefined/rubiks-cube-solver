@@ -8,6 +8,6 @@ credentials-file: /home/YOUR_USERNAME/.cloudflared/YOUR_TUNNEL_ID.json
 
 ingress:
   - hostname: wilho.com.br
-    service: http://localhost:3001
+    service: http://localhost:8787
 
   - service: http_status:404
