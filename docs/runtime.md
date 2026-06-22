@@ -69,10 +69,25 @@ The current vision model is trained from the Roboflow Universe Rubik's Cube Colo
 
 ## Docker Production Runtime
 
-Run a production-like local stack:
+Use these scripts for the local production Docker stack that serves the built web app and Rust API at `http://127.0.0.1:8787/`.
+
+| Script | Use When | What It Does |
+| --- | --- | --- |
+| `npm run prod:deploy` | After `main` changes or a PR is merged | Switches to `main`, pulls `origin/main`, rebuilds/recreates Docker production in the background, waits for app health, and prints status. |
+| `npm run prod:restart` | Checkout is already current, but containers need a rebuild/recreate | Runs Docker production down/up, waits for app health, and prints status without pulling Git. |
+| `npm run prod:health` | Need a quick app readiness check | Waits for `http://127.0.0.1:8787/health` to return 2xx. |
+| `npm run prod:status` | Need container state | Shows `rubiks-prod` Compose containers. |
+| `npm run prod:logs` | Need production logs | Follows logs for the `rubiks-prod` Compose project. |
+| `npm run prod:down` | Need to stop production Docker | Stops and removes `rubiks-prod` containers and network. |
+| `npm run live:start` | Need public production via Cloudflare | Runs `prod:deploy`, then starts `cloudflared tunnel run wilho`. |
+| `npm run live:tunnel` | Docker production is already healthy and only tunnel is needed | Starts only the Cloudflare tunnel. |
+| `npm run tunnel:run:prod` | Legacy command muscle memory | Compatibility alias for `live:start`. |
+| `npm run tunnel:check:prod` | Legacy production health check | Compatibility alias for `prod:health`. |
+
+Deploy or update the production-like local stack from `origin/main`:
 
 ```bash
-npm run docker:up
+npm run prod:deploy
 ```
 
 Open:
@@ -90,13 +105,35 @@ Services:
 
 The `app` container calls vision at `http://vision:8790`. The scanner model is mounted from `./scanner/models:/models:ro`.
 
+`docker:up`, `docker:down`, `docker:restart`, `docker:status`, and `docker:logs` are lower-level Compose wrappers. Prefer `prod:*` for production operations because those commands include Git update and health-check behavior where appropriate.
+
 Stop production Docker:
 
 ```bash
-npm run docker:down
+npm run prod:down
+```
+
+Inspect production Docker:
+
+```bash
+npm run prod:status
+npm run prod:logs
+```
+
+Deploy the current `main` stack and start the Cloudflare tunnel:
+
+```bash
+npm run live:start
 ```
 
 ## Docker Dev Runtime
+
+Use Docker dev when you want containerized hot-reload services instead of the local zero runtime. It is intentionally separate from Docker production.
+
+| Script | Use When | What It Does |
+| --- | --- | --- |
+| `npm run docker:dev` | Need hot-reload dev services in Docker | Starts dev Compose with non-production ports. |
+| `npm run docker:dev:down` | Need to stop Docker dev | Stops the `rubiks-dev` Compose project. |
 
 Run hot-reload dev services in Docker:
 
@@ -122,6 +159,11 @@ The npm scripts use Compose project names `rubiks-prod` and `rubiks-dev`, so con
 ## Docker Trainer
 
 Training is separate from runtime:
+
+| Script | Use When | What It Does |
+| --- | --- | --- |
+| `npm run docker:train` | Need scanner training in CPU/default Docker mode | Runs the trainer service once and removes the container. |
+| `npm run docker:train-gpu` | Need scanner training with NVIDIA GPU | Runs the GPU trainer service once; requires NVIDIA Container Toolkit. |
 
 ```bash
 npm run docker:train
