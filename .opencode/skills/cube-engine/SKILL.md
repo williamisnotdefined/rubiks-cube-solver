@@ -149,10 +149,10 @@ The target is a Rubik's Cube solver with a Rust engine, search algorithms, heuri
 
 - `crates/cube-engine`: Rust crate for cube representation, moves, notation, scramble handling, search, and heuristics.
 - `crates/api`: Axum HTTP API around the Rust engine and generated pruning-table artifacts.
-- `web`: Vite React app for notation-only solve requests, cube visualization, and playback-oriented UI.
+- `web`: Vite React app for puzzle-aware solve flows, scan flows, visualization, playback, algorithms pages, notation pages, and timer flows.
 - `scanner`: Python scanner contracts, FastAPI runtime, and offline scanner training/evaluation tooling.
 - `ai`: canonical AI knowledge base and route generation system.
-- `docs/project-plan.md`: source roadmap, implementation order, and multi-puzzle direction.
+- `docs/project-plan.md`: current technical direction, implementation rules, and puzzle boundaries.
 
 ## Generated Artifacts
 
@@ -167,7 +167,7 @@ The target is a Rubik's Cube solver with a Rust engine, search algorithms, heuri
 
 ## Future Or Optional Boundaries
 
-- `crates/wasm`: optional future wasm-bindgen bridge around the Rust engine if browser-local solving becomes a concrete roadmap item.
+- `crates/wasm`: optional future wasm-bindgen bridge around the Rust engine if browser-local solving becomes a concrete product requirement.
 - Additional frontend routing, shared component libraries, or state managers should wait for current UI complexity to require them.
 
 ## Ownership
@@ -181,16 +181,14 @@ The target is a Rubik's Cube solver with a Rust engine, search algorithms, heuri
 
 # Cube Engine Architecture
 
-The cube engine is the first phase of the roadmap and must stay independent from UI, scanner, and HTTP transport concerns.
+The cube engine is the source of truth for puzzle state, moves, validation, search, and replay verification. It must stay independent from UI, scanner, and HTTP transport concerns.
 
 ## Modules
 
-- `cube/cubies.rs`: cubie identifiers and primary cubie-state structure.
-- `cube/moves.rs`: face move and turn definitions.
-- `cube/notation.rs`: Singmaster notation parsing and formatting.
-- `cube/scramble.rs`: scramble parsing and inversion utilities.
-- `cube/state.rs`: high-level cube API over cubie state.
-- `search/*`: search and heuristic modules that consume cube state.
+- `cube/*`: current 3x3 state, moves, notation, facelets, scrambles, and high-level cube API.
+- `puzzles/cube2/*`: 2x2-specific state, moves, notation, solver, visual state, and quality reporting.
+- `puzzle/*`: puzzle identities, metadata, input kinds, visualization kinds, and strategy registry.
+- `search/*`: search, generated two-phase, pruning, and heuristic modules that consume puzzle state.
 
 ## State Model
 
@@ -201,17 +199,17 @@ The primary representation is cubie based:
 - edge permutation
 - edge orientation
 
-Sticker strings, Kociemba strings, and visual states can be adapters later, but they should not replace the core model.
+Sticker strings, Kociemba strings, and visual states are adapter formats; they should not replace the core model.
 
 ## Multi-Puzzle Boundary
 
-Future puzzles should live in puzzle-specific modules with their own state, move model, notation parser, validation, search, heuristics, coordinates, and artifacts.
+Additional puzzles should live in puzzle-specific modules with their own state, move model, notation parser, validation, search, heuristics, coordinates, and artifacts.
 
 Do not add a generic puzzle engine, universal move type, universal state type, `BaseMove`, `BaseState`, `BasePuzzle`, or inheritance-style hierarchy. Shared Rust code should be limited to puzzle-neutral metadata, budgets, results, registries, compatibility checks, and artifact plumbing.
 
-## Bootstrap Boundary
+## Unsupported Behavior
 
-The initial crate may expose API skeletons before move tables are complete. Any unimplemented behavior must fail explicitly instead of pretending to mutate cube state.
+Any unimplemented puzzle behavior must fail explicitly instead of pretending to mutate, validate, or solve a state.
 
 ## Reference: `ai/glossary/cube-terms.md`
 

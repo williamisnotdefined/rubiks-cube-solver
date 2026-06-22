@@ -31,7 +31,7 @@ Keep React Query as the frontend server-state boundary while keeping raw HTTP de
 - Components do not import `fetch`, raw requests, or query keys.
 - Request details stay behind `web/src/api/client.ts`.
 - Solve response status parsing stays in `web/src/api`, not page components.
-- Browser clients still submit move notation and limits, never facelets or sticker state.
+- Browser notation clients submit move notation and limits, while scan flows use scan-session contracts instead of raw facelets or sticker state.
 - Request functions and hooks have Vitest coverage for success, API failure payloads, disabled queries, and mutation behavior when changed.
 
 ## Verification

@@ -27,7 +27,7 @@ Use this skill when adding or changing solve controls, scramble inputs, frontend
 
 ## Goal
 
-Keep form state and lightweight validation clear while preserving the notation-only API boundary and Rust-owned cube semantics.
+Keep form state and lightweight validation clear while preserving Rust-owned puzzle semantics and API-owned validation.
 
 ## Read First
 
@@ -39,7 +39,7 @@ Keep form state and lightweight validation clear while preserving the notation-o
 
 ## Workflow
 
-- Keep browser-facing solve input as move notation.
+- Keep notation solve input as move notation.
 - Keep the default scramble empty so the cube starts solved; place sample scrambles in placeholders or examples.
 - Use the existing React Hook Form and Zod setup for solve-form required and numeric limit validation.
 - Keep simpler form-like controls local when RHF/Zod would add indirection without value.
@@ -72,7 +72,7 @@ Rules for forms and local validation in `web`.
 
 ## Always
 
-- Keep the browser-facing solve flow notation-only.
+- Keep notation solve forms on move notation.
 - Use the existing React Hook Form and Zod setup for solve controls that need schema validation or coordinated submission shaping.
 - Keep simpler form-like controls in lightweight local state when RHF/Zod would add indirection without value.
 - Keep local validation near the owning form when it only validates simple limits or required values.
@@ -219,7 +219,7 @@ Rules for the Axum HTTP API and the frontend API contract.
 - Keep route handlers thin: extract state and JSON, validate request limits, choose the solver strategy, delegate to Rust engine code, and map results to HTTP responses.
 - Keep solver behavior in `cube-engine`; `crates/api` owns HTTP shape, safety limits, generated-solver loading, CORS, and error/status mapping.
 - Use Serde request and response structs as the API contract.
-- Keep client-facing solve requests notation-only through `/solve-notation`.
+- Keep notation solve requests on move notation and route scan solves through scan-session contracts.
 - Validate API safety limits before parsing notation or invoking search.
 - Use named constants for public API caps such as maximum depth, maximum nodes, notation bytes, and JSON body bytes.
 - Preserve stable response status strings, error kinds, and metadata fields because `web/src/api` normalizes them.
@@ -230,7 +230,7 @@ Rules for the Axum HTTP API and the frontend API contract.
 
 ## Never
 
-- Do not add facelet, Kociemba, or raw sticker-state request payloads to browser-facing solve endpoints.
+- Do not add facelet, Kociemba, or raw sticker-state request payloads to browser-facing notation solve endpoints.
 - Do not implement search algorithms, heuristics, pruning table generation, or cube validation logic inside API handlers.
 - Do not let handlers panic or leak internal errors when a stable error response can represent the failure.
 - Do not accept unbounded request depth, node count, notation length, or JSON body size.

@@ -7,7 +7,7 @@ Rules for the Axum HTTP API and the frontend API contract.
 - Keep route handlers thin: extract state and JSON, validate request limits, choose the solver strategy, delegate to Rust engine code, and map results to HTTP responses.
 - Keep solver behavior in `cube-engine`; `crates/api` owns HTTP shape, safety limits, generated-solver loading, CORS, and error/status mapping.
 - Use Serde request and response structs as the API contract.
-- Keep client-facing solve requests notation-only through `/solve-notation`.
+- Keep notation solve requests on move notation and route scan solves through scan-session contracts.
 - Validate API safety limits before parsing notation or invoking search.
 - Use named constants for public API caps such as maximum depth, maximum nodes, notation bytes, and JSON body bytes.
 - Preserve stable response status strings, error kinds, and metadata fields because `web/src/api` normalizes them.
@@ -18,7 +18,7 @@ Rules for the Axum HTTP API and the frontend API contract.
 
 ## Never
 
-- Do not add facelet, Kociemba, or raw sticker-state request payloads to browser-facing solve endpoints.
+- Do not add facelet, Kociemba, or raw sticker-state request payloads to browser-facing notation solve endpoints.
 - Do not implement search algorithms, heuristics, pruning table generation, or cube validation logic inside API handlers.
 - Do not let handlers panic or leak internal errors when a stable error response can represent the failure.
 - Do not accept unbounded request depth, node count, notation length, or JSON body size.

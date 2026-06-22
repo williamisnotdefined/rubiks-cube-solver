@@ -4,7 +4,7 @@ Rules for forms and local validation in `web`.
 
 ## Always
 
-- Keep the browser-facing solve flow notation-only.
+- Keep notation solve forms on move notation.
 - Use the existing React Hook Form and Zod setup for solve controls that need schema validation or coordinated submission shaping.
 - Keep simpler form-like controls in lightweight local state when RHF/Zod would add indirection without value.
 - Keep local validation near the owning form when it only validates simple limits or required values.
