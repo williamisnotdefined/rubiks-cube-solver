@@ -17,6 +17,7 @@ Global rules for changes anywhere in this repository.
 - Run targeted verification for the affected area and report any environment blockers.
 - Before any AI-created commit or pull request, run `cargo clippy --all-targets --all-features -- -D warnings` from the repository root when the Rust toolchain is available.
 - Keep AI route files generated from canonical files under `ai`.
+- Use `prod:deploy` for local production Docker deploys after `main` changes, `prod:restart` only when the checkout is already current, and `live:start` when the Cloudflare tunnel should be started after a production deploy.
 
 ## Never
 
@@ -28,6 +29,20 @@ Global rules for changes anywhere in this repository.
 - Do not edit `.opencode/skills`, `.cursor/rules`, or `.github/instructions` AI route files manually.
 - Do not add compatibility layers or future abstractions without a concrete current consumer.
 - Do not add a new formatter, linter, framework, or workspace-wide tool unless explicitly requested.
+- Do not use `docker restart` or start an old production container to deploy code changes; production code changes require a Docker rebuild through `prod:deploy`, `prod:restart`, or the lower-level `docker:up` wrapper.
+
+## Runtime Scripts
+
+- `zero:prepare`, `zero:start`, `zero:status`, and `zero:stop`: local non-Docker runtime for development/debugging on ports `5173`, `8788`, and `8791`.
+- `prod:deploy`: preferred production update command after PRs merge; switches to `main`, pulls `origin/main`, rebuilds/recreates Docker production, waits for `http://127.0.0.1:8787/health`, and prints status.
+- `prod:restart`: rebuilds/recreates Docker production without pulling Git; use when the checkout is already current.
+- `prod:health`, `prod:status`, `prod:logs`, and `prod:down`: production health/status/log/stop helpers.
+- `live:start`: deploys production with `prod:deploy`, then starts `cloudflared tunnel run wilho`.
+- `live:tunnel`: starts only the Cloudflare tunnel and assumes production Docker is already healthy.
+- `tunnel:run:prod` and `tunnel:check:prod`: compatibility aliases for `live:start` and `prod:health`.
+- `docker:up`, `docker:down`, `docker:restart`, `docker:status`, and `docker:logs`: lower-level `rubiks-prod` Compose wrappers; prefer `prod:*` unless you specifically need raw Compose behavior.
+- `docker:dev` and `docker:dev:down`: containerized hot-reload dev runtime with non-production ports.
+- `docker:train` and `docker:train-gpu`: scanner training containers, separate from normal runtime.
 
 ## Verification
 

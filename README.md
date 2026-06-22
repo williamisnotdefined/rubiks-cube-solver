@@ -15,6 +15,7 @@ The product goal is a web interface where a user can input a valid puzzle state 
 ## Project Docs
 
 - `docs/project-plan.md`: current technical direction, implementation rules, and puzzle boundaries.
+- `docs/runtime.md`: local, Docker, production, tunnel, and training runtime commands.
 - `scanner/training/SCANNER_YOLO_RUNBOOK.md`: scanner dataset, training, export, and artifact workflow.
 - `scanner/runtime/README.md`: scanner runtime service details.
 
@@ -68,11 +69,24 @@ npm run product:gate
 Production-like Docker runs the Rust API and built web app in one `app` container, with scanner vision in a separate `vision` container:
 
 ```bash
-npm run docker:up
-npm run docker:down
+npm run prod:deploy
+npm run prod:restart
+npm run prod:status
+npm run prod:logs
+npm run prod:down
 ```
 
+Use `prod:deploy` after a merge to update `main`, rebuild Docker images, start containers in the background, wait for `http://127.0.0.1:8787/health`, and print Compose status. Use `prod:restart` only when the local checkout is already current and you just need to rebuild/recreate containers.
+
 Open `http://127.0.0.1:8787/`. The scanner model is mounted from `scanner/models/tile-detector.onnx`; if it is missing, the app still starts but scanner health reports the detector unavailable.
+
+To deploy the current `main` build and start the Cloudflare tunnel:
+
+```bash
+npm run live:start
+```
+
+`tunnel:run:prod` is kept as a compatibility alias for `live:start`. `live:tunnel` runs only `cloudflared tunnel run wilho` and assumes Docker production is already healthy.
 
 Docker dev uses separate hot-reload services and non-conflicting ports:
 

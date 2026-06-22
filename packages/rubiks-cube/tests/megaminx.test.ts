@@ -146,26 +146,24 @@ describe('Megaminx3D', () => {
     expect(megaminx.getState()).toBe(defaultMegaminxStickerState());
   });
 
-  test('applies move inverses and order-five turns', () => {
-    for (const move of allMegaminxMoves) {
-      const megaminx = new Megaminx3D({ animationSpeedMs: 0 });
-      const solved = megaminx.getState();
+  test.each(allMegaminxMoves)('applies inverse and order-five turns for %s', (move) => {
+    const megaminx = new Megaminx3D({ animationSpeedMs: 0 });
+    const solved = megaminx.getState();
 
+    megaminx.applyMove(move);
+    expect(megaminx.getState()).not.toBe(solved);
+
+    megaminx.applyMove(reverseMegaminxMove(move));
+    expect(megaminx.getState()).toBe(solved);
+    megaminx.applyMove(move, { reverse: true });
+    expect(megaminx.getState()).not.toBe(solved);
+    megaminx.applyMove(move);
+    expect(megaminx.getState()).toBe(solved);
+
+    for (let repeat = 0; repeat < 5; repeat++) {
       megaminx.applyMove(move);
-      expect(megaminx.getState()).not.toBe(solved);
-
-      megaminx.applyMove(reverseMegaminxMove(move));
-      expect(megaminx.getState()).toBe(solved);
-      megaminx.applyMove(move, { reverse: true });
-      expect(megaminx.getState()).not.toBe(solved);
-      megaminx.applyMove(move);
-      expect(megaminx.getState()).toBe(solved);
-
-      for (let repeat = 0; repeat < 5; repeat++) {
-        megaminx.applyMove(move);
-      }
-      expect(megaminx.getState()).toBe(solved);
     }
+    expect(megaminx.getState()).toBe(solved);
   });
 
   test('runs algorithms, reset, setState, and async zero-speed moves', async () => {
