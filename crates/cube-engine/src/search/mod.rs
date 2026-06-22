@@ -1,7 +1,6 @@
 pub mod corner_pdb;
 pub mod edge_pdb;
 pub mod heuristics;
-pub(crate) mod hybrid;
 pub mod ida_star;
 pub(crate) mod optimal_pdb16;
 pub(crate) mod portfolio;
@@ -22,11 +21,6 @@ pub use heuristics::{
     CornerOrientationHeuristic, CornerOrientationPatternDatabaseHeuristic,
     EdgeOrientationHeuristic, EdgeOrientationPatternDatabaseHeuristic, Heuristic, MaxHeuristic,
     MisplacedCubiesHeuristic, OrientationPatternDatabaseHeuristic, ZeroHeuristic,
-};
-pub(crate) use hybrid::{
-    load_hybrid_value_model, load_hybrid_value_outputs, solve_hybrid_move_ordering,
-    HybridMoveOrderingMetrics, HybridValueArtifact, HybridValueArtifactStatus,
-    DEFAULT_HYBRID_VALUE_OUTPUT_PATH,
 };
 pub use ida_star::{solve_ida_star_bounded, solve_ida_star_bounded_with_heuristic};
 pub(crate) use optimal_pdb16::solve_optimal_bounded_pdb16_quality;

@@ -193,55 +193,6 @@ impl QualityReportStatus {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum QualityHybridArtifactStatus {
-    Available,
-    Missing,
-    DependencyFallback,
-    Malformed,
-}
-
-impl QualityHybridArtifactStatus {
-    pub const fn label(self) -> &'static str {
-        match self {
-            Self::Available => "available",
-            Self::Missing => "missing",
-            Self::DependencyFallback => "dependency_fallback",
-            Self::Malformed => "malformed",
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum QualityHybridReportStatus {
-    Success,
-    ArtifactUnavailable,
-    ArtifactDependencyFallback,
-    ArtifactMalformed,
-    ExpectedNotFoundWithinLimits,
-    UnexpectedRegression,
-}
-
-impl QualityHybridReportStatus {
-    pub const fn label(self) -> &'static str {
-        match self {
-            Self::Success => "success",
-            Self::ArtifactUnavailable => "artifact_unavailable",
-            Self::ArtifactDependencyFallback => "artifact_dependency_fallback",
-            Self::ArtifactMalformed => "artifact_malformed",
-            Self::ExpectedNotFoundWithinLimits => "expected_not_found_within_limits",
-            Self::UnexpectedRegression => "unexpected_regression",
-        }
-    }
-
-    pub const fn is_gate_failure(self) -> bool {
-        matches!(
-            self,
-            Self::ArtifactUnavailable | Self::ArtifactMalformed | Self::UnexpectedRegression
-        )
-    }
-}
-
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct QualityReportRow {
     pub fixture_id: &'static str,
@@ -265,63 +216,20 @@ pub struct QualityReportRow {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct QualityHybridReportRow {
-    pub fixture_id: &'static str,
-    pub fixture_category: QualityFixtureCategory,
-    pub input_kind: QualityInputKind,
-    pub expectation: QualityExpectation,
-    pub scramble: &'static str,
-    pub baseline_selection: QualitySolverSelection,
-    pub max_depth: usize,
-    pub max_nodes: Option<usize>,
-    pub artifact_path: String,
-    pub artifact_status: QualityHybridArtifactStatus,
-    pub artifact_metadata: Option<String>,
-    pub status: QualityHybridReportStatus,
-    pub solution_length: Option<usize>,
-    pub explored_nodes: usize,
-    pub elapsed: Duration,
-    pub replay_verified: Option<bool>,
-    pub scored_move_lookups: usize,
-    pub missing_score_lookups: usize,
-    pub model_score_evals: usize,
-    pub moves: Vec<Move>,
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct QualityReport {
     rows: Vec<QualityReportRow>,
-    hybrid_rows: Vec<QualityHybridReportRow>,
 }
 
 impl QualityReport {
     pub fn new(rows: Vec<QualityReportRow>) -> Self {
-        Self {
-            rows,
-            hybrid_rows: Vec::new(),
-        }
-    }
-
-    pub fn with_hybrid_rows(
-        rows: Vec<QualityReportRow>,
-        hybrid_rows: Vec<QualityHybridReportRow>,
-    ) -> Self {
-        Self { rows, hybrid_rows }
+        Self { rows }
     }
 
     pub fn rows(&self) -> &[QualityReportRow] {
         &self.rows
     }
 
-    pub fn hybrid_rows(&self) -> &[QualityHybridReportRow] {
-        &self.hybrid_rows
-    }
-
     pub fn has_gate_failures(&self) -> bool {
         self.rows.iter().any(|row| row.status.is_gate_failure())
-            || self
-                .hybrid_rows
-                .iter()
-                .any(|row| row.status.is_gate_failure())
     }
 }

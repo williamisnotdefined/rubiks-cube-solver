@@ -4,12 +4,12 @@ Bootstrap repository for a Rubik's Cube solver focused on a Rust engine first, t
 
 The product goal is defined in `GOALS.md`: a web interface where a user can input a valid 3x3 cube state and receive the shortest practical replay-verified solution found within explicit limits.
 
-The project is method-agnostic. Generated two-phase search is a current classical strategy, not the final product goal; bounded optimal search, stronger pattern databases, solver portfolios, external classical algorithms, ML-assisted ordering, and hybrid search are valid paths when they keep Rust-owned validation and replay verification intact.
+The project is method-agnostic. Generated two-phase search is a current classical strategy, not the final product goal; bounded optimal search, stronger pattern databases, solver portfolios, and external classical algorithms are valid paths when they keep Rust-owned validation and replay verification intact.
 
 ## Current Status
 
 - Rust workspace scaffolded.
-- `cube-engine` contains cubie state, moves, notation parsing, scrambles, validation, bounded IDA*, generated two-phase search, solver datasets, and quality reporting.
+- `cube-engine` contains cubie state, moves, notation parsing, scrambles, validation, bounded IDA*, generated two-phase search, pruning tables, and quality reporting.
 - `web` uses `react-i18next` locale resources with browser-language detection for English, Spanish, Brazilian Portuguese, Italian, German, French, Russian, Simplified Chinese, and Japanese.
 - AI knowledge routing is managed from canonical files under `ai/`.
 
@@ -19,7 +19,7 @@ Prerequisites:
 
 - Node.js and npm (for workspace scripts)
 - Rust toolchain (for API, tests, and pruning-table generation)
-- Python 3.11+ for optional vision and machine-learning helpers
+- Python 3.11+ for the optional scanner runtime and scanner training helpers
 
 Install the required Node dependencies:
 
@@ -31,10 +31,9 @@ Optional local helpers:
 
 ```bash
 npm run vision:install
-python -m pip install -r ml/requirements.txt
 ```
 
-Install `vision_ml/requirements.txt` only when training, exporting, or evaluating scanner models locally. It includes heavier training/export dependencies that are not required for the live Vision service.
+Install `scanner/training/requirements.txt` only when training, exporting, or evaluating scanner models locally. It includes heavier training/export dependencies that are not required for the live scanner runtime.
 
 Start the full local stack (API, optional vision service, and web dev server):
 
@@ -48,6 +47,7 @@ Core command quick refs:
 npm run api:dev
 npm run web:dev
 npm run build
+npm run bootstrap:check
 npm run product:gate
 ```
 
@@ -62,6 +62,7 @@ npm run api:dev
 npm run build
 npm run lint
 npm run format -w @rubiks-cube-solver/web
+npm run bootstrap:check
 npm run live:start
 npm run product:gate
 ```
@@ -74,31 +75,37 @@ When Rust is installed:
 cargo test
 ```
 
-## Python, Vision, And ML Boundaries
+## Clean Bootstrap Check
 
-The repository currently has three Python areas with different ownership. They are intentionally separate so runtime scanner dependencies, scanner training tooling, and solver ML experiments do not blur together.
+Use `bootstrap:check` to validate a fresh install without private scanner datasets or model artifacts:
+
+```bash
+npm ci
+npm run vision:install
+npm run bootstrap:check
+```
+
+The check runs AI route validation, Rust formatting, cube-engine tests, API tests, scanner runtime/training tests, web build, web lint, and a YOLO artifact readiness check. Missing YOLO training datasets or local `scanner/models/tile-detector.onnx` are reported as external artifacts and do not fail the core bootstrap gate.
+
+## Python And Scanner Boundaries
+
+Python is used for the camera scanner only. Solver runtime, validation, search, heuristics, pruning tables, and replay verification remain Rust-owned.
 
 | Path | Role | Used by default runtime? | Notes |
 | --- | --- | --- | --- |
-| `ml/` | Solver ML value baseline. | No | Consumes Rust-generated solver datasets and writes local value artifacts for hybrid move-ordering experiments. It is not a product solver dependency. |
-| `vision/` | Runtime Vision service. | Yes, when scanner flows are enabled | FastAPI/OpenCV service proxied by the Rust API for `/scan/analyze-face` and `/analyze-session`. |
-| `vision_ml/` | Scanner training, datasets, replay/evaluation, and ONNX export. | No, except for local model artifact paths | Generates and validates scanner artifacts such as `vision_ml/local-models/tile-detector.onnx`; the live service receives those paths through environment variables. |
+| `scanner/contracts/` | Shared scanner contracts. | Yes | Pydantic contracts and scanner dataset schemas shared by runtime and training. |
+| `scanner/runtime/` | Runtime scanner service. | Yes, when scanner flows are enabled | FastAPI/OpenCV service proxied by the Rust API for `/scan/analyze-face`. |
+| `scanner/training/` | Scanner training and evaluation tooling. | No | Generates and validates scanner datasets, replay reports, YOLO datasets, training runs, and exported models. |
 
 Current scanner path:
 
 ```txt
-Web scanner -> Rust API -> Python vision service -> optional YOLO ONNX tile detector
+Web scanner -> Rust API -> scanner runtime -> optional YOLO ONNX tile detector
 ```
 
-The active live scanner model path is the tile detector configured by `RUBIKS_VISION_TILE_DETECTOR_MODEL`, usually `vision_ml/local-models/tile-detector.onnx` for local runs. The `vision_ml` package is not imported by normal `vision` request handling; it prepares datasets, labels, replay reports, training runs, and exported models.
-
-The sticker CNN and face detector code paths are optional or experimental. They are kept for research and smoke coverage, but the current live scanner path uses the YOLO tile detector for visible sticker localization and color classification.
+The active live scanner model path is the tile detector configured by `RUBIKS_VISION_TILE_DETECTOR_MODEL`, usually `scanner/models/tile-detector.onnx` for local runs. The scanner is YOLO-only: it does not use a sticker CNN, face detector, or color-classifier fallback.
 
 Do not commit private camera images, downloaded datasets, generated YOLO datasets, training runs, checkpoints, `.pt` files, `.onnx` files, or local `outputs/` directories. These paths are intentionally ignored so scanner experiments can run locally without becoming repository artifacts.
-
-## Product Validation Gate
-
-`PRODUCT_VALIDATION.md` is the durable product gate report for `GOALS.md` and completed roadmap phases. It lists the required Roadrunner verification commands, latest dated outcomes, generated artifact locations, and the product safety limits: every success is replay verified, generated tables are local artifacts, solver methods are interchangeable implementation details, ML is research-only unless explicitly integrated behind replay verification, and the solver does not claim optimality, `<=16`, or a 20-move guarantee.
 
 ## Solver Quality Report
 
@@ -118,7 +125,7 @@ cargo run --quiet -p cube-engine --bin solver_quality_report
 
 Rows are ordered by fixture and solver selection. Compare fixture IDs, categories, input paths, expectations, solver selection, strategy, configured limits, generated-table status, row status, solution length, explored nodes, replay verification, and moves for regressions. `elapsed_us` is local timing output and is not deterministic.
 
-Generated two-phase rows read local pruning-table artifacts from `crates/cube-engine/pruning-tables` by default. Missing artifacts report `generated_tables_unavailable`; corrupt or incompatible artifacts report `generated_tables_corrupt_or_incompatible`. The CLI prints the Markdown report and exits nonzero for native `unexpected_regression`, unavailable or corrupt generated-table rows, and hybrid missing, malformed, or unexpected-regression rows; a PyTorch dependency-fallback hybrid artifact remains a successful smoke outcome. These artifacts are local generated files and should not be committed.
+Generated two-phase rows read local pruning-table artifacts from `crates/cube-engine/pruning-tables` by default. Missing artifacts report `generated_tables_unavailable`; corrupt or incompatible artifacts report `generated_tables_corrupt_or_incompatible`. The CLI prints the Markdown report and exits nonzero for `unexpected_regression`, unavailable generated-table rows, or corrupt generated-table rows. These artifacts are local generated files and should not be committed.
 
 Generate the native compact artifacts used by generated two-phase rows with:
 
@@ -200,22 +207,6 @@ npm run pdb:edge:deep
 
 `pdb:edge` creates two depth-6 smoke artifacts. `pdb:edge:deep` creates two denser depth-8 local artifacts, `edge-pattern-database-a.repdb` and `edge-pattern-database-b.repdb`, under `crates/cube-engine/pruning-tables/`; this can take many minutes. The `optimal-bounded-pdb16` strategy uses `max(corner_pdb, edge_pdb_a, edge_pdb_b, orientation_pdb)` for an admissible IDA* attempt up to 16 moves, then falls back to `generated-two-phase-quality` without claiming that no short solution exists.
 
-Generate ML training rows labeled by the generated two-phase solver instead of inverse scrambles:
-
-```bash
-npm run dataset:solver
-npm run dataset:solver:1k
-npm run ml:solver:1k
-```
-
-The solver dataset generator supports `--solver-label-mode generated-two-phase`, `generated-two-phase-quality`, and `generated-two-phase-multiprobe`. The npm dataset scripts use `generated-two-phase-quality` labels by default, replay-verify every emitted solution, and keep generated JSONL files under `datasets/generated/` for local experiments.
-
-When PyTorch is available, `ml.train_value_baseline` writes both diagnostic `value_outputs.tsv` rows and a portable `model.json` MLP artifact. The Rust quality report can score unseen child states from that artifact with:
-
-```bash
-npm run solver:bench:hybrid-model
-```
-
 ## Native HTTP API
 
 The API is the preferred path for heavy generated two-phase solving because it keeps native pruning-table artifacts on the server instead of shipping large solver assets to the browser.
@@ -243,7 +234,7 @@ API endpoints:
 - `GET /strategies`
 - `POST /solve-notation` with `{ "moves": "R2 D2 F'", "strategyId": "generated-two-phase-quality", "maxDepth": 30, "maxNodes": 10000000 }`
 - `POST /solve-scan` with `{"faces": {"U":"UUURRR...", "R":"...", ...}, "strategyId": "generated-two-phase-quality", "maxDepth": 30, "maxNodes": 10000000 }`
-- `POST /scan/analyze-face` with `{ "expectedCenter": "R", "image": "<base64-png>", "knownCenters": { ... } }`
+- `POST /scan/analyze-face` with `{ "expectedCenter": "R", "image": "<base64-png>" }`
 - `POST /scan/solve-session` for 3x3 scan sessions.
 - `POST /puzzles/:puzzleSlug/scan/solve-session` for puzzle-scoped scan sessions such as `cube-2x2x2`.
 - If `maxNodes` is omitted, the API uses `10000000`; the request cap is `25000000`.
@@ -258,7 +249,7 @@ The default web-facing contract is now puzzle-aware move-notation solving throug
 
 ### Multi-Puzzle And 2x2 Support
 
-The many-cubes track is documented in `docs/many-cubes-plan.md` and `roadmap-many-cubes.md`. The current implementation keeps `cube/3x3x3` stable and adds experimental `cube/2x2x2` support through the same Rust/API/frontend boundary.
+The many-cubes track is documented in `docs/many-cubes-plan.md`. The current implementation keeps `cube/3x3x3` stable and adds experimental `cube/2x2x2` support through the same Rust/API/frontend boundary.
 
 Current puzzle IDs and slugs:
 
@@ -284,23 +275,22 @@ npm run solver:bench:2x2
 
 ### Vision Service Integration
 
-Scan analysis is handled by the optional Rust-proxied Vision service in `vision/`.
+Scan preview is handled by the optional Rust-proxied scanner runtime in `scanner/runtime/`.
 
 - API defaults to `http://127.0.0.1:8790` for scan analysis (`RUBIKS_VISION_URL` overrides this).
-- The Vision service exposes `/analyze-face` for live face preview and `/analyze-session` for full scan-session analysis.
-- The Rust API proxies scanner calls through `/scan/analyze-face`, `/scan/solve-session`, and related scan routes.
+- The scanner runtime exposes `/analyze-face` for live face preview.
+- The Rust API proxies live preview through `/scan/analyze-face`; `/scan/solve-session` validates reviewed stickers and solves in Rust.
 - The active live scanner path uses the optional YOLO tile detector when `RUBIKS_VISION_TILE_DETECTOR_MODEL` points to an exported ONNX model.
-- The default local detector path used by scanner scripts is `vision_ml/local-models/tile-detector.onnx`.
-- The sticker CNN (`RUBIKS_VISION_CNN_MODEL`) and face detector (`RUBIKS_VISION_FACE_DETECTOR_MODEL`) are optional or experimental and are not the current live scanner path.
+- The default local detector path used by scanner scripts is `scanner/models/tile-detector.onnx`.
 
-Install and run the runtime Vision service with:
+Install and run the runtime scanner service with:
 
 ```bash
 npm run vision:install
 npm run vision:dev
 ```
 
-Run the Vision service tests with:
+Run the scanner runtime tests with:
 
 ```bash
 npm run vision:test
@@ -309,22 +299,26 @@ npm run vision:test
 Run the full local stack with the current scanner detector environment configured:
 
 ```bash
-npm run dev:scan-ml
+npm run dev
 ```
 
-Scanner training and evaluation tooling lives in `vision_ml/`. Use it to label sessions, replay scans, evaluate scanner quality, generate YOLO datasets, train/export local ONNX models, and keep private image artifacts out of git.
+Scanner training and evaluation tooling lives in `scanner/training/`. Use it to label sessions, replay scans, evaluate scanner quality, generate YOLO datasets, train/export local ONNX models, and keep private image artifacts out of git.
 
 Useful scanner tooling commands:
 
 ```bash
-npm run vision-ml:test
+npm run scanner:training:test
 npm run scan:label
 npm run scan:replay
 npm run scan:evaluate
-npm run scan:tile-yolo-dataset
+npm run scan:tile-yolo-roboflow-dataset
+npm run scan:tile-yolo-check
+npm run scan:tile-yolo-train
+npm run scan:tile-yolo-export
+npm run scan:tile-yolo-install
 ```
 
-`vision/README.md` documents the runtime service. `vision_ml/README.md` and `vision_ml/SCANNER_YOLO_RUNBOOK.md` document scanner datasets, model quality expectations, Roboflow/YOLO conversion, ONNX export, and artifact handling.
+`scanner/runtime/README.md` documents the runtime service. `scanner/training/README.md` and `scanner/training/SCANNER_YOLO_RUNBOOK.md` document scanner datasets, model quality expectations, Roboflow/YOLO conversion, ONNX export, and artifact handling.
 
 ## Troubleshooting
 
@@ -395,7 +389,7 @@ Useful E2E splits:
 
 ## Cloudflare Tunnel
 
-Production follows the same local tunnel model used by `zelda-proto`: one local HTTP server listens on port `3001`, serves the built web app, exposes the Rust API routes, and Cloudflare Tunnel publishes it at `wilho.com.br`. The production Vision service listens on `8791` by default, so `npm run live:start` can run alongside `npm run dev`.
+Production follows the same local tunnel model used by `zelda-proto`: one local HTTP server listens on port `3001`, serves the built web app, exposes the Rust API routes, and Cloudflare Tunnel publishes it at `wilho.com.br`. The production scanner runtime listens on `8791` by default, so `npm run live:start` can run alongside `npm run dev`.
 
 Start the full production boot path plus tunnel:
 
@@ -432,114 +426,15 @@ Production defaults:
 - `RUBIKS_WEB_DIST_DIR=web/dist`
 - The production web build uses the same origin for API calls when `VITE_RUBIKS_API_URL` is not set
 
-## Dataset Generation
+## Solver Quality Report
 
-`cube-engine` owns deterministic solver-labeled dataset generation. The current generator still emits legacy 3x3 JSONL records with fixed field order and schema version `1`:
-
-```json
-{"schema_version":1,"state":"cp=...;co=...;ep=...;eo=...","scramble":"R U","scramble_depth":2,"verified_solution":"U' R'","verified_solution_length":2,"best_move":"U'","label_source":"generated_two_phase_quality_solver_replay_verified","split":"train"}
-```
-
-- `state` is the stable serialized `CubieState` string and is validated before writing.
-- `scramble_depth` is the generated scramble length, not an optimal-distance claim.
-- `verified_solution` is the replay-verified solution returned by the configured generated two-phase solver mode.
-- `verified_solution_length` is the length of that replay-verified solution, not an optimal-distance claim.
-- `best_move` is the first move of `verified_solution`, or `null` for solved examples.
-- `split` is assigned from a stable hash of `state` into `train`, `validation`, or `test`.
-
-Generate a local smoke dataset with:
-
-```bash
-npm run dataset:solver
-```
-
-Generate larger local datasets under the ignored `datasets/generated/` path, for example:
-
-```bash
-npm run dataset:solver:1k
-```
-
-The committed `datasets/fixtures/small.jsonl` remains a tiny ML smoke fixture with legacy reversible-scramble labels. It is kept for fast deterministic tests, not as the preferred generator path for new training data.
-
-Schema version `2` is puzzle-aware and records `puzzle_id`, `puzzle_slug`, `state_encoding_id`, `move_set_id`, `metric`, `label_target`, `generator_seed`, `solver_strategy_id`, and `replay_verified`. See `docs/dataset-schema-v2.md` for the full contract. The committed `datasets/fixtures/cube2-small-v2.jsonl` validates the initial 2x2 dataset representation, but the current ML value model still accepts only `cube/3x3x3` rows with `cube3-cubie-v1` encoding.
-
-## ML Value Baseline
-
-The first ML baseline is isolated under `ml/`. It consumes Rust dataset JSONL records and derives model inputs from the serialized 3x3 `CubieState` fields `cp`, `co`, `ep`, and `eo`. It does not use frontend sticker or color arrays as the primary model input.
-
-Install Python dependencies with:
-
-```bash
-python -m pip install -r ml/requirements.txt
-```
-
-Run the fixture-based tests with:
-
-```bash
-python -m pytest ml
-```
-
-Train and evaluate the small deterministic PyTorch MLP value model with:
-
-```bash
-python -m ml.train_value_baseline --dataset datasets/fixtures/small.jsonl --epochs 1 --seed 0 --output ml/outputs/value-baseline --inference-repeats 1
-```
-
-The CLI prints a JSON report and writes `metrics.json` plus `value_outputs.tsv` under the requested `--output` directory. The TSV uses comment metadata followed by `CubieState<TAB>predicted_value` rows for local hybrid-search experiments. The report, model artifact, and TSV metadata include puzzle/model compatibility fields so a 3x3 model cannot silently consume 2x2 rows. The default output directory is the ignored workspace-local `ml/outputs/value-baseline`, and the dependency fallback does not write model checkpoints.
-
-If PyTorch is unavailable, the CLI exits successfully with an explicit dependency-fallback report so smoke verification still records label metrics; install `ml/requirements.txt` to train the PyTorch MLP.
-
-The target label is `verified_solution_length`: the length of the replay-verified solution stored in the dataset. It is useful for a reproducible value-model smoke baseline, but it is not an optimal-distance label and must not be described as God's Number evidence or a 20-move guarantee. The direct `reversible_scramble_depth` baseline can score perfectly on the small fixture because that committed fixture uses reversible scramble inverses; that is evidence of label consistency, not optimal solving.
-
-The report includes MAE, RMSE, bucket accuracy, metrics by depth bucket, and inference time per state for the ML value model or dependency fallback. Its `classical_baseline_comparison` section also includes direct fixture baselines for `reversible_scramble_depth` and `constant_train_mean`, each with MAE, RMSE, bucket accuracy, and depth-bucket metrics derived from `datasets/fixtures/small.jsonl`.
-
-The same comparison section documents the reproducible Rust product solver-quality command and comparable metric names. The Rust report uses the separate `quality_fixtures()` catalog in `crates/cube-engine/src/solver/quality.rs`, so compare it as deterministic classical solver evidence rather than as the same label catalog used by the ML JSONL smoke test:
+The native solver quality report is Rust-only. It uses the fixture catalog in `crates/cube-engine/src/solver/quality.rs` to check deterministic solver rows, generated pruning-table availability, replay verification, and honest limit failures:
 
 ```bash
 cargo run --quiet -p cube-engine --bin solver_quality_report
 ```
 
 The Rust report summary includes status counts by solver selection, replay-verified successes, solution-length range, and explored-node totals. Row-level elapsed timing is local and non-deterministic.
-
-Safety rules for ML experiments:
-
-- ML does not validate cube states.
-- ML does not replace replay verification of returned solutions.
-- ML is not an admissible heuristic unless a separate proof or safe bound is added.
-- ML is not a dependency of the default Rust API or web solve path.
-- Classical deterministic solving remains the fallback for product behavior.
-
-## Hybrid Move Ordering Experiment
-
-The first hybrid-search experiment is isolated to the native solver quality report. It loads local value outputs and uses them only to order legal bounded IDA* child moves by predicted value, with lower values tried first. It does not validate states, prune branches, change depth or node limits, claim admissibility, replace Rust replay verification, or change Rust API/web product defaults.
-
-The no-arg quality report looks for local value outputs at:
-
-```bash
-ml/outputs/value-baseline/value_outputs.tsv
-```
-
-Generate that artifact with the ML smoke command:
-
-```bash
-python -m ml.train_value_baseline --dataset datasets/fixtures/small.jsonl --epochs 1 --seed 0 --output ml/outputs/value-baseline --inference-repeats 1
-```
-
-Run the report with the default artifact path:
-
-```bash
-cargo run --quiet -p cube-engine --bin solver_quality_report
-```
-
-Run the report with an explicit artifact path:
-
-```bash
-cargo run --quiet -p cube-engine --bin solver_quality_report -- --hybrid-value-outputs ml/outputs/value-baseline/value_outputs.tsv
-```
-
-The report keeps the deterministic classical rows unchanged and appends `Hybrid Move Ordering Experiment` rows using the same fixture budgets as `default-bounded-ida-star`. Hybrid rows include artifact status, row status, solution length, explored nodes, elapsed time, replay verification, scored value lookups, missing score lookups, and moves.
-
-Missing artifacts report `artifact_unavailable`. PyTorch dependency-fallback artifacts report `artifact_dependency_fallback` instead of being treated as learned guidance. Malformed artifacts report `artifact_malformed`. A hybrid row is reported as `success` only when Rust replay verification proves the returned moves solve the fixture. The experiment does not claim optimality or a 20-move guarantee.
 
 ## Local Visualization Package
 

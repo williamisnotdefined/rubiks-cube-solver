@@ -954,9 +954,6 @@
       "liveReviewReady": "已识别 {{count}} 个贴纸。请复核颜色，必要时更正任何方格，然后确认此面。"
     },
     "modal": {
-      "cnnEvidenceActive": "CNN 证据启用",
-      "cnnReasonUnknown": "未配置",
-      "colorFallbackActive": "仅颜色回退：{{reason}}",
       "confirmed": "已确认 {{count}} 个",
       "description": "按要求的顶部颜色一次展示一个面。解法会使用你确认的颜色。",
       "dismiss": "关闭扫描魔方",

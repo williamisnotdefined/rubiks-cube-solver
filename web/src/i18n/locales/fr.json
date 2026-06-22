@@ -954,9 +954,6 @@
       "liveReviewReady": "{{count}} stickers reconnus. Vérifiez les couleurs, corrigez toute case si nécessaire, puis confirmez cette face."
     },
     "modal": {
-      "cnnEvidenceActive": "Preuve CNN active",
-      "cnnReasonUnknown": "non configuré",
-      "colorFallbackActive": "Repli couleur seule : {{reason}}",
       "confirmed": "{{count}} confirmées",
       "description": "Montrez une face à la fois avec la couleur du haut demandée. La solution utilise les couleurs que vous confirmez.",
       "dismiss": "Fermer le scan du cube",

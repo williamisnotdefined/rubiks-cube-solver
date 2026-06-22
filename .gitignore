@@ -11,15 +11,9 @@ playwright-report/
 test-results/
 blob-report/
 
-# Local tooling
-.roadrunner/
-
 # Generated pruning tables are local artifacts; commit only tiny fixtures.
 crates/cube-engine/pruning-tables/
 web/public/generated-pruning-tables/
-
-# Generated datasets are local artifacts; commit only small fixtures.
-datasets/generated/
 
 # Python
 __pycache__/
@@ -27,19 +21,15 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 
-# ML outputs
-ml/outputs/
-ml/runs/
-ml/checkpoints/
-vision_ml/outputs/
-vision_ml/runs/
-vision_ml/checkpoints/
+# Scanner outputs
+scanner/outputs/
+scanner/runs/
+scanner/checkpoints/
 
 # Local scanner captures, downloaded datasets, and model artifacts may contain private images.
-vision_ml/local-images/
-vision_ml/references/
-archive/
-archive.zip
+scanner/local-images/
+scanner/references/
+scanner/models/
 rubiks-scan-session-*.json
 rubiks-scan-dataset-*.json
 *.coco.zip

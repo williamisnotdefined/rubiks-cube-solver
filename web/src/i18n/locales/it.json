@@ -954,9 +954,6 @@
       "liveReviewReady": "{{count}} sticker riconosciuti. Revisiona i colori, correggi eventuali quadrati se necessario, poi conferma questa faccia."
     },
     "modal": {
-      "cnnEvidenceActive": "Evidenza CNN attiva",
-      "cnnReasonUnknown": "non configurato",
-      "colorFallbackActive": "Fallback solo colore: {{reason}}",
       "confirmed": "{{count}} confermate",
       "description": "Mostra una faccia alla volta con il colore superiore richiesto. La soluzione usa i colori che confermi.",
       "dismiss": "Chiudi scansione cubo",

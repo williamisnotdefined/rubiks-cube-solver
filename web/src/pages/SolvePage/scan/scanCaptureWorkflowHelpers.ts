@@ -1,5 +1,4 @@
-import type { AnalyzeScanFaceResponse, RgbColor } from '@api/scan'
-import type { ScanFaceSymbol } from '@api/solver/types'
+import type { AnalyzeScanFaceResponse } from '@api/scan'
 import type { TFunction } from 'i18next'
 import type { CapturedScanImage } from './scanCapture'
 import {
@@ -8,7 +7,6 @@ import {
   type ScanCaptureMetadata,
   type ScanFaceDraft,
   type ScanFaceDrafts,
-  type ScanFaces,
 } from './scanState'
 import type { TemporalFaceConsensus } from './scanTemporalConsensus'
 
@@ -111,17 +109,4 @@ export function scanQualityMessage(
   }
 
   return analysis.status === 'low_confidence' ? t('scan.messages.lowConfidence') : undefined
-}
-
-export function knownCenterReferencesFromFaces(faces: ScanFaces): Partial<Record<ScanFaceSymbol, RgbColor>> {
-  const references: Partial<Record<ScanFaceSymbol, RgbColor>> = {}
-
-  for (const face of Object.values(faces)) {
-    const center = face?.stickers[4]
-    if (face !== undefined && center?.rgb !== undefined) {
-      references[face.symbol] = center.rgb
-    }
-  }
-
-  return references
 }

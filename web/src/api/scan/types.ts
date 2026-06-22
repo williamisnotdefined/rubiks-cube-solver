@@ -91,7 +91,6 @@ export type AnalyzeScanFaceVariables = {
   expectedCenter: ScanFaceSymbol
   gridSize?: 2 | 3
   image: string
-  knownCenters: Partial<Record<ScanFaceSymbol, RgbColor>>
   signal?: AbortSignal
 }
 

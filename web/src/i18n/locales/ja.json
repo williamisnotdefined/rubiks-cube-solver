@@ -954,9 +954,6 @@
       "liveReviewReady": "{{count}} ステッカーが認識されました。色を確認し、必要に応じて四角形を修正し、この面を確認します。"
     },
     "modal": {
-      "cnnEvidenceActive": "CNN 証拠が有効です",
-      "cnnReasonUnknown": "設定されていません",
-      "colorFallbackActive": "カラーのみのフォールバック: {{reason}}",
       "confirmed": "{{count}} 件確認済み",
       "description": "要求されたトップカラーで一度に 1 つの顔を表示します。ソリューションでは、確認した色が使用されます。",
       "dismiss": "スキャンキューブを閉じる",

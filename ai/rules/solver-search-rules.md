@@ -14,7 +14,7 @@ Rules for search, heuristics, and pattern database work.
 
 - Do not depend on brute force as the final strategy.
 - Do not mix pattern database generation with runtime search unless the boundary is explicit.
-- Do not add learned heuristics before deterministic heuristics and validation are available.
+- Do not add learned or external-inference heuristics without an explicit current product requirement.
 - Do not claim optimality unless the heuristic and search mode guarantee it.
 
 ## Verification

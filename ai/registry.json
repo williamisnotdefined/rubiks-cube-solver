@@ -168,11 +168,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "crates/api/**/*.{rs,toml},web/src/api/**/*.{ts,tsx},roadmap.md,PRODUCT_VALIDATION.md",
+          "globs": "crates/api/**/*.{rs,toml},web/src/api/**/*.{ts,tsx},roadmap.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "crates/api/**/*.{rs,toml},web/src/api/**/*.{ts,tsx},roadmap.md,PRODUCT_VALIDATION.md"
+          "applyTo": "crates/api/**/*.{rs,toml},web/src/api/**/*.{ts,tsx},roadmap.md"
         }
       }
     },

@@ -64,7 +64,6 @@ Current 3x3-specific anchors:
 - `crates/cube-engine/src/solver/strategy.rs` exposes 3x3 strategy metadata.
 - `crates/api/src/solve.rs` receives notation or scan input and builds a 3x3 `Cube`.
 - `web/src/pages/SolvePage/CubeStage.tsx` renders `<rubiks-cube cube-type="Three">`.
-- `ml/data.py` and `crates/cube-engine/src/search/hybrid/encoding.rs` encode 3x3 `cp/co/ep/eo` as 40 features.
 
 This is not a weakness. The current 3x3 path should be treated as the first puzzle implementation, not as a generic engine.
 
@@ -86,7 +85,6 @@ Each puzzle owns:
 - heuristics;
 - coordinates;
 - artifact compatibility rules;
-- ML state encoding, if any.
 
 Shared layers are allowed only where they stay puzzle-neutral:
 
@@ -98,7 +96,6 @@ Shared layers are allowed only where they stay puzzle-neutral:
 - search metrics;
 - replay verification reporting;
 - artifact metadata format;
-- dataset/model compatibility metadata;
 - frontend puzzle selection and rendering adapters.
 
 Shared layers must not own puzzle state transitions, legal move semantics, solvability rules, or solver correctness.
@@ -150,7 +147,6 @@ crates/cube-engine/src/
     input.rs
     output.rs
     artifacts.rs
-    ml.rs
   puzzles/
     cube3/
     cube2/
@@ -163,7 +159,6 @@ crates/cube-engine/src/
   search/
     common/
     pruning/
-    hybrid/
   solver/
     registry.rs
     config.rs
@@ -480,7 +475,7 @@ Scanner multi-puzzle should have a separate roadmap after notation/state solvers
 
 ## Artifact Compatibility
 
-Every generated table or model artifact must eventually declare compatibility metadata.
+Every generated table artifact must eventually declare compatibility metadata.
 
 Required artifact metadata:
 
@@ -505,71 +500,7 @@ Examples:
 - a 3x3 Kociemba pruning table cannot load for 2x2;
 - a 2x2 corner PDB cannot load for Pyraminx;
 - an HTM table cannot silently serve QTM if metric matters;
-- a model trained on `cube3-cubie-v1` cannot rank `cube2-corners-v1` states.
-
-## Dataset And ML Plan
-
-Dataset schema v1 is 3x3-specific. Multi-puzzle support needs dataset schema v2.
-
-Dataset v2 required fields:
-
-```txt
-schema_version
-puzzle_id
-puzzle_slug
-state_encoding_id
-move_set_id
-metric
-state
-scramble
-scramble_depth
-verified_solution
-verified_solution_length
-best_move
-label_source
-label_target
-split
-generator_seed
-solver_strategy_id
-replay_verified
-```
-
-Model artifact metadata required fields:
-
-```txt
-model_schema_version
-puzzle_id
-state_encoding_id
-move_set_id
-metric
-feature_dim
-label_target
-label_source
-role
-admissible
-validates_states
-replaces_replay_verification
-default_product_solver_dependency
-```
-
-Allowed ML roles initially:
-
-```txt
-value_estimation
-policy_prior
-move_ordering
-```
-
-Forbidden ML roles initially:
-
-```txt
-state_validation
-replay_verification
-required_product_solver
-admissible_pruning_without_proof
-```
-
-ML remains optional and experimental until deterministic solvers and replay verification are correct.
+- generated artifacts must declare enough puzzle, move-set, metric, and coordinate metadata to reject incompatible runtime loading.
 
 ## First Puzzle: 2x2x2
 
@@ -600,7 +531,6 @@ Deferred:
 - physical orientation ambiguity handling
 - color scheme selection
 - full-table optimal solver
-- ML
 - advanced visualization if no existing adapter supports it
 
 ### 2x2 State
@@ -922,7 +852,7 @@ Recommended sequence:
 11. Expose 2x2 in API.
 12. Add 2x2 frontend selection.
 13. Add 2x2 quality report fixtures.
-14. Introduce dataset/model compatibility v2.
+14. Add generated-artifact compatibility metadata.
 15. Start Pyraminx.
 
 ## Verification Policy
@@ -951,12 +881,6 @@ Frontend changes:
 npm run build
 npm run lint -w @rubiks-cube-solver/web
 npm run test -w @rubiks-cube-solver/web
-```
-
-ML changes:
-
-```bash
-python -m pytest ml
 ```
 
 Release-level validation remains broader and should not be required for every small phase.
@@ -1002,18 +926,16 @@ Primary risks:
 
 - accidentally breaking the current 3x3 product path;
 - over-generalizing too early;
-- under-specifying puzzle/model/artifact compatibility;
+- under-specifying puzzle/artifact compatibility;
 - mixing scanner assumptions into puzzle engine design;
 - adding frontend puzzle behavior before Rust contracts exist;
-- treating ML as an admissible heuristic without proof;
 - committing generated artifacts.
 
 Mitigations:
 
 - keep old 3x3 endpoints during migration;
 - use puzzle-specific modules;
-- add compatibility metadata before artifacts/models multiply;
+- add compatibility metadata before artifacts multiply;
 - keep scanner 3x3-only initially;
 - expose puzzle capabilities from API;
-- keep ML optional and role-limited;
 - preserve ignored artifact paths.

@@ -39,8 +39,6 @@ export type HealthResponse = {
   ok: boolean
   generatedTwoPhaseReady: boolean
   visionOk?: boolean
-  visionCnnAvailable?: boolean
-  visionCnnReason?: string
   visionTileDetectorAvailable?: boolean
   visionTileDetectorReason?: string
 }

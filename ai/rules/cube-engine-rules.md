@@ -18,7 +18,7 @@ Rules for the Rust cube engine.
 - Do not depend on JavaScript visualization libraries in the Rust core.
 - Do not let search code mutate cube state through hidden global state.
 - Do not create a generic puzzle engine, universal move type, universal state type, `BaseMove`, `BaseState`, `BasePuzzle`, or inheritance-style puzzle hierarchy.
-- Do not add ML heuristics before classic move tables and deterministic search are correct.
+- Do not add learned or external inference heuristics without an explicit current product requirement.
 
 ## Verification
 

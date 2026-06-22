@@ -9,10 +9,6 @@ pub struct HealthResponse {
     pub generated_two_phase_ready: bool,
     #[serde(rename = "visionOk")]
     pub vision_ok: bool,
-    #[serde(rename = "visionCnnAvailable")]
-    pub vision_cnn_available: bool,
-    #[serde(rename = "visionCnnReason", skip_serializing_if = "Option::is_none")]
-    pub vision_cnn_reason: Option<String>,
     #[serde(rename = "visionTileDetectorAvailable")]
     pub vision_tile_detector_available: bool,
     #[serde(
@@ -403,8 +399,6 @@ pub struct AnalyzeScanFaceRequest {
     #[serde(rename = "expectedCenter")]
     pub expected_center: String,
     pub image: String,
-    #[serde(rename = "knownCenters", default)]
-    pub known_centers: HashMap<String, RgbColorRequest>,
     #[serde(rename = "gridSize", default = "default_grid_size")]
     pub grid_size: usize,
 }

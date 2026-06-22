@@ -939,7 +939,7 @@ async fn solve_scan_route_is_exposed() {
 }
 
 #[tokio::test]
-async fn health_route_reports_vision_cnn_status() {
+async fn health_route_reports_vision_tile_detector_status() {
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
         .await
         .expect("vision listener should bind");
@@ -951,8 +951,6 @@ async fn health_route_reports_vision_cnn_status() {
         axum::routing::get(|| async {
             axum::Json(serde_json::json!({
                 "ok": true,
-                "cnnAvailable": false,
-                "cnnReason": "cnn_model_not_configured",
                 "tileDetectorAvailable": false,
                 "tileDetectorReason": "tile_detector_model_not_configured"
             }))
@@ -987,8 +985,6 @@ async fn health_route_reports_vision_cnn_status() {
     assert_eq!(response["ok"], true);
     assert_eq!(response["generatedTwoPhaseReady"], false);
     assert_eq!(response["visionOk"], true);
-    assert_eq!(response["visionCnnAvailable"], false);
-    assert_eq!(response["visionCnnReason"], "cnn_model_not_configured");
     assert_eq!(response["visionTileDetectorAvailable"], false);
     assert_eq!(
         response["visionTileDetectorReason"],
@@ -1008,8 +1004,7 @@ async fn analyze_scan_face_route_rejects_invalid_center_before_proxy() {
                 .body(Body::from(
                     serde_json::json!({
                         "expectedCenter": "Q",
-                        "image": "data:image/jpeg;base64,AAAA",
-                        "knownCenters": {}
+                        "image": "data:image/jpeg;base64,AAAA"
                     })
                     .to_string(),
                 ))
@@ -1038,7 +1033,6 @@ async fn analyze_scan_face_reports_unavailable_vision_service() {
         expected_center: "U".to_owned(),
         grid_size: 3,
         image: "data:image/jpeg;base64,AAAA".to_owned(),
-        known_centers: Default::default(),
     };
 
     let (status, response) = crate::analyze_scan_face_request(&state, request).await;

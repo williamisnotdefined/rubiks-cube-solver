@@ -450,27 +450,23 @@ describe('ScanCubeModal', () => {
     expect(liveScanMocks.resetAutoFill).toHaveBeenCalled()
   })
 
-  it('shows the optional CNN evidence status', () => {
+  it('shows the optional tile detector status', () => {
     const { rerender } = render(
       <ScanCubeModal
         apiReady
         solving={false}
-        visionCnnAvailable
         visionTileDetectorAvailable
         visionOk
         onClose={vi.fn()}
       />,
     )
 
-    expect(screen.getByText('CNN evidence active')).toBeInTheDocument()
     expect(screen.getByText('Sticker detector active')).toBeInTheDocument()
 
     rerender(
       <ScanCubeModal
         apiReady
         solving={false}
-        visionCnnAvailable={false}
-        visionCnnReason="cnn_model_not_configured"
         visionTileDetectorAvailable={false}
         visionTileDetectorReason="tile_detector_model_not_configured"
         visionOk
@@ -478,7 +474,6 @@ describe('ScanCubeModal', () => {
       />,
     )
 
-    expect(screen.getByText('Color-only fallback: cnn_model_not_configured')).toBeInTheDocument()
     expect(screen.getByText('Sticker detector fallback: tile_detector_model_not_configured')).toBeInTheDocument()
 
     rerender(
@@ -490,7 +485,7 @@ describe('ScanCubeModal', () => {
       />,
     )
 
-    expect(screen.getAllByText('Vision status unavailable')).toHaveLength(2)
+    expect(screen.getByText('Vision status unavailable')).toBeInTheDocument()
   })
 
   it('does not fill the review grid when the detected center is a different color', () => {
@@ -1258,7 +1253,6 @@ describe('ScanCubeModal', () => {
         expectedCenter: 'F',
         gridSize: 3,
         image: 'data:image/jpeg;base64,manual-scan',
-        knownCenters: {},
       })
     })
     expect(captureScanImageMock).toHaveBeenCalledWith(expect.any(HTMLVideoElement), apiMocks.cameraStream)

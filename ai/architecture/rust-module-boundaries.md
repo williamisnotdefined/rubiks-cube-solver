@@ -4,10 +4,10 @@ Rust module structure should make the cube domain and solver flow easier to read
 
 ## Crate Boundaries
 
-- `crates/cube-engine` owns cube state, moves, validation, search, heuristics, pruning tables, solver orchestration, reports, and dataset generation helpers.
+- `crates/cube-engine` owns cube state, moves, validation, search, heuristics, pruning tables, solver orchestration, and reports.
 - `crates/api` owns HTTP routing, request and response types, CORS, API safety caps, generated solver loading, and HTTP error mapping.
 - `web` renders UI and calls the API; it should not receive solver internals.
-- `ml` consumes generated datasets and should not become a runtime solver dependency.
+- `scanner` owns Python scanner runtime and offline scanner model tooling; it should not receive solver internals.
 
 ## Module Shape
 
@@ -38,8 +38,8 @@ Prefer narrow files named after concrete responsibilities. Good seams in this re
 ## DDD Mapping For This Project
 
 - Domain: cubies, moves, coordinates, facelets, invariants, and pure transformations.
-- Application/use case: solver entry points, strategy dispatch, replay verification, reports, and dataset generation.
-- Infrastructure/adapters: Axum handlers, local artifact loading, CLI binaries, filesystem writes, and JSONL output.
+- Application/use case: solver entry points, strategy dispatch, replay verification, and reports.
+- Infrastructure/adapters: Axum handlers, local artifact loading, CLI binaries, and filesystem writes.
 
 ## Visibility
 

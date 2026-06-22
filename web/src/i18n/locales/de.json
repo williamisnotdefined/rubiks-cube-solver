@@ -954,9 +954,6 @@
       "liveReviewReady": "{{count}} Sticker erkannt. Prüfe die Farben, korrigiere bei Bedarf ein Feld und bestätige dann diese Seite."
     },
     "modal": {
-      "cnnEvidenceActive": "CNN-Evidenz aktiv",
-      "cnnReasonUnknown": "nicht konfiguriert",
-      "colorFallbackActive": "Nur-Farb-Fallback: {{reason}}",
       "confirmed": "{{count}} bestätigt",
       "description": "Zeige jeweils eine Seite mit der angeforderten oberen Farbe. Die Lösung verwendet die Farben, die du bestätigst.",
       "dismiss": "Würfelscan schließen",
