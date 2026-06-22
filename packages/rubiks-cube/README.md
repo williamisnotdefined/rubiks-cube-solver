@@ -45,6 +45,10 @@ and 120-degree vertex turns instead of cube `CubeType`, Kociemba, or slice moves
 `<megaminx-puzzle>` is the Megaminx renderer. It uses Megaminx-specific visual sticker state, dodecahedral
 geometry, and 72-degree face turns instead of cube `CubeType`, Kociemba, or slice moves.
 
+Megaminx defaults to `visual-style="stickerless"`, rendering face-colored plastic instead of black sticker backing.
+Use `<megaminx-puzzle visual-style="stickered">` to inspect the sticker/backing layout. The visual style does not
+change notation, state, or solver behavior.
+
 ## Boundaries
 
 - Solver behavior, cube validation, search, and heuristics stay in Rust.

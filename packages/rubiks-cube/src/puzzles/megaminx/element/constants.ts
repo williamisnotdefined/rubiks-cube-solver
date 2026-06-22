@@ -22,4 +22,5 @@ export const MegaminxAttributeNames = {
   cameraRadius: 'camera-radius',
   cameraSpeed: 'camera-speed-ms',
   maxDevicePixelRatio: 'max-device-pixel-ratio',
+  visualStyle: 'visual-style',
 } as const;

@@ -8,6 +8,7 @@ import {
   MegaminxFaces,
   MegaminxMoves,
   MegaminxPuzzleElement,
+  MegaminxVisualStyles,
 } from '../src/puzzles/megaminx';
 
 const rendererMocks = vi.hoisted(() => ({
@@ -39,10 +40,14 @@ const controlsMocks = vi.hoisted(() => ({
   removeEventListener: vi.fn(),
   update: vi.fn(() => false),
   instances: [] as Array<{
+    dampingFactor: number;
     dispatch: (type: string) => void;
     enableDamping: boolean;
     enablePan: boolean;
     enableZoom: boolean;
+    maxPolarAngle: number;
+    minPolarAngle: number;
+    rotateSpeed: number;
   }>,
 }));
 
@@ -78,9 +83,13 @@ vi.mock('three/examples/jsm/controls/OrbitControls.js', async (importOriginal) =
   return {
     ...actual,
     OrbitControls: class MockOrbitControls {
+      dampingFactor = 0;
       enableDamping = true;
       enablePan = true;
       enableZoom = true;
+      maxPolarAngle = Math.PI;
+      minPolarAngle = 0;
+      rotateSpeed = 1;
       listeners = new Map<string, Set<() => void>>();
 
       constructor() {
@@ -198,6 +207,7 @@ describe('MegaminxPuzzleElement', () => {
     element.setAttribute(MegaminxAttributeNames.cameraPeekAngleVertical, '0.5');
     element.setAttribute(MegaminxAttributeNames.maxDevicePixelRatio, '2');
     element.setAttribute(MegaminxAttributeNames.antialias, 'true');
+    element.setAttribute(MegaminxAttributeNames.visualStyle, MegaminxVisualStyles.Stickerless);
     element.setAttribute('render-events', '');
     const renderListener = vi.fn();
     element.addEventListener('megaminx-render', renderListener);
@@ -212,11 +222,16 @@ describe('MegaminxPuzzleElement', () => {
     expect(element.cameraSpeedMs).toBe(80);
     expect(element.cameraPeekAngleHorizontal).toBe(0.4);
     expect(element.cameraPeekAngleVertical).toBe(0.5);
+    expect(element.visualStyle).toBe(MegaminxVisualStyles.Stickerless);
 
     MockResizeObserver.instances[0].resize(240, 120);
     controlsMocks.instances.at(-1)?.dispatch('change');
     element.setAttribute(MegaminxAttributeNames.maxDevicePixelRatio, '4');
     expect(rendererMocks.setPixelRatio).toHaveBeenCalledWith(3);
+    element.setAttribute(MegaminxAttributeNames.visualStyle, MegaminxVisualStyles.Stickered);
+    expect((element as unknown as { _megaminx: Megaminx3D })._megaminx.visualStyle).toBe(
+      MegaminxVisualStyles.Stickered,
+    );
 
     gsapMocks.to.mockClear();
     element.setAttribute(MegaminxAttributeNames.cameraSpeed, '60');
@@ -276,20 +291,24 @@ describe('MegaminxPuzzleElement', () => {
     expect(element.cameraSpeedMs).toBe(100);
     expect(element.cameraPeekAngleHorizontal).toBe(0.55);
     expect(element.cameraPeekAngleVertical).toBe(0.55);
+    expect(element.visualStyle).toBe(MegaminxVisualStyles.Stickerless);
 
     await expect(element.move(MegaminxMoves.DPP)).resolves.toHaveLength(defaultMegaminxStickerState().length);
     expect(gsapMocks.to).toHaveBeenCalled();
 
     element.removeAttribute(MegaminxAttributeNames.maxDevicePixelRatio);
     element.removeAttribute(MegaminxAttributeNames.antialias);
+    element.removeAttribute(MegaminxAttributeNames.visualStyle);
     element.attributeChangedCallback(MegaminxAttributeNames.maxDevicePixelRatio, '4', '');
     element.attributeChangedCallback(MegaminxAttributeNames.antialias, 'false', null);
+    element.attributeChangedCallback(MegaminxAttributeNames.visualStyle, MegaminxVisualStyles.Stickerless, '');
     element.attributeChangedCallback(MegaminxAttributeNames.cameraRadius, '5.8', '5.8');
     element.attributeChangedCallback(MegaminxAttributeNames.cameraFieldOfView, '70', '70');
     element.attributeChangedCallback(MegaminxAttributeNames.antialias, 'true', 'true');
 
     expect(element.maxDevicePixelRatio).toBe(2);
     expect(element.antialias).toBe(true);
+    expect(element.visualStyle).toBe(MegaminxVisualStyles.Stickerless);
   });
 
   test('renders active animation loops and cancels them on disconnect', async () => {
@@ -383,6 +402,12 @@ describe('MegaminxPuzzleElement', () => {
 
     const controls = controlsMocks.instances.at(-1);
     expect(controls?.enableDamping).toBe(true);
+    expect(controls?.dampingFactor).toBe(0.08);
+    expect(controls?.enablePan).toBe(false);
+    expect(controls?.enableZoom).toBe(false);
+    expect(controls?.rotateSpeed).toBe(0.7);
+    expect(controls?.minPolarAngle).toBeCloseTo(Math.PI * 0.12);
+    expect(controls?.maxPolarAngle).toBeCloseTo(Math.PI * 0.88);
 
     controls?.dispatch('start');
     flushAnimationFrames();
@@ -390,6 +415,26 @@ describe('MegaminxPuzzleElement', () => {
 
     controls?.dispatch('end');
     flushAnimationFrames();
+    flushAnimationFrames();
+    flushAnimationFrames();
+
+    expect(cancelAnimationFrame).toHaveBeenCalled();
+  });
+
+  test('stops control rendering on next frame when damping is disabled', () => {
+    const element = createElement();
+    document.body.append(element);
+    flushAnimationFrames();
+
+    const controls = controlsMocks.instances.at(-1);
+    if (!controls) {
+      throw new Error('Megaminx OrbitControls mock was not created');
+    }
+    controls.enableDamping = false;
+
+    controls.dispatch('start');
+    flushAnimationFrames();
+    controls.dispatch('end');
     flushAnimationFrames();
     flushAnimationFrames();
 
@@ -412,6 +457,7 @@ describe('MegaminxPuzzleElement', () => {
     element.setAttribute(MegaminxAttributeNames.cameraPeekAngleVertical, '-1');
     element.setAttribute(MegaminxAttributeNames.maxDevicePixelRatio, '10');
     element.setAttribute(MegaminxAttributeNames.antialias, 'maybe');
+    element.setAttribute(MegaminxAttributeNames.visualStyle, 'transparent');
 
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();

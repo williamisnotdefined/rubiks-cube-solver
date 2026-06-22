@@ -1,84 +1,186 @@
-import type { Quaternion } from 'three';
 import { BufferGeometry, Float32BufferAttribute, Vector3 } from 'three';
 import type { MegaminxFace } from '../core/types';
-import { MegaminxFaceOrder } from '../core/types';
+import { MEGAMINX_FACE_STICKER_COUNT, MegaminxFaceOrder } from '../core/types';
 import {
-  BACKING_OFFSET,
-  BACKING_SCALE,
-  CENTER_STICKER_RADIUS,
-  CORNER_STICKER_SCALE,
+  CORNER_CUT_RATIO,
   DODECAHEDRON_FACE_DISTANCE,
-  EDGE_STICKER_SCALE,
+  FACE_INSET_RATIO,
   faceNormals,
-  STICKER_OFFSET,
-  STICKER_RADIUS,
+  SURFACE_DEPTH,
+  SURFACE_OFFSET,
 } from './config';
-import { MegaminxSticker } from './sticker';
+import { MegaminxPhysicalPiece, type MegaminxPieceType, MegaminxSticker } from './sticker';
 
 type FaceGeometry = {
   center: Vector3;
   normal: Vector3;
-  tangent: Vector3;
-  bitangent: Vector3;
   vertices: Vector3[];
 };
 
-export type StickerSlot = {
-  backingPosition: Vector3;
-  backingQuaternion: Quaternion;
+type SurfaceCell = {
+  face: MegaminxFace;
+  pieceKey: string;
+  pieceType: MegaminxPieceType;
+  polygon: Vector3[];
+  slotIndex: number;
+};
+
+export type SurfaceSlot = {
   face: MegaminxFace;
   id: string;
+  pieceKey: string;
+  pieceType: MegaminxPieceType;
   position: Vector3;
-  quaternion: Quaternion;
   slotIndex: number;
+};
+
+export type MegaminxPhysicalModel = {
+  pieces: MegaminxPhysicalPiece[];
+  slots: SurfaceSlot[];
+  stickers: MegaminxSticker[];
 };
 
 const adjacentDot = 1 / Math.sqrt(5);
 const adjacencyEpsilon = 0.001;
 const planeEpsilon = 0.000001;
-const geometryCache = new Map<MegaminxFace, FaceGeometry>();
+const faceGeometryCache = new Map<MegaminxFace, FaceGeometry>();
+const faceCellsCache = new Map<MegaminxFace, SurfaceCell[]>();
 
-export function createFaceStickers(face: MegaminxFace, startIndex: number): MegaminxSticker[] {
-  const faceGeometry = getFaceGeometry(face);
-  const stickerCenters = createStickerCenters(faceGeometry);
+export function createPhysicalMegaminxModel(): MegaminxPhysicalModel {
+  const piecesByKey = new Map<string, MegaminxPhysicalPiece>();
+  const slots: SurfaceSlot[] = [];
+  const stickers: MegaminxSticker[] = [];
 
-  return stickerCenters.map((center, localIndex) => {
-    const normal = faceGeometry.normal.clone();
-    const position = center.clone().add(normal.clone().multiplyScalar(STICKER_OFFSET));
-    const backingPosition = center.clone().add(normal.clone().multiplyScalar(BACKING_OFFSET));
-    const radius = localIndex === 0 ? CENTER_STICKER_RADIUS : STICKER_RADIUS;
-    const id = `megaminx-${face}-${startIndex + localIndex}`;
-    const sticker = new MegaminxSticker(
-      id,
-      startIndex + localIndex,
-      face,
-      createPentagonGeometry(faceGeometry, center, radius, position),
-      createPentagonGeometry(faceGeometry, center, radius * BACKING_SCALE, backingPosition),
-    );
-    sticker.backing.position.copy(backingPosition);
-    sticker.position.copy(position);
+  for (const face of MegaminxFaceOrder) {
+    for (const cell of faceCells(face)) {
+      const piece = getOrCreatePiece(piecesByKey, cell);
+      const normal = faceNormals[cell.face].clone().normalize();
+      const topPolygon = insetPolygon(cell.polygon, FACE_INSET_RATIO).map((point) =>
+        point.clone().add(normal.clone().multiplyScalar(SURFACE_OFFSET)),
+      );
+      const position = averagePoint(topPolygon);
+      const sticker = new MegaminxSticker(
+        `megaminx-${cell.pieceKey}-${cell.slotIndex}`,
+        cell.slotIndex,
+        cell.face,
+        cell.pieceKey,
+        cell.pieceType,
+        createExtrudedSurfaceGeometry(topPolygon, normal, position),
+      );
+      sticker.position.copy(position);
+      piece.addSticker(sticker);
+      stickers[cell.slotIndex] = sticker;
+      slots[cell.slotIndex] = {
+        face: cell.face,
+        id: sticker.stickerId,
+        pieceKey: cell.pieceKey,
+        pieceType: cell.pieceType,
+        position: position.clone(),
+        slotIndex: cell.slotIndex,
+      };
+    }
+  }
 
-    return sticker;
-  });
+  const pieces = Array.from(piecesByKey.values());
+
+  return { pieces, slots, stickers };
 }
 
-function createStickerCenters(faceGeometry: FaceGeometry): Vector3[] {
+function getOrCreatePiece(piecesByKey: Map<string, MegaminxPhysicalPiece>, cell: SurfaceCell): MegaminxPhysicalPiece {
+  const existing = piecesByKey.get(cell.pieceKey);
+  if (existing) {
+    return existing;
+  }
+
+  const piece = new MegaminxPhysicalPiece(cell.pieceKey, cell.pieceType);
+  piecesByKey.set(cell.pieceKey, piece);
+
+  return piece;
+}
+
+function faceCells(face: MegaminxFace): SurfaceCell[] {
+  const cached = faceCellsCache.get(face);
+  if (cached) {
+    return cached;
+  }
+
+  const faceGeometry = getFaceGeometry(face);
   const { center, vertices } = faceGeometry;
-  const centers = [center.clone()];
+  const innerVertices = vertices.map((vertex) => center.clone().add(vertex.clone().sub(center).multiplyScalar(0.38)));
+  const startIndex = MegaminxFaceOrder.indexOf(face) * MEGAMINX_FACE_STICKER_COUNT;
+  const cells: SurfaceCell[] = [
+    {
+      face,
+      pieceKey: pieceKey('center', [face]),
+      pieceType: 'center',
+      polygon: innerVertices,
+      slotIndex: startIndex,
+    },
+  ];
 
   for (let index = 0; index < vertices.length; index++) {
     const vertex = vertices[index];
     const nextVertex = vertices[(index + 1) % vertices.length];
-    const edgeCenter = vertex.clone().add(nextVertex).multiplyScalar(0.5);
-    centers.push(center.clone().add(vertex.clone().sub(center).multiplyScalar(CORNER_STICKER_SCALE)));
-    centers.push(center.clone().add(edgeCenter.sub(center).multiplyScalar(EDGE_STICKER_SCALE)));
+    const previousVertex = vertices[(index + vertices.length - 1) % vertices.length];
+    const innerVertex = innerVertices[index];
+    const nextInnerVertex = innerVertices[(index + 1) % innerVertices.length];
+    const cornerNext = vertex.clone().lerp(nextVertex, CORNER_CUT_RATIO);
+    const cornerPrevious = vertex.clone().lerp(previousVertex, CORNER_CUT_RATIO);
+    const edgeStart = cornerNext;
+    const edgeEnd = vertex.clone().lerp(nextVertex, 1 - CORNER_CUT_RATIO);
+    const cornerFaces = facesForVertex(face, vertex);
+    const edgeFaces = facesForEdge(face, vertex.clone().add(nextVertex).multiplyScalar(0.5));
+
+    cells.push({
+      face,
+      pieceKey: pieceKey('corner', cornerFaces),
+      pieceType: 'corner',
+      polygon: [vertex, cornerNext, innerVertex, cornerPrevious],
+      slotIndex: startIndex + 1 + index * 2,
+    });
+    cells.push({
+      face,
+      pieceKey: pieceKey('edge', edgeFaces),
+      pieceType: 'edge',
+      polygon: [innerVertex, nextInnerVertex, edgeEnd, edgeStart],
+      slotIndex: startIndex + 2 + index * 2,
+    });
   }
 
-  return centers;
+  faceCellsCache.set(face, cells);
+
+  return cells;
+}
+
+function facesForEdge(face: MegaminxFace, edgeMidpoint: Vector3): MegaminxFace[] {
+  const faces = MegaminxFaceOrder.filter((candidate) => {
+    return Math.abs(faceNormals[candidate].dot(edgeMidpoint) - DODECAHEDRON_FACE_DISTANCE) < adjacencyEpsilon;
+  });
+  if (faces.length !== 2 || !faces.includes(face)) {
+    throw new Error(`Megaminx edge on ${face} did not resolve to two faces`);
+  }
+
+  return faces;
+}
+
+function facesForVertex(face: MegaminxFace, vertex: Vector3): MegaminxFace[] {
+  const faces = MegaminxFaceOrder.filter((candidate) => {
+    return Math.abs(faceNormals[candidate].dot(vertex) - DODECAHEDRON_FACE_DISTANCE) < adjacencyEpsilon;
+  });
+  if (faces.length !== 3 || !faces.includes(face)) {
+    throw new Error(`Megaminx corner on ${face} did not resolve to three faces`);
+  }
+
+  return faces;
+}
+
+function pieceKey(pieceType: MegaminxPieceType, faces: readonly MegaminxFace[]): string {
+  const sortedFaces = faces.slice().sort((a, b) => MegaminxFaceOrder.indexOf(a) - MegaminxFaceOrder.indexOf(b));
+  return `${pieceType}:${sortedFaces.join('-')}`;
 }
 
 function getFaceGeometry(face: MegaminxFace): FaceGeometry {
-  const cached = geometryCache.get(face);
+  const cached = faceGeometryCache.get(face);
   if (cached) {
     return cached;
   }
@@ -86,10 +188,8 @@ function getFaceGeometry(face: MegaminxFace): FaceGeometry {
   const normal = faceNormals[face].clone();
   const center = normal.clone().multiplyScalar(DODECAHEDRON_FACE_DISTANCE);
   const vertices = faceVertices(face, normal, center);
-  const tangent = vertices[0].clone().sub(center).normalize();
-  const bitangent = normal.clone().cross(tangent).normalize();
-  const result = { center, normal, tangent, bitangent, vertices };
-  geometryCache.set(face, result);
+  const result = { center, normal, vertices };
+  faceGeometryCache.set(face, result);
 
   return result;
 }
@@ -154,28 +254,31 @@ function angleAround(point: Vector3, center: Vector3, tangent: Vector3, bitangen
   return Math.atan2(local.dot(bitangent), local.dot(tangent));
 }
 
-function createPentagonGeometry(
-  faceGeometry: FaceGeometry,
-  _center: Vector3,
-  radius: number,
+function insetPolygon(vertices: readonly Vector3[], ratio: number): Vector3[] {
+  const center = averagePoint(vertices);
+
+  return vertices.map((vertex) => center.clone().add(vertex.clone().sub(center).multiplyScalar(ratio)));
+}
+
+function averagePoint(points: readonly Vector3[]): Vector3 {
+  return points.reduce((sum, point) => sum.add(point), new Vector3()).divideScalar(points.length);
+}
+
+function createExtrudedSurfaceGeometry(
+  topPolygon: readonly Vector3[],
+  normal: Vector3,
   origin: Vector3,
 ): BufferGeometry {
+  const bottomPolygon = topPolygon.map((vertex) => vertex.clone().sub(normal.clone().multiplyScalar(SURFACE_DEPTH)));
   const vertices: number[] = [];
-  const geometryCenter = origin.clone();
-  const points = Array.from({ length: 5 }, (_, index) => {
-    const angle = (2 * Math.PI * index) / 5;
-    return geometryCenter
-      .clone()
-      .add(faceGeometry.tangent.clone().multiplyScalar(Math.cos(angle) * radius))
-      .add(faceGeometry.bitangent.clone().multiplyScalar(Math.sin(angle) * radius));
-  });
 
-  for (let index = 0; index < points.length; index++) {
-    const nextIndex = (index + 1) % points.length;
-    for (const point of [geometryCenter, points[index], points[nextIndex]]) {
-      const local = point.clone().sub(origin);
-      vertices.push(local.x, local.y, local.z);
-    }
+  pushFan(vertices, topPolygon, origin, false);
+  pushFan(vertices, bottomPolygon, origin, true);
+
+  for (let index = 0; index < topPolygon.length; index++) {
+    const nextIndex = (index + 1) % topPolygon.length;
+    pushTriangle(vertices, topPolygon[index], bottomPolygon[index], bottomPolygon[nextIndex], origin);
+    pushTriangle(vertices, topPolygon[index], bottomPolygon[nextIndex], topPolygon[nextIndex], origin);
   }
 
   const geometry = new BufferGeometry();
@@ -183,4 +286,23 @@ function createPentagonGeometry(
   geometry.computeVertexNormals();
 
   return geometry;
+}
+
+function pushFan(vertices: number[], polygon: readonly Vector3[], origin: Vector3, reverse: boolean): void {
+  const center = averagePoint(polygon);
+  for (let index = 0; index < polygon.length; index++) {
+    const nextIndex = (index + 1) % polygon.length;
+    if (reverse) {
+      pushTriangle(vertices, center, polygon[nextIndex], polygon[index], origin);
+    } else {
+      pushTriangle(vertices, center, polygon[index], polygon[nextIndex], origin);
+    }
+  }
+}
+
+function pushTriangle(vertices: number[], a: Vector3, b: Vector3, c: Vector3, origin: Vector3): void {
+  for (const point of [a, b, c]) {
+    const local = point.clone().sub(origin);
+    vertices.push(local.x, local.y, local.z);
+  }
 }

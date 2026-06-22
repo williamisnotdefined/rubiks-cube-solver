@@ -1,8 +1,10 @@
-import type { MegaminxFace, MegaminxMove, MegaminxMoveSuffix, MegaminxTurn } from './types';
-import { MegaminxFaceOrder } from './types';
+import type { MegaminxFace, MegaminxMove, MegaminxMoveSuffix, MegaminxTurn, MegaminxWcaWideTurn } from './types';
+import { MegaminxFaceOrder, MegaminxFaces } from './types';
 
 const faceSymbols = new Set<string>(MegaminxFaceOrder);
-const suffixToAmount = new Map<MegaminxMoveSuffix, MegaminxTurn['amount']>([
+type MegaminxTurnAmount = -2 | -1 | 1 | 2;
+
+const suffixToAmount = new Map<MegaminxMoveSuffix, MegaminxTurnAmount>([
   ['', 1],
   ["'", -1],
   ['2', 2],
@@ -11,9 +13,14 @@ const suffixToAmount = new Map<MegaminxMoveSuffix, MegaminxTurn['amount']>([
   ['--', -2],
 ]);
 
-const amountToSuffix = new Map<MegaminxTurn['amount'], MegaminxMoveSuffix>([
+const amountToFaceSuffix = new Map<MegaminxTurnAmount, MegaminxMoveSuffix>([
   [1, ''],
   [-1, "'"],
+  [2, '2'],
+  [-2, "2'"],
+]);
+
+const amountToWcaSuffix = new Map<MegaminxWcaWideTurn['amount'], MegaminxMoveSuffix>([
   [2, '++'],
   [-2, '--'],
 ]);
@@ -43,9 +50,12 @@ export function megaminxMoveToTurn(move: MegaminxMove): MegaminxTurn {
 
 export function reverseMegaminxMove(move: MegaminxMove): MegaminxMove {
   const turn = megaminxMoveToTurn(move);
-  const suffix = amountToSuffix.get(-turn.amount as MegaminxTurn['amount']) as MegaminxMoveSuffix;
+  const suffix =
+    turn.kind === 'wca-wide'
+      ? (amountToWcaSuffix.get(-turn.amount as MegaminxWcaWideTurn['amount']) as MegaminxMoveSuffix)
+      : (amountToFaceSuffix.get(-turn.amount as MegaminxTurnAmount) as MegaminxMoveSuffix);
 
-  return `${turn.face}${suffix}` as MegaminxMove;
+  return `${megaminxFaceForMove(move)}${suffix}` as MegaminxMove;
 }
 
 export function parseMegaminxAlgorithm(input: string): MegaminxMove[] {
@@ -68,7 +78,8 @@ export function invertMegaminxAlgorithm(moves: readonly MegaminxMove[]): Megamin
 }
 
 export function megaminxFaceForMove(move: MegaminxMove): MegaminxFace {
-  return megaminxMoveToTurn(move).face;
+  const turn = megaminxMoveToTurn(move);
+  return turn.kind === 'face' ? turn.face : turn.axis;
 }
 
 function parseMegaminxMove(value: string): MegaminxTurn | undefined {
@@ -83,7 +94,20 @@ function parseMegaminxMove(value: string): MegaminxTurn | undefined {
   }
 
   const suffix = (result[2] ?? '') as MegaminxMoveSuffix;
-  const amount = suffixToAmount.get(suffix) as MegaminxTurn['amount'];
+  const amount = suffixToAmount.get(suffix) as MegaminxTurnAmount;
 
-  return { amount, face: face as MegaminxFace };
+  if ((face === MegaminxFaces.R || face === MegaminxFaces.D) && (suffix === '++' || suffix === '--')) {
+    return {
+      amount: amount as MegaminxWcaWideTurn['amount'],
+      axis: face,
+      fixedFace: face === MegaminxFaces.R ? MegaminxFaces.L : MegaminxFaces.U,
+      kind: 'wca-wide',
+    };
+  }
+
+  if (suffix === '++' || suffix === '--') {
+    return undefined;
+  }
+
+  return { amount, face: face as MegaminxFace, kind: 'face' };
 }

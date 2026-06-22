@@ -38,6 +38,7 @@ const rendersPerSecondOutput = /** @type {HTMLElement} */ (document.getElementBy
 const totalRendersOutput = /** @type {HTMLElement} */ (document.getElementById('total-renders'));
 const stateInput = /** @type {HTMLTextAreaElement} */ (document.getElementById('state-input'));
 const cubeOnlySettings = Array.from(document.querySelectorAll<HTMLElement>('[data-cube-only]'));
+const megaminxOnlySettings = Array.from(document.querySelectorAll<HTMLElement>('[data-megaminx-only]'));
 const runAlgorithmButton = /** @type {HTMLButtonElement} */ (document.getElementById('run-algorithm'));
 
 type PuzzleKind = 'cube' | 'pyraminx' | 'megaminx';
@@ -55,6 +56,7 @@ const inputs = {
   cameraPeekAngleHorizontal: /** @type {HTMLInputElement} */ (document.getElementById('camera-peek-angle-horizontal')),
   cameraPeekAngleVertical: /** @type {HTMLInputElement} */ (document.getElementById('camera-peek-angle-vertical')),
   logo: /** @type {HTMLInputElement} */ (document.getElementById('logo')),
+  megaminxVisualStyle: /** @type {HTMLSelectElement} */ (document.getElementById('megaminx-visual-style')),
   maxDevicePixelRatio: /** @type {HTMLSelectElement} */ (document.getElementById('max-device-pixel-ratio')),
   antialias: /** @type {HTMLSelectElement} */ (document.getElementById('antialias')),
   profileCss: /** @type {HTMLSelectElement} */ (document.getElementById('profile-css')),
@@ -104,6 +106,7 @@ const megaminxAttributeInputs = [
   [MegaminxAttributeNames.cameraPeekAngleVertical, inputs.cameraPeekAngleVertical],
   [MegaminxAttributeNames.maxDevicePixelRatio, inputs.maxDevicePixelRatio],
   [MegaminxAttributeNames.antialias, inputs.antialias],
+  [MegaminxAttributeNames.visualStyle, inputs.megaminxVisualStyle],
 ] as const;
 
 const cubeActions = [
@@ -292,6 +295,9 @@ function updatePlaygroundChrome(puzzleKind: PuzzleKind) {
         : 'Paste a Kociemba state string';
   for (const setting of cubeOnlySettings) {
     setting.hidden = puzzleKind !== 'cube';
+  }
+  for (const setting of megaminxOnlySettings) {
+    setting.hidden = puzzleKind !== 'megaminx';
   }
 }
 

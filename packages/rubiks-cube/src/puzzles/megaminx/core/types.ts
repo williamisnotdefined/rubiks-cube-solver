@@ -60,10 +60,20 @@ export const MegaminxMoves = Object.freeze({
   BP: "B'",
 });
 
-export type MegaminxTurn = {
+export type MegaminxFaceTurn = {
   amount: -2 | -1 | 1 | 2;
   face: MegaminxFace;
+  kind: 'face';
 };
+
+export type MegaminxWcaWideTurn = {
+  amount: -2 | 2;
+  axis: 'D' | 'R';
+  fixedFace: MegaminxFace;
+  kind: 'wca-wide';
+};
+
+export type MegaminxTurn = MegaminxFaceTurn | MegaminxWcaWideTurn;
 
 export const MEGAMINX_FACE_STICKER_COUNT = 11;
 export const MEGAMINX_STICKER_COUNT = MegaminxFaceOrder.length * MEGAMINX_FACE_STICKER_COUNT;

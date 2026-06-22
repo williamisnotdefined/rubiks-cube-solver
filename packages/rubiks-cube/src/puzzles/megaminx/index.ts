@@ -1,4 +1,11 @@
-export type { MegaminxFace, MegaminxMove, MegaminxMoveSuffix, MegaminxTurn } from './core';
+export type {
+  MegaminxFace,
+  MegaminxFaceTurn,
+  MegaminxMove,
+  MegaminxMoveSuffix,
+  MegaminxTurn,
+  MegaminxWcaWideTurn,
+} from './core';
 export {
   invertMegaminxAlgorithm,
   isMegaminxMove,
@@ -16,5 +23,13 @@ export {
 } from './core';
 export { MegaminxAttributeNames, MegaminxPuzzleElement } from './element';
 export { defaultMegaminxStickerState, isMegaminxStickerState, parseMegaminxStickerState } from './state';
-export type { Megaminx3DOptions, MegaminxAnimationOptions } from './three';
-export { DEFAULT_MEGAMINX_ANIMATION_SPEED_MS, Megaminx3D, MegaminxFaceColors, MegaminxSticker } from './three';
+export type { Megaminx3DOptions, MegaminxAnimationOptions, MegaminxVisualStyle } from './three';
+export {
+  DEFAULT_MEGAMINX_ANIMATION_SPEED_MS,
+  DEFAULT_MEGAMINX_VISUAL_STYLE,
+  Megaminx3D,
+  MegaminxFaceColors,
+  MegaminxPhysicalPiece,
+  MegaminxSticker,
+  MegaminxVisualStyles,
+} from './three';

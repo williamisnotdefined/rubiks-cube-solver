@@ -1,5 +1,10 @@
 import { type AnimationStyle, AnimationStyles } from '../../../shared/animation';
-import { DEFAULT_MEGAMINX_ANIMATION_SPEED_MS } from '../three/megaminx3D';
+import {
+  DEFAULT_MEGAMINX_ANIMATION_SPEED_MS,
+  DEFAULT_MEGAMINX_VISUAL_STYLE,
+  type MegaminxVisualStyle,
+  MegaminxVisualStyles,
+} from '../three/megaminx3D';
 
 export type MegaminxElementSettings = {
   animationSpeedMs: number;
@@ -11,6 +16,7 @@ export type MegaminxElementSettings = {
   cameraRadius: number;
   cameraSpeedMs: number;
   maxDevicePixelRatio: number;
+  visualStyle: MegaminxVisualStyle;
 };
 
 export const defaultMegaminxElementSettings: MegaminxElementSettings = {
@@ -23,6 +29,7 @@ export const defaultMegaminxElementSettings: MegaminxElementSettings = {
   cameraRadius: 5.8,
   cameraSpeedMs: 100,
   maxDevicePixelRatio: 2,
+  visualStyle: DEFAULT_MEGAMINX_VISUAL_STYLE,
 };
 
 const minFieldOfView = 30;
@@ -131,4 +138,18 @@ export function setMegaminxAntialias(target: MegaminxElementSettings, value: str
     return;
   }
   console.warn(`Invalid Megaminx antialias value. Accepted values are true/false. Value is ${value}`);
+}
+
+export function setMegaminxVisualStyle(target: MegaminxElementSettings, value: string | null): void {
+  if (value == null || value === '') {
+    target.visualStyle = defaultMegaminxElementSettings.visualStyle;
+    return;
+  }
+  if (Object.values(MegaminxVisualStyles).includes(value as MegaminxVisualStyle)) {
+    target.visualStyle = value as MegaminxVisualStyle;
+    return;
+  }
+  console.warn(
+    `Invalid Megaminx visual style value. Accepted values are [${Object.values(MegaminxVisualStyles).join(', ')}]. Value is ${value}`,
+  );
 }

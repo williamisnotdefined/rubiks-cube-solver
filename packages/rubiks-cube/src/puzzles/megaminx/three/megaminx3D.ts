@@ -3,20 +3,23 @@ import { Group, Object3D, Quaternion, Vector3 } from 'three';
 import type { TurnPlan } from '../../../shared/turnPlan';
 import { megaminxMoveToTurn, parseMegaminxAlgorithm, reverseMegaminxMove } from '../core/notation';
 import type { MegaminxFace, MegaminxMove, MegaminxTurn } from '../core/types';
-import { MegaminxFaceOrder } from '../core/types';
 import { defaultMegaminxStickerState, parseMegaminxStickerState } from '../state/stickerState';
 import {
   DEFAULT_MEGAMINX_ANIMATION_SPEED_MS,
+  DEFAULT_MEGAMINX_VISUAL_STYLE,
   faceNormals,
-  MEGAMINX_FACE_TURN_STICKER_COUNT,
+  MEGAMINX_FACE_TURN_PIECE_COUNT,
+  MEGAMINX_WCA_WIDE_TURN_PIECE_COUNT,
+  type MegaminxVisualStyle,
   TURN_ANGLE_RADIANS,
 } from './config';
-import { createFaceStickers, type StickerSlot } from './geometry';
-import { MegaminxSticker } from './sticker';
+import { createPhysicalMegaminxModel, type SurfaceSlot } from './geometry';
+import { MegaminxPhysicalPiece, MegaminxSticker } from './sticker';
 
 type Megaminx3DOptions = {
   animationSpeedMs?: number;
   animationStyle?: gsap.EaseString | gsap.EaseFunction;
+  visualStyle?: MegaminxVisualStyle;
 };
 
 type MegaminxAnimationOptions = {
@@ -27,10 +30,12 @@ type MegaminxAnimationOptions = {
 export class Megaminx3D extends Object3D {
   animationSpeedMs: number;
   animationStyle: gsap.EaseString | gsap.EaseFunction;
+  visualStyle: MegaminxVisualStyle;
   _mainGroup: Group;
   _animationGroup: Group;
+  _pieces: MegaminxPhysicalPiece[];
   _stickers: MegaminxSticker[];
-  _slots: StickerSlot[];
+  _slots: SurfaceSlot[];
   _currentAnimation: gsap.core.Tween | undefined;
   _moveQueue: Promise<void>;
 
@@ -38,6 +43,8 @@ export class Megaminx3D extends Object3D {
     super();
     this.animationSpeedMs = options.animationSpeedMs ?? DEFAULT_MEGAMINX_ANIMATION_SPEED_MS;
     this.animationStyle = options.animationStyle ?? 'linear';
+    this.visualStyle = options.visualStyle ?? DEFAULT_MEGAMINX_VISUAL_STYLE;
+    this._pieces = [];
     this._stickers = [];
     this._slots = [];
     this._currentAnimation = undefined;
@@ -49,42 +56,48 @@ export class Megaminx3D extends Object3D {
 
   createMegaminxGroup(): Group {
     const group = new Group();
+    const model = createPhysicalMegaminxModel();
+    this._pieces = model.pieces;
+    this._stickers = model.stickers;
+    this._slots = model.slots;
 
-    let slotIndex = 0;
-    for (const face of MegaminxFaceOrder) {
-      for (const sticker of createFaceStickers(face, slotIndex)) {
-        this._stickers.push(sticker);
-        this._slots.push({
-          backingPosition: sticker.backing.position.clone(),
-          backingQuaternion: sticker.backing.quaternion.clone(),
-          face: sticker.face,
-          id: sticker.stickerId,
-          position: sticker.position.clone(),
-          quaternion: sticker.quaternion.clone(),
-          slotIndex: sticker.slotIndex,
-        });
-        group.add(sticker.backing, sticker);
-        slotIndex++;
+    for (const piece of this._pieces) {
+      for (const sticker of piece.stickers) {
+        sticker.setVisualStyle(this.visualStyle);
       }
+      group.add(piece);
     }
 
     return group;
+  }
+
+  pieceCount(): number {
+    return this._pieces.length;
   }
 
   stickerCount(): number {
     return this._stickers.length;
   }
 
+  setVisualStyle(visualStyle: MegaminxVisualStyle): void {
+    this.visualStyle = visualStyle;
+    for (const sticker of this._stickers) {
+      sticker.setVisualStyle(visualStyle);
+    }
+  }
+
   reset(): string {
     this.finishCurrentAnimation();
-    for (const sticker of this._stickers) {
-      const slot = this._slots[sticker.slotIndex];
-      sticker.backing.position.copy(slot.backingPosition);
-      sticker.backing.quaternion.copy(slot.backingQuaternion);
-      sticker.position.copy(slot.position);
-      sticker.quaternion.copy(slot.quaternion);
-      sticker.setFace(slot.face);
+    for (const piece of this._pieces) {
+      this._mainGroup.add(piece);
+      piece.position.set(0, 0, 0);
+      piece.quaternion.identity();
+      for (const sticker of piece.stickers) {
+        sticker.setFace(this._slots[sticker.slotIndex].face);
+      }
     }
+    this._animationGroup.rotation.set(0, 0, 0);
+    this._animationGroup.quaternion.identity();
 
     return this.getState();
   }
@@ -94,6 +107,7 @@ export class Megaminx3D extends Object3D {
   }
 
   private facesByNearestSlot(): MegaminxFace[] {
+    this.updateMatrixWorld(true);
     const available = new Set(this._stickers);
     const faces: MegaminxFace[] = [];
 
@@ -102,7 +116,9 @@ export class Megaminx3D extends Object3D {
       let nearestDistance = Number.POSITIVE_INFINITY;
 
       for (const sticker of Array.from(available)) {
-        const distance = sticker.position.distanceToSquared(slot.position);
+        const worldPosition = new Vector3();
+        sticker.getWorldPosition(worldPosition);
+        const distance = worldPosition.distanceToSquared(slot.position);
         if (distance < nearestDistance) {
           nearestDistance = distance;
           nearest = sticker;
@@ -138,13 +154,13 @@ export class Megaminx3D extends Object3D {
   turnPlan(move: MegaminxMove, options: Pick<MegaminxAnimationOptions, 'reverse'> = {}): TurnPlan {
     const directedMove = options.reverse ? reverseMegaminxMove(move) : move;
     const turn = megaminxMoveToTurn(directedMove);
-    const axis = axisForFace(turn.face);
-    const stickers = this.stickersForTurn(turn);
+    const axis = axisForTurn(turn);
+    const pieces = this.piecesForTurn(turn);
 
     return {
       angleRadians: angleForTurn(turn),
       axis: { x: axis.x, y: axis.y, z: axis.z },
-      pieceIds: stickers.map((sticker) => sticker.stickerId),
+      pieceIds: pieces.map((piece) => piece.pieceId),
     };
   }
 
@@ -172,17 +188,17 @@ export class Megaminx3D extends Object3D {
     this.finishCurrentAnimation();
     const directedMove = options.reverse ? reverseMegaminxMove(move) : move;
     const turn = megaminxMoveToTurn(directedMove);
-    const stickers = this.stickersForTurn(turn);
-    const axis = axisForFace(turn.face);
+    const pieces = this.piecesForTurn(turn);
+    const axis = axisForTurn(turn);
     const speed = options.animationSpeedMs ?? this.animationSpeedMs;
 
     if (speed === 0) {
-      this.applyTurnToStickers(stickers, axis, angleForTurn(turn));
+      this.applyTurnToPieces(pieces, axis, angleForTurn(turn));
       return Promise.resolve(this.getState());
     }
 
     return new Promise((resolve) => {
-      this.fillAnimationGroup(stickers);
+      this.fillAnimationGroup(pieces);
       const target = { rotation: 0 };
       let previousRotation = 0;
 
@@ -215,70 +231,54 @@ export class Megaminx3D extends Object3D {
   }
 
   private applyTurn(turn: MegaminxTurn, angle: number): void {
-    this.applyTurnToStickers(this.stickersForTurn(turn), axisForFace(turn.face), angle);
+    this.applyTurnToPieces(this.piecesForTurn(turn), axisForTurn(turn), angle);
   }
 
-  private applyTurnToStickers(stickers: readonly MegaminxSticker[], axis: Vector3, angle: number): void {
+  private applyTurnToPieces(pieces: readonly MegaminxPhysicalPiece[], axis: Vector3, angle: number): void {
     const quaternion = new Quaternion().setFromAxisAngle(axis, angle);
-    for (const sticker of stickers) {
-      sticker.backing.position.applyQuaternion(quaternion);
-      sticker.backing.quaternion.premultiply(quaternion);
-      sticker.position.applyQuaternion(quaternion);
-      sticker.quaternion.premultiply(quaternion);
+    for (const piece of pieces) {
+      piece.quaternion.premultiply(quaternion);
     }
     this.snapToNearestSlots();
   }
 
-  private fillAnimationGroup(stickers: readonly MegaminxSticker[]): void {
-    for (const sticker of stickers) {
-      this._animationGroup.add(sticker.backing, sticker);
+  private fillAnimationGroup(pieces: readonly MegaminxPhysicalPiece[]): void {
+    for (const piece of pieces) {
+      this._animationGroup.add(piece);
     }
   }
 
   private clearAnimationGroup(): void {
-    const stickers = this._animationGroup.children.filter(
-      (child): child is MegaminxSticker => child instanceof MegaminxSticker,
+    const faces = this.facesByNearestSlot();
+    const pieces = this._animationGroup.children.filter(
+      (child): child is MegaminxPhysicalPiece => child instanceof MegaminxPhysicalPiece,
     );
-    this.updateMatrixWorld(true);
-    this._mainGroup.updateMatrixWorld(true);
-    this._animationGroup.updateMatrixWorld(true);
-    const parentWorldQuaternion = new Quaternion();
-    this._mainGroup.getWorldQuaternion(parentWorldQuaternion);
-    const inverseParentWorldQuaternion = parentWorldQuaternion.clone().invert();
 
-    for (const sticker of stickers) {
-      this.moveAnimatedObjectToMain(sticker.backing, inverseParentWorldQuaternion);
-      this.moveAnimatedObjectToMain(sticker, inverseParentWorldQuaternion);
+    for (const piece of pieces) {
+      this._mainGroup.add(piece);
+      piece.position.set(0, 0, 0);
+      piece.quaternion.identity();
     }
 
     this._animationGroup.rotation.set(0, 0, 0);
     this._animationGroup.quaternion.identity();
-    this.snapToNearestSlots();
-  }
-
-  private moveAnimatedObjectToMain(object: Object3D, inverseParentWorldQuaternion: Quaternion): void {
-    const worldPosition = new Vector3();
-    const worldQuaternion = new Quaternion();
-    object.getWorldPosition(worldPosition);
-    object.getWorldQuaternion(worldQuaternion);
-    this._mainGroup.add(object);
-    this._mainGroup.worldToLocal(worldPosition);
-    object.position.copy(worldPosition);
-    object.quaternion.copy(inverseParentWorldQuaternion.clone().multiply(worldQuaternion));
+    this.applyFaces(faces);
   }
 
   private snapToNearestSlots(): void {
     const faces = this.facesByNearestSlot();
 
+    for (const piece of this._pieces) {
+      this._mainGroup.add(piece);
+      piece.position.set(0, 0, 0);
+      piece.quaternion.identity();
+    }
+    this.applyFaces(faces);
+  }
+
+  private applyFaces(faces: readonly MegaminxFace[]): void {
     for (let index = 0; index < this._slots.length; index++) {
-      const slot = this._slots[index];
-      const sticker = this._stickers[index];
-      this._mainGroup.add(sticker.backing, sticker);
-      sticker.backing.position.copy(slot.backingPosition);
-      sticker.backing.quaternion.copy(slot.backingQuaternion);
-      sticker.position.copy(slot.position);
-      sticker.quaternion.copy(slot.quaternion);
-      sticker.setFace(faces[index]);
+      this._stickers[index].setFace(faces[index]);
     }
   }
 
@@ -292,33 +292,27 @@ export class Megaminx3D extends Object3D {
     this._currentAnimation = undefined;
   }
 
-  private stickersForTurn(turn: MegaminxTurn): MegaminxSticker[] {
-    const axis = axisForFace(turn.face);
-
-    return this._stickers
-      .map((sticker) => ({
-        projection: this.nearestSlotForSticker(sticker).position.dot(axis),
-        sticker,
-      }))
-      .sort((a, b) => b.projection - a.projection)
-      .slice(0, MEGAMINX_FACE_TURN_STICKER_COUNT)
-      .map(({ sticker }) => sticker);
-  }
-
-  private nearestSlotForSticker(sticker: MegaminxSticker): StickerSlot {
-    let nearest = this._slots[0];
-    let nearestDistance = sticker.position.distanceToSquared(nearest.position);
-
-    for (const slot of this._slots.slice(1)) {
-      const distance = sticker.position.distanceToSquared(slot.position);
-      if (distance < nearestDistance) {
-        nearest = slot;
-        nearestDistance = distance;
-      }
+  private piecesForTurn(turn: MegaminxTurn): MegaminxPhysicalPiece[] {
+    const pieces = this._pieces.filter((piece) =>
+      turn.kind === 'face' ? piece.faces.has(turn.face) : !piece.faces.has(turn.fixedFace),
+    );
+    const expectedPieceCount =
+      turn.kind === 'face' ? MEGAMINX_FACE_TURN_PIECE_COUNT : MEGAMINX_WCA_WIDE_TURN_PIECE_COUNT;
+    if (pieces.length !== expectedPieceCount) {
+      const turnName = turn.kind === 'face' ? turn.face : `${turn.axis} wide`;
+      throw new Error(`Megaminx ${turnName} resolved ${pieces.length} physical pieces for turn`);
     }
 
-    return nearest;
+    return pieces;
   }
+}
+
+function axisForTurn(turn: MegaminxTurn): Vector3 {
+  if (turn.kind === 'wca-wide') {
+    return faceNormals[turn.fixedFace].clone().normalize().negate();
+  }
+
+  return axisForFace(turn.face);
 }
 
 function axisForFace(face: MegaminxFace): Vector3 {
@@ -329,7 +323,12 @@ function angleForTurn(turn: MegaminxTurn): number {
   return turn.amount * TURN_ANGLE_RADIANS;
 }
 
-export { DEFAULT_MEGAMINX_ANIMATION_SPEED_MS, MegaminxFaceColors } from './config';
-export { MegaminxSticker } from './sticker';
-export type { Megaminx3DOptions, MegaminxAnimationOptions };
+export {
+  DEFAULT_MEGAMINX_ANIMATION_SPEED_MS,
+  DEFAULT_MEGAMINX_VISUAL_STYLE,
+  MegaminxFaceColors,
+  MegaminxVisualStyles,
+} from './config';
+export { MegaminxPhysicalPiece, MegaminxSticker } from './sticker';
+export type { Megaminx3DOptions, MegaminxAnimationOptions, MegaminxVisualStyle };
 export { defaultMegaminxStickerState };

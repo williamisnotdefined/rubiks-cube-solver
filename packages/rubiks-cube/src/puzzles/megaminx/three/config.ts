@@ -4,16 +4,22 @@ import type { MegaminxFace } from '../core/types';
 import { MegaminxFaces } from '../core/types';
 
 export const DODECAHEDRON_FACE_DISTANCE = 1.18;
-export const BACKING_SCALE = 1.16;
-export const BACKING_OFFSET = 0.018;
-export const STICKER_OFFSET = 0.04;
-export const STICKER_RADIUS = 0.095;
-export const CENTER_STICKER_RADIUS = 0.11;
-export const CORNER_STICKER_SCALE = 0.74;
-export const EDGE_STICKER_SCALE = 0.72;
+export const CORNER_CUT_RATIO = 0.3;
+export const FACE_INSET_RATIO = 0.94;
+export const SURFACE_DEPTH = 0.18;
+export const SURFACE_OFFSET = 0.035;
 export const TURN_ANGLE_RADIANS = (2 * Math.PI) / 5;
 export const DEFAULT_MEGAMINX_ANIMATION_SPEED_MS = 240;
-export const MEGAMINX_FACE_TURN_STICKER_COUNT = 26;
+export const MEGAMINX_FACE_TURN_PIECE_COUNT = 11;
+export const MEGAMINX_WCA_WIDE_TURN_PIECE_COUNT = 51;
+
+export const MegaminxVisualStyles = Object.freeze({
+  Stickered: 'stickered',
+  Stickerless: 'stickerless',
+});
+
+export type MegaminxVisualStyle = (typeof MegaminxVisualStyles)[keyof typeof MegaminxVisualStyles];
+export const DEFAULT_MEGAMINX_VISUAL_STYLE: MegaminxVisualStyle = MegaminxVisualStyles.Stickerless;
 
 const phi = (1 + Math.sqrt(5)) / 2;
 

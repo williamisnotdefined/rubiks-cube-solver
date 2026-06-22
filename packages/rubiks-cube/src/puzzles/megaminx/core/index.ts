@@ -7,7 +7,14 @@ export {
   parseMegaminxAlgorithm,
   reverseMegaminxMove,
 } from './notation';
-export type { MegaminxFace, MegaminxMove, MegaminxMoveSuffix, MegaminxTurn } from './types';
+export type {
+  MegaminxFace,
+  MegaminxFaceTurn,
+  MegaminxMove,
+  MegaminxMoveSuffix,
+  MegaminxTurn,
+  MegaminxWcaWideTurn,
+} from './types';
 export {
   MEGAMINX_FACE_STICKER_COUNT,
   MEGAMINX_STICKER_COUNT,

@@ -5,7 +5,7 @@ import type { AnimationStyle } from '../../../shared/animation';
 import { CameraState } from '../../../shared/cameraState';
 import { debounce } from '../../../shared/debouncer';
 import type { MegaminxMove } from '../core/types';
-import type { MegaminxAnimationOptions } from '../three/megaminx3D';
+import type { MegaminxAnimationOptions, MegaminxVisualStyle } from '../three/megaminx3D';
 import { Megaminx3D } from '../three/megaminx3D';
 import {
   InternalEvents,
@@ -27,6 +27,7 @@ import {
   setMegaminxCameraRadius,
   setMegaminxCameraSpeed,
   setMegaminxMaxDevicePixelRatio,
+  setMegaminxVisualStyle,
 } from './settings';
 
 type RenderLoopStarter = (updateControls?: boolean) => () => void;
@@ -42,6 +43,7 @@ export class MegaminxPuzzleElement extends HTMLElement {
   cameraRadius: number;
   cameraSpeedMs: number;
   maxDevicePixelRatio: number;
+  visualStyle: MegaminxVisualStyle;
   private _megaminx: Megaminx3D | null;
   private _renderOnce: (() => void) | null;
   private _startRenderLoop: RenderLoopStarter | null;
@@ -64,6 +66,7 @@ export class MegaminxPuzzleElement extends HTMLElement {
     this.cameraRadius = settings.cameraRadius;
     this.cameraSpeedMs = settings.cameraSpeedMs;
     this.maxDevicePixelRatio = settings.maxDevicePixelRatio;
+    this.visualStyle = settings.visualStyle;
     this._megaminx = null;
     this._renderOnce = null;
     this._startRenderLoop = null;
@@ -141,6 +144,11 @@ export class MegaminxPuzzleElement extends HTMLElement {
         if (oldVal !== newVal && oldVal !== null) {
           this.rebuildPreservingState();
         }
+        break;
+      case MegaminxAttributeNames.visualStyle:
+        setMegaminxVisualStyle(this, newVal);
+        this._megaminx?.setVisualStyle(this.visualStyle);
+        this._renderOnce?.();
     }
   }
 
@@ -235,6 +243,7 @@ export class MegaminxPuzzleElement extends HTMLElement {
     const megaminx = new Megaminx3D({
       animationSpeedMs: this.animationSpeedMs,
       animationStyle: this.animationStyle,
+      visualStyle: this.visualStyle,
     });
     this._megaminx = megaminx;
 
@@ -269,6 +278,10 @@ export class MegaminxPuzzleElement extends HTMLElement {
     controls.enableZoom = false;
     controls.enablePan = false;
     controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.rotateSpeed = 0.7;
+    controls.minPolarAngle = Math.PI * 0.12;
+    controls.maxPolarAngle = Math.PI * 0.88;
 
     const ambientLight = new AmbientLight('white', 0.5);
     const keyLight = new DirectionalLight('white', 2);
@@ -315,6 +328,7 @@ export class MegaminxPuzzleElement extends HTMLElement {
       if (updateControls) {
         activeControlRenderLoops++;
       }
+      let stopped = false;
       const tick = () => {
         if (isDisposed || activeRenderLoops === 0) {
           loopFrameId = 0;
@@ -343,6 +357,10 @@ export class MegaminxPuzzleElement extends HTMLElement {
         loopFrameId = requestAnimationFrame(tick);
       }
       return () => {
+        if (stopped) {
+          return;
+        }
+        stopped = true;
         activeRenderLoops = Math.max(0, activeRenderLoops - 1);
         if (updateControls) {
           activeControlRenderLoops = Math.max(0, activeControlRenderLoops - 1);
@@ -366,6 +384,14 @@ export class MegaminxPuzzleElement extends HTMLElement {
     };
     const onControlsEnd = () => {
       stableControlFrames = 0;
+      if (!controls.enableDamping) {
+        controlsSettling = false;
+        requestAnimationFrame(() => {
+          stopControlsRenderLoop?.();
+          stopControlsRenderLoop = null;
+        });
+        return;
+      }
       controlsSettling = true;
     };
     controls.addEventListener('start', onControlsStart);
