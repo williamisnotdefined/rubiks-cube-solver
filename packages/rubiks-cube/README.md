@@ -14,6 +14,7 @@ Current puzzle modules:
 
 - `src/puzzles/cube`: Rubik's Cube and cubic NxN visualization code, including cube notation helpers, sticker-state adapters, Three.js objects, custom element, controller, and player.
 - `src/puzzles/pyraminx`: Pyraminx notation helpers, sticker-state adapters, Three.js object, and custom element.
+- `src/puzzles/megaminx`: Megaminx notation helpers, sticker-state adapters, Three.js object, and custom element.
 - `src/shared`: visualization-only helpers such as camera state, animation style constants, debouncing, and turn plans.
 
 `src/shared` must stay puzzle-neutral and rendering-oriented. It must not contain a generic puzzle engine, universal puzzle state, universal move type, `BaseMove`, `BaseState`, or common solver model.
@@ -31,6 +32,8 @@ Current puzzle modules:
 | `@rubiks-cube-solver/rubiks-cube/puzzles/cube` | Cube puzzle module barrel |
 | `@rubiks-cube-solver/rubiks-cube/puzzles/pyraminx` | Pyraminx puzzle module barrel |
 | `@rubiks-cube-solver/rubiks-cube/pyraminx` | Pyraminx custom element, 3D object, notation, and sticker-state helpers |
+| `@rubiks-cube-solver/rubiks-cube/puzzles/megaminx` | Megaminx puzzle module barrel |
+| `@rubiks-cube-solver/rubiks-cube/megaminx` | Megaminx custom element, 3D object, notation, and sticker-state helpers |
 
 ## Custom Elements
 
@@ -38,6 +41,13 @@ Current puzzle modules:
 
 `<pyraminx-puzzle>` is the Pyraminx renderer. It uses Pyraminx-specific notation, sticker state, geometry,
 and 120-degree vertex turns instead of cube `CubeType`, Kociemba, or slice moves.
+
+`<megaminx-puzzle>` is the Megaminx renderer. It uses Megaminx-specific visual sticker state, dodecahedral
+geometry, and 72-degree face turns instead of cube `CubeType`, Kociemba, or slice moves.
+
+Megaminx defaults to `visual-style="stickerless"`, rendering face-colored plastic instead of black sticker backing.
+Use `<megaminx-puzzle visual-style="stickered">` to inspect the sticker/backing layout. The visual style does not
+change notation, state, or solver behavior.
 
 ## Boundaries
 

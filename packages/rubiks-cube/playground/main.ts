@@ -1,6 +1,13 @@
 import { IsRotation, isMovement } from '../src/puzzles/cube/core';
 import { AttributeNames, PeekActions, RubiksCubeElement } from '../src/puzzles/cube/element';
 import {
+  DEFAULT_MEGAMINX_ANIMATION_SPEED_MS,
+  isMegaminxMove,
+  MegaminxAttributeNames,
+  MegaminxMoves,
+  MegaminxPuzzleElement,
+} from '../src/puzzles/megaminx';
+import {
   DEFAULT_PYRAMINX_ANIMATION_SPEED_MS,
   isPyraminxMove,
   PyraminxAttributeNames,
@@ -13,6 +20,9 @@ if (!customElements.get('rubiks-cube')) {
 }
 if (!customElements.get('pyraminx-puzzle')) {
   PyraminxPuzzleElement.register();
+}
+if (!customElements.get('megaminx-puzzle')) {
+  MegaminxPuzzleElement.register();
 }
 
 const frame = /** @type {HTMLDivElement} */ (document.getElementById('cube-frame'));
@@ -28,10 +38,11 @@ const rendersPerSecondOutput = /** @type {HTMLElement} */ (document.getElementBy
 const totalRendersOutput = /** @type {HTMLElement} */ (document.getElementById('total-renders'));
 const stateInput = /** @type {HTMLTextAreaElement} */ (document.getElementById('state-input'));
 const cubeOnlySettings = Array.from(document.querySelectorAll<HTMLElement>('[data-cube-only]'));
+const megaminxOnlySettings = Array.from(document.querySelectorAll<HTMLElement>('[data-megaminx-only]'));
 const runAlgorithmButton = /** @type {HTMLButtonElement} */ (document.getElementById('run-algorithm'));
 
-type PuzzleKind = 'cube' | 'pyraminx';
-type PlaygroundPuzzle = RubiksCubeElement | PyraminxPuzzleElement;
+type PuzzleKind = 'cube' | 'pyraminx' | 'megaminx';
+type PlaygroundPuzzle = RubiksCubeElement | PyraminxPuzzleElement | MegaminxPuzzleElement;
 
 const inputs = {
   puzzleKind: /** @type {HTMLSelectElement} */ (document.getElementById('puzzle-kind')),
@@ -45,6 +56,7 @@ const inputs = {
   cameraPeekAngleHorizontal: /** @type {HTMLInputElement} */ (document.getElementById('camera-peek-angle-horizontal')),
   cameraPeekAngleVertical: /** @type {HTMLInputElement} */ (document.getElementById('camera-peek-angle-vertical')),
   logo: /** @type {HTMLInputElement} */ (document.getElementById('logo')),
+  megaminxVisualStyle: /** @type {HTMLSelectElement} */ (document.getElementById('megaminx-visual-style')),
   maxDevicePixelRatio: /** @type {HTMLSelectElement} */ (document.getElementById('max-device-pixel-ratio')),
   antialias: /** @type {HTMLSelectElement} */ (document.getElementById('antialias')),
   profileCss: /** @type {HTMLSelectElement} */ (document.getElementById('profile-css')),
@@ -84,6 +96,19 @@ const pyraminxAttributeInputs = [
   [PyraminxAttributeNames.antialias, inputs.antialias],
 ] as const;
 
+const megaminxAttributeInputs = [
+  [MegaminxAttributeNames.animationStyle, inputs.animationStyle],
+  [MegaminxAttributeNames.animationSpeed, inputs.animationSpeed],
+  [MegaminxAttributeNames.cameraSpeed, inputs.cameraSpeed],
+  [MegaminxAttributeNames.cameraRadius, inputs.cameraRadius],
+  [MegaminxAttributeNames.cameraFieldOfView, inputs.cameraFieldOfView],
+  [MegaminxAttributeNames.cameraPeekAngleHorizontal, inputs.cameraPeekAngleHorizontal],
+  [MegaminxAttributeNames.cameraPeekAngleVertical, inputs.cameraPeekAngleVertical],
+  [MegaminxAttributeNames.maxDevicePixelRatio, inputs.maxDevicePixelRatio],
+  [MegaminxAttributeNames.antialias, inputs.antialias],
+  [MegaminxAttributeNames.visualStyle, inputs.megaminxVisualStyle],
+] as const;
+
 const cubeActions = [
   'R',
   "R'",
@@ -103,14 +128,28 @@ const cubeActions = [
 ];
 
 const pyraminxActions = Object.values(PyraminxMoves);
+const megaminxActions = [
+  MegaminxMoves.RPP,
+  MegaminxMoves.RMM,
+  MegaminxMoves.DPP,
+  MegaminxMoves.DMM,
+  MegaminxMoves.U,
+  MegaminxMoves.UP,
+  MegaminxMoves.R,
+  MegaminxMoves.RP,
+  MegaminxMoves.D,
+  MegaminxMoves.DP,
+];
 
 const defaultAlgorithms: Record<PuzzleKind, string> = {
   cube: "R U R' U'",
+  megaminx: "R++ D-- R++ D-- U'",
   pyraminx: "U L R' u b'",
 };
 
 const defaultAnimationSpeeds: Record<PuzzleKind, number> = {
   cube: 100,
+  megaminx: DEFAULT_MEGAMINX_ANIMATION_SPEED_MS,
   pyraminx: DEFAULT_PYRAMINX_ANIMATION_SPEED_MS,
 };
 
@@ -129,6 +168,9 @@ for (const [attributeName, input] of [...sharedCubeAttributeInputs, ...cubeAttri
   input.addEventListener('input', () => setAttributeFromInput(attributeName, input));
 }
 for (const [attributeName, input] of pyraminxAttributeInputs) {
+  input.addEventListener('input', () => setAttributeFromInput(attributeName, input));
+}
+for (const [attributeName, input] of megaminxAttributeInputs) {
   input.addEventListener('input', () => setAttributeFromInput(attributeName, input));
 }
 
@@ -171,17 +213,25 @@ updateProfileCss();
 updateState();
 
 function getPuzzleKind(): PuzzleKind {
-  return inputs.puzzleKind.value === 'pyraminx' ? 'pyraminx' : 'cube';
+  if (inputs.puzzleKind.value === 'pyraminx') {
+    return 'pyraminx';
+  }
+  if (inputs.puzzleKind.value === 'megaminx') {
+    return 'megaminx';
+  }
+  return 'cube';
 }
 
 function createPuzzle(): PlaygroundPuzzle {
   puzzle?.removeEventListener('rubiks-cube-render', onPuzzleRender);
   puzzle?.removeEventListener('pyraminx-render', onPuzzleRender);
+  puzzle?.removeEventListener('megaminx-render', onPuzzleRender);
   const puzzleKind = getPuzzleKind();
   updatePlaygroundChrome(puzzleKind);
   renderQuickActions();
 
-  const nextPuzzle = puzzleKind === 'pyraminx' ? createPyraminx() : createCube();
+  const nextPuzzle =
+    puzzleKind === 'pyraminx' ? createPyraminx() : puzzleKind === 'megaminx' ? createMegaminx() : createCube();
   frame.replaceChildren(nextPuzzle);
   return nextPuzzle;
 }
@@ -202,6 +252,14 @@ function createPyraminx(): PyraminxPuzzleElement {
   return /** @type {PyraminxPuzzleElement} */ (pyraminx);
 }
 
+function createMegaminx(): MegaminxPuzzleElement {
+  const megaminx = document.createElement('megaminx-puzzle');
+  megaminx.setAttribute('render-events', '');
+  applyAttributes(megaminx, megaminxAttributeInputs);
+  megaminx.addEventListener('megaminx-render', onPuzzleRender);
+  return /** @type {MegaminxPuzzleElement} */ (megaminx);
+}
+
 function remountPuzzle() {
   puzzle = createPuzzle();
   moveCount = 0;
@@ -212,7 +270,9 @@ function remountPuzzle() {
 }
 
 function renderQuickActions() {
-  const actions = getPuzzleKind() === 'pyraminx' ? pyraminxActions : cubeActions;
+  const puzzleKind = getPuzzleKind();
+  const actions =
+    puzzleKind === 'pyraminx' ? pyraminxActions : puzzleKind === 'megaminx' ? megaminxActions : cubeActions;
   quickActions.replaceChildren(
     ...actions.map((action) => {
       const button = document.createElement('button');
@@ -225,11 +285,19 @@ function renderQuickActions() {
 }
 
 function updatePlaygroundChrome(puzzleKind: PuzzleKind) {
-  const isPyraminx = puzzleKind === 'pyraminx';
-  puzzleTitle.textContent = isPyraminx ? 'Pyraminx' : 'Rubiks Cube';
-  stateInput.placeholder = isPyraminx ? 'Paste a pyraminx-stickers-v1 state string' : 'Paste a Kociemba state string';
+  puzzleTitle.textContent =
+    puzzleKind === 'pyraminx' ? 'Pyraminx' : puzzleKind === 'megaminx' ? 'Megaminx' : 'Rubiks Cube';
+  stateInput.placeholder =
+    puzzleKind === 'pyraminx'
+      ? 'Paste a pyraminx-stickers-v1 state string'
+      : puzzleKind === 'megaminx'
+        ? 'Paste a megaminx-stickers-v1 state string'
+        : 'Paste a Kociemba state string';
   for (const setting of cubeOnlySettings) {
-    setting.hidden = isPyraminx;
+    setting.hidden = puzzleKind !== 'cube';
+  }
+  for (const setting of megaminxOnlySettings) {
+    setting.hidden = puzzleKind !== 'megaminx';
   }
 }
 
@@ -265,6 +333,11 @@ async function runAction(action) {
         throw new Error(`Unsupported Pyraminx action: ${action}`);
       }
       await (puzzle as PyraminxPuzzleElement).move(action);
+    } else if (getPuzzleKind() === 'megaminx') {
+      if (!isMegaminxMove(action)) {
+        throw new Error(`Unsupported Megaminx action: ${action}`);
+      }
+      await (puzzle as MegaminxPuzzleElement).move(action);
     } else if (isMovement(action)) {
       await (puzzle as RubiksCubeElement).move(action);
     } else if (IsRotation(action)) {
@@ -339,7 +412,12 @@ function parseAlgorithm(value) {
     .split(' ')
     .filter((action) => action.length > 0)
     .filter((action) => {
-      const valid = puzzleKind === 'pyraminx' ? isPyraminxMove(action) : isMovement(action) || IsRotation(action);
+      const valid =
+        puzzleKind === 'pyraminx'
+          ? isPyraminxMove(action)
+          : puzzleKind === 'megaminx'
+            ? isMegaminxMove(action)
+            : isMovement(action) || IsRotation(action);
       if (!valid) {
         console.warn(`Ignoring invalid action: ${action}`);
       }
