@@ -48,10 +48,18 @@
     "./pyraminx": {
       "types": "./src/puzzles/pyraminx/index.ts",
       "default": "./src/puzzles/pyraminx/index.ts"
+    },
+    "./puzzles/megaminx": {
+      "types": "./src/puzzles/megaminx/index.ts",
+      "default": "./src/puzzles/megaminx/index.ts"
+    },
+    "./megaminx": {
+      "types": "./src/puzzles/megaminx/index.ts",
+      "default": "./src/puzzles/megaminx/index.ts"
     }
   },
   "scripts": {
-    "playground": "vite --host 0.0.0.0 ./playground",
+    "playground": "vite --host 0.0.0.0 --port 5174 ./playground",
     "build:types": "tsc",
     "check": "biome check .",
     "format": "biome format . --write",
