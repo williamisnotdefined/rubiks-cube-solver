@@ -18,11 +18,11 @@ services:
     image: rust:1-bookworm
     working_dir: /workspace
     command: >-
-      sh -lc '
+      sh -c '
         if [ ! -f crates/cube-engine/pruning-tables/phase2-ud-edge-permutation-slice-edge-permutation.rpt ]; then
-          cargo run --quiet -p cube-engine --bin generate_pruning_tables -- --output crates/cube-engine/pruning-tables --phase1-max-depth 8 --phase2-max-depth 10;
+          /usr/local/cargo/bin/cargo run --quiet -p cube-engine --bin generate_pruning_tables -- --output crates/cube-engine/pruning-tables --phase1-max-depth 8 --phase2-max-depth 10;
         fi;
-        cargo run -p rubiks-cube-solver-api
+        /usr/local/cargo/bin/cargo run -p rubiks-cube-solver-api
       '
     depends_on:
       vision:
