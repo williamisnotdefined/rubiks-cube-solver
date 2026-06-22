@@ -41,6 +41,7 @@ labels.zip
 *.onnx.data
 
 # Logs
+logs/
 *.log
 
 # Environment

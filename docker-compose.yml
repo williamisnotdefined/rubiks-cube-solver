@@ -1,0 +1,28 @@
+services:
+  vision:
+    build:
+      context: .
+      dockerfile: Dockerfile.vision
+    environment:
+      RUBIKS_VISION_TILE_DETECTOR_MODEL: /models/tile-detector.onnx
+      RUBIKS_VISION_TILE_DETECTOR_INPUT_SIZE: "640"
+      RUBIKS_VISION_TILE_DETECTOR_CONFIDENCE: "0.5"
+    volumes:
+      - ./scanner/models:/models:ro
+    expose:
+      - "8790"
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.app
+    depends_on:
+      vision:
+        condition: service_healthy
+    environment:
+      RUBIKS_API_ADDR: 0.0.0.0:8787
+      RUBIKS_WEB_DIST_DIR: /app/web
+      RUBIKS_PRUNING_TABLE_DIR: /app/pruning-tables
+      RUBIKS_VISION_URL: http://vision:8790
+    ports:
+      - "127.0.0.1:8787:8787"

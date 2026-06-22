@@ -1,0 +1,62 @@
+services:
+  vision:
+    build:
+      context: .
+      dockerfile: Dockerfile.vision
+    command: ["python", "-m", "uvicorn", "scanner.runtime.app:app", "--host", "0.0.0.0", "--port", "8790", "--reload"]
+    environment:
+      RUBIKS_VISION_TILE_DETECTOR_MODEL: /models/tile-detector.onnx
+      RUBIKS_VISION_TILE_DETECTOR_INPUT_SIZE: "640"
+      RUBIKS_VISION_TILE_DETECTOR_CONFIDENCE: "0.5"
+    ports:
+      - "127.0.0.1:8791:8790"
+    volumes:
+      - ./scanner:/app/scanner
+      - ./scanner/models:/models:ro
+
+  api:
+    image: rust:1-bookworm
+    working_dir: /workspace
+    command: >-
+      sh -lc '
+        if [ ! -f crates/cube-engine/pruning-tables/phase2-ud-edge-permutation-slice-edge-permutation.rpt ]; then
+          cargo run --quiet -p cube-engine --bin generate_pruning_tables -- --output crates/cube-engine/pruning-tables --phase1-max-depth 8 --phase2-max-depth 10;
+        fi;
+        cargo run -p rubiks-cube-solver-api
+      '
+    depends_on:
+      vision:
+        condition: service_healthy
+    environment:
+      RUBIKS_API_ADDR: 0.0.0.0:8788
+      RUBIKS_PRUNING_TABLE_DIR: crates/cube-engine/pruning-tables
+      RUBIKS_VISION_URL: http://vision:8790
+    ports:
+      - "127.0.0.1:8788:8788"
+    volumes:
+      - .:/workspace
+      - cargo-registry:/usr/local/cargo/registry
+      - cargo-git:/usr/local/cargo/git
+      - rust-target:/workspace/target
+
+  web:
+    image: node:22-bookworm-slim
+    working_dir: /workspace
+    command: >-
+      sh -lc '
+        if [ ! -x node_modules/.bin/vite ]; then npm ci; fi;
+        npm run dev -w @rubiks-cube-solver/web -- --host 0.0.0.0 --port 5173
+      '
+    environment:
+      VITE_RUBIKS_API_URL: http://127.0.0.1:8788
+    ports:
+      - "127.0.0.1:5173:5173"
+    volumes:
+      - .:/workspace
+      - node-modules:/workspace/node_modules
+
+volumes:
+  cargo-git:
+  cargo-registry:
+  node-modules:
+  rust-target:

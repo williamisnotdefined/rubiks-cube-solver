@@ -33,6 +33,26 @@ npm run vision:install
 npm run dev
 ```
 
+For a prepared local runtime without the full validation gate:
+
+```bash
+npm run zero:prepare
+npm run zero:start
+```
+
+This starts dev ports that can run alongside Docker production:
+
+- Web: `http://127.0.0.1:5173`
+- API: `http://127.0.0.1:8788`
+- Vision: `http://127.0.0.1:8791`
+
+Stop or inspect the local runtime with:
+
+```bash
+npm run zero:stop
+npm run zero:status
+```
+
 Core commands:
 
 ```bash
@@ -42,6 +62,33 @@ npm run build
 npm run bootstrap:check
 npm run product:gate
 ```
+
+## Docker Runtime
+
+Production-like Docker runs the Rust API and built web app in one `app` container, with scanner vision in a separate `vision` container:
+
+```bash
+npm run docker:up
+npm run docker:down
+```
+
+Open `http://127.0.0.1:8787/`. The scanner model is mounted from `scanner/models/tile-detector.onnx`; if it is missing, the app still starts but scanner health reports the detector unavailable.
+
+Docker dev uses separate hot-reload services and non-conflicting ports:
+
+```bash
+npm run docker:dev
+npm run docker:dev:down
+```
+
+Scanner training is separate from normal runtime:
+
+```bash
+npm run docker:train
+npm run docker:train-gpu
+```
+
+GPU training requires NVIDIA Container Toolkit. See `docs/runtime.md` for details.
 
 When Rust is installed:
 
@@ -68,6 +115,8 @@ The repository tracks the current Roboflow COCO source export through Git LFS at
 ```txt
 scanner/datasets/roboflow/rubiks-cube-colors-v2.coco.zip
 ```
+
+Source Roboflow Universe project: <https://universe.roboflow.com/dhyan-thacker/rubiks-cube-colors>.
 
 Train and install a local runtime detector from scratch with `scanner/training/SCANNER_YOLO_RUNBOOK.md`.
 

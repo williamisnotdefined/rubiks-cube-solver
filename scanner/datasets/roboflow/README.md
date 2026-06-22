@@ -5,6 +5,7 @@ This directory stores the source Roboflow COCO export for the YOLO tile detector
 ## Current Export
 
 - File: `rubiks-cube-colors-v2.coco.zip`
+- Source project: <https://universe.roboflow.com/dhyan-thacker/rubiks-cube-colors>
 - Source filename: `Rubiks Cube Colors.v2i.coco.zip`
 - SHA-256: `284792da12f872640f7858e1fb857ee0ab1390946cda71bd289e0de230b2cf2d`
 - Size: 134 MiB
