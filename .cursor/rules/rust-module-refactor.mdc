@@ -1,6 +1,6 @@
 ---
 description: "Use when splitting large Rust files, changing mod.rs facades, moving tests, tightening visibility, or improving Rust module boundaries without changing behavior."
-globs: "crates/**/*.rs,crates/**/*.toml,Cargo.toml,roadmap.md"
+globs: "crates/**/*.rs,crates/**/*.toml,Cargo.toml,docs/project-plan.md"
 alwaysApply: false
 ---
 
@@ -161,7 +161,7 @@ The target is a Rubik's Cube solver with a Rust engine, search algorithms, heuri
 - `web`: Vite React app for notation-only solve requests, cube visualization, and playback-oriented UI.
 - `scanner`: Python scanner contracts, FastAPI runtime, and offline scanner training/evaluation tooling.
 - `ai`: canonical AI knowledge base and route generation system.
-- `roadmap.md`: source roadmap and implementation order.
+- `docs/project-plan.md`: source roadmap, implementation order, and multi-puzzle direction.
 
 ## Generated Artifacts
 

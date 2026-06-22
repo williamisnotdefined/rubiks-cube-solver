@@ -1,6 +1,6 @@
 ---
 description: "Use when adding or changing web Vitest tests, Testing Library tests, React Query hook tests, coverage configuration, or Storybook stories."
-globs: "web/**/*.{ts,tsx,css},web/.storybook/**/*,roadmap.md"
+globs: "web/**/*.{ts,tsx,css},web/.storybook/**/*,docs/project-plan.md"
 alwaysApply: false
 ---
 

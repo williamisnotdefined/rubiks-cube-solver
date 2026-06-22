@@ -1,5 +1,5 @@
 ---
-applyTo: "web/**/*.{ts,tsx},roadmap.md"
+applyTo: "web/**/*.{ts,tsx},docs/project-plan.md"
 ---
 
 Generated from `ai/registry.json`. Do not edit manually.

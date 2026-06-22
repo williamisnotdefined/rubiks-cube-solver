@@ -1,6 +1,6 @@
 ---
 description: "Use when adding or changing client-side state, custom hooks, visualization synchronization, or API load/result flow in web."
-globs: "web/**/*.{ts,tsx},roadmap.md"
+globs: "web/**/*.{ts,tsx},docs/project-plan.md"
 alwaysApply: false
 ---
 

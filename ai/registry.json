@@ -87,11 +87,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "crates/**/*.rs,crates/**/*.toml,Cargo.toml,roadmap.md",
+          "globs": "crates/**/*.rs,crates/**/*.toml,Cargo.toml,docs/project-plan.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "crates/**/*.rs,crates/**/*.toml,Cargo.toml,roadmap.md"
+          "applyTo": "crates/**/*.rs,crates/**/*.toml,Cargo.toml,docs/project-plan.md"
         }
       }
     },
@@ -113,11 +113,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "crates/cube-engine/**/*.{rs,toml},roadmap.md",
+          "globs": "crates/cube-engine/**/*.{rs,toml},docs/project-plan.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "crates/cube-engine/**/*.{rs,toml},roadmap.md"
+          "applyTo": "crates/cube-engine/**/*.{rs,toml},docs/project-plan.md"
         }
       }
     },
@@ -140,11 +140,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "crates/cube-engine/src/search/**/*.rs,crates/cube-engine/src/cube/**/*.rs,roadmap.md",
+          "globs": "crates/cube-engine/src/search/**/*.rs,crates/cube-engine/src/cube/**/*.rs,docs/project-plan.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "crates/cube-engine/src/search/**/*.rs,crates/cube-engine/src/cube/**/*.rs,roadmap.md"
+          "applyTo": "crates/cube-engine/src/search/**/*.rs,crates/cube-engine/src/cube/**/*.rs,docs/project-plan.md"
         }
       }
     },
@@ -168,11 +168,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "crates/api/**/*.{rs,toml},web/src/api/**/*.{ts,tsx},roadmap.md",
+          "globs": "crates/api/**/*.{rs,toml},web/src/api/**/*.{ts,tsx},docs/project-plan.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "crates/api/**/*.{rs,toml},web/src/api/**/*.{ts,tsx},roadmap.md"
+          "applyTo": "crates/api/**/*.{rs,toml},web/src/api/**/*.{ts,tsx},docs/project-plan.md"
         }
       }
     },
@@ -199,11 +199,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "web/**/*.{ts,tsx,css},crates/api/**/*,roadmap.md",
+          "globs": "web/**/*.{ts,tsx,css},crates/api/**/*,docs/project-plan.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "web/**/*.{ts,tsx,css},crates/api/**/*,roadmap.md"
+          "applyTo": "web/**/*.{ts,tsx,css},crates/api/**/*,docs/project-plan.md"
         }
       }
     },
@@ -226,11 +226,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "web/**/*.{ts,tsx,css},roadmap.md",
+          "globs": "web/**/*.{ts,tsx,css},docs/project-plan.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "web/**/*.{ts,tsx,css},roadmap.md"
+          "applyTo": "web/**/*.{ts,tsx,css},docs/project-plan.md"
         }
       }
     },
@@ -253,11 +253,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "web/**/*.{ts,tsx},roadmap.md",
+          "globs": "web/**/*.{ts,tsx},docs/project-plan.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "web/**/*.{ts,tsx},roadmap.md"
+          "applyTo": "web/**/*.{ts,tsx},docs/project-plan.md"
         }
       }
     },
@@ -279,11 +279,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "web/**/*.{ts,tsx},crates/api/**/*.{rs,toml},roadmap.md",
+          "globs": "web/**/*.{ts,tsx},crates/api/**/*.{rs,toml},docs/project-plan.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "web/**/*.{ts,tsx},crates/api/**/*.{rs,toml},roadmap.md"
+          "applyTo": "web/**/*.{ts,tsx},crates/api/**/*.{rs,toml},docs/project-plan.md"
         }
       }
     },
@@ -303,11 +303,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "web/**/*.{ts,tsx,css},roadmap.md",
+          "globs": "web/**/*.{ts,tsx,css},docs/project-plan.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "web/**/*.{ts,tsx,css},roadmap.md"
+          "applyTo": "web/**/*.{ts,tsx,css},docs/project-plan.md"
         }
       }
     },
@@ -329,11 +329,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "web/src/api/**/*.{ts,tsx},web/src/pages/**/*.{ts,tsx},crates/api/**/*.{rs,toml},roadmap.md",
+          "globs": "web/src/api/**/*.{ts,tsx},web/src/pages/**/*.{ts,tsx},crates/api/**/*.{rs,toml},docs/project-plan.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "web/src/api/**/*.{ts,tsx},web/src/pages/**/*.{ts,tsx},crates/api/**/*.{rs,toml},roadmap.md"
+          "applyTo": "web/src/api/**/*.{ts,tsx},web/src/pages/**/*.{ts,tsx},crates/api/**/*.{rs,toml},docs/project-plan.md"
         }
       }
     },
@@ -354,11 +354,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "web/**/*.{ts,tsx,css},web/.storybook/**/*,roadmap.md",
+          "globs": "web/**/*.{ts,tsx,css},web/.storybook/**/*,docs/project-plan.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "web/**/*.{ts,tsx,css},web/.storybook/**/*,roadmap.md"
+          "applyTo": "web/**/*.{ts,tsx,css},web/.storybook/**/*,docs/project-plan.md"
         }
       }
     }

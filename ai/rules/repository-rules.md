@@ -4,7 +4,7 @@ Global rules for changes anywhere in this repository.
 
 ## Always
 
-- Read `roadmap.md`, nearby code, and current tests before changing behavior.
+- Read `docs/project-plan.md`, nearby code, and current tests before changing behavior.
 - Prefer the smallest correct change with the lowest surface area.
 - Follow existing naming, file layout, import style, error handling, and command style before introducing a new pattern.
 - Keep the implementation order aligned with the roadmap: cube representation, moves, search, heuristics, pattern databases, solver quality, then solver portfolios.

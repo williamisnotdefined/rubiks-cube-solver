@@ -1,6 +1,6 @@
 ---
 description: "Use when changing Tailwind CSS v4 utilities, theme/color variables, responsive layout, visual treatment, classnames usage, or cube visualization sizing in web."
-globs: "web/**/*.{ts,tsx,css},roadmap.md"
+globs: "web/**/*.{ts,tsx,css},docs/project-plan.md"
 alwaysApply: false
 ---
 

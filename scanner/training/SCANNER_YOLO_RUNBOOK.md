@@ -20,13 +20,15 @@ The scanner runtime is YOLO-only. It does not use a sticker CNN, face detector, 
 
 ```bash
 npm run vision:install
-python -m pip install -r scanner/training/requirements.txt
+npm run scan:tile-yolo-install-deps
 npm run scan:tile-yolo-roboflow-dataset
 npm run scan:tile-yolo-check
 npm run scan:tile-yolo-train
 npm run scan:tile-yolo-export
 npm run scan:tile-yolo-install
 ```
+
+The dependency command installs CPU-only Torch first, then Ultralytics and ONNX export helpers. Override `RUBIKS_PYTHON` if you want to install into a specific virtual environment.
 
 The training wrapper above runs the same Ultralytics commands shown below. It fine-tunes the YOLO base model configured by `RUBIKS_TILE_YOLO_BASE_MODEL`, defaulting to `yolo11n.pt`:
 
@@ -48,14 +50,16 @@ npm run dev
 Roboflow COCO conversion:
 
 ```bash
-RUBIKS_ROBOFLOW_COCO_ZIP=/path/to/Rubiks\ Cube\ Colors.v2i.coco.zip npm run scan:tile-yolo-roboflow-dataset
+npm run scan:tile-yolo-roboflow-dataset
 ```
 
-Roboflow COCO exports contain `_annotations.coco.json` inside each split folder, usually `train/`, `valid/`, and `test/`. Those annotation files are local dataset inputs and are not versioned in this repository. The converter reads the COCO boxes and writes YOLO labels to `scanner/outputs/tile-yolo-roboflow-v2/labels/`.
+The default source export is the Git LFS-backed `scanner/datasets/roboflow/rubiks-cube-colors-v2.coco.zip`. Override it with `RUBIKS_ROBOFLOW_COCO_ZIP=/path/to/export.zip` when testing another Roboflow export.
+
+Roboflow COCO exports contain `_annotations.coco.json` inside each split folder, usually `train/`, `valid/`, and `test/`. The converter reads the COCO boxes and writes YOLO labels to `scanner/outputs/tile-yolo-roboflow-v2/labels/`.
 
 ## Artifact Rules
 
-Do not commit model files, local camera captures, Roboflow exports, generated YOLO datasets, training runs, or references. Use ignored local paths under `scanner/outputs`, `scanner/runs`, `scanner/models`, and `scanner/references`.
+Do not commit model files, local camera captures, generated YOLO datasets, training runs, or references. The current Roboflow source export is the explicit exception and is tracked through Git LFS under `scanner/datasets/roboflow`. Use ignored local paths under `scanner/outputs`, `scanner/runs`, `scanner/models`, and `scanner/references` for generated artifacts.
 
 ## Runtime Files
 

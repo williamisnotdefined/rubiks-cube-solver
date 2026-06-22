@@ -1,6 +1,6 @@
 ---
 description: "Use when adding or changing IDA*, generated two-phase search, heuristics, pruning, or pattern database code."
-globs: "crates/cube-engine/src/search/**/*.rs,crates/cube-engine/src/cube/**/*.rs,roadmap.md"
+globs: "crates/cube-engine/src/search/**/*.rs,crates/cube-engine/src/cube/**/*.rs,docs/project-plan.md"
 alwaysApply: false
 ---
 
@@ -151,7 +151,7 @@ The target is a Rubik's Cube solver with a Rust engine, search algorithms, heuri
 - `web`: Vite React app for notation-only solve requests, cube visualization, and playback-oriented UI.
 - `scanner`: Python scanner contracts, FastAPI runtime, and offline scanner training/evaluation tooling.
 - `ai`: canonical AI knowledge base and route generation system.
-- `roadmap.md`: source roadmap and implementation order.
+- `docs/project-plan.md`: source roadmap, implementation order, and multi-puzzle direction.
 
 ## Generated Artifacts
 

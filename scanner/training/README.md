@@ -18,7 +18,7 @@ The project no longer keeps scanner CNN or face-detector training code. Tile rec
 ## Commands
 
 ```bash
-python -m pip install -r scanner/training/requirements.txt
+npm run scan:tile-yolo-install-deps
 python -m pytest scanner/training
 npm run scan:label
 npm run scan:replay
@@ -34,13 +34,13 @@ npm run scan:tile-yolo-install
 
 Tile recognition is trained by fine-tuning an Ultralytics YOLO model. The default base model is `yolo11n.pt`, which Ultralytics can download locally if it is not already present.
 
-The source annotations are not committed. For Roboflow COCO exports, `_annotations.coco.json` lives inside the local export zip under split folders such as `train/`, `valid/`, and `test/`. The converter writes a YOLO dataset under `scanner/outputs/` with `data.yaml`, `images/`, and `labels/`.
+The current source Roboflow COCO export is tracked through Git LFS at `scanner/datasets/roboflow/rubiks-cube-colors-v2.coco.zip`. For Roboflow COCO exports, `_annotations.coco.json` lives inside the export zip under split folders such as `train/`, `valid`, and `test`. The converter writes a YOLO dataset under `scanner/outputs/` with `data.yaml`, `images/`, and `labels/`.
 
 See `scanner/training/tile_detector/README.md` for the concrete pipeline.
 
 ## Artifacts
 
-Keep private captures, downloaded datasets, training runs, checkpoints, `.pt`, `.onnx`, and generated YOLO datasets out of git.
+Keep private captures, non-approved downloaded datasets, training runs, checkpoints, `.pt`, `.onnx`, and generated YOLO datasets out of git.
 
 Ignored local paths:
 

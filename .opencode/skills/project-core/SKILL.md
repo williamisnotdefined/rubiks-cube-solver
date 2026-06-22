@@ -40,7 +40,7 @@ Keep every change aligned with the roadmap order, Rust engine boundaries, cube d
 
 ## Workflow
 
-- Start from `roadmap.md`, nearby code, tests, and source docs before changing behavior.
+- Start from `docs/project-plan.md`, nearby code, tests, and source docs before changing behavior.
 - Apply a narrower skill when the task touches cube engine, solver search, API boundary, frontend visualization, or AI knowledge.
 - Keep solver logic in Rust and keep AI routes generated.
 - Run targeted verification first, then broader checks when a change crosses boundaries.
@@ -66,7 +66,7 @@ Global rules for changes anywhere in this repository.
 
 ## Always
 
-- Read `roadmap.md`, nearby code, and current tests before changing behavior.
+- Read `docs/project-plan.md`, nearby code, and current tests before changing behavior.
 - Prefer the smallest correct change with the lowest surface area.
 - Follow existing naming, file layout, import style, error handling, and command style before introducing a new pattern.
 - Keep the implementation order aligned with the roadmap: cube representation, moves, search, heuristics, pattern databases, solver quality, then solver portfolios.
@@ -198,7 +198,7 @@ The target is a Rubik's Cube solver with a Rust engine, search algorithms, heuri
 - `web`: Vite React app for notation-only solve requests, cube visualization, and playback-oriented UI.
 - `scanner`: Python scanner contracts, FastAPI runtime, and offline scanner training/evaluation tooling.
 - `ai`: canonical AI knowledge base and route generation system.
-- `roadmap.md`: source roadmap and implementation order.
+- `docs/project-plan.md`: source roadmap, implementation order, and multi-puzzle direction.
 
 ## Generated Artifacts
 

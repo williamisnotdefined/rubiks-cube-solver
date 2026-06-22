@@ -1,22 +1,146 @@
-# Many Cubes Solver Plan
+# Project Plan
 
-## Purpose
+This document is the canonical technical plan for the solver, scanner, and multi-puzzle direction. Keep `README.md` focused on setup and day-to-day commands; keep implementation order and architectural constraints here.
 
-This document defines the technical plan for evolving the repository from a 3x3x3-focused Rubik's Cube solver into a multi-puzzle solver platform.
+## Sources Of Truth
+
+- `GOALS.md`: product north star. Automation should change it only when the user explicitly asks.
+- `docs/project-plan.md`: technical implementation order, constraints, and multi-puzzle direction.
+- `crates/cube-engine`: source of truth for cube state, moves, validation, search, solvers, and replay verification.
+- Scanner model artifacts and generated datasets are local outputs unless a source dataset is explicitly tracked through Git LFS.
+
+## Product Goal
+
+Build a web application where a user can provide a valid puzzle state, receive a verified solution within explicit limits, and replay the result visually. For invalid states, the product must reject the input with useful errors instead of returning an unsafe solution.
+
+Current priorities:
+
+1. Never return an invalid solution.
+2. Reject impossible states with useful errors.
+3. Solve user-provided states, not only internally generated scrambles.
+4. Improve solution quality after correctness by minimizing replay-verified move count within explicit limits.
+5. Keep heavy solving behind the native Rust API and web UI.
+6. Expand to solver portfolios and puzzle-specific implementations only after the core path remains correct.
+
+## Implementation Rules
+
+- Keep cube state, validation, search, heuristics, pruning tables, and replay verification in Rust.
+- Keep API and frontend layers as adapters around Rust-owned solver behavior.
+- Use cubie representation as the primary 3x3 engine model; do not use sticker/color arrays as the primary solver representation.
+- Verify every returned solution by replay before exposing success.
+- Do not promise optimality, `<=16`, or 20-move guarantees without an algorithm and tests that support the claim.
+- Treat two-phase, IDA*, PDBs, solver portfolios, and external classical algorithms as implementation strategies, not product goals.
+- Do not add machine learning, reinforcement learning, Transformers, or ML-guided solving without an explicit current product requirement.
+- Do not commit generated pruning tables, model checkpoints, `.pt` files, `.onnx` files, private captures, training runs, or generated datasets.
+- Track only explicitly approved source datasets through Git LFS.
+
+## Architecture Direction
+
+```txt
+Web UI (TypeScript + React)
+        -> Rust HTTP API
+        -> Rust cube-engine
+        -> validated puzzle state
+        -> method-agnostic solver strategy or portfolio
+        -> shortest practical replay-verified move sequence found within limits
+        -> playback / solved verification
+```
+
+Research and quality work should build on the deterministic baseline:
+
+```txt
+Deterministic solver baseline
+        -> coordinates and pruning tables
+        -> solver benchmarks
+        -> bounded optimal attempts / solver portfolio
+```
+
+## Current Status
+
+- The Rust workspace contains `cube-engine` with cubie representation, moves, notation, scrambles, validation, bounded IDA*, generated two-phase search, pruning tables, quality reporting, and puzzle metadata.
+- The native HTTP API is the product boundary for web solving and scanner-backed solve flows.
+- The web app supports puzzle-aware notation solving, visualization, playback, locale resources, and scan-session flows.
+- The scanner is YOLO-only at runtime and uses Python for camera analysis, dataset conversion, training, and ONNX export.
+- AI knowledge routing is generated from canonical files under `ai/`.
+
+## Roadmap
+
+### Phase 1 - Cube Engine
+
+Maintain a pure, deterministic, testable 3x3 engine with cubie state, move application and inversion, notation, algorithms, scrambles, invariants, solved-state detection, and deterministic behavior tests.
+
+Exit criterion: every state accepted by the engine is a valid cube state or returns a structured error.
+
+### Phase 2 - User State Input
+
+Accept real user-provided states without changing the internal solver representation. This includes facelet syntax, centers, color counts, cubie decoding, round-trips, and distinct errors for syntax, centers, decoding, and cubie validation.
+
+Exit criterion: valid facelet states convert to cubies and impossible states are rejected before solve.
+
+### Phase 3 - Product Solver
+
+Expose a correct solver API before optimizing quality. Bounded IDA*, simple admissible heuristics where applicable, typed results, explicit limits, replay verification, and honest limit failures are required.
+
+Exit criterion: solved and shallow states return verified solutions; insufficient limits return honest failures with metrics.
+
+### Phase 4 - Native HTTP API
+
+Expose Rust solving through `crates/api` without duplicating solver logic, shipping pruning tables to the browser, or relying on frontend-side validation.
+
+Exit criterion: HTTP requests delegate to `cube-engine` and pass success and failure contract tests.
+
+### Phase 5 - Web Frontend
+
+Deliver the product flow in the browser with isolated API clients, visible limits, move output, metrics, replay, and usable desktop/mobile layout.
+
+Exit criterion: users can submit valid and invalid notation and receive the correct result in each case.
+
+### Phase 6 - Product Validation
+
+Protect the solve, playback, scanner, and responsive product flows with deterministic tests and executable gates.
+
+Exit criterion: regressions in input, solving, verification, API contracts, scanner contracts, or playback fail targeted tests.
+
+### Phase 7 - Classical Solver Quality
+
+Improve beyond shallow solving with coordinates, pruning tables, generated two-phase baseline, checked indexing, fixtures, and benchmarks that compare strategies by verified length, nodes, time, limits, and short-solution buckets.
+
+Exit criterion: a classical baseline is measurable, replay-verified, and honest about missing artifacts or limits.
+
+### Phase 8 - Solver Portfolio And Shorter Solutions
+
+Combine strategies to return the best replay-verified solution found within configured limits. Possible lines include stronger admissible PDBs, bounded `<=16` attempts, multiprobe search, and portfolios that choose the shortest verified result.
+
+Exit criterion: API strategies can report which strategy won, compare verified solutions, and avoid presenting lack of proof as proof of non-existence.
+
+### Phase 9 - Advanced Research
+
+Explore isolated ideas only after the product path stays correct. Candidates include multi-threaded search, beam search, Monte Carlo Tree Search, neural-guided experiments, human-like solvers, and symmetry reduction.
+
+Exit criterion: each experiment has a baseline, metric, fallback, and isolated scope.
+
+## Definition Of Done
+
+The core product goal is reached when:
+
+- the user can provide a valid puzzle state through the web UI;
+- impossible states are rejected with useful messages;
+- valid states are solved by Rust through the API;
+- every successful solution is replay verified;
+- the UI displays notation, metrics, and playback;
+- automated tests cover the full product flow.
+
+## Multi-Puzzle Expansion
+
+### Purpose
+
+This section defines the technical plan for evolving the repository from a 3x3x3-focused Rubik's Cube solver into a multi-puzzle solver platform.
 
 The first implementation target is `2x2x2`. Later targets are Pyraminx, Clock, Skewb, cubic NxNxN puzzles, Square-1, and Megaminx.
 
 The current 3x3x3 product path must keep working while this expansion is built.
 
-## Branch
-
-The implementation branch for this work is:
-
-```txt
-feat/many-cubes
-```
-
-## Scope
+### Scope
 
 Puzzles in scope, in initial implementation order:
 

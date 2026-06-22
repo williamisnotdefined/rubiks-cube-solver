@@ -1,6 +1,6 @@
 ---
 description: "Use when adding or changing the Axum HTTP API, API validation, generated solver loading, solve-status contracts, or web API client."
-globs: "crates/api/**/*.{rs,toml},web/src/api/**/*.{ts,tsx},roadmap.md"
+globs: "crates/api/**/*.{rs,toml},web/src/api/**/*.{ts,tsx},docs/project-plan.md"
 alwaysApply: false
 ---
 
@@ -279,7 +279,7 @@ The target is a Rubik's Cube solver with a Rust engine, search algorithms, heuri
 - `web`: Vite React app for notation-only solve requests, cube visualization, and playback-oriented UI.
 - `scanner`: Python scanner contracts, FastAPI runtime, and offline scanner training/evaluation tooling.
 - `ai`: canonical AI knowledge base and route generation system.
-- `roadmap.md`: source roadmap and implementation order.
+- `docs/project-plan.md`: source roadmap, implementation order, and multi-puzzle direction.
 
 ## Generated Artifacts
 

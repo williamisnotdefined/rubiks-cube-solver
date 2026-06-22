@@ -4,7 +4,7 @@ The live scanner recognizes visible cube tiles with a YOLO ONNX detector. Traini
 
 ## Inputs
 
-The supported default input is a Roboflow COCO export zip passed through `RUBIKS_ROBOFLOW_COCO_ZIP`.
+The default input is the Git LFS-backed Roboflow COCO export at `scanner/datasets/roboflow/rubiks-cube-colors-v2.coco.zip`. Override it with `RUBIKS_ROBOFLOW_COCO_ZIP` when testing another export.
 
 Roboflow COCO exports contain annotation files such as:
 
@@ -14,12 +14,13 @@ valid/_annotations.coco.json
 test/_annotations.coco.json
 ```
 
-Those files describe images, classes, and bounding boxes. They are not committed to this repository.
+Those files describe images, classes, and bounding boxes. Generated YOLO datasets still stay ignored under `scanner/outputs`.
 
 ## Pipeline
 
 ```bash
-RUBIKS_ROBOFLOW_COCO_ZIP=/path/to/export.zip npm run scan:tile-yolo-roboflow-dataset
+npm run scan:tile-yolo-roboflow-dataset
+npm run scan:tile-yolo-install-deps
 npm run scan:tile-yolo-check
 npm run scan:tile-yolo-train
 npm run scan:tile-yolo-export

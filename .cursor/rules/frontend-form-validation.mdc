@@ -1,6 +1,6 @@
 ---
 description: "Use when adding or changing solve controls, scramble inputs, frontend limit validation, or form behavior in web."
-globs: "web/**/*.{ts,tsx},crates/api/**/*.{rs,toml},roadmap.md"
+globs: "web/**/*.{ts,tsx},crates/api/**/*.{rs,toml},docs/project-plan.md"
 alwaysApply: false
 ---
 

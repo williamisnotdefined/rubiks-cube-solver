@@ -33,6 +33,7 @@ scanner/models/
 rubiks-scan-session-*.json
 rubiks-scan-dataset-*.json
 *.coco.zip
+!scanner/datasets/roboflow/*.coco.zip
 images.zip
 labels.zip
 *.pt

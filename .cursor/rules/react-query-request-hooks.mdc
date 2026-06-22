@@ -1,6 +1,6 @@
 ---
 description: "Use when adding or changing web API query hooks, mutation hooks, request functions, query keys, or response normalization."
-globs: "web/src/api/**/*.{ts,tsx},web/src/pages/**/*.{ts,tsx},crates/api/**/*.{rs,toml},roadmap.md"
+globs: "web/src/api/**/*.{ts,tsx},web/src/pages/**/*.{ts,tsx},crates/api/**/*.{rs,toml},docs/project-plan.md"
 alwaysApply: false
 ---
 

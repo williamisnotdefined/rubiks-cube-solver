@@ -1,5 +1,5 @@
 ---
-applyTo: "crates/cube-engine/**/*.{rs,toml},roadmap.md"
+applyTo: "crates/cube-engine/**/*.{rs,toml},docs/project-plan.md"
 ---
 
 Generated from `ai/registry.json`. Do not edit manually.
@@ -151,7 +151,7 @@ The target is a Rubik's Cube solver with a Rust engine, search algorithms, heuri
 - `web`: Vite React app for notation-only solve requests, cube visualization, and playback-oriented UI.
 - `scanner`: Python scanner contracts, FastAPI runtime, and offline scanner training/evaluation tooling.
 - `ai`: canonical AI knowledge base and route generation system.
-- `roadmap.md`: source roadmap and implementation order.
+- `docs/project-plan.md`: source roadmap, implementation order, and multi-puzzle direction.
 
 ## Generated Artifacts
 
