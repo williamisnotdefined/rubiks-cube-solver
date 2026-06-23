@@ -1,5 +1,5 @@
 [tool.ruff]
-target-version = "py311"
+target-version = "py314"
 line-length = 100
 extend-exclude = [
   "scanner/models",
@@ -15,7 +15,7 @@ select = ["E4", "E7", "E9", "F"]
 "scanner/**/tests/*.py" = ["E402"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.14"
 files = ["scanner/contracts"]
 exclude = "scanner/(models|outputs|references|runs)/"
 ignore_missing_imports = true

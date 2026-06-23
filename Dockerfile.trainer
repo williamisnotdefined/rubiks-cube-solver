@@ -1,7 +1,14 @@
-FROM node:26-bookworm-slim
+FROM node:26-trixie-slim AS node-runtime
+
+FROM python:3.14-slim
+
+COPY --from=node-runtime /usr/local/bin/node /usr/local/bin/node
+COPY --from=node-runtime /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+  && ln -s /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends bash git git-lfs libglib2.0-0 libgomp1 python3 python3-pip python3-venv \
+  && apt-get install -y --no-install-recommends bash git git-lfs libgl1 libglib2.0-0 libgomp1 libxcb1 \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
@@ -11,7 +18,7 @@ COPY scanner/requirements-test.txt scanner/requirements-test.txt
 COPY scanner/runtime/requirements.txt scanner/runtime/requirements.txt
 COPY scanner/training/requirements.txt scanner/training/requirements.txt
 
-RUN python3 -m venv /opt/rubiks-venv \
+RUN python -m venv /opt/rubiks-venv \
   && /opt/rubiks-venv/bin/python -m pip install --upgrade pip
 
 ENV RUBIKS_PYTHON=/opt/rubiks-venv/bin/python \
