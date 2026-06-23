@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import os
+import hashlib
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -13,6 +15,8 @@ DEFAULT_TILE_DETECTOR_INPUT_SIZE = 640
 DEFAULT_TILE_DETECTOR_CONFIDENCE = 0.28
 DEFAULT_TILE_DETECTOR_IOU = 0.45
 DEFAULT_TILE_DETECTOR_CLASS_SYMBOLS = ("face", "U", "R", "F", "D", "L", "B")
+EXPECTED_TILE_DETECTOR_CONTRACT_VERSION = "tile-yolo-onnx-v1"
+MAX_SUPPORTED_ONNX_OPSET = 21
 TILE_DETECTOR_CLASS_SYMBOLS = DEFAULT_TILE_DETECTOR_CLASS_SYMBOLS
 
 
@@ -23,10 +27,24 @@ class TileDetection:
     bbox: tuple[float, float, float, float]
 
 
+@dataclass(frozen=True)
+class TileDetectorManifest:
+    model_path: Path
+    input_size: int
+    class_symbols: tuple[str, ...]
+
+
+class TileDetectorManifestError(ValueError):
+    def __init__(self, reason: str) -> None:
+        super().__init__(reason)
+        self.reason = reason
+
+
 class VisionTileDetector:
     def __init__(
         self,
         model_path: str | os.PathLike[str] | None = None,
+        manifest_path: str | os.PathLike[str] | None = None,
         session: Any | None = None,
         input_name: str | None = None,
         input_size: int = DEFAULT_TILE_DETECTOR_INPUT_SIZE,
@@ -45,6 +63,19 @@ class VisionTileDetector:
 
         if self._session is not None:
             return
+
+        if manifest_path is not None:
+            try:
+                manifest = load_tile_detector_manifest(
+                    manifest_path,
+                    configured_model_path=self.model_path,
+                    input_size=self.input_size,
+                    class_symbols=self.class_symbols,
+                )
+            except TileDetectorManifestError as error:
+                self.unavailable_reason = error.reason
+                return
+            self.model_path = manifest.model_path
 
         if self.model_path is None:
             self.unavailable_reason = "tile_detector_model_not_configured"
@@ -111,6 +142,7 @@ def get_default_tile_detector() -> VisionTileDetector:
         class_symbols = tile_detector_class_symbols_from_env()
         _DEFAULT_TILE_DETECTOR = VisionTileDetector(
             os.environ.get("RUBIKS_VISION_TILE_DETECTOR_MODEL"),
+            manifest_path=os.environ.get("RUBIKS_VISION_TILE_DETECTOR_MANIFEST"),
             input_size=input_size,
             confidence_threshold=confidence_threshold,
             class_symbols=class_symbols,
@@ -143,6 +175,66 @@ def tile_detector_class_symbols_from_env() -> tuple[str, ...]:
 
     symbols = tuple(symbol.strip() for symbol in value.split(",") if symbol.strip())
     return symbols or DEFAULT_TILE_DETECTOR_CLASS_SYMBOLS
+
+
+def load_tile_detector_manifest(
+    manifest_path: str | os.PathLike[str],
+    *,
+    configured_model_path: Path | None,
+    input_size: int,
+    class_symbols: tuple[str, ...],
+) -> TileDetectorManifest:
+    path = Path(manifest_path)
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except OSError as error:
+        raise TileDetectorManifestError("tile_detector_manifest_unavailable") from error
+    except json.JSONDecodeError as error:
+        raise TileDetectorManifestError("tile_detector_manifest_invalid") from error
+
+    if not isinstance(payload, dict):
+        raise TileDetectorManifestError("tile_detector_manifest_invalid")
+    if payload.get("schemaVersion") != "1":
+        raise TileDetectorManifestError("tile_detector_manifest_schema_mismatch")
+    if payload.get("contractVersion") != EXPECTED_TILE_DETECTOR_CONTRACT_VERSION:
+        raise TileDetectorManifestError("tile_detector_manifest_contract_mismatch")
+    if payload.get("inputSize") != input_size:
+        raise TileDetectorManifestError("tile_detector_manifest_input_size_mismatch")
+    if tuple(payload.get("classOrder", ())) != class_symbols:
+        raise TileDetectorManifestError("tile_detector_manifest_class_order_mismatch")
+
+    onnx_opset = payload.get("onnxOpset")
+    if not isinstance(onnx_opset, int) or onnx_opset < 1 or onnx_opset > MAX_SUPPORTED_ONNX_OPSET:
+        raise TileDetectorManifestError("tile_detector_manifest_opset_mismatch")
+
+    model_path_value = payload.get("modelPath")
+    model_sha256 = payload.get("modelSha256")
+    if not isinstance(model_path_value, str) or not isinstance(model_sha256, str):
+        raise TileDetectorManifestError("tile_detector_manifest_invalid")
+
+    model_path = resolve_manifest_model_path(path, model_path_value)
+    if configured_model_path is not None and model_path.resolve(strict=False) != configured_model_path.resolve(strict=False):
+        raise TileDetectorManifestError("tile_detector_manifest_model_path_mismatch")
+    if sha256_file(model_path) != model_sha256:
+        raise TileDetectorManifestError("tile_detector_manifest_model_sha256_mismatch")
+
+    return TileDetectorManifest(model_path=model_path, input_size=input_size, class_symbols=class_symbols)
+
+
+def resolve_manifest_model_path(manifest_path: Path, model_path: str) -> Path:
+    path = Path(model_path)
+    return path if path.is_absolute() else manifest_path.parent / path
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    try:
+        with path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+    except OSError as error:
+        raise TileDetectorManifestError("tile_detector_manifest_model_unavailable") from error
+    return digest.hexdigest()
 
 
 def tile_detector_input(image_bgr: np.ndarray, input_size: int) -> np.ndarray:

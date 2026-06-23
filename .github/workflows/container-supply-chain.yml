@@ -1,0 +1,138 @@
+name: Container Supply Chain
+
+on:
+  pull_request:
+    paths:
+      - Dockerfile.app
+      - Dockerfile.vision
+      - docker-compose.yml
+      - Cargo.lock
+      - package-lock.json
+      - scanner/runtime/requirements.txt
+      - .github/workflows/container-supply-chain.yml
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 5 * * 2"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  container-supply-chain:
+    name: container-supply-chain
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Build app image
+        run: docker build -t rubiks-app:${{ github.sha }} -f Dockerfile.app .
+
+      - name: Build vision image
+        run: docker build -t rubiks-vision:${{ github.sha }} -f Dockerfile.vision .
+
+      - name: Scan app image vulnerabilities
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: rubiks-app:${{ github.sha }}
+          format: sarif
+          output: trivy-app.sarif
+          severity: HIGH,CRITICAL
+          vuln-type: os,library
+          scanners: vuln
+          exit-code: "0"
+
+      - name: Scan vision image vulnerabilities
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: rubiks-vision:${{ github.sha }}
+          format: sarif
+          output: trivy-vision.sarif
+          severity: HIGH,CRITICAL
+          vuln-type: os,library
+          scanners: vuln
+          exit-code: "0"
+
+      - name: Generate app SBOM
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: rubiks-app:${{ github.sha }}
+          format: cyclonedx
+          output: sbom-app.cdx.json
+          scanners: vuln
+          exit-code: "0"
+
+      - name: Generate vision SBOM
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: rubiks-vision:${{ github.sha }}
+          format: cyclonedx
+          output: sbom-vision.cdx.json
+          scanners: vuln
+          exit-code: "0"
+
+      - name: Upload app Trivy SARIF
+        if: always() && hashFiles('trivy-app.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4
+        with:
+          sarif_file: trivy-app.sarif
+          category: trivy-app-image
+
+      - name: Upload vision Trivy SARIF
+        if: always() && hashFiles('trivy-vision.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4
+        with:
+          sarif_file: trivy-vision.sarif
+          category: trivy-vision-image
+
+      - name: Upload container security artifacts
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: container-supply-chain-artifacts
+          path: |
+            trivy-app.sarif
+            trivy-vision.sarif
+            sbom-app.cdx.json
+            sbom-vision.cdx.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Enforce app image fixable vulnerability budget
+        id: enforce-app
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: rubiks-app:${{ github.sha }}
+          format: table
+          severity: HIGH,CRITICAL
+          vuln-type: os,library
+          scanners: vuln
+          ignore-unfixed: "true"
+          exit-code: "1"
+
+      - name: Enforce vision image fixable vulnerability budget
+        id: enforce-vision
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: rubiks-vision:${{ github.sha }}
+          format: table
+          severity: HIGH,CRITICAL
+          vuln-type: os,library
+          scanners: vuln
+          ignore-unfixed: "true"
+          exit-code: "1"
+
+      - name: Fail on image vulnerabilities
+        if: steps.enforce-app.outcome == 'failure' || steps.enforce-vision.outcome == 'failure'
+        run: exit 1

@@ -15,7 +15,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "failed to load generated two-phase solver from {}: {error}",
             config.pruning_table_dir.display()
         )
-    })?;
+    })?
+    .with_solver_max_concurrency(config.solver_max_concurrency);
     let web_index_file = config.web_dist_dir.join("index.html");
     let app = if web_index_file.is_file() {
         api_router_with_web_dist(state, config.web_dist_dir.clone())

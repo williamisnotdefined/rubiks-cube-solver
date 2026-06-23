@@ -43,4 +43,4 @@ services:
       RUBIKS_PRUNING_TABLE_DIR: /app/pruning-tables
       RUBIKS_VISION_URL: http://vision:8790
     ports:
-      - "127.0.0.1:8787:8787"
+      - "127.0.0.1:${RUBIKS_APP_HOST_PORT:-8787}:8787"

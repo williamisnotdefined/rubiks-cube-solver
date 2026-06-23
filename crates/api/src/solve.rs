@@ -16,17 +16,37 @@ use crate::response::{
 };
 use crate::state::ApiState;
 
+pub(crate) struct PreparedSolveRequest {
+    pub(crate) max_depth: usize,
+    pub(crate) max_nodes: Option<usize>,
+    pub(crate) strategy: SolverStrategy,
+    cube: Cube,
+    visual_state: String,
+}
+
+type SolveHttpResponse = (StatusCode, Json<SolveResponse>);
+type PreparedSolveResult = Result<PreparedSolveRequest, Box<SolveHttpResponse>>;
+
 pub fn solve_notation_request(
     state: &ApiState,
     request: SolveNotationRequest,
 ) -> (StatusCode, Json<SolveResponse>) {
+    let prepared = match prepare_solve_notation_request(request) {
+        Ok(prepared) => prepared,
+        Err(response) => return *response,
+    };
+
+    solve_prepared_request(state, prepared)
+}
+
+pub(crate) fn prepare_solve_notation_request(request: SolveNotationRequest) -> PreparedSolveResult {
     let request = match validate_solve_notation_request_limits(request) {
         Ok(request) => request,
-        Err(response) => return (StatusCode::BAD_REQUEST, Json(*response)),
+        Err(response) => return Err(Box::new((StatusCode::BAD_REQUEST, Json(*response)))),
     };
 
     let Some(strategy) = SolverStrategy::from_id(&request.strategy_id) else {
-        return (
+        return Err(Box::new((
             StatusCode::BAD_REQUEST,
             Json(error_response_from_parts(
                 &request.strategy_id,
@@ -38,12 +58,12 @@ pub fn solve_notation_request(
                 SolverStrategy::unsupported_strategy_message(&request.strategy_id),
                 None,
             )),
-        );
+        )));
     };
     let cube = match cube_from_notation(&request.moves) {
         Ok(cube) => cube,
         Err(message) => {
-            return (
+            return Err(Box::new((
                 StatusCode::BAD_REQUEST,
                 Json(error_response_from_parts(
                     &request.strategy_id,
@@ -55,32 +75,40 @@ pub fn solve_notation_request(
                     message,
                     None,
                 )),
-            );
+            )));
         }
     };
     let visual_state = FaceletString::from_cube(&cube).to_string();
 
-    solve_prepared_cube(
-        state,
-        request.max_depth,
-        request.max_nodes,
+    Ok(PreparedSolveRequest {
+        max_depth: request.max_depth,
+        max_nodes: request.max_nodes,
         strategy,
         cube,
         visual_state,
-    )
+    })
 }
 
 pub fn solve_scan_request(
     state: &ApiState,
     request: SolveScanRequest,
 ) -> (StatusCode, Json<SolveResponse>) {
+    let prepared = match prepare_solve_scan_request(request) {
+        Ok(prepared) => prepared,
+        Err(response) => return *response,
+    };
+
+    solve_prepared_request(state, prepared)
+}
+
+pub(crate) fn prepare_solve_scan_request(request: SolveScanRequest) -> PreparedSolveResult {
     let request = match validate_solve_scan_request_limits(request) {
         Ok(request) => request,
-        Err(response) => return (StatusCode::BAD_REQUEST, Json(*response)),
+        Err(response) => return Err(Box::new((StatusCode::BAD_REQUEST, Json(*response)))),
     };
 
     let Some(strategy) = SolverStrategy::from_id(&request.strategy_id) else {
-        return (
+        return Err(Box::new((
             StatusCode::BAD_REQUEST,
             Json(error_response_from_parts(
                 &request.strategy_id,
@@ -92,7 +120,7 @@ pub fn solve_scan_request(
                 SolverStrategy::unsupported_strategy_message(&request.strategy_id),
                 None,
             )),
-        );
+        )));
     };
     let facelet_input = scan_faces_to_facelet_string(&request.faces);
     let parsed_visual_state = FaceletString::parse(&facelet_input)
@@ -101,7 +129,7 @@ pub fn solve_scan_request(
     let cube = match cube_from_facelet_string(&facelet_input) {
         Ok(cube) => cube,
         Err(error) => {
-            return (
+            return Err(Box::new((
                 StatusCode::BAD_REQUEST,
                 Json(error_response_from_parts(
                     &request.strategy_id,
@@ -113,18 +141,31 @@ pub fn solve_scan_request(
                     error.to_string(),
                     parsed_visual_state,
                 )),
-            );
+            )));
         }
     };
     let visual_state = FaceletString::from_cube(&cube).to_string();
 
+    Ok(PreparedSolveRequest {
+        max_depth: request.max_depth,
+        max_nodes: request.max_nodes,
+        strategy,
+        cube,
+        visual_state,
+    })
+}
+
+pub(crate) fn solve_prepared_request(
+    state: &ApiState,
+    request: PreparedSolveRequest,
+) -> (StatusCode, Json<SolveResponse>) {
     solve_prepared_cube(
         state,
         request.max_depth,
         request.max_nodes,
-        strategy,
-        cube,
-        visual_state,
+        request.strategy,
+        request.cube,
+        request.visual_state,
     )
 }
 

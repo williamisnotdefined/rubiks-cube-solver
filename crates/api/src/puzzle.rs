@@ -169,6 +169,88 @@ pub fn solve_puzzle_request(
     }
 }
 
+pub(crate) fn puzzle_solve_overloaded_response(
+    puzzle_slug: &str,
+    request: &PuzzleSolveRequest,
+) -> PuzzleSolveResponse {
+    puzzle_solve_api_error_response(
+        puzzle_slug,
+        request,
+        "solver_overloaded",
+        "solver concurrency limit reached; retry the request later".to_owned(),
+    )
+}
+
+pub(crate) fn puzzle_solve_worker_failed_response(
+    puzzle_slug: &str,
+    request: &PuzzleSolveRequest,
+) -> PuzzleSolveResponse {
+    puzzle_solve_api_error_response(
+        puzzle_slug,
+        request,
+        "solver_worker_failed",
+        "solver worker failed before returning a response".to_owned(),
+    )
+}
+
+fn puzzle_solve_api_error_response(
+    puzzle_slug: &str,
+    request: &PuzzleSolveRequest,
+    error_kind: &str,
+    message: String,
+) -> PuzzleSolveResponse {
+    let puzzle = puzzle_definition_by_slug(puzzle_slug);
+    let strategy_id = puzzle
+        .map(|puzzle| effective_strategy_id(puzzle, request).to_owned())
+        .unwrap_or_else(|| requested_strategy_id(request));
+    let strategy_definition = strategy_definition_by_id(&strategy_id);
+    let (strategy_label, solver_mode) = strategy_definition.map_or_else(
+        || {
+            SolverStrategy::from_id(&strategy_id).map_or_else(
+                || ("Unknown strategy".to_owned(), "unknown".to_owned()),
+                |strategy| {
+                    let metadata = strategy.metadata();
+                    (metadata.label.to_owned(), metadata.solver_mode.to_owned())
+                },
+            )
+        },
+        |definition| {
+            (
+                definition.label.to_owned(),
+                definition.solver_mode.to_owned(),
+            )
+        },
+    );
+    let generated_table_status = SolverStrategy::from_id(&strategy_id)
+        .map(generated_table_status)
+        .unwrap_or("not_applicable")
+        .to_owned();
+
+    PuzzleSolveResponse {
+        ok: false,
+        status: "api_error".to_owned(),
+        puzzle_id: puzzle.map(|puzzle| puzzle.id.as_str().to_owned()),
+        puzzle_slug: puzzle
+            .map(|puzzle| puzzle.slug.to_owned())
+            .unwrap_or_else(|| puzzle_slug.to_owned()),
+        strategy_id,
+        strategy_label,
+        solver_mode,
+        generated_table_status,
+        metric: request.metric.clone(),
+        max_depth: request.limits.max_depth,
+        max_nodes: request.limits.max_nodes,
+        moves: Vec::new(),
+        length: None,
+        explored_nodes: None,
+        elapsed_ms: None,
+        replay_verified: None,
+        visual_state: None,
+        error_kind: Some(error_kind.to_owned()),
+        message: Some(message),
+    }
+}
+
 fn solve_cube3_puzzle_request(
     state: &ApiState,
     puzzle: &PuzzleDefinition,

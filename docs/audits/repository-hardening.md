@@ -34,9 +34,11 @@ Recommended stable required-check names after local workflow changes:
 | Required check | Purpose |
 | --- | --- |
 | `rust` | Rust formatting, workspace tests, and Clippy warnings-as-errors. |
+| `cargo-deny` | Rust dependency advisory, license, ban, and source policy. |
 | `node` | AI routes, visualization package checks, web tests, lint, build, and Storybook. |
 | `scanner` | Python scanner runtime/training tests plus Ruff, contract mypy, and practical coverage. |
 | `docker` | Compose syntax and Docker image build checks. |
+| `container-supply-chain` | Container vulnerability scanning and CycloneDX SBOM generation. |
 | `e2e-smoke` | Fast Playwright product/responsive/timer smoke coverage. |
 | `dependency-review` | Pull request dependency vulnerability and license review. |
 | `codeql` | CodeQL analysis for Rust, TypeScript/JavaScript, Python, and Actions workflows. |
@@ -79,7 +81,7 @@ Read-only evidence from repository metadata:
 
 | Ecosystem | Evidence | Current strategy | Gap |
 | --- | --- | --- | --- |
-| Rust | `Cargo.toml`, `Cargo.lock`, `rust-toolchain.toml` | Workspace lockfile exists; license metadata is MIT. | Toolchain was unconstrained `stable`; no advisory/license policy workflow. |
+| Rust | `Cargo.toml`, `Cargo.lock`, `rust-toolchain.toml`, `deny.toml` | Workspace lockfile exists; license metadata is MIT; Rust toolchain is pinned; `cargo-deny` policy is configured locally. | GitHub `cargo-deny` check must run successfully before it is required by a Ruleset. |
 | Node | `package.json`, `package-lock.json`, workspaces | Root lockfile and `npm ci` are used. | No Dependabot config; no dependency-review workflow before this pass. |
 | Python scanner | `scanner/runtime/requirements.txt`, `scanner/training/requirements.txt`, `scanner/requirements-test.txt` | Requirements files use lower bounds. | No lockfile or hash-pinned install; no Ruff/static type config before this pass. |
 | GitHub Actions | `.github/workflows/ci.yml` | Actions were version-tagged. | Third-party actions were not pinned to immutable commit SHAs. |
@@ -112,12 +114,13 @@ Positive evidence:
 - API contracts are typed through Rust modules and scanner contract adapters.
 - Request limits exist in API configuration and solve paths.
 - README states every successful solve includes `replayVerified=true`.
+- `/livez` and `/readyz` now split process liveness from generated-solver readiness while `/health` remains backward compatible.
+- Browser-facing responses include baseline security headers, and CORS origins are configurable via `RUBIKS_CORS_ALLOWED_ORIGINS`.
 
 Gaps:
 
 - CPU-bound solve isolation, bounded worker concurrency, queue limits, and overload contracts need deeper API implementation work.
-- Health semantics are still centered on `/health`; `/livez` and `/readyz` are not documented as separate readiness levels.
-- Security headers, request IDs, structured JSON logs, body limits, and graceful shutdown should be expanded in a dedicated API PR.
+- Request IDs, structured JSON logs, request duration telemetry, broader timeouts, and graceful shutdown should be expanded in a dedicated API PR.
 
 ## Solver Correctness And Performance Review
 
@@ -144,8 +147,8 @@ Positive evidence:
 Gaps:
 
 - `scanner/MODEL_CARD.md`, `scanner/DATASET_CARD.md`, and `scanner/model-manifest.schema.json` were added in this pass.
-- Runtime model compatibility checks should reject incompatible manifest/class/order/input/opset combinations once manifest loading is implemented.
-- Scanner inference concurrency, timeouts, image size limits, and warm-readiness behavior need runtime hardening.
+- Runtime model compatibility checks now reject incompatible configured manifests, including model checksum, contract version, class order, input size, and ONNX opset range.
+- Scanner inference concurrency, timeouts, and warm-readiness behavior need runtime hardening.
 
 ## Container And Deployment Security Review
 
@@ -156,11 +159,14 @@ Positive evidence:
 - Package manager caches are removed from apt layers.
 - Runtime app and vision containers now run as non-root users.
 - Production Compose drops Linux capabilities, sets `no-new-privileges`, uses read-only root filesystems, and mounts `/tmp` as tmpfs.
+- The app runtime image no longer installs `curl` or other apt packages; Compose/CI perform HTTP readiness checks from outside the container.
+- Container supply-chain workflow generates Trivy SARIF plus CycloneDX SBOMs and fails on HIGH/CRITICAL vulnerabilities with published fixes.
 
 Gaps:
 
 - Base images are version-tagged but not digest-pinned.
-- No container vulnerability scan, SBOM, or attestation workflow existed before this pass.
+- Full Trivy visibility still reports upstream base-image CVEs with no fixed version, fix-deferred, or will-not-fix status; those are reported but not used as a failing budget until a fix exists.
+- Release attestation/provenance remains a release workflow follow-up.
 
 ## Documentation And Governance Review
 
@@ -183,9 +189,9 @@ Gaps:
 | High | CI actions were tag-pinned, not SHA-pinned | `.github/workflows/ci.yml` used `actions/checkout@v6`, `actions/setup-node@v6`, `dtolnay/rust-toolchain@stable`. | Mutable tags increase supply-chain risk. | Pin actions to full commit SHAs or replace unnecessary third-party actions with direct toolchain commands. | Planned in local CI hardening. | Workflow diff and future CI run. |
 | High | Web CI did not enforce web coverage | CI used `npm run test -w @rubiks-cube-solver/web`; local `npm run test:coverage -w @rubiks-cube-solver/web` currently reports 93.55% statements, 88.42% branches, 94.14% functions, and 93.42% lines against 95% thresholds. | Coverage regressions could pass PR CI, but adding the gate now would create broken automation. | Add tests to bring web coverage above the existing 95% thresholds, then switch CI from web tests to web coverage. | Documented gap; not added as a required check in this pass. | `npm run test:coverage -w @rubiks-cube-solver/web` before enabling the gate. |
 | High | No dedicated scanner CI job | Only scanner tests are included in bootstrap scripts, not in the GitHub workflow. | Scanner regressions can merge without runtime/training test coverage. | Add Python 3.11 scanner job for runtime and training tests plus lint/static checks. | Implemented locally with Ruff, contract mypy, runtime/training tests, and coverage. | `python -m ruff check scanner`, `python -m mypy`, `npm run vision:test`, `npm run scanner:training:test`, and `python -m pytest scanner/runtime scanner/training --cov=scanner --cov-report=term-missing`. |
-| Medium | No dependency-review or Dependabot config | `.github/dependabot.yml` and dependency review workflow absent. | Dependency vulnerabilities and license regressions rely on ad hoc review. | Add Dependabot config and dependency-review workflow. | Planned in security hardening. | Workflow syntax and future PR check. |
-| Medium | No CodeQL workflow | Code scanning API returned no analysis found. | Security issues in Rust, TypeScript, Python, or Actions may be missed. | Add CodeQL workflow with minimal permissions. | Planned in security hardening. | Future CodeQL run. |
-| Medium | Containers lack runtime hardening | Compose/Dockerfiles do not define non-root runtime users or dropped capabilities. | Container escape blast radius is higher than necessary. | Add non-root users, read-only filesystems, dropped capabilities, resource limits, and scans in a focused build PR. | Documented follow-up. | Docker build and smoke tests after implementation. |
+| Medium | No dependency-review or Dependabot config | `.github/dependabot.yml` and dependency review workflow absent. | Dependency vulnerabilities and license regressions rely on ad hoc review. | Add Dependabot config and dependency-review workflow. | Implemented locally; GitHub run pending. | Workflow syntax and future PR check. |
+| Medium | No CodeQL workflow | Code scanning API returned no analysis found. | Security issues in Rust, TypeScript, Python, or Actions may be missed. | Add CodeQL workflow with minimal permissions. | Implemented locally; GitHub run pending. | Future CodeQL run. |
+| Medium | Containers lack runtime hardening | Compose/Dockerfiles do not define non-root runtime users or dropped capabilities. | Container escape blast radius is higher than necessary. | Add non-root users, read-only filesystems, dropped capabilities, resource limits, and scans in a focused build PR. | Implemented locally with non-root users, Compose hardening, Compose smoke, Trivy scan, and CycloneDX SBOM workflow; release attestations remain follow-up. | `docker compose config`, Docker image builds, local smoke, and future GitHub container supply-chain check. |
 | Medium | Python dependencies are lower-bound requirements | Requirements files use `>=` and no lock strategy. | Non-reproducible scanner installs can fail unexpectedly. | Introduce a lock strategy such as `uv.lock` or hashed constraints after dependency review. | Documented follow-up. | Clean install from lockfile. |
 | Low | Governance files were incomplete | No `SECURITY.md`, CODEOWNERS, templates, threat model, or ADRs before this pass. | Contributors lack clear review/security/reporting process. | Add governance docs and templates. | Planned in docs hardening. | File presence and review. |
 

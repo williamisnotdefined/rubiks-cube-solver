@@ -30,7 +30,7 @@ The model file is a local artifact and must not be committed. It should be gener
 | Framework | YOLO exported to ONNX Runtime. |
 | ONNX opset | Documented in the model manifest for each installed model. |
 | Input size | `640` unless explicitly overridden by manifest and environment. |
-| Class order | Must match scanner contract color/tile semantics. |
+| Class order | Must match scanner contract color/tile semantics: `face,U,R,F,D,L,B` by default. |
 | Confidence threshold | Default runtime value is `0.5`. |
 | Runtime path | `scanner/runtime/detectors/tile_yolo_onnx.py`. |
 
@@ -57,8 +57,10 @@ Scanner inputs are processed in memory by default. Do not commit raw camera fram
 
 - Model confidence can be high for visually plausible but invalid sticker layouts.
 - Lighting, glare, partial occlusion, and camera motion can degrade tile detection.
-- The runtime currently relies on environment configuration plus the local model path; manifest enforcement is a follow-up implementation task.
+- Manifest enforcement is opt-in through `RUBIKS_VISION_TILE_DETECTOR_MANIFEST`; incompatible manifest fields keep the detector unavailable instead of loading an unknown model contract.
 
 ## Required Manifest
 
 Every promoted model should have a manifest matching `scanner/model-manifest.schema.json` and recording the model checksum, dataset checksum, class order, input size, opset, training command, dependency versions, metrics, and source commit.
+
+The current runtime contract version is `tile-yolo-onnx-v1`.

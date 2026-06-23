@@ -23,16 +23,10 @@ RUN cargo run --release --quiet -p cube-engine --bin generate_pruning_tables -- 
 
 FROM debian:bookworm-slim AS runtime
 
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends ca-certificates curl \
-  && groupadd --system rubiks \
-  && useradd --system --gid rubiks --home-dir /app --shell /usr/sbin/nologin rubiks \
-  && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /app
 COPY --from=rust-build /src/target/release/rubiks-cube-solver-api /usr/local/bin/rubiks-cube-solver-api
-COPY --chown=rubiks:rubiks --from=rust-build /artifacts/pruning-tables /app/pruning-tables
-COPY --chown=rubiks:rubiks --from=web-build /src/web/dist /app/web
+COPY --chown=10001:10001 --from=rust-build /artifacts/pruning-tables /app/pruning-tables
+COPY --chown=10001:10001 --from=web-build /src/web/dist /app/web
 
 ENV RUBIKS_API_ADDR=0.0.0.0:8787 \
   RUBIKS_WEB_DIST_DIR=/app/web \
@@ -40,9 +34,7 @@ ENV RUBIKS_API_ADDR=0.0.0.0:8787 \
   RUBIKS_VISION_URL=http://vision:8790
 
 EXPOSE 8787
-HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=5 \
-  CMD curl -fsS http://127.0.0.1:8787/health >/dev/null || exit 1
 
-USER rubiks
+USER 10001:10001
 
 CMD ["rubiks-cube-solver-api"]

@@ -33,8 +33,6 @@ import { ScanModalShell } from './ScanModalShell'
 import {
   scanFaceOrder,
   scan2StickersPerFace,
-  scan3StickersPerFace,
-  scanSessionFacesFromDrafts,
 } from './scanState'
 import { scanFaceDraftValidationMessage } from './scanTranslations'
 import { scanDraftsHaveProgress, scanQualityMessage } from './scanCaptureWorkflowHelpers'
@@ -87,9 +85,8 @@ export function EvenCubeScanModal({
   const { t } = useTranslation()
   const puzzleSlug: string = 'cube-2x2x2'
   const solveScanSession = useSolveScanSession()
-  const stickersPerFace = puzzleSlug === 'cube-2x2x2' ? scan2StickersPerFace : scan3StickersPerFace
-  const isEvenCubeScan = stickersPerFace === scan2StickersPerFace
-  const gridSize = stickersPerFace === scan2StickersPerFace ? 2 : 3
+  const stickersPerFace = scan2StickersPerFace
+  const gridSize = 2
   const [backendReviewTargets, setBackendReviewTargets] = useState<BackendReviewTargets>(() =>
     emptyBackendReviewTargets(),
   )
@@ -145,9 +142,7 @@ export function EvenCubeScanModal({
     onFaceChanged: resetEvenReviewState,
     onFaceCleared: (symbol) => clearBackendReviewForFace(symbol),
   })
-  const sessionFaces = isEvenCubeScan
-    ? evenCubeScanSessionFacesFromDrafts(drafts, evenFaceRotations, evenNetAssignments, stickersPerFace)
-    : scanSessionFacesFromDrafts(drafts, stickersPerFace)
+  const sessionFaces = evenCubeScanSessionFacesFromDrafts(drafts, evenFaceRotations, evenNetAssignments, stickersPerFace)
   const evenValidation = useMemo(
     () => validateEvenCubeScan(drafts, evenFaceRotations, evenNetAssignments, stickersPerFace),
     [drafts, evenFaceRotations, evenNetAssignments, stickersPerFace],
@@ -160,12 +155,12 @@ export function EvenCubeScanModal({
     drafts,
     apiReady,
     solveDisabledReason,
-    { requirePhotos: !isEvenCubeScan },
+    { requirePhotos: false },
   )
   const draftValidationMessage = scanFaceDraftValidationMessage(t, draftValidation)
   const faceValidation = draftValidationMessage
   const sessionSolving = solveScanSession.isPending
-  const solveScanDisabledReason = evenReviewVisible && isEvenCubeScan && evenInvalidCorners.length > 0
+  const solveScanDisabledReason = evenReviewVisible && evenInvalidCorners.length > 0
     ? t('scan.evenReview.invalidSolveDisabled')
     : scanSessionReadiness
   const solveScanDisabled = solving || sessionSolving || solveScanDisabledReason !== undefined
@@ -213,7 +208,7 @@ export function EvenCubeScanModal({
       return
     }
 
-    if (isEvenCubeScan && !evenReviewVisible) {
+    if (!evenReviewVisible) {
       if (!allEvenCubeFacesConfirmed(drafts)) {
         setMessage(t('scan.messages.confirmAllFaces'))
         return
@@ -224,7 +219,7 @@ export function EvenCubeScanModal({
       return
     }
 
-    if (isEvenCubeScan && evenInvalidCorners.length > 0) {
+    if (evenInvalidCorners.length > 0) {
       setMessage(t('scan.evenReview.invalidSolveDisabled'))
       return
     }
@@ -324,7 +319,7 @@ export function EvenCubeScanModal({
     const nextTargets = backendReviewTargetsFromSessionResult(result)
     setBackendReviewTargets(nextTargets)
     const nextInvalidCorners = evenInvalidCornersFromSessionResult(result)
-    if (isEvenCubeScan && nextInvalidCorners.length > 0) {
+    if (nextInvalidCorners.length > 0) {
       setBackendEvenInvalidCorners(nextInvalidCorners)
       setEvenReviewVisible(true)
       setMessage(scanSessionMessage(t, result))
@@ -357,7 +352,7 @@ export function EvenCubeScanModal({
         onOverlayClose={handleProtectedClose}
       >
 
-        {evenReviewVisible && isEvenCubeScan ? (
+        {evenReviewVisible ? (
           <EvenCubeReviewStep
             drafts={drafts}
             assignments={evenNetAssignments}
@@ -391,7 +386,7 @@ export function EvenCubeScanModal({
             faceStatuses={faceStatuses}
             finalActionDisabled={solveScanDisabled}
             finalActionDisabledReason={solveScanDisabledReason}
-            finalActionLabel={isEvenCubeScan ? t('scan.evenReview.reviewAction') : t('scan.actions.solveScannedCube')}
+            finalActionLabel={t('scan.evenReview.reviewAction')}
             finalActionLoading={solving || sessionSolving}
             liveStableFrameCount={liveStableFrameCount}
             liveStatus={liveStatus}
