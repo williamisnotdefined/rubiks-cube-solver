@@ -5,6 +5,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends libglib2.0-0 libgomp1 \
+  && groupadd --system rubiks \
+  && useradd --system --gid rubiks --home-dir /app --shell /usr/sbin/nologin rubiks \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -12,9 +14,9 @@ COPY scanner/runtime/requirements.txt /tmp/scanner-runtime-requirements.txt
 RUN python -m pip install --no-cache-dir --upgrade pip \
   && python -m pip install --no-cache-dir -r /tmp/scanner-runtime-requirements.txt
 
-COPY scanner/__init__.py scanner/__init__.py
-COPY scanner/contracts scanner/contracts
-COPY scanner/runtime scanner/runtime
+COPY --chown=rubiks:rubiks scanner/__init__.py scanner/__init__.py
+COPY --chown=rubiks:rubiks scanner/contracts scanner/contracts
+COPY --chown=rubiks:rubiks scanner/runtime scanner/runtime
 
 ENV RUBIKS_VISION_TILE_DETECTOR_MODEL=/models/tile-detector.onnx \
   RUBIKS_VISION_TILE_DETECTOR_INPUT_SIZE=640 \
@@ -23,5 +25,7 @@ ENV RUBIKS_VISION_TILE_DETECTOR_MODEL=/models/tile-detector.onnx \
 EXPOSE 8790
 HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=5 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8790/health', timeout=2).read()" || exit 1
+
+USER rubiks
 
 CMD ["python", "-m", "uvicorn", "scanner.runtime.app:app", "--host", "0.0.0.0", "--port", "8790"]

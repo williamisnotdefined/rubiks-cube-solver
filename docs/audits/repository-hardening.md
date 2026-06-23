@@ -154,11 +154,11 @@ Positive evidence:
 - Local production Compose binds the app to `127.0.0.1:8787`.
 - Scanner model mount is read-only in production Compose.
 - Package manager caches are removed from apt layers.
+- Runtime app and vision containers now run as non-root users.
+- Production Compose drops Linux capabilities, sets `no-new-privileges`, uses read-only root filesystems, and mounts `/tmp` as tmpfs.
 
 Gaps:
 
-- Runtime images do not yet run as dedicated non-root users.
-- Compose files do not yet set `read_only`, `tmpfs`, `security_opt`, `cap_drop`, resource limits, or process limits.
 - Base images are version-tagged but not digest-pinned.
 - No container vulnerability scan, SBOM, or attestation workflow existed before this pass.
 

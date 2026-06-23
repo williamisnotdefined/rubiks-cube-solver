@@ -10,7 +10,7 @@ COPY packages/rubiks-cube packages/rubiks-cube
 COPY web web
 RUN npm run build -w @rubiks-cube-solver/web
 
-FROM rust:1-bookworm AS rust-build
+FROM rust:1.95-bookworm AS rust-build
 
 WORKDIR /src
 COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
@@ -25,12 +25,14 @@ FROM debian:bookworm-slim AS runtime
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends ca-certificates curl \
+  && groupadd --system rubiks \
+  && useradd --system --gid rubiks --home-dir /app --shell /usr/sbin/nologin rubiks \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY --from=rust-build /src/target/release/rubiks-cube-solver-api /usr/local/bin/rubiks-cube-solver-api
-COPY --from=rust-build /artifacts/pruning-tables /app/pruning-tables
-COPY --from=web-build /src/web/dist /app/web
+COPY --chown=rubiks:rubiks --from=rust-build /artifacts/pruning-tables /app/pruning-tables
+COPY --chown=rubiks:rubiks --from=web-build /src/web/dist /app/web
 
 ENV RUBIKS_API_ADDR=0.0.0.0:8787 \
   RUBIKS_WEB_DIST_DIR=/app/web \
@@ -40,5 +42,7 @@ ENV RUBIKS_API_ADDR=0.0.0.0:8787 \
 EXPOSE 8787
 HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=5 \
   CMD curl -fsS http://127.0.0.1:8787/health >/dev/null || exit 1
+
+USER rubiks
 
 CMD ["rubiks-cube-solver-api"]

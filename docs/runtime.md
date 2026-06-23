@@ -105,6 +105,8 @@ Services:
 
 The `app` container calls vision at `http://vision:8790`. The scanner model is mounted from `./scanner/models:/models:ro`.
 
+The production Compose services run as non-root users, drop Linux capabilities, set `no-new-privileges`, use read-only root filesystems, and mount a small writable `/tmp` tmpfs for runtime scratch space.
+
 `docker:up`, `docker:down`, `docker:restart`, `docker:status`, and `docker:logs` are lower-level Compose wrappers. Prefer `prod:*` for production operations because those commands include Git update and health-check behavior where appropriate.
 
 Stop production Docker:
