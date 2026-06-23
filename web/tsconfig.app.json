@@ -9,12 +9,11 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "moduleResolution": "bundler",
-    "baseUrl": ".",
     "paths": {
-      "@api/*": ["src/api/*"],
-      "@components/*": ["src/components/*"],
-      "@core/*": ["src/core/*"],
-      "@pages/*": ["src/pages/*"],
+      "@api/*": ["./src/api/*"],
+      "@components/*": ["./src/components/*"],
+      "@core/*": ["./src/core/*"],
+      "@pages/*": ["./src/pages/*"],
       "@rubiks-cube-solver/rubiks-cube/controller": [
         "../packages/rubiks-cube/src/puzzles/cube/controller/index.ts"
       ],
@@ -33,7 +32,7 @@
       "@rubiks-cube-solver/rubiks-cube/view": [
         "../packages/rubiks-cube/src/puzzles/cube/element/index.ts"
       ],
-      "@src/*": ["src/*"]
+      "@src/*": ["./src/*"]
     },
     "isolatedModules": true,
     "moduleDetection": "force",
