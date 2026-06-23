@@ -7,8 +7,45 @@ void i18n.changeLanguage('en');
 
 expect.extend(matchers);
 
+const testLocalStorage = createMemoryStorage()
+
+Object.defineProperty(window, 'localStorage', {
+  configurable: true,
+  value: testLocalStorage,
+})
+
+Object.defineProperty(globalThis, 'localStorage', {
+  configurable: true,
+  value: testLocalStorage,
+});
+
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT =
   true
+
+function createMemoryStorage(): Storage {
+  const storage = new Map<string, string>()
+
+  return {
+    clear() {
+      storage.clear()
+    },
+    getItem(key) {
+      return storage.get(String(key)) ?? null
+    },
+    key(index) {
+      return Array.from(storage.keys())[index] ?? null
+    },
+    get length() {
+      return storage.size
+    },
+    removeItem(key) {
+      storage.delete(String(key))
+    },
+    setItem(key, value) {
+      storage.set(String(key), String(value))
+    },
+  }
+}
 
 if (!globalThis.requestAnimationFrame) {
   globalThis.requestAnimationFrame = (callback) =>
