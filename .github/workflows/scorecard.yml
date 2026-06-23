@@ -9,8 +9,6 @@ on:
 
 permissions:
   contents: read
-  id-token: write
-  security-events: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -21,6 +19,9 @@ jobs:
     name: scorecard
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - name: Run OpenSSF Scorecard
