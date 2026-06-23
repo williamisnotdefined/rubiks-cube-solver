@@ -35,7 +35,7 @@ Recommended stable required-check names after local workflow changes:
 | --- | --- |
 | `rust` | Rust formatting, workspace tests, and Clippy warnings-as-errors. |
 | `node` | AI routes, visualization package checks, web tests, lint, build, and Storybook. |
-| `scanner` | Python scanner runtime/training tests plus scanner lint/static checks. |
+| `scanner` | Python scanner runtime/training tests plus Ruff, contract mypy, and practical coverage. |
 | `docker` | Compose syntax and Docker image build checks. |
 | `e2e-smoke` | Fast Playwright product/responsive/timer smoke coverage. |
 | `dependency-review` | Pull request dependency vulnerability and license review. |
@@ -103,7 +103,7 @@ Read-only evidence from repository metadata:
 | Web app | Vitest coverage thresholds at 95% for branches, functions, lines, and statements in `web/vite.config.ts`. |
 | Visualization package | Vitest coverage thresholds at 95% for branches, functions, lines, and statements in `packages/rubiks-cube/vitest.config.ts`. |
 | Rust | No coverage threshold configured; correctness is enforced by tests and replay verification. |
-| Scanner | No coverage threshold configured before this pass. |
+| Scanner | `pyproject.toml` configures `pytest-cov` with branch coverage and a practical 60% starting threshold. |
 
 ## API Reliability And Abuse-Resistance Review
 
@@ -182,7 +182,7 @@ Gaps:
 | High | GitHub security features are disabled | `security_and_analysis` shows secret scanning, push protection, and Dependabot security updates disabled. | Vulnerable or secret-bearing changes may be missed until manual review. | Enable available GitHub security features and Dependabot alerts in repository settings. | Manual GitHub configuration required; not applied by this task. | GitHub repository security settings and API metadata. |
 | High | CI actions were tag-pinned, not SHA-pinned | `.github/workflows/ci.yml` used `actions/checkout@v6`, `actions/setup-node@v6`, `dtolnay/rust-toolchain@stable`. | Mutable tags increase supply-chain risk. | Pin actions to full commit SHAs or replace unnecessary third-party actions with direct toolchain commands. | Planned in local CI hardening. | Workflow diff and future CI run. |
 | High | Web CI did not enforce web coverage | CI used `npm run test -w @rubiks-cube-solver/web`; local `npm run test:coverage -w @rubiks-cube-solver/web` currently reports 93.55% statements, 88.42% branches, 94.14% functions, and 93.42% lines against 95% thresholds. | Coverage regressions could pass PR CI, but adding the gate now would create broken automation. | Add tests to bring web coverage above the existing 95% thresholds, then switch CI from web tests to web coverage. | Documented gap; not added as a required check in this pass. | `npm run test:coverage -w @rubiks-cube-solver/web` before enabling the gate. |
-| High | No dedicated scanner CI job | Only scanner tests are included in bootstrap scripts, not in the GitHub workflow. | Scanner regressions can merge without runtime/training test coverage. | Add Python 3.11 scanner job for runtime and training tests plus lint/static checks. | Planned in local CI hardening. | Future `scanner` check. |
+| High | No dedicated scanner CI job | Only scanner tests are included in bootstrap scripts, not in the GitHub workflow. | Scanner regressions can merge without runtime/training test coverage. | Add Python 3.11 scanner job for runtime and training tests plus lint/static checks. | Implemented locally with Ruff, contract mypy, runtime/training tests, and coverage. | `python -m ruff check scanner`, `python -m mypy`, `npm run vision:test`, `npm run scanner:training:test`, and `python -m pytest scanner/runtime scanner/training --cov=scanner --cov-report=term-missing`. |
 | Medium | No dependency-review or Dependabot config | `.github/dependabot.yml` and dependency review workflow absent. | Dependency vulnerabilities and license regressions rely on ad hoc review. | Add Dependabot config and dependency-review workflow. | Planned in security hardening. | Workflow syntax and future PR check. |
 | Medium | No CodeQL workflow | Code scanning API returned no analysis found. | Security issues in Rust, TypeScript, Python, or Actions may be missed. | Add CodeQL workflow with minimal permissions. | Planned in security hardening. | Future CodeQL run. |
 | Medium | Containers lack runtime hardening | Compose/Dockerfiles do not define non-root runtime users or dropped capabilities. | Container escape blast radius is higher than necessary. | Add non-root users, read-only filesystems, dropped capabilities, resource limits, and scans in a focused build PR. | Documented follow-up. | Docker build and smoke tests after implementation. |

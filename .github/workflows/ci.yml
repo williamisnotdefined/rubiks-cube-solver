@@ -123,11 +123,20 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r scanner/runtime/requirements.txt -r scanner/training/requirements.txt -r scanner/requirements-test.txt
 
+      - name: Lint scanner Python
+        run: python -m ruff check scanner
+
+      - name: Typecheck scanner Python
+        run: python -m mypy
+
       - name: Test scanner runtime
         run: npm run vision:test
 
       - name: Test scanner training
         run: npm run scanner:training:test
+
+      - name: Check scanner coverage
+        run: python -m pytest scanner/runtime scanner/training --cov=scanner --cov-report=term-missing
 
   docker:
     name: docker

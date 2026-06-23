@@ -6,6 +6,7 @@ crates/wasm/pkg/
 node_modules/
 dist/
 coverage/
+.coverage
 storybook-static/
 playwright-report/
 test-results/
