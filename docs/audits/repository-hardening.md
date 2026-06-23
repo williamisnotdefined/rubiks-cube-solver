@@ -40,6 +40,7 @@ Recommended stable required-check names after local workflow changes:
 | `e2e-smoke` | Fast Playwright product/responsive/timer smoke coverage. |
 | `dependency-review` | Pull request dependency vulnerability and license review. |
 | `codeql` | CodeQL analysis for Rust, TypeScript/JavaScript, Python, and Actions workflows. |
+| `scorecard` | Scheduled OpenSSF Scorecard supply-chain posture scan. |
 
 ## Current Branch, Ruleset, And Merge Settings
 

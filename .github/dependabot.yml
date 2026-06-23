@@ -1,0 +1,115 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    versioning-strategy: increase-if-necessary
+    groups:
+      npm-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:20"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    groups:
+      cargo-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: pip
+    directory: /scanner
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:40"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    groups:
+      scanner-test-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: pip
+    directory: /scanner/runtime
+    schedule:
+      interval: weekly
+      day: monday
+      time: "10:00"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    groups:
+      scanner-runtime-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: pip
+    directory: /scanner/training
+    schedule:
+      interval: weekly
+      day: monday
+      time: "10:20"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    groups:
+      scanner-training-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "10:40"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    groups:
+      actions-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "11:00"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    groups:
+      docker-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
