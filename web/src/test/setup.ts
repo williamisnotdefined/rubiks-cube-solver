@@ -1,9 +1,11 @@
-import '@testing-library/jest-dom/vitest'
+import * as matchers from '@testing-library/jest-dom/matchers'
 import { cleanup } from '@testing-library/react'
-import { afterEach, vi } from 'vitest'
+import { afterEach, expect, vi } from 'vitest'
 import i18n from '@src/i18n/i18n'
 
 void i18n.changeLanguage('en');
+
+expect.extend(matchers);
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT =
   true
