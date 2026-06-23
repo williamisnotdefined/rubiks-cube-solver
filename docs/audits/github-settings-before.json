@@ -1,0 +1,49 @@
+{
+  "capturedAt": "2026-06-23T00:09:31Z",
+  "captureMode": "read-only gh api and gh repo view calls; no remote settings changed",
+  "repository": {
+    "nameWithOwner": "williamisnotdefined/rubiks-cube-solver",
+    "visibility": "PUBLIC",
+    "defaultBranch": "main",
+    "viewerPermission": "ADMIN",
+    "viewerCanAdminister": true,
+    "licenseInfo": null,
+    "isSecurityPolicyEnabled": false,
+    "securityPolicyUrl": "",
+    "mergeCommitAllowed": true,
+    "rebaseMergeAllowed": true,
+    "squashMergeAllowed": true,
+    "deleteBranchOnMerge": false,
+    "allowAutoMerge": false,
+    "allowUpdateBranch": false
+  },
+  "branchProtection": {
+    "main": {
+      "status": 404,
+      "message": "Branch not protected"
+    }
+  },
+  "rulesets": [],
+  "securityAndAnalysis": {
+    "secretScanning": "disabled",
+    "secretScanningPushProtection": "disabled",
+    "secretScanningNonProviderPatterns": "disabled",
+    "secretScanningValidityChecks": "disabled",
+    "dependabotSecurityUpdates": "disabled"
+  },
+  "dependabotAlerts": {
+    "status": 403,
+    "message": "Dependabot alerts are disabled for this repository"
+  },
+  "codeScanning": {
+    "status": 404,
+    "message": "no analysis found"
+  },
+  "actionsWorkflows": [
+    {
+      "name": "CI",
+      "path": ".github/workflows/ci.yml",
+      "state": "active"
+    }
+  ]
+}
