@@ -12,7 +12,7 @@ name = "rubiks-cube-solver-api"
 path = "src/main.rs"
 
 [dependencies]
-axum = "0.7"
+axum = "0.8"
 cube-engine = { path = "../cube-engine" }
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 serde = { version = "1", features = ["derive"] }
