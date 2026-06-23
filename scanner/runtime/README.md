@@ -15,7 +15,7 @@ Set `RUBIKS_VISION_TILE_DETECTOR_MANIFEST` to validate a promoted model before l
 ## Commands
 
 ```bash
-npm run vision:install
+npm run dev:local:prepare
 npm run vision:dev
 npm run vision:test
 ```

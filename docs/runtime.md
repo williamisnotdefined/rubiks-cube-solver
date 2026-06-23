@@ -1,24 +1,16 @@
 # Runtime And Containerization
 
-This project has two supported runtime paths: local zero-install preparation and Docker runtime. Scanner training is separate from normal runtime because YOLO/CUDA dependencies are heavier and environment-sensitive.
+This project has two supported runtime paths: Docker dev/production and a local non-Docker fallback. Scanner training is separate from normal runtime because YOLO/CUDA dependencies are heavier and environment-sensitive.
 
-## Local Zero Runtime
+## Docker Dev Runtime
 
-Prepare local dependencies and generated artifacts without running the full validation gate:
-
-```bash
-npm run zero:prepare
-```
-
-This command verifies prerequisites, pulls Git LFS assets, runs `npm ci`, creates `.venv`, installs scanner runtime dependencies, converts the Roboflow dataset when needed, and generates native pruning tables.
-
-It does not run lint, Playwright, coverage, `bootstrap:check`, or scanner training by default.
-
-Start local services:
+Docker dev is the default daily development path. It uses the repository's Node, Rust, and Python baselines through containers and keeps ports separate from production:
 
 ```bash
-npm run zero:start
+npm run dev
 ```
+
+`npm run dev` builds/recreates the `rubiks-dev` Compose project in the background, waits for service health, and prints container status.
 
 Ports:
 
@@ -31,24 +23,52 @@ Ports:
 Manage services:
 
 ```bash
-npm run zero:status
-npm run zero:stop
+npm run dev:status
+npm run dev:logs
+npm run dev:stop
 ```
 
-Logs and PID files are written under `logs/zero-install/`.
+The same Docker dev services are available through compatibility wrappers `docker:dev` and `docker:dev:down`, but prefer `dev:*` for daily use.
+
+## Local Non-Docker Fallback
+
+Use the local fallback only when you need to debug without Docker. Prepare local dependencies and generated artifacts without running the full validation gate:
+
+```bash
+npm run dev:local:prepare
+```
+
+This command verifies prerequisites, pulls Git LFS assets, runs `npm ci`, creates `.venv`, installs scanner runtime dependencies, converts the Roboflow dataset when needed, and generates native pruning tables.
+
+It does not run lint, Playwright, coverage, `bootstrap:check`, or scanner training by default.
+
+Start local services:
+
+```bash
+npm run dev:local
+```
+
+Stop or inspect the local fallback runtime with:
+
+```bash
+npm run dev:local:status
+npm run dev:local:stop
+```
+
+Logs and PID files are written under `logs/dev-local/`.
 
 ## Scanner Training
 
 Training is opt-in:
 
 ```bash
-npm run zero:prepare -- --train-scanner
+npm run dev:local:prepare -- --train-scanner
 ```
 
 CPU is the safe default. CUDA is explicit:
 
 ```bash
-npm run zero:prepare -- --train-scanner --device cuda --torch cu128 --epochs 100 --batch 16
+npm run dev:local:prepare -- --train-scanner --device cuda --torch cu128 --epochs 100 --batch 16
 ```
 
 Torch dependency modes:
@@ -73,21 +93,19 @@ Use these scripts for the local production Docker stack that serves the built we
 
 | Script | Use When | What It Does |
 | --- | --- | --- |
-| `npm run prod:deploy` | After `main` changes or a PR is merged | Switches to `main`, pulls `origin/main`, rebuilds/recreates Docker production in the background, waits for app health, and prints status. |
-| `npm run prod:restart` | Checkout is already current, but containers need a rebuild/recreate | Runs Docker production down/up, waits for app health, and prints status without pulling Git. |
-| `npm run prod:health` | Need a quick app readiness check | Waits for `http://127.0.0.1:8787/health` to return 2xx. |
-| `npm run prod:status` | Need container state | Shows `rubiks-prod` Compose containers. |
-| `npm run prod:logs` | Need production logs | Follows logs for the `rubiks-prod` Compose project. |
-| `npm run prod:down` | Need to stop production Docker | Stops and removes `rubiks-prod` containers and network. |
-| `npm run live:start` | Need public production via Cloudflare | Runs `prod:deploy`, then starts `cloudflared tunnel run wilho`. |
+| `npm run live:deploy` | After `main` changes or a PR is merged | Switches to `main`, pulls `origin/main`, rebuilds/recreates Docker production in the background, waits for app health, and prints status. |
+| `npm run live:restart` | Checkout is already current, but containers need a rebuild/recreate | Runs Docker production down/up, waits for app health, and prints status without pulling Git. |
+| `npm run live:health` | Need a quick app readiness check | Waits for `http://127.0.0.1:8787/health` to return 2xx. |
+| `npm run live:status` | Need container state | Shows `rubiks-prod` Compose containers. |
+| `npm run live:logs` | Need production logs | Follows logs for the `rubiks-prod` Compose project. |
+| `npm run live:stop` | Need to stop production Docker | Stops and removes `rubiks-prod` containers and network. |
+| `npm run live:start` | Need public production via Cloudflare | Runs `live:deploy`, then starts `cloudflared tunnel run wilho`. |
 | `npm run live:tunnel` | Docker production is already healthy and only tunnel is needed | Starts only the Cloudflare tunnel. |
-| `npm run tunnel:run:prod` | Legacy command muscle memory | Compatibility alias for `live:start`. |
-| `npm run tunnel:check:prod` | Legacy production health check | Compatibility alias for `prod:health`. |
 
 Deploy or update the production-like local stack from `origin/main`:
 
 ```bash
-npm run prod:deploy
+npm run live:deploy
 ```
 
 Open:
@@ -117,19 +135,19 @@ API runtime health endpoints:
 
 Set `RUBIKS_CORS_ALLOWED_ORIGINS` to a comma-separated list to override the default local development/preview CORS origins. Set it to an empty value to keep browser API access same-origin only.
 
-`docker:up`, `docker:down`, `docker:restart`, `docker:status`, and `docker:logs` are lower-level Compose wrappers. Prefer `prod:*` for production operations because those commands include Git update and health-check behavior where appropriate.
+`prod:*`, `docker:up`, `docker:down`, `docker:restart`, `docker:status`, and `docker:logs` are lower-level Compose wrappers. Prefer `live:*` for production operations because those commands include Git update and health-check behavior where appropriate.
 
 Stop production Docker:
 
 ```bash
-npm run prod:down
+npm run live:stop
 ```
 
 Inspect production Docker:
 
 ```bash
-npm run prod:status
-npm run prod:logs
+npm run live:status
+npm run live:logs
 ```
 
 Deploy the current `main` stack and start the Cloudflare tunnel:
@@ -138,33 +156,14 @@ Deploy the current `main` stack and start the Cloudflare tunnel:
 npm run live:start
 ```
 
-## Docker Dev Runtime
+## Runtime Port Summary
 
-Use Docker dev when you want containerized hot-reload services instead of the local zero runtime. It is intentionally separate from Docker production.
-
-| Script | Use When | What It Does |
-| --- | --- | --- |
-| `npm run docker:dev` | Need hot-reload dev services in Docker | Starts dev Compose with non-production ports. |
-| `npm run docker:dev:down` | Need to stop Docker dev | Stops the `rubiks-dev` Compose project. |
-
-Run hot-reload dev services in Docker:
-
-```bash
-npm run docker:dev
-```
-
-Ports are intentionally different from Docker production so both can run on the same PC:
+Dev ports are intentionally different from Docker production so both can run on the same PC:
 
 | Environment | Web | API | Vision |
 | --- | ---: | ---: | ---: |
 | Docker production | `8787` | `8787` through `app` | internal `8790` |
 | Local/Docker dev | `5173` | `8788` | `8791` |
-
-Stop Docker dev:
-
-```bash
-npm run docker:dev:down
-```
 
 The npm scripts use Compose project names `rubiks-prod` and `rubiks-dev`, so container names, networks, and named volumes do not collide.
 

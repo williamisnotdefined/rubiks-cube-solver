@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 
 const scriptDir = dirname(fileURLToPath(import.meta.url))
 const repoRoot = resolve(scriptDir, '..', '..')
-const runtimeDir = join(repoRoot, 'logs', 'zero-install')
+const runtimeDir = join(repoRoot, 'logs', 'dev-local')
 const services = [
   ['web', 'http://127.0.0.1:5173'],
   ['api', 'http://127.0.0.1:8788/health'],
@@ -14,7 +14,7 @@ const services = [
 ]
 
 if (process.argv.includes('--help') || process.argv.includes('-h')) {
-  console.log('Usage: npm run zero:status')
+  console.log('Usage: npm run dev:local:status')
   process.exit(0)
 }
 

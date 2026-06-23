@@ -21,7 +21,8 @@ The product goal is a web interface where a user can input a valid puzzle state 
 
 ## Prerequisites
 
-- Node.js and npm.
+- Node.js and npm for running repository scripts.
+- Docker with Compose for the default development and production runtimes.
 - Rust toolchain for API, engine tests, and pruning-table generation.
 - Python 3.14+ for optional scanner runtime and scanner training helpers.
 - Git LFS for source datasets tracked under `scanner/datasets`.
@@ -29,29 +30,27 @@ The product goal is a web interface where a user can input a valid puzzle state 
 ## Quick Start
 
 ```bash
-npm install
-npm run vision:install
 npm run dev
 ```
 
-For a prepared local runtime without the full validation gate:
-
-```bash
-npm run zero:prepare
-npm run zero:start
-```
-
-This starts dev ports that can run alongside Docker production:
+This starts Docker dev with hot-reload services on ports that can run alongside Docker production:
 
 - Web: `http://127.0.0.1:5173`
 - API: `http://127.0.0.1:8788`
 - Vision: `http://127.0.0.1:8791`
 
-Stop or inspect the local runtime with:
+Stop or inspect Docker dev with:
 
 ```bash
-npm run zero:stop
-npm run zero:status
+npm run dev:stop
+npm run dev:status
+npm run dev:logs
+```
+
+See the short command table with:
+
+```bash
+npm run scripts:help
 ```
 
 Core commands:
@@ -69,14 +68,14 @@ npm run product:gate
 Production-like Docker runs the Rust API and built web app in one `app` container, with scanner vision in a separate `vision` container:
 
 ```bash
-npm run prod:deploy
-npm run prod:restart
-npm run prod:status
-npm run prod:logs
-npm run prod:down
+npm run live:deploy
+npm run live:restart
+npm run live:status
+npm run live:logs
+npm run live:stop
 ```
 
-Use `prod:deploy` after a merge to update `main`, rebuild Docker images, start containers in the background, wait for `http://127.0.0.1:8787/health`, and print Compose status. Use `prod:restart` only when the local checkout is already current and you just need to rebuild/recreate containers.
+Use `live:deploy` after a merge to update `main`, rebuild Docker images, start containers in the background, wait for `http://127.0.0.1:8787/health`, and print Compose status. Use `live:restart` only when the local checkout is already current and you just need to rebuild/recreate containers.
 
 Open `http://127.0.0.1:8787/`. The scanner model is mounted from `scanner/models/tile-detector.onnx`; if it is missing, the app still starts but scanner health reports the detector unavailable.
 
@@ -86,13 +85,13 @@ To deploy the current `main` build and start the Cloudflare tunnel:
 npm run live:start
 ```
 
-`tunnel:run:prod` is kept as a compatibility alias for `live:start`. `live:tunnel` runs only `cloudflared tunnel run wilho` and assumes Docker production is already healthy.
+`live:tunnel` runs only `cloudflared tunnel run wilho` and assumes Docker production is already healthy.
 
 Docker dev uses separate hot-reload services and non-conflicting ports:
 
 ```bash
-npm run docker:dev
-npm run docker:dev:down
+npm run dev
+npm run dev:stop
 ```
 
 Scanner training is separate from normal runtime:
@@ -116,7 +115,6 @@ Use `bootstrap:check` to validate a fresh install:
 
 ```bash
 npm ci
-npm run vision:install
 npm run bootstrap:check
 ```
 

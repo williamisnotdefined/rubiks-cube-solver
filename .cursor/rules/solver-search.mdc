@@ -160,12 +160,12 @@ The target is a Rubik's Cube solver with a Rust engine, search algorithms, heuri
 
 ## Runtime And Deployment
 
-- Local zero runtime uses `zero:prepare` and `zero:start` for development/debugging without Docker production.
-- Docker production uses the `rubiks-prod` Compose project. Use `prod:deploy` after merges to pull `origin/main`, rebuild/recreate containers, wait for app health, and print status.
-- Use `prod:restart` only when the checkout is already current and containers need to be rebuilt/recreated.
+- Docker dev is the default development runtime. Use `npm run dev` to build/recreate the `rubiks-dev` Compose project, wait for health, and serve web/API/vision on ports `5173`, `8788`, and `8791`.
+- Local non-Docker fallback uses `dev:local:prepare` and `dev:local` for development/debugging when Docker is not desired.
+- Docker production uses the `rubiks-prod` Compose project. Use `live:deploy` after merges to pull `origin/main`, rebuild/recreate containers, wait for app health, and print status.
+- Use `live:restart` only when the checkout is already current and containers need to be rebuilt/recreated.
 - `live:start` runs production deploy first and then starts the Cloudflare tunnel. `live:tunnel` runs only `cloudflared tunnel run wilho`.
-- `tunnel:run:prod` and `tunnel:check:prod` remain compatibility aliases for the Docker production flow.
-- Docker dev and scanner training use separate Compose projects/commands so they do not collide with production runtime.
+- Docker dev, Docker production, and scanner training use separate Compose projects/commands so they do not collide.
 
 ## Multi-Puzzle Direction
 

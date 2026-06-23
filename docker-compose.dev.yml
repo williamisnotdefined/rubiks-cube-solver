@@ -44,7 +44,7 @@ services:
     working_dir: /workspace
     command: >-
       sh -lc '
-        if [ ! -x node_modules/.bin/vite ]; then npm ci; fi;
+        npm ci;
         npm run dev -w @rubiks-cube-solver/web -- --host 0.0.0.0 --port 5173
       '
     environment:
@@ -54,9 +54,11 @@ services:
     volumes:
       - .:/workspace
       - node-modules:/workspace/node_modules
+      - web-node-modules:/workspace/web/node_modules
 
 volumes:
   cargo-git:
   cargo-registry:
   node-modules:
+  web-node-modules:
   rust-target:

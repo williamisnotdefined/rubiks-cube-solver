@@ -19,8 +19,7 @@ The scanner runtime is YOLO-only. It does not use a sticker CNN, face detector, 
 ## Quick Commands
 
 ```bash
-npm run zero:prepare
-npm run vision:install
+npm run dev:local:prepare
 npm run scan:tile-yolo-install-deps
 npm run scan:tile-yolo-roboflow-dataset
 npm run scan:tile-yolo-check
@@ -29,7 +28,7 @@ npm run scan:tile-yolo-export
 npm run scan:tile-yolo-install
 ```
 
-The zero prepare command builds the normal local runtime artifacts and converts the dataset when needed. Scanner training stays explicit; run `npm run zero:prepare -- --train-scanner` to train, export, and install the ONNX model as part of preparation.
+The local prepare command builds the non-Docker fallback runtime artifacts and converts the dataset when needed. Scanner training stays explicit; run `npm run dev:local:prepare -- --train-scanner` to train, export, and install the ONNX model as part of preparation.
 
 The dependency command installs CPU-only Torch by default, then Ultralytics and ONNX export helpers. Override `RUBIKS_PYTHON` if you want to install into a specific virtual environment. Use `npm run scan:tile-yolo-install-deps -- --torch cu128` for an explicit CUDA Torch install, or `--torch skip` when Torch is already managed externally.
 

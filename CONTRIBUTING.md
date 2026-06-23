@@ -5,9 +5,10 @@ Thanks for improving Rubik's Cube Solver. Keep changes small, reviewed, and alig
 ## Development Setup
 
 ```bash
-npm ci
-npm run vision:install
+npm run dev
 ```
+
+Use `npm run dev:stop` when you are done. The default development runtime is Docker-based; use `npm run dev:local:prepare` and `npm run dev:local` only when you need the non-Docker fallback.
 
 Useful local commands:
 

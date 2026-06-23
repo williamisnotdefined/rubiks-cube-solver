@@ -114,10 +114,10 @@ function runZeroPrepare(options) {
 
   if (!existsSync(scannerModel)) {
     console.warn('warning   Scanner ONNX model not found: scanner/models/tile-detector.onnx')
-    console.warn('          Run npm run zero:prepare -- --train-scanner when you want to build it locally.')
+    console.warn('          Run npm run dev:local:prepare -- --train-scanner when you want to build it locally.')
   }
 
-  console.log('\nZero prepare completed. Start services with npm run zero:start.')
+  console.log('\nLocal dev preparation completed. Start services with npm run dev:local.')
 }
 
 function parseArgs(args) {
@@ -275,7 +275,7 @@ function run(command, args, options = {}) {
 }
 
 function printUsage() {
-  console.log(`Usage: npm run zero:prepare -- [options]
+  console.log(`Usage: npm run dev:local:prepare -- [options]
 
 Prepares local development/runtime artifacts without running the heavy validation gate.
 

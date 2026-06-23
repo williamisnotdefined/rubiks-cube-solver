@@ -6,11 +6,11 @@ import { fileURLToPath } from 'node:url'
 
 const scriptDir = dirname(fileURLToPath(import.meta.url))
 const repoRoot = resolve(scriptDir, '..', '..')
-const runtimeDir = join(repoRoot, 'logs', 'zero-install')
+const runtimeDir = join(repoRoot, 'logs', 'dev-local')
 const serviceNames = ['web', 'api', 'vision']
 
 if (process.argv.includes('--help') || process.argv.includes('-h')) {
-  console.log('Usage: npm run zero:stop')
+  console.log('Usage: npm run dev:local:stop')
   process.exit(0)
 }
 

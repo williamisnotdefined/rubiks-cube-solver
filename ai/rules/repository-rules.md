@@ -17,7 +17,7 @@ Global rules for changes anywhere in this repository.
 - Run targeted verification for the affected area and report any environment blockers.
 - Before any AI-created commit or pull request, run `cargo clippy --all-targets --all-features -- -D warnings` from the repository root when the Rust toolchain is available.
 - Keep AI route files generated from canonical files under `ai`.
-- Use `prod:deploy` for local production Docker deploys after `main` changes, `prod:restart` only when the checkout is already current, and `live:start` when the Cloudflare tunnel should be started after a production deploy.
+- Use `npm run dev` for the default Docker development runtime, `live:deploy` for production Docker deploys after `main` changes, `live:restart` only when the checkout is already current, and `live:start` when the Cloudflare tunnel should be started after a production deploy.
 
 ## Never
 
@@ -29,19 +29,19 @@ Global rules for changes anywhere in this repository.
 - Do not edit `.opencode/skills`, `.cursor/rules`, or `.github/instructions` AI route files manually.
 - Do not add compatibility layers or future abstractions without a concrete current consumer.
 - Do not add a new formatter, linter, framework, or workspace-wide tool unless explicitly requested.
-- Do not use `docker restart` or start an old production container to deploy code changes; production code changes require a Docker rebuild through `prod:deploy`, `prod:restart`, or the lower-level `docker:up` wrapper.
+- Do not use `docker restart` or start an old production container to deploy code changes; production code changes require a Docker rebuild through `live:deploy`, `live:restart`, `prod:deploy`, `prod:restart`, or the lower-level `docker:up` wrapper.
 
 ## Runtime Scripts
 
-- `zero:prepare`, `zero:start`, `zero:status`, and `zero:stop`: local non-Docker runtime for development/debugging on ports `5173`, `8788`, and `8791`.
-- `prod:deploy`: preferred production update command after PRs merge; switches to `main`, pulls `origin/main`, rebuilds/recreates Docker production, waits for `http://127.0.0.1:8787/health`, and prints status.
-- `prod:restart`: rebuilds/recreates Docker production without pulling Git; use when the checkout is already current.
-- `prod:health`, `prod:status`, `prod:logs`, and `prod:down`: production health/status/log/stop helpers.
-- `live:start`: deploys production with `prod:deploy`, then starts `cloudflared tunnel run wilho`.
+- `dev`, `dev:start`, `dev:restart`, `dev:stop`, `dev:status`, `dev:logs`, and `dev:health`: default Docker development runtime on ports `5173`, `8788`, and `8791`.
+- `dev:local:prepare`, `dev:local`, `dev:local:status`, and `dev:local:stop`: non-Docker fallback runtime for development/debugging on ports `5173`, `8788`, and `8791`.
+- `live:deploy`: preferred production update command after PRs merge; switches to `main`, pulls `origin/main`, rebuilds/recreates Docker production, waits for `http://127.0.0.1:8787/health`, and prints status.
+- `live:restart`: rebuilds/recreates Docker production without pulling Git; use when the checkout is already current.
+- `live:health`, `live:status`, `live:logs`, and `live:stop`: production health/status/log/stop helpers.
+- `live:start`: deploys production with `live:deploy`, then starts `cloudflared tunnel run wilho`.
 - `live:tunnel`: starts only the Cloudflare tunnel and assumes production Docker is already healthy.
-- `tunnel:run:prod` and `tunnel:check:prod`: compatibility aliases for `live:start` and `prod:health`.
-- `docker:up`, `docker:down`, `docker:restart`, `docker:status`, and `docker:logs`: lower-level `rubiks-prod` Compose wrappers; prefer `prod:*` unless you specifically need raw Compose behavior.
-- `docker:dev` and `docker:dev:down`: containerized hot-reload dev runtime with non-production ports.
+- `prod:*`, `docker:up`, `docker:down`, `docker:restart`, `docker:status`, and `docker:logs`: lower-level `rubiks-prod` Compose wrappers; prefer `live:*` unless you specifically need raw Compose behavior.
+- `docker:dev` and `docker:dev:down`: compatibility wrappers for Docker dev; prefer `dev:*`.
 - `docker:train` and `docker:train-gpu`: scanner training containers, separate from normal runtime.
 
 ## Verification
