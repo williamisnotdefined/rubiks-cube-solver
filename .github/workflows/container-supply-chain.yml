@@ -32,7 +32,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Build app image
         run: docker build -t rubiks-app:${{ github.sha }} -f Dockerfile.app .
@@ -41,7 +41,7 @@ jobs:
         run: docker build -t rubiks-vision:${{ github.sha }} -f Dockerfile.vision .
 
       - name: Scan app image vulnerabilities
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
           image-ref: rubiks-app:${{ github.sha }}
           format: sarif
@@ -52,7 +52,7 @@ jobs:
           exit-code: "0"
 
       - name: Scan vision image vulnerabilities
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
           image-ref: rubiks-vision:${{ github.sha }}
           format: sarif
@@ -63,7 +63,7 @@ jobs:
           exit-code: "0"
 
       - name: Generate app SBOM
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
           image-ref: rubiks-app:${{ github.sha }}
           format: cyclonedx
@@ -72,7 +72,7 @@ jobs:
           exit-code: "0"
 
       - name: Generate vision SBOM
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
           image-ref: rubiks-vision:${{ github.sha }}
           format: cyclonedx
@@ -96,7 +96,7 @@ jobs:
 
       - name: Upload container security artifacts
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: container-supply-chain-artifacts
           path: |
@@ -110,7 +110,7 @@ jobs:
       - name: Enforce app image fixable vulnerability budget
         id: enforce-app
         continue-on-error: true
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
           image-ref: rubiks-app:${{ github.sha }}
           format: table
@@ -123,7 +123,7 @@ jobs:
       - name: Enforce vision image fixable vulnerability budget
         id: enforce-vision
         continue-on-error: true
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
           image-ref: rubiks-vision:${{ github.sha }}
           format: table
