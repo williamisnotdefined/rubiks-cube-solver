@@ -142,6 +142,50 @@ pub async fn analyze_scan_face_request(
     }
 }
 
+pub(crate) fn validate_scan_session_request_before_capacity(
+    puzzle_id: PuzzleId,
+    request: &ScanSessionRequest,
+) -> Option<Box<(StatusCode, Json<ScanSessionResponse>)>> {
+    let mut request = request.clone();
+    match puzzle_id {
+        PuzzleId::Cube3x3x3 => {
+            request.grid_size = 3;
+            scan_session_validation_error_response(&request, SCAN_STICKERS_PER_FACE)
+        }
+        PuzzleId::Cube2x2x2 => {
+            request.grid_size = 2;
+            scan_session_validation_error_response(&request, CUBE2_SCAN_STICKERS_PER_FACE)
+        }
+        PuzzleId::Pyraminx
+        | PuzzleId::Clock
+        | PuzzleId::Skewb
+        | PuzzleId::CubeNxN
+        | PuzzleId::Square1
+        | PuzzleId::Megaminx => Some(Box::new((
+            StatusCode::BAD_REQUEST,
+            Json(scan_session_error(
+                "unsupported_puzzle",
+                format!(
+                    "scan solving is not implemented for puzzle {}",
+                    puzzle_id.as_str()
+                ),
+            )),
+        ))),
+    }
+}
+
+fn scan_session_validation_error_response(
+    request: &ScanSessionRequest,
+    stickers_per_face: usize,
+) -> Option<Box<(StatusCode, Json<ScanSessionResponse>)>> {
+    validate_scan_session_request(request, stickers_per_face).map(|message| {
+        let timings = ScanSessionTimingRecorder::start();
+        let mut response = scan_session_error("invalid_session", message);
+        response.timings = Some(timings.finish());
+        Box::new((StatusCode::BAD_REQUEST, Json(response)))
+    })
+}
+
 pub fn solve_scan_session_request(
     state: &ApiState,
     request: ScanSessionRequest,

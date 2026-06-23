@@ -20,6 +20,7 @@ use crate::config::{
 use crate::puzzle::{
     list_puzzles_response, puzzle_response_by_slug, puzzle_solve_overloaded_response,
     puzzle_solve_worker_failed_response, puzzle_strategy_responses_by_slug, solve_puzzle_request,
+    validate_puzzle_solve_request_before_capacity,
 };
 use crate::response::{
     solver_overloaded_response_from_parts, solver_worker_failed_response_from_parts,
@@ -27,7 +28,10 @@ use crate::response::{
     PuzzleSolveRequest, PuzzleSolveResponse, ReadyzResponse, ScanSessionRequest,
     ScanSessionResponse, SolveNotationRequest, SolveResponse, SolveScanRequest, StrategyResponse,
 };
-use crate::scan_analysis::{analyze_scan_face_request, solve_scan_session_request_for_puzzle};
+use crate::scan_analysis::{
+    analyze_scan_face_request, solve_scan_session_request_for_puzzle,
+    validate_scan_session_request_before_capacity,
+};
 use crate::solve::{
     prepare_solve_notation_request, prepare_solve_scan_request, solve_prepared_request,
 };
@@ -45,6 +49,18 @@ struct VisionHealthResponse {
 }
 
 pub fn api_router(state: ApiState) -> Router {
+    apply_http_layers(api_routes()).with_state(state)
+}
+
+pub fn api_router_with_web_dist(state: ApiState, web_dist_dir: PathBuf) -> Router {
+    let index_file = web_dist_dir.join("index.html");
+    let router = api_routes()
+        .fallback_service(ServeDir::new(web_dist_dir).fallback(ServeFile::new(index_file)));
+
+    apply_http_layers(router).with_state(state)
+}
+
+fn api_routes() -> Router<ApiState> {
     Router::new()
         .route("/health", get(health))
         .route("/livez", get(livez))
@@ -66,17 +82,13 @@ pub fn api_router(state: ApiState) -> Router {
         )
         .route("/solve-notation", post(solve_notation))
         .route("/solve-scan", post(solve_scan))
+}
+
+fn apply_http_layers(router: Router<ApiState>) -> Router<ApiState> {
+    router
         .layer(DefaultBodyLimit::max(MAX_JSON_BODY_BYTES))
         .layer(middleware::from_fn(security_headers))
         .layer(cors_layer())
-        .with_state(state)
-}
-
-pub fn api_router_with_web_dist(state: ApiState, web_dist_dir: PathBuf) -> Router {
-    let index_file = web_dist_dir.join("index.html");
-
-    api_router(state)
-        .fallback_service(ServeDir::new(web_dist_dir).fallback(ServeFile::new(index_file)))
 }
 
 fn cors_layer() -> CorsLayer {
@@ -232,8 +244,14 @@ async fn puzzle_strategies(Path(puzzle_slug): Path<String>) -> Response {
 async fn solve_puzzle(
     State(state): State<ApiState>,
     Path(puzzle_slug): Path<String>,
-    Json(request): Json<PuzzleSolveRequest>,
+    Json(mut request): Json<PuzzleSolveRequest>,
 ) -> (StatusCode, Json<PuzzleSolveResponse>) {
+    if let Err(response) = validate_puzzle_solve_request_before_capacity(&puzzle_slug, &mut request)
+    {
+        let (status, response) = *response;
+        return (status, Json(response));
+    }
+
     let Some(permit) = state.try_acquire_solver_permit() else {
         return (
             StatusCode::SERVICE_UNAVAILABLE,
@@ -359,6 +377,10 @@ async fn solve_scan_session_http_request(
     puzzle_id: PuzzleId,
     request: ScanSessionRequest,
 ) -> (StatusCode, Json<ScanSessionResponse>) {
+    if let Some(response) = validate_scan_session_request_before_capacity(puzzle_id, &request) {
+        return *response;
+    }
+
     let Some(permit) = state.try_acquire_solver_permit() else {
         return scan_session_solver_error_response(
             StatusCode::SERVICE_UNAVAILABLE,

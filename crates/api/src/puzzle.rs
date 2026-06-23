@@ -22,7 +22,7 @@ use crate::response::{
     PuzzleSolveRequest, PuzzleSolveResponse, PuzzleStrategyResponse, SolveNotationRequest,
     SolveResponse, VisualStateResponse,
 };
-use crate::solve::solve_notation_request;
+use crate::solve::{prepare_solve_notation_request, solve_notation_request};
 use crate::state::ApiState;
 
 pub fn list_puzzles_response() -> Vec<PuzzleResponse> {
@@ -167,6 +167,186 @@ pub fn solve_puzzle_request(
             ),
         ),
     }
+}
+
+pub(crate) fn validate_puzzle_solve_request_before_capacity(
+    puzzle_slug: &str,
+    request: &mut PuzzleSolveRequest,
+) -> Result<(), Box<(StatusCode, PuzzleSolveResponse)>> {
+    let Some(puzzle) = puzzle_definition_by_slug(puzzle_slug) else {
+        let strategy_id = requested_strategy_id(request);
+        return Err(Box::new((
+            StatusCode::NOT_FOUND,
+            puzzle_solve_error_response(
+                None,
+                puzzle_slug,
+                &strategy_id,
+                &request.limits,
+                &request.metric,
+                "unknown_puzzle",
+                "unknown_puzzle",
+                format!("unknown puzzle slug: {puzzle_slug}"),
+            ),
+        )));
+    };
+
+    let strategy_id = effective_strategy_id(puzzle, request).to_owned();
+
+    if request.input.kind != InputKind::Notation.as_str() {
+        return Err(Box::new((
+            StatusCode::BAD_REQUEST,
+            puzzle_solve_error_response(
+                Some(puzzle.id),
+                puzzle.slug,
+                &strategy_id,
+                &request.limits,
+                &request.metric,
+                "unsupported_input_kind",
+                "unsupported_input_kind",
+                format!(
+                    "input kind {:?} is not supported by this solve endpoint",
+                    request.input.kind
+                ),
+            ),
+        )));
+    }
+
+    if request.metric != MoveMetric::Htm.as_str() {
+        return Err(Box::new((
+            StatusCode::BAD_REQUEST,
+            puzzle_solve_error_response(
+                Some(puzzle.id),
+                puzzle.slug,
+                &strategy_id,
+                &request.limits,
+                &request.metric,
+                "unsupported_metric",
+                "unsupported_metric",
+                format!("move metric {:?} is not supported", request.metric),
+            ),
+        )));
+    }
+
+    let Some(strategy_definition) = strategy_definition_by_id(&strategy_id) else {
+        return Err(Box::new((
+            StatusCode::BAD_REQUEST,
+            puzzle_solve_error_response(
+                Some(puzzle.id),
+                puzzle.slug,
+                &strategy_id,
+                &request.limits,
+                &request.metric,
+                "unsupported_strategy",
+                "unsupported_strategy",
+                format!("unsupported solver strategy id: {strategy_id}"),
+            ),
+        )));
+    };
+
+    if strategy_definition.puzzle_id != puzzle.id {
+        return Err(Box::new((
+            StatusCode::BAD_REQUEST,
+            puzzle_solve_error_response(
+                Some(puzzle.id),
+                puzzle.slug,
+                &strategy_id,
+                &request.limits,
+                &request.metric,
+                "strategy_puzzle_mismatch",
+                "strategy_puzzle_mismatch",
+                format!(
+                    "strategy {:?} is not registered for puzzle {}",
+                    strategy_id, puzzle.id
+                ),
+            ),
+        )));
+    }
+
+    request.strategy_id = Some(strategy_id.clone());
+
+    match puzzle.id {
+        PuzzleId::Cube3x3x3 => validate_cube3_puzzle_solve_request(puzzle, &strategy_id, request),
+        PuzzleId::Cube2x2x2 => validate_cube2_puzzle_solve_request(puzzle, &strategy_id, request),
+        PuzzleId::Pyraminx
+        | PuzzleId::Clock
+        | PuzzleId::Skewb
+        | PuzzleId::CubeNxN
+        | PuzzleId::Square1
+        | PuzzleId::Megaminx => Err(Box::new((
+            StatusCode::BAD_REQUEST,
+            puzzle_solve_error_response(
+                Some(puzzle.id),
+                puzzle.slug,
+                &strategy_id,
+                &request.limits,
+                &request.metric,
+                "unsupported_puzzle",
+                "unsupported_puzzle",
+                format!("solving is not implemented for puzzle {}", puzzle.id),
+            ),
+        ))),
+    }
+}
+
+fn validate_cube3_puzzle_solve_request(
+    puzzle: &PuzzleDefinition,
+    strategy_id: &str,
+    request: &PuzzleSolveRequest,
+) -> Result<(), Box<(StatusCode, PuzzleSolveResponse)>> {
+    let strategy = SolverStrategy::from_id(strategy_id)
+        .expect("3x3 puzzle strategy registry should only contain SolverStrategy ids");
+    let legacy_request = SolveNotationRequest {
+        moves: request.input.value.clone(),
+        max_depth: request.limits.max_depth,
+        max_nodes: request.limits.max_nodes,
+        strategy_id: strategy.id().to_owned(),
+    };
+
+    match prepare_solve_notation_request(legacy_request) {
+        Ok(_) => Ok(()),
+        Err(response) => {
+            let (status, Json(response)) = *response;
+            Err(Box::new((
+                status,
+                puzzle_solve_response_from_legacy(puzzle, &request.metric, response),
+            )))
+        }
+    }
+}
+
+fn validate_cube2_puzzle_solve_request(
+    puzzle: &PuzzleDefinition,
+    strategy_id: &str,
+    request: &PuzzleSolveRequest,
+) -> Result<(), Box<(StatusCode, PuzzleSolveResponse)>> {
+    let mut limits = request.limits.clone();
+    if let Err(response) = validate_puzzle_solve_notation_limits(
+        puzzle,
+        strategy_id,
+        &request.input.value,
+        &mut limits,
+        &request.metric,
+    ) {
+        return Err(Box::new((StatusCode::BAD_REQUEST, *response)));
+    }
+
+    if let Err(error) = Cube2Algorithm::parse(&request.input.value) {
+        return Err(Box::new((
+            StatusCode::BAD_REQUEST,
+            puzzle_solve_error_response(
+                Some(puzzle.id),
+                puzzle.slug,
+                strategy_id,
+                &request.limits,
+                &request.metric,
+                "invalid_notation",
+                "invalid_move_notation",
+                error.to_string(),
+            ),
+        )));
+    }
+
+    Ok(())
 }
 
 pub(crate) fn puzzle_solve_overloaded_response(
