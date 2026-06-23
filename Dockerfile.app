@@ -10,7 +10,7 @@ COPY packages/rubiks-cube packages/rubiks-cube
 COPY web web
 RUN npm run build -w @rubiks-cube-solver/web
 
-FROM rust:1.95-bookworm AS rust-build
+FROM rust:1.96-bookworm AS rust-build
 
 WORKDIR /src
 COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
