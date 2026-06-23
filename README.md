@@ -23,7 +23,7 @@ The product goal is a web interface where a user can input a valid puzzle state 
 
 - Node.js and npm.
 - Rust toolchain for API, engine tests, and pruning-table generation.
-- Python 3.11+ for optional scanner runtime and scanner training helpers.
+- Python 3.14+ for optional scanner runtime and scanner training helpers.
 - Git LFS for source datasets tracked under `scanner/datasets`.
 
 ## Quick Start

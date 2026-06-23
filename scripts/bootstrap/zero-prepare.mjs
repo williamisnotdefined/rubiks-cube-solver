@@ -202,7 +202,7 @@ function requiredValue(flag, value) {
 }
 
 function findPython() {
-  for (const command of ['python3.11', 'python3', 'python']) {
+  for (const command of ['python3.14', 'python3', 'python']) {
     const result = spawnSync(command, ['--version'], { encoding: 'utf8' })
     if (result.error || result.status !== 0) {
       continue
@@ -213,13 +213,13 @@ function findPython() {
     }
     const major = Number(version[1])
     const minor = Number(version[2])
-    if (major > 3 || (major === 3 && minor >= 11)) {
+    if (major > 3 || (major === 3 && minor >= 14)) {
       console.log(`ok        Python: ${command} ${major}.${minor}`)
       return { command, major, minor }
     }
   }
 
-  throw new Error('Python 3.11+ was not found. Install Python 3.11 or set up .venv manually.')
+  throw new Error('Python 3.14+ was not found. Install Python 3.14 or set up .venv manually.')
 }
 
 function checkCommand(command, args, label) {
