@@ -75,6 +75,7 @@ if (!window.IntersectionObserver) {
   window.IntersectionObserver = class MockIntersectionObserver implements IntersectionObserver {
     readonly root = null
     readonly rootMargin = ''
+    readonly scrollMargin = ''
     readonly thresholds = []
 
     disconnect() {}
