@@ -143,8 +143,8 @@ Positive evidence:
 
 Gaps:
 
-- No model card, dataset card, or model manifest schema existed before this pass.
-- Runtime model compatibility checks should reject incompatible manifest/class/order/input/opset combinations once manifests are introduced.
+- `scanner/MODEL_CARD.md`, `scanner/DATASET_CARD.md`, and `scanner/model-manifest.schema.json` were added in this pass.
+- Runtime model compatibility checks should reject incompatible manifest/class/order/input/opset combinations once manifest loading is implemented.
 - Scanner inference concurrency, timeouts, image size limits, and warm-readiness behavior need runtime hardening.
 
 ## Container And Deployment Security Review
