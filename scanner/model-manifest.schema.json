@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/williamisnotdefined/rubiks-cube-solver/scanner/model-manifest.schema.json",
+  "title": "Rubik's Cube Scanner Model Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "modelId",
+    "modelPath",
+    "modelSha256",
+    "contractVersion",
+    "framework",
+    "onnxOpset",
+    "inputSize",
+    "classOrder",
+    "dataset",
+    "training",
+    "metrics",
+    "sourceCommit"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1"
+    },
+    "modelId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "modelPath": {
+      "type": "string",
+      "minLength": 1
+    },
+    "modelSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "contractVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "framework": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["training", "runtime"],
+      "properties": {
+        "training": { "type": "string", "minLength": 1 },
+        "runtime": { "type": "string", "minLength": 1 }
+      }
+    },
+    "onnxOpset": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "inputSize": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "normalization": {
+      "type": "string"
+    },
+    "classOrder": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "dataset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "source", "license", "sha256", "splits"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "source": { "type": "string", "minLength": 1 },
+        "license": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "splits": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "training": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command", "seed", "hyperparameters"],
+      "properties": {
+        "command": { "type": "string", "minLength": 1 },
+        "seed": { "type": "integer" },
+        "hyperparameters": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["perClassPrecision", "perClassRecall", "falseAcceptRate", "falseRejectRate"],
+      "properties": {
+        "perClassPrecision": { "$ref": "#/$defs/classMetricMap" },
+        "perClassRecall": { "$ref": "#/$defs/classMetricMap" },
+        "falseAcceptRate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "falseRejectRate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "pytorchOnnxMaxDelta": { "type": "number", "minimum": 0 }
+      }
+    },
+    "knownFailureModes": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "sourceCommit": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{7,40}$"
+    }
+  },
+  "$defs": {
+    "classMetricMap": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      }
+    }
+  }
+}

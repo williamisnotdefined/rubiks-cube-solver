@@ -105,6 +105,18 @@ Services:
 
 The `app` container calls vision at `http://vision:8790`. The scanner model is mounted from `./scanner/models:/models:ro`.
 
+The production Compose services run as non-root users, drop Linux capabilities, set `no-new-privileges`, use read-only root filesystems, and mount a small writable `/tmp` tmpfs for runtime scratch space.
+
+API runtime health endpoints:
+
+| Endpoint | Meaning |
+| --- | --- |
+| `/livez` | Process is alive. |
+| `/readyz` | Required generated solver artifacts are loaded; returns `503` when they are unavailable. |
+| `/health` | Backward-compatible product health summary including generated solver and vision status. |
+
+Set `RUBIKS_CORS_ALLOWED_ORIGINS` to a comma-separated list to override the default local development/preview CORS origins. Set it to an empty value to keep browser API access same-origin only.
+
 `docker:up`, `docker:down`, `docker:restart`, `docker:status`, and `docker:logs` are lower-level Compose wrappers. Prefer `prod:*` for production operations because those commands include Git update and health-check behavior where appropriate.
 
 Stop production Docker:
@@ -186,6 +198,8 @@ Fast runtime checks:
 
 ```bash
 npm run scan:tile-yolo-check
+curl http://127.0.0.1:8788/livez
+curl http://127.0.0.1:8788/readyz
 curl http://127.0.0.1:8788/health
 curl http://127.0.0.1:8791/health
 curl http://127.0.0.1:8787/health

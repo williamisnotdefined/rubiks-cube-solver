@@ -142,20 +142,20 @@ pub async fn analyze_scan_face_request(
     }
 }
 
-pub async fn solve_scan_session_request(
+pub fn solve_scan_session_request(
     state: &ApiState,
     request: ScanSessionRequest,
 ) -> (StatusCode, Json<ScanSessionResponse>) {
-    solve_scan_session_request_for_puzzle(state, PuzzleId::Cube3x3x3, request).await
+    solve_scan_session_request_for_puzzle(state, PuzzleId::Cube3x3x3, request)
 }
 
-pub async fn solve_scan_session_request_for_puzzle(
+pub fn solve_scan_session_request_for_puzzle(
     state: &ApiState,
     puzzle_id: PuzzleId,
     request: ScanSessionRequest,
 ) -> (StatusCode, Json<ScanSessionResponse>) {
     match puzzle_id {
-        PuzzleId::Cube3x3x3 => solve_cube3_scan_session_request(state, request).await,
+        PuzzleId::Cube3x3x3 => solve_cube3_scan_session_request(state, request),
         PuzzleId::Cube2x2x2 => solve_cube2_scan_session_request(request),
         PuzzleId::Pyraminx
         | PuzzleId::Clock
@@ -175,7 +175,7 @@ pub async fn solve_scan_session_request_for_puzzle(
     }
 }
 
-async fn solve_cube3_scan_session_request(
+fn solve_cube3_scan_session_request(
     state: &ApiState,
     mut request: ScanSessionRequest,
 ) -> (StatusCode, Json<ScanSessionResponse>) {

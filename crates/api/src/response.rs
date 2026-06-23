@@ -19,6 +19,18 @@ pub struct HealthResponse {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+pub struct LivezResponse {
+    pub ok: bool,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+pub struct ReadyzResponse {
+    pub ok: bool,
+    #[serde(rename = "generatedTwoPhaseReady")]
+    pub generated_two_phase_ready: bool,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub struct StrategyResponse {
     pub id: &'static str,
     pub label: &'static str,
@@ -608,6 +620,40 @@ pub(crate) fn unverified_solution_response_from_parts(
         "unverified_solution",
         "solver returned a solution that failed replay verification".to_owned(),
         visual_state,
+    )
+}
+
+pub(crate) fn solver_overloaded_response_from_parts(
+    strategy_id: &str,
+    max_depth: usize,
+    max_nodes: Option<usize>,
+) -> SolveResponse {
+    error_response_from_parts(
+        strategy_id,
+        max_depth,
+        max_nodes,
+        SolverStrategy::from_id(strategy_id),
+        "api_error",
+        "solver_overloaded",
+        "solver concurrency limit reached; retry the request later".to_owned(),
+        None,
+    )
+}
+
+pub(crate) fn solver_worker_failed_response_from_parts(
+    strategy_id: &str,
+    max_depth: usize,
+    max_nodes: Option<usize>,
+) -> SolveResponse {
+    error_response_from_parts(
+        strategy_id,
+        max_depth,
+        max_nodes,
+        SolverStrategy::from_id(strategy_id),
+        "api_error",
+        "solver_worker_failed",
+        "solver worker failed before returning a response".to_owned(),
+        None,
     )
 }
 

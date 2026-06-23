@@ -10,6 +10,8 @@ Web scanner -> Rust API -> scanner runtime -> optional YOLO ONNX tile detector
 
 The active detector is configured with `RUBIKS_VISION_TILE_DETECTOR_MODEL`, normally `scanner/models/tile-detector.onnx`. The runtime is YOLO-only; it does not load a sticker CNN, face detector, or color-classifier fallback.
 
+Set `RUBIKS_VISION_TILE_DETECTOR_MANIFEST` to validate a promoted model before loading it. The manifest must match `scanner/model-manifest.schema.json` and the runtime checks `schemaVersion`, `contractVersion`, ONNX opset range, `inputSize`, `classOrder`, `modelPath`, and `modelSha256`. Manifest failures keep the scanner service alive but report the detector unavailable through `/health`.
+
 ## Commands
 
 ```bash

@@ -7,14 +7,16 @@ use cube_engine::{infer_scan, Facelet, PuzzleId, Scramble, SolverStrategy};
 use tower::ServiceExt;
 
 use crate::response::{unverified_solution_response_from_parts, ScanSessionManualTargetResponse};
+use crate::routes::allowed_web_origins;
 use crate::{
     api_router, api_router_with_web_dist, solve_notation_request, solve_puzzle_request,
     solve_scan_request, solve_scan_session_request, solve_scan_session_request_for_puzzle,
     AnalyzeScanFaceRequest, ApiState, PuzzleApiErrorResponse, PuzzleResponse,
     PuzzleSolveInputRequest, PuzzleSolveLimitsRequest, PuzzleSolveRequest, PuzzleSolveResponse,
     PuzzleStrategyResponse, ScanFacesRequest, ScanSessionFaceRequest, ScanSessionRequest,
-    ScanSessionReviewedStickerRequest, SolveNotationRequest, SolveScanRequest, CUBE2_MAX_API_DEPTH,
-    CUBE3_MAX_API_DEPTH, DEFAULT_API_NODES, MAX_API_NODES, MAX_NOTATION_BYTES,
+    ScanSessionResponse, ScanSessionReviewedStickerRequest, SolveNotationRequest, SolveResponse,
+    SolveScanRequest, CUBE2_MAX_API_DEPTH, CUBE3_MAX_API_DEPTH, DEFAULT_API_NODES, MAX_API_NODES,
+    MAX_NOTATION_BYTES,
 };
 
 #[test]
@@ -939,6 +941,193 @@ async fn solve_scan_route_is_exposed() {
 }
 
 #[tokio::test]
+async fn solve_notation_route_returns_503_when_solver_concurrency_is_saturated() {
+    let state = ApiState::without_generated_solver().with_solver_max_concurrency(1);
+    let _permit = state
+        .try_acquire_solver_permit()
+        .expect("test should acquire the only solver permit");
+    let app = api_router(state);
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/solve-notation")
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    serde_json::json!({
+                        "moves": "F",
+                        "maxDepth": 1,
+                        "maxNodes": 1000,
+                        "strategyId": "bounded-ida-star"
+                    })
+                    .to_string(),
+                ))
+                .expect("request should build"),
+        )
+        .await
+        .expect("request should complete");
+
+    assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
+    let response: SolveResponse = response_json(response).await;
+    assert!(!response.ok);
+    assert_eq!(response.status, "api_error");
+    assert_eq!(response.error_kind.as_deref(), Some("solver_overloaded"));
+    assert_eq!(response.strategy_id, "bounded-ida-star");
+}
+
+#[tokio::test]
+async fn solve_notation_route_validates_limits_before_solver_concurrency_gate() {
+    let state = ApiState::without_generated_solver().with_solver_max_concurrency(1);
+    let _permit = state
+        .try_acquire_solver_permit()
+        .expect("test should acquire the only solver permit");
+    let app = api_router(state);
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/solve-notation")
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    serde_json::json!({
+                        "moves": "",
+                        "maxDepth": CUBE3_MAX_API_DEPTH + 1,
+                        "maxNodes": 1000,
+                        "strategyId": "bounded-ida-star"
+                    })
+                    .to_string(),
+                ))
+                .expect("request should build"),
+        )
+        .await
+        .expect("request should complete");
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    let response: SolveResponse = response_json(response).await;
+    assert!(!response.ok);
+    assert_eq!(response.status, "invalid_limits");
+    assert_eq!(
+        response.error_kind.as_deref(),
+        Some("max_depth_exceeds_limit")
+    );
+}
+
+#[tokio::test]
+async fn puzzle_solve_route_returns_503_when_solver_concurrency_is_saturated() {
+    let state = ApiState::without_generated_solver().with_solver_max_concurrency(1);
+    let _permit = state
+        .try_acquire_solver_permit()
+        .expect("test should acquire the only solver permit");
+    let app = api_router(state);
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/puzzles/cube-2x2x2/solve")
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    serde_json::json!({
+                        "input": { "kind": "notation", "value": "F" },
+                        "strategyId": "cube2-pdb-ida-star",
+                        "limits": { "maxDepth": 1, "maxNodes": 1000 },
+                        "metric": "htm"
+                    })
+                    .to_string(),
+                ))
+                .expect("request should build"),
+        )
+        .await
+        .expect("request should complete");
+
+    assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
+    let response: PuzzleSolveResponse = response_json(response).await;
+    assert!(!response.ok);
+    assert_eq!(response.status, "api_error");
+    assert_eq!(response.error_kind.as_deref(), Some("solver_overloaded"));
+    assert_eq!(response.puzzle_slug, "cube-2x2x2");
+}
+
+#[tokio::test]
+async fn solve_scan_session_route_returns_503_when_solver_concurrency_is_saturated() {
+    let state = ApiState::without_generated_solver().with_solver_max_concurrency(1);
+    let _permit = state
+        .try_acquire_solver_permit()
+        .expect("test should acquire the only solver permit");
+    let app = api_router(state);
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/scan/solve-session")
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    serde_json::to_string(&solved_scan_session_request())
+                        .expect("request should serialize"),
+                ))
+                .expect("request should build"),
+        )
+        .await
+        .expect("request should complete");
+
+    assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
+    let response: ScanSessionResponse = response_json(response).await;
+    assert!(!response.ok);
+    assert_eq!(response.status, "api_error");
+    assert_eq!(
+        response.message.as_deref(),
+        Some("solver concurrency limit reached; retry the request later")
+    );
+}
+
+#[tokio::test]
+async fn livez_and_readyz_split_liveness_from_readiness() {
+    let app = api_router(ApiState::without_generated_solver());
+    let livez = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/livez")
+                .body(Body::empty())
+                .expect("request should build"),
+        )
+        .await
+        .expect("request should complete");
+
+    assert_eq!(livez.status(), StatusCode::OK);
+    let body = to_bytes(livez.into_body(), usize::MAX)
+        .await
+        .expect("body should be readable");
+    let response: serde_json::Value =
+        serde_json::from_slice(&body).expect("response should be JSON");
+    assert_eq!(response["ok"], true);
+
+    let readyz = app
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/readyz")
+                .body(Body::empty())
+                .expect("request should build"),
+        )
+        .await
+        .expect("request should complete");
+
+    assert_eq!(readyz.status(), StatusCode::SERVICE_UNAVAILABLE);
+    let body = to_bytes(readyz.into_body(), usize::MAX)
+        .await
+        .expect("body should be readable");
+    let response: serde_json::Value =
+        serde_json::from_slice(&body).expect("response should be JSON");
+    assert_eq!(response["ok"], false);
+    assert_eq!(response["generatedTwoPhaseReady"], false);
+}
+
+#[tokio::test]
 async fn health_route_reports_vision_tile_detector_status() {
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
         .await
@@ -990,6 +1179,45 @@ async fn health_route_reports_vision_tile_detector_status() {
         response["visionTileDetectorReason"],
         "tile_detector_model_not_configured"
     );
+}
+
+#[tokio::test]
+async fn responses_include_browser_security_headers() {
+    let app = api_router(ApiState::without_generated_solver());
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/livez")
+                .body(Body::empty())
+                .expect("request should build"),
+        )
+        .await
+        .expect("request should complete");
+
+    assert_eq!(
+        response.headers().get("x-content-type-options"),
+        Some(&"nosniff".parse().expect("header value"))
+    );
+    assert_eq!(
+        response.headers().get("referrer-policy"),
+        Some(&"no-referrer".parse().expect("header value"))
+    );
+    assert!(response.headers().get("content-security-policy").is_some());
+    assert!(response.headers().get("permissions-policy").is_some());
+}
+
+#[test]
+fn cors_allowed_origins_can_be_configured() {
+    assert!(allowed_web_origins(None).contains(&"http://127.0.0.1:5173".to_owned()));
+    assert_eq!(
+        allowed_web_origins(Some("https://rubiks.example, https://preview.example ")),
+        vec![
+            "https://rubiks.example".to_owned(),
+            "https://preview.example".to_owned(),
+        ]
+    );
+    assert!(allowed_web_origins(Some("  ,  ")).is_empty());
 }
 
 #[tokio::test]
@@ -1080,8 +1308,7 @@ async fn solve_scan_session_rejects_missing_reviewed_stickers() {
     let (status, response) = solve_scan_session_request(
         &ApiState::without_generated_solver(),
         solved_scan_session_request_without_reviewed_stickers(),
-    )
-    .await;
+    );
 
     assert_eq!(status, StatusCode::BAD_REQUEST);
     assert!(!response.ok);
@@ -1094,7 +1321,7 @@ async fn solve_scan_session_rejects_3x3_depth_above_puzzle_cap() {
     request.max_depth = CUBE3_MAX_API_DEPTH + 1;
 
     let (status, response) =
-        solve_scan_session_request(&ApiState::without_generated_solver(), request).await;
+        solve_scan_session_request(&ApiState::without_generated_solver(), request);
 
     assert_eq!(status, StatusCode::OK);
     let response = response.0;
@@ -1114,7 +1341,7 @@ async fn solve_scan_session_skips_scan_analysis_for_reviewed_stickers() {
     }
 
     let (status, response) =
-        solve_scan_session_request(&ApiState::without_generated_solver(), request).await;
+        solve_scan_session_request(&ApiState::without_generated_solver(), request);
 
     assert_eq!(status, StatusCode::OK);
     let response = response.0;
@@ -1147,8 +1374,7 @@ async fn solve_cube2_scan_session_accepts_reviewed_stickers() {
         &ApiState::without_generated_solver(),
         PuzzleId::Cube2x2x2,
         request,
-    )
-    .await;
+    );
 
     assert_eq!(status, StatusCode::OK);
     let response = response.0;
@@ -1181,8 +1407,7 @@ async fn solve_cube2_scan_session_returns_initial_scrambled_visual_state() {
         &ApiState::without_generated_solver(),
         PuzzleId::Cube2x2x2,
         request,
-    )
-    .await;
+    );
 
     assert_eq!(status, StatusCode::OK);
     let response = response.0;
@@ -1208,8 +1433,7 @@ async fn solve_cube2_scan_session_rejects_depth_above_puzzle_cap() {
         &ApiState::without_generated_solver(),
         PuzzleId::Cube2x2x2,
         request,
-    )
-    .await;
+    );
 
     assert_eq!(status, StatusCode::OK);
     let response = response.0;
@@ -1235,8 +1459,7 @@ async fn solve_cube2_scan_session_highlights_invalid_corner_stickers() {
         &ApiState::without_generated_solver(),
         PuzzleId::Cube2x2x2,
         request,
-    )
-    .await;
+    );
 
     assert_eq!(status, StatusCode::OK);
     let response = response.0;

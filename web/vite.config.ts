@@ -153,15 +153,14 @@ export default defineConfig({
       exclude: [
         'src/**/*.stories.{ts,tsx}',
         'src/**/__tests__/**',
-        'src/api/**/index.ts',
+        'src/**/index.ts',
+        'src/**/types.ts',
+        'src/**/*.d.ts',
         'src/App.tsx',
-        'src/custom-elements.d.ts',
         'src/main.tsx',
-        'src/pages/**/index.ts',
         'src/stories/**',
         'src/test/**',
         'src/vendor/**',
-        'src/vite-env.d.ts',
       ],
       include: [
         'src/api/**/*.{ts,tsx}',

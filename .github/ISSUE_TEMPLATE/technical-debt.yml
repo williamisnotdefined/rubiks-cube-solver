@@ -1,0 +1,31 @@
+name: Technical debt
+description: Track maintenance or hardening work.
+title: "debt: "
+labels: [technical-debt]
+body:
+  - type: textarea
+    id: finding
+    attributes:
+      label: Finding
+      description: What is the current debt and where is the evidence?
+    validations:
+      required: true
+  - type: textarea
+    id: risk
+    attributes:
+      label: Risk
+      description: Why does this matter?
+    validations:
+      required: true
+  - type: textarea
+    id: remediation
+    attributes:
+      label: Remediation
+      description: What is the safe, incremental fix?
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification
+      description: What commands or tests should pass?
