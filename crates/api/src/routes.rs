@@ -66,9 +66,9 @@ fn api_routes() -> Router<ApiState> {
         .route("/livez", get(livez))
         .route("/readyz", get(readyz))
         .route("/puzzles", get(puzzles))
-        .route("/puzzles/:puzzle_slug", get(puzzle_detail))
-        .route("/puzzles/:puzzle_slug/strategies", get(puzzle_strategies))
-        .route("/puzzles/:puzzle_slug/solve", post(solve_puzzle))
+        .route("/puzzles/{puzzle_slug}", get(puzzle_detail))
+        .route("/puzzles/{puzzle_slug}/strategies", get(puzzle_strategies))
+        .route("/puzzles/{puzzle_slug}/solve", post(solve_puzzle))
         .route("/strategies", get(strategies))
         .route("/scan/analyze-face", post(analyze_scan_face))
         .route(
@@ -76,7 +76,7 @@ fn api_routes() -> Router<ApiState> {
             post(solve_scan_session).layer(DefaultBodyLimit::max(MAX_SCAN_SESSION_BODY_BYTES)),
         )
         .route(
-            "/puzzles/:puzzle_slug/scan/solve-session",
+            "/puzzles/{puzzle_slug}/scan/solve-session",
             post(solve_puzzle_scan_session)
                 .layer(DefaultBodyLimit::max(MAX_SCAN_SESSION_BODY_BYTES)),
         )
