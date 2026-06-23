@@ -1,0 +1,16 @@
+# Default ownership.
+* @williamisnotdefined
+
+# Repository automation and security-sensitive configuration.
+.github/ @williamisnotdefined
+.github/workflows/ @williamisnotdefined
+.github/dependabot.yml @williamisnotdefined
+
+# Solver, API, scanner, and generated artifact boundaries.
+crates/cube-engine/ @williamisnotdefined
+crates/api/ @williamisnotdefined
+scanner/ @williamisnotdefined
+crates/cube-engine/pruning-tables/ @williamisnotdefined
+
+# Canonical AI guidance.
+ai/ @williamisnotdefined

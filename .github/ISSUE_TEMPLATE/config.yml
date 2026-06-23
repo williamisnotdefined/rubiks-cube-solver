@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security reports
+    url: https://github.com/williamisnotdefined/rubiks-cube-solver/security/advisories/new
+    about: Use private vulnerability reporting when it is available.
