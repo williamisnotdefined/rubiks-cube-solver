@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 
 const scriptDir = dirname(fileURLToPath(import.meta.url))
 const repoRoot = resolve(scriptDir, '..', '..')
-const runtimeDir = join(repoRoot, 'logs', 'zero-install')
+const runtimeDir = join(repoRoot, 'logs', 'dev-local')
 const venvPython = join(repoRoot, '.venv', 'bin', 'python')
 const scannerModel = join(repoRoot, 'scanner', 'models', 'tile-detector.onnx')
 const pruningTableDir = join(repoRoot, 'crates', 'cube-engine', 'pruning-tables')
@@ -85,19 +85,19 @@ async function main() {
     }
   }
 
-  console.log('\nZero runtime is ready:')
+  console.log('\nLocal dev runtime is ready:')
   console.log('  Web:    http://127.0.0.1:5173')
   console.log('  API:    http://127.0.0.1:8788/health')
   console.log('  Vision: http://127.0.0.1:8791/health')
-  console.log('  Logs:   logs/zero-install')
+  console.log('  Logs:   logs/dev-local')
 }
 
 function ensureRuntimeReady() {
   if (!existsSync(venvPython)) {
-    throw new Error('Missing .venv/bin/python. Run npm run zero:prepare first.')
+    throw new Error('Missing .venv/bin/python. Run npm run dev:local:prepare first.')
   }
   if (!requiredPruningTables.every((file) => existsSync(join(pruningTableDir, file)))) {
-    throw new Error('Missing generated pruning tables. Run npm run zero:prepare first.')
+    throw new Error('Missing generated pruning tables. Run npm run dev:local:prepare first.')
   }
   if (!existsSync(scannerModel)) {
     console.warn('warning   scanner/models/tile-detector.onnx is missing; scanner health will report the detector unavailable.')
@@ -137,7 +137,7 @@ async function waitForUrl(url, timeoutMs, label) {
     await delay(1000)
   }
 
-  throw new Error(`${label} did not become ready within ${timeoutMs}ms. Check logs/zero-install/${label}.log.`)
+  throw new Error(`${label} did not become ready within ${timeoutMs}ms. Check logs/dev-local/${label}.log.`)
 }
 
 function requestOk(url) {
@@ -184,7 +184,7 @@ function relativePath(path) {
 }
 
 function printUsage() {
-  console.log(`Usage: npm run zero:start -- [options]
+  console.log(`Usage: npm run dev:local -- [options]
 
 Starts the local prepared runtime on non-production ports:
   web    http://127.0.0.1:5173
