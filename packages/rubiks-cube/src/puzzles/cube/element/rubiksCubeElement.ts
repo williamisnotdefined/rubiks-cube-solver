@@ -1,8 +1,8 @@
 import { gsap } from 'gsap';
 import { AmbientLight, DirectionalLight, PerspectiveCamera, Scene, Spherical, WebGLRenderer } from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { CameraState } from '../../../shared/cameraState';
 import { debounce } from '../../../shared/debouncer';
-import { PointerOrbitControls } from '../../../shared/puzzleControls';
 import type { AnimationOptions } from '../controller';
 import { RubiksCubeController } from '../controller';
 import type { CubeType, Movement, Rotation } from '../core';
@@ -317,8 +317,10 @@ export class RubiksCubeElement extends HTMLElement {
     camera.position.setFromSpherical(cameraSpherical);
     camera.lookAt(0, 0, 0);
 
-    const controls = new PointerOrbitControls(camera, renderer.domElement);
-    controls.target.set(0, 0, 0);
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableZoom = false;
+    controls.enablePan = false;
+    controls.enableDamping = true;
 
     const ambientLight = new AmbientLight('white', 0.4);
     const spotLight1 = new DirectionalLight('white', 2);
@@ -428,6 +430,10 @@ export class RubiksCubeElement extends HTMLElement {
     };
     const onControlsEnd = () => {
       stableControlFrames = 0;
+      if (controls.enableDamping) {
+        controlsSettling = true;
+        return;
+      }
       controlsSettling = false;
       requestAnimationFrame(() => {
         stopControlsRenderLoop?.();
