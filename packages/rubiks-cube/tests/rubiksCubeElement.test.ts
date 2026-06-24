@@ -258,4 +258,24 @@ describe('RubiksCubeElement', () => {
 
     expect(gsapMocks.to).toHaveBeenCalled();
   });
+
+  test('stops control rendering on next frame when damping is disabled', () => {
+    const element = createElement();
+    document.body.append(element);
+    flushAnimationFrames();
+
+    const controls = controlsMocks.instances.at(-1);
+    if (!controls) {
+      throw new Error('RubiksCube OrbitControls mock was not created');
+    }
+    controls.enableDamping = false;
+
+    controls.dispatch('start');
+    flushAnimationFrames();
+    controls.dispatch('end');
+    flushAnimationFrames();
+    flushAnimationFrames();
+
+    expect(cancelAnimationFrame).toHaveBeenCalled();
+  });
 });
