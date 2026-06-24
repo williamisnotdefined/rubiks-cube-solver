@@ -1,4 +1,5 @@
 import './setup';
+import { PerspectiveCamera } from 'three';
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { CubeTypes, Movements, Rotations } from '../src/puzzles/cube/core';
 import { AttributeNames, PeekActions, PeekStates, RubiksCubeElement } from '../src/puzzles/cube/element';
@@ -185,6 +186,7 @@ describe('RubiksCubeElement', () => {
 
   test('initializes rendering, responds to attributes, and cleans up', async () => {
     const element = createElement();
+    const lookAt = vi.spyOn(PerspectiveCamera.prototype, 'lookAt');
     element.setAttribute(AttributeNames.cubeType, CubeTypes.Three);
     element.setAttribute(AttributeNames.pieceGap, '1.05');
     element.setAttribute(AttributeNames.animationSpeed, '0');
@@ -205,6 +207,7 @@ describe('RubiksCubeElement', () => {
 
     expect(rendererMocks.setSize).toHaveBeenCalled();
     expect(rendererMocks.setPixelRatio).toHaveBeenCalledWith(2);
+    expect(lookAt).toHaveBeenCalledWith(0, 0, 0);
     flushAnimationFrames();
     expect(rendererMocks.render).toHaveBeenCalled();
     expect(renderListener).toHaveBeenCalledTimes(1);

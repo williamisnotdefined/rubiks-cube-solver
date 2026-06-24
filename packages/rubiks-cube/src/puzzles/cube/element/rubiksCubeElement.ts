@@ -315,6 +315,7 @@ export class RubiksCubeElement extends HTMLElement {
     );
     const cameraSpherical = getTargetCameraSpherical();
     camera.position.setFromSpherical(cameraSpherical);
+    camera.lookAt(0, 0, 0);
 
     const controls = new PointerOrbitControls(camera, renderer.domElement);
     controls.target.set(0, 0, 0);
