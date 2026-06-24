@@ -22,6 +22,14 @@ import {
 } from '../src/puzzles/megaminx';
 
 const allMegaminxMoves = Object.values(MegaminxMoves);
+const megaminxDirectionalFaceMovePairs = [
+  [MegaminxMoves.U, MegaminxMoves.UP],
+  [MegaminxMoves.R, MegaminxMoves.RP],
+  [MegaminxMoves.D, MegaminxMoves.DP],
+  [MegaminxMoves.F, MegaminxMoves.FP],
+  [MegaminxMoves.L, MegaminxMoves.LP],
+  [MegaminxMoves.B, MegaminxMoves.BP],
+] as const;
 
 describe('Megaminx notation', () => {
   test.each(allMegaminxMoves)('accepts %s', (move) => {
@@ -168,6 +176,17 @@ describe('Megaminx3D', () => {
       megaminx.applyMove(move);
     }
     expect(megaminx.getState()).toBe(solved);
+  });
+
+  test.each(megaminxDirectionalFaceMovePairs)('uses expected visual direction for %s and %s', (move, primeMove) => {
+    const megaminx = new Megaminx3D({ animationSpeedMs: 0 });
+    const movePlan = megaminx.turnPlan(move);
+    const primePlan = megaminx.turnPlan(primeMove);
+
+    expect(movePlan.angleRadians).toBeCloseTo((-2 * Math.PI) / 5);
+    expect(primePlan.angleRadians).toBeCloseTo((2 * Math.PI) / 5);
+    expect(movePlan.axis).toEqual(primePlan.axis);
+    expect(movePlan.pieceIds).toEqual(primePlan.pieceIds);
   });
 
   test('runs algorithms, reset, setState, and async zero-speed moves', async () => {
