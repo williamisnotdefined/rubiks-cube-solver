@@ -59,7 +59,7 @@
     }
   },
   "scripts": {
-    "playground": "vite --host 0.0.0.0 --port 5174 ./playground",
+    "playground": "vite --host 0.0.0.0 --port 6174 ./playground",
     "build:types": "tsc",
     "check": "biome check .",
     "format": "biome format . --write",
