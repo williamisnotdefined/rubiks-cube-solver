@@ -37,12 +37,10 @@ const gsapMocks = vi.hoisted(() => ({
 const controlsMocks = vi.hoisted(() => ({
   dispose: vi.fn(),
   removeEventListener: vi.fn(),
+  targetSet: vi.fn(),
   update: vi.fn(() => false),
   instances: [] as Array<{
     dispatch: (type: string) => void;
-    enableDamping: boolean;
-    enablePan: boolean;
-    enableZoom: boolean;
   }>,
 }));
 
@@ -72,15 +70,13 @@ vi.mock('three', async (importOriginal) => {
   };
 });
 
-vi.mock('three/examples/jsm/controls/OrbitControls.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('three/examples/jsm/controls/OrbitControls.js')>();
+vi.mock('../src/shared/puzzleControls', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../src/shared/puzzleControls')>();
 
   return {
     ...actual,
-    OrbitControls: class MockOrbitControls {
-      enableDamping = true;
-      enablePan = true;
-      enableZoom = true;
+    PointerOrbitControls: class MockPointerOrbitControls {
+      target = { set: controlsMocks.targetSet };
       listeners = new Map<string, Set<() => void>>();
 
       constructor() {
@@ -150,6 +146,8 @@ beforeEach(() => {
   controlsMocks.instances = [];
   controlsMocks.dispose.mockClear();
   controlsMocks.removeEventListener.mockClear();
+  controlsMocks.targetSet.mockClear();
+  controlsMocks.update.mockClear();
   gsapMocks.to.mockClear();
   gsapMocks.progress.mockClear();
   rendererMocks.dispose.mockClear();
@@ -211,6 +209,7 @@ describe('PyraminxPuzzleElement', () => {
     expect(element.cameraSpeedMs).toBe(80);
     expect(element.cameraPeekAngleHorizontal).toBe(0.4);
     expect(element.cameraPeekAngleVertical).toBe(0.5);
+    expect(controlsMocks.targetSet).toHaveBeenCalledWith(0, 0, 0);
 
     MockResizeObserver.instances[0].resize(240, 120);
     controlsMocks.instances.at(-1)?.dispatch('change');
@@ -366,13 +365,12 @@ describe('PyraminxPuzzleElement', () => {
     expect(element.getState()).toHaveLength(defaultPyraminxStickerState().length);
   });
 
-  test('keeps rendering while damped controls settle', () => {
+  test('renders during pointer orbit drag and stops after release', () => {
     const element = createElement();
     document.body.append(element);
     flushAnimationFrames();
 
     const controls = controlsMocks.instances.at(-1);
-    expect(controls?.enableDamping).toBe(true);
 
     controls?.dispatch('start');
     flushAnimationFrames();

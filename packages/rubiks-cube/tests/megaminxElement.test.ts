@@ -38,16 +38,10 @@ const gsapMocks = vi.hoisted(() => ({
 const controlsMocks = vi.hoisted(() => ({
   dispose: vi.fn(),
   removeEventListener: vi.fn(),
+  targetSet: vi.fn(),
   update: vi.fn(() => false),
   instances: [] as Array<{
-    dampingFactor: number;
     dispatch: (type: string) => void;
-    enableDamping: boolean;
-    enablePan: boolean;
-    enableZoom: boolean;
-    maxPolarAngle: number;
-    minPolarAngle: number;
-    rotateSpeed: number;
   }>,
 }));
 
@@ -77,19 +71,13 @@ vi.mock('three', async (importOriginal) => {
   };
 });
 
-vi.mock('three/examples/jsm/controls/OrbitControls.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('three/examples/jsm/controls/OrbitControls.js')>();
+vi.mock('../src/shared/puzzleControls', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../src/shared/puzzleControls')>();
 
   return {
     ...actual,
-    OrbitControls: class MockOrbitControls {
-      dampingFactor = 0;
-      enableDamping = true;
-      enablePan = true;
-      enableZoom = true;
-      maxPolarAngle = Math.PI;
-      minPolarAngle = 0;
-      rotateSpeed = 1;
+    PointerOrbitControls: class MockPointerOrbitControls {
+      target = { set: controlsMocks.targetSet };
       listeners = new Map<string, Set<() => void>>();
 
       constructor() {
@@ -159,6 +147,7 @@ beforeEach(() => {
   controlsMocks.instances = [];
   controlsMocks.dispose.mockClear();
   controlsMocks.removeEventListener.mockClear();
+  controlsMocks.targetSet.mockClear();
   controlsMocks.update.mockClear();
   gsapMocks.to.mockClear();
   gsapMocks.progress.mockClear();
@@ -223,6 +212,7 @@ describe('MegaminxPuzzleElement', () => {
     expect(element.cameraPeekAngleHorizontal).toBe(0.4);
     expect(element.cameraPeekAngleVertical).toBe(0.5);
     expect(element.visualStyle).toBe(MegaminxVisualStyles.Stickerless);
+    expect(controlsMocks.targetSet).toHaveBeenCalledWith(0, 0, 0);
 
     MockResizeObserver.instances[0].resize(240, 120);
     controlsMocks.instances.at(-1)?.dispatch('change');
@@ -395,19 +385,12 @@ describe('MegaminxPuzzleElement', () => {
     expect(element.getState()).toHaveLength(defaultMegaminxStickerState().length);
   });
 
-  test('keeps rendering while damped controls settle', () => {
+  test('renders during pointer orbit drag and stops after release', () => {
     const element = createElement();
     document.body.append(element);
     flushAnimationFrames();
 
     const controls = controlsMocks.instances.at(-1);
-    expect(controls?.enableDamping).toBe(true);
-    expect(controls?.dampingFactor).toBe(0.08);
-    expect(controls?.enablePan).toBe(false);
-    expect(controls?.enableZoom).toBe(false);
-    expect(controls?.rotateSpeed).toBe(0.7);
-    expect(controls?.minPolarAngle).toBeCloseTo(Math.PI * 0.12);
-    expect(controls?.maxPolarAngle).toBeCloseTo(Math.PI * 0.88);
 
     controls?.dispatch('start');
     flushAnimationFrames();
@@ -415,26 +398,6 @@ describe('MegaminxPuzzleElement', () => {
 
     controls?.dispatch('end');
     flushAnimationFrames();
-    flushAnimationFrames();
-    flushAnimationFrames();
-
-    expect(cancelAnimationFrame).toHaveBeenCalled();
-  });
-
-  test('stops control rendering on next frame when damping is disabled', () => {
-    const element = createElement();
-    document.body.append(element);
-    flushAnimationFrames();
-
-    const controls = controlsMocks.instances.at(-1);
-    if (!controls) {
-      throw new Error('Megaminx OrbitControls mock was not created');
-    }
-    controls.enableDamping = false;
-
-    controls.dispatch('start');
-    flushAnimationFrames();
-    controls.dispatch('end');
     flushAnimationFrames();
     flushAnimationFrames();
 

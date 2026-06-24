@@ -103,10 +103,14 @@ describe('Megaminx3D', () => {
     expect(megaminx.getState()).toBe(defaultMegaminxStickerState());
 
     const facePlan = megaminx.turnPlan(MegaminxMoves.R2);
+    const uPlan = megaminx.turnPlan(MegaminxMoves.U);
+    const upPlan = megaminx.turnPlan(MegaminxMoves.UP);
     const widePlan = megaminx.turnPlan(MegaminxMoves.RPP);
     const reversePlan = megaminx.turnPlan(MegaminxMoves.RPP, { reverse: true });
 
-    expect(facePlan.angleRadians).toBeCloseTo((4 * Math.PI) / 5);
+    expect(facePlan.angleRadians).toBeCloseTo((-4 * Math.PI) / 5);
+    expect(uPlan.angleRadians).toBeCloseTo((-2 * Math.PI) / 5);
+    expect(upPlan.angleRadians).toBeCloseTo((2 * Math.PI) / 5);
     expect(reversePlan.angleRadians).toBeCloseTo((-4 * Math.PI) / 5);
     expect(facePlan.pieceIds).toHaveLength(11);
     expect(new Set(facePlan.pieceIds).size).toBe(facePlan.pieceIds.length);

@@ -31,12 +31,10 @@ const gsapMocks = vi.hoisted(() => ({
 const controlsMocks = vi.hoisted(() => ({
   dispose: vi.fn(),
   removeEventListener: vi.fn(),
+  targetSet: vi.fn(),
   update: vi.fn(() => false),
   instances: [] as Array<{
     dispatch: (type: string) => void;
-    enableDamping: boolean;
-    enablePan: boolean;
-    enableZoom: boolean;
   }>,
 }));
 
@@ -66,15 +64,13 @@ vi.mock('three', async (importOriginal) => {
   };
 });
 
-vi.mock('three/examples/jsm/controls/OrbitControls.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('three/examples/jsm/controls/OrbitControls.js')>();
+vi.mock('../src/shared/puzzleControls', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../src/shared/puzzleControls')>();
 
   return {
     ...actual,
-    OrbitControls: class MockOrbitControls {
-      enableDamping = true;
-      enablePan = true;
-      enableZoom = true;
+    PointerOrbitControls: class MockPointerOrbitControls {
+      target = { set: controlsMocks.targetSet };
       listeners = new Map<string, Set<() => void>>();
 
       constructor() {
@@ -146,6 +142,7 @@ beforeEach(() => {
   controlsMocks.instances = [];
   controlsMocks.dispose.mockClear();
   controlsMocks.removeEventListener.mockClear();
+  controlsMocks.targetSet.mockClear();
   controlsMocks.update.mockClear();
   gsapMocks.to.mockClear();
   gsapMocks.duration.mockClear();

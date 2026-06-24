@@ -1,10 +1,11 @@
 import { gsap } from 'gsap';
 import { AmbientLight, DirectionalLight, PerspectiveCamera, Scene, Spherical, WebGLRenderer } from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { AnimationStyle } from '../../../shared/animation';
 import { CameraState } from '../../../shared/cameraState';
 import { debounce } from '../../../shared/debouncer';
-import type { MegaminxMove } from '../core/types';
+import { PointerOrbitControls } from '../../../shared/puzzleControls';
+import { MegaminxFaces, type MegaminxMove } from '../core/types';
+import { faceNormals } from '../three/config';
 import type { MegaminxAnimationOptions, MegaminxVisualStyle } from '../three/megaminx3D';
 import { Megaminx3D } from '../three/megaminx3D';
 import {
@@ -31,6 +32,15 @@ import {
 } from './settings';
 
 type RenderLoopStarter = (updateControls?: boolean) => () => void;
+
+const initialCameraUpBias = 0.32;
+function initialCameraPosition(radius: number) {
+  return faceNormals[MegaminxFaces.F]
+    .clone()
+    .addScaledVector(faceNormals[MegaminxFaces.U], initialCameraUpBias)
+    .normalize()
+    .multiplyScalar(radius);
+}
 
 export class MegaminxPuzzleElement extends HTMLElement {
   canvas: HTMLCanvasElement;
@@ -270,18 +280,12 @@ export class MegaminxPuzzleElement extends HTMLElement {
       return new Spherical(this.cameraRadius, phi, theta);
     };
     const camera = new PerspectiveCamera(this.cameraFieldOfView, this.clientWidth / this.clientHeight, 1, 2000);
-    const cameraSpherical = getTargetCameraSpherical();
-    camera.position.setFromSpherical(cameraSpherical);
+    camera.up.copy(faceNormals[MegaminxFaces.U]);
+    camera.position.copy(initialCameraPosition(this.cameraRadius));
     camera.lookAt(0, 0, 0);
 
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableZoom = false;
-    controls.enablePan = false;
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.08;
-    controls.rotateSpeed = 0.7;
-    controls.minPolarAngle = Math.PI * 0.12;
-    controls.maxPolarAngle = Math.PI * 0.88;
+    const controls = new PointerOrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 0, 0);
 
     const ambientLight = new AmbientLight('white', 0.5);
     const keyLight = new DirectionalLight('white', 2);
@@ -308,9 +312,9 @@ export class MegaminxPuzzleElement extends HTMLElement {
     };
 
     const renderWithControls = () => {
-      const controlsChanged = controls.update();
+      controls.update();
       renderScene();
-      return controlsChanged;
+      return true;
     };
 
     const requestRender = () => {
@@ -384,15 +388,11 @@ export class MegaminxPuzzleElement extends HTMLElement {
     };
     const onControlsEnd = () => {
       stableControlFrames = 0;
-      if (!controls.enableDamping) {
-        controlsSettling = false;
-        requestAnimationFrame(() => {
-          stopControlsRenderLoop?.();
-          stopControlsRenderLoop = null;
-        });
-        return;
-      }
-      controlsSettling = true;
+      controlsSettling = false;
+      requestAnimationFrame(() => {
+        stopControlsRenderLoop?.();
+        stopControlsRenderLoop = null;
+      });
     };
     controls.addEventListener('start', onControlsStart);
     controls.addEventListener('change', requestRender);

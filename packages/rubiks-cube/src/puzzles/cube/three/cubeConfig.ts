@@ -62,7 +62,7 @@ export const FaceColors = {
   [Faces.B]: 'blue',
   [Faces.D]: 'yellow',
   [Faces.F]: '#2cbf13',
-  [Faces.L]: '#fc9a05',
+  [Faces.L]: '#ff6d00',
   [Faces.R]: 'red',
   [Faces.U]: 'white',
 } satisfies Record<Face, ColorRepresentation>;

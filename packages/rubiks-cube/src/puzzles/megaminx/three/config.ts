@@ -54,5 +54,5 @@ export const MegaminxFaceColors = {
   [MegaminxFaces.E]: '#f72585',
   [MegaminxFaces.G]: '#8b5a2b',
   [MegaminxFaces.H]: '#9acd32',
-  [MegaminxFaces.I]: '#c0c0c0',
+  [MegaminxFaces.I]: '#4b5563',
 } satisfies Record<MegaminxFace, ColorRepresentation>;
