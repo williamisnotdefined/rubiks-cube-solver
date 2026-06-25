@@ -100,17 +100,21 @@ describe('Settings', () => {
   test('rejects invalid values and resets optional defaults', () => {
     const settings = new Settings();
 
+    settings.setCameraFieldOfView('88');
+
     settings.setCubeType('bad');
     settings.setPieceGap('0.9');
     settings.setPieceGap('1.2');
     settings.setAnimationSpeed(null);
     settings.setAnimationStyle('bad');
     settings.setCameraSpeed(null);
+    settings.setCameraRadius('9');
     settings.setCameraRadius('3');
     settings.setCameraPeekAngleHorizontal('-1');
     settings.setCameraPeekAngleVertical('2');
     settings.setCameraFieldOfView('29');
     settings.setCameraFieldOfView('101');
+    expect(settings.cameraFieldOfView).toBe(88);
     settings.setCameraFieldOfView(null);
     settings.setMaxDevicePixelRatio('0.1');
     settings.setMaxDevicePixelRatio('5');
@@ -120,16 +124,19 @@ describe('Settings', () => {
     expect(settings.rubiksCube3DSettings.pieceGap).toBe(1.04);
     expect(settings.rubiksCube3DSettings.animationSpeedMs).toBe(100);
     expect(settings.cameraSpeedMs).toBe(100);
-    expect(settings.cameraRadius).toBe(5);
+    expect(settings.cameraRadius).toBe(9);
+    expect(settings.cameraFieldOfView).toBe(75);
     expect(settings.cameraPeekAngleHorizontal).toBe(0.6);
     expect(settings.cameraPeekAngleVertical).toBe(0.6);
     expect(settings.maxDevicePixelRatio).toBe(2);
     expect(settings.antialias).toBe(true);
 
     settings.setMaxDevicePixelRatio('');
+    settings.setCameraRadius(null);
     settings.setAntialias(null);
     settings.setAntialias('');
     expect(settings.maxDevicePixelRatio).toBe(2);
+    expect(settings.cameraRadius).toBe(5);
     expect(settings.antialias).toBe(true);
     expect(warn).toHaveBeenCalled();
   });

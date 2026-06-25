@@ -293,9 +293,9 @@ export class PyraminxPuzzleElement extends HTMLElement {
     };
 
     const renderWithControls = () => {
-      controls.update();
+      const controlsChanged = controls.update();
       renderScene();
-      return true;
+      return controlsChanged;
     };
 
     const requestRender = () => {
@@ -313,6 +313,7 @@ export class PyraminxPuzzleElement extends HTMLElement {
       if (updateControls) {
         activeControlRenderLoops++;
       }
+      let stopped = false;
       const tick = () => {
         if (isDisposed || activeRenderLoops === 0) {
           loopFrameId = 0;
@@ -341,6 +342,10 @@ export class PyraminxPuzzleElement extends HTMLElement {
         loopFrameId = requestAnimationFrame(tick);
       }
       return () => {
+        if (stopped) {
+          return;
+        }
+        stopped = true;
         activeRenderLoops = Math.max(0, activeRenderLoops - 1);
         if (updateControls) {
           activeControlRenderLoops = Math.max(0, activeControlRenderLoops - 1);
@@ -364,11 +369,7 @@ export class PyraminxPuzzleElement extends HTMLElement {
     };
     const onControlsEnd = () => {
       stableControlFrames = 0;
-      controlsSettling = false;
-      requestAnimationFrame(() => {
-        stopControlsRenderLoop?.();
-        stopControlsRenderLoop = null;
-      });
+      controlsSettling = true;
     };
     controls.addEventListener('start', onControlsStart);
     controls.addEventListener('change', requestRender);

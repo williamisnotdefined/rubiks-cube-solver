@@ -276,7 +276,7 @@ describe('MegaminxPuzzleElement', () => {
 
     expect(element.animationSpeedMs).toBe(DEFAULT_MEGAMINX_ANIMATION_SPEED_MS);
     expect(element.animationStyle).toBe('linear');
-    expect(element.cameraRadius).toBe(5.8);
+    expect(element.cameraRadius).toBe(5);
     expect(element.cameraFieldOfView).toBe(75);
     expect(element.cameraSpeedMs).toBe(100);
     expect(element.cameraPeekAngleHorizontal).toBe(0.55);
@@ -292,7 +292,7 @@ describe('MegaminxPuzzleElement', () => {
     element.attributeChangedCallback(MegaminxAttributeNames.maxDevicePixelRatio, '4', '');
     element.attributeChangedCallback(MegaminxAttributeNames.antialias, 'false', null);
     element.attributeChangedCallback(MegaminxAttributeNames.visualStyle, MegaminxVisualStyles.Stickerless, '');
-    element.attributeChangedCallback(MegaminxAttributeNames.cameraRadius, '5.8', '5.8');
+    element.attributeChangedCallback(MegaminxAttributeNames.cameraRadius, '5', '5');
     element.attributeChangedCallback(MegaminxAttributeNames.cameraFieldOfView, '70', '70');
     element.attributeChangedCallback(MegaminxAttributeNames.antialias, 'true', 'true');
 

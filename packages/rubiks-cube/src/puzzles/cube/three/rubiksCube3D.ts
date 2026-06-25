@@ -162,11 +162,7 @@ export default class RubiksCube3D extends Object3D implements RubiksCubeViewInte
   }
 
   addLogo(logo: string): void {
-    this._mainGroup.children
-      .filter((x) => x instanceof CornerPiece || x instanceof CenterPiece)
-      .forEach((x) => {
-        x.removeLogo();
-      });
+    this.removeLogo();
 
     if (this._cubeType === CubeTypes.Two) {
       const corner = this._mainGroup.children
@@ -207,6 +203,24 @@ export default class RubiksCube3D extends Object3D implements RubiksCubeViewInte
       })
       .at(0);
     center?.addLogo(logo);
+  }
+
+  removeLogo(): void {
+    this._mainGroup.children
+      .filter((x) => x instanceof CornerPiece || x instanceof CenterPiece)
+      .forEach((x) => {
+        x.removeLogo();
+      });
+  }
+
+  setLogo(logo: string | null): void {
+    this._cubeSettings.logo = logo;
+    if (logo) {
+      this.addLogo(logo);
+      return;
+    }
+
+    this.removeLogo();
   }
 
   getRotationLayer(slice: Slice): Object3D[] {

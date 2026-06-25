@@ -100,7 +100,7 @@ function parseMegaminxMove(value: string): MegaminxTurn | undefined {
     return {
       amount: amount as MegaminxWcaWideTurn['amount'],
       axis: face,
-      fixedFace: face === MegaminxFaces.R ? MegaminxFaces.L : MegaminxFaces.U,
+      fixedFace: face === MegaminxFaces.R ? MegaminxFaces.R : MegaminxFaces.U,
       kind: 'wca-wide',
     };
   }

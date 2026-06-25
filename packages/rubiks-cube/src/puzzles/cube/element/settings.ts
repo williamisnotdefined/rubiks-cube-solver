@@ -1,3 +1,4 @@
+import { DEFAULT_CAMERA_RADIUS } from '../../../shared/cameraDefaults';
 import type { CubeType } from '../core';
 import { CubeTypes } from '../core';
 import RubiksCube3DSettings from '../three/cubeSettings';
@@ -13,7 +14,7 @@ const defaultCubeSettings = {
 
 const defaultSettings = {
   cameraSpeedMs: 100,
-  cameraRadius: 5,
+  cameraRadius: DEFAULT_CAMERA_RADIUS,
   cameraPeekAngleHorizontal: 0.6,
   cameraPeekAngleVertical: 0.6,
   cameraFieldOfView: 75,
@@ -105,8 +106,13 @@ export default class Settings {
   }
 
   setCameraRadius(value: string | null): void {
+    if (value == null) {
+      this.cameraRadius = defaultSettings.cameraRadius;
+      return;
+    }
+
     const radius = Number(value);
-    if (radius >= minRadius && value != null) {
+    if (radius >= minRadius) {
       this.cameraRadius = radius;
       return;
     }
@@ -132,21 +138,27 @@ export default class Settings {
   }
 
   setCameraFieldOfView(value: string | null): void {
+    if (value == null) {
+      this.cameraFieldOfView = defaultSettings.cameraFieldOfView;
+      return;
+    }
+
     const fov = Number(value);
-    if (fov < minFieldOfView && value != null) {
+    if (fov < minFieldOfView) {
       console.warn(
         `Invalid camera FOV value. Min is ${minFieldOfView} Max is ${maxFieldOfView}. Value is ${value} which is below the minimum.`,
       );
       return;
     }
-    if (fov > maxFieldOfView && value != null) {
+    if (fov > maxFieldOfView) {
       console.warn(
         `Invalid camera FOV value. Min is ${minFieldOfView} Max is ${maxFieldOfView}. Value is ${value} which is above the maximum.`,
       );
       return;
     }
-    if (value == null) {
+    if (Number.isNaN(fov)) {
       console.warn(`Invalid camera FOV value. Min is ${minFieldOfView} Max is ${maxFieldOfView}. Value is ${value}.`);
+      return;
     }
     this.cameraFieldOfView = fov;
   }

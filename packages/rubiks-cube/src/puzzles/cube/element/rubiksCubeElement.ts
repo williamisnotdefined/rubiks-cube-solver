@@ -1,8 +1,8 @@
 import { gsap } from 'gsap';
 import { AmbientLight, DirectionalLight, PerspectiveCamera, Scene, Spherical, WebGLRenderer } from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { CameraState } from '../../../shared/cameraState';
 import { debounce } from '../../../shared/debouncer';
+import { PointerOrbitControls } from '../../../shared/puzzleControls';
 import type { AnimationOptions } from '../controller';
 import { RubiksCubeController } from '../controller';
 import type { CubeType, Movement, Rotation } from '../core';
@@ -92,7 +92,9 @@ export class RubiksCubeElement extends HTMLElement {
         this.attributeChangedCallback(attr, null, this.getAttribute(attr));
       }
     }
-    this.init();
+    if (this._rubiksCube === null) {
+      this.init();
+    }
   }
 
   attributeChangedCallback(name: string, oldVal: string | null, newVal: string | null): void {
@@ -103,9 +105,15 @@ export class RubiksCubeElement extends HTMLElement {
           this._rebuild();
         }
         break;
-      case AttributeNames.pieceGap:
+      case AttributeNames.pieceGap: {
+        const previousPieceGap = this.settings.rubiksCube3DSettings.pieceGap;
         this.settings.setPieceGap(newVal);
+        if (this._rubiksCube3D !== null && this.settings.rubiksCube3DSettings.pieceGap !== previousPieceGap) {
+          this._rubiksCube3D.updateGap(this.settings.rubiksCube3DSettings.pieceGap);
+          this._renderOnce?.();
+        }
         break;
+      }
       case AttributeNames.animationSpeed:
         this.settings.setAnimationSpeed(newVal);
         break;
@@ -153,8 +161,15 @@ export class RubiksCubeElement extends HTMLElement {
         }
         break;
       }
-      case AttributeNames.logo:
+      case AttributeNames.logo: {
+        const previousLogo = this.settings.rubiksCube3DSettings.logo;
         this.settings.setLogo(newVal);
+        if (this._rubiksCube3D !== null && this.settings.rubiksCube3DSettings.logo !== previousLogo) {
+          this._rubiksCube3D.setLogo(this.settings.rubiksCube3DSettings.logo);
+          this._renderOnce?.();
+        }
+        break;
+      }
     }
   }
 
@@ -171,6 +186,7 @@ export class RubiksCubeElement extends HTMLElement {
   }
 
   move(move: Movement, options: AnimationOptions = {}): Promise<string> {
+    this.ensureInitialised();
     if (this._rubiksCube == null) {
       return Promise.reject(new Error(notInitialisedMessage));
     }
@@ -182,6 +198,7 @@ export class RubiksCubeElement extends HTMLElement {
   }
 
   rotate(rotation: Rotation, options: AnimationOptions = {}): Promise<string> {
+    this.ensureInitialised();
     if (this._rubiksCube == null) {
       return Promise.reject(new Error(notInitialisedMessage));
     }
@@ -193,6 +210,7 @@ export class RubiksCubeElement extends HTMLElement {
   }
 
   reset(): string {
+    this.ensureInitialised();
     if (this._rubiksCube == null) {
       throw new Error(notInitialisedMessage);
     }
@@ -202,6 +220,7 @@ export class RubiksCubeElement extends HTMLElement {
   }
 
   setState(kociembaState: string): boolean {
+    this.ensureInitialised();
     if (this._rubiksCube == null) {
       throw new Error(notInitialisedMessage);
     }
@@ -211,6 +230,7 @@ export class RubiksCubeElement extends HTMLElement {
   }
 
   getState(): string {
+    this.ensureInitialised();
     if (this._rubiksCube == null) {
       throw new Error(notInitialisedMessage);
     }
@@ -219,6 +239,7 @@ export class RubiksCubeElement extends HTMLElement {
 
   setType(cubeType: CubeType): string {
     this.setAttribute(AttributeNames.cubeType, cubeType);
+    this.ensureInitialised();
     this._renderOnce?.();
     return this.getState();
   }
@@ -253,6 +274,7 @@ export class RubiksCubeElement extends HTMLElement {
    *
    */
   peek(action: PeekAction, options: CameraOptions | null = null): Promise<PeekState> {
+    this.ensureInitialised();
     if (this._rubiksCube3D == null) {
       return Promise.reject(new Error(notInitialisedMessage));
     }
@@ -273,6 +295,12 @@ export class RubiksCubeElement extends HTMLElement {
       this.addEventListener(InternalEvents.cameraPeekComplete, handler);
       this.dispatchEvent(new CustomEvent(InternalEvents.cameraPeek, { detail: data }));
     });
+  }
+
+  private ensureInitialised(): void {
+    if (this._rubiksCube === null && this.isConnected) {
+      this.init();
+    }
   }
 
   private init(): void {
@@ -317,10 +345,8 @@ export class RubiksCubeElement extends HTMLElement {
     camera.position.setFromSpherical(cameraSpherical);
     camera.lookAt(0, 0, 0);
 
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableZoom = false;
-    controls.enablePan = false;
-    controls.enableDamping = true;
+    const controls = new PointerOrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 0, 0);
 
     const ambientLight = new AmbientLight('white', 0.4);
     const spotLight1 = new DirectionalLight('white', 2);
@@ -430,15 +456,7 @@ export class RubiksCubeElement extends HTMLElement {
     };
     const onControlsEnd = () => {
       stableControlFrames = 0;
-      if (controls.enableDamping) {
-        controlsSettling = true;
-        return;
-      }
-      controlsSettling = false;
-      requestAnimationFrame(() => {
-        stopControlsRenderLoop?.();
-        stopControlsRenderLoop = null;
-      });
+      controlsSettling = true;
     };
     controls.addEventListener('start', onControlsStart);
     controls.addEventListener('change', requestRender);

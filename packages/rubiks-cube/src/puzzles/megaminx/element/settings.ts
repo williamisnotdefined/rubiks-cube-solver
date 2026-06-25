@@ -1,4 +1,5 @@
 import { type AnimationStyle, AnimationStyles } from '../../../shared/animation';
+import { DEFAULT_CAMERA_RADIUS } from '../../../shared/cameraDefaults';
 import {
   DEFAULT_MEGAMINX_ANIMATION_SPEED_MS,
   DEFAULT_MEGAMINX_VISUAL_STYLE,
@@ -26,7 +27,7 @@ export const defaultMegaminxElementSettings: MegaminxElementSettings = {
   cameraFieldOfView: 75,
   cameraPeekAngleHorizontal: 0.55,
   cameraPeekAngleVertical: 0.55,
-  cameraRadius: 5.8,
+  cameraRadius: DEFAULT_CAMERA_RADIUS,
   cameraSpeedMs: 100,
   maxDevicePixelRatio: 2,
   visualStyle: DEFAULT_MEGAMINX_VISUAL_STYLE,
@@ -71,8 +72,13 @@ export function setMegaminxCameraSpeed(target: MegaminxElementSettings, value: s
 }
 
 export function setMegaminxCameraRadius(target: MegaminxElementSettings, value: string | null): void {
+  if (value == null) {
+    target.cameraRadius = defaultMegaminxElementSettings.cameraRadius;
+    return;
+  }
+
   const radius = Number(value);
-  if (radius >= minCameraRadius && value != null) {
+  if (radius >= minCameraRadius) {
     target.cameraRadius = radius;
     return;
   }
@@ -80,8 +86,13 @@ export function setMegaminxCameraRadius(target: MegaminxElementSettings, value: 
 }
 
 export function setMegaminxCameraFieldOfView(target: MegaminxElementSettings, value: string | null): void {
+  if (value == null) {
+    target.cameraFieldOfView = defaultMegaminxElementSettings.cameraFieldOfView;
+    return;
+  }
+
   const fov = Number(value);
-  if (fov >= minFieldOfView && fov <= maxFieldOfView && value != null) {
+  if (fov >= minFieldOfView && fov <= maxFieldOfView) {
     target.cameraFieldOfView = fov;
     return;
   }
