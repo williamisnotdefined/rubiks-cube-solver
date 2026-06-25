@@ -4,6 +4,7 @@ import * as player from '@rubiks-cube-solver/rubiks-cube/player';
 import * as cube from '@rubiks-cube-solver/rubiks-cube/puzzles/cube';
 import * as megaminx from '@rubiks-cube-solver/rubiks-cube/puzzles/megaminx';
 import * as pyraminx from '@rubiks-cube-solver/rubiks-cube/puzzles/pyraminx';
+import * as square1 from '@rubiks-cube-solver/rubiks-cube/puzzles/square1';
 import * as state from '@rubiks-cube-solver/rubiks-cube/state';
 import * as three from '@rubiks-cube-solver/rubiks-cube/three';
 import * as view from '@rubiks-cube-solver/rubiks-cube/view';
@@ -20,6 +21,7 @@ describe('public package exports', () => {
     expect(cube.RubiksCubeElement).toBeTypeOf('function');
     expect(pyraminx.PyraminxPuzzleElement).toBeTypeOf('function');
     expect(megaminx.MegaminxPuzzleElement).toBeTypeOf('function');
+    expect(square1.Square1PuzzleElement).toBeTypeOf('function');
   });
 
   test('keeps cube state subpath narrow', () => {
@@ -31,8 +33,10 @@ describe('public package exports', () => {
   test('does not expose legacy direct puzzle aliases', async () => {
     const pyraminxAlias = '@rubiks-cube-solver/rubiks-cube/pyraminx';
     const megaminxAlias = '@rubiks-cube-solver/rubiks-cube/megaminx';
+    const square1Alias = '@rubiks-cube-solver/rubiks-cube/square1';
 
     await expect(import(pyraminxAlias)).rejects.toThrow();
     await expect(import(megaminxAlias)).rejects.toThrow();
+    await expect(import(square1Alias)).rejects.toThrow();
   });
 });
