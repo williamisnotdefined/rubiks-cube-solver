@@ -1,25 +1,20 @@
 import { gsap } from 'gsap';
-import { Group, Object3D } from 'three';
-import type { TurnPlan } from '../../../shared/turnPlan';
+import { Group, Object3D, Quaternion, Vector3 } from 'three';
+import { parseSquare1Algorithm, parseSquare1MoveToken, Square1NotationError } from '../core/notation';
+import { applySquare1Move } from '../core/state';
+import type { Square1MiddlePieceId, Square1Move, Square1PieceDefinition, Square1PieceId } from '../core/types';
+import { Square1PieceDefinitions } from '../core/types';
 import {
-  parseSquare1Algorithm,
-  parseSquare1MoveToken,
-  Square1NotationError,
-  square1MoveToString,
-} from '../core/notation';
-import type { Square1LayerPieceId, Square1Move, Square1PieceDefinition, Square1PieceId } from '../core/types';
-import { SQUARE1_LAYER_UNIT_COUNT, Square1MiddlePieceOrder } from '../core/types';
-import {
-  cloneSquare1VisualStateModel,
   createSolvedSquare1VisualStateModel,
   defaultSquare1VisualState,
   parseSquare1VisualState,
   type Square1VisualStateModel,
   serializeSquare1VisualState,
-  square1PieceDefinitionById,
 } from '../state/visualState';
-import { DEFAULT_SQUARE1_ANIMATION_SPEED_MS, SQUARE1_UNIT_ANGLE_RADIANS } from './config';
+import { DEFAULT_SQUARE1_ANIMATION_SPEED_MS } from './config';
 import { createSquare1LayerPieceGeometry, createSquare1MiddlePieceGeometry } from './geometry';
+import { createSquare1MovePlan, type Square1MovePlan } from './movePlan';
+import { applySquare1PiecePose, poseForPiece, type Square1PiecePose } from './pose';
 import { Square1Piece } from './sticker';
 
 type Square1DOptions = {
@@ -34,30 +29,20 @@ type Square1AnimationOptions = {
 
 type Square1MoveInput = Square1Move | string;
 
-type LayerSplit = {
-  firstHalf: Square1LayerPieceId[];
-  secondHalf: Square1LayerPieceId[];
+type AnimatedPiecePose = {
+  position: Vector3;
+  quaternion: Quaternion;
 };
-
-export class Square1IllegalMoveError extends Error {
-  constructor(move: Square1Move) {
-    super(`Illegal Square-1 move for current shape: ${square1MoveToString(move)}`);
-    this.name = 'Square1IllegalMoveError';
-  }
-}
 
 export class Square1D extends Object3D {
   animationSpeedMs: number;
   animationStyle: gsap.EaseString | gsap.EaseFunction;
-  _animationGroup: Group;
-  _bottomLayerGroup: Group;
   _currentAnimation: gsap.core.Tween | undefined;
   _mainGroup: Group;
-  _middleGroup: Group;
   _model: Square1VisualStateModel;
   _moveQueue: Promise<void>;
   _pieces: Square1Piece[];
-  _topLayerGroup: Group;
+  _piecesById: Map<Square1PieceId, Square1Piece>;
 
   constructor(options: Square1DOptions = {}) {
     super();
@@ -65,25 +50,27 @@ export class Square1D extends Object3D {
     this.animationStyle = options.animationStyle ?? 'linear';
     this._model = createSolvedSquare1VisualStateModel();
     this._pieces = [];
+    this._piecesById = new Map();
     this._currentAnimation = undefined;
     this._moveQueue = Promise.resolve();
     this._mainGroup = new Group();
-    this._animationGroup = new Group();
-    this._topLayerGroup = new Group();
-    this._bottomLayerGroup = new Group();
-    this._middleGroup = new Group();
-    this.add(this._mainGroup, this._animationGroup);
-    this.rebuildPieces();
+    this.add(this._mainGroup);
+    this.createPersistentPieces();
+    this.applyStatePoses();
   }
 
   pieceCount(): number {
     return this._pieces.length;
   }
 
+  pieceById(id: Square1PieceId): Square1Piece | undefined {
+    return this._piecesById.get(id);
+  }
+
   reset(): string {
     this.finishCurrentAnimation();
     this._model = createSolvedSquare1VisualStateModel();
-    this.rebuildPieces();
+    this.applyStatePoses();
     return this.getState();
   }
 
@@ -99,39 +86,20 @@ export class Square1D extends Object3D {
 
     this.finishCurrentAnimation();
     this._model = nextState;
-    this.rebuildPieces();
+    this.applyStatePoses();
 
     return true;
   }
 
-  turnPlan(moveInput: Square1MoveInput, options: Pick<Square1AnimationOptions, 'reverse'> = {}): TurnPlan {
-    const move = this.directedMove(moveInput, options.reverse);
-    if (move.kind === 'slash') {
-      const { firstHalf: topRight } = splitLayerForSlash(this._model.top, this._model.topOffset, move);
-      const { firstHalf: bottomRight } = splitLayerForSlash(this._model.bottom, this._model.bottomOffset, move);
-      return {
-        angleRadians: Math.PI,
-        axis: { x: 0, y: 0, z: 1 },
-        pieceIds: [...topRight, ...bottomRight, this.middleRightPieceId()],
-      };
-    }
-
-    const topIds = move.top === 0 ? [] : this._model.top;
-    const bottomIds = move.bottom === 0 ? [] : this._model.bottom;
-    const angleUnits = move.top !== 0 ? -move.top : move.bottom;
-
-    return {
-      angleRadians: angleUnits * SQUARE1_UNIT_ANGLE_RADIANS,
-      axis: { x: 0, y: 1, z: 0 },
-      pieceIds: [...topIds, ...bottomIds],
-    };
+  movePlan(moveInput: Square1MoveInput, options: Pick<Square1AnimationOptions, 'reverse'> = {}): Square1MovePlan {
+    return createSquare1MovePlan(this._model, this.directedMove(moveInput, options.reverse));
   }
 
   applyMove(moveInput: Square1MoveInput, options: Pick<Square1AnimationOptions, 'reverse'> = {}): string {
     this.finishCurrentAnimation();
     const move = this.directedMove(moveInput, options.reverse);
-    this._model = applyMoveToModel(this._model, move);
-    this.rebuildPieces();
+    this._model = applySquare1Move(this._model, move);
+    this.applyStatePoses();
     return this.getState();
   }
 
@@ -158,38 +126,33 @@ export class Square1D extends Object3D {
   private runMove(moveInput: Square1MoveInput, options: Square1AnimationOptions = {}): Promise<string> {
     this.finishCurrentAnimation();
     const move = this.directedMove(moveInput, options.reverse);
-    if (move.kind === 'slash') {
-      ensureSlashLegal(this._model, move);
-    }
-
+    const plan = createSquare1MovePlan(this._model, move);
+    const nextModel = applySquare1Move(this._model, move);
     const speed = options.animationSpeedMs ?? this.animationSpeedMs;
-    if (speed === 0) {
-      this._model = applyMoveToModel(this._model, move);
-      this.rebuildPieces();
+    if (speed === 0 || plan.rotations.length === 0) {
+      this._model = nextModel;
+      this.applyStatePoses();
       return Promise.resolve(this.getState());
     }
 
+    const startPoses = this.captureCurrentPoses();
     return new Promise((resolve, reject) => {
       const target = { progress: 0 };
-      if (move.kind === 'slash') {
-        this.fillSlashAnimationGroup(move);
-      }
       this._currentAnimation = gsap.to(target, {
         duration: speed / 1000,
         ease: this.animationStyle,
         onComplete: () => {
-          this.clearAnimationPreview();
           this._currentAnimation = undefined;
           try {
-            this._model = applyMoveToModel(this._model, move);
-            this.rebuildPieces();
+            this._model = nextModel;
+            this.applyStatePoses();
             resolve(this.getState());
           } catch (error) {
             reject(error);
           }
         },
         onUpdate: () => {
-          this.previewMove(move, target.progress);
+          this.previewMove(plan, startPoses, target.progress);
         },
         progress: 1,
       });
@@ -205,84 +168,64 @@ export class Square1D extends Object3D {
     return { bottom: -move.bottom, kind: 'coordinate', top: -move.top };
   }
 
-  private previewMove(move: Square1Move, progress: number): void {
-    this.clearAnimationPreview();
-    if (move.kind === 'slash') {
-      this._animationGroup.rotation.z = progress * Math.PI;
-      return;
-    }
-
-    this._topLayerGroup.rotation.y = layerRotationForOffset(this._model.topOffset + move.top * progress);
-    this._bottomLayerGroup.rotation.y = layerRotationForOffset(this._model.bottomOffset - move.bottom * progress);
-  }
-
-  private clearAnimationPreview(): void {
-    this._topLayerGroup.rotation.set(0, layerRotationForOffset(this._model.topOffset), 0);
-    this._bottomLayerGroup.rotation.set(0, layerRotationForOffset(this._model.bottomOffset), 0);
-    this._animationGroup.rotation.set(0, 0, 0);
-  }
-
-  private fillSlashAnimationGroup(move: Square1Move): void {
-    const pieceIds = new Set(this.turnPlan(move).pieceIds);
-    for (const piece of this._pieces) {
-      if (pieceIds.has(piece.pieceId)) {
-        this._animationGroup.add(piece);
+  private previewMove(
+    plan: Square1MovePlan,
+    startPoses: Map<Square1PieceId, AnimatedPiecePose>,
+    progress: number,
+  ): void {
+    const rotationByPiece = new Map<Square1PieceId, { angleRadians: number; axis: Vector3 }>();
+    for (const rotation of plan.rotations) {
+      const axis = new Vector3(rotation.axis.x, rotation.axis.y, rotation.axis.z).normalize();
+      for (const pieceId of rotation.pieceIds) {
+        rotationByPiece.set(pieceId, { angleRadians: rotation.angleRadians, axis });
       }
     }
-  }
 
-  private rebuildPieces(): void {
-    this._mainGroup.clear();
-    this._animationGroup.clear();
-    this.clearAnimationPreview();
-    this._pieces = [];
-    this._topLayerGroup = this.createLayerGroup(this._model.top, this._model.topOffset, 'top');
-    this._bottomLayerGroup = this.createLayerGroup(this._model.bottom, this._model.bottomOffset, 'bottom');
-    this._middleGroup = this.createMiddleGroup();
-    this._mainGroup.add(this._topLayerGroup, this._middleGroup, this._bottomLayerGroup);
-  }
+    for (const piece of this._pieces) {
+      const startPose = startPoses.get(piece.pieceId) as AnimatedPiecePose;
+      const rotation = rotationByPiece.get(piece.pieceId);
+      if (!rotation) {
+        piece.position.copy(startPose.position);
+        piece.quaternion.copy(startPose.quaternion);
+        continue;
+      }
 
-  private createLayerGroup(
-    ids: readonly Square1LayerPieceId[],
-    offset: number,
-    layer: Extract<Square1Piece['displayLayer'], 'top' | 'bottom'>,
-  ): Group {
-    const group = new Group();
-    let cursor = 0;
-    for (const id of ids) {
-      const definition = requiredPieceDefinition(id);
-      const piece = new Square1Piece(
-        definition,
-        layer,
-        createSquare1LayerPieceGeometry(cursor, definition.widthUnits, definition.kind, layer),
-      );
-      group.add(piece);
-      this._pieces.push(piece);
-      cursor += definition.widthUnits;
+      const delta = new Quaternion().setFromAxisAngle(rotation.axis, rotation.angleRadians * progress);
+      piece.position.copy(startPose.position).applyQuaternion(delta);
+      piece.quaternion.copy(delta).multiply(startPose.quaternion).normalize();
+      piece.updateMatrixWorld(true);
     }
-    group.rotation.y = layerRotationForOffset(offset);
-
-    return group;
   }
 
-  private createMiddleGroup(): Group {
-    const group = new Group();
-    const middleIds = this._model.middleFlipped ? [...Square1MiddlePieceOrder].reverse() : Square1MiddlePieceOrder;
-    for (const [index, id] of middleIds.entries()) {
-      const piece = new Square1Piece(
-        requiredPieceDefinition(id),
-        'middle',
-        createSquare1MiddlePieceGeometry(index as 0 | 1),
-      );
-      group.add(piece);
+  private createPersistentPieces(): void {
+    for (const definition of Square1PieceDefinitions) {
+      const piece = new Square1Piece(definition, createGeometryForDefinition(definition));
       this._pieces.push(piece);
+      this._piecesById.set(piece.pieceId, piece);
+      this._mainGroup.add(piece);
     }
-
-    return group;
   }
 
-  private middleRightPieceId(): Square1PieceId {
-    return this._model.middleFlipped ? 'M0' : 'M1';
+  private applyStatePoses(): void {
+    for (const definition of Square1PieceDefinitions) {
+      const piece = this._piecesById.get(definition.id);
+      if (!piece) {
+        throw new Error(`Missing Square-1 piece: ${definition.id}`);
+      }
+      applySquare1PiecePose(piece, poseForPiece(this._model, definition));
+    }
+  }
+
+  private captureCurrentPoses(): Map<Square1PieceId, Square1PiecePose> {
+    return new Map(
+      this._pieces.map((piece) => [
+        piece.pieceId,
+        {
+          position: piece.position.clone(),
+          quaternion: piece.quaternion.clone(),
+        },
+      ]),
+    );
   }
 
   private finishCurrentAnimation(): void {
@@ -309,108 +252,13 @@ function parseMoveInput(moveInput: Square1MoveInput): Square1Move {
   return move;
 }
 
-function applyMoveToModel(model: Square1VisualStateModel, move: Square1Move): Square1VisualStateModel {
-  const nextModel = cloneSquare1VisualStateModel(model);
-  if (move.kind === 'coordinate') {
-    nextModel.topOffset = modUnit(nextModel.topOffset + move.top);
-    nextModel.bottomOffset = modUnit(nextModel.bottomOffset - move.bottom);
-    return nextModel;
-  }
-
-  ensureSlashLegal(nextModel, move);
-  const top = splitLayerForSlash(nextModel.top, nextModel.topOffset, move);
-  const bottom = splitLayerForSlash(nextModel.bottom, nextModel.bottomOffset, move);
-  nextModel.top = [...bottom.firstHalf].reverse().concat(top.secondHalf);
-  nextModel.bottom = [...top.firstHalf].reverse().concat(bottom.secondHalf);
-  nextModel.topOffset = 0;
-  nextModel.bottomOffset = 0;
-  nextModel.middleFlipped = !nextModel.middleFlipped;
-
-  return nextModel;
+function createGeometryForDefinition(definition: Square1PieceDefinition) {
+  return definition.kind === 'middle'
+    ? createSquare1MiddlePieceGeometry(definition.id as Square1MiddlePieceId)
+    : createSquare1LayerPieceGeometry(definition.kind);
 }
 
-function ensureSlashLegal(model: Square1VisualStateModel, move: Square1Move): void {
-  if (
-    move.kind !== 'slash' ||
-    (hasBoundaryAtWorld(model.top, model.topOffset, 0) &&
-      hasBoundaryAtWorld(model.top, model.topOffset, 6) &&
-      hasBoundaryAtWorld(model.bottom, model.bottomOffset, 0) &&
-      hasBoundaryAtWorld(model.bottom, model.bottomOffset, 6))
-  ) {
-    return;
-  }
-
-  throw new Square1IllegalMoveError(move);
-}
-
-function splitLayerForSlash(ids: readonly Square1LayerPieceId[], offset: number, move: Square1Move): LayerSplit {
-  ensureLayerSlashLegal(ids, offset, move);
-  const normalized = normalizeLayerToWorldZero(ids, offset);
-  const firstHalf: Square1LayerPieceId[] = [];
-  const secondHalf: Square1LayerPieceId[] = [];
-  let cursor = 0;
-  for (const id of normalized) {
-    const width = requiredPieceDefinition(id).widthUnits;
-    if (cursor < SQUARE1_LAYER_UNIT_COUNT / 2) {
-      firstHalf.push(id);
-    } else {
-      secondHalf.push(id);
-    }
-    cursor += width;
-  }
-
-  return { firstHalf, secondHalf };
-}
-
-function ensureLayerSlashLegal(ids: readonly Square1LayerPieceId[], offset: number, move: Square1Move): void {
-  if (hasBoundaryAtWorld(ids, offset, 0) && hasBoundaryAtWorld(ids, offset, SQUARE1_LAYER_UNIT_COUNT / 2)) {
-    return;
-  }
-
-  throw new Square1IllegalMoveError(move);
-}
-
-function normalizeLayerToWorldZero(ids: readonly Square1LayerPieceId[], offset: number): Square1LayerPieceId[] {
-  let cursor = 0;
-  for (let index = 0; index < ids.length; index++) {
-    if (modUnit(cursor + offset) === 0) {
-      return [...ids.slice(index), ...ids.slice(0, index)];
-    }
-    cursor += requiredPieceDefinition(ids[index]).widthUnits;
-  }
-
-  return [...ids];
-}
-
-function hasBoundaryAtWorld(ids: readonly Square1LayerPieceId[], offset: number, target: number): boolean {
-  let cursor = 0;
-  for (const id of ids) {
-    if (modUnit(cursor + offset) === modUnit(target)) {
-      return true;
-    }
-    cursor += requiredPieceDefinition(id).widthUnits;
-  }
-
-  return modUnit(cursor + offset) === modUnit(target);
-}
-
-function requiredPieceDefinition(id: Square1PieceId): Square1PieceDefinition {
-  const definition = square1PieceDefinitionById(id);
-  if (!definition) {
-    throw new Error(`Unknown Square-1 piece id: ${id}`);
-  }
-
-  return definition;
-}
-
-function modUnit(value: number): number {
-  return ((value % SQUARE1_LAYER_UNIT_COUNT) + SQUARE1_LAYER_UNIT_COUNT) % SQUARE1_LAYER_UNIT_COUNT;
-}
-
-function layerRotationForOffset(offset: number): number {
-  return -offset * SQUARE1_UNIT_ANGLE_RADIANS;
-}
-
+export { Square1IllegalMoveError } from '../core/state';
 export { DEFAULT_SQUARE1_ANIMATION_SPEED_MS, Square1FaceColors } from './config';
 export { Square1Piece } from './sticker';
 export type { Square1AnimationOptions, Square1DOptions, Square1MoveInput };

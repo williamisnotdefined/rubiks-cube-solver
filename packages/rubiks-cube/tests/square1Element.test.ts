@@ -236,10 +236,10 @@ describe('Square1PuzzleElement', () => {
     document.body.append(element);
     const solved = element.getState();
 
-    await expect(element.move(Square1MoveTokens.ThreeZero)).resolves.toContain('square1-pieces-v1');
+    await expect(element.move(Square1MoveTokens.ThreeZero)).resolves.toContain('square1-pieces-v2');
     expect(element.getState()).not.toBe(solved);
     await expect(element.move('(-3,0)')).resolves.toBe(solved);
-    await expect(element.do('(1,-1) /')).resolves.toContain('square1-pieces-v1');
+    await expect(element.do('(1,-1) /')).resolves.toContain('square1-pieces-v2');
     expect(element.reset()).toBe(solved);
 
     const custom = new Square1D({ animationSpeedMs: 0 });
@@ -281,7 +281,7 @@ describe('Square1PuzzleElement', () => {
     expect(element.antialias).toBe(true);
     expect(element.cameraRadius).toBe(5);
     expect(element.cameraFieldOfView).toBe(70);
-    await expect(element.move(Square1MoveTokens.Slash)).resolves.toContain('square1-pieces-v1');
+    await expect(element.move(Square1MoveTokens.Slash)).resolves.toContain('square1-pieces-v2');
   });
 
   test('renders active animation loops and cancels them on disconnect', async () => {
@@ -313,7 +313,7 @@ describe('Square1PuzzleElement', () => {
     expect(completeMove).toBeTypeOf('function');
     completeMove?.();
 
-    await expect(movePromise).resolves.toContain('square1-pieces-v1');
+    await expect(movePromise).resolves.toContain('square1-pieces-v2');
     expect(cancelAnimationFrame).toHaveBeenCalled();
   });
 

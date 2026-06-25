@@ -7,8 +7,25 @@ export {
   Square1NotationError,
   square1MoveToString,
 } from './notation';
+export type { Square1MiddleOrientation, Square1State } from './state';
+export {
+  applySquare1CoordinateMove,
+  applySquare1Move,
+  applySquare1Slash,
+  cloneSquare1State,
+  createSolvedSquare1State,
+  isLayerSlashLegal,
+  isSquare1SlashLegal,
+  modLayerUnit,
+  rotateSlots,
+  Square1IllegalMoveError,
+  uniqueSquare1LayerPieceIds,
+} from './state';
 export type {
   Square1CoordinateMove,
+  Square1CornerPieceId,
+  Square1EdgePieceId,
+  Square1ExternalLayerName,
   Square1Face,
   Square1LayerName,
   Square1LayerPieceId,
@@ -19,16 +36,21 @@ export type {
   Square1PieceId,
   Square1PieceKind,
   Square1SlashMove,
+  Square1StickerDefinition,
+  Square1StickerLocalSurface,
 } from './types';
 export {
   SQUARE1_LAYER_UNIT_COUNT,
   SQUARE1_PIECE_COUNT,
   SQUARE1_VISUAL_STATE_KIND,
   Square1BottomPieceOrder,
+  Square1ExternalPieceOrder,
   Square1FaceOrder,
   Square1Faces,
   Square1MiddlePieceOrder,
   Square1MoveTokens,
   Square1PieceDefinitions,
+  Square1SolvedBottomSlots,
+  Square1SolvedTopSlots,
   Square1TopPieceOrder,
 } from './types';

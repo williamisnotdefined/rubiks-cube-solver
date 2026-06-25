@@ -22,84 +22,313 @@ export const Square1FaceOrder = Object.freeze([
 
 export type Square1PieceKind = 'corner' | 'edge' | 'middle';
 export type Square1LayerName = 'top' | 'bottom' | 'middle';
+export type Square1ExternalLayerName = Extract<Square1LayerName, 'top' | 'bottom'>;
+export type Square1StickerLocalSurface = 'cap' | 'sideA' | 'sideB' | 'sideC';
 
-export type Square1LayerPieceId =
-  | 'U0'
-  | 'U1'
-  | 'U2'
-  | 'U3'
-  | 'U4'
-  | 'U5'
-  | 'U6'
-  | 'U7'
-  | 'D0'
-  | 'D1'
-  | 'D2'
-  | 'D3'
-  | 'D4'
-  | 'D5'
-  | 'D6'
-  | 'D7';
-
-export type Square1MiddlePieceId = 'M0' | 'M1';
+export type Square1CornerPieceId = 'UFR' | 'URB' | 'UBL' | 'ULF' | 'DFR' | 'DRB' | 'DBL' | 'DLF';
+export type Square1EdgePieceId = 'UF' | 'UR' | 'UB' | 'UL' | 'DF' | 'DR' | 'DB' | 'DL';
+export type Square1LayerPieceId = Square1CornerPieceId | Square1EdgePieceId;
+export type Square1MiddlePieceId = 'M_MOVING' | 'M_FIXED';
 export type Square1PieceId = Square1LayerPieceId | Square1MiddlePieceId;
 
 export type Square1PieceDefinition = {
-  face: Square1Face;
   id: Square1PieceId;
+  pieceIndex: number;
   kind: Square1PieceKind;
-  layer: Square1LayerName;
-  widthUnits: number;
+  sourceLayer: Square1LayerName;
+  widthUnits: 1 | 2 | 6;
+  solvedStartUnit: number;
+  stickerFaces: readonly Square1Face[];
+  stickers: readonly Square1StickerDefinition[];
 };
 
+export type Square1StickerDefinition = {
+  face: Square1Face;
+  localSurface: Square1StickerLocalSurface;
+};
+
+// TNoodle-aligned 24-slot reference orientation used by the state golden tests:
+// top slots start at UFR and advance through R, B, L, F; bottom slots start at DF
+// and advance through F, R, B, L. Semantic IDs name solved stickers, not position.
 export const Square1TopPieceOrder = Object.freeze([
-  'U0',
-  'U1',
-  'U2',
-  'U3',
-  'U4',
-  'U5',
-  'U6',
-  'U7',
+  'UFR',
+  'UR',
+  'URB',
+  'UB',
+  'UBL',
+  'UL',
+  'ULF',
+  'UF',
 ] as const satisfies readonly Square1LayerPieceId[]);
 
 export const Square1BottomPieceOrder = Object.freeze([
-  'D0',
-  'D1',
-  'D2',
-  'D3',
-  'D4',
-  'D5',
-  'D6',
-  'D7',
+  'DF',
+  'DFR',
+  'DR',
+  'DRB',
+  'DB',
+  'DBL',
+  'DL',
+  'DLF',
 ] as const satisfies readonly Square1LayerPieceId[]);
 
-export const Square1MiddlePieceOrder = Object.freeze(['M0', 'M1'] as const satisfies readonly Square1MiddlePieceId[]);
+export const Square1MiddlePieceOrder = Object.freeze([
+  'M_MOVING',
+  'M_FIXED',
+] as const satisfies readonly Square1MiddlePieceId[]);
 
-const topDefinitions = Square1TopPieceOrder.map(
-  (id, index): Square1PieceDefinition => ({
-    face: Square1Faces.U,
-    id,
-    kind: index % 2 === 0 ? 'corner' : 'edge',
-    layer: 'top',
-    widthUnits: index % 2 === 0 ? 2 : 1,
-  }),
-);
+export const Square1SolvedTopSlots = Object.freeze([
+  'UFR',
+  'UFR',
+  'UR',
+  'URB',
+  'URB',
+  'UB',
+  'UBL',
+  'UBL',
+  'UL',
+  'ULF',
+  'ULF',
+  'UF',
+] as const satisfies readonly Square1LayerPieceId[]);
 
-const bottomDefinitions = Square1BottomPieceOrder.map(
-  (id, index): Square1PieceDefinition => ({
-    face: Square1Faces.D,
-    id,
-    kind: index % 2 === 0 ? 'corner' : 'edge',
-    layer: 'bottom',
-    widthUnits: index % 2 === 0 ? 2 : 1,
-  }),
-);
+export const Square1SolvedBottomSlots = Object.freeze([
+  'DF',
+  'DFR',
+  'DFR',
+  'DR',
+  'DRB',
+  'DRB',
+  'DB',
+  'DBL',
+  'DBL',
+  'DL',
+  'DLF',
+  'DLF',
+] as const satisfies readonly Square1LayerPieceId[]);
+
+export const Square1ExternalPieceOrder = Object.freeze([
+  ...Square1TopPieceOrder,
+  ...Square1BottomPieceOrder,
+] as const satisfies readonly Square1LayerPieceId[]);
+
+const topDefinitions: Square1PieceDefinition[] = [
+  {
+    id: 'UFR',
+    kind: 'corner',
+    pieceIndex: 0,
+    solvedStartUnit: 0,
+    sourceLayer: 'top',
+    ...defineStickers(
+      { face: Square1Faces.U, localSurface: 'cap' },
+      { face: Square1Faces.R, localSurface: 'sideA' },
+      { face: Square1Faces.F, localSurface: 'sideB' },
+    ),
+    widthUnits: 2,
+  },
+  {
+    id: 'UR',
+    kind: 'edge',
+    pieceIndex: 1,
+    solvedStartUnit: 2,
+    sourceLayer: 'top',
+    ...defineStickers({ face: Square1Faces.U, localSurface: 'cap' }, { face: Square1Faces.R, localSurface: 'sideA' }),
+    widthUnits: 1,
+  },
+  {
+    id: 'URB',
+    kind: 'corner',
+    pieceIndex: 2,
+    solvedStartUnit: 3,
+    sourceLayer: 'top',
+    ...defineStickers(
+      { face: Square1Faces.U, localSurface: 'cap' },
+      { face: Square1Faces.B, localSurface: 'sideA' },
+      { face: Square1Faces.R, localSurface: 'sideB' },
+    ),
+    widthUnits: 2,
+  },
+  {
+    id: 'UB',
+    kind: 'edge',
+    pieceIndex: 3,
+    solvedStartUnit: 5,
+    sourceLayer: 'top',
+    ...defineStickers({ face: Square1Faces.U, localSurface: 'cap' }, { face: Square1Faces.B, localSurface: 'sideA' }),
+    widthUnits: 1,
+  },
+  {
+    id: 'UBL',
+    kind: 'corner',
+    pieceIndex: 4,
+    solvedStartUnit: 6,
+    sourceLayer: 'top',
+    ...defineStickers(
+      { face: Square1Faces.U, localSurface: 'cap' },
+      { face: Square1Faces.L, localSurface: 'sideA' },
+      { face: Square1Faces.B, localSurface: 'sideB' },
+    ),
+    widthUnits: 2,
+  },
+  {
+    id: 'UL',
+    kind: 'edge',
+    pieceIndex: 5,
+    solvedStartUnit: 8,
+    sourceLayer: 'top',
+    ...defineStickers({ face: Square1Faces.U, localSurface: 'cap' }, { face: Square1Faces.L, localSurface: 'sideA' }),
+    widthUnits: 1,
+  },
+  {
+    id: 'ULF',
+    kind: 'corner',
+    pieceIndex: 6,
+    solvedStartUnit: 9,
+    sourceLayer: 'top',
+    ...defineStickers(
+      { face: Square1Faces.U, localSurface: 'cap' },
+      { face: Square1Faces.F, localSurface: 'sideA' },
+      { face: Square1Faces.L, localSurface: 'sideB' },
+    ),
+    widthUnits: 2,
+  },
+  {
+    id: 'UF',
+    kind: 'edge',
+    pieceIndex: 7,
+    solvedStartUnit: 11,
+    sourceLayer: 'top',
+    ...defineStickers({ face: Square1Faces.U, localSurface: 'cap' }, { face: Square1Faces.F, localSurface: 'sideA' }),
+    widthUnits: 1,
+  },
+];
+
+const bottomDefinitions: Square1PieceDefinition[] = [
+  {
+    id: 'DF',
+    kind: 'edge',
+    pieceIndex: 8,
+    solvedStartUnit: 0,
+    sourceLayer: 'bottom',
+    ...defineStickers({ face: Square1Faces.D, localSurface: 'cap' }, { face: Square1Faces.F, localSurface: 'sideA' }),
+    widthUnits: 1,
+  },
+  {
+    id: 'DFR',
+    kind: 'corner',
+    pieceIndex: 9,
+    solvedStartUnit: 1,
+    sourceLayer: 'bottom',
+    ...defineStickers(
+      { face: Square1Faces.D, localSurface: 'cap' },
+      { face: Square1Faces.F, localSurface: 'sideA' },
+      { face: Square1Faces.R, localSurface: 'sideB' },
+    ),
+    widthUnits: 2,
+  },
+  {
+    id: 'DR',
+    kind: 'edge',
+    pieceIndex: 10,
+    solvedStartUnit: 3,
+    sourceLayer: 'bottom',
+    ...defineStickers({ face: Square1Faces.D, localSurface: 'cap' }, { face: Square1Faces.R, localSurface: 'sideA' }),
+    widthUnits: 1,
+  },
+  {
+    id: 'DRB',
+    kind: 'corner',
+    pieceIndex: 11,
+    solvedStartUnit: 4,
+    sourceLayer: 'bottom',
+    ...defineStickers(
+      { face: Square1Faces.D, localSurface: 'cap' },
+      { face: Square1Faces.R, localSurface: 'sideA' },
+      { face: Square1Faces.B, localSurface: 'sideB' },
+    ),
+    widthUnits: 2,
+  },
+  {
+    id: 'DB',
+    kind: 'edge',
+    pieceIndex: 12,
+    solvedStartUnit: 6,
+    sourceLayer: 'bottom',
+    ...defineStickers({ face: Square1Faces.D, localSurface: 'cap' }, { face: Square1Faces.B, localSurface: 'sideA' }),
+    widthUnits: 1,
+  },
+  {
+    id: 'DBL',
+    kind: 'corner',
+    pieceIndex: 13,
+    solvedStartUnit: 7,
+    sourceLayer: 'bottom',
+    ...defineStickers(
+      { face: Square1Faces.D, localSurface: 'cap' },
+      { face: Square1Faces.B, localSurface: 'sideA' },
+      { face: Square1Faces.L, localSurface: 'sideB' },
+    ),
+    widthUnits: 2,
+  },
+  {
+    id: 'DL',
+    kind: 'edge',
+    pieceIndex: 14,
+    solvedStartUnit: 9,
+    sourceLayer: 'bottom',
+    ...defineStickers({ face: Square1Faces.D, localSurface: 'cap' }, { face: Square1Faces.L, localSurface: 'sideA' }),
+    widthUnits: 1,
+  },
+  {
+    id: 'DLF',
+    kind: 'corner',
+    pieceIndex: 15,
+    solvedStartUnit: 10,
+    sourceLayer: 'bottom',
+    ...defineStickers(
+      { face: Square1Faces.D, localSurface: 'cap' },
+      { face: Square1Faces.L, localSurface: 'sideA' },
+      { face: Square1Faces.F, localSurface: 'sideB' },
+    ),
+    widthUnits: 2,
+  },
+];
 
 const middleDefinitions: Square1PieceDefinition[] = [
-  { face: Square1Faces.F, id: 'M0', kind: 'middle', layer: 'middle', widthUnits: 6 },
-  { face: Square1Faces.B, id: 'M1', kind: 'middle', layer: 'middle', widthUnits: 6 },
+  {
+    id: 'M_MOVING',
+    kind: 'middle',
+    pieceIndex: 16,
+    solvedStartUnit: 0,
+    sourceLayer: 'middle',
+    ...defineStickers(
+      { face: Square1Faces.L, localSurface: 'sideA' },
+      { face: Square1Faces.F, localSurface: 'sideB' },
+      { face: Square1Faces.R, localSurface: 'sideC' },
+    ),
+    widthUnits: 6,
+  },
+  {
+    id: 'M_FIXED',
+    kind: 'middle',
+    pieceIndex: 17,
+    solvedStartUnit: 0,
+    sourceLayer: 'middle',
+    ...defineStickers(
+      { face: Square1Faces.B, localSurface: 'sideA' },
+      { face: Square1Faces.R, localSurface: 'sideB' },
+      { face: Square1Faces.L, localSurface: 'sideC' },
+    ),
+    widthUnits: 6,
+  },
 ];
+
+function defineStickers(...stickers: Square1StickerDefinition[]) {
+  return {
+    stickerFaces: stickers.map((sticker) => sticker.face),
+    stickers,
+  };
+}
 
 export const Square1PieceDefinitions = Object.freeze([
   ...topDefinitions,
@@ -109,7 +338,7 @@ export const Square1PieceDefinitions = Object.freeze([
 
 export const SQUARE1_LAYER_UNIT_COUNT = 12;
 export const SQUARE1_PIECE_COUNT = 18;
-export const SQUARE1_VISUAL_STATE_KIND = 'square1-pieces-v1';
+export const SQUARE1_VISUAL_STATE_KIND = 'square1-pieces-v2';
 
 export type Square1CoordinateMove = {
   bottom: number;

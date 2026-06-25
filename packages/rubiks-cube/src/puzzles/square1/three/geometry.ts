@@ -1,9 +1,6 @@
-import type { ColorRepresentation } from 'three';
 import { BufferGeometry, Float32BufferAttribute, Vector3 } from 'three';
-import type { Square1LayerName, Square1PieceKind } from '../core/types';
-import { Square1Faces } from '../core/types';
+import type { Square1MiddlePieceId, Square1PieceKind, Square1StickerLocalSurface } from '../core/types';
 import {
-  SQUARE1_BOTTOM_Y,
   SQUARE1_CUT_OFFSET,
   SQUARE1_LAYER_HALF_SIZE,
   SQUARE1_LAYER_HEIGHT,
@@ -11,13 +8,11 @@ import {
   SQUARE1_STICKER_INSET,
   SQUARE1_STICKER_LIFT,
   SQUARE1_STICKER_VERTICAL_INSET,
-  SQUARE1_TOP_Y,
-  Square1FaceColors,
 } from './config';
 
 export type Square1StickerGeometry = {
-  color: ColorRepresentation;
   geometry: BufferGeometry;
+  surface: Square1StickerLocalSurface;
 };
 
 export type Square1PieceGeometry = {
@@ -30,41 +25,30 @@ type Point2 = {
   z: number;
 };
 
-const fullTurnUnits = 12;
-const pieceBoundaryPhaseUnits = 0.5;
 const tolerance = 0.0001;
 
-export function createSquare1LayerPieceGeometry(
-  startUnits: number,
-  widthUnits: number,
-  pieceKind: Square1PieceKind,
-  layer: Extract<Square1LayerName, 'top' | 'bottom'>,
-): Square1PieceGeometry {
-  const start = startUnits + pieceBoundaryPhaseUnits;
-  const end = start + widthUnits;
-  const yCenter = layer === 'top' ? SQUARE1_TOP_Y : SQUARE1_BOTTOM_Y;
-  const yMin = yCenter - SQUARE1_LAYER_HEIGHT / 2;
-  const yMax = yCenter + SQUARE1_LAYER_HEIGHT / 2;
-  const points = createSquare1OuterLayerPolygon(start, end);
-  const stickers: Square1StickerGeometry[] = [];
-
-  stickers.push({
-    color: Square1FaceColors[layer === 'top' ? Square1Faces.U : Square1Faces.D],
-    geometry: createCapStickerGeometry(points, layer === 'top' ? yMax : yMin, layer),
-  });
-  stickers.push(...createExternalSideStickerGeometries(points, yMin, yMax));
+export function createSquare1LayerPieceGeometry(pieceKind: Exclude<Square1PieceKind, 'middle'>): Square1PieceGeometry {
+  const points = pieceKind === 'corner' ? createCornerPolygon() : createEdgePolygon();
+  const yMin = -SQUARE1_LAYER_HEIGHT / 2;
+  const yMax = SQUARE1_LAYER_HEIGHT / 2;
 
   return {
     body: createPrismGeometry(points, yMin, yMax),
-    stickers,
+    stickers: [
+      {
+        geometry: createCapStickerGeometry(points, yMax),
+        surface: 'cap',
+      },
+      ...createExternalSideStickerGeometries(points, yMin, yMax, pieceKind === 'corner' ? 2 : 1),
+    ],
   };
 }
 
-export function createSquare1MiddlePieceGeometry(index: 0 | 1): Square1PieceGeometry {
+export function createSquare1MiddlePieceGeometry(id: Square1MiddlePieceId): Square1PieceGeometry {
   const half = SQUARE1_LAYER_HALF_SIZE;
   const h = SQUARE1_CUT_OFFSET;
   const points =
-    index === 0
+    id === 'M_MOVING'
       ? [
           { x: -half, z: -h },
           { x: -half, z: half },
@@ -82,16 +66,28 @@ export function createSquare1MiddlePieceGeometry(index: 0 | 1): Square1PieceGeom
 
   return {
     body: createPrismGeometry(points, yMin, yMax),
-    stickers: createExternalSideStickerGeometries(points, yMin, yMax),
+    stickers: createExternalSideStickerGeometries(points, yMin, yMax, 3),
   };
 }
 
-function createSquare1OuterLayerPolygon(startUnits: number, endUnits: number): Point2[] {
+function createEdgePolygon(): Point2[] {
+  const half = SQUARE1_LAYER_HALF_SIZE;
+  const h = SQUARE1_CUT_OFFSET;
   return [
     { x: 0, z: 0 },
-    squareBoundaryPoint(startUnits),
-    ...squareCornerPointsBetween(startUnits, endUnits),
-    squareBoundaryPoint(endUnits),
+    { x: half, z: -h },
+    { x: half, z: h },
+  ];
+}
+
+function createCornerPolygon(): Point2[] {
+  const half = SQUARE1_LAYER_HALF_SIZE;
+  const h = SQUARE1_CUT_OFFSET;
+  return [
+    { x: 0, z: 0 },
+    { x: half, z: h },
+    { x: half, z: half },
+    { x: h, z: half },
   ];
 }
 
@@ -114,16 +110,11 @@ function createPrismGeometry(points: readonly Point2[], yMin: number, yMax: numb
   return createBufferGeometry(vertices);
 }
 
-function createCapStickerGeometry(
-  points: readonly Point2[],
-  y: number,
-  layer: Extract<Square1LayerName, 'top' | 'bottom'>,
-): BufferGeometry {
+function createCapStickerGeometry(points: readonly Point2[], y: number): BufferGeometry {
   const insetPoints = insetConvexPolygon(points, SQUARE1_STICKER_INSET);
-  const liftedY = layer === 'top' ? y + SQUARE1_STICKER_LIFT : y - SQUARE1_STICKER_LIFT;
   const vertices: number[] = [];
 
-  pushCap(vertices, insetPoints, liftedY, layer === 'bottom');
+  pushCap(vertices, insetPoints, y + SQUARE1_STICKER_LIFT, false);
   return createBufferGeometry(vertices);
 }
 
@@ -131,25 +122,30 @@ function createExternalSideStickerGeometries(
   points: readonly Point2[],
   yMin: number,
   yMax: number,
+  maxStickerCount: number,
 ): Square1StickerGeometry[] {
   const stickers: Square1StickerGeometry[] = [];
 
-  for (let index = 0; index < points.length; index++) {
+  for (let index = 0; index < points.length && stickers.length < maxStickerCount; index++) {
     const nextIndex = (index + 1) % points.length;
     const start = points[index];
     const end = points[nextIndex];
-    const boundary = externalBoundaryForSegment(start, end);
-    if (!boundary) {
+    const normal = externalNormalForSegment(start, end);
+    if (!normal) {
       continue;
     }
 
     stickers.push({
-      color: boundary.color,
-      geometry: createSideStickerGeometry(start, end, yMin, yMax, boundary.normal),
+      geometry: createSideStickerGeometry(start, end, yMin, yMax, normal),
+      surface: sideSurfaceForIndex(stickers.length),
     });
   }
 
   return stickers;
+}
+
+function sideSurfaceForIndex(index: number): Square1StickerLocalSurface {
+  return index === 0 ? 'sideA' : index === 1 ? 'sideB' : 'sideC';
 }
 
 function createSideStickerGeometry(
@@ -187,22 +183,19 @@ function createSideStickerGeometry(
   return createBufferGeometry(vertices);
 }
 
-function externalBoundaryForSegment(
-  start: Point2,
-  end: Point2,
-): { color: ColorRepresentation; normal: Point2 } | undefined {
+function externalNormalForSegment(start: Point2, end: Point2): Point2 | undefined {
   const half = SQUARE1_LAYER_HALF_SIZE;
   if (isClose(start.x, half) && isClose(end.x, half)) {
-    return { color: Square1FaceColors[Square1Faces.R], normal: { x: 1, z: 0 } };
+    return { x: 1, z: 0 };
   }
   if (isClose(start.x, -half) && isClose(end.x, -half)) {
-    return { color: Square1FaceColors[Square1Faces.L], normal: { x: -1, z: 0 } };
+    return { x: -1, z: 0 };
   }
   if (isClose(start.z, half) && isClose(end.z, half)) {
-    return { color: Square1FaceColors[Square1Faces.F], normal: { x: 0, z: 1 } };
+    return { x: 0, z: 1 };
   }
   if (isClose(start.z, -half) && isClose(end.z, -half)) {
-    return { color: Square1FaceColors[Square1Faces.B], normal: { x: 0, z: -1 } };
+    return { x: 0, z: -1 };
   }
 
   return undefined;
@@ -234,8 +227,8 @@ function insetConvexPolygon(points: readonly Point2[], amount: number): Point2[]
     };
 
     return {
-      point: { x: point.x + normal.x * amount, z: point.z + normal.z * amount },
       direction: edge,
+      point: { x: point.x + normal.x * amount, z: point.z + normal.z * amount },
     };
   });
 
@@ -287,38 +280,6 @@ function polygonArea(points: readonly Point2[]): number {
   }
 
   return area / 2;
-}
-
-function squareCornerPointsBetween(startUnits: number, endUnits: number): Point2[] {
-  const corners: Point2[] = [];
-  const firstCycle = Math.floor(startUnits / fullTurnUnits) * fullTurnUnits;
-  for (let cycleOffset = firstCycle; cycleOffset <= endUnits + fullTurnUnits; cycleOffset += fullTurnUnits) {
-    for (const cornerUnits of [1.5, 4.5, 7.5, 10.5]) {
-      const units = cycleOffset + cornerUnits;
-      if (units > startUnits && units < endUnits) {
-        corners.push(squareBoundaryPoint(units));
-      }
-    }
-  }
-
-  return corners;
-}
-
-function squareBoundaryPoint(units: number): Point2 {
-  const direction = radialPoint(1, units);
-  const scale = SQUARE1_LAYER_HALF_SIZE / Math.max(Math.abs(direction.x), Math.abs(direction.z));
-  return {
-    x: direction.x * scale,
-    z: direction.z * scale,
-  };
-}
-
-function radialPoint(radius: number, units: number): Point2 {
-  const angle = (units * Math.PI) / 6;
-  return {
-    x: Math.cos(angle) * radius,
-    z: Math.sin(angle) * radius,
-  };
 }
 
 function createBufferGeometry(vertices: number[]): BufferGeometry {

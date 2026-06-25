@@ -1,4 +1,5 @@
 import type { ColorRepresentation } from 'three';
+import { Vector3 } from 'three';
 import type { Square1Face } from '../core/types';
 import { Square1Faces } from '../core/types';
 
@@ -12,6 +13,9 @@ export const SQUARE1_LAYER_GAP = 0;
 export const SQUARE1_TOP_Y = SQUARE1_MIDDLE_HEIGHT / 2 + SQUARE1_LAYER_GAP + SQUARE1_LAYER_HEIGHT / 2;
 export const SQUARE1_BOTTOM_Y = -SQUARE1_TOP_Y;
 export const SQUARE1_MIDDLE_SEAM_OFFSET = SQUARE1_CUT_OFFSET;
+export const SQUARE1_SEAM_DIRECTION = new Vector3(1, 0, SQUARE1_CUT_OFFSET).normalize();
+export const SQUARE1_SLICE_AXIS = new Vector3(-SQUARE1_CUT_OFFSET, 0, 1).normalize();
+export const SQUARE1_SLICE_EPSILON = 1e-8;
 export const SQUARE1_STICKER_INSET = 0.018;
 export const SQUARE1_STICKER_LIFT = 0.003;
 export const SQUARE1_STICKER_VERTICAL_INSET = 0.04;

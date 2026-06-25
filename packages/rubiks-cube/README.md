@@ -46,7 +46,7 @@ and 120-degree vertex turns instead of cube `CubeType`, Kociemba, or slice moves
 geometry, and 72-degree face turns instead of cube `CubeType`, Kociemba, or slice moves.
 
 `<square1-puzzle>` is the Square-1 renderer. It uses Square-1-specific `(x,y)` and `/` notation,
-shape-shifting piece geometry, and a `square1-pieces-v1` visual state instead of cube `CubeType`, Kociemba,
+physical semantic piece IDs, and a `square1-pieces-v2` visual state instead of cube `CubeType`, Kociemba,
 or facelet strings.
 
 Megaminx defaults to `visual-style="stickerless"`, rendering face-colored plastic instead of black sticker backing.

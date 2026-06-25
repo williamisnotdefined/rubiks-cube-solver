@@ -450,7 +450,7 @@ function updatePlaygroundChrome(puzzleKind: PuzzleKind) {
       : puzzleKind === 'megaminx'
         ? 'Paste a megaminx-stickers-v1 state string'
         : puzzleKind === 'square1'
-          ? 'Paste a square1-pieces-v1 state string'
+          ? 'Paste a square1-pieces-v2 state string'
           : 'Paste a Kociemba state string';
   for (const setting of cubeOnlySettings) {
     setting.hidden = puzzleKind !== 'cube';
