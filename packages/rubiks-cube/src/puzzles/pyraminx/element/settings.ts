@@ -1,4 +1,5 @@
 import { type AnimationStyle, AnimationStyles } from '../../../shared/animation';
+import { DEFAULT_CAMERA_RADIUS } from '../../../shared/cameraDefaults';
 import { DEFAULT_PYRAMINX_ANIMATION_SPEED_MS } from '../three/pyraminx3D';
 
 export type PyraminxElementSettings = {
@@ -20,7 +21,7 @@ export const defaultPyraminxElementSettings: PyraminxElementSettings = {
   cameraFieldOfView: 75,
   cameraPeekAngleHorizontal: 0.6,
   cameraPeekAngleVertical: 0.6,
-  cameraRadius: 5,
+  cameraRadius: DEFAULT_CAMERA_RADIUS,
   cameraSpeedMs: 100,
   maxDevicePixelRatio: 2,
 };
@@ -64,8 +65,13 @@ export function setPyraminxCameraSpeed(target: PyraminxElementSettings, value: s
 }
 
 export function setPyraminxCameraRadius(target: PyraminxElementSettings, value: string | null): void {
+  if (value == null) {
+    target.cameraRadius = defaultPyraminxElementSettings.cameraRadius;
+    return;
+  }
+
   const radius = Number(value);
-  if (radius >= minCameraRadius && value != null) {
+  if (radius >= minCameraRadius) {
     target.cameraRadius = radius;
     return;
   }
@@ -73,8 +79,13 @@ export function setPyraminxCameraRadius(target: PyraminxElementSettings, value: 
 }
 
 export function setPyraminxCameraFieldOfView(target: PyraminxElementSettings, value: string | null): void {
+  if (value == null) {
+    target.cameraFieldOfView = defaultPyraminxElementSettings.cameraFieldOfView;
+    return;
+  }
+
   const fov = Number(value);
-  if (fov >= minFieldOfView && fov <= maxFieldOfView && value != null) {
+  if (fov >= minFieldOfView && fov <= maxFieldOfView) {
     target.cameraFieldOfView = fov;
     return;
   }

@@ -3,6 +3,7 @@ import { PerspectiveCamera } from 'three';
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { CubeTypes, Movements, Rotations } from '../src/puzzles/cube/core';
 import { AttributeNames, PeekActions, PeekStates, RubiksCubeElement } from '../src/puzzles/cube/element';
+import RubiksCube3D from '../src/puzzles/cube/three/rubiksCube3D';
 
 const rendererMocks = vi.hoisted(() => ({
   render: vi.fn(),
@@ -32,12 +33,10 @@ const gsapMocks = vi.hoisted(() => ({
 const controlsMocks = vi.hoisted(() => ({
   dispose: vi.fn(),
   removeEventListener: vi.fn(),
+  targetSet: vi.fn(),
   update: vi.fn(() => false),
   instances: [] as Array<{
     dispatch: (type: string) => void;
-    enableDamping: boolean;
-    enablePan: boolean;
-    enableZoom: boolean;
   }>,
 }));
 
@@ -67,15 +66,13 @@ vi.mock('three', async (importOriginal) => {
   };
 });
 
-vi.mock('three/examples/jsm/controls/OrbitControls.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('three/examples/jsm/controls/OrbitControls.js')>();
+vi.mock('../src/shared/puzzleControls', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../src/shared/puzzleControls')>();
 
   return {
     ...actual,
-    OrbitControls: class MockOrbitControls {
-      enableDamping = true;
-      enablePan = true;
-      enableZoom = true;
+    PointerOrbitControls: class MockPointerOrbitControls {
+      target = { set: controlsMocks.targetSet };
       listeners = new Map<string, Set<() => void>>();
 
       constructor() {
@@ -147,6 +144,7 @@ beforeEach(() => {
   controlsMocks.instances = [];
   controlsMocks.dispose.mockClear();
   controlsMocks.removeEventListener.mockClear();
+  controlsMocks.targetSet.mockClear();
   controlsMocks.update.mockClear();
   gsapMocks.to.mockClear();
   gsapMocks.duration.mockClear();
@@ -190,6 +188,8 @@ describe('RubiksCubeElement', () => {
   test('initializes rendering, responds to attributes, and cleans up', async () => {
     const element = createElement();
     const lookAt = vi.spyOn(PerspectiveCamera.prototype, 'lookAt');
+    const updateGap = vi.spyOn(RubiksCube3D.prototype, 'updateGap');
+    const addLogo = vi.spyOn(RubiksCube3D.prototype, 'addLogo');
     element.setAttribute(AttributeNames.cubeType, CubeTypes.Three);
     element.setAttribute(AttributeNames.pieceGap, '1.05');
     element.setAttribute(AttributeNames.animationSpeed, '0');
@@ -211,9 +211,7 @@ describe('RubiksCubeElement', () => {
     expect(rendererMocks.setSize).toHaveBeenCalled();
     expect(rendererMocks.setPixelRatio).toHaveBeenCalledWith(2);
     expect(lookAt).toHaveBeenCalledWith(0, 0, 0);
-    expect(controlsMocks.instances.at(-1)?.enableDamping).toBe(true);
-    expect(controlsMocks.instances.at(-1)?.enablePan).toBe(false);
-    expect(controlsMocks.instances.at(-1)?.enableZoom).toBe(false);
+    expect(controlsMocks.targetSet).toHaveBeenCalledWith(0, 0, 0);
     flushAnimationFrames();
     expect(rendererMocks.render).toHaveBeenCalled();
     expect(renderListener).toHaveBeenCalledTimes(1);
@@ -222,8 +220,17 @@ describe('RubiksCubeElement', () => {
     vi.advanceTimersByTime(30);
     expect(rendererMocks.setSize).toHaveBeenCalledWith(240, 120);
 
+    updateGap.mockClear();
+    addLogo.mockClear();
+    element.setAttribute(AttributeNames.pieceGap, '1.06');
+    expect(updateGap).toHaveBeenCalledWith(1.06);
+    element.setAttribute(AttributeNames.logo, 'updated-logo.png');
+    expect(addLogo).toHaveBeenCalledWith('updated-logo.png');
+
     element.setAttribute(AttributeNames.cameraRadius, '8');
     element.setAttribute(AttributeNames.cameraFieldOfView, '62');
+    element.removeAttribute(AttributeNames.cameraFieldOfView);
+    expect(element.settings.cameraFieldOfView).toBe(75);
     element.setAttribute(AttributeNames.cameraPeekAngleHorizontal, '0.45');
     element.setAttribute(AttributeNames.cameraPeekAngleVertical, '0.55');
     element.setAttribute(AttributeNames.maxDevicePixelRatio, '4');
@@ -239,6 +246,8 @@ describe('RubiksCubeElement', () => {
     expect(MockResizeObserver.instances.at(-1)?.disconnect).toHaveBeenCalled();
     expect(controlsMocks.dispose).toHaveBeenCalled();
     expect(rendererMocks.dispose).toHaveBeenCalled();
+    updateGap.mockRestore();
+    addLogo.mockRestore();
   });
 
   test('performs cube actions and camera peek after connection', async () => {
@@ -259,23 +268,23 @@ describe('RubiksCubeElement', () => {
     expect(gsapMocks.to).toHaveBeenCalled();
   });
 
-  test('stops control rendering on next frame when damping is disabled', () => {
+  test('stops control rendering after shared controls settle', () => {
     const element = createElement();
     document.body.append(element);
     flushAnimationFrames();
 
     const controls = controlsMocks.instances.at(-1);
     if (!controls) {
-      throw new Error('RubiksCube OrbitControls mock was not created');
+      throw new Error('RubiksCube PointerOrbitControls mock was not created');
     }
-    controls.enableDamping = false;
 
     controls.dispatch('start');
     flushAnimationFrames();
     controls.dispatch('end');
-    flushAnimationFrames();
-    flushAnimationFrames();
+    for (let frame = 0; frame < 5; frame++) {
+      flushAnimationFrames();
+    }
 
-    expect(cancelAnimationFrame).toHaveBeenCalled();
+    expect(rafCallbacks).toHaveLength(0);
   });
 });

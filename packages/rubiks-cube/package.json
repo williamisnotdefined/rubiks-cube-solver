@@ -45,15 +45,7 @@
       "types": "./src/puzzles/pyraminx/index.ts",
       "default": "./src/puzzles/pyraminx/index.ts"
     },
-    "./pyraminx": {
-      "types": "./src/puzzles/pyraminx/index.ts",
-      "default": "./src/puzzles/pyraminx/index.ts"
-    },
     "./puzzles/megaminx": {
-      "types": "./src/puzzles/megaminx/index.ts",
-      "default": "./src/puzzles/megaminx/index.ts"
-    },
-    "./megaminx": {
       "types": "./src/puzzles/megaminx/index.ts",
       "default": "./src/puzzles/megaminx/index.ts"
     }

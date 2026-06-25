@@ -286,6 +286,18 @@ describe('RubiksCubePlayer', () => {
     expect(player.currentMoveIndex).toBe(1);
   });
 
+  test('does not duplicate button listeners after reconnect', async () => {
+    const player = createPlayer({ [RubiksCubePlayerAttributes.Alg]: 'R' });
+    const stepForward = vi.spyOn(player, 'stepForward').mockResolvedValue();
+
+    document.body.removeChild(player);
+    document.body.append(player);
+    player.forwardsStepbutton.click();
+    await vi.dynamicImportSettled();
+
+    expect(stepForward).toHaveBeenCalledTimes(1);
+  });
+
   test('handles playback completion when it was stopped mid-loop', async () => {
     const player = createPlayer({ [RubiksCubePlayerAttributes.Alg]: 'R U' });
     vi.spyOn(player.rubiksCubeElement, 'move').mockImplementation(async () => {

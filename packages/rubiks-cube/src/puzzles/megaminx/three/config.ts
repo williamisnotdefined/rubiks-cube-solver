@@ -43,16 +43,16 @@ export const faceNormals = Object.fromEntries(
 ) as Record<MegaminxFace, Vector3>;
 
 export const MegaminxFaceColors = {
-  [MegaminxFaces.U]: 'white',
-  [MegaminxFaces.R]: 'red',
+  [MegaminxFaces.U]: '#ffffff',
+  [MegaminxFaces.R]: '#7b2cbf',
   [MegaminxFaces.D]: '#ffd500',
-  [MegaminxFaces.F]: '#00a651',
-  [MegaminxFaces.L]: '#ff8c00',
-  [MegaminxFaces.B]: '#0046ad',
-  [MegaminxFaces.A]: '#7b2cbf',
-  [MegaminxFaces.C]: '#00a3a3',
-  [MegaminxFaces.E]: '#f72585',
-  [MegaminxFaces.G]: '#8b5a2b',
-  [MegaminxFaces.H]: '#9acd32',
-  [MegaminxFaces.I]: '#4b5563',
+  [MegaminxFaces.F]: '#006b3f',
+  [MegaminxFaces.L]: '#0046ad',
+  [MegaminxFaces.B]: '#d8b56d',
+  [MegaminxFaces.A]: '#c1121f',
+  [MegaminxFaces.C]: '#ff8c00',
+  [MegaminxFaces.E]: '#3f3f46',
+  [MegaminxFaces.G]: '#9acd32',
+  [MegaminxFaces.H]: '#5dade2',
+  [MegaminxFaces.I]: '#f72585',
 } satisfies Record<MegaminxFace, ColorRepresentation>;

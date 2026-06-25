@@ -37,6 +37,14 @@ export class RubiksCubePlayer extends HTMLElement {
   algMoves: (Movement | Rotation)[];
   currentMoveIndex: number;
   playState: PlayState;
+  private buttonListenersAttached: boolean;
+  private readonly onStartClick = () => this.jumpToStart();
+  private readonly onBackwardsClick = () => this.playBackward();
+  private readonly onBackwardsStepClick = () => this.stepBackward();
+  private readonly onStopClick = () => this.stop();
+  private readonly onForwardsStepClick = () => this.stepForward();
+  private readonly onForwardClick = () => this.playForward();
+  private readonly onEndClick = () => this.jumpToEnd();
 
   constructor() {
     super();
@@ -111,6 +119,7 @@ export class RubiksCubePlayer extends HTMLElement {
     this.algMoves = [];
     this.currentMoveIndex = 0;
     this.playState = PlayState.Idle;
+    this.buttonListenersAttached = false;
   }
 
   static register(tagName = 'rubiks-cube-player'): void {
@@ -135,13 +144,12 @@ export class RubiksCubePlayer extends HTMLElement {
         this.attributeChangedCallback(attr, null, this.getAttribute(attr));
       }
     }
-    this.startButton.addEventListener('click', () => this.jumpToStart());
-    this.backwardsButton.addEventListener('click', () => this.playBackward());
-    this.backwardsStepButton.addEventListener('click', () => this.stepBackward());
-    this.stopButton.addEventListener('click', () => this.stop());
-    this.forwardsStepbutton.addEventListener('click', () => this.stepForward());
-    this.forwardbutton.addEventListener('click', () => this.playForward());
-    this.endButton.addEventListener('click', () => this.jumpToEnd());
+    this.attachButtonListeners();
+  }
+
+  disconnectedCallback(): void {
+    this.detachButtonListeners();
+    this.stop();
   }
 
   attributeChangedCallback(name: string, oldVal: string | null, newVal: string | null): void {
@@ -171,6 +179,36 @@ export class RubiksCubePlayer extends HTMLElement {
       .trim()
       .split(' ')
       .filter((token) => token.length > 0);
+  }
+
+  private attachButtonListeners(): void {
+    if (this.buttonListenersAttached) {
+      return;
+    }
+
+    this.startButton.addEventListener('click', this.onStartClick);
+    this.backwardsButton.addEventListener('click', this.onBackwardsClick);
+    this.backwardsStepButton.addEventListener('click', this.onBackwardsStepClick);
+    this.stopButton.addEventListener('click', this.onStopClick);
+    this.forwardsStepbutton.addEventListener('click', this.onForwardsStepClick);
+    this.forwardbutton.addEventListener('click', this.onForwardClick);
+    this.endButton.addEventListener('click', this.onEndClick);
+    this.buttonListenersAttached = true;
+  }
+
+  private detachButtonListeners(): void {
+    if (!this.buttonListenersAttached) {
+      return;
+    }
+
+    this.startButton.removeEventListener('click', this.onStartClick);
+    this.backwardsButton.removeEventListener('click', this.onBackwardsClick);
+    this.backwardsStepButton.removeEventListener('click', this.onBackwardsStepClick);
+    this.stopButton.removeEventListener('click', this.onStopClick);
+    this.forwardsStepbutton.removeEventListener('click', this.onForwardsStepClick);
+    this.forwardbutton.removeEventListener('click', this.onForwardClick);
+    this.endButton.removeEventListener('click', this.onEndClick);
+    this.buttonListenersAttached = false;
   }
 
   init(): void {

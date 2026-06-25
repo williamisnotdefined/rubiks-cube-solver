@@ -25,15 +25,13 @@ Current puzzle modules:
 | --- | --- |
 | `@rubiks-cube-solver/rubiks-cube/view` | `RubiksCubeElement`, `AttributeNames`, `PeekActions`, `PeekStates`, `AnimationStyles` |
 | `@rubiks-cube-solver/rubiks-cube/core` | Movement, rotation, face, cube-type constants and helpers |
-| `@rubiks-cube-solver/rubiks-cube/state` | Headless sticker-state helpers |
+| `@rubiks-cube-solver/rubiks-cube/state` | Cube visual-state facade: `RubiksCubeState`, `Axi`, `GetMovementSlice`, `GetRotationSlice` |
 | `@rubiks-cube-solver/rubiks-cube/three` | Three.js cube object and settings |
 | `@rubiks-cube-solver/rubiks-cube/controller` | State/view controller |
 | `@rubiks-cube-solver/rubiks-cube/player` | Playback custom element |
 | `@rubiks-cube-solver/rubiks-cube/puzzles/cube` | Cube puzzle module barrel |
-| `@rubiks-cube-solver/rubiks-cube/puzzles/pyraminx` | Pyraminx puzzle module barrel |
-| `@rubiks-cube-solver/rubiks-cube/pyraminx` | Pyraminx custom element, 3D object, notation, and sticker-state helpers |
-| `@rubiks-cube-solver/rubiks-cube/puzzles/megaminx` | Megaminx puzzle module barrel |
-| `@rubiks-cube-solver/rubiks-cube/megaminx` | Megaminx custom element, 3D object, notation, and sticker-state helpers |
+| `@rubiks-cube-solver/rubiks-cube/puzzles/pyraminx` | Pyraminx custom element, 3D object, notation, and visual-state adapter |
+| `@rubiks-cube-solver/rubiks-cube/puzzles/megaminx` | Megaminx custom element, 3D object, notation, and visual-state adapter |
 
 ## Custom Elements
 

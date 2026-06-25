@@ -2,7 +2,6 @@ import { IsRotation, isMovement } from '../src/puzzles/cube/core';
 import { AttributeNames, PeekActions, RubiksCubeElement } from '../src/puzzles/cube/element';
 import {
   DEFAULT_MEGAMINX_ANIMATION_SPEED_MS,
-  isMegaminxMove,
   MegaminxAttributeNames,
   MegaminxMoves,
   MegaminxPuzzleElement,
@@ -136,11 +135,8 @@ const megaminxActions = [
   MegaminxMoves.DMM,
   MegaminxMoves.U,
   MegaminxMoves.UP,
-  MegaminxMoves.R,
-  MegaminxMoves.RP,
-  MegaminxMoves.D,
-  MegaminxMoves.DP,
-];
+] as const;
+const megaminxActionSet = new Set<string>(megaminxActions);
 
 const defaultAlgorithms: Record<PuzzleKind, string> = {
   cube: "R U R' U'",
@@ -416,7 +412,7 @@ async function runAction(action) {
       }
       await (puzzle as PyraminxPuzzleElement).move(action);
     } else if (getPuzzleKind() === 'megaminx') {
-      if (!isMegaminxMove(action)) {
+      if (!isMegaminxPlaygroundAction(action)) {
         throw new Error(`Unsupported Megaminx action: ${action}`);
       }
       await (puzzle as MegaminxPuzzleElement).move(action);
@@ -499,13 +495,17 @@ function parseAlgorithm(value) {
         puzzleKind === 'pyraminx'
           ? isPyraminxMove(action)
           : puzzleKind === 'megaminx'
-            ? isMegaminxMove(action)
+            ? isMegaminxPlaygroundAction(action)
             : isMovement(action) || IsRotation(action);
       if (!valid) {
         console.warn(`Ignoring invalid action: ${action}`);
       }
       return valid;
     });
+}
+
+function isMegaminxPlaygroundAction(action: string): action is (typeof megaminxActions)[number] {
+  return megaminxActionSet.has(action);
 }
 
 function updateState() {

@@ -1,5 +1,5 @@
 import './setup';
-import { PerspectiveCamera, Quaternion, Vector3 } from 'three';
+import { PerspectiveCamera, Quaternion } from 'three';
 import { describe, expect, test, vi } from 'vitest';
 import { PointerOrbitControls } from '../src/shared/puzzleControls';
 
@@ -26,7 +26,7 @@ function dispatchPointer(
 }
 
 describe('PointerOrbitControls', () => {
-  test('maps full element width and height drags to full rotations', () => {
+  test('maps horizontal drags to yaw without changing camera up', () => {
     const canvas = document.createElement('canvas');
     Object.defineProperty(canvas, 'getBoundingClientRect', {
       value: () => ({ height: 200, width: 400 }),
@@ -34,27 +34,23 @@ describe('PointerOrbitControls', () => {
     const camera = new PerspectiveCamera(75, 1, 1, 2000);
     camera.position.set(0, 0, 10);
     camera.lookAt(0, 0, 0);
+    const initialUp = camera.up.clone();
     const controls = new PointerOrbitControls(camera, canvas);
 
     dispatchPointer(canvas, 'pointerdown', 0, 0);
     dispatchPointer(canvas, 'pointermove', 200, 0);
     expect(camera.position.z).toBeCloseTo(-10);
+    expect(camera.up.distanceTo(initialUp)).toBeLessThan(1e-9);
     dispatchPointer(canvas, 'pointermove', 400, 0);
     expect(camera.position.x).toBeCloseTo(0);
     expect(camera.position.z).toBeCloseTo(10);
-
-    dispatchPointer(canvas, 'pointermove', 400, 100);
-    expect(camera.position.y).toBeCloseTo(0);
-    expect(camera.position.z).toBeCloseTo(-10);
-    dispatchPointer(canvas, 'pointermove', 400, 200);
-    expect(camera.position.y).toBeCloseTo(0);
-    expect(camera.position.z).toBeCloseTo(10);
+    expect(camera.up.distanceTo(initialUp)).toBeLessThan(1e-9);
     dispatchPointer(canvas, 'pointerup', 400, 200);
 
     controls.dispose();
   });
 
-  test('uses screen axes for horizontal drags with a tilted camera', () => {
+  test('uses stable world up for horizontal drags with a tilted camera', () => {
     const canvas = document.createElement('canvas');
     Object.defineProperty(canvas, 'getBoundingClientRect', {
       value: () => ({ height: 200, width: 400 }),
@@ -65,11 +61,7 @@ describe('PointerOrbitControls', () => {
     camera.lookAt(0, 0, 0);
     const initialPosition = camera.position.clone();
     const rawUp = camera.up.clone().normalize();
-    const screenUp = new Vector3(0, 1, 0).applyQuaternion(camera.quaternion).normalize();
-    const expected = initialPosition.clone().applyQuaternion(new Quaternion().setFromAxisAngle(screenUp, -Math.PI / 2));
-    const rawUpExpected = initialPosition
-      .clone()
-      .applyQuaternion(new Quaternion().setFromAxisAngle(rawUp, -Math.PI / 2));
+    const expected = initialPosition.clone().applyQuaternion(new Quaternion().setFromAxisAngle(rawUp, -Math.PI / 2));
     const controls = new PointerOrbitControls(camera, canvas);
 
     dispatchPointer(canvas, 'pointerdown', 0, 100);
@@ -78,8 +70,31 @@ describe('PointerOrbitControls', () => {
     expect(camera.position.x).toBeCloseTo(expected.x);
     expect(camera.position.y).toBeCloseTo(expected.y);
     expect(camera.position.z).toBeCloseTo(expected.z);
-    expect(camera.position.distanceTo(rawUpExpected)).toBeGreaterThan(0.1);
+    expect(camera.up.distanceTo(rawUp)).toBeLessThan(1e-9);
     dispatchPointer(canvas, 'pointerup', 100, 100);
+
+    controls.dispose();
+  });
+
+  test('clamps vertical drags to prevent camera roll and flips', () => {
+    const canvas = document.createElement('canvas');
+    Object.defineProperty(canvas, 'getBoundingClientRect', {
+      value: () => ({ height: 200, width: 400 }),
+    });
+    const camera = new PerspectiveCamera(75, 1, 1, 2000);
+    camera.position.set(0, 0, 10);
+    camera.lookAt(0, 0, 0);
+    const initialUp = camera.up.clone();
+    const controls = new PointerOrbitControls(camera, canvas);
+
+    dispatchPointer(canvas, 'pointerdown', 200, 100);
+    dispatchPointer(canvas, 'pointermove', 200, 500);
+    dispatchPointer(canvas, 'pointermove', 200, -500);
+    dispatchPointer(canvas, 'pointermove', 300, -450);
+
+    expect(camera.up.distanceTo(initialUp)).toBeLessThan(1e-9);
+    expect(Math.abs(camera.position.clone().normalize().dot(initialUp))).toBeLessThan(0.999999);
+    dispatchPointer(canvas, 'pointerup', 300, -450);
 
     controls.dispose();
   });
@@ -117,8 +132,37 @@ describe('PointerOrbitControls', () => {
     dispatchPointer(canvas, 'pointerup', 100, 0);
     expect(end).toHaveBeenCalledTimes(1);
 
-    expect(controls.update()).toBe(false);
+    expect(controls.update()).toBe(true);
     expect(controls.handleResize()).toBeUndefined();
+    controls.dispose();
+  });
+
+  test('continues briefly after release and damps to rest without roll', () => {
+    const canvas = document.createElement('canvas');
+    Object.defineProperty(canvas, 'getBoundingClientRect', {
+      value: () => ({ height: 200, width: 400 }),
+    });
+    const camera = new PerspectiveCamera(75, 1, 1, 2000);
+    camera.position.set(0, 0, 10);
+    camera.lookAt(0, 0, 0);
+    const initialUp = camera.up.clone();
+    const controls = new PointerOrbitControls(camera, canvas);
+
+    dispatchPointer(canvas, 'pointerdown', 0, 100);
+    dispatchPointer(canvas, 'pointermove', 20, 90);
+    dispatchPointer(canvas, 'pointerup', 20, 90);
+    const releasedPosition = camera.position.clone();
+
+    expect(controls.update()).toBe(true);
+    expect(camera.position.distanceTo(releasedPosition)).toBeGreaterThan(0);
+    expect(camera.up.distanceTo(initialUp)).toBeLessThan(1e-9);
+
+    for (let frame = 0; frame < 120; frame++) {
+      controls.update();
+    }
+
+    expect(controls.update()).toBe(false);
+    expect(camera.up.distanceTo(initialUp)).toBeLessThan(1e-9);
     controls.dispose();
   });
 
@@ -164,14 +208,17 @@ describe('PointerOrbitControls', () => {
     const camera = new PerspectiveCamera(75, 1, 1, 2000);
     camera.position.set(0, 0, 10);
     camera.lookAt(0, 0, 0);
+    const initialUp = camera.up.clone();
     const controls = new PointerOrbitControls(camera, canvas);
 
     dispatchPointer(canvas, 'pointerdown', 0, 0);
     dispatchPointer(canvas, 'pointermove', 1, 1);
 
-    expect(camera.position.x).toBeCloseTo(0);
-    expect(camera.position.y).toBeCloseTo(0);
-    expect(camera.position.z).toBeCloseTo(10);
+    expect(camera.position.length()).toBeCloseTo(10);
+    expect(Number.isFinite(camera.position.x)).toBe(true);
+    expect(Number.isFinite(camera.position.y)).toBe(true);
+    expect(Number.isFinite(camera.position.z)).toBe(true);
+    expect(camera.up.distanceTo(initialUp)).toBeLessThan(1e-9);
 
     controls.dispose();
   });

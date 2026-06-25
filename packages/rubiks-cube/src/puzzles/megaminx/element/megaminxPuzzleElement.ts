@@ -312,9 +312,9 @@ export class MegaminxPuzzleElement extends HTMLElement {
     };
 
     const renderWithControls = () => {
-      controls.update();
+      const controlsChanged = controls.update();
       renderScene();
-      return true;
+      return controlsChanged;
     };
 
     const requestRender = () => {
@@ -388,11 +388,7 @@ export class MegaminxPuzzleElement extends HTMLElement {
     };
     const onControlsEnd = () => {
       stableControlFrames = 0;
-      controlsSettling = false;
-      requestAnimationFrame(() => {
-        stopControlsRenderLoop?.();
-        stopControlsRenderLoop = null;
-      });
+      controlsSettling = true;
     };
     controls.addEventListener('start', onControlsStart);
     controls.addEventListener('change', requestRender);

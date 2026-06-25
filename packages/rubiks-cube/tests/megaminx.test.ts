@@ -7,9 +7,13 @@ import {
   invertMegaminxAlgorithm,
   isMegaminxMove,
   isMegaminxStickerState,
+  MEGAMINX_FACE_STICKER_COUNT,
   MEGAMINX_STICKER_COUNT,
   MEGAMINX_VISUAL_STATE_KIND,
   Megaminx3D,
+  type MegaminxFace,
+  MegaminxFaceColors,
+  MegaminxFaceOrder,
   MegaminxFaces,
   MegaminxMoves,
   MegaminxNotationError,
@@ -30,6 +34,11 @@ const megaminxDirectionalFaceMovePairs = [
   [MegaminxMoves.L, MegaminxMoves.LP],
   [MegaminxMoves.B, MegaminxMoves.BP],
 ] as const;
+
+function faceState(state: string, face: MegaminxFace): string {
+  const faceIndex = MegaminxFaceOrder.indexOf(face);
+  return state.slice(faceIndex * MEGAMINX_FACE_STICKER_COUNT, (faceIndex + 1) * MEGAMINX_FACE_STICKER_COUNT);
+}
 
 describe('Megaminx notation', () => {
   test.each(allMegaminxMoves)('accepts %s', (move) => {
@@ -58,7 +67,7 @@ describe('Megaminx notation', () => {
     expect(megaminxMoveToTurn(MegaminxMoves.RPP)).toMatchObject({
       amount: 2,
       axis: MegaminxFaces.R,
-      fixedFace: MegaminxFaces.L,
+      fixedFace: MegaminxFaces.R,
       kind: 'wca-wide',
     });
     expect(megaminxMoveToTurn(MegaminxMoves.DPP)).toMatchObject({
@@ -92,6 +101,50 @@ describe('Megaminx sticker state', () => {
 });
 
 describe('Megaminx3D', () => {
+  test('uses the expected face colors and opposite pairs', () => {
+    expect(MegaminxFaceColors).toMatchObject({
+      [MegaminxFaces.U]: '#ffffff',
+      [MegaminxFaces.E]: '#3f3f46',
+      [MegaminxFaces.F]: '#006b3f',
+      [MegaminxFaces.R]: '#7b2cbf',
+      [MegaminxFaces.D]: '#ffd500',
+      [MegaminxFaces.L]: '#0046ad',
+      [MegaminxFaces.A]: '#c1121f',
+      [MegaminxFaces.H]: '#5dade2',
+      [MegaminxFaces.C]: '#ff8c00',
+      [MegaminxFaces.G]: '#9acd32',
+      [MegaminxFaces.I]: '#f72585',
+      [MegaminxFaces.B]: '#d8b56d',
+    });
+
+    expect(
+      [MegaminxFaces.F, MegaminxFaces.R, MegaminxFaces.D, MegaminxFaces.L, MegaminxFaces.A].map(
+        (face) => MegaminxFaceColors[face],
+      ),
+    ).toEqual(['#006b3f', '#7b2cbf', '#ffd500', '#0046ad', '#c1121f']);
+    expect(
+      [MegaminxFaces.H, MegaminxFaces.C, MegaminxFaces.G, MegaminxFaces.I, MegaminxFaces.B].map(
+        (face) => MegaminxFaceColors[face],
+      ),
+    ).toEqual(['#5dade2', '#ff8c00', '#9acd32', '#f72585', '#d8b56d']);
+
+    expect([
+      [MegaminxFaceColors[MegaminxFaces.U], MegaminxFaceColors[MegaminxFaces.E]],
+      [MegaminxFaceColors[MegaminxFaces.F], MegaminxFaceColors[MegaminxFaces.G]],
+      [MegaminxFaceColors[MegaminxFaces.R], MegaminxFaceColors[MegaminxFaces.I]],
+      [MegaminxFaceColors[MegaminxFaces.D], MegaminxFaceColors[MegaminxFaces.B]],
+      [MegaminxFaceColors[MegaminxFaces.L], MegaminxFaceColors[MegaminxFaces.H]],
+      [MegaminxFaceColors[MegaminxFaces.A], MegaminxFaceColors[MegaminxFaces.C]],
+    ]).toEqual([
+      ['#ffffff', '#3f3f46'],
+      ['#006b3f', '#9acd32'],
+      ['#7b2cbf', '#f72585'],
+      ['#ffd500', '#d8b56d'],
+      ['#0046ad', '#5dade2'],
+      ['#c1121f', '#ff8c00'],
+    ]);
+  });
+
   test('starts solved and exposes face turn plans', () => {
     const defaultMegaminx = new Megaminx3D();
     expect(defaultMegaminx.animationSpeedMs).toBe(DEFAULT_MEGAMINX_ANIMATION_SPEED_MS);
@@ -119,7 +172,7 @@ describe('Megaminx3D', () => {
     expect(facePlan.angleRadians).toBeCloseTo((-4 * Math.PI) / 5);
     expect(uPlan.angleRadians).toBeCloseTo((-2 * Math.PI) / 5);
     expect(upPlan.angleRadians).toBeCloseTo((2 * Math.PI) / 5);
-    expect(reversePlan.angleRadians).toBeCloseTo((-4 * Math.PI) / 5);
+    expect(reversePlan.angleRadians).toBeCloseTo((4 * Math.PI) / 5);
     expect(facePlan.pieceIds).toHaveLength(11);
     expect(new Set(facePlan.pieceIds).size).toBe(facePlan.pieceIds.length);
     expect(widePlan.pieceIds).toHaveLength(51);
@@ -187,6 +240,35 @@ describe('Megaminx3D', () => {
     expect(primePlan.angleRadians).toBeCloseTo((2 * Math.PI) / 5);
     expect(movePlan.axis).toEqual(primePlan.axis);
     expect(movePlan.pieceIds).toEqual(primePlan.pieceIds);
+  });
+
+  test('keeps the expected fixed face for WCA wide turns', () => {
+    const megaminx = new Megaminx3D({ animationSpeedMs: 0 });
+    const rppPlan = megaminx.turnPlan(MegaminxMoves.RPP);
+    const rmmPlan = megaminx.turnPlan(MegaminxMoves.RMM);
+    const dppPlan = megaminx.turnPlan(MegaminxMoves.DPP);
+    const dmmPlan = megaminx.turnPlan(MegaminxMoves.DMM);
+
+    expect(rppPlan.angleRadians).toBeCloseTo((-4 * Math.PI) / 5);
+    expect(rmmPlan.angleRadians).toBeCloseTo((4 * Math.PI) / 5);
+    expect(dppPlan.angleRadians).toBeCloseTo((-4 * Math.PI) / 5);
+    expect(dmmPlan.angleRadians).toBeCloseTo((4 * Math.PI) / 5);
+
+    const rWidePieces = new Set(rppPlan.pieceIds);
+    const dWidePieces = new Set(dppPlan.pieceIds);
+    const rFixedPieces = megaminx._pieces.filter((piece) => piece.faces.has(MegaminxFaces.R));
+    const dFixedPieces = megaminx._pieces.filter((piece) => piece.faces.has(MegaminxFaces.U));
+
+    expect(rFixedPieces.some((piece) => rWidePieces.has(piece.pieceId))).toBe(false);
+    expect(dFixedPieces.some((piece) => dWidePieces.has(piece.pieceId))).toBe(false);
+
+    megaminx.applyMove(MegaminxMoves.RPP);
+    expect(faceState(megaminx.getState(), MegaminxFaces.R)).toBe(MegaminxFaces.R.repeat(MEGAMINX_FACE_STICKER_COUNT));
+    megaminx.applyMove(MegaminxMoves.RMM);
+    megaminx.applyMove(MegaminxMoves.DPP);
+    expect(faceState(megaminx.getState(), MegaminxFaces.U)).toBe(MegaminxFaces.U.repeat(MEGAMINX_FACE_STICKER_COUNT));
+    megaminx.applyMove(MegaminxMoves.DMM);
+    expect(megaminx.getState()).toBe(defaultMegaminxStickerState());
   });
 
   test('runs algorithms, reset, setState, and async zero-speed moves', async () => {

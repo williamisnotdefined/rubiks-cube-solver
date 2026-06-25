@@ -3,18 +3,26 @@ import { PerspectiveCamera, Quaternion, Vector3 } from 'three';
 type PointerOrbitEvent = 'change' | 'end' | 'start';
 
 export const pointerOrbitFullDragRadians = Math.PI * 2;
+const pointerOrbitDampingFactor = 0.86;
+const pointerOrbitMinimumVelocity = 0.00001;
+const minPolarAngle = 0.001;
+const maxPolarAngle = Math.PI - minPolarAngle;
 
 export class PointerOrbitControls {
   readonly target = new Vector3(0, 0, 0);
   private activePointerId: number | null = null;
   private lastX = 0;
   private lastY = 0;
+  private velocityPitch = 0;
+  private velocityYaw = 0;
+  private readonly stableUp: Vector3;
   private readonly listeners = new Map<PointerOrbitEvent, Set<() => void>>();
 
   constructor(
     private readonly camera: PerspectiveCamera,
     private readonly domElement: HTMLElement,
   ) {
+    this.stableUp = this.camera.up.clone().normalize();
     this.domElement.addEventListener('pointerdown', this.onPointerDown);
     this.domElement.addEventListener('pointermove', this.onPointerMove);
     this.domElement.addEventListener('pointerup', this.onPointerEnd);
@@ -32,7 +40,27 @@ export class PointerOrbitControls {
   }
 
   update(): boolean {
-    return false;
+    if (this.activePointerId !== null) {
+      return false;
+    }
+
+    if (
+      Math.abs(this.velocityYaw) < pointerOrbitMinimumVelocity &&
+      Math.abs(this.velocityPitch) < pointerOrbitMinimumVelocity
+    ) {
+      this.velocityYaw = 0;
+      this.velocityPitch = 0;
+      return false;
+    }
+
+    const moved = this.orbit(this.velocityYaw, this.velocityPitch);
+    this.velocityYaw *= pointerOrbitDampingFactor;
+    this.velocityPitch *= pointerOrbitDampingFactor;
+    if (!moved) {
+      this.velocityYaw = 0;
+      this.velocityPitch = 0;
+    }
+    return moved;
   }
 
   handleResize(): void {
@@ -54,6 +82,8 @@ export class PointerOrbitControls {
     this.activePointerId = event.pointerId;
     this.lastX = event.clientX;
     this.lastY = event.clientY;
+    this.velocityYaw = 0;
+    this.velocityPitch = 0;
     this.domElement.setPointerCapture?.(event.pointerId);
     this.dispatch('start');
     event.preventDefault();
@@ -71,7 +101,9 @@ export class PointerOrbitControls {
       return;
     }
     const { width, height } = this.getDragSize();
-    this.orbit((-deltaX / width) * pointerOrbitFullDragRadians, (-deltaY / height) * pointerOrbitFullDragRadians);
+    this.velocityYaw = (-deltaX / width) * pointerOrbitFullDragRadians;
+    this.velocityPitch = (-deltaY / height) * pointerOrbitFullDragRadians;
+    this.orbit(this.velocityYaw, this.velocityPitch);
     this.dispatch('change');
     event.preventDefault();
   };
@@ -88,17 +120,30 @@ export class PointerOrbitControls {
     event.preventDefault();
   };
 
-  private orbit(yawRadians: number, pitchRadians: number): void {
+  private orbit(yawRadians: number, pitchRadians: number): boolean {
     const offset = this.camera.position.clone().sub(this.target);
-    const screenUp = new Vector3(0, 1, 0).applyQuaternion(this.camera.quaternion).normalize();
-    const screenRight = new Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion).normalize();
-    const yaw = new Quaternion().setFromAxisAngle(screenUp, yawRadians);
-    const pitch = new Quaternion().setFromAxisAngle(screenRight, pitchRadians);
+    const radius = offset.length();
+    if (radius === 0) {
+      return false;
+    }
+    const initialOffset = offset.clone();
 
-    offset.applyQuaternion(yaw).applyQuaternion(pitch);
-    this.camera.up.applyQuaternion(yaw).applyQuaternion(pitch).normalize();
+    const yaw = new Quaternion().setFromAxisAngle(this.stableUp, yawRadians);
+    offset.applyQuaternion(yaw);
+
+    const polarAngle = offset.angleTo(this.stableUp);
+    const clampedPitch = Math.min(Math.max(pitchRadians, minPolarAngle - polarAngle), maxPolarAngle - polarAngle);
+    const right = new Vector3().crossVectors(this.stableUp, offset);
+    if (right.lengthSq() > 0 && clampedPitch !== 0) {
+      right.normalize();
+      offset.applyQuaternion(new Quaternion().setFromAxisAngle(right, clampedPitch));
+    }
+
+    offset.setLength(radius);
     this.camera.position.copy(this.target).add(offset);
+    this.camera.up.copy(this.stableUp);
     this.camera.lookAt(this.target);
+    return offset.distanceToSquared(initialOffset) > 1e-12;
   }
 
   private getDragSize(): { height: number; width: number } {
