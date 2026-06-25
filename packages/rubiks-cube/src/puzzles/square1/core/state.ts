@@ -1,6 +1,12 @@
 import { square1MoveToString } from './notation';
 import type { Square1CoordinateMove, Square1LayerPieceId, Square1Move } from './types';
-import { SQUARE1_LAYER_UNIT_COUNT, Square1SolvedBottomSlots, Square1SolvedTopSlots } from './types';
+import {
+  SQUARE1_BOTTOM_SLASH_SLOT_INDICES,
+  SQUARE1_LAYER_UNIT_COUNT,
+  SQUARE1_TOP_SLASH_SLOT_INDICES,
+  Square1SolvedBottomSlots,
+  Square1SolvedTopSlots,
+} from './types';
 
 export type Square1MiddleOrientation = 0 | 3;
 
@@ -50,7 +56,7 @@ export function applySquare1CoordinateMove(state: Square1State, move: Square1Coo
   return {
     bottomSlots: rotateSlots(state.bottomSlots, -move.bottom),
     middleOrientation: state.middleOrientation,
-    topSlots: rotateSlots(state.topSlots, -move.top),
+    topSlots: rotateSlots(state.topSlots, move.top),
     version: 2,
   };
 }
@@ -63,12 +69,8 @@ export function applySquare1Slash(state: Square1State, move: Square1Move = { kin
   const topSlots = [...state.topSlots];
   const bottomSlots = [...state.bottomSlots];
 
-  // TNoodle-aligned slash convention: top slots 6..11 exchange with bottom slots 0..5.
-  // The visual flip is handled by piece pose quaternions, not by reversing slot order.
-  for (let index = 0; index < SQUARE1_LAYER_UNIT_COUNT / 2; index++) {
-    topSlots[6 + index] = state.bottomSlots[index];
-    bottomSlots[index] = state.topSlots[6 + index];
-  }
+  assignSlashTargets(bottomSlots, state.topSlots, SQUARE1_TOP_SLASH_SLOT_INDICES, 'top', 'bottom');
+  assignSlashTargets(topSlots, state.bottomSlots, SQUARE1_BOTTOM_SLASH_SLOT_INDICES, 'bottom', 'top');
 
   return {
     bottomSlots,
@@ -79,15 +81,70 @@ export function applySquare1Slash(state: Square1State, move: Square1Move = { kin
 }
 
 export function isSquare1SlashLegal(state: Square1State): boolean {
-  return isLayerSlashLegal(state.topSlots) && isLayerSlashLegal(state.bottomSlots);
-}
-
-export function isLayerSlashLegal(slots: readonly Square1LayerPieceId[]): boolean {
-  return slots[5] !== slots[6] && slots[11] !== slots[0];
+  return (
+    state.topSlots[10] !== state.topSlots[11] &&
+    state.topSlots[4] !== state.topSlots[5] &&
+    state.bottomSlots[11] !== state.bottomSlots[0] &&
+    state.bottomSlots[5] !== state.bottomSlots[6]
+  );
 }
 
 export function uniqueSquare1LayerPieceIds(slots: readonly Square1LayerPieceId[]): Square1LayerPieceId[] {
   return Array.from(new Set(slots));
+}
+
+function assignSlashTargets(
+  targetSlots: Square1LayerPieceId[],
+  sourceSlots: readonly Square1LayerPieceId[],
+  sourceIndices: readonly number[],
+  sourceLayer: 'top' | 'bottom',
+  targetLayer: 'top' | 'bottom',
+): void {
+  const sourcePieceIds = uniqueSquare1LayerPieceIds(sourceIndices.map((index) => sourceSlots[index]));
+
+  for (const pieceId of sourcePieceIds) {
+    const widthUnits = square1PieceWidthUnits(pieceId);
+    const sourceStartSlot = firstOccupiedSlot(sourceSlots, pieceId);
+    const sourceRotationUnits = square1PieceRotationUnits(sourceStartSlot, widthUnits, sourceLayer);
+    const targetRotationUnits = modLayerUnit(11 - sourceRotationUnits);
+
+    for (const targetSlot of square1SlotsForRotationUnits(targetRotationUnits, widthUnits, targetLayer)) {
+      targetSlots[targetSlot] = pieceId;
+    }
+  }
+}
+
+function square1PieceWidthUnits(pieceId: Square1LayerPieceId): 1 | 2 {
+  return pieceId.length === 3 ? 2 : 1;
+}
+
+function square1PieceRotationUnits(slot: number, widthUnits: 1 | 2, layer: 'top' | 'bottom'): number {
+  if (layer === 'top') {
+    return widthUnits === 1 ? slot - 2 : slot;
+  }
+
+  return widthUnits === 1 ? slot - 3 : slot - 4;
+}
+
+function square1SlotsForRotationUnits(rotationUnits: number, widthUnits: 1 | 2, layer: 'top' | 'bottom'): number[] {
+  const normalized = modLayerUnit(rotationUnits);
+  if (layer === 'top') {
+    return widthUnits === 1 ? [modLayerUnit(normalized + 2)] : [normalized, modLayerUnit(normalized + 1)];
+  }
+
+  return widthUnits === 1
+    ? [modLayerUnit(normalized + 3)]
+    : [modLayerUnit(normalized + 4), modLayerUnit(normalized + 5)];
+}
+
+function firstOccupiedSlot(slots: readonly Square1LayerPieceId[], id: Square1LayerPieceId): number {
+  const positions = slots.flatMap((slotId, index) => (slotId === id ? [index] : []));
+  if (positions.length === 1) {
+    return positions[0];
+  }
+
+  const [first, second] = positions;
+  return (first + 1) % SQUARE1_LAYER_UNIT_COUNT === second ? first : second;
 }
 
 export function modLayerUnit(value: number): number {

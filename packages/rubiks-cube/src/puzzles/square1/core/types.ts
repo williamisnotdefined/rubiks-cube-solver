@@ -47,7 +47,7 @@ export type Square1StickerDefinition = {
   localSurface: Square1StickerLocalSurface;
 };
 
-// TNoodle-aligned 24-slot reference orientation used by the state golden tests:
+// csTimer-aligned 24-slot reference orientation used by the state golden tests:
 // top slots start at UFR and advance through R, B, L, F; bottom slots start at DF
 // and advance through F, R, B, L. Semantic IDs name solved stickers, not position.
 export const Square1TopPieceOrder = Object.freeze([
@@ -302,9 +302,9 @@ const middleDefinitions: Square1PieceDefinition[] = [
     solvedStartUnit: 0,
     sourceLayer: 'middle',
     ...defineStickers(
-      { face: Square1Faces.L, localSurface: 'sideA' },
-      { face: Square1Faces.F, localSurface: 'sideB' },
-      { face: Square1Faces.R, localSurface: 'sideC' },
+      { face: Square1Faces.F, localSurface: 'sideA' },
+      { face: Square1Faces.R, localSurface: 'sideB' },
+      { face: Square1Faces.B, localSurface: 'sideC' },
     ),
     widthUnits: 6,
   },
@@ -315,9 +315,9 @@ const middleDefinitions: Square1PieceDefinition[] = [
     solvedStartUnit: 0,
     sourceLayer: 'middle',
     ...defineStickers(
-      { face: Square1Faces.B, localSurface: 'sideA' },
-      { face: Square1Faces.R, localSurface: 'sideB' },
-      { face: Square1Faces.L, localSurface: 'sideC' },
+      { face: Square1Faces.L, localSurface: 'sideA' },
+      { face: Square1Faces.B, localSurface: 'sideB' },
+      { face: Square1Faces.F, localSurface: 'sideC' },
     ),
     widthUnits: 6,
   },
@@ -338,6 +338,8 @@ export const Square1PieceDefinitions = Object.freeze([
 
 export const SQUARE1_LAYER_UNIT_COUNT = 12;
 export const SQUARE1_PIECE_COUNT = 18;
+export const SQUARE1_TOP_SLASH_SLOT_INDICES = [11, 0, 1, 2, 3, 4] as const;
+export const SQUARE1_BOTTOM_SLASH_SLOT_INDICES = [0, 1, 2, 3, 4, 5] as const;
 export const SQUARE1_VISUAL_STATE_KIND = 'square1-pieces-v2';
 
 export type Square1CoordinateMove = {

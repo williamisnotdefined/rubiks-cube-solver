@@ -13,8 +13,8 @@ export const SQUARE1_LAYER_GAP = 0;
 export const SQUARE1_TOP_Y = SQUARE1_MIDDLE_HEIGHT / 2 + SQUARE1_LAYER_GAP + SQUARE1_LAYER_HEIGHT / 2;
 export const SQUARE1_BOTTOM_Y = -SQUARE1_TOP_Y;
 export const SQUARE1_MIDDLE_SEAM_OFFSET = SQUARE1_CUT_OFFSET;
-export const SQUARE1_SEAM_DIRECTION = new Vector3(1, 0, SQUARE1_CUT_OFFSET).normalize();
-export const SQUARE1_SLICE_AXIS = new Vector3(-SQUARE1_CUT_OFFSET, 0, 1).normalize();
+export const SQUARE1_SEAM_DIRECTION = new Vector3(-SQUARE1_CUT_OFFSET, 0, 1).normalize();
+export const SQUARE1_SLICE_AXIS = new Vector3(1, 0, SQUARE1_CUT_OFFSET).normalize();
 export const SQUARE1_SLICE_EPSILON = 1e-8;
 export const SQUARE1_STICKER_INSET = 0.018;
 export const SQUARE1_STICKER_LIFT = 0.003;
@@ -24,10 +24,10 @@ export const SQUARE1_PIECE_GAP_UNITS = 0;
 export const SQUARE1_SHADOW_COLOR = '#111318';
 
 export const Square1FaceColors = {
-  [Square1Faces.U]: '#ffffff',
-  [Square1Faces.R]: 'red',
-  [Square1Faces.F]: '#2cbf13',
-  [Square1Faces.D]: '#ffd500',
-  [Square1Faces.L]: '#ff6d00',
-  [Square1Faces.B]: 'blue',
+  [Square1Faces.U]: '#ffd500',
+  [Square1Faces.R]: '#2cbf13',
+  [Square1Faces.F]: 'red',
+  [Square1Faces.D]: '#ffffff',
+  [Square1Faces.L]: 'blue',
+  [Square1Faces.B]: '#ff6d00',
 } satisfies Record<Square1Face, ColorRepresentation>;

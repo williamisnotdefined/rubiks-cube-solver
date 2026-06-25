@@ -25,7 +25,6 @@ export {
   cloneSquare1State,
   createSolvedSquare1State,
   invertSquare1Algorithm,
-  isLayerSlashLegal,
   isSquare1MoveToken,
   isSquare1SlashLegal,
   parseSquare1Algorithm,

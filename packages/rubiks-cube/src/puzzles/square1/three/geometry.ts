@@ -50,16 +50,16 @@ export function createSquare1MiddlePieceGeometry(id: Square1MiddlePieceId): Squa
   const points =
     id === 'M_MOVING'
       ? [
-          { x: -half, z: -h },
-          { x: -half, z: half },
+          { x: -h, z: half },
           { x: half, z: half },
-          { x: half, z: h },
+          { x: half, z: -half },
+          { x: h, z: -half },
         ]
       : [
+          { x: -half, z: half },
           { x: -half, z: -half },
-          { x: half, z: -half },
-          { x: half, z: h },
-          { x: -half, z: -h },
+          { x: h, z: -half },
+          { x: -h, z: half },
         ];
   const yMin = -SQUARE1_MIDDLE_HEIGHT / 2;
   const yMax = SQUARE1_MIDDLE_HEIGHT / 2;

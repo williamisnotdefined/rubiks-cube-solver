@@ -9,6 +9,7 @@ import {
   defaultSquare1VisualState,
   invertSquare1Algorithm,
   isSquare1MoveToken,
+  isSquare1SlashLegal,
   isSquare1VisualState,
   parseSquare1Algorithm,
   parseSquare1MoveToken,
@@ -22,6 +23,8 @@ import {
   type Square1Move,
   Square1MoveTokens,
   Square1NotationError,
+  type Square1PieceId,
+  type Square1State,
   square1MoveToString,
 } from '../src/puzzles/square1';
 import {
@@ -33,6 +36,7 @@ import {
   SQUARE1_SEAM_DIRECTION,
   SQUARE1_SLICE_AXIS,
   SQUARE1_UNIT_ANGLE_RADIANS,
+  Square1FaceColors,
 } from '../src/puzzles/square1/three/config';
 
 const square1CoordinateTokens = [
@@ -83,23 +87,23 @@ type ReferenceGoldenCase = {
 
 const referenceGoldenCases: ReferenceGoldenCase[] = [
   {
-    expectedBottom: [4, 4, 5, 6, 6, 7, 12, 13, 13, 14, 15, 15],
+    expectedBottom: [2, 2, 1, 0, 0, 7, 12, 13, 13, 14, 15, 15],
     expectedMiddleOrientation: 3,
-    expectedTop: [0, 0, 1, 2, 2, 3, 8, 9, 9, 10, 11, 11],
+    expectedTop: [11, 10, 9, 9, 8, 3, 4, 4, 5, 6, 6, 11],
     moves: [{ kind: 'slash' }],
     name: '/',
   },
   {
     expectedBottom: [8, 9, 9, 10, 11, 11, 12, 13, 13, 14, 15, 15],
     expectedMiddleOrientation: 0,
-    expectedTop: [7, 0, 0, 1, 2, 2, 3, 4, 4, 5, 6, 6],
+    expectedTop: [0, 1, 2, 2, 3, 4, 4, 5, 6, 6, 7, 0],
     moves: [{ bottom: 0, kind: 'coordinate', top: 1 }],
     name: '(1,0)',
   },
   {
     expectedBottom: [8, 9, 9, 10, 11, 11, 12, 13, 13, 14, 15, 15],
     expectedMiddleOrientation: 0,
-    expectedTop: [0, 1, 2, 2, 3, 4, 4, 5, 6, 6, 7, 0],
+    expectedTop: [7, 0, 0, 1, 2, 2, 3, 4, 4, 5, 6, 6],
     moves: [{ bottom: 0, kind: 'coordinate', top: -1 }],
     name: '(-1,0)',
   },
@@ -118,23 +122,23 @@ const referenceGoldenCases: ReferenceGoldenCase[] = [
     name: '(0,-1)',
   },
   {
-    expectedBottom: [3, 4, 4, 5, 6, 6, 13, 13, 14, 15, 15, 8],
+    expectedBottom: [3, 2, 2, 1, 0, 0, 13, 13, 14, 15, 15, 8],
     expectedMiddleOrientation: 3,
-    expectedTop: [7, 0, 0, 1, 2, 2, 9, 9, 10, 11, 11, 12],
+    expectedTop: [11, 11, 10, 9, 9, 4, 4, 5, 6, 6, 7, 12],
     moves: [{ bottom: -1, kind: 'coordinate', top: 1 }, { kind: 'slash' }],
     name: '(1,-1) /',
   },
   {
-    expectedBottom: [2, 2, 3, 4, 4, 5, 12, 13, 13, 14, 15, 15],
+    expectedBottom: [4, 4, 3, 2, 2, 1, 12, 13, 13, 14, 15, 15],
     expectedMiddleOrientation: 3,
-    expectedTop: [6, 6, 7, 0, 0, 1, 8, 9, 9, 10, 11, 11],
+    expectedTop: [11, 10, 9, 9, 8, 5, 6, 6, 7, 0, 0, 11],
     moves: [{ bottom: 0, kind: 'coordinate', top: 3 }, { kind: 'slash' }],
     name: '(3,0) /',
   },
   {
-    expectedBottom: [4, 4, 5, 6, 6, 7, 10, 11, 11, 12, 13, 13],
+    expectedBottom: [2, 2, 1, 0, 0, 7, 10, 11, 11, 12, 13, 13],
     expectedMiddleOrientation: 3,
-    expectedTop: [0, 0, 1, 2, 2, 3, 14, 15, 15, 8, 9, 9],
+    expectedTop: [9, 8, 15, 15, 14, 3, 4, 4, 5, 6, 6, 9],
     moves: [{ bottom: 3, kind: 'coordinate', top: 0 }, { kind: 'slash' }],
     name: '(0,3) /',
   },
@@ -146,6 +150,32 @@ const referenceGoldenCases: ReferenceGoldenCase[] = [
     name: '/ /',
   },
 ];
+
+const reportedSquare1Scramble =
+  '(4,0) / (-3,6) / (-1,-4) / (3,0) / (6,0) / (-2,-2) / (0,-1) / (-3,-3) / (1,0) / (4,0) / (-1,-2) / (6,-1) /';
+
+const reportedCsTimerExpectedState: Square1State = {
+  bottomSlots: ['DL', 'DLF', 'DLF', 'UR', 'UF', 'UL', 'UB', 'ULF', 'ULF', 'DFR', 'DFR', 'DF'],
+  middleOrientation: 0,
+  topSlots: ['DR', 'DRB', 'DRB', 'URB', 'URB', 'UBL', 'UBL', 'DBL', 'DBL', 'UFR', 'UFR', 'DB'],
+  version: 2,
+};
+
+const referenceAlgorithms = [
+  { algorithm: '/', name: '/' },
+  { algorithm: '(1,0)', name: '(1,0)' },
+  { algorithm: '(-1,0)', name: '(-1,0)' },
+  { algorithm: '(0,1)', name: '(0,1)' },
+  { algorithm: '(0,-1)', name: '(0,-1)' },
+  { algorithm: '(1,-1) /', name: '(1,-1) /' },
+  { algorithm: '(3,0) /', name: '(3,0) /' },
+  { algorithm: '(0,3) /', name: '(0,3) /' },
+  { algorithm: '/ /', name: '/ /' },
+  { algorithm: reportedSquare1Scramble, name: 'reported scramble' },
+] as const;
+
+const square1StressScrambleCount = 1_000;
+const square1StressPairCount = 12;
 
 describe('Square-1 notation', () => {
   test.each([...square1CoordinateTokens, Square1MoveTokens.Slash, '(0,0)'])('accepts %s', (move) => {
@@ -194,14 +224,46 @@ describe('Square-1 pure state', () => {
     expect(actual.middleOrientation).toBe(golden.expectedMiddleOrientation);
   });
 
+  test('matches csTimer state for the reported scramble', () => {
+    const moves = parseSquare1Algorithm(reportedSquare1Scramble);
+    const actual = moves.reduce(applySquare1Move, createSolvedSquare1State());
+
+    expect(actual).toEqual(reportedCsTimerExpectedState);
+    expect(applyGeometricSquare1Oracle(moves)).toEqual(reportedCsTimerExpectedState);
+  });
+
+  test.each(referenceAlgorithms)('matches independent reference model for $name', ({ algorithm }) => {
+    const moves = parseSquare1Algorithm(algorithm);
+    const actual = moves.reduce(applySquare1Move, createSolvedSquare1State());
+
+    expect(actual).toEqual(applyReferenceSquare1Moves(moves));
+  });
+
   test.each(square1CoordinateTokens)('applies coordinate inverse for %s', (move) => {
     const parsed = parseSquare1MoveToken(move);
     if (!parsed) {
       throw new Error(`Expected parsed move: ${move}`);
     }
-    const solved = createSolvedSquare1State();
+    const states = [
+      createSolvedSquare1State(),
+      parseSquare1Algorithm('/').reduce(applySquare1Move, createSolvedSquare1State()),
+    ];
 
-    expect(applySquare1Move(applySquare1Move(solved, parsed), reverseSquare1Move(parsed))).toEqual(solved);
+    for (const state of states) {
+      expect(applySquare1Move(applySquare1Move(state, parsed), reverseSquare1Move(parsed))).toEqual(state);
+    }
+  });
+
+  test.each(['/', '(1,-1) /', '(3,0) /', '(0,3) /'])('keeps slash involutive for %s', (algorithm) => {
+    const state = parseSquare1Algorithm(algorithm).reduce(applySquare1Move, createSolvedSquare1State());
+
+    expect(applySquare1Move(applySquare1Move(state, { kind: 'slash' }), { kind: 'slash' })).toEqual(state);
+  });
+
+  test.each(referenceAlgorithms)('preserves external pieces for $name', ({ algorithm }) => {
+    const actual = parseSquare1Algorithm(algorithm).reduce(applySquare1Move, createSolvedSquare1State());
+
+    expectSquare1PieceConservation(actual);
   });
 
   test('rejects blocked slash states', () => {
@@ -209,6 +271,53 @@ describe('Square-1 pure state', () => {
 
     expect(() => applySquare1Move(blocked, { kind: 'slash' })).toThrow(Square1IllegalMoveError);
   });
+
+  test.each([
+    { layer: 'top', left: 10, name: 'top 10|11', right: 11 },
+    { layer: 'top', left: 4, name: 'top 4|5', right: 5 },
+    { layer: 'bottom', left: 11, name: 'bottom 11|0', right: 0 },
+    { layer: 'bottom', left: 5, name: 'bottom 5|6', right: 6 },
+  ] as const)('rejects a slash when a corner crosses $name', ({ layer, left, right }) => {
+    const state = createSolvedSquare1State();
+    const slots = layer === 'top' ? [...state.topSlots] : [...state.bottomSlots];
+    slots[right] = slots[left];
+    const blocked = layer === 'top' ? { ...state, topSlots: slots } : { ...state, bottomSlots: slots };
+
+    expect(isSquare1SlashLegal(blocked)).toBe(false);
+    expect(() => applySquare1Move(blocked, { kind: 'slash' })).toThrow(Square1IllegalMoveError);
+  });
+
+  test('validates 1,000 deterministic legal scrambles through core and renderer', () => {
+    const random = createSeededRandom(0x5_01_000);
+    const solved = createSolvedSquare1State();
+    const solvedVisualState = defaultSquare1VisualState();
+    const square1 = new Square1D({ animationSpeedMs: 0 });
+
+    for (let index = 0; index < square1StressScrambleCount; index++) {
+      const scramble = createLegalSquare1Scramble(random, square1StressPairCount);
+      const algorithm = scramble.map(square1MoveToString).join(' ');
+      const finalState = scramble.reduce(applySquare1Move, solved);
+      const oracleState = applyGeometricSquare1Oracle(scramble);
+      const inverse = invertSquare1Algorithm(scramble);
+
+      expect(parseSquare1Algorithm(algorithm), `scramble #${index}: ${algorithm}`).toEqual(scramble);
+      expect(finalState, `scramble #${index}: geometric oracle ${algorithm}`).toEqual(oracleState);
+      expectSquare1PieceConservation(finalState);
+      expect(parseSquare1VisualState(payload(finalState)), `scramble #${index}: visual validation`).toEqual(finalState);
+      expect(inverse.reduce(applySquare1Move, finalState), `scramble #${index}: inverse replay`).toEqual(solved);
+
+      square1.reset();
+      for (const move of scramble) {
+        square1.applyMove(move);
+      }
+      expect(parseSquare1VisualState(square1.getState()), `scramble #${index}: renderer state`).toEqual(finalState);
+
+      for (const move of inverse) {
+        square1.applyMove(move);
+      }
+      expect(square1.getState(), `scramble #${index}: renderer inverse replay`).toBe(solvedVisualState);
+    }
+  }, 15_000);
 });
 
 describe('Square-1 visual state', () => {
@@ -274,6 +383,9 @@ describe('Square1D', () => {
     expect(slashPlan.rotations[0].axis.x).toBeCloseTo(SQUARE1_SLICE_AXIS.x);
     expect(slashPlan.rotations[0].axis.z).toBeCloseTo(SQUARE1_SLICE_AXIS.z);
     expect(slashPlan.rotations[0].axis).not.toEqual({ x: 0, y: 0, z: 1 });
+    expect(new Set(slashPlan.rotations[0].pieceIds)).toEqual(
+      new Set(['UF', 'UFR', 'UR', 'URB', 'DF', 'DFR', 'DR', 'DRB', 'M_MOVING']),
+    );
     expect(slashPlan.rotations[0].pieceIds).toContain('M_MOVING');
     expect(slashPlan.rotations[0].pieceIds).not.toContain('M_FIXED');
   });
@@ -291,6 +403,19 @@ describe('Square1D', () => {
         ).toBeGreaterThan(0.9);
       }
     }
+  });
+
+  test('keeps WCA middle-layer slash colors split across red and orange in the solved state', () => {
+    const square1 = new Square1D({ animationSpeedMs: 0 });
+    const movingFaces = new Set(requiredPiece(square1, 'M_MOVING').stickers.map((sticker) => sticker.square1Face));
+    const fixedFaces = new Set(requiredPiece(square1, 'M_FIXED').stickers.map((sticker) => sticker.square1Face));
+    const splitFaces = Array.from(movingFaces)
+      .filter((face) => fixedFaces.has(face))
+      .sort();
+
+    expect(splitFaces).toEqual(['B', 'F']);
+    expect(Square1FaceColors.F).toBe('red');
+    expect(Square1FaceColors.B).toBe('#ff6d00');
   });
 
   test('applies moves, rejects blocked slash, and rejects v1 state', () => {
@@ -356,7 +481,7 @@ describe('Square1D', () => {
 
   test('keeps stickers attached to pieces through slash transfer', () => {
     const square1 = new Square1D({ animationSpeedMs: 0 });
-    const topTransfer = requiredPiece(square1, 'UBL');
+    const topTransfer = requiredPiece(square1, 'UFR');
     const bottomTransfer = requiredPiece(square1, 'DFR');
     const topCap = requiredCapSticker(topTransfer);
     const bottomCap = requiredCapSticker(bottomTransfer);
@@ -383,6 +508,23 @@ describe('Square1D', () => {
     expect(progress).toHaveBeenCalledWith(1);
     expect(square1.getState()).toBe(defaultSquare1VisualState());
     expect(captureWorldMatrices(square1)).toEqual(before);
+  });
+
+  test.each([
+    Square1MoveTokens.OneZero,
+    Square1MoveTokens.MinusOneZero,
+    Square1MoveTokens.ZeroOne,
+    Square1MoveTokens.ZeroMinusOne,
+    '(3,-1)',
+    Square1MoveTokens.Slash,
+  ])('ends animation at the static pose for %s', (move) => {
+    const preview = new Square1D({ animationSpeedMs: 0 });
+    previewMoveAtEnd(preview, move);
+
+    const expected = new Square1D({ animationSpeedMs: 0 });
+    expected.applyMove(move);
+
+    expect(captureWorldMatrices(preview)).toEqual(captureWorldMatrices(expected));
   });
 
   test('uses exact cube-like proportions with a substantial aligned middle layer', () => {
@@ -414,11 +556,11 @@ describe('Square1D', () => {
       3,
     );
     expect(SQUARE1_LAYER_HEIGHT / SQUARE1_LAYER_HALF_SIZE).toBeCloseTo(8 / 11, 6);
-    expect(minGeometryZAtX(middleMoving.surface.geometry, -SQUARE1_LAYER_HALF_SIZE)).toBeCloseTo(
+    expect(minGeometryXAtZ(middleMoving.surface.geometry, SQUARE1_LAYER_HALF_SIZE)).toBeCloseTo(
       -SQUARE1_MIDDLE_SEAM_OFFSET,
       3,
     );
-    expect(minGeometryZAtX(middleMoving.surface.geometry, SQUARE1_LAYER_HALF_SIZE)).toBeCloseTo(
+    expect(minGeometryXAtZ(middleMoving.surface.geometry, -SQUARE1_LAYER_HALF_SIZE)).toBeCloseTo(
       SQUARE1_MIDDLE_SEAM_OFFSET,
       3,
     );
@@ -426,14 +568,414 @@ describe('Square1D', () => {
 });
 
 describe('Square-1 slash axis', () => {
-  test('is normalized and perpendicular to the seam', () => {
+  test('is normalized, perpendicular to the seam, and matches csTimer slash axis', () => {
     expect(Math.abs(SQUARE1_SEAM_DIRECTION.dot(SQUARE1_SLICE_AXIS))).toBeLessThan(1e-10);
+    expect(SQUARE1_SLICE_AXIS.x).toBeCloseTo(Math.cos(Math.PI / 12));
+    expect(SQUARE1_SLICE_AXIS.z).toBeCloseTo(Math.sin(Math.PI / 12));
     expect(SQUARE1_SLICE_AXIS.length()).toBeCloseTo(1);
   });
 });
 
 function mapReferenceSlots(slots: readonly number[]): Square1LayerPieceId[] {
   return slots.map((id) => referenceIdToSemanticId[id]);
+}
+
+function applyReferenceSquare1Moves(moves: readonly Square1Move[]): Square1State {
+  return moves.reduce(applyReferenceSquare1Move, {
+    bottomSlots: mapReferenceSlots([8, 9, 9, 10, 11, 11, 12, 13, 13, 14, 15, 15]),
+    middleOrientation: 0,
+    topSlots: mapReferenceSlots([0, 0, 1, 2, 2, 3, 4, 4, 5, 6, 6, 7]),
+    version: 2,
+  });
+}
+
+function applyReferenceSquare1Move(state: Square1State, move: Square1Move): Square1State {
+  if (move.kind !== 'slash') {
+    return {
+      bottomSlots: rotateReferenceSlots(state.bottomSlots, -move.bottom),
+      middleOrientation: state.middleOrientation,
+      topSlots: rotateReferenceSlots(state.topSlots, move.top),
+      version: 2,
+    };
+  }
+
+  const topSlots = [...state.topSlots];
+  const bottomSlots = [...state.bottomSlots];
+
+  assignReferenceSlashTargets(bottomSlots, state.topSlots, [11, 0, 1, 2, 3, 4], 'top', 'bottom');
+  assignReferenceSlashTargets(topSlots, state.bottomSlots, [0, 1, 2, 3, 4, 5], 'bottom', 'top');
+
+  return {
+    bottomSlots,
+    middleOrientation: state.middleOrientation === 0 ? 3 : 0,
+    topSlots,
+    version: 2,
+  };
+}
+
+function rotateReferenceSlots(slots: readonly Square1LayerPieceId[], shift: number): Square1LayerPieceId[] {
+  const normalized = ((shift % 12) + 12) % 12;
+  return Array.from({ length: 12 }, (_, index) => slots[(normalized + index) % 12]);
+}
+
+function assignReferenceSlashTargets(
+  targetSlots: Square1LayerPieceId[],
+  sourceSlots: readonly Square1LayerPieceId[],
+  sourceIndices: readonly number[],
+  sourceLayer: 'top' | 'bottom',
+  targetLayer: 'top' | 'bottom',
+): void {
+  for (const pieceId of new Set(sourceIndices.map((index) => sourceSlots[index]))) {
+    const widthUnits = pieceId.length === 3 ? 2 : 1;
+    const sourceStartSlot = referenceFirstOccupiedSlot(sourceSlots, pieceId);
+    const sourceRotationUnits = referencePieceRotationUnits(sourceStartSlot, widthUnits, sourceLayer);
+    const targetRotationUnits = ((11 - sourceRotationUnits) % 12) + 12;
+
+    for (const targetSlot of referenceSlotsForRotationUnits(targetRotationUnits, widthUnits, targetLayer)) {
+      targetSlots[targetSlot] = pieceId;
+    }
+  }
+}
+
+function referencePieceRotationUnits(slot: number, widthUnits: 1 | 2, layer: 'top' | 'bottom'): number {
+  if (layer === 'top') {
+    return widthUnits === 1 ? slot - 2 : slot;
+  }
+
+  return widthUnits === 1 ? slot - 3 : slot - 4;
+}
+
+function referenceSlotsForRotationUnits(rotationUnits: number, widthUnits: 1 | 2, layer: 'top' | 'bottom'): number[] {
+  const normalized = rotationUnits % 12;
+  if (layer === 'top') {
+    return widthUnits === 1 ? [(normalized + 2) % 12] : [normalized, (normalized + 1) % 12];
+  }
+
+  return widthUnits === 1 ? [(normalized + 3) % 12] : [(normalized + 4) % 12, (normalized + 5) % 12];
+}
+
+function referenceFirstOccupiedSlot(slots: readonly Square1LayerPieceId[], id: Square1LayerPieceId): number {
+  const positions = slots.flatMap((slotId, index) => (slotId === id ? [index] : []));
+  if (positions.length === 1) {
+    return positions[0];
+  }
+
+  const [first, second] = positions;
+  return (first + 1) % 12 === second ? first : second;
+}
+
+function expectSquare1PieceConservation(state: Square1State): void {
+  const topIds = new Set(state.topSlots);
+  const bottomIds = new Set(state.bottomSlots);
+  const counts = countSquare1Pieces([...state.topSlots, ...state.bottomSlots]);
+  const ids = Object.values(referenceIdToSemanticId) as Square1LayerPieceId[];
+
+  expect(ids.filter((id) => id.length === 3)).toHaveLength(8);
+  expect(ids.filter((id) => id.length === 2)).toHaveLength(8);
+  for (const id of ids) {
+    expect(topIds.has(id) && bottomIds.has(id), `${id} appears on both layers`).toBe(false);
+    expect(counts.get(id), `${id} multiplicity`).toBe(id.length === 3 ? 2 : 1);
+  }
+  expectCornersAdjacent(state.topSlots);
+  expectCornersAdjacent(state.bottomSlots);
+}
+
+function countSquare1Pieces(ids: readonly Square1LayerPieceId[]): Map<Square1LayerPieceId, number> {
+  const counts = new Map<Square1LayerPieceId, number>();
+  for (const id of ids) {
+    counts.set(id, (counts.get(id) ?? 0) + 1);
+  }
+  return counts;
+}
+
+function expectCornersAdjacent(slots: readonly Square1LayerPieceId[]): void {
+  for (const id of new Set(slots)) {
+    if (id.length !== 3) {
+      continue;
+    }
+
+    const positions = slots.flatMap((slotId, index) => (slotId === id ? [index] : []));
+    expect(positions, `${id} corner slots`).toHaveLength(2);
+    expect(
+      (positions[0] + 1) % 12 === positions[1] || (positions[1] + 1) % 12 === positions[0],
+      `${id} corner adjacency`,
+    ).toBe(true);
+  }
+}
+
+function previewMoveAtEnd(square1: Square1D, move: string | Square1Move): void {
+  const plan = square1.movePlan(move);
+  const startPoses = new Map(
+    square1._pieces.map((piece) => [
+      piece.pieceId,
+      {
+        position: piece.position.clone(),
+        quaternion: piece.quaternion.clone(),
+      },
+    ]),
+  );
+  (
+    square1 as unknown as {
+      previewMove: (
+        plan: ReturnType<Square1D['movePlan']>,
+        startPoses: Map<Square1PieceId, { position: Vector3; quaternion: Quaternion }>,
+        progress: number,
+      ) => void;
+    }
+  ).previewMove(plan, startPoses, 1);
+}
+
+type OracleSquare1Layer = 'top' | 'bottom';
+
+type OracleSquare1Piece = {
+  id: Square1LayerPieceId;
+  localCentroid: Vector3;
+  position: Vector3;
+  quaternion: Quaternion;
+  widthUnits: 1 | 2;
+};
+
+function applyGeometricSquare1Oracle(moves: readonly Square1Move[]): Square1State {
+  const pieces = createSolvedOraclePieces();
+  let middleQuaternion = new Quaternion();
+
+  for (const move of moves) {
+    if (move.kind === 'slash') {
+      const rotation = oracleRotation(oracleSlashAxis(), Math.PI);
+      for (const piece of pieces) {
+        if (oracleWorldCentroid(piece).dot(oracleSlashAxis()) > 1e-8) {
+          applyOracleRotation(piece, rotation);
+        }
+      }
+      middleQuaternion = rotation.clone().multiply(middleQuaternion).normalize();
+      continue;
+    }
+
+    if (move.top !== 0) {
+      const rotation = oracleRotation(oracleYAxis(), -move.top * oracleUnitAngleRadians());
+      for (const piece of pieces.filter((candidate) => candidate.position.y > 0)) {
+        applyOracleRotation(piece, rotation);
+      }
+    }
+    if (move.bottom !== 0) {
+      const rotation = oracleRotation(oracleYAxis(), move.bottom * oracleUnitAngleRadians());
+      for (const piece of pieces.filter((candidate) => candidate.position.y < 0)) {
+        applyOracleRotation(piece, rotation);
+      }
+    }
+  }
+
+  return oracleStateFromPieces(pieces, middleQuaternion);
+}
+
+function createSolvedOraclePieces(): OracleSquare1Piece[] {
+  return [
+    ...createSolvedOracleLayerPieces('top', [0, 0, 1, 2, 2, 3, 4, 4, 5, 6, 6, 7]),
+    ...createSolvedOracleLayerPieces('bottom', [8, 9, 9, 10, 11, 11, 12, 13, 13, 14, 15, 15]),
+  ];
+}
+
+function createSolvedOracleLayerPieces(layer: OracleSquare1Layer, slots: readonly number[]): OracleSquare1Piece[] {
+  const ids = Array.from(new Set(mapReferenceSlots(slots)));
+  return ids.map((id) => {
+    const widthUnits = oraclePieceWidthUnits(id);
+    const slot = oracleFirstOccupiedSlot(mapReferenceSlots(slots), id);
+    const rotationUnits = oraclePieceRotationUnits(slot, widthUnits, layer);
+    return {
+      id,
+      localCentroid: oracleLocalCentroid(widthUnits),
+      position: new Vector3(0, layer === 'top' ? 1 : -1, 0),
+      quaternion: oracleStaticQuaternion(layer, rotationUnits),
+      widthUnits,
+    };
+  });
+}
+
+function oracleStateFromPieces(pieces: readonly OracleSquare1Piece[], middleQuaternion: Quaternion): Square1State {
+  const topSlots = Array<Square1LayerPieceId | undefined>(12).fill(undefined);
+  const bottomSlots = Array<Square1LayerPieceId | undefined>(12).fill(undefined);
+
+  for (const piece of pieces) {
+    const layer = piece.position.y > 0 ? 'top' : 'bottom';
+    const rotationUnits = oracleRotationUnitsForQuaternion(piece.quaternion, layer);
+    const targetSlots = layer === 'top' ? topSlots : bottomSlots;
+    for (const slot of oracleSlotsForRotationUnits(rotationUnits, piece.widthUnits, layer)) {
+      if (targetSlots[slot] && targetSlots[slot] !== piece.id) {
+        throw new Error(`Oracle slot collision on ${layer} slot ${slot}`);
+      }
+      targetSlots[slot] = piece.id;
+    }
+  }
+
+  if (topSlots.some((slot) => !slot) || bottomSlots.some((slot) => !slot)) {
+    throw new Error('Oracle produced an incomplete Square-1 state');
+  }
+
+  return {
+    bottomSlots: bottomSlots as Square1LayerPieceId[],
+    middleOrientation: oracleMiddleOrientation(middleQuaternion),
+    topSlots: topSlots as Square1LayerPieceId[],
+    version: 2,
+  };
+}
+
+function applyOracleRotation(piece: OracleSquare1Piece, rotation: Quaternion): void {
+  piece.position.applyQuaternion(rotation);
+  piece.quaternion.premultiply(rotation).normalize();
+}
+
+function oracleWorldCentroid(piece: OracleSquare1Piece): Vector3 {
+  return piece.localCentroid.clone().applyQuaternion(piece.quaternion).add(piece.position);
+}
+
+function oracleRotation(axis: Vector3, angle: number): Quaternion {
+  return new Quaternion().setFromAxisAngle(axis, angle).normalize();
+}
+
+function oracleStaticQuaternion(layer: OracleSquare1Layer, rotationUnits: number): Quaternion {
+  const yRotation = oracleRotation(oracleYAxis(), rotationUnits * oracleUnitAngleRadians());
+  return layer === 'top' ? yRotation : yRotation.multiply(oracleRotation(oracleXAxis(), Math.PI)).normalize();
+}
+
+function oracleRotationUnitsForQuaternion(quaternion: Quaternion, layer: OracleSquare1Layer): number {
+  let bestUnits = 0;
+  let bestScore = Number.POSITIVE_INFINITY;
+  for (let units = 0; units < 12; units++) {
+    const score = 1 - Math.abs(quaternion.dot(oracleStaticQuaternion(layer, units)));
+    if (score < bestScore) {
+      bestScore = score;
+      bestUnits = units;
+    }
+  }
+
+  if (bestScore > 1e-8) {
+    throw new Error(`Oracle could not map quaternion to ${layer} rotation units`);
+  }
+
+  return bestUnits;
+}
+
+function oracleMiddleOrientation(middleQuaternion: Quaternion): 0 | 3 {
+  const solvedScore = Math.abs(middleQuaternion.dot(new Quaternion()));
+  const slashScore = Math.abs(middleQuaternion.dot(oracleRotation(oracleSlashAxis(), Math.PI)));
+  return solvedScore >= slashScore ? 0 : 3;
+}
+
+function oraclePieceWidthUnits(pieceId: Square1LayerPieceId): 1 | 2 {
+  return pieceId.length === 3 ? 2 : 1;
+}
+
+function oracleLocalCentroid(widthUnits: 1 | 2): Vector3 {
+  if (widthUnits === 1) {
+    return new Vector3(2 / 3, 0, 0);
+  }
+
+  const cornerCentroid = (2 + Math.tan(Math.PI / 12)) / 4;
+  return new Vector3(cornerCentroid, 0, cornerCentroid);
+}
+
+function oraclePieceRotationUnits(slot: number, widthUnits: 1 | 2, layer: OracleSquare1Layer): number {
+  if (layer === 'top') {
+    return widthUnits === 1 ? slot - 2 : slot;
+  }
+
+  return widthUnits === 1 ? slot - 3 : slot - 4;
+}
+
+function oracleSlotsForRotationUnits(rotationUnits: number, widthUnits: 1 | 2, layer: OracleSquare1Layer): number[] {
+  const normalized = oracleModLayerUnit(rotationUnits);
+  if (layer === 'top') {
+    return widthUnits === 1 ? [oracleModLayerUnit(normalized + 2)] : [normalized, oracleModLayerUnit(normalized + 1)];
+  }
+
+  return widthUnits === 1
+    ? [oracleModLayerUnit(normalized + 3)]
+    : [oracleModLayerUnit(normalized + 4), oracleModLayerUnit(normalized + 5)];
+}
+
+function oracleFirstOccupiedSlot(slots: readonly Square1LayerPieceId[], id: Square1LayerPieceId): number {
+  const positions = slots.flatMap((slotId, index) => (slotId === id ? [index] : []));
+  if (positions.length === 1) {
+    return positions[0];
+  }
+
+  const [first, second] = positions;
+  return (first + 1) % 12 === second ? first : second;
+}
+
+function oracleModLayerUnit(value: number): number {
+  return ((value % 12) + 12) % 12;
+}
+
+function oracleUnitAngleRadians(): number {
+  return Math.PI / 6;
+}
+
+function oracleSlashAxis(): Vector3 {
+  return new Vector3(Math.cos(Math.PI / 12), 0, Math.sin(Math.PI / 12)).normalize();
+}
+
+function oracleYAxis(): Vector3 {
+  return new Vector3(0, 1, 0);
+}
+
+function oracleXAxis(): Vector3 {
+  return new Vector3(1, 0, 0);
+}
+
+function createLegalSquare1Scramble(random: () => number, pairCount: number): Square1Move[] {
+  let state = createSolvedSquare1State();
+  const moves: Square1Move[] = [];
+
+  for (let pairIndex = 0; pairIndex < pairCount; pairIndex++) {
+    let accepted = false;
+
+    for (let attempt = 0; attempt < 500 && !accepted; attempt++) {
+      const coordinateMove = randomSquare1CoordinateMove(random);
+      if (coordinateMove.top === 0 && coordinateMove.bottom === 0) {
+        continue;
+      }
+
+      const afterCoordinate = applySquare1Move(state, coordinateMove);
+      if (!isSquare1SlashLegal(afterCoordinate)) {
+        continue;
+      }
+
+      moves.push(coordinateMove, { kind: 'slash' });
+      state = applySquare1Move(afterCoordinate, { kind: 'slash' });
+      accepted = true;
+    }
+
+    if (!accepted) {
+      throw new Error(`Failed to generate legal Square-1 pair at index ${pairIndex}`);
+    }
+  }
+
+  return moves;
+}
+
+function randomSquare1CoordinateMove(random: () => number): Extract<Square1Move, { kind: 'coordinate' }> {
+  return {
+    bottom: randomSquare1Turn(random),
+    kind: 'coordinate',
+    top: randomSquare1Turn(random),
+  };
+}
+
+function randomSquare1Turn(random: () => number): number {
+  return Math.floor(random() * 12) - 5;
+}
+
+function createSeededRandom(seed: number): () => number {
+  let state = seed >>> 0;
+
+  return () => {
+    state += 0x6d2b79f5;
+    let value = state;
+    value = Math.imul(value ^ (value >>> 15), value | 1);
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+    return ((value ^ (value >>> 14)) >>> 0) / 4_294_967_296;
+  };
 }
 
 function payload(value: unknown): string {
@@ -486,17 +1028,17 @@ function localStickerNormal(
   }
   if (pieceId === 'M_MOVING') {
     return surface === 'sideA'
-      ? new Vector3(-1, 0, 0)
+      ? new Vector3(0, 0, 1)
       : surface === 'sideB'
-        ? new Vector3(0, 0, 1)
-        : new Vector3(1, 0, 0);
+        ? new Vector3(1, 0, 0)
+        : new Vector3(0, 0, -1);
   }
   if (pieceId === 'M_FIXED') {
     return surface === 'sideA'
-      ? new Vector3(0, 0, -1)
+      ? new Vector3(-1, 0, 0)
       : surface === 'sideB'
-        ? new Vector3(1, 0, 0)
-        : new Vector3(-1, 0, 0);
+        ? new Vector3(0, 0, -1)
+        : new Vector3(0, 0, 1);
   }
   if (surface === 'sideA') {
     return new Vector3(1, 0, 0);
@@ -531,7 +1073,9 @@ function captureWorldMatrices(square1: Square1D): string[] {
 }
 
 function matrixSignature(matrix: Matrix4): string {
-  return matrix.elements.map((value) => value.toFixed(6)).join(',');
+  return matrix.elements
+    .map((value) => (Object.is(value, -0) || Math.abs(value) < 0.0000005 ? 0 : value).toFixed(6))
+    .join(',');
 }
 
 function geometrySignature(geometry: BufferGeometry): string {
@@ -581,14 +1125,14 @@ function externalSegmentLengthAtX(geometry: BufferGeometry, x: number): number {
   return zValues.length > 0 ? Math.max(...zValues) - Math.min(...zValues) : 0;
 }
 
-function minGeometryZAtX(geometry: BufferGeometry, x: number): number {
+function minGeometryXAtZ(geometry: BufferGeometry, z: number): number {
   const position = geometry.getAttribute('position');
-  let minZ = Infinity;
+  let minX = Infinity;
   for (let index = 0; index < position.count; index++) {
-    if (Math.abs(position.getX(index) - x) < 0.0001) {
-      minZ = Math.min(minZ, position.getZ(index));
+    if (Math.abs(position.getZ(index) - z) < 0.0001) {
+      minX = Math.min(minX, position.getX(index));
     }
   }
 
-  return minZ;
+  return minX;
 }

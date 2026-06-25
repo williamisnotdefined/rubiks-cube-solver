@@ -1,6 +1,7 @@
 import type { Square1State } from '../core/state';
 import { isSquare1SlashLegal, Square1IllegalMoveError, uniqueSquare1LayerPieceIds } from '../core/state';
 import type { Square1Move, Square1PieceId } from '../core/types';
+import { SQUARE1_BOTTOM_SLASH_SLOT_INDICES, SQUARE1_TOP_SLASH_SLOT_INDICES } from '../core/types';
 import { SQUARE1_SLICE_AXIS, SQUARE1_UNIT_ANGLE_RADIANS } from './config';
 
 export type Square1RotationPlan = {
@@ -23,14 +24,17 @@ export function createSquare1MovePlan(state: Square1State, move: Square1Move): S
       throw new Square1IllegalMoveError(move);
     }
 
+    const topSlashPieces = SQUARE1_TOP_SLASH_SLOT_INDICES.map((index) => state.topSlots[index]);
+    const bottomSlashPieces = SQUARE1_BOTTOM_SLASH_SLOT_INDICES.map((index) => state.bottomSlots[index]);
+
     return {
       rotations: [
         {
           angleRadians: Math.PI,
           axis: { x: SQUARE1_SLICE_AXIS.x, y: SQUARE1_SLICE_AXIS.y, z: SQUARE1_SLICE_AXIS.z },
           pieceIds: [
-            ...uniqueSquare1LayerPieceIds(state.topSlots.slice(6, 12)),
-            ...uniqueSquare1LayerPieceIds(state.bottomSlots.slice(0, 6)),
+            ...uniqueSquare1LayerPieceIds(topSlashPieces),
+            ...uniqueSquare1LayerPieceIds(bottomSlashPieces),
             'M_MOVING',
           ],
         },

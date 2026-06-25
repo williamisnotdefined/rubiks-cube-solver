@@ -14,7 +14,6 @@ export {
   applySquare1Slash,
   cloneSquare1State,
   createSolvedSquare1State,
-  isLayerSlashLegal,
   isSquare1SlashLegal,
   modLayerUnit,
   rotateSlots,
