@@ -320,7 +320,8 @@ function axisForFace(face: MegaminxFace): Vector3 {
 }
 
 function angleForTurn(turn: MegaminxTurn): number {
-  return turn.amount * TURN_ANGLE_RADIANS;
+  const angle = turn.amount * TURN_ANGLE_RADIANS;
+  return turn.kind === 'face' ? -angle : angle;
 }
 
 export {

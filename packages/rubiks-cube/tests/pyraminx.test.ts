@@ -20,6 +20,16 @@ import {
 } from '../src/puzzles/pyraminx';
 
 const allPyraminxMoves = Object.values(PyraminxMoves);
+const pyraminxDirectionalMovePairs = [
+  [PyraminxMoves.U, PyraminxMoves.UP],
+  [PyraminxMoves.L, PyraminxMoves.LP],
+  [PyraminxMoves.R, PyraminxMoves.RP],
+  [PyraminxMoves.B, PyraminxMoves.BP],
+  [PyraminxMoves.u, PyraminxMoves.uP],
+  [PyraminxMoves.l, PyraminxMoves.lP],
+  [PyraminxMoves.r, PyraminxMoves.rP],
+  [PyraminxMoves.b, PyraminxMoves.bP],
+] as const;
 
 describe('Pyraminx notation', () => {
   test.each(allPyraminxMoves)('accepts %s', (move) => {
@@ -85,11 +95,22 @@ describe('Pyraminx3D', () => {
     const tipPlan = pyraminx.turnPlan(PyraminxMoves.u);
     const reversePlan = pyraminx.turnPlan(PyraminxMoves.U, { reverse: true });
 
-    expect(mainPlan.angleRadians).toBeCloseTo((2 * Math.PI) / 3);
-    expect(reversePlan.angleRadians).toBeCloseTo((-2 * Math.PI) / 3);
+    expect(mainPlan.angleRadians).toBeCloseTo((-2 * Math.PI) / 3);
+    expect(reversePlan.angleRadians).toBeCloseTo((2 * Math.PI) / 3);
     expect(tipPlan.pieceIds.length).toBeGreaterThan(0);
     expect(mainPlan.pieceIds.length).toBeGreaterThan(tipPlan.pieceIds.length);
     expect(mainPlan.pieceIds.some((id) => tipPlan.pieceIds.includes(id))).toBe(false);
+  });
+
+  test.each(pyraminxDirectionalMovePairs)('uses expected visual direction for %s and %s', (move, primeMove) => {
+    const pyraminx = new Pyraminx3D({ animationSpeedMs: 0 });
+    const movePlan = pyraminx.turnPlan(move);
+    const primePlan = pyraminx.turnPlan(primeMove);
+
+    expect(movePlan.angleRadians).toBeCloseTo((-2 * Math.PI) / 3);
+    expect(primePlan.angleRadians).toBeCloseTo((2 * Math.PI) / 3);
+    expect(movePlan.axis).toEqual(primePlan.axis);
+    expect(movePlan.pieceIds).toEqual(primePlan.pieceIds);
   });
 
   test('applies move inverses and order-three turns', () => {

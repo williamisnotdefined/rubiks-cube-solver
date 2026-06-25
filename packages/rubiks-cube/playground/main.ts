@@ -43,6 +43,7 @@ const runAlgorithmButton = /** @type {HTMLButtonElement} */ (document.getElement
 
 type PuzzleKind = 'cube' | 'pyraminx' | 'megaminx';
 type PlaygroundPuzzle = RubiksCubeElement | PyraminxPuzzleElement | MegaminxPuzzleElement;
+type UrlBackedInput = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
 
 const inputs = {
   puzzleKind: /** @type {HTMLSelectElement} */ (document.getElementById('puzzle-kind')),
@@ -153,6 +154,28 @@ const defaultAnimationSpeeds: Record<PuzzleKind, number> = {
   pyraminx: DEFAULT_PYRAMINX_ANIMATION_SPEED_MS,
 };
 
+const urlBackedInputs: [string, UrlBackedInput][] = [
+  ['puzzle', inputs.puzzleKind],
+  ['cubeType', inputs.cubeType],
+  ['animationStyle', inputs.animationStyle],
+  ['animationSpeedMs', inputs.animationSpeed],
+  ['pieceGap', inputs.pieceGap],
+  ['cameraRadius', inputs.cameraRadius],
+  ['cameraFov', inputs.cameraFieldOfView],
+  ['cameraSpeedMs', inputs.cameraSpeed],
+  ['peekHorizontal', inputs.cameraPeekAngleHorizontal],
+  ['peekVertical', inputs.cameraPeekAngleVertical],
+  ['logo', inputs.logo],
+  ['megaminxStyle', inputs.megaminxVisualStyle],
+  ['maxDpr', inputs.maxDevicePixelRatio],
+  ['antialias', inputs.antialias],
+  ['profileCss', inputs.profileCss],
+  ['algorithm', inputs.algorithm],
+  ['repeat', inputs.repeatCount],
+  ['stress', inputs.stressLoop],
+  ['fps', inputs.fpsMonitor],
+];
+
 let puzzle: PlaygroundPuzzle;
 let moveCount = 0;
 let stressRunning = false;
@@ -162,16 +185,26 @@ let totalRenders = 0;
 let lastRenderAt = 0;
 let renderIdleTimer = 0;
 
+applyUrlSettings();
 puzzle = createPuzzle();
 
 for (const [attributeName, input] of [...sharedCubeAttributeInputs, ...cubeAttributeInputs]) {
-  input.addEventListener('input', () => setAttributeFromInput(attributeName, input));
+  input.addEventListener('input', () => {
+    setAttributeFromInput(attributeName, input);
+    updateUrlSettings();
+  });
 }
 for (const [attributeName, input] of pyraminxAttributeInputs) {
-  input.addEventListener('input', () => setAttributeFromInput(attributeName, input));
+  input.addEventListener('input', () => {
+    setAttributeFromInput(attributeName, input);
+    updateUrlSettings();
+  });
 }
 for (const [attributeName, input] of megaminxAttributeInputs) {
-  input.addEventListener('input', () => setAttributeFromInput(attributeName, input));
+  input.addEventListener('input', () => {
+    setAttributeFromInput(attributeName, input);
+    updateUrlSettings();
+  });
 }
 
 inputs.puzzleKind.addEventListener('change', () => {
@@ -179,6 +212,7 @@ inputs.puzzleKind.addEventListener('change', () => {
   inputs.algorithm.value = defaultAlgorithms[puzzleKind];
   inputs.animationSpeed.value = String(defaultAnimationSpeeds[puzzleKind]);
   remountPuzzle();
+  updateUrlSettings();
 });
 
 document.getElementById('reset')?.addEventListener('click', () => {
@@ -196,21 +230,69 @@ document.getElementById('set-state')?.addEventListener('click', () => {
 document.getElementById('remount')?.addEventListener('click', remountPuzzle);
 runAlgorithmButton.addEventListener('click', () => runAlgorithm());
 inputs.fpsMonitor.addEventListener('change', () => {
-  if (inputs.fpsMonitor.value === 'on') {
-    startFpsMonitor();
-  } else {
-    stopFpsMonitor();
-  }
+  updateFpsMonitor();
+  updateUrlSettings();
 });
-inputs.profileCss.addEventListener('change', updateProfileCss);
+inputs.profileCss.addEventListener('change', () => {
+  updateProfileCss();
+  updateUrlSettings();
+});
+inputs.algorithm.addEventListener('input', updateUrlSettings);
+inputs.repeatCount.addEventListener('input', updateUrlSettings);
+inputs.stressLoop.addEventListener('change', updateUrlSettings);
 document.getElementById('stop-stress')?.addEventListener('click', () => {
   stressRunning = false;
   inputs.stressLoop.value = 'off';
+  updateUrlSettings();
   setStatus('idle');
 });
 
 updateProfileCss();
+updateFpsMonitor();
 updateState();
+
+function applyUrlSettings() {
+  const params = new URLSearchParams(window.location.search);
+  for (const [paramName, input] of urlBackedInputs) {
+    const value = params.get(paramName);
+    if (value == null) {
+      continue;
+    }
+    setInputValueFromUrl(input, value);
+  }
+  const puzzleKind = getPuzzleKind();
+  if (!params.has('algorithm')) {
+    inputs.algorithm.value = defaultAlgorithms[puzzleKind];
+  }
+  if (!params.has('animationSpeedMs')) {
+    inputs.animationSpeed.value = String(defaultAnimationSpeeds[puzzleKind]);
+  }
+}
+
+function setInputValueFromUrl(input: UrlBackedInput, value: string) {
+  if (input instanceof HTMLSelectElement) {
+    const optionExists = Array.from(input.options).some((option) => option.value === value);
+    if (!optionExists) {
+      return;
+    }
+  }
+  input.value = value;
+}
+
+function updateUrlSettings() {
+  const params = new URLSearchParams();
+  for (const [paramName, input] of urlBackedInputs) {
+    const value = input.value.trim();
+    if (value !== '') {
+      params.set(paramName, value);
+    }
+  }
+  const search = params.toString();
+  const nextUrl = `${window.location.pathname}${search ? `?${search}` : ''}${window.location.hash}`;
+  if (nextUrl !== `${window.location.pathname}${window.location.search}${window.location.hash}`) {
+    window.history.replaceState(null, '', nextUrl);
+  }
+}
 
 function getPuzzleKind(): PuzzleKind {
   if (inputs.puzzleKind.value === 'pyraminx') {
@@ -395,6 +477,7 @@ async function runAlgorithm() {
     runAlgorithmButton.disabled = false;
     if (!stressRunning) {
       inputs.stressLoop.value = 'off';
+      updateUrlSettings();
     }
   }
 }
@@ -460,6 +543,14 @@ function onPuzzleRender() {
     rendersPerSecondOutput.textContent = '0';
     lastRenderAt = 0;
   }, 250);
+}
+
+function updateFpsMonitor() {
+  if (inputs.fpsMonitor.value === 'on') {
+    startFpsMonitor();
+  } else {
+    stopFpsMonitor();
+  }
 }
 
 function startFpsMonitor() {

@@ -1,9 +1,9 @@
 import { gsap } from 'gsap';
 import { AmbientLight, DirectionalLight, PerspectiveCamera, Scene, Spherical, WebGLRenderer } from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { AnimationStyle } from '../../../shared/animation';
 import { CameraState } from '../../../shared/cameraState';
 import { debounce } from '../../../shared/debouncer';
+import { PointerOrbitControls } from '../../../shared/puzzleControls';
 import type { PyraminxMove } from '../core/types';
 import type { PyraminxAnimationOptions } from '../three/pyraminx3D';
 import { Pyraminx3D } from '../three/pyraminx3D';
@@ -265,10 +265,8 @@ export class PyraminxPuzzleElement extends HTMLElement {
     camera.position.setFromSpherical(cameraSpherical);
     camera.lookAt(0, 0, 0);
 
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableZoom = false;
-    controls.enablePan = false;
-    controls.enableDamping = true;
+    const controls = new PointerOrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 0, 0);
 
     const ambientLight = new AmbientLight('white', 0.5);
     const keyLight = new DirectionalLight('white', 2);
@@ -295,9 +293,9 @@ export class PyraminxPuzzleElement extends HTMLElement {
     };
 
     const renderWithControls = () => {
-      const controlsChanged = controls.update();
+      controls.update();
       renderScene();
-      return controlsChanged;
+      return true;
     };
 
     const requestRender = () => {
@@ -366,7 +364,11 @@ export class PyraminxPuzzleElement extends HTMLElement {
     };
     const onControlsEnd = () => {
       stableControlFrames = 0;
-      controlsSettling = true;
+      controlsSettling = false;
+      requestAnimationFrame(() => {
+        stopControlsRenderLoop?.();
+        stopControlsRenderLoop = null;
+      });
     };
     controls.addEventListener('start', onControlsStart);
     controls.addEventListener('change', requestRender);

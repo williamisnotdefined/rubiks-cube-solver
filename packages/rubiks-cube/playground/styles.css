@@ -57,6 +57,19 @@ textarea {
   padding: 0.62rem 0.7rem;
 }
 
+select {
+  color-scheme: dark;
+}
+
+select option {
+  background: #111827;
+  color: #eef2ff;
+}
+
+select option:checked {
+  background: #1f2937;
+}
+
 textarea {
   min-height: 5.8rem;
   resize: vertical;

@@ -1,4 +1,5 @@
 import './setup';
+import { PerspectiveCamera } from 'three';
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { CubeTypes, Movements, Rotations } from '../src/puzzles/cube/core';
 import { AttributeNames, PeekActions, PeekStates, RubiksCubeElement } from '../src/puzzles/cube/element';
@@ -188,6 +189,7 @@ describe('RubiksCubeElement', () => {
 
   test('initializes rendering, responds to attributes, and cleans up', async () => {
     const element = createElement();
+    const lookAt = vi.spyOn(PerspectiveCamera.prototype, 'lookAt');
     element.setAttribute(AttributeNames.cubeType, CubeTypes.Three);
     element.setAttribute(AttributeNames.pieceGap, '1.05');
     element.setAttribute(AttributeNames.animationSpeed, '0');
@@ -208,6 +210,10 @@ describe('RubiksCubeElement', () => {
 
     expect(rendererMocks.setSize).toHaveBeenCalled();
     expect(rendererMocks.setPixelRatio).toHaveBeenCalledWith(2);
+    expect(lookAt).toHaveBeenCalledWith(0, 0, 0);
+    expect(controlsMocks.instances.at(-1)?.enableDamping).toBe(true);
+    expect(controlsMocks.instances.at(-1)?.enablePan).toBe(false);
+    expect(controlsMocks.instances.at(-1)?.enableZoom).toBe(false);
     flushAnimationFrames();
     expect(rendererMocks.render).toHaveBeenCalled();
     expect(renderListener).toHaveBeenCalledTimes(1);
@@ -251,5 +257,25 @@ describe('RubiksCubeElement', () => {
     await expect(element.peek('invalid' as PeekActions)).rejects.toThrow('Invalid peek action');
 
     expect(gsapMocks.to).toHaveBeenCalled();
+  });
+
+  test('stops control rendering on next frame when damping is disabled', () => {
+    const element = createElement();
+    document.body.append(element);
+    flushAnimationFrames();
+
+    const controls = controlsMocks.instances.at(-1);
+    if (!controls) {
+      throw new Error('RubiksCube OrbitControls mock was not created');
+    }
+    controls.enableDamping = false;
+
+    controls.dispatch('start');
+    flushAnimationFrames();
+    controls.dispatch('end');
+    flushAnimationFrames();
+    flushAnimationFrames();
+
+    expect(cancelAnimationFrame).toHaveBeenCalled();
   });
 });

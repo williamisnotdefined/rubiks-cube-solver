@@ -329,7 +329,7 @@ function axisForVertex(vertex: PyraminxFace): Vector3 {
 }
 
 function angleForTurn(turn: PyraminxTurn): number {
-  return (turn.prime ? -1 : 1) * TURN_ANGLE_RADIANS;
+  return (turn.prime ? 1 : -1) * TURN_ANGLE_RADIANS;
 }
 
 export { DEFAULT_PYRAMINX_ANIMATION_SPEED_MS, PyraminxFaceColors } from './config';
