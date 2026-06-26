@@ -48,6 +48,10 @@
     "./puzzles/megaminx": {
       "types": "./src/puzzles/megaminx/index.ts",
       "default": "./src/puzzles/megaminx/index.ts"
+    },
+    "./puzzles/square1": {
+      "types": "./src/puzzles/square1/index.ts",
+      "default": "./src/puzzles/square1/index.ts"
     }
   },
   "scripts": {

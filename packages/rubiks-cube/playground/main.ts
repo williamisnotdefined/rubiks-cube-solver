@@ -13,6 +13,13 @@ import {
   PyraminxMoves,
   PyraminxPuzzleElement,
 } from '../src/puzzles/pyraminx';
+import {
+  DEFAULT_SQUARE1_ANIMATION_SPEED_MS,
+  isSquare1MoveToken,
+  Square1AttributeNames,
+  Square1MoveTokens,
+  Square1PuzzleElement,
+} from '../src/puzzles/square1';
 
 if (!customElements.get('rubiks-cube')) {
   RubiksCubeElement.register();
@@ -22,6 +29,9 @@ if (!customElements.get('pyraminx-puzzle')) {
 }
 if (!customElements.get('megaminx-puzzle')) {
   MegaminxPuzzleElement.register();
+}
+if (!customElements.get('square1-puzzle')) {
+  Square1PuzzleElement.register();
 }
 
 const frame = /** @type {HTMLDivElement} */ (document.getElementById('cube-frame'));
@@ -40,8 +50,8 @@ const cubeOnlySettings = Array.from(document.querySelectorAll<HTMLElement>('[dat
 const megaminxOnlySettings = Array.from(document.querySelectorAll<HTMLElement>('[data-megaminx-only]'));
 const runAlgorithmButton = /** @type {HTMLButtonElement} */ (document.getElementById('run-algorithm'));
 
-type PuzzleKind = 'cube' | 'pyraminx' | 'megaminx';
-type PlaygroundPuzzle = RubiksCubeElement | PyraminxPuzzleElement | MegaminxPuzzleElement;
+type PuzzleKind = 'cube' | 'pyraminx' | 'megaminx' | 'square1';
+type PlaygroundPuzzle = RubiksCubeElement | PyraminxPuzzleElement | MegaminxPuzzleElement | Square1PuzzleElement;
 type UrlBackedInput = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
 
 const inputs = {
@@ -109,6 +119,18 @@ const megaminxAttributeInputs = [
   [MegaminxAttributeNames.visualStyle, inputs.megaminxVisualStyle],
 ] as const;
 
+const square1AttributeInputs = [
+  [Square1AttributeNames.animationStyle, inputs.animationStyle],
+  [Square1AttributeNames.animationSpeed, inputs.animationSpeed],
+  [Square1AttributeNames.cameraSpeed, inputs.cameraSpeed],
+  [Square1AttributeNames.cameraRadius, inputs.cameraRadius],
+  [Square1AttributeNames.cameraFieldOfView, inputs.cameraFieldOfView],
+  [Square1AttributeNames.cameraPeekAngleHorizontal, inputs.cameraPeekAngleHorizontal],
+  [Square1AttributeNames.cameraPeekAngleVertical, inputs.cameraPeekAngleVertical],
+  [Square1AttributeNames.maxDevicePixelRatio, inputs.maxDevicePixelRatio],
+  [Square1AttributeNames.antialias, inputs.antialias],
+] as const;
+
 const cubeActions = [
   'R',
   "R'",
@@ -137,17 +159,38 @@ const megaminxActions = [
   MegaminxMoves.UP,
 ] as const;
 const megaminxActionSet = new Set<string>(megaminxActions);
+const square1Actions = [
+  Square1MoveTokens.OneZero,
+  Square1MoveTokens.MinusOneZero,
+  Square1MoveTokens.ThreeZero,
+  Square1MoveTokens.MinusThreeZero,
+  Square1MoveTokens.FiveZero,
+  Square1MoveTokens.MinusFiveZero,
+  Square1MoveTokens.SixZero,
+  Square1MoveTokens.ZeroOne,
+  Square1MoveTokens.ZeroMinusOne,
+  Square1MoveTokens.ZeroThree,
+  Square1MoveTokens.ZeroMinusThree,
+  Square1MoveTokens.ZeroFive,
+  Square1MoveTokens.ZeroMinusFive,
+  Square1MoveTokens.ZeroSix,
+  Square1MoveTokens.OneMinusOne,
+  Square1MoveTokens.MinusOneOne,
+  Square1MoveTokens.Slash,
+] as const;
 
 const defaultAlgorithms: Record<PuzzleKind, string> = {
   cube: "R U R' U'",
   megaminx: "R++ D-- R++ D-- U'",
   pyraminx: "U L R' u b'",
+  square1: '(3,0) (0,3) (-3,0) (0,-3)',
 };
 
 const defaultAnimationSpeeds: Record<PuzzleKind, number> = {
   cube: 100,
   megaminx: DEFAULT_MEGAMINX_ANIMATION_SPEED_MS,
   pyraminx: DEFAULT_PYRAMINX_ANIMATION_SPEED_MS,
+  square1: DEFAULT_SQUARE1_ANIMATION_SPEED_MS,
 };
 
 const urlBackedInputs: [string, UrlBackedInput][] = [
@@ -197,6 +240,12 @@ for (const [attributeName, input] of pyraminxAttributeInputs) {
   });
 }
 for (const [attributeName, input] of megaminxAttributeInputs) {
+  input.addEventListener('input', () => {
+    setAttributeFromInput(attributeName, input);
+    updateUrlSettings();
+  });
+}
+for (const [attributeName, input] of square1AttributeInputs) {
   input.addEventListener('input', () => {
     setAttributeFromInput(attributeName, input);
     updateUrlSettings();
@@ -297,6 +346,9 @@ function getPuzzleKind(): PuzzleKind {
   if (inputs.puzzleKind.value === 'megaminx') {
     return 'megaminx';
   }
+  if (inputs.puzzleKind.value === 'square1') {
+    return 'square1';
+  }
   return 'cube';
 }
 
@@ -304,12 +356,19 @@ function createPuzzle(): PlaygroundPuzzle {
   puzzle?.removeEventListener('rubiks-cube-render', onPuzzleRender);
   puzzle?.removeEventListener('pyraminx-render', onPuzzleRender);
   puzzle?.removeEventListener('megaminx-render', onPuzzleRender);
+  puzzle?.removeEventListener('square1-render', onPuzzleRender);
   const puzzleKind = getPuzzleKind();
   updatePlaygroundChrome(puzzleKind);
   renderQuickActions();
 
   const nextPuzzle =
-    puzzleKind === 'pyraminx' ? createPyraminx() : puzzleKind === 'megaminx' ? createMegaminx() : createCube();
+    puzzleKind === 'pyraminx'
+      ? createPyraminx()
+      : puzzleKind === 'megaminx'
+        ? createMegaminx()
+        : puzzleKind === 'square1'
+          ? createSquare1()
+          : createCube();
   frame.replaceChildren(nextPuzzle);
   return nextPuzzle;
 }
@@ -338,6 +397,14 @@ function createMegaminx(): MegaminxPuzzleElement {
   return /** @type {MegaminxPuzzleElement} */ (megaminx);
 }
 
+function createSquare1(): Square1PuzzleElement {
+  const square1 = document.createElement('square1-puzzle');
+  square1.setAttribute('render-events', '');
+  applyAttributes(square1, square1AttributeInputs);
+  square1.addEventListener('square1-render', onPuzzleRender);
+  return /** @type {Square1PuzzleElement} */ (square1);
+}
+
 function remountPuzzle() {
   puzzle = createPuzzle();
   moveCount = 0;
@@ -350,7 +417,13 @@ function remountPuzzle() {
 function renderQuickActions() {
   const puzzleKind = getPuzzleKind();
   const actions =
-    puzzleKind === 'pyraminx' ? pyraminxActions : puzzleKind === 'megaminx' ? megaminxActions : cubeActions;
+    puzzleKind === 'pyraminx'
+      ? pyraminxActions
+      : puzzleKind === 'megaminx'
+        ? megaminxActions
+        : puzzleKind === 'square1'
+          ? square1Actions
+          : cubeActions;
   quickActions.replaceChildren(
     ...actions.map((action) => {
       const button = document.createElement('button');
@@ -364,13 +437,21 @@ function renderQuickActions() {
 
 function updatePlaygroundChrome(puzzleKind: PuzzleKind) {
   puzzleTitle.textContent =
-    puzzleKind === 'pyraminx' ? 'Pyraminx' : puzzleKind === 'megaminx' ? 'Megaminx' : 'Rubiks Cube';
+    puzzleKind === 'pyraminx'
+      ? 'Pyraminx'
+      : puzzleKind === 'megaminx'
+        ? 'Megaminx'
+        : puzzleKind === 'square1'
+          ? 'Square-1'
+          : 'Rubiks Cube';
   stateInput.placeholder =
     puzzleKind === 'pyraminx'
       ? 'Paste a pyraminx-stickers-v1 state string'
       : puzzleKind === 'megaminx'
         ? 'Paste a megaminx-stickers-v1 state string'
-        : 'Paste a Kociemba state string';
+        : puzzleKind === 'square1'
+          ? 'Paste a square1-pieces-v2 state string'
+          : 'Paste a Kociemba state string';
   for (const setting of cubeOnlySettings) {
     setting.hidden = puzzleKind !== 'cube';
   }
@@ -416,6 +497,11 @@ async function runAction(action) {
         throw new Error(`Unsupported Megaminx action: ${action}`);
       }
       await (puzzle as MegaminxPuzzleElement).move(action);
+    } else if (getPuzzleKind() === 'square1') {
+      if (!isSquare1MoveToken(action)) {
+        throw new Error(`Unsupported Square-1 action: ${action}`);
+      }
+      await (puzzle as Square1PuzzleElement).move(action);
     } else if (isMovement(action)) {
       await (puzzle as RubiksCubeElement).move(action);
     } else if (IsRotation(action)) {
@@ -496,7 +582,9 @@ function parseAlgorithm(value) {
           ? isPyraminxMove(action)
           : puzzleKind === 'megaminx'
             ? isMegaminxPlaygroundAction(action)
-            : isMovement(action) || IsRotation(action);
+            : puzzleKind === 'square1'
+              ? isSquare1MoveToken(action)
+              : isMovement(action) || IsRotation(action);
       if (!valid) {
         console.warn(`Ignoring invalid action: ${action}`);
       }
