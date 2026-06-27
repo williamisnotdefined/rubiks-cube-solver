@@ -2115,7 +2115,18 @@ fn assert_security_headers(headers: &HeaderMap) {
         headers.get("referrer-policy"),
         Some(&"no-referrer".parse().expect("header value"))
     );
-    assert!(headers.get("content-security-policy").is_some());
+    let content_security_policy = headers
+        .get("content-security-policy")
+        .expect("content-security-policy should be set")
+        .to_str()
+        .expect("content-security-policy should be valid");
+    assert!(content_security_policy
+        .contains("script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com"));
+    assert!(content_security_policy
+        .contains("img-src 'self' data: blob: https://yt3.googleusercontent.com"));
+    assert!(content_security_policy.contains(
+        "connect-src 'self' http://127.0.0.1:* http://localhost:* https://cloudflareinsights.com"
+    ));
     assert!(headers.get("permissions-policy").is_some());
 }
 
