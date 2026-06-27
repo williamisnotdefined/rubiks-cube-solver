@@ -38,6 +38,7 @@ use crate::solve::{
 use crate::state::ApiState;
 
 const HEALTH_VISION_TIMEOUT: Duration = Duration::from_millis(250);
+const CONTENT_SECURITY_POLICY: &str = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://yt3.googleusercontent.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https://cloudflareinsights.com; media-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'";
 
 #[derive(serde::Deserialize)]
 struct VisionHealthResponse {
@@ -136,9 +137,7 @@ async fn security_headers(request: Request<Body>, next: Next) -> Response {
     let headers = response.headers_mut();
     headers.insert(
         HeaderName::from_static("content-security-policy"),
-        HeaderValue::from_static(
-            "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' http://127.0.0.1:* http://localhost:*; media-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
-        ),
+        HeaderValue::from_static(CONTENT_SECURITY_POLICY),
     );
     headers.insert(
         HeaderName::from_static("permissions-policy"),
