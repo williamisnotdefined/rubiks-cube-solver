@@ -7,6 +7,7 @@ COPY web/package.json web/package.json
 RUN npm ci
 
 COPY packages/rubiks-cube packages/rubiks-cube
+COPY scripts/seo scripts/seo
 COPY web web
 RUN npm run build -w @rubiks-cube-solver/web
 
