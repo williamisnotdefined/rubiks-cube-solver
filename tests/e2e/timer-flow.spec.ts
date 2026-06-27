@@ -36,25 +36,36 @@ test.describe('timer flow', () => {
     await expect(page.getByRole('table')).toContainText('OK')
   })
 
-  test('updates latest solve penalty between +2, DNF, and OK', async ({ page }) => {
+  test('toggles latest solve penalty between +2, DNF, and OK', async ({ page }) => {
     await page.goto(timerPath)
     await recordKeyboardSolve(page)
 
     const rawTimeMs = (await persistedTimerSolves(page))[0]!.rawTimeMs
+    const timer = page.getByRole('timer', { name: 'Speedsolve timer' })
 
-    await dispatchClick(page.getByRole('button', { name: '+2' }))
+    await expect(page.getByRole('button', { name: 'OK' })).toHaveCount(0)
+    await expect(timer.getByRole('button', { name: '+2' })).toBeVisible()
+    await expect(timer.getByRole('button', { name: 'DNF' })).toBeVisible()
+
+    await dispatchClick(timer.getByRole('button', { name: '+2' }))
     await expect(page.getByRole('table')).toContainText('+2')
     await expect.poll(() => persistedTimerSolves(page)).toMatchObject([
       { finalTimeMs: rawTimeMs + 2_000, penalty: 'plus2' },
     ])
 
-    await dispatchClick(page.getByRole('button', { name: 'DNF' }))
+    await dispatchClick(timer.getByRole('button', { name: '+2' }))
+    await expect(page.getByRole('table')).toContainText('OK')
+    await expect.poll(() => persistedTimerSolves(page)).toMatchObject([
+      { finalTimeMs: rawTimeMs, penalty: 'ok' },
+    ])
+
+    await dispatchClick(timer.getByRole('button', { name: 'DNF' }))
     await expect(page.getByRole('table')).toContainText('DNF')
     await expect.poll(() => persistedTimerSolves(page)).toMatchObject([
       { finalTimeMs: null, penalty: 'dnf' },
     ])
 
-    await dispatchClick(page.getByRole('button', { name: 'OK' }))
+    await dispatchClick(timer.getByRole('button', { name: 'DNF' }))
     await expect(page.getByRole('table')).toContainText('OK')
     await expect.poll(() => persistedTimerSolves(page)).toMatchObject([
       { finalTimeMs: rawTimeMs, penalty: 'ok' },

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCopyToClipboard } from 'usehooks-ts'
 import { AverageCards } from '@components/timer/AverageCards'
@@ -52,6 +52,7 @@ export function TimerPage() {
   const [scrambleLoadFailed, setScrambleLoadFailed] = useState(false)
   const [isScramblePending, setIsScramblePending] = useState(true)
   const [timerResetSignal, setTimerResetSignal] = useState(0)
+  const timerDisplayRef = useRef<HTMLDivElement>(null)
   const scrambleRequestIdRef = useRef(0)
   const sessions = useTimerStore((state) => state.sessions)
   const activeSessionId = useTimerStore((state) => state.activeSessionId)
@@ -202,6 +203,29 @@ export function TimerPage() {
     updateSolvePenalty(lastSolve.id, penalty)
   }
 
+  function handleEventChange(eventId: string) {
+    setSelectedEventId(eventId)
+    focusTimerDisplaySoon()
+  }
+
+  function handleInspectionEnabledChange(checked: boolean) {
+    setInspectionEnabled(checked)
+    focusTimerDisplay()
+  }
+
+  function handleShowMillisecondsChange(checked: boolean) {
+    setShowMilliseconds(checked)
+    focusTimerDisplay()
+  }
+
+  function focusTimerDisplay() {
+    timerDisplayRef.current?.focus({ preventScroll: true })
+  }
+
+  function focusTimerDisplaySoon() {
+    window.setTimeout(focusTimerDisplay, 0)
+  }
+
   function queueNextScramble(
     eventId: string,
     { replaceHistory = false }: QueueNextScrambleOptions = {},
@@ -257,10 +281,13 @@ export function TimerPage() {
               <CompactScrambleEventSelect
                 events={scrambleEvents}
                 selectedEventId={selectedEventId}
-                onEventChange={setSelectedEventId}
+                onActionComplete={focusTimerDisplaySoon}
+                onEventChange={handleEventChange}
               />
             )}
             eventLabel={generatedScramble.event.label}
+            focusableActions={false}
+            onActionComplete={focusTimerDisplay}
             scramble={scrambleText({
               failed: scrambleLoadFailed,
               pending: isScramblePending,
@@ -271,12 +298,14 @@ export function TimerPage() {
             onNext={isScramblePending ? undefined : handleNextScramble}
             onPrevious={isScramblePending || scrambleLoadFailed ? undefined : handlePreviousScramble}
           />
-          <Panel className="grid min-h-0 grid-cols-2 gap-2 p-2 sm:grid-cols-[auto_auto_minmax(14rem,1fr)] sm:items-center" aria-label={t('timer.settings.label')}>
+          <Panel className="grid min-h-0 grid-cols-2 gap-2 p-2 sm:w-fit sm:justify-self-start" aria-label={t('timer.settings.label')}>
             <label className="flex min-h-9 items-center gap-2 border border-app-border bg-app-control px-3 py-2 text-xs font-extrabold uppercase tracking-[0.16em] text-app-text">
               <Switch
                 aria-label={t('timer.settings.inspection')}
                 checked={inspectionEnabled}
-                onCheckedChange={setInspectionEnabled}
+                tabIndex={-1}
+                onCheckedChange={handleInspectionEnabledChange}
+                onPointerDown={preventPointerFocus}
               />
               {t('timer.settings.inspection')}
             </label>
@@ -284,30 +313,25 @@ export function TimerPage() {
               <Switch
                 aria-label={t('timer.settings.milliseconds')}
                 checked={showMilliseconds}
-                onCheckedChange={setShowMilliseconds}
+                tabIndex={-1}
+                onCheckedChange={handleShowMillisecondsChange}
+                onPointerDown={preventPointerFocus}
               />
               {t('timer.settings.milliseconds')}
             </label>
-            <div className="col-span-2 grid gap-1 sm:col-span-1 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center" aria-label={t('timer.penalty.label')}>
-              <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-app-muted sm:whitespace-nowrap">
-                {t('timer.penalty.latest')}
-              </p>
-              <PenaltyControls
-                compact
-                disabled={lastSolve === undefined}
-                penalty={lastSolve?.penalty ?? 'ok'}
-                onPenaltyChange={handlePenaltyChange}
-              />
-            </div>
           </Panel>
         </div>
         <div className="grid min-h-0 grid-rows-[minmax(12rem,2fr)_minmax(7rem,1fr)] gap-2 overflow-hidden lg:grid-cols-[minmax(0,1fr)_24rem] lg:grid-rows-none xl:grid-cols-[minmax(0,1fr)_30rem]">
           <TimerRuntime
             disabled={isScramblePending || scrambleLoadFailed}
+            displayRef={timerDisplayRef}
             holdToStartMs={holdToStartMs}
             inspectionEnabled={inspectionEnabled}
+            penalty={lastSolve?.penalty ?? 'ok'}
+            penaltyDisabled={lastSolve === undefined}
             resetSignal={timerResetSignal}
             showMilliseconds={showMilliseconds}
+            onPenaltyChange={handlePenaltyChange}
             onSolveComplete={handleSolveComplete}
           />
           <aside className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-2 overflow-hidden">
@@ -318,13 +342,15 @@ export function TimerPage() {
                 { label: 'ao5', timeMs: stats.ao5.timeMs },
                 { label: 'ao12', timeMs: stats.ao12.timeMs },
               ]}
-              className="grid-cols-2 sm:grid-cols-4 lg:grid-cols-2"
+              className="lg:max-h-40"
               showMilliseconds={showMilliseconds}
             />
             <SolveTable
               className="h-full min-h-0"
+              focusableActions={false}
               rows={solveRows}
               showMilliseconds={showMilliseconds}
+              onActionComplete={focusTimerDisplay}
               onDeleteSolve={deleteSolve}
             />
           </aside>
@@ -355,19 +381,27 @@ function scrambleText({ failed, pending, scramble, t }: ScrambleTextOptions): st
 
 type TimerRuntimeProps = {
   disabled: boolean
+  displayRef: RefObject<HTMLDivElement | null>
   holdToStartMs: number
   inspectionEnabled: boolean
+  penalty: TimerPenalty
+  penaltyDisabled: boolean
   resetSignal: number
   showMilliseconds: boolean
+  onPenaltyChange: (penalty: TimerPenalty) => void
   onSolveComplete: (rawTimeMs: number, penalty: TimerPenalty) => void
 }
 
 function TimerRuntime({
   disabled,
+  displayRef,
   holdToStartMs,
   inspectionEnabled,
+  penalty,
+  penaltyDisabled,
   resetSignal,
   showMilliseconds,
+  onPenaltyChange,
   onSolveComplete,
 }: TimerRuntimeProps) {
   const { t } = useTranslation()
@@ -388,9 +422,14 @@ function TimerRuntime({
     }
   }, [resetSignal])
 
+  function focusTimerDisplay() {
+    displayRef.current?.focus({ preventScroll: true })
+  }
+
   return (
     <section className="grid min-h-0 grid-rows-[minmax(0,1fr)_auto_auto] gap-2 overflow-hidden">
       <TimerDisplay
+        ref={displayRef}
         aria-label={t('timer.displayLabel')}
         aria-disabled={disabled}
         className="h-full"
@@ -398,7 +437,17 @@ function TimerRuntime({
         showMilliseconds={showMilliseconds}
         status={timer.status}
         {...touchHandlers}
-      />
+      >
+        <PenaltyControls
+          compact
+          className="mt-5 w-full max-w-44"
+          disabled={penaltyDisabled}
+          focusable={false}
+          penalty={penalty}
+          onActionComplete={focusTimerDisplay}
+          onPenaltyChange={onPenaltyChange}
+        />
+      </TimerDisplay>
       <TimerStatusBar status={timer.status} />
       <InspectionBar
         enabled={inspectionEnabled}
@@ -421,12 +470,14 @@ type QueueNextScrambleOptions = {
 type CompactScrambleEventSelectProps = {
   events: readonly ScrambleEvent[]
   selectedEventId: string
+  onActionComplete?: () => void
   onEventChange: (eventId: string) => void
 }
 
 function CompactScrambleEventSelect({
   events,
   selectedEventId,
+  onActionComplete,
   onEventChange,
 }: CompactScrambleEventSelectProps) {
   const { t } = useTranslation()
@@ -440,10 +491,16 @@ function CompactScrambleEventSelect({
       <SelectTrigger
         aria-label={t('timer.scramble.event')}
         className="h-7 max-w-40 px-2 py-1 text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted"
+        tabIndex={-1}
       >
         <SelectValue />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent
+        onCloseAutoFocus={(event) => {
+          event.preventDefault()
+          onActionComplete?.()
+        }}
+      >
         {groups.map((group) => (
           <SelectGroup key={group}>
             <SelectLabel>{group}</SelectLabel>
@@ -459,4 +516,8 @@ function CompactScrambleEventSelect({
       </SelectContent>
     </Select>
   )
+}
+
+function preventPointerFocus(event: { preventDefault: () => void }) {
+  event.preventDefault()
 }

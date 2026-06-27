@@ -34,8 +34,10 @@ export type SolveTableRow = {
 
 type SolveTableProps = {
   className?: string
+  focusableActions?: boolean
   rows: readonly SolveTableRow[]
   showMilliseconds?: boolean
+  onActionComplete?: () => void
   onDeleteSolve?: (solveId: string) => void
 }
 
@@ -65,7 +67,14 @@ function EmptySolveTable({ className }: Pick<SolveTableProps, 'className'>) {
   )
 }
 
-function PlainSolveTable({ className, rows, showMilliseconds = false, onDeleteSolve }: SolveTableProps) {
+function PlainSolveTable({
+  className,
+  focusableActions = true,
+  rows,
+  showMilliseconds = false,
+  onActionComplete,
+  onDeleteSolve,
+}: SolveTableProps) {
   const { t } = useTranslation()
 
   return (
@@ -96,7 +105,9 @@ function PlainSolveTable({ className, rows, showMilliseconds = false, onDeleteSo
               <td className="px-4 py-3">
                 <DeleteSolveButton
                   disabled={onDeleteSolve === undefined}
+                  focusable={focusableActions}
                   solveId={row.id}
+                  onActionComplete={onActionComplete}
                   onDeleteSolve={onDeleteSolve}
                 />
               </td>
@@ -108,7 +119,14 @@ function PlainSolveTable({ className, rows, showMilliseconds = false, onDeleteSo
   )
 }
 
-function VirtualizedSolveTable({ className, rows, showMilliseconds = false, onDeleteSolve }: SolveTableProps) {
+function VirtualizedSolveTable({
+  className,
+  focusableActions = true,
+  rows,
+  showMilliseconds = false,
+  onActionComplete,
+  onDeleteSolve,
+}: SolveTableProps) {
   const { t } = useTranslation()
   const [scrollParentElement, setScrollParentElement] = useState<HTMLElement | null>(null)
   const data = useMemo(() => [...rows], [rows])
@@ -143,14 +161,16 @@ function VirtualizedSolveTable({ className, rows, showMilliseconds = false, onDe
       cell: ({ row }) => (
         <DeleteSolveButton
           disabled={onDeleteSolve === undefined}
+          focusable={focusableActions}
           solveId={row.original.id}
+          onActionComplete={onActionComplete}
           onDeleteSolve={onDeleteSolve}
         />
       ),
       header: t('timer.solves.actions'),
       id: 'actions',
     },
-  ], [onDeleteSolve, showMilliseconds, t])
+  ], [focusableActions, onActionComplete, onDeleteSolve, showMilliseconds, t])
   const table = useReactTable({
     autoResetPageIndex: false,
     columns,
@@ -229,11 +249,15 @@ function VirtualizedSolveTable({ className, rows, showMilliseconds = false, onDe
 
 function DeleteSolveButton({
   disabled,
+  focusable,
   solveId,
+  onActionComplete,
   onDeleteSolve,
 }: {
   disabled: boolean
+  focusable: boolean
   solveId: string
+  onActionComplete?: () => void
   onDeleteSolve?: (solveId: string) => void
 }) {
   const { t } = useTranslation()
@@ -241,9 +265,15 @@ function DeleteSolveButton({
   return (
     <Button
       disabled={disabled}
+      tabIndex={focusable ? undefined : -1}
       type="button"
       variant="ghost"
-      onClick={() => onDeleteSolve?.(solveId)}
+      onClick={(event) => {
+        event.currentTarget.blur()
+        onDeleteSolve?.(solveId)
+        onActionComplete?.()
+      }}
+      onPointerDown={focusable ? undefined : (event) => event.preventDefault()}
     >
       {t('timer.solves.delete')}
     </Button>
