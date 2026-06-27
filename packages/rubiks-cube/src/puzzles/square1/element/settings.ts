@@ -1,10 +1,13 @@
-import { type AnimationStyle, AnimationStyles } from '../../../shared/animation';
+import type { gsap } from 'gsap';
+import { AnimationStyles } from '../../../shared/animation';
 import { DEFAULT_CAMERA_RADIUS } from '../../../shared/cameraDefaults';
 import { DEFAULT_SQUARE1_ANIMATION_SPEED_MS } from '../three/square1D';
 
+export type Square1AnimationStyle = gsap.EaseString | gsap.EaseFunction;
+
 export type Square1ElementSettings = {
   animationSpeedMs: number;
-  animationStyle: AnimationStyle;
+  animationStyle: Square1AnimationStyle;
   antialias: boolean;
   cameraFieldOfView: number;
   cameraPeekAngleHorizontal: number;
@@ -31,14 +34,24 @@ const maxFieldOfView = 100;
 const minCameraRadius = 4;
 const minDevicePixelRatio = 0.25;
 const maxDevicePixelRatio = 4;
+const square1AnimationStyleAliases = new Map<string, gsap.EaseString>([
+  [AnimationStyles.Linear, 'linear'],
+  [AnimationStyles.Exponential, 'expo'],
+  ['expo', 'expo'],
+]);
 
 export function createDefaultSquare1ElementSettings(): Square1ElementSettings {
   return { ...defaultSquare1ElementSettings };
 }
 
 export function setSquare1AnimationSpeed(target: Square1ElementSettings, value: string | null): void {
+  if (value == null) {
+    target.animationSpeedMs = defaultSquare1ElementSettings.animationSpeedMs;
+    return;
+  }
+
   const speed = Number(value);
-  if (speed >= 0 && value != null) {
+  if (Number.isFinite(speed) && speed >= 0) {
     target.animationSpeedMs = speed;
     return;
   }
@@ -46,18 +59,29 @@ export function setSquare1AnimationSpeed(target: Square1ElementSettings, value: 
 }
 
 export function setSquare1AnimationStyle(target: Square1ElementSettings, value: unknown): void {
-  if (value && Object.values(AnimationStyles).includes(value as AnimationStyle)) {
-    target.animationStyle = value as AnimationStyle;
+  if (value == null || value === '') {
+    target.animationStyle = defaultSquare1ElementSettings.animationStyle;
+    return;
+  }
+
+  const style = normalizeSquare1AnimationStyle(value);
+  if (style) {
+    target.animationStyle = style;
     return;
   }
   console.warn(
-    `Invalid Square-1 animation style value. Accepted Values are [${Object.values(AnimationStyles).join(', ')}] Value is ${value}`,
+    `Invalid Square-1 animation style value. Use a GSAP ease string such as linear or expo. Value is ${value}`,
   );
 }
 
 export function setSquare1CameraSpeed(target: Square1ElementSettings, value: string | null): void {
+  if (value == null) {
+    target.cameraSpeedMs = defaultSquare1ElementSettings.cameraSpeedMs;
+    return;
+  }
+
   const speed = Number(value);
-  if (speed >= 0 && value != null) {
+  if (Number.isFinite(speed) && speed >= 0) {
     target.cameraSpeedMs = speed;
     return;
   }
@@ -71,7 +95,7 @@ export function setSquare1CameraRadius(target: Square1ElementSettings, value: st
   }
 
   const radius = Number(value);
-  if (radius >= minCameraRadius) {
+  if (Number.isFinite(radius) && radius >= minCameraRadius) {
     target.cameraRadius = radius;
     return;
   }
@@ -85,7 +109,7 @@ export function setSquare1CameraFieldOfView(target: Square1ElementSettings, valu
   }
 
   const fov = Number(value);
-  if (fov >= minFieldOfView && fov <= maxFieldOfView) {
+  if (Number.isFinite(fov) && fov >= minFieldOfView && fov <= maxFieldOfView) {
     target.cameraFieldOfView = fov;
     return;
   }
@@ -95,8 +119,13 @@ export function setSquare1CameraFieldOfView(target: Square1ElementSettings, valu
 }
 
 export function setSquare1CameraPeekAngleHorizontal(target: Square1ElementSettings, value: string | null): void {
+  if (value == null) {
+    target.cameraPeekAngleHorizontal = defaultSquare1ElementSettings.cameraPeekAngleHorizontal;
+    return;
+  }
+
   const angle = Number(value);
-  if (angle >= 0 && angle <= 1 && value != null) {
+  if (Number.isFinite(angle) && angle >= 0 && angle <= 1) {
     target.cameraPeekAngleHorizontal = angle;
     return;
   }
@@ -104,8 +133,13 @@ export function setSquare1CameraPeekAngleHorizontal(target: Square1ElementSettin
 }
 
 export function setSquare1CameraPeekAngleVertical(target: Square1ElementSettings, value: string | null): void {
+  if (value == null) {
+    target.cameraPeekAngleVertical = defaultSquare1ElementSettings.cameraPeekAngleVertical;
+    return;
+  }
+
   const angle = Number(value);
-  if (angle >= 0 && angle <= 1 && value != null) {
+  if (Number.isFinite(angle) && angle >= 0 && angle <= 1) {
     target.cameraPeekAngleVertical = angle;
     return;
   }
@@ -118,7 +152,7 @@ export function setSquare1MaxDevicePixelRatio(target: Square1ElementSettings, va
     return;
   }
   const ratio = Number(value);
-  if (ratio >= minDevicePixelRatio && ratio <= maxDevicePixelRatio) {
+  if (Number.isFinite(ratio) && ratio >= minDevicePixelRatio && ratio <= maxDevicePixelRatio) {
     target.maxDevicePixelRatio = ratio;
     return;
   }
@@ -142,4 +176,15 @@ export function setSquare1Antialias(target: Square1ElementSettings, value: strin
     return;
   }
   console.warn(`Invalid Square-1 antialias value. Accepted values are true/false. Value is ${value}`);
+}
+
+function normalizeSquare1AnimationStyle(value: unknown): Square1AnimationStyle | undefined {
+  if (typeof value === 'function') {
+    return value as gsap.EaseFunction;
+  }
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  return square1AnimationStyleAliases.get(value);
 }

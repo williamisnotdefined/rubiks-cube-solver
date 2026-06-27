@@ -48,6 +48,15 @@ export class Square1Piece extends Object3D {
       this.add(sticker);
     }
   }
+
+  dispose(): void {
+    this.surface.geometry.dispose();
+    this.surface.material.dispose();
+    for (const sticker of this.stickers) {
+      sticker.geometry.dispose();
+      sticker.material.dispose();
+    }
+  }
 }
 
 function createMaterial(color: ColorRepresentation, roughness: number): MeshStandardMaterial {

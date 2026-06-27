@@ -105,6 +105,13 @@ function skipWhitespace(input: string, index: number): number {
 
 function readInvalidToken(input: string, index: number): string {
   const rest = input.slice(index).trimStart();
+  if (rest.startsWith('(')) {
+    const closingParenIndex = rest.indexOf(')');
+    if (closingParenIndex >= 0) {
+      return rest.slice(0, closingParenIndex + 1);
+    }
+  }
+
   const token = rest.split(/\s+/)[0];
   return token.length > 0 ? token : input;
 }

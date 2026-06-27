@@ -196,6 +196,16 @@ describe('Square-1 notation', () => {
     expect(() => parseSquare1Algorithm(token)).toThrow(Square1NotationError);
   });
 
+  test('reports complete invalid coordinate tokens with internal whitespace', () => {
+    try {
+      parseSquare1Algorithm('(7, 0)');
+      throw new Error('Expected Square-1 notation to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(Square1NotationError);
+      expect((error as Square1NotationError).token).toBe('(7, 0)');
+    }
+  });
+
   test('parses, displays, and inverts algorithms', () => {
     const moves = parseSquare1Algorithm(' (1, -1) / (3,0) ');
 
@@ -451,6 +461,95 @@ describe('Square1D', () => {
     await expect(square1.move('bad')).rejects.toThrow(Square1NotationError);
   });
 
+  test('rejects invalid object moves without mutating state', async () => {
+    const square1 = new Square1D({ animationSpeedMs: 0 });
+    const solved = square1.getState();
+    const invalidMove = { bottom: 0, kind: 'coordinate', top: 0.5 } as never;
+
+    expect(() => square1.movePlan(invalidMove)).toThrow(Square1NotationError);
+    expect(() => square1.applyMove(invalidMove)).toThrow(Square1NotationError);
+    await expect(square1.move(invalidMove)).rejects.toThrow(Square1NotationError);
+
+    expect(square1.getState()).toBe(solved);
+    expect(parseSquare1VisualState(square1.getState())).toEqual(createSolvedSquare1State());
+  });
+
+  test('snapshots queued object moves, action arrays, and options', async () => {
+    const objectMoveSquare1 = new Square1D({ animationSpeedMs: 0 });
+    const move = { bottom: 0, kind: 'coordinate', top: 3 } satisfies Square1Move;
+    const options = { reverse: true };
+    const objectMovePromise = objectMoveSquare1.move(move, options);
+    move.top = 0;
+    options.reverse = false;
+
+    const expectedObjectMove = new Square1D({ animationSpeedMs: 0 });
+    expectedObjectMove.applyMove(Square1MoveTokens.ThreeZero, { reverse: true });
+    await expect(objectMovePromise).resolves.toBe(expectedObjectMove.getState());
+
+    const arraySquare1 = new Square1D({ animationSpeedMs: 0 });
+    const actions: string[] = [Square1MoveTokens.ThreeZero];
+    const arrayPromise = arraySquare1.do(actions);
+    actions[0] = Square1MoveTokens.ZeroThree;
+
+    const expectedArrayMove = new Square1D({ animationSpeedMs: 0 });
+    expectedArrayMove.applyMove(Square1MoveTokens.ThreeZero);
+    await expect(arrayPromise).resolves.toBe(expectedArrayMove.getState());
+  });
+
+  test('runs concurrent algorithms atomically in queue order', async () => {
+    const square1 = new Square1D({ animationSpeedMs: 0 });
+    const firstAlgorithm = '(1,-1) /';
+    const secondAlgorithm = '(3,0) /';
+
+    const first = square1.do(firstAlgorithm);
+    const second = square1.do(secondAlgorithm);
+    await Promise.all([first, second]);
+
+    const expected = parseSquare1Algorithm(`${firstAlgorithm} ${secondAlgorithm}`).reduce(
+      applySquare1Move,
+      createSolvedSquare1State(),
+    );
+    expect(parseSquare1VisualState(square1.getState())).toEqual(expected);
+  });
+
+  test('does not replay queued moves after reset interrupts the queue', async () => {
+    const square1 = new Square1D({ animationSpeedMs: 0 });
+    const first = square1.move(Square1MoveTokens.ThreeZero);
+    const second = square1.move(Square1MoveTokens.ZeroThree);
+
+    const resetState = square1.reset();
+    await expect(first).resolves.toBe(resetState);
+    await expect(second).resolves.toBe(resetState);
+
+    expect(square1.getState()).toBe(resetState);
+  });
+
+  test('does not continue an active algorithm after reset interrupts it', async () => {
+    const square1 = new Square1D({ animationSpeedMs: 1000 });
+    const algorithm = square1.do([Square1MoveTokens.ThreeZero, Square1MoveTokens.ZeroThree]);
+
+    await Promise.resolve();
+    const resetState = square1.reset();
+    await expect(algorithm).resolves.toBe(resetState);
+
+    expect(square1.getState()).toBe(resetState);
+  });
+
+  test('interrupt finishes the active move and clears queued moves', async () => {
+    const square1 = new Square1D({ animationSpeedMs: 1000 });
+    const first = square1.move(Square1MoveTokens.ThreeZero);
+    const second = square1.move(Square1MoveTokens.ZeroThree);
+
+    await Promise.resolve();
+    const interruptedState = square1.interrupt();
+    await expect(first).resolves.toBe(interruptedState);
+    await expect(second).resolves.toBe(interruptedState);
+
+    const expected = applySquare1Move(createSolvedSquare1State(), { bottom: 0, kind: 'coordinate', top: 3 });
+    expect(parseSquare1VisualState(interruptedState)).toEqual(expected);
+    expect(square1.getState()).toBe(interruptedState);
+  });
+
   test('throws if a persistent physical piece is missing internally', () => {
     const square1 = new Square1D({ animationSpeedMs: 0 });
 
@@ -477,6 +576,24 @@ describe('Square1D', () => {
     expect(after.stickers[0]).toBe(beforeSticker);
     expect(after.stickers[0].material).toBe(beforeSticker.material);
     expect(geometrySignature(after.surface.geometry)).toBe(beforeSignature);
+  });
+
+  test('disposes Square-1 geometry and materials', () => {
+    const square1 = new Square1D({ animationSpeedMs: 0 });
+    const piece = requiredPiece(square1, 'UFR');
+    const sticker = requiredCapSticker(piece);
+    const surfaceGeometryDispose = vi.spyOn(piece.surface.geometry, 'dispose');
+    const surfaceMaterialDispose = vi.spyOn(piece.surface.material, 'dispose');
+    const stickerGeometryDispose = vi.spyOn(sticker.geometry, 'dispose');
+    const stickerMaterialDispose = vi.spyOn(sticker.material, 'dispose');
+
+    square1.dispose();
+
+    expect(surfaceGeometryDispose).toHaveBeenCalledTimes(1);
+    expect(surfaceMaterialDispose).toHaveBeenCalledTimes(1);
+    expect(stickerGeometryDispose).toHaveBeenCalledTimes(1);
+    expect(stickerMaterialDispose).toHaveBeenCalledTimes(1);
+    expect(square1.pieceCount()).toBe(0);
   });
 
   test('keeps stickers attached to pieces through slash transfer', () => {
