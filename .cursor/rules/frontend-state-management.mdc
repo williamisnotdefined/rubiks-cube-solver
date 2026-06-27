@@ -195,6 +195,7 @@ Rules for React component boundaries in `web`.
 - Do not move page, cube, solver, API, or visualization-specific helpers into shared utilities before reuse exists.
 - Do not let `App.tsx`, page files, or hooks become god modules.
 - Do not add localized route paths; user-visible navigation text belongs in locale files.
+- Do not use nested ternary expressions in React or frontend helpers; use explicit `if`/`return`, a named helper, or a small lookup table instead.
 - Do not fix a god component by moving all state and effects into a god provider or god hook.
 - Do not create React Context for mutable UI state.
 - Do not render short fixed control groups through artificial arrays when direct JSX is clearer.

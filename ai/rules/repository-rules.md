@@ -29,6 +29,7 @@ Global rules for changes anywhere in this repository.
 - Do not edit `.opencode/skills`, `.cursor/rules`, or `.github/instructions` AI route files manually.
 - Do not add compatibility layers or future abstractions without a concrete current consumer.
 - Do not add a new formatter, linter, framework, or workspace-wide tool unless explicitly requested.
+- Do not use nested ternary expressions; use explicit `if`/`return`, a named helper, or a small lookup table instead.
 - Do not use `docker restart` or start an old production container to deploy code changes; production code changes require a Docker rebuild through `live:deploy`, `live:restart`, `prod:deploy`, `prod:restart`, or the lower-level `docker:up` wrapper.
 
 ## Runtime Scripts
@@ -38,7 +39,7 @@ Global rules for changes anywhere in this repository.
 - `live:deploy`: preferred production update command after PRs merge; switches to `main`, pulls `origin/main`, rebuilds/recreates Docker production, waits for `http://127.0.0.1:8787/health`, and prints status.
 - `live:restart`: rebuilds/recreates Docker production without pulling Git; use when the checkout is already current.
 - `live:health`, `live:status`, `live:logs`, and `live:stop`: production health/status/log/stop helpers.
-- `live:start`: deploys production with `live:deploy`, then starts `cloudflared tunnel run wilho`.
+- `live:start`: deploys production with `live:deploy`, then starts `cloudflared tunnel run --token "$CLOUDFLARED_TUNNEL_TOKEN"` for `speedcube.com.br`.
 - `live:tunnel`: starts only the Cloudflare tunnel and assumes production Docker is already healthy.
 - `prod:*`, `docker:up`, `docker:down`, `docker:restart`, `docker:status`, and `docker:logs`: lower-level `rubiks-prod` Compose wrappers; prefer `live:*` unless you specifically need raw Compose behavior.
 - `docker:dev` and `docker:dev:down`: compatibility wrappers for Docker dev; prefer `dev:*`.

@@ -1,0 +1,29 @@
+# Speedcube
+
+> Online Rubik's Cube solver, speedcubing timer, notation guides, and algorithm library.
+
+## Main Pages
+
+- [Solver](https://speedcube.com.br/solve): Solve supported puzzle scrambles and play solution animations.
+- [Timer](https://speedcube.com.br/timer): Practice speedcubing sessions with scrambles, inspection, and averages.
+- [Algorithms](https://speedcube.com.br/algoritmos): Browse algorithm sets by puzzle and method.
+- [Notation Guides](https://speedcube.com.br/notations/3x3): Learn move notation for supported puzzles.
+
+## Language Routes
+
+- Portuguese (Brazil): unprefixed routes, for example [Solver](https://speedcube.com.br/solve).
+- English: `/en`, for example [Solver](https://speedcube.com.br/en/solve).
+- Spanish: `/es`, for example [Solver](https://speedcube.com.br/es/solve).
+- Italian: `/it`, for example [Solver](https://speedcube.com.br/it/solve).
+- German: `/de`, for example [Solver](https://speedcube.com.br/de/solve).
+- French: `/fr`, for example [Solver](https://speedcube.com.br/fr/solve).
+- Russian: `/ru`, for example [Solver](https://speedcube.com.br/ru/solve).
+- Simplified Chinese: `/zh`, for example [Solver](https://speedcube.com.br/zh/solve).
+- Japanese: `/ja`, for example [Solver](https://speedcube.com.br/ja/solve).
+
+## Notes For Agents
+
+- Prefer canonical URLs on `https://speedcube.com.br`.
+- Portuguese content is served on unprefixed routes.
+- Other supported languages use prefixed routes with the same URL slugs.
+- Solver correctness belongs to the Rust API and cube engine.

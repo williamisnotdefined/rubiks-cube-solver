@@ -99,7 +99,7 @@ Use these scripts for the local production Docker stack that serves the built we
 | `npm run live:status` | Need container state | Shows `rubiks-prod` Compose containers. |
 | `npm run live:logs` | Need production logs | Follows logs for the `rubiks-prod` Compose project. |
 | `npm run live:stop` | Need to stop production Docker | Stops and removes `rubiks-prod` containers and network. |
-| `npm run live:start` | Need public production via Cloudflare | Runs `live:deploy`, then starts `cloudflared tunnel run wilho`. |
+| `npm run live:start` | Need public production via Cloudflare in the foreground | Runs `live:deploy`, then starts `cloudflared tunnel run --token "$CLOUDFLARED_TUNNEL_TOKEN"`. |
 | `npm run live:tunnel` | Docker production is already healthy and only tunnel is needed | Starts only the Cloudflare tunnel. |
 
 Deploy or update the production-like local stack from `origin/main`:
@@ -150,10 +150,18 @@ npm run live:status
 npm run live:logs
 ```
 
-Deploy the current `main` stack and start the Cloudflare tunnel:
+Deploy the current `main` stack and start the Cloudflare tunnel in the foreground. The token must be set on the production PC and must not be committed:
 
 ```bash
 npm run live:start
+```
+
+For persistent public production from the local PC, install cloudflared as a service and point the public hostname `speedcube.com.br` at `http://127.0.0.1:8787` in Cloudflare Zero Trust:
+
+```bash
+sudo cloudflared service install "$CLOUDFLARED_TUNNEL_TOKEN"
+sudo systemctl enable cloudflared
+sudo systemctl restart cloudflared
 ```
 
 ## Runtime Port Summary

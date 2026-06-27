@@ -3,7 +3,9 @@
     "cancel": "Abbrechen",
     "close": "Schließen",
     "loading": "Wird geladen",
-    "loadingRoute": "Route wird geladen"
+    "loadingRoute": "Route wird geladen",
+    "notFoundBody": "Die angeforderte Seite ist nicht verfügbar. Kehre zum Solver zurück, um fortzufahren.",
+    "notFoundTitle": "Seite nicht gefunden"
   },
   "channels": {
     "bannerAlt": "Banner des Kanals {{channel}}",

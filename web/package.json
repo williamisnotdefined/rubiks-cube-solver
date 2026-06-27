@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5173",
-    "build": "npm run build:types -w @rubiks-cube-solver/rubiks-cube && tsc -b && vite build",
+    "build": "npm run build:types -w @rubiks-cube-solver/rubiks-cube && tsc -b && vite build && node ../scripts/seo/generate-static-assets.mjs",
     "lint": "biome lint . --error-on-warnings",
     "format": "biome format . --write",
     "preview": "vite preview --host 127.0.0.1 --port 4173",

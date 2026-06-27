@@ -3,7 +3,9 @@
     "cancel": "Annuler",
     "close": "Fermer",
     "loading": "Chargement",
-    "loadingRoute": "Chargement de la route"
+    "loadingRoute": "Chargement de la route",
+    "notFoundBody": "La page demandée n'est pas disponible. Retournez au solveur pour continuer.",
+    "notFoundTitle": "Page introuvable"
   },
   "channels": {
     "bannerAlt": "Bannière de la chaîne {{channel}}",

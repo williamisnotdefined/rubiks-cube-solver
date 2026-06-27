@@ -3,7 +3,9 @@
     "cancel": "Cancelar",
     "close": "Cerrar",
     "loading": "Cargando",
-    "loadingRoute": "Cargando ruta"
+    "loadingRoute": "Cargando ruta",
+    "notFoundBody": "La página solicitada no está disponible. Vuelve al solucionador para continuar.",
+    "notFoundTitle": "Página no encontrada"
   },
   "channels": {
     "bannerAlt": "Banner del canal {{channel}}",

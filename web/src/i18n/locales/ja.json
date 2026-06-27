@@ -3,7 +3,9 @@
     "cancel": "キャンセル",
     "close": "閉じる",
     "loading": "読み込み中",
-    "loadingRoute": "搬入経路"
+    "loadingRoute": "搬入経路",
+    "notFoundBody": "リクエストされたページは利用できません。ソルバーに戻って続行してください。",
+    "notFoundTitle": "ページが見つかりません"
   },
   "channels": {
     "bannerAlt": "{{channel}} チャンネル バナー",

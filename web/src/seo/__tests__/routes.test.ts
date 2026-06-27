@@ -1,0 +1,31 @@
+import { describe, expect, it } from 'vitest'
+import { getSeoMetadata, localeFromPathname, localizedPath, prefixedSeoLocales, stripLocalePrefix } from '../routes'
+
+describe('SEO route metadata', () => {
+  it('uses pt-BR for unprefixed routes and route prefixes for every indexed locale', () => {
+    expect(localeFromPathname('/solve')).toBe('pt-BR')
+
+    for (const locale of prefixedSeoLocales) {
+      expect(localeFromPathname(localizedPath('/solve', locale))).toBe(locale)
+      expect(stripLocalePrefix(localizedPath('/algoritmos/3x3/oll', locale))).toBe('/algoritmos/3x3/oll')
+    }
+  })
+
+  it('builds canonical metadata for English algorithm pages without translating slugs', () => {
+    const metadata = getSeoMetadata('/en/algoritmos/3x3/oll')
+
+    expect(metadata.locale).toBe('en')
+    expect(metadata.path).toBe('/algoritmos/3x3/oll')
+    expect(metadata.canonicalUrl).toBe('https://speedcube.com.br/en/algoritmos/3x3/oll')
+    expect(metadata.title).toContain('3x3 OLL Algorithms')
+    expect(metadata.noindex).toBe(false)
+  })
+
+  it('marks unknown routes as noindex', () => {
+    const metadata = getSeoMetadata('/es/missing')
+
+    expect(metadata.locale).toBe('es')
+    expect(metadata.noindex).toBe(true)
+    expect(metadata.title).toContain('Pagina no encontrada')
+  })
+})

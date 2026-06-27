@@ -105,6 +105,7 @@ Rules for React component boundaries in `web`.
 - Do not move page, cube, solver, API, or visualization-specific helpers into shared utilities before reuse exists.
 - Do not let `App.tsx`, page files, or hooks become god modules.
 - Do not add localized route paths; user-visible navigation text belongs in locale files.
+- Do not use nested ternary expressions in React or frontend helpers; use explicit `if`/`return`, a named helper, or a small lookup table instead.
 - Do not fix a god component by moving all state and effects into a god provider or god hook.
 - Do not create React Context for mutable UI state.
 - Do not render short fixed control groups through artificial arrays when direct JSX is clearer.
@@ -296,7 +297,7 @@ The target is a Rubik's Cube solver with a Rust engine, search algorithms, heuri
 - Local non-Docker fallback uses `dev:local:prepare` and `dev:local` for development/debugging when Docker is not desired.
 - Docker production uses the `rubiks-prod` Compose project. Use `live:deploy` after merges to pull `origin/main`, rebuild/recreate containers, wait for app health, and print status.
 - Use `live:restart` only when the checkout is already current and containers need to be rebuilt/recreated.
-- `live:start` runs production deploy first and then starts the Cloudflare tunnel. `live:tunnel` runs only `cloudflared tunnel run wilho`.
+- `live:start` runs production deploy first and then starts the Cloudflare tunnel for `speedcube.com.br` with `cloudflared tunnel run --token "$CLOUDFLARED_TUNNEL_TOKEN"`. `live:tunnel` runs only the tunnel command and assumes production Docker is already healthy.
 - Docker dev, Docker production, and scanner training use separate Compose projects/commands so they do not collide.
 
 ## Multi-Puzzle Direction

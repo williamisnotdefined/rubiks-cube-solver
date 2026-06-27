@@ -2,12 +2,13 @@ import cls from 'classnames'
 import { GitFork, Menu, Sun, X } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { NavLink as RouterNavLink } from 'react-router'
+import { NavLink as RouterNavLink, useLocation } from 'react-router'
 import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from '@components/Dialog'
 import { Popover, PopoverContent, PopoverTrigger } from '@components/Popover'
 import { useThemePreferenceSync, useThemeStore, type ThemePreference } from '@core/theme/themeStore'
 import { algorithmPuzzles, setsForPuzzle } from '@pages/AlgorithmsPage/sets/algorithmSetMetadata'
 import { notationPuzzleGroups } from '@pages/NotationsPage/notationGuides'
+import { localeFromPathname, localizedPath } from '@src/seo/routes'
 
 export type PageNavRoute = 'algorithms' | 'channels' | 'notations' | 'solve' | 'timer'
 
@@ -87,21 +88,27 @@ type NavContentProps = {
 
 function NavContent({ activeRoute, onNavigate }: NavContentProps) {
   const { t } = useTranslation()
+  const location = useLocation()
+  const locale = localeFromPathname(location.pathname)
+
+  function toLocalizedPath(path: string) {
+    return localizedPath(path, locale)
+  }
 
   return (
     <div className="flex min-h-0 w-full flex-col gap-4">
       <div className="grid gap-2">
-        <PageNavLink active={activeRoute === 'solve'} to="/solve" onClick={onNavigate}>
+        <PageNavLink active={activeRoute === 'solve'} to={toLocalizedPath('/solve')} onClick={onNavigate}>
           {t('navigation.solve')}
         </PageNavLink>
-        <PageNavLink active={activeRoute === 'timer'} to="/timer" onClick={onNavigate}>
+        <PageNavLink active={activeRoute === 'timer'} to={toLocalizedPath('/timer')} onClick={onNavigate}>
           {t('navigation.timer')}
         </PageNavLink>
-        <PageNavLink active={activeRoute === 'channels'} to="/channels" onClick={onNavigate}>
+        <PageNavLink active={activeRoute === 'channels'} to={toLocalizedPath('/channels')} onClick={onNavigate}>
           {t('navigation.channels')}
         </PageNavLink>
-        <NotationsMenu active={activeRoute === 'notations'} onNavigate={onNavigate} />
-        <AlgorithmsMenu active={activeRoute === 'algorithms'} onNavigate={onNavigate} />
+        <NotationsMenu active={activeRoute === 'notations'} locale={locale} onNavigate={onNavigate} />
+        <AlgorithmsMenu active={activeRoute === 'algorithms'} locale={locale} onNavigate={onNavigate} />
       </div>
       <div className="mt-auto flex gap-2">
         <ThemeMenu />
@@ -142,9 +149,11 @@ function activeRouteLabelKey(activeRoute: PageNavRoute) {
 
 function NotationsMenu({
   active,
+  locale,
   onNavigate,
 }: {
   active: boolean
+  locale: ReturnType<typeof localeFromPathname>
   onNavigate?: () => void
 }) {
   const { t } = useTranslation()
@@ -193,7 +202,7 @@ function NotationsMenu({
                         'text-app-muted hover:bg-app-control hover:text-app-text': !isActive,
                       },
                     )}
-                    to={guide.path}
+                    to={localizedPath(guide.path, locale)}
                     onClick={handleNavigate}
                   >
                     {guide.puzzle}
@@ -210,9 +219,11 @@ function NotationsMenu({
 
 function AlgorithmsMenu({
   active,
+  locale,
   onNavigate,
 }: {
   active: boolean
+  locale: ReturnType<typeof localeFromPathname>
   onNavigate?: () => void
 }) {
   const { t } = useTranslation()
@@ -261,7 +272,7 @@ function AlgorithmsMenu({
                         'text-app-muted hover:bg-app-control hover:text-app-text': !isActive,
                       },
                     )}
-                    to={set.path}
+                    to={localizedPath(set.path, locale)}
                     onClick={handleNavigate}
                   >
                     {set.title}
