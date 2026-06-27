@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+
+branch="$(git branch --show-current)"
+
+if [ "$branch" = "main" ]; then
+  printf '%s\n' "Commit blocked: create a task branch before committing."
+  exit 1
+fi

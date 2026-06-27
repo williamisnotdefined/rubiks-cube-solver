@@ -18,6 +18,7 @@ Keep every change aligned with Rust engine boundaries, cube domain language, cur
 ## Workflow
 
 - Start from `docs/project-plan.md`, nearby code, tests, and source docs before changing behavior.
+- Create or switch to a dedicated task branch before changing files; never work or commit directly on `main`.
 - Apply a narrower skill when the task touches cube engine, solver search, API boundary, frontend visualization, or AI knowledge.
 - Keep solver logic in Rust and keep AI routes generated.
 - Run targeted verification first, then broader checks when a change crosses boundaries.

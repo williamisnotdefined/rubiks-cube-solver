@@ -32,6 +32,7 @@ npm run scanner:training:test
 - Keep scanner predictions as evidence only; Rust validation remains authoritative.
 - Do not commit generated pruning tables, model artifacts, private captures, logs, `.env` files, generated datasets, or local outputs.
 - Update canonical AI guidance under `ai/` and run `npm run ai:sync`; do not edit generated AI routes manually.
+- Create a task branch before changing files and never commit directly on `main`; Husky blocks commits on `main` locally.
 - Preserve existing coverage thresholds and checks. Add tests for behavior changes.
 
 ## Pull Requests

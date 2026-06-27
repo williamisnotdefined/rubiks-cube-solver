@@ -13,6 +13,7 @@ Global rules for changes anywhere in this repository.
 - For multi-puzzle work, keep state, move models, notation, validation, and solver strategy puzzle-specific unless a shared type is strictly metadata or infrastructure.
 - Keep workspace-specific code inside the owning workspace unless there is a current cross-workspace consumer.
 - Use repository-root commands such as `npm run ai:check`, `npm run api:test`, `npm run build`, and `cargo test` so paths and workspaces resolve consistently.
+- Before any task that changes files, create or switch to a dedicated branch; never work directly on `main` for task changes.
 - For `web`, use Biome through workspace scripts for linting and formatting; do not add ESLint or Prettier configs unless explicitly requested.
 - Run targeted verification for the affected area and report any environment blockers.
 - Before any AI-created commit or pull request, run `cargo clippy --all-targets --all-features -- -D warnings` from the repository root when the Rust toolchain is available.
@@ -26,6 +27,7 @@ Global rules for changes anywhere in this repository.
 - Do not mix UI rendering logic with cube engine logic.
 - Do not add a generic puzzle engine, universal state type, universal move type, `BaseMove`, `BaseState`, `BasePuzzle`, or inheritance-style puzzle abstraction.
 - Do not commit `.env` files, raw secrets, API tokens, model artifacts with private data, or local solver output that is not intended for source control.
+- Do not commit directly on `main`; create a task branch first and do not bypass branch-protection hooks with `--no-verify`.
 - Do not edit `.opencode/skills`, `.cursor/rules`, or `.github/instructions` AI route files manually.
 - Do not add compatibility layers or future abstractions without a concrete current consumer.
 - Do not add a new formatter, linter, framework, or workspace-wide tool unless explicitly requested.
