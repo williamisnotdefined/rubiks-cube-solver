@@ -9,6 +9,8 @@ type PersistedTimerSolve = {
   scramble: string
 }
 
+const timerPath = '/en/timer'
+
 test.describe('timer flow', () => {
   test.describe.configure({ timeout: 60_000 })
 
@@ -17,7 +19,7 @@ test.describe('timer flow', () => {
   })
 
   test('records a solve with keyboard start and stop', async ({ page }) => {
-    await page.goto('/timer')
+    await page.goto(timerPath)
 
     await expect(page.getByRole('timer', { name: 'Speedsolve timer' })).toBeVisible()
     await expect(page.getByText('No solves yet')).toBeVisible()
@@ -35,7 +37,7 @@ test.describe('timer flow', () => {
   })
 
   test('updates latest solve penalty between +2, DNF, and OK', async ({ page }) => {
-    await page.goto('/timer')
+    await page.goto(timerPath)
     await recordKeyboardSolve(page)
 
     const rawTimeMs = (await persistedTimerSolves(page))[0]!.rawTimeMs
@@ -60,7 +62,7 @@ test.describe('timer flow', () => {
   })
 
   test('uses the selected event for the next recorded solve', async ({ page }) => {
-    await page.goto('/timer')
+    await page.goto(timerPath)
 
     await chooseRadixSelectOption(page, 'Event', 'Pyraminx')
     await expect(page.getByText(/Pyraminx/)).toBeVisible()
@@ -73,7 +75,7 @@ test.describe('timer flow', () => {
   })
 
   test('supports inspection and millisecond display settings', async ({ page }) => {
-    await page.goto('/timer')
+    await page.goto(timerPath)
 
     await dispatchClick(page.getByRole('switch', { name: 'Inspection' }))
     await expect(page.getByText('WCA inspection')).toBeVisible()
@@ -110,7 +112,7 @@ test.describe('timer flow', () => {
         },
       })
     })
-    await page.goto('/timer')
+    await page.goto(timerPath)
 
     await expect(page.getByRole('button', { name: 'Previous scramble' })).toBeDisabled()
     await expect(page.getByRole('button', { name: 'Copy scramble' })).toBeEnabled()
