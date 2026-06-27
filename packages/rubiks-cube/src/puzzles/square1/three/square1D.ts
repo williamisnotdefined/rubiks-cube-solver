@@ -1,6 +1,11 @@
 import { gsap } from 'gsap';
 import { Group, Object3D, Quaternion, Vector3 } from 'three';
-import { parseSquare1Algorithm, parseSquare1MoveToken, Square1NotationError } from '../core/notation';
+import {
+  parseSquare1Algorithm,
+  parseSquare1MoveToken,
+  reverseSquare1Move,
+  Square1NotationError,
+} from '../core/notation';
 import { applySquare1Move } from '../core/state';
 import type { Square1MiddlePieceId, Square1Move, Square1PieceDefinition, Square1PieceId } from '../core/types';
 import { Square1PieceDefinitions } from '../core/types';
@@ -29,6 +34,8 @@ type Square1AnimationOptions = {
 
 type Square1MoveInput = Square1Move | string;
 
+type ResolvedSquare1AnimationOptions = Pick<Square1AnimationOptions, 'animationSpeedMs'>;
+
 type AnimatedPiecePose = {
   position: Vector3;
   quaternion: Quaternion;
@@ -41,6 +48,7 @@ export class Square1D extends Object3D {
   _mainGroup: Group;
   _model: Square1VisualStateModel;
   _moveQueue: Promise<void>;
+  _moveQueueGeneration: number;
   _pieces: Square1Piece[];
   _piecesById: Map<Square1PieceId, Square1Piece>;
 
@@ -53,6 +61,7 @@ export class Square1D extends Object3D {
     this._piecesById = new Map();
     this._currentAnimation = undefined;
     this._moveQueue = Promise.resolve();
+    this._moveQueueGeneration = 0;
     this._mainGroup = new Group();
     this.add(this._mainGroup);
     this.createPersistentPieces();
@@ -68,7 +77,7 @@ export class Square1D extends Object3D {
   }
 
   reset(): string {
-    this.finishCurrentAnimation();
+    this.interruptQueuedMoves();
     this._model = createSolvedSquare1VisualStateModel();
     this.applyStatePoses();
     return this.getState();
@@ -84,7 +93,7 @@ export class Square1D extends Object3D {
       return false;
     }
 
-    this.finishCurrentAnimation();
+    this.interruptQueuedMoves();
     this._model = nextState;
     this.applyStatePoses();
 
@@ -96,16 +105,57 @@ export class Square1D extends Object3D {
   }
 
   applyMove(moveInput: Square1MoveInput, options: Pick<Square1AnimationOptions, 'reverse'> = {}): string {
-    this.finishCurrentAnimation();
+    this.interruptQueuedMoves();
     const move = this.directedMove(moveInput, options.reverse);
     this._model = applySquare1Move(this._model, move);
     this.applyStatePoses();
     return this.getState();
   }
 
+  interrupt(): string {
+    this.interruptQueuedMoves();
+    return this.getState();
+  }
+
   move(moveInput: Square1MoveInput, options: Square1AnimationOptions = {}): Promise<string> {
-    const runMove = () => this.runMove(moveInput, options);
-    const result = this._moveQueue.then(runMove, runMove);
+    try {
+      const move = this.directedMove(moveInput, options.reverse);
+      const animationOptions = snapshotAnimationOptions(options);
+      return this.enqueueMoveOperation(async (generation) => {
+        const state = await this.runMove(move, animationOptions);
+        return this.isMoveQueueGenerationCurrent(generation) ? state : this.getState();
+      });
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
+
+  async do(actions: readonly Square1MoveInput[] | string, options: Square1AnimationOptions = {}): Promise<string> {
+    const moves = (typeof actions === 'string' ? parseSquare1Algorithm(actions) : actions).map((move) =>
+      this.directedMove(move, options.reverse),
+    );
+    const animationOptions = snapshotAnimationOptions(options);
+
+    return this.enqueueMoveOperation(async (generation) => {
+      for (const move of moves) {
+        if (!this.isMoveQueueGenerationCurrent(generation)) {
+          return this.getState();
+        }
+        await this.runMove(move, animationOptions);
+        if (!this.isMoveQueueGenerationCurrent(generation)) {
+          return this.getState();
+        }
+      }
+
+      return this.getState();
+    });
+  }
+
+  private enqueueMoveOperation(operation: (generation: number) => Promise<string>): Promise<string> {
+    const generation = this._moveQueueGeneration;
+    const runOperation = () =>
+      this.isMoveQueueGenerationCurrent(generation) ? operation(generation) : Promise.resolve(this.getState());
+    const result = this._moveQueue.then(runOperation, runOperation);
     this._moveQueue = result.then(
       () => undefined,
       () => undefined,
@@ -113,19 +163,8 @@ export class Square1D extends Object3D {
     return result;
   }
 
-  async do(actions: readonly Square1MoveInput[] | string, options: Square1AnimationOptions = {}): Promise<string> {
-    const moves = typeof actions === 'string' ? parseSquare1Algorithm(actions) : actions;
-
-    for (const move of moves) {
-      await this.move(move, options);
-    }
-
-    return this.getState();
-  }
-
-  private runMove(moveInput: Square1MoveInput, options: Square1AnimationOptions = {}): Promise<string> {
+  private runMove(move: Square1Move, options: ResolvedSquare1AnimationOptions = {}): Promise<string> {
     this.finishCurrentAnimation();
-    const move = this.directedMove(moveInput, options.reverse);
     const plan = createSquare1MovePlan(this._model, move);
     const nextModel = applySquare1Move(this._model, move);
     const speed = options.animationSpeedMs ?? this.animationSpeedMs;
@@ -165,7 +204,7 @@ export class Square1D extends Object3D {
       return move;
     }
 
-    return { bottom: -move.bottom, kind: 'coordinate', top: -move.top };
+    return reverseSquare1Move(move);
   }
 
   private previewMove(
@@ -237,11 +276,35 @@ export class Square1D extends Object3D {
     animation.progress(1);
     this._currentAnimation = undefined;
   }
+
+  private interruptQueuedMoves(): void {
+    this._moveQueueGeneration++;
+    this._moveQueue = Promise.resolve();
+    this.finishCurrentAnimation();
+  }
+
+  private isMoveQueueGenerationCurrent(generation: number): boolean {
+    return generation === this._moveQueueGeneration;
+  }
+
+  dispose(): void {
+    this.interruptQueuedMoves();
+    for (const piece of this._pieces) {
+      piece.dispose();
+    }
+    this._pieces = [];
+    this._piecesById.clear();
+    this._mainGroup.clear();
+    this.remove(this._mainGroup);
+  }
 }
 
 function parseMoveInput(moveInput: Square1MoveInput): Square1Move {
   if (typeof moveInput !== 'string') {
-    return moveInput;
+    if (isSquare1Move(moveInput)) {
+      return cloneSquare1Move(moveInput);
+    }
+    throw new Square1NotationError(String(moveInput));
   }
 
   const move = parseSquare1MoveToken(moveInput);
@@ -250,6 +313,35 @@ function parseMoveInput(moveInput: Square1MoveInput): Square1Move {
   }
 
   return move;
+}
+
+function cloneSquare1Move(move: Square1Move): Square1Move {
+  return move.kind === 'slash' ? { kind: 'slash' } : { bottom: move.bottom, kind: 'coordinate', top: move.top };
+}
+
+function isSquare1Move(value: unknown): value is Square1Move {
+  if (typeof value !== 'object' || value == null || !('kind' in value)) {
+    return false;
+  }
+
+  const candidate = value as { kind?: unknown };
+  if (candidate.kind === 'slash') {
+    return true;
+  }
+  if (candidate.kind !== 'coordinate') {
+    return false;
+  }
+
+  const coordinate = value as { bottom?: unknown; top?: unknown };
+  return isValidCoordinate(coordinate.top) && isValidCoordinate(coordinate.bottom);
+}
+
+function isValidCoordinate(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= -5 && value <= 6;
+}
+
+function snapshotAnimationOptions(options: Square1AnimationOptions): ResolvedSquare1AnimationOptions {
+  return { animationSpeedMs: options.animationSpeedMs };
 }
 
 function createGeometryForDefinition(definition: Square1PieceDefinition) {
