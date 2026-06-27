@@ -16,6 +16,7 @@ type TimerStoreState = {
   sessions: TimerSession[]
   setActiveSessionEvent: (eventId: string) => void
   setActiveSessionId: (sessionId: string) => void
+  updateLatestSolvePenalty: (penalty: TimerPenalty) => void
   updateSolvePenalty: (solveId: string, penalty: TimerPenalty) => void
 }
 
@@ -108,6 +109,32 @@ export const useTimerStore = create<TimerStoreState>()(
         }))
       },
       setActiveSessionId: (activeSessionId) => set({ activeSessionId }),
+      updateLatestSolvePenalty: (penalty) => {
+        const { activeSessionId } = get()
+
+        set((state) => ({
+          sessions: state.sessions.map((session) => {
+            if (session.id !== activeSessionId) {
+              return session
+            }
+
+            const latestSolve = session.solves.at(-1)
+
+            if (latestSolve === undefined) {
+              return session
+            }
+
+            return {
+              ...session,
+              solves: session.solves.map((solve) =>
+                solve.id === latestSolve.id
+                  ? { ...solve, finalTimeMs: finalTimeMs(solve.rawTimeMs, penalty), penalty }
+                  : solve,
+              ),
+            }
+          }),
+        }))
+      },
       updateSolvePenalty: (solveId, penalty) => {
         const { activeSessionId } = get()
 

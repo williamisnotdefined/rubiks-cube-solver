@@ -34,10 +34,8 @@ export type SolveTableRow = {
 
 type SolveTableProps = {
   className?: string
-  focusableActions?: boolean
   rows: readonly SolveTableRow[]
   showMilliseconds?: boolean
-  onActionComplete?: () => void
   onDeleteSolve?: (solveId: string) => void
 }
 
@@ -69,10 +67,8 @@ function EmptySolveTable({ className }: Pick<SolveTableProps, 'className'>) {
 
 function PlainSolveTable({
   className,
-  focusableActions = true,
   rows,
   showMilliseconds = false,
-  onActionComplete,
   onDeleteSolve,
 }: SolveTableProps) {
   const { t } = useTranslation()
@@ -105,9 +101,7 @@ function PlainSolveTable({
               <td className="px-4 py-3">
                 <DeleteSolveButton
                   disabled={onDeleteSolve === undefined}
-                  focusable={focusableActions}
                   solveId={row.id}
-                  onActionComplete={onActionComplete}
                   onDeleteSolve={onDeleteSolve}
                 />
               </td>
@@ -121,10 +115,8 @@ function PlainSolveTable({
 
 function VirtualizedSolveTable({
   className,
-  focusableActions = true,
   rows,
   showMilliseconds = false,
-  onActionComplete,
   onDeleteSolve,
 }: SolveTableProps) {
   const { t } = useTranslation()
@@ -161,16 +153,14 @@ function VirtualizedSolveTable({
       cell: ({ row }) => (
         <DeleteSolveButton
           disabled={onDeleteSolve === undefined}
-          focusable={focusableActions}
           solveId={row.original.id}
-          onActionComplete={onActionComplete}
           onDeleteSolve={onDeleteSolve}
         />
       ),
       header: t('timer.solves.actions'),
       id: 'actions',
     },
-  ], [focusableActions, onActionComplete, onDeleteSolve, showMilliseconds, t])
+  ], [onDeleteSolve, showMilliseconds, t])
   const table = useReactTable({
     autoResetPageIndex: false,
     columns,
@@ -249,15 +239,11 @@ function VirtualizedSolveTable({
 
 function DeleteSolveButton({
   disabled,
-  focusable,
   solveId,
-  onActionComplete,
   onDeleteSolve,
 }: {
   disabled: boolean
-  focusable: boolean
   solveId: string
-  onActionComplete?: () => void
   onDeleteSolve?: (solveId: string) => void
 }) {
   const { t } = useTranslation()
@@ -265,15 +251,12 @@ function DeleteSolveButton({
   return (
     <Button
       disabled={disabled}
-      tabIndex={focusable ? undefined : -1}
       type="button"
       variant="ghost"
       onClick={(event) => {
         event.currentTarget.blur()
         onDeleteSolve?.(solveId)
-        onActionComplete?.()
       }}
-      onPointerDown={focusable ? undefined : (event) => event.preventDefault()}
     >
       {t('timer.solves.delete')}
     </Button>

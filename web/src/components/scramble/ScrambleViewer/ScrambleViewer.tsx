@@ -1,6 +1,6 @@
 import cls from 'classnames'
 import { ChevronLeft, ChevronRight, Copy } from 'lucide-react'
-import type { MouseEvent, PointerEvent, ReactNode } from 'react'
+import type { MouseEvent, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 type ScrambleViewerProps = {
@@ -9,8 +9,6 @@ type ScrambleViewerProps = {
   copied?: boolean
   eventControl?: ReactNode
   eventLabel: string
-  focusableActions?: boolean
-  onActionComplete?: () => void
   onCopy?: () => void
   onNext?: () => void
   onPrevious?: () => void
@@ -23,8 +21,6 @@ export function ScrambleViewer({
   copied = false,
   eventControl,
   eventLabel,
-  focusableActions = true,
-  onActionComplete,
   onCopy,
   onNext,
   onPrevious,
@@ -48,10 +44,8 @@ export function ScrambleViewer({
               aria-label={t('timer.scramble.previous')}
               className={scrambleActionButtonClassName}
               disabled={!canGoPrevious || onPrevious === undefined}
-              tabIndex={focusableActions ? undefined : -1}
               type="button"
-              onClick={(event) => handleActionClick(event, onPrevious, onActionComplete)}
-              onPointerDown={focusableActions ? undefined : preventButtonFocus}
+              onClick={(event) => handleActionClick(event, onPrevious)}
             >
               <ChevronLeft aria-hidden="true" size={18} strokeWidth={2.6} />
             </button>
@@ -59,10 +53,8 @@ export function ScrambleViewer({
               aria-label={t('timer.scramble.next')}
               className={scrambleActionButtonClassName}
               disabled={onNext === undefined}
-              tabIndex={focusableActions ? undefined : -1}
               type="button"
-              onClick={(event) => handleActionClick(event, onNext, onActionComplete)}
-              onPointerDown={focusableActions ? undefined : preventButtonFocus}
+              onClick={(event) => handleActionClick(event, onNext)}
             >
               <ChevronRight aria-hidden="true" size={18} strokeWidth={2.6} />
             </button>
@@ -72,10 +64,8 @@ export function ScrambleViewer({
                 'border-app-border-strong bg-app-surface-raised text-app-text': copied,
               })}
               disabled={onCopy === undefined}
-              tabIndex={focusableActions ? undefined : -1}
               type="button"
-              onClick={(event) => handleActionClick(event, onCopy, onActionComplete)}
-              onPointerDown={focusableActions ? undefined : preventButtonFocus}
+              onClick={(event) => handleActionClick(event, onCopy)}
             >
               <Copy aria-hidden="true" size={17} strokeWidth={2.6} />
             </button>
@@ -97,13 +87,7 @@ const scrambleActionButtonClassName =
 function handleActionClick(
   event: MouseEvent<HTMLButtonElement>,
   onClick: (() => void) | undefined,
-  onActionComplete: (() => void) | undefined,
 ) {
   event.currentTarget.blur()
   onClick?.()
-  onActionComplete?.()
-}
-
-function preventButtonFocus(event: PointerEvent<HTMLButtonElement>) {
-  event.preventDefault()
 }
