@@ -3,7 +3,9 @@
     "cancel": "Cancel",
     "close": "Close",
     "loading": "Loading",
-    "loadingRoute": "Loading route"
+    "loadingRoute": "Loading route",
+    "notFoundBody": "The page you requested is not available. Go back to the solver to continue.",
+    "notFoundTitle": "Page not found"
   },
   "channels": {
     "bannerAlt": "{{channel}} channel banner",

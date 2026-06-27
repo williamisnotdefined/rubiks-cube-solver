@@ -1,13 +1,13 @@
 # Cloudflare Tunnel Configuration for Rubik's Cube Solver
 #
-# Copy this to your ~/.cloudflared/config.yml and replace the tunnel ID and
-# credentials path with your local Cloudflare tunnel values.
+# Copy this to your ~/.cloudflared/config.yml only if you use a named tunnel
+# instead of the token-based cloudflared service setup.
 
 tunnel: YOUR_TUNNEL_ID_HERE
 credentials-file: /home/YOUR_USERNAME/.cloudflared/YOUR_TUNNEL_ID.json
 
 ingress:
-  - hostname: wilho.com.br
-    service: http://localhost:8787
+  - hostname: speedcube.com.br
+    service: http://127.0.0.1:8787
 
   - service: http_status:404

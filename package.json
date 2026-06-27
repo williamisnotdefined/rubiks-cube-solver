@@ -50,7 +50,7 @@
     "docker:dev:down": "npm run dev:stop",
     "docker:train": "docker compose -f docker-compose.train.yml run --rm trainer",
     "docker:train-gpu": "docker compose -f docker-compose.train.yml run --rm trainer-gpu",
-    "live:tunnel": "cloudflared tunnel run wilho",
+    "live:tunnel": "cloudflared tunnel run --token \"$CLOUDFLARED_TUNNEL_TOKEN\"",
     "live:deploy": "npm run prod:deploy",
     "live:restart": "npm run prod:restart",
     "live:health": "npm run prod:health",

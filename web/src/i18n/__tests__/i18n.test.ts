@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import i18n, { fallbackLanguage, languageFromBrowser, supportedLanguages } from '../i18n'
+import i18n, { fallbackLanguage, languageFromBrowser, languageFromRoute, supportedLanguages } from '../i18n'
 
 describe('i18n language support', () => {
   it.each([
@@ -23,6 +23,19 @@ describe('i18n language support', () => {
 
   it('falls back to English when browser languages are unsupported', () => {
     expect(languageFromBrowser(['nl-NL'])).toBe(fallbackLanguage)
+  })
+
+  it('uses route language for indexable SEO URLs', () => {
+    expect(languageFromRoute('/solve')).toBe('pt-BR')
+    expect(languageFromRoute('/en/solve')).toBe('en')
+    expect(languageFromRoute('/es/solve')).toBe('es')
+    expect(languageFromRoute('/it/solve')).toBe('it')
+    expect(languageFromRoute('/de/solve')).toBe('de')
+    expect(languageFromRoute('/fr/solve')).toBe('fr')
+    expect(languageFromRoute('/ru/solve')).toBe('ru')
+    expect(languageFromRoute('/zh/solve')).toBe('zh')
+    expect(languageFromRoute('/ja/solve')).toBe('ja')
+    expect(languageFromRoute('/en/algoritmos/3x3/oll')).toBe('en')
   })
 
   it('registers resources for every supported language', () => {

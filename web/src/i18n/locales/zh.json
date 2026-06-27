@@ -3,7 +3,9 @@
     "cancel": "取消",
     "close": "关闭",
     "loading": "正在加载",
-    "loadingRoute": "正在加载路由"
+    "loadingRoute": "正在加载路由",
+    "notFoundBody": "请求的页面不可用。返回求解器继续。",
+    "notFoundTitle": "页面未找到"
   },
   "channels": {
     "bannerAlt": "{{channel}} 频道横幅",

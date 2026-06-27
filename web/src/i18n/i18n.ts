@@ -37,13 +37,29 @@ export function languageFromBrowser(languages: readonly string[] = browserLangua
   return fallbackLanguage
 }
 
+export function languageFromRoute(pathname: string = browserPathname()): SupportedLanguage {
+  const firstSegment = pathname.split('/').filter(Boolean)[0]
+  const routeLanguages: Partial<Record<string, SupportedLanguage>> = {
+    de: 'de',
+    en: 'en',
+    es: 'es',
+    fr: 'fr',
+    it: 'it',
+    ja: 'ja',
+    ru: 'ru',
+    zh: 'zh',
+  }
+
+  return firstSegment === undefined ? 'pt-BR' : routeLanguages[firstSegment] ?? 'pt-BR'
+}
+
 i18n.use(initReactI18next).init({
   fallbackLng: fallbackLanguage,
   initAsync: false,
   interpolation: {
     escapeValue: false,
   },
-  lng: languageFromBrowser(),
+  lng: languageFromRoute(),
   resources: {
     de: { translation: de },
     en: { translation: en },
@@ -70,6 +86,14 @@ function browserLanguages(): readonly string[] {
   }
 
   return [navigator.language]
+}
+
+function browserPathname(): string {
+  if (typeof window === 'undefined') {
+    return '/'
+  }
+
+  return window.location.pathname
 }
 
 function supportedLanguageFromTag(language: string): SupportedLanguage | undefined {

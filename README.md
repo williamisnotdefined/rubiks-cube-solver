@@ -79,13 +79,13 @@ Use `live:deploy` after a merge to update `main`, rebuild Docker images, start c
 
 Open `http://127.0.0.1:8787/`. The scanner model is mounted from `scanner/models/tile-detector.onnx`; if it is missing, the app still starts but scanner health reports the detector unavailable.
 
-To deploy the current `main` build and start the Cloudflare tunnel:
+To deploy the current `main` build and start the Cloudflare tunnel in the foreground, set `CLOUDFLARED_TUNNEL_TOKEN` on the production PC and run:
 
 ```bash
 npm run live:start
 ```
 
-`live:tunnel` runs only `cloudflared tunnel run wilho` and assumes Docker production is already healthy.
+`live:tunnel` runs only `cloudflared tunnel run --token "$CLOUDFLARED_TUNNEL_TOKEN"` and assumes Docker production is already healthy. For persistent production on the local PC, install the same token as a system service with `sudo cloudflared service install "$CLOUDFLARED_TUNNEL_TOKEN"` and manage it with `systemctl` instead of committing the token.
 
 Docker dev uses separate hot-reload services and non-conflicting ports:
 
