@@ -10,6 +10,7 @@
     "esbuild": "0.28.1"
   },
   "scripts": {
+    "prepare": "husky",
     "dev": "npm run dev:start",
     "dev:start": "docker compose -p rubiks-dev -f docker-compose.dev.yml up -d --build && npm run dev:health && npm run dev:status",
     "dev:restart": "npm run dev:stop && npm run dev:start",
@@ -108,6 +109,7 @@
     "@playwright/test": "^1.60.0",
     "@types/node": "^26.0.0",
     "concurrently": "^10.0.3",
+    "husky": "^9.1.7",
     "typescript": "^6.0.3",
     "vite": "^8.1.0"
   }

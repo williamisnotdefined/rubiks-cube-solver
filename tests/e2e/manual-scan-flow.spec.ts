@@ -135,6 +135,7 @@ const cube3TargetSolveResponseMs = 20_000
 const cube2TargetSolveResponseMs = 10_000
 const maxNodesMillion = '25'
 const maxNodes = 25_000_000
+const solvePath = '/en/solve'
 
 test.describe('manual scan solve flow', () => {
   test.describe.configure({ timeout: 120_000 })
@@ -145,7 +146,7 @@ test.describe('manual scan solve flow', () => {
 
   for (const [index, fixture] of cube3ManualScanFixtures.entries()) {
     test(`solves manually entered 3x3 scan #${index + 1}`, async ({ page }) => {
-      await page.goto('/')
+      await page.goto(solvePath)
 
       const cube = page.locator('.cube-stage rubiks-cube')
       await expect(page.getByRole('button', { name: 'Scan cube with camera' })).toBeEnabled({
@@ -188,7 +189,7 @@ test.describe('manual scan solve flow', () => {
 
   for (const [index, fixture] of cube2ManualScanFixtures.entries()) {
     test(`solves manually entered 2x2 scan #${index + 1}`, async ({ page }) => {
-      await page.goto('/')
+      await page.goto(solvePath)
 
       const puzzleSelect = page.getByRole('combobox', { name: 'Puzzle' })
       await expect(puzzleSelect).toBeEnabled({ timeout: 15_000 })
@@ -279,7 +280,7 @@ async function fillCurrentScanFace(page: Page, stickers: string, stickersPerFace
 
 async function expectSuccessfulScanResult(page: Page, strategyPattern: RegExp, moves: readonly string[]) {
   await expect(page.locator('.result code')).toHaveText(moves.join(' '), { timeout: 30_000 })
-  await expect(page.locator('.result')).toContainText(/found in/)
+  await expect(page.locator('.result')).toContainText(/\d+ moves? - response in/)
   await page.getByRole('button', { name: 'see more' }).click()
 
   const details = page.getByRole('dialog', { name: 'Solver details' })
