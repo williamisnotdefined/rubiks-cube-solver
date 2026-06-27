@@ -164,6 +164,31 @@ describe('TimerPage', () => {
     expect(screen.getByRole('button', { name: 'Previous scramble' })).toBeDisabled()
   })
 
+  it('blocks timing and lets the user retry when competition-quality scramble generation fails', async () => {
+    const user = userEvent.setup()
+    highQualityMocks.generateHighQualityScrambleForEvent
+      .mockRejectedValueOnce(new Error('provider unavailable'))
+      .mockResolvedValueOnce({
+        event: scrambleEventById('333'),
+        scramble: 'retry high-quality scramble',
+      })
+
+    renderTimerPage()
+
+    await waitFor(() => {
+      expect(screen.getByText('Could not generate a competition-quality scramble. Try again.')).toBeInTheDocument()
+    })
+    expect(screen.getByRole('timer', { name: 'Speedsolve timer' })).toHaveAttribute('aria-disabled', 'true')
+    expect(screen.getByRole('button', { name: 'Copy scramble' })).toBeDisabled()
+
+    await user.click(screen.getByRole('button', { name: 'Next scramble' }))
+    await waitForScrambleReady()
+
+    expect(screen.getByText('retry high-quality scramble')).toBeInTheDocument()
+    expect(screen.getByRole('timer', { name: 'Speedsolve timer' })).toHaveAttribute('aria-disabled', 'false')
+    expect(screen.getByRole('button', { name: 'Previous scramble' })).toBeDisabled()
+  })
+
   it('keeps copy button unchanged when clipboard write fails', async () => {
     const user = userEvent.setup()
     const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})

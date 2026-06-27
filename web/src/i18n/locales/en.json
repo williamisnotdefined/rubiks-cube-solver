@@ -1260,6 +1260,7 @@
       "copy": "Copy scramble",
       "copyFailed": "Could not copy scramble",
       "event": "Event",
+      "generateFailed": "Could not generate a competition-quality scramble. Try again.",
       "generating": "Generating scramble...",
       "next": "Next scramble",
       "previous": "Previous scramble",

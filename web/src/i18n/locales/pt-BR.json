@@ -956,6 +956,7 @@
       "copy": "Copiar scramble",
       "copyFailed": "Não foi possível copiar o scramble",
       "event": "Evento",
+      "generateFailed": "Não foi possível gerar um scramble de qualidade de competição. Tente novamente.",
       "generating": "Gerando scramble...",
       "next": "Próximo scramble",
       "previous": "Scramble anterior",

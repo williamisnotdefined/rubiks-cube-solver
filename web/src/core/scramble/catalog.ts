@@ -18,7 +18,7 @@ export const scrambleEvents = [
     label: '3x3x3',
     puzzle: '3x3x3',
     puzzleSlug: 'cube-3x3x3',
-    quality: 'wcaLike',
+    quality: 'officialRandomState',
   },
   {
     defaultLength: 11,
@@ -28,7 +28,7 @@ export const scrambleEvents = [
     label: '2x2x2',
     puzzle: '2x2x2',
     puzzleSlug: 'cube-2x2x2',
-    quality: 'wcaLike',
+    quality: 'officialRandomState',
   },
   {
     defaultLength: 40,
@@ -78,7 +78,7 @@ export const scrambleEvents = [
     label: '3x3 BLD',
     puzzle: '3x3x3',
     puzzleSlug: 'cube-3x3x3',
-    quality: 'wcaLike',
+    quality: 'officialRandomState',
   },
   {
     defaultLength: 25,
@@ -98,7 +98,7 @@ export const scrambleEvents = [
     label: '3x3 OH',
     puzzle: '3x3x3',
     puzzleSlug: 'cube-3x3x3',
-    quality: 'wcaLike',
+    quality: 'officialRandomState',
   },
   {
     defaultLength: 0,
@@ -128,7 +128,7 @@ export const scrambleEvents = [
     label: 'Pyraminx',
     puzzle: 'Pyraminx',
     puzzleSlug: 'pyraminx',
-    quality: 'wcaLike',
+    quality: 'officialRandomState',
   },
   {
     defaultLength: 11,
@@ -138,7 +138,7 @@ export const scrambleEvents = [
     label: 'Skewb',
     puzzle: 'Skewb',
     puzzleSlug: 'skewb',
-    quality: 'wcaLike',
+    quality: 'officialRandomState',
   },
   {
     defaultLength: 15,
@@ -148,7 +148,7 @@ export const scrambleEvents = [
     label: 'Square-1',
     puzzle: 'Square-1',
     puzzleSlug: 'square1',
-    quality: 'wcaLike',
+    quality: 'officialRandomState',
   },
   {
     defaultLength: 40,
@@ -178,7 +178,7 @@ export const scrambleEvents = [
     label: '3x3 MBLD',
     puzzle: '3x3x3',
     puzzleSlug: 'cube-3x3x3',
-    quality: 'wcaLike',
+    quality: 'officialRandomState',
   },
 ] as const satisfies readonly ScrambleEvent[]
 

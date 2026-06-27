@@ -1158,6 +1158,7 @@
       "copy": "Copier le mélange",
       "copyFailed": "Impossible de copier le mélange",
       "event": "Épreuve",
+      "generateFailed": "Impossible de générer un mélange de qualité compétition. Réessayez.",
       "generating": "Génération du mélange...",
       "next": "Mélange suivant",
       "previous": "Mélange précédent",

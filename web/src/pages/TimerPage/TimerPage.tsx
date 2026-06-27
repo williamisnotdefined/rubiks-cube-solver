@@ -21,7 +21,7 @@ import {
 import { Switch } from '@components/Switch'
 import { useToast } from '@core/toast/toastStore'
 import {
-  generateScrambleForEvent,
+  scrambleEventById,
   scrambleEvents,
 } from '@core/scramble/catalog'
 import { generateHighQualityScrambleForEvent } from '@core/scramble/highQuality'
@@ -41,13 +41,15 @@ export function TimerPage() {
   const [, copyToClipboard] = useCopyToClipboard()
   const showToast = useToast()
   const [scrambleHistory, setScrambleHistory] = useState<ScrambleHistory>(() => {
-    const initialScramble = generateScrambleForEvent(
-      useTimerSettingsStore.getState().selectedEventId,
-    )
+    const initialScramble: GeneratedScramble = {
+      event: scrambleEventById(useTimerSettingsStore.getState().selectedEventId),
+      scramble: '',
+    }
 
     return { index: 0, items: [initialScramble] }
   })
   const [copied, setCopied] = useState(false)
+  const [scrambleLoadFailed, setScrambleLoadFailed] = useState(false)
   const [isScramblePending, setIsScramblePending] = useState(true)
   const [timerResetSignal, setTimerResetSignal] = useState(0)
   const scrambleRequestIdRef = useRef(0)
@@ -86,6 +88,7 @@ export function TimerPage() {
 
     setActiveSessionEvent(selectedEventId)
     setIsScramblePending(true)
+    setScrambleLoadFailed(false)
     setCopied(false)
 
     void generateHighQualityScrambleForEvent(selectedEventId)
@@ -95,6 +98,14 @@ export function TimerPage() {
         }
 
         setScrambleHistory({ index: 0, items: [scramble] })
+        setScrambleLoadFailed(false)
+      })
+      .catch(() => {
+        if (scrambleRequestIdRef.current !== requestId) {
+          return
+        }
+
+        setScrambleLoadFailed(true)
       })
       .finally(() => {
         if (scrambleRequestIdRef.current === requestId) {
@@ -104,6 +115,10 @@ export function TimerPage() {
   }, [selectedEventId, setActiveSessionEvent])
 
   function handleSolveComplete(rawTimeMs: number, penalty: TimerPenalty) {
+    if (scrambleLoadFailed || generatedScramble.scramble.trim() === '') {
+      return
+    }
+
     const endedAt = Date.now()
     const solve: TimerSolve = {
       comment: '',
@@ -124,6 +139,12 @@ export function TimerPage() {
 
   function handleNextScramble() {
     if (isScramblePending) {
+      return
+    }
+
+    if (scrambleLoadFailed) {
+      queueNextScramble(selectedEventId, { replaceHistory: true })
+      setCopied(false)
       return
     }
 
@@ -158,7 +179,7 @@ export function TimerPage() {
   }
 
   async function handleCopyScramble() {
-    if (isScramblePending) {
+    if (isScramblePending || scrambleLoadFailed) {
       return
     }
 
@@ -181,10 +202,14 @@ export function TimerPage() {
     updateSolvePenalty(lastSolve.id, penalty)
   }
 
-  function queueNextScramble(eventId: string) {
+  function queueNextScramble(
+    eventId: string,
+    { replaceHistory = false }: QueueNextScrambleOptions = {},
+  ) {
     const requestId = ++scrambleRequestIdRef.current
 
     setIsScramblePending(true)
+    setScrambleLoadFailed(false)
 
     void generateHighQualityScrambleForEvent(eventId)
       .then((scramble) => {
@@ -193,6 +218,10 @@ export function TimerPage() {
         }
 
         setScrambleHistory((history) => {
+          if (replaceHistory) {
+            return { index: 0, items: [scramble] }
+          }
+
           const retainedHistory = history.items.slice(0, history.index + 1)
 
           return {
@@ -200,6 +229,14 @@ export function TimerPage() {
             items: [...retainedHistory, scramble],
           }
         })
+        setScrambleLoadFailed(false)
+      })
+      .catch(() => {
+        if (scrambleRequestIdRef.current !== requestId) {
+          return
+        }
+
+        setScrambleLoadFailed(true)
       })
       .finally(() => {
         if (scrambleRequestIdRef.current === requestId) {
@@ -214,7 +251,7 @@ export function TimerPage() {
         <div className="grid min-h-0 shrink-0 gap-2">
           <ScrambleViewer
             className="min-h-0"
-            canGoPrevious={!isScramblePending && scrambleHistory.index > 0}
+            canGoPrevious={!isScramblePending && !scrambleLoadFailed && scrambleHistory.index > 0}
             copied={copied}
             eventControl={(
               <CompactScrambleEventSelect
@@ -224,12 +261,15 @@ export function TimerPage() {
               />
             )}
             eventLabel={generatedScramble.event.label}
-            scramble={isScramblePending
-              ? t('timer.scramble.generating')
-              : generatedScramble.scramble}
-            onCopy={isScramblePending ? undefined : handleCopyScramble}
+            scramble={scrambleText({
+              failed: scrambleLoadFailed,
+              pending: isScramblePending,
+              scramble: generatedScramble.scramble,
+              t,
+            })}
+            onCopy={isScramblePending || scrambleLoadFailed ? undefined : handleCopyScramble}
             onNext={isScramblePending ? undefined : handleNextScramble}
-            onPrevious={isScramblePending ? undefined : handlePreviousScramble}
+            onPrevious={isScramblePending || scrambleLoadFailed ? undefined : handlePreviousScramble}
           />
           <Panel className="grid min-h-0 grid-cols-2 gap-2 p-2 sm:grid-cols-[auto_auto_minmax(14rem,1fr)] sm:items-center" aria-label={t('timer.settings.label')}>
             <label className="flex min-h-9 items-center gap-2 border border-app-border bg-app-control px-3 py-2 text-xs font-extrabold uppercase tracking-[0.16em] text-app-text">
@@ -263,7 +303,7 @@ export function TimerPage() {
         </div>
         <div className="grid min-h-0 grid-rows-[minmax(12rem,2fr)_minmax(7rem,1fr)] gap-2 overflow-hidden lg:grid-cols-[minmax(0,1fr)_24rem] lg:grid-rows-none xl:grid-cols-[minmax(0,1fr)_30rem]">
           <TimerRuntime
-            disabled={isScramblePending}
+            disabled={isScramblePending || scrambleLoadFailed}
             holdToStartMs={holdToStartMs}
             inspectionEnabled={inspectionEnabled}
             resetSignal={timerResetSignal}
@@ -292,6 +332,25 @@ export function TimerPage() {
       </section>
     </main>
   )
+}
+
+type ScrambleTextOptions = {
+  failed: boolean
+  pending: boolean
+  scramble: string
+  t: ReturnType<typeof useTranslation>['t']
+}
+
+function scrambleText({ failed, pending, scramble, t }: ScrambleTextOptions): string {
+  if (pending) {
+    return t('timer.scramble.generating')
+  }
+
+  if (failed) {
+    return t('timer.scramble.generateFailed')
+  }
+
+  return scramble
 }
 
 type TimerRuntimeProps = {
@@ -353,6 +412,10 @@ function TimerRuntime({
 type ScrambleHistory = {
   index: number
   items: GeneratedScramble[]
+}
+
+type QueueNextScrambleOptions = {
+  replaceHistory?: boolean
 }
 
 type CompactScrambleEventSelectProps = {

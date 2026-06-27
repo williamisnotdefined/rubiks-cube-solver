@@ -31,10 +31,28 @@ describe('WCA scramble catalog', () => {
     expect(new Set(scrambleEvents.map((event) => event.label)).size).toBe(scrambleEvents.length)
   })
 
-  it('keeps all events in the WCA group as WCA-like generators', () => {
+  it('keeps all events in the WCA group and records their generator quality', () => {
     expect(scrambleEvents).toHaveLength(17)
     expect(scrambleEvents.every((event) => event.group === 'WCA')).toBe(true)
-    expect(scrambleEvents.every((event) => event.quality === 'wcaLike')).toBe(true)
+    expect(scrambleEvents.map((event) => [event.id, event.quality])).toEqual([
+      ['333', 'officialRandomState'],
+      ['222', 'officialRandomState'],
+      ['444', 'wcaLike'],
+      ['555', 'wcaLike'],
+      ['666', 'wcaLike'],
+      ['777', 'wcaLike'],
+      ['333bld', 'officialRandomState'],
+      ['333fm', 'wcaLike'],
+      ['333oh', 'officialRandomState'],
+      ['clock', 'wcaLike'],
+      ['megaminx', 'wcaLike'],
+      ['pyraminx', 'officialRandomState'],
+      ['skewb', 'officialRandomState'],
+      ['square1', 'officialRandomState'],
+      ['444bld', 'wcaLike'],
+      ['555bld', 'wcaLike'],
+      ['333mbld', 'officialRandomState'],
+    ])
   })
 
   it('assigns puzzle slugs to every event', () => {

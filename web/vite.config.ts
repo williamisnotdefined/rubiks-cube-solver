@@ -11,6 +11,8 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   build: {
     chunkSizeWarningLimit: 800,
+    // cubing's scramble worker must not import Vite's document-based preload helper.
+    modulePreload: false,
     rollupOptions: {
       output: {
         manualChunks(id) {
