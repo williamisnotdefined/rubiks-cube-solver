@@ -4,7 +4,7 @@
 
 - pyraminx U and U' are reversed, i think all moves are wrong
 - megaminx U is not on U, check all others
-- scramble do megaminx em live esta bugado, verificar todos os outros scrambles.
+- WCA data
 
 # General Cubing
 

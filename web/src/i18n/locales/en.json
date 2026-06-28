@@ -1252,7 +1252,7 @@
       "dnf": "DNF",
       "label": "Penalty controls",
       "latest": "Latest solve penalty",
-      "ok": "OK",
+      "ok": "-",
       "plus2": "+2"
     },
     "scramble": {

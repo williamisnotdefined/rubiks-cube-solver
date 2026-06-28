@@ -33,17 +33,17 @@ test.describe('timer flow', () => {
     expect(solves[0]?.rawTimeMs ?? -1).toBeGreaterThanOrEqual(0)
     expect(solves[0]?.finalTimeMs ?? -1).toBeGreaterThanOrEqual(0)
     expect(solves[0]?.scramble).toEqual(expect.any(String))
-    await expect(page.getByRole('table')).toContainText('OK')
+    await expect(page.getByRole('table')).toContainText('-')
   })
 
-  test('toggles latest solve penalty between +2, DNF, and OK', async ({ page }) => {
+  test('toggles latest solve penalty between +2, DNF, and no penalty', async ({ page }) => {
     await page.goto(timerPath)
     await recordKeyboardSolve(page)
 
     const rawTimeMs = (await persistedTimerSolves(page))[0]!.rawTimeMs
     const timer = page.getByRole('timer', { name: 'Speedsolve timer' })
 
-    await expect(page.getByRole('button', { name: 'OK' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: '-' })).toHaveCount(0)
     await expect(timer.getByRole('button', { name: '+2' })).toBeVisible()
     await expect(timer.getByRole('button', { name: 'DNF' })).toBeVisible()
 
@@ -54,7 +54,7 @@ test.describe('timer flow', () => {
     ])
 
     await dispatchClick(timer.getByRole('button', { name: '+2' }))
-    await expect(page.getByRole('table')).toContainText('OK')
+    await expect(page.getByRole('table')).toContainText('-')
     await expect.poll(() => persistedTimerSolves(page)).toMatchObject([
       { finalTimeMs: rawTimeMs, penalty: 'ok' },
     ])
@@ -66,7 +66,7 @@ test.describe('timer flow', () => {
     ])
 
     await dispatchClick(timer.getByRole('button', { name: 'DNF' }))
-    await expect(page.getByRole('table')).toContainText('OK')
+    await expect(page.getByRole('table')).toContainText('-')
     await expect.poll(() => persistedTimerSolves(page)).toMatchObject([
       { finalTimeMs: rawTimeMs, penalty: 'ok' },
     ])
@@ -88,13 +88,19 @@ test.describe('timer flow', () => {
   test('supports inspection and millisecond display settings', async ({ page }) => {
     await page.goto(timerPath)
 
-    await dispatchClick(page.getByRole('switch', { name: 'Inspection' }))
+    await dispatchClick(page.getByRole('button', { name: 'Timer settings' }))
+    const settingsDialog = page.getByRole('dialog', { name: 'Timer settings' })
+
+    await dispatchClick(settingsDialog.getByRole('switch', { name: 'Inspection' }))
     await expect(page.getByText('WCA inspection')).toBeVisible()
+    await dispatchClick(settingsDialog.getByRole('switch', { name: 'Milliseconds' }))
+    await expect.poll(() => persistedTimerSettings(page)).toMatchObject({ showMilliseconds: true })
+    await dispatchClick(settingsDialog.getByRole('button', { name: 'Close' }))
     await expectTimerReady(page)
 
     await dispatchKeyboardEvent(page, 'keydown', 'Space', ' ')
     await dispatchKeyboardEvent(page, 'keyup', 'Space', ' ')
-    await expect(page.getByText('Inspection', { exact: true })).toHaveCount(2)
+    await expect(page.getByText('Inspection', { exact: true })).toBeVisible()
 
     await dispatchKeyboardEvent(page, 'keydown', 'Space', ' ')
     await dispatchKeyboardEvent(page, 'keyup', 'Space', ' ')
@@ -102,7 +108,6 @@ test.describe('timer flow', () => {
     await dispatchKeyboardEvent(page, 'keydown', 'KeyA', 'a')
     await expect(page.getByRole('table')).toBeVisible()
 
-    await dispatchClick(page.getByRole('switch', { name: 'Milliseconds' }))
     await expect(page.getByRole('table')).toContainText(/\d+\.\d{3}/)
 
     const settings = await persistedTimerSettings(page)

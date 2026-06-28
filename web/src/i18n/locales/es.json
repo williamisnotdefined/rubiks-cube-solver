@@ -846,7 +846,7 @@
       "dnf": "DNF",
       "label": "Controles de penalización",
       "latest": "Penalización del último solve",
-      "ok": "OK",
+      "ok": "-",
       "plus2": "+2"
     },
     "scramble": {

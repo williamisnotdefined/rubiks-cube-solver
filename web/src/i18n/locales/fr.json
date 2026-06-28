@@ -1150,7 +1150,7 @@
       "dnf": "DNF",
       "label": "Contrôles de pénalité",
       "latest": "Dernière pénalité de résolution",
-      "ok": "OK",
+      "ok": "-",
       "plus2": "+2"
     },
     "scramble": {

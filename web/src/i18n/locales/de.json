@@ -1150,7 +1150,7 @@
       "dnf": "DNF",
       "label": "Penalty-Steuerung",
       "latest": "Penalty des letzten Solves",
-      "ok": "OK",
+      "ok": "-",
       "plus2": "+2"
     },
     "scramble": {

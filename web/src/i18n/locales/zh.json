@@ -1150,7 +1150,7 @@
       "dnf": "DNF",
       "label": "罚时控制",
       "latest": "最近一次还原罚时",
-      "ok": "OK",
+      "ok": "-",
       "plus2": "+2"
     },
     "scramble": {

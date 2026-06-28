@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { ScrambleViewer } from '@components/scramble/ScrambleViewer'
 import type { TimerScrambleHistory } from '../../hooks/useTimerScrambleHistory'
 import { TimerEventSelect } from '../TimerEventSelect'
+import { TimerSettingsPanel } from '../TimerSettingsPanel'
 
 type TimerScramblePanelProps = {
   scramble: TimerScrambleHistory
@@ -13,6 +14,7 @@ export function TimerScramblePanel({ scramble }: TimerScramblePanelProps) {
 
   return (
     <ScrambleViewer
+      actionSlot={<TimerSettingsPanel />}
       className="min-h-0"
       canGoPrevious={scramble.canGoPrevious}
       copied={scramble.copied}
