@@ -15,6 +15,23 @@
     "openInYouTube": "Abrir en YouTube",
     "title": "Canales YT"
   },
+  "sites": {
+    "categories": {
+      "algorithms": "Algoritmos",
+      "brands": "Marcas",
+      "community": "Comunidad",
+      "competitions": "Competiciones",
+      "shops": "Tiendas",
+      "solutions": "Soluciones",
+      "tools": "Herramientas"
+    },
+    "description": "Una lista curada con {{count}} sitios de cubing validados para soluciones, algoritmos, herramientas, competiciones, tiendas, marcas y comunidad.",
+    "imageAlt": "Icono del sitio {{site}}",
+    "kicker": "Directorio cuber web",
+    "openSite": "Abrir sitio {{site}}",
+    "openWebsite": "Abrir sitio",
+    "title": "Sitios"
+  },
   "algorithms": {
     "index": {
       "description": "Hojas estáticas de algoritmos: imagen del caso y algoritmo. Sin API, sin estado de entrenador y sin texto editorial.",
@@ -337,6 +354,7 @@
     "algorithms": "Algoritmos",
     "algorithmsMenu": "Métodos por puzzle",
     "channels": "Canales YT",
+    "sites": "Sitios",
     "closeMenu": "Cerrar menú",
     "github": "Abrir proyecto en GitHub",
     "menu": "Menú",

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="MoYu">
+  <rect width="256" height="256" fill="black" />
+  <path d="M64 64h128v128H64z" fill="none" stroke="white" stroke-width="14" />
+  <path d="M82 174V82h20l26 48 26-48h20v92h-20v-54l-20 36h-12l-20-36v54z" fill="white" />
+  <text x="128" y="230" fill="white" font-family="Arial, sans-serif" font-size="26" font-weight="700" text-anchor="middle">MoYu</text>
+</svg>

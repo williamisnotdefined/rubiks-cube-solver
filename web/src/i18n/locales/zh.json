@@ -15,6 +15,23 @@
     "openInYouTube": "在 YouTube 打开",
     "title": "YT Channels"
   },
+  "sites": {
+    "categories": {
+      "algorithms": "算法",
+      "brands": "品牌",
+      "community": "社区",
+      "competitions": "比赛",
+      "shops": "商店",
+      "solutions": "解法",
+      "tools": "工具"
+    },
+    "description": "精选 {{count}} 个经过验证的魔方网站，涵盖解法、算法、工具、比赛、商店、品牌和社区。",
+    "imageAlt": "{{site}} 网站图标",
+    "kicker": "魔方网站目录",
+    "openSite": "打开 {{site}} 网站",
+    "openWebsite": "打开网站",
+    "title": "Sites"
+  },
   "algorithms": {
     "index": {
       "description": "静态公式表：案例图加公式。无 API、无训练器状态、无编辑说明。",
@@ -641,6 +658,7 @@
     "algorithms": "公式",
     "algorithmsMenu": "项目方法",
     "channels": "YT Channels",
+    "sites": "Sites",
     "closeMenu": "关闭菜单",
     "github": "在 GitHub 打开项目",
     "menu": "菜单",

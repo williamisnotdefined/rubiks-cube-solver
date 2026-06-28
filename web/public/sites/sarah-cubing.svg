@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Sarah's Cubing Site">
+  <rect width="256" height="256" fill="black" />
+  <path d="M72 72h112v112H72z" fill="none" stroke="white" stroke-width="12" />
+  <path d="M92 103c0-21 17-33 39-33 17 0 31 6 43 17l-16 18c-8-7-16-10-26-10-9 0-15 4-15 10 0 20 61 7 61 47 0 22-18 36-46 36-22 0-40-8-53-21l16-18c10 10 22 15 36 15 13 0 20-4 20-11 0-20-59-8-59-50z" fill="white" />
+  <text x="128" y="230" fill="white" font-family="Arial, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Sarah Cubing</text>
+</svg>

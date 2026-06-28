@@ -15,6 +15,23 @@
     "openInYouTube": "Ouvrir sur YouTube",
     "title": "Chaînes YT"
   },
+  "sites": {
+    "categories": {
+      "algorithms": "Algorithmes",
+      "brands": "Marques",
+      "community": "Communauté",
+      "competitions": "Compétitions",
+      "shops": "Boutiques",
+      "solutions": "Solutions",
+      "tools": "Outils"
+    },
+    "description": "Une liste sélectionnée de {{count}} sites de cubing validés pour solutions, algorithmes, outils, compétitions, boutiques, marques et communauté.",
+    "imageAlt": "Icône du site {{site}}",
+    "kicker": "Annuaire cubing web",
+    "openSite": "Ouvrir le site {{site}}",
+    "openWebsite": "Ouvrir le site",
+    "title": "Sites"
+  },
   "algorithms": {
     "index": {
       "description": "Fiches d'algorithmes statiques : image du cas plus algorithme. Pas d'API, pas d'état d'entraîneur, pas de texte éditorial.",
@@ -641,6 +658,7 @@
     "algorithms": "Algorithmes",
     "algorithmsMenu": "Méthodes de puzzle",
     "channels": "Chaînes YT",
+    "sites": "Sites",
     "closeMenu": "Fermer le menu",
     "github": "Ouvrir le projet sur GitHub",
     "menu": "Menu",

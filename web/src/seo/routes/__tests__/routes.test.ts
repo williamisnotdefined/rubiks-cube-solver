@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { cubingSites } from '@pages/CubingSitesPage/sites'
 import { getSeoMetadata, localeFromPathname, localizedPath, prefixedSeoLocales, stripLocalePrefix } from '../routes'
 
 describe('SEO route metadata', () => {
@@ -21,8 +22,20 @@ describe('SEO route metadata', () => {
     expect(metadata.noindex).toBe(false)
   })
 
+  it('builds canonical metadata for the English cubing sites page', () => {
+    const metadata = getSeoMetadata('/en/sites')
+
+    expect(metadata.locale).toBe('en')
+    expect(metadata.path).toBe('/sites')
+    expect(metadata.canonicalUrl).toBe('https://speedcube.com.br/en/sites/')
+    expect(metadata.title).toContain('Cubing Websites')
+    expect(metadata.itemList).toHaveLength(cubingSites.length)
+    expect(metadata.itemList?.[0]).toEqual({ name: 'World Cube Association', path: 'https://www.worldcubeassociation.org/' })
+    expect(metadata.noindex).toBe(false)
+  })
+
   it('keeps indexable routes indexable when the server adds trailing slashes', () => {
-    for (const pathname of ['/solve/', '/timer/', '/channels/', '/en/solve/', '/en/timer/']) {
+    for (const pathname of ['/solve/', '/timer/', '/channels/', '/sites/', '/en/solve/', '/en/timer/', '/en/sites/']) {
       const metadata = getSeoMetadata(pathname)
 
       expect(metadata.noindex).toBe(false)

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="CubingApp">
+  <rect width="256" height="256" fill="black" />
+  <path d="M52 52h152v152H52z" fill="none" stroke="white" stroke-width="12" />
+  <path d="M52 104h152M52 152h152M104 52v152M152 52v152" stroke="white" stroke-width="8" opacity="0.72" />
+  <text x="128" y="230" fill="white" font-family="Arial, sans-serif" font-size="24" font-weight="700" text-anchor="middle">CubingApp</text>
+</svg>

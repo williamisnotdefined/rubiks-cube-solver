@@ -15,6 +15,23 @@
     "openInYouTube": "Apri su YouTube",
     "title": "Canali YT"
   },
+  "sites": {
+    "categories": {
+      "algorithms": "Algoritmi",
+      "brands": "Marchi",
+      "community": "Community",
+      "competitions": "Competizioni",
+      "shops": "Negozi",
+      "solutions": "Soluzioni",
+      "tools": "Strumenti"
+    },
+    "description": "Una lista curata di {{count}} siti cubing verificati per soluzioni, algoritmi, strumenti, competizioni, negozi, marchi e community.",
+    "imageAlt": "Icona del sito {{site}}",
+    "kicker": "Directory cubing web",
+    "openSite": "Apri il sito {{site}}",
+    "openWebsite": "Apri sito",
+    "title": "Siti"
+  },
   "algorithms": {
     "index": {
       "description": "Schede statiche di algoritmi: immagine del caso più algoritmo. Nessuna API, nessuno stato trainer, nessun testo editoriale.",
@@ -641,6 +658,7 @@
     "algorithms": "Algoritmi",
     "algorithmsMenu": "Metodi puzzle",
     "channels": "Canali YT",
+    "sites": "Siti",
     "closeMenu": "Chiudi menu",
     "github": "Apri il progetto su GitHub",
     "menu": "Menu",
