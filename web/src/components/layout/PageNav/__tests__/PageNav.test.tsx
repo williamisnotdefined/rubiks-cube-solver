@@ -60,11 +60,13 @@ describe('PageNav', () => {
 
     await user.click(algorithmsButton)
 
-    expect(screen.getByRole('link', { name: '3x3 OLL' })).toHaveAttribute('href', '/algoritmos/3x3/oll/')
-    expect(screen.getByRole('link', { name: '2x2 CLL' })).toHaveAttribute('href', '/algoritmos/2x2/cll/')
-    expect(screen.getByRole('link', { name: '4x4 PLL' })).toHaveAttribute('href', '/algoritmos/4x4/pll/')
-    expect(screen.getByRole('link', { name: 'Square-1 Cubeshape' })).toHaveAttribute('href', '/algoritmos/sq1/cubeshape/')
-    expect(screen.getByRole('link', { name: 'Megaminx OLL' })).toHaveAttribute('href', '/algoritmos/megaminx/oll/')
+    const methodsDialog = screen.getByRole('dialog', { name: 'Puzzle methods' })
+
+    expect(within(methodsDialog).getByRole('link', { name: '3x3 OLL' })).toHaveAttribute('href', '/algoritmos/3x3/oll/')
+    expect(within(methodsDialog).getByRole('link', { name: '2x2 CLL' })).toHaveAttribute('href', '/algoritmos/2x2/cll/')
+    expect(within(methodsDialog).getByRole('link', { name: '4x4 PLL' })).toHaveAttribute('href', '/algoritmos/4x4/pll/')
+    expect(within(methodsDialog).getByRole('link', { name: 'Square-1 Cubeshape' })).toHaveAttribute('href', '/algoritmos/sq1/cubeshape/')
+    expect(within(methodsDialog).getByRole('link', { name: 'Megaminx OLL' })).toHaveAttribute('href', '/algoritmos/megaminx/oll/')
   })
 
   it('marks notations as active and opens puzzle notation links', async () => {
@@ -76,10 +78,12 @@ describe('PageNav', () => {
 
     await user.click(notationsButton)
 
-    expect(screen.getByRole('link', { name: '3x3' })).toHaveAttribute('href', '/notations/3x3/')
-    expect(screen.getByRole('link', { name: 'Pyraminx' })).toHaveAttribute('href', '/notations/pyraminx/')
-    expect(screen.getByRole('link', { name: 'Square-1' })).toHaveAttribute('href', '/notations/square-1/')
-    expect(screen.getByRole('link', { name: 'Clock' })).toHaveAttribute('href', '/notations/clock/')
+    const notationsDialog = screen.getByRole('dialog', { name: 'Puzzle notations' })
+
+    expect(within(notationsDialog).getByRole('link', { name: '3x3' })).toHaveAttribute('href', '/notations/3x3/')
+    expect(within(notationsDialog).getByRole('link', { name: 'Pyraminx' })).toHaveAttribute('href', '/notations/pyraminx/')
+    expect(within(notationsDialog).getByRole('link', { name: 'Square-1' })).toHaveAttribute('href', '/notations/square-1/')
+    expect(within(notationsDialog).getByRole('link', { name: 'Clock' })).toHaveAttribute('href', '/notations/clock/')
   })
 
   it('links to the project on GitHub', () => {
@@ -106,6 +110,22 @@ describe('PageNav', () => {
     await user.click(screen.getAllByRole('button', { name: 'Close menu' })[0])
 
     expect(screen.queryAllByRole('button', { name: 'Close menu' })).toHaveLength(0)
+  })
+
+  it('opens mobile drawer submenus in dialogs and closes after navigation', async () => {
+    const user = userEvent.setup()
+    renderWithRouter(<PageNav activeRoute="algorithms" />, '/algoritmos/')
+
+    await user.click(screen.getByRole('button', { name: 'Open menu' }))
+
+    const drawer = screen.getByRole('dialog', { name: 'Menu' })
+    await user.click(within(drawer).getByRole('button', { name: 'Algorithms' }))
+
+    const methodsDialog = screen.getByRole('dialog', { name: 'Puzzle methods' })
+    await user.click(within(methodsDialog).getByRole('link', { name: '3x3 OLL' }))
+
+    expect(screen.queryByRole('dialog', { name: 'Puzzle methods' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: 'Menu' })).not.toBeInTheDocument()
   })
 
   it('closes the mobile menu with Escape', async () => {

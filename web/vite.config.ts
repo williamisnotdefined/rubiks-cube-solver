@@ -11,6 +11,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   build: {
     chunkSizeWarningLimit: 800,
+    sourcemap: true,
     // cubing's scramble worker must not import Vite's document-based preload helper.
     modulePreload: false,
     rollupOptions: {
@@ -138,6 +139,24 @@ export default defineConfig({
         find: /^@rubiks-cube-solver\/rubiks-cube\/view$/,
         replacement: fileURLToPath(
           new URL('../packages/rubiks-cube/src/puzzles/cube/element/index.ts', import.meta.url),
+        ),
+      },
+      {
+        find: /^@rubiks-cube-solver\/rubiks-cube\/puzzles\/megaminx$/,
+        replacement: fileURLToPath(
+          new URL('../packages/rubiks-cube/src/puzzles/megaminx/index.ts', import.meta.url),
+        ),
+      },
+      {
+        find: /^@rubiks-cube-solver\/rubiks-cube\/puzzles\/pyraminx$/,
+        replacement: fileURLToPath(
+          new URL('../packages/rubiks-cube/src/puzzles/pyraminx/index.ts', import.meta.url),
+        ),
+      },
+      {
+        find: /^@rubiks-cube-solver\/rubiks-cube\/puzzles\/square1$/,
+        replacement: fileURLToPath(
+          new URL('../packages/rubiks-cube/src/puzzles/square1/index.ts', import.meta.url),
         ),
       },
       { find: '@api', replacement: fileURLToPath(new URL('./src/api', import.meta.url)) },

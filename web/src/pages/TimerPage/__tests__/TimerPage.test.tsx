@@ -1,7 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ToastProvider } from '@components/Toast'
 import { scrambleEventById, scrambleEvents } from '@core/scramble/catalog'
 import { TimerPage } from '../TimerPage'
 import { useTimerSettingsStore } from '../timerSettingsStore'
@@ -314,11 +313,7 @@ describe('TimerPage', () => {
 })
 
 function renderTimerPage() {
-  return render(
-    <ToastProvider>
-      <TimerPage />
-    </ToastProvider>,
-  )
+  return render(<TimerPage />)
 }
 
 type TestUser = ReturnType<typeof userEvent.setup>

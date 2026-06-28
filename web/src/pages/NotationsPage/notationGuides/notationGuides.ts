@@ -21,133 +21,151 @@ export type NotationGuide = {
   id: NotationPuzzleId
   path: string
   puzzle: string
-  sections: NotationSection[]
-  summaryKey: string
-  symbols: NotationSymbol[]
+  visualization?: NotationVisualization
 }
 
-type NotationSection = {
-  bodyKey: string
-  titleKey: string
+export type NotationVisualization =
+  | {
+    actions: readonly NotationVisualizationAction[]
+    cubeType: 'Two' | 'Three' | 'Four' | 'Five' | 'Six' | 'Seven'
+    kind: 'cube'
+  }
+  | {
+    actions: readonly NotationVisualizationAction[]
+    kind: 'megaminx' | 'pyraminx' | 'square1'
+  }
+
+export type NotationVisualizationAction = string | {
+  label: string
+  move: string
 }
 
-type NotationSymbol = {
-  example: string
-  meaningKey: string
-  symbol: string
-}
+const twoByTwoActions = ['R', "R'", 'R2', 'L', "L'", 'L2', 'U', "U'", 'F', 'x', 'y', 'z'] as const
+const threeByThreeActions = ['R', "R'", 'R2', 'L', "L'", 'L2', 'U', "U'", 'F', 'M', "M'", 'E', "E'", 'S', "S'", 'Rw', "Rw'", 'x', 'y', 'z'] as const
+const bigCubeActions = ['R', "R'", 'R2', 'L', "L'", 'L2', 'U', "U'", 'F', 'Rw', "Rw'", 'Uw', "Uw'", '2R', "2R'", '3Rw', "3Rw'"] as const
+const pyraminxActions = ['U', "U'", 'L', "L'", 'R', "R'", 'B', "B'", 'u', "u'", 'l', "l'", 'r', "r'", 'b', "b'"] as const
+const squareOneActions = [
+  '(1,0)',
+  '(-1,0)',
+  '(2,0)',
+  '(-2,0)',
+  '(3,0)',
+  '(-3,0)',
+  '(4,0)',
+  '(-4,0)',
+  '(5,0)',
+  '(-5,0)',
+  '(6,0)',
+  '(0,1)',
+  '(0,-1)',
+  '(0,2)',
+  '(0,-2)',
+  '(0,3)',
+  '(0,-3)',
+  '(0,4)',
+  '(0,-4)',
+  '(0,5)',
+  '(0,-5)',
+  '(0,6)',
+  '(1,-1)',
+  '(-1,1)',
+  '/',
+] as const
 
-const faceSymbol: NotationSymbol = { example: 'R', meaningKey: 'notations.symbols.face', symbol: 'U D R L F B' }
-const counterClockwiseSymbol: NotationSymbol = { example: "R'", meaningKey: 'notations.symbols.counterClockwise', symbol: "'" }
-const halfTurnSymbol: NotationSymbol = { example: 'R2', meaningKey: 'notations.symbols.halfTurn', symbol: '2' }
-const rotationSymbol: NotationSymbol = { example: 'x y z', meaningKey: 'notations.symbols.rotation', symbol: 'x y z' }
-const mSliceSymbol: NotationSymbol = { example: 'M', meaningKey: 'notations.symbols.mSlice', symbol: 'M' }
-const eSliceSymbol: NotationSymbol = { example: 'E', meaningKey: 'notations.symbols.eSlice', symbol: 'E' }
-const sSliceSymbol: NotationSymbol = { example: 'S', meaningKey: 'notations.symbols.sSlice', symbol: 'S' }
-const wideSymbol: NotationSymbol = { example: 'Rw', meaningKey: 'notations.symbols.wide', symbol: 'Rw' }
-const innerLayerSymbol: NotationSymbol = { example: '2R', meaningKey: 'notations.symbols.innerLayer', symbol: '2R' }
-const multiLayerSymbol: NotationSymbol = { example: '3Rw', meaningKey: 'notations.symbols.multiLayer', symbol: '3Rw' }
-const pyraminxFaceSymbol: NotationSymbol = { example: 'R', meaningKey: 'notations.symbols.pyraminxFace', symbol: 'U L R B' }
-const pyraminxTipSymbol: NotationSymbol = { example: 'r', meaningKey: 'notations.symbols.pyraminxTip', symbol: 'u l r b' }
-const squareOnePairSymbol: NotationSymbol = { example: '(1,-3)', meaningKey: 'notations.symbols.squareOnePair', symbol: '(x,y)' }
-const squareOneSlashSymbol: NotationSymbol = { example: '/', meaningKey: 'notations.symbols.squareOneSlash', symbol: '/' }
-const squareOneNegativeSymbol: NotationSymbol = { example: '(-2,0)', meaningKey: 'notations.symbols.squareOneNegative', symbol: '-' }
-const megaminxFaceSymbol: NotationSymbol = { example: "U'", meaningKey: 'notations.symbols.megaminxFace', symbol: 'U R D' }
-const megaminxDoublePlusSymbol: NotationSymbol = { example: 'R++', meaningKey: 'notations.symbols.megaminxDoublePlus', symbol: '++' }
-const megaminxDoubleMinusSymbol: NotationSymbol = { example: 'D--', meaningKey: 'notations.symbols.megaminxDoubleMinus', symbol: '--' }
-const skewbFaceSymbol: NotationSymbol = { example: 'R', meaningKey: 'notations.symbols.skewbFace', symbol: 'R L U B' }
-const clockPinSymbol: NotationSymbol = { example: 'UR', meaningKey: 'notations.symbols.clockPin', symbol: 'UR DR DL UL' }
-const clockDialSymbol: NotationSymbol = { example: 'U3+', meaningKey: 'notations.symbols.clockDial', symbol: '+ / -' }
-const clockAllSymbol: NotationSymbol = { example: 'ALL6+', meaningKey: 'notations.symbols.clockAll', symbol: 'ALL' }
+const megaminxMoveSuffixes = ['', "'", '2', "2'"] as const
+const megaminxVisualFaces = [
+  { label: 'U', move: 'U' },
+  { label: 'F', move: 'F' },
+  { label: 'R', move: 'A' },
+  { label: 'L', move: 'R' },
+  { label: 'BR', move: 'L' },
+  { label: 'BL', move: 'D' },
+  { label: 'B', move: 'G' },
+  { label: 'D', move: 'E' },
+  { label: 'DR', move: 'B' },
+  { label: 'DL', move: 'H' },
+  { label: 'DBR', move: 'I' },
+  { label: 'DBL', move: 'C' },
+] as const
+const megaminxActions: readonly NotationVisualizationAction[] = [
+  ...megaminxVisualFaces.flatMap(({ label, move }) =>
+    megaminxMoveSuffixes.map((suffix): NotationVisualizationAction => {
+      const actionLabel = `${label}${suffix}`
+      const actionMove = `${move}${suffix}`
+
+      return actionLabel === actionMove ? actionLabel : { label: actionLabel, move: actionMove }
+    }),
+  ),
+  'R++',
+  'R--',
+  'D++',
+  'D--',
+]
 
 export const notationGuides: NotationGuide[] = [
   {
     id: '2x2',
     path: '/notations/2x2',
     puzzle: '2x2',
-    sections: [section('nxnFaces'), section('suffixes'), section('rotations'), section('twoByTwo')],
-    summaryKey: 'notations.puzzles.2x2.summary',
-    symbols: [faceSymbol, counterClockwiseSymbol, halfTurnSymbol, rotationSymbol],
+    visualization: { actions: twoByTwoActions, cubeType: 'Two', kind: 'cube' },
   },
   {
     id: '3x3',
     path: '/notations/3x3',
     puzzle: '3x3',
-    sections: [section('nxnFaces'), section('suffixes'), section('slices'), section('wideMoves'), section('rotations')],
-    summaryKey: 'notations.puzzles.3x3.summary',
-    symbols: [faceSymbol, counterClockwiseSymbol, halfTurnSymbol, mSliceSymbol, eSliceSymbol, sSliceSymbol, wideSymbol, rotationSymbol],
+    visualization: { actions: threeByThreeActions, cubeType: 'Three', kind: 'cube' },
   },
   {
     id: '4x4',
     path: '/notations/4x4',
     puzzle: '4x4',
-    sections: [section('nxnFaces'), section('wideMoves'), section('bigCubeLayers'), section('parityNotation')],
-    summaryKey: 'notations.puzzles.4x4.summary',
-    symbols: [faceSymbol, counterClockwiseSymbol, halfTurnSymbol, wideSymbol, innerLayerSymbol],
+    visualization: { actions: bigCubeActions, cubeType: 'Four', kind: 'cube' },
   },
   {
     id: '5x5',
     path: '/notations/5x5',
     puzzle: '5x5',
-    sections: [section('nxnFaces'), section('wideMoves'), section('bigCubeLayers'), section('oddCubeCenters')],
-    summaryKey: 'notations.puzzles.5x5.summary',
-    symbols: [faceSymbol, counterClockwiseSymbol, halfTurnSymbol, wideSymbol, multiLayerSymbol],
+    visualization: { actions: bigCubeActions, cubeType: 'Five', kind: 'cube' },
   },
   {
     id: '6x6',
     path: '/notations/6x6',
     puzzle: '6x6',
-    sections: [section('nxnFaces'), section('wideMoves'), section('bigCubeLayers'), section('evenCubeCenters')],
-    summaryKey: 'notations.puzzles.6x6.summary',
-    symbols: [faceSymbol, counterClockwiseSymbol, halfTurnSymbol, wideSymbol, multiLayerSymbol],
+    visualization: { actions: bigCubeActions, cubeType: 'Six', kind: 'cube' },
   },
   {
     id: '7x7',
     path: '/notations/7x7',
     puzzle: '7x7',
-    sections: [section('nxnFaces'), section('wideMoves'), section('bigCubeLayers'), section('oddCubeCenters')],
-    summaryKey: 'notations.puzzles.7x7.summary',
-    symbols: [faceSymbol, counterClockwiseSymbol, halfTurnSymbol, wideSymbol, multiLayerSymbol],
+    visualization: { actions: bigCubeActions, cubeType: 'Seven', kind: 'cube' },
   },
   {
     id: 'pyraminx',
     path: '/notations/pyraminx',
     puzzle: 'Pyraminx',
-    sections: [section('pyraminxFaces'), section('pyraminxTips'), section('suffixes')],
-    summaryKey: 'notations.puzzles.pyraminx.summary',
-    symbols: [pyraminxFaceSymbol, pyraminxTipSymbol, counterClockwiseSymbol, halfTurnSymbol],
+    visualization: { actions: pyraminxActions, kind: 'pyraminx' },
   },
   {
     id: 'square-1',
     path: '/notations/square-1',
     puzzle: 'Square-1',
-    sections: [section('squareOnePairs'), section('squareOneSlash'), section('squareOneShape')],
-    summaryKey: 'notations.puzzles.square-1.summary',
-    symbols: [squareOnePairSymbol, squareOneSlashSymbol, squareOneNegativeSymbol],
+    visualization: { actions: squareOneActions, kind: 'square1' },
   },
   {
     id: 'megaminx',
     path: '/notations/megaminx',
     puzzle: 'Megaminx',
-    sections: [section('megaminxFaces'), section('megaminxDoubleTurns'), section('suffixes')],
-    summaryKey: 'notations.puzzles.megaminx.summary',
-    symbols: [megaminxFaceSymbol, megaminxDoublePlusSymbol, megaminxDoubleMinusSymbol, counterClockwiseSymbol],
+    visualization: { actions: megaminxActions, kind: 'megaminx' },
   },
   {
     id: 'skewb',
     path: '/notations/skewb',
     puzzle: 'Skewb',
-    sections: [section('skewbCorners'), section('skewbGrip'), section('suffixes')],
-    summaryKey: 'notations.puzzles.skewb.summary',
-    symbols: [skewbFaceSymbol, counterClockwiseSymbol, halfTurnSymbol],
   },
   {
     id: 'clock',
     path: '/notations/clock',
     puzzle: 'Clock',
-    sections: [section('clockPins'), section('clockDials'), section('clockFlip')],
-    summaryKey: 'notations.puzzles.clock.summary',
-    symbols: [clockPinSymbol, clockDialSymbol, clockAllSymbol],
   },
 ]
 
@@ -158,11 +176,4 @@ export const notationPuzzleGroups: NotationPuzzleGroup[] = [
 
 export function getNotationGuide(puzzleId: string | undefined) {
   return notationGuides.find((guide) => guide.id === puzzleId)
-}
-
-function section(id: string): NotationSection {
-  return {
-    bodyKey: `notations.sections.${id}.body`,
-    titleKey: `notations.sections.${id}.title`,
-  }
 }

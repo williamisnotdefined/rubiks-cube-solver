@@ -32,6 +32,15 @@
       "@rubiks-cube-solver/rubiks-cube/view": [
         "../packages/rubiks-cube/src/puzzles/cube/element/index.ts"
       ],
+      "@rubiks-cube-solver/rubiks-cube/puzzles/megaminx": [
+        "../packages/rubiks-cube/src/puzzles/megaminx/index.ts"
+      ],
+      "@rubiks-cube-solver/rubiks-cube/puzzles/pyraminx": [
+        "../packages/rubiks-cube/src/puzzles/pyraminx/index.ts"
+      ],
+      "@rubiks-cube-solver/rubiks-cube/puzzles/square1": [
+        "../packages/rubiks-cube/src/puzzles/square1/index.ts"
+      ],
       "@src/*": ["./src/*"]
     },
     "isolatedModules": true,

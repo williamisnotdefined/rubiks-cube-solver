@@ -7,7 +7,7 @@ import type { PageNavRoute } from '@components/layout/PageNav'
 import { Seo } from '@src/seo/Seo'
 import { localeFromPathname, localePrefix, localizedPath, prefixedSeoLocales, stripLocalePrefix } from '@src/seo/routes'
 
-const SolvePage = lazy(() => import('../pages/SolvePage/SolvePage').then((module) => ({ default: module.SolvePage })))
+const SolvePage = lazy(() => import('../pages/SolvePage/SolvePageRoute').then((module) => ({ default: module.SolvePageRoute })))
 const TimerPage = lazy(() => import('../pages/TimerPage/TimerPage').then((module) => ({ default: module.TimerPage })))
 const AlgorithmsIndexPage = lazy(() => import('../pages/AlgorithmsPage/AlgorithmsIndexPage').then((module) => ({ default: module.AlgorithmsIndexPage })))
 const AlgorithmsPuzzlePage = lazy(() => import('../pages/AlgorithmsPage/AlgorithmsPuzzlePage').then((module) => ({ default: module.AlgorithmsPuzzlePage })))
