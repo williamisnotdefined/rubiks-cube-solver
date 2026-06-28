@@ -356,22 +356,30 @@ export type Square1Move = Square1CoordinateMove | Square1SlashMove;
 
 export const Square1MoveTokens = Object.freeze({
   FiveZero: '(5,0)',
+  FourZero: '(4,0)',
   MinusOneOne: '(-1,1)',
+  MinusFourZero: '(-4,0)',
   MinusFiveZero: '(-5,0)',
   MinusOneZero: '(-1,0)',
   MinusThreeZero: '(-3,0)',
+  MinusTwoZero: '(-2,0)',
   OneMinusOne: '(1,-1)',
   OneZero: '(1,0)',
   Slash: '/',
   SixZero: '(6,0)',
   ThreeZero: '(3,0)',
+  TwoZero: '(2,0)',
   ZeroFive: '(0,5)',
+  ZeroFour: '(0,4)',
   ZeroMinusFive: '(0,-5)',
+  ZeroMinusFour: '(0,-4)',
   ZeroMinusOne: '(0,-1)',
   ZeroMinusThree: '(0,-3)',
+  ZeroMinusTwo: '(0,-2)',
   ZeroOne: '(0,1)',
   ZeroSix: '(0,6)',
   ZeroThree: '(0,3)',
+  ZeroTwo: '(0,2)',
 });
 
 export type Square1MoveToken = ValueOf<typeof Square1MoveTokens>;
