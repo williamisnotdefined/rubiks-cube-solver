@@ -1,0 +1,1 @@
+export { AlgorithmsPuzzlePage } from './AlgorithmsPuzzlePage'

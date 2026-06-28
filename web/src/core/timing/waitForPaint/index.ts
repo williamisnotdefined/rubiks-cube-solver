@@ -1,0 +1,1 @@
+export { waitForPaint } from './waitForPaint'

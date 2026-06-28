@@ -1,0 +1,1 @@
+export { useGetPuzzles } from './useGetPuzzles'

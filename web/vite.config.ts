@@ -158,8 +158,8 @@ export default defineConfig({
         'src/**/index.ts',
         'src/**/types.ts',
         'src/**/*.d.ts',
-        'src/App.tsx',
-        'src/main.tsx',
+        'src/App/**',
+        'src/main/**',
         'src/stories/**',
         'src/test/**',
         'src/vendor/**',
@@ -179,6 +179,6 @@ export default defineConfig({
       },
     },
     environment: 'jsdom',
-    setupFiles: './src/test/setup.ts',
+    setupFiles: './src/test/setup',
   },
 })

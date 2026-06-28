@@ -1,0 +1,1 @@
+export { getPuzzleStrategies } from './getPuzzleStrategies'

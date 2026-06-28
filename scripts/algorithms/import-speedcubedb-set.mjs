@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process'
 import { mkdirSync, writeFileSync } from 'node:fs'
-import { dirname, extname, join } from 'node:path'
+import { basename, dirname, extname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { JSDOM } from 'jsdom'
 
@@ -235,7 +235,8 @@ function imageExtension(url, contentType) {
 }
 
 function writeSetFile(set, cases) {
-  const tsPath = join(repoRoot, 'web/src/pages/AlgorithmsPage/sets', set.tsPath)
+  const modulePath = set.tsPath.replace(/\.ts$/, '')
+  const tsPath = join(repoRoot, 'web/src/pages/AlgorithmsPage/sets', modulePath, `${basename(modulePath)}.ts`)
   mkdirSync(dirname(tsPath), { recursive: true })
   const lines = [
     `import type { AlgorithmCase } from '${typeImportPath(set.tsPath)}'`,
@@ -246,13 +247,15 @@ function writeSetFile(set, cases) {
     '',
   ]
   writeFileSync(tsPath, lines.join('\n'))
+  writeFileSync(join(dirname(tsPath), 'index.ts'), `export * from './${basename(modulePath)}'\n`)
 }
 
 function writeRegistryFile() {
-  const tsPath = join(repoRoot, 'web/src/pages/AlgorithmsPage/sets/speedCubeDbSets.ts')
+  const tsPath = join(repoRoot, 'web/src/pages/AlgorithmsPage/sets/speedCubeDbSets/speedCubeDbSets.ts')
+  mkdirSync(dirname(tsPath), { recursive: true })
   const lines = [
-    "import type { AlgorithmSet } from './types'",
-    ...sets.map((set) => `import { ${set.exportName} } from './${set.tsPath.replace(/\.ts$/, '')}'`),
+    "import type { AlgorithmSet } from '../types'",
+    ...sets.map((set) => `import { ${set.exportName} } from '../${set.tsPath.replace(/\.ts$/, '')}'`),
     '',
     "const speedCubeDbBase = 'https://speedcubedb.com'",
     '',
@@ -262,12 +265,14 @@ function writeRegistryFile() {
     '',
   ]
   writeFileSync(tsPath, lines.join('\n'))
+  writeFileSync(join(dirname(tsPath), 'index.ts'), "export * from './speedCubeDbSets'\n")
 }
 
 function writeSummaryFile() {
-  const tsPath = join(repoRoot, 'web/src/pages/AlgorithmsPage/sets/speedCubeDbSetSummaries.ts')
+  const tsPath = join(repoRoot, 'web/src/pages/AlgorithmsPage/sets/speedCubeDbSetSummaries/speedCubeDbSetSummaries.ts')
+  mkdirSync(dirname(tsPath), { recursive: true })
   const lines = [
-    "import type { AlgorithmSetSummary } from './types'",
+    "import type { AlgorithmSetSummary } from '../types'",
     '',
     "const speedCubeDbBase = 'https://speedcubedb.com'",
     '',
@@ -277,6 +282,7 @@ function writeSummaryFile() {
     '',
   ]
   writeFileSync(tsPath, lines.join('\n'))
+  writeFileSync(join(dirname(tsPath), 'index.ts'), "export * from './speedCubeDbSetSummaries'\n")
 }
 
 function formatRegistryObject(set) {
@@ -288,7 +294,7 @@ function formatSummaryObject(set) {
 }
 
 function typeImportPath(tsPath) {
-  const depth = tsPath.split('/').length - 1
+  const depth = tsPath.replace(/\.ts$/, '').split('/').length
   return `${'../'.repeat(depth)}types`
 }
 
