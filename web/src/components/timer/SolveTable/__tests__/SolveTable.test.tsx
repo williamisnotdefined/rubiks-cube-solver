@@ -19,8 +19,12 @@ describe('SolveTable', () => {
     const table = screen.getByRole('table')
     expect(within(table).getByText('1')).toBeInTheDocument()
     expect(within(table).getByText('12.345')).toBeInTheDocument()
-    expect(within(table).getByText('OK')).toBeInTheDocument()
+    expect(within(table).getByText('-')).toBeInTheDocument()
     expect(within(table).getByText('R U')).toBeInTheDocument()
+    expect(within(table).queryByText('Delete')).not.toBeInTheDocument()
+    const bodyRow = within(table).getAllByRole('row')[1]!
+    const firstCell = within(bodyRow).getAllByRole('cell')[0]!
+    expect(firstCell).toContainElement(within(table).getByRole('button', { name: 'Delete' }))
 
     await user.click(within(table).getByRole('button', { name: 'Delete' }))
     expect(onDeleteSolve).toHaveBeenCalledWith('solve-1')

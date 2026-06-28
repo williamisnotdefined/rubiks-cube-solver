@@ -1,4 +1,5 @@
 import cls from 'classnames'
+import { Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import {
   flexRender,
@@ -78,16 +79,25 @@ function PlainSolveTable({
       <table className="w-full min-w-[32rem] border-collapse text-left text-sm">
         <thead className="sticky top-0 border-b border-app-border bg-app-surface text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
           <tr>
+            <th className="w-10 px-2 py-3">
+              <span className="sr-only">{t('timer.solves.actions')}</span>
+            </th>
             <th className="px-4 py-3">#</th>
             <th className="px-4 py-3">{t('timer.solves.time')}</th>
             <th className="px-4 py-3">{t('timer.solves.penalty')}</th>
             <th className="px-4 py-3">{t('timer.solves.scramble')}</th>
-            <th className="px-4 py-3">{t('timer.solves.actions')}</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row) => (
             <tr key={row.id} className="border-b border-app-border last:border-b-0">
+              <td className="px-2 py-3">
+                <DeleteSolveButton
+                  disabled={onDeleteSolve === undefined}
+                  solveId={row.id}
+                  onDeleteSolve={onDeleteSolve}
+                />
+              </td>
               <td className="px-4 py-3 font-mono text-app-muted">{row.index}</td>
               <td className="px-4 py-3 font-mono text-lg font-black text-app-text">
                 {formatTimerTime(row.finalTimeMs, { showMilliseconds })}
@@ -97,13 +107,6 @@ function PlainSolveTable({
               </td>
               <td className="max-w-md truncate px-4 py-3 font-mono text-xs text-app-muted">
                 {row.scramble}
-              </td>
-              <td className="px-4 py-3">
-                <DeleteSolveButton
-                  disabled={onDeleteSolve === undefined}
-                  solveId={row.id}
-                  onDeleteSolve={onDeleteSolve}
-                />
               </td>
             </tr>
           ))}
@@ -123,6 +126,17 @@ function VirtualizedSolveTable({
   const [scrollParentElement, setScrollParentElement] = useState<HTMLElement | null>(null)
   const data = useMemo(() => [...rows], [rows])
   const columns = useMemo<ColumnDef<SolveTableRow>[]>(() => [
+    {
+      cell: ({ row }) => (
+        <DeleteSolveButton
+          disabled={onDeleteSolve === undefined}
+          solveId={row.original.id}
+          onDeleteSolve={onDeleteSolve}
+        />
+      ),
+      header: () => <span className="sr-only">{t('timer.solves.actions')}</span>,
+      id: 'actions',
+    },
     {
       accessorKey: 'index',
       cell: ({ row }) => (
@@ -148,17 +162,6 @@ function VirtualizedSolveTable({
       accessorKey: 'scramble',
       cell: ({ row }) => row.original.scramble,
       header: t('timer.solves.scramble'),
-    },
-    {
-      cell: ({ row }) => (
-        <DeleteSolveButton
-          disabled={onDeleteSolve === undefined}
-          solveId={row.original.id}
-          onDeleteSolve={onDeleteSolve}
-        />
-      ),
-      header: t('timer.solves.actions'),
-      id: 'actions',
     },
   ], [onDeleteSolve, showMilliseconds, t])
   const table = useReactTable({
@@ -250,7 +253,10 @@ function DeleteSolveButton({
 
   return (
     <Button
+      aria-label={t('timer.solves.delete')}
+      className="!min-h-8 min-w-8 px-2 py-1"
       disabled={disabled}
+      size="sm"
       type="button"
       variant="ghost"
       onClick={(event) => {
@@ -258,7 +264,7 @@ function DeleteSolveButton({
         onDeleteSolve?.(solveId)
       }}
     >
-      {t('timer.solves.delete')}
+      <Trash2 aria-hidden="true" className="size-4" strokeWidth={2.6} />
     </Button>
   )
 }
@@ -296,6 +302,10 @@ function observeVirtualTableElementRect(
 }
 
 function cellClassName(columnId: string): string {
+  if (columnId === 'actions') {
+    return 'w-10 px-2 py-3'
+  }
+
   if (columnId === 'scramble') {
     return 'max-w-md truncate px-4 py-3 font-mono text-xs text-app-muted'
   }

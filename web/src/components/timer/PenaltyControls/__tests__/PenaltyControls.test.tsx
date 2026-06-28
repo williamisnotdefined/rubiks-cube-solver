@@ -10,7 +10,7 @@ describe('PenaltyControls', () => {
 
     render(<PenaltyControls penalty="plus2" onPenaltyChange={onPenaltyChange} />)
 
-    expect(screen.queryByRole('button', { name: 'OK' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '-' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: '+2' })).toHaveClass('bg-app-text')
 
     await user.click(screen.getByRole('button', { name: '+2' }))

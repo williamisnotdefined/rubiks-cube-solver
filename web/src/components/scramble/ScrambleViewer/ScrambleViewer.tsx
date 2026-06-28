@@ -4,6 +4,7 @@ import type { MouseEvent, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 type ScrambleViewerProps = {
+  actionSlot?: ReactNode
   canGoPrevious?: boolean
   className?: string
   copied?: boolean
@@ -16,6 +17,7 @@ type ScrambleViewerProps = {
 }
 
 export function ScrambleViewer({
+  actionSlot,
   canGoPrevious = false,
   className,
   copied = false,
@@ -30,6 +32,7 @@ export function ScrambleViewer({
   const hasActions = onCopy !== undefined
     || onNext !== undefined
     || onPrevious !== undefined
+    || actionSlot !== undefined
 
   return (
     <section className={cls('grid min-h-0 gap-2 border border-app-border bg-app-surface px-3 py-2 text-center', className)}>
@@ -69,6 +72,7 @@ export function ScrambleViewer({
             >
               <Copy aria-hidden="true" size={17} strokeWidth={2.6} />
             </button>
+            {actionSlot}
           </div>
         ) : (
           <span aria-hidden="true" />

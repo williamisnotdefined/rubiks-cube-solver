@@ -83,7 +83,41 @@ describe('TimerPage', () => {
     expect(within(screen.getByRole('table')).getByText('1')).toBeInTheDocument()
   })
 
-  it('toggles the latest solve penalty between +2, DNF, and OK', async () => {
+  it('lists the latest solve first', async () => {
+    useTimerStore.getState().addSolve({
+      comment: '',
+      endedAt: 1_000,
+      eventId: '333',
+      finalTimeMs: 1_000,
+      id: 'solve-1',
+      penalty: 'ok',
+      rawTimeMs: 1_000,
+      scramble: 'first scramble',
+      startedAt: 0,
+    })
+    useTimerStore.getState().addSolve({
+      comment: '',
+      endedAt: 3_000,
+      eventId: '333',
+      finalTimeMs: 2_000,
+      id: 'solve-2',
+      penalty: 'ok',
+      rawTimeMs: 2_000,
+      scramble: 'latest scramble',
+      startedAt: 1_000,
+    })
+
+    renderTimerPage()
+    await waitForScrambleReady()
+
+    const solveRows = within(screen.getByRole('table')).getAllByRole('row').slice(1)
+    expect(within(solveRows[0]!).getByText('2')).toBeInTheDocument()
+    expect(within(solveRows[0]!).getByText('latest scramble')).toBeInTheDocument()
+    expect(within(solveRows[1]!).getByText('1')).toBeInTheDocument()
+    expect(within(solveRows[1]!).getByText('first scramble')).toBeInTheDocument()
+  })
+
+  it('toggles the latest solve penalty between +2, DNF, and no penalty', async () => {
     const user = userEvent.setup()
     renderTimerPage()
     await waitForScrambleReady()
@@ -95,7 +129,7 @@ describe('TimerPage', () => {
     await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument())
     const timer = screen.getByRole('timer', { name: 'Speedsolve timer' })
 
-    expect(screen.queryByRole('button', { name: 'OK' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '-' })).not.toBeInTheDocument()
     expect(within(timer).getByRole('button', { name: '+2' })).toBeInTheDocument()
     expect(within(timer).getByRole('button', { name: 'DNF' })).toBeInTheDocument()
 
@@ -106,7 +140,7 @@ describe('TimerPage', () => {
 
     await user.click(within(timer).getByRole('button', { name: '+2' }))
 
-    expect(within(screen.getByRole('table')).getByText('OK')).toBeInTheDocument()
+    expect(within(screen.getByRole('table')).getByText('-')).toBeInTheDocument()
 
     await user.click(within(timer).getByRole('button', { name: 'DNF' }))
 
@@ -114,7 +148,7 @@ describe('TimerPage', () => {
 
     await user.click(within(timer).getByRole('button', { name: 'DNF' }))
 
-    expect(within(screen.getByRole('table')).getByText('OK')).toBeInTheDocument()
+    expect(within(screen.getByRole('table')).getByText('-')).toBeInTheDocument()
   })
 
   it('switches WCA events and stores the selected event on the solve', async () => {
@@ -222,13 +256,19 @@ describe('TimerPage', () => {
     renderTimerPage()
     await waitForScrambleReady()
 
-    await user.click(screen.getByRole('switch', { name: 'Inspection' }))
+    await user.click(screen.getByRole('button', { name: 'Timer settings' }))
+    const settingsDialog = await screen.findByRole('dialog', { name: 'Timer settings' })
+
+    await user.click(within(settingsDialog).getByRole('switch', { name: 'Inspection' }))
     expect(screen.getByText('WCA inspection')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('switch', { name: 'Milliseconds' }))
+    const updatedSettingsDialog = screen.getByRole('dialog', { name: 'Timer settings' })
+    await user.click(within(updatedSettingsDialog).getByRole('switch', { name: 'Milliseconds' }))
+    await waitFor(() => expect(useTimerSettingsStore.getState().showMilliseconds).toBe(true))
+    await user.click(within(updatedSettingsDialog).getByRole('button', { name: 'Close' }))
     fireEvent.keyDown(window, { code: 'Space', key: ' ' })
     fireEvent.keyUp(window, { code: 'Space', key: ' ' })
-    await waitFor(() => expect(screen.getAllByText('Inspection').length).toBeGreaterThan(1))
+    await waitFor(() => expect(screen.getByText('Inspection')).toBeInTheDocument())
     fireEvent.keyDown(window, { code: 'Space', key: ' ' })
     fireEvent.keyUp(window, { code: 'Space', key: ' ' })
     await waitFor(() => expect(screen.getByText('Solving')).toBeInTheDocument())
