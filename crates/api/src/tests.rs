@@ -1448,6 +1448,7 @@ async fn router_with_web_dist_applies_security_headers_to_static_and_spa_fallbac
 
         assert_eq!(response.status(), StatusCode::OK);
         assert_security_headers(response.headers());
+        assert_eq!(response.headers().get("cache-control"), None);
         let body = to_bytes(response.into_body(), usize::MAX)
             .await
             .expect("body should be readable");
@@ -1467,6 +1468,14 @@ async fn router_with_web_dist_applies_security_headers_to_static_and_spa_fallbac
 
     assert_eq!(response.status(), StatusCode::OK);
     assert_security_headers(response.headers());
+    assert_eq!(
+        response.headers().get("cache-control"),
+        Some(
+            &"public, max-age=31536000, immutable"
+                .parse()
+                .expect("cache header")
+        )
+    );
     let body = to_bytes(response.into_body(), usize::MAX)
         .await
         .expect("body should be readable");

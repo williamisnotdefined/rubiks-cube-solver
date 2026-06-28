@@ -26,27 +26,27 @@ function App() {
       <AppErrorBoundary resetKeys={[location.pathname]}>
         <Suspense fallback={<RouteFallback />}>
           <Routes>
-            <Route path="/" element={<Navigate replace to="/solve" />} />
+            <Route path="/" element={<Navigate replace to="/solve/" />} />
             <Route path="/solve" element={<SolvePage />} />
             <Route path="/timer" element={<TimerPage />} />
             <Route path="/channels" element={<YouTubeChannelsPage />} />
             <Route path="/algoritmos" element={<AlgorithmsIndexPage />} />
             <Route path="/algoritmos/:puzzleId" element={<AlgorithmsPuzzlePage />} />
             <Route path="/algoritmos/:puzzleId/:methodId" element={<AlgorithmSetPage />} />
-            <Route path="/notations" element={<Navigate replace to="/notations/3x3" />} />
+            <Route path="/notations" element={<Navigate replace to="/notations/3x3/" />} />
             <Route path="/notations/:puzzleId" element={<NotationGuidePage />} />
             {prefixedSeoLocales.map((locale) => {
               const prefix = localePrefix(locale)
 
               return [
-                <Route key={`${prefix}-root`} path={`/${prefix}`} element={<Navigate replace to={`/${prefix}/solve`} />} />,
+                <Route key={`${prefix}-root`} path={`/${prefix}`} element={<Navigate replace to={`/${prefix}/solve/`} />} />,
                 <Route key={`${prefix}-solve`} path={`/${prefix}/solve`} element={<SolvePage />} />,
                 <Route key={`${prefix}-timer`} path={`/${prefix}/timer`} element={<TimerPage />} />,
                 <Route key={`${prefix}-channels`} path={`/${prefix}/channels`} element={<YouTubeChannelsPage />} />,
                 <Route key={`${prefix}-algoritmos`} path={`/${prefix}/algoritmos`} element={<AlgorithmsIndexPage />} />,
                 <Route key={`${prefix}-algoritmos-puzzle`} path={`/${prefix}/algoritmos/:puzzleId`} element={<AlgorithmsPuzzlePage />} />,
                 <Route key={`${prefix}-algoritmos-method`} path={`/${prefix}/algoritmos/:puzzleId/:methodId`} element={<AlgorithmSetPage />} />,
-                <Route key={`${prefix}-notations`} path={`/${prefix}/notations`} element={<Navigate replace to={`/${prefix}/notations/3x3`} />} />,
+                <Route key={`${prefix}-notations`} path={`/${prefix}/notations`} element={<Navigate replace to={`/${prefix}/notations/3x3/`} />} />,
                 <Route key={`${prefix}-notations-puzzle`} path={`/${prefix}/notations/:puzzleId`} element={<NotationGuidePage />} />,
               ]
             })}

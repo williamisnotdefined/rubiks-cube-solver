@@ -3,7 +3,10 @@ use std::time::Duration;
 
 use axum::body::Body;
 use axum::extract::{DefaultBodyLimit, Path, State};
-use axum::http::{header::CONTENT_TYPE, HeaderName, HeaderValue, Method, Request, StatusCode};
+use axum::http::{
+    header::CACHE_CONTROL, header::CONTENT_TYPE, HeaderName, HeaderValue, Method, Request,
+    StatusCode,
+};
 use axum::middleware::{self, Next};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
@@ -39,6 +42,7 @@ use crate::state::ApiState;
 
 const HEALTH_VISION_TIMEOUT: Duration = Duration::from_millis(250);
 const CONTENT_SECURITY_POLICY: &str = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://yt3.googleusercontent.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https://cloudflareinsights.com; media-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'";
+const VERSIONED_ASSET_CACHE_CONTROL: &str = "public, max-age=31536000, immutable";
 
 #[derive(serde::Deserialize)]
 struct VisionHealthResponse {
@@ -133,6 +137,7 @@ fn allowed_web_origin(origin: &HeaderValue, allowed_origins: &[String]) -> bool 
 }
 
 async fn security_headers(request: Request<Body>, next: Next) -> Response {
+    let cache_versioned_asset = request.uri().path().starts_with("/assets/");
     let mut response = next.run(request).await;
     let headers = response.headers_mut();
     headers.insert(
@@ -151,6 +156,12 @@ async fn security_headers(request: Request<Body>, next: Next) -> Response {
         HeaderName::from_static("x-content-type-options"),
         HeaderValue::from_static("nosniff"),
     );
+    if cache_versioned_asset {
+        headers.insert(
+            CACHE_CONTROL,
+            HeaderValue::from_static(VERSIONED_ASSET_CACHE_CONTROL),
+        );
+    }
 
     response
 }

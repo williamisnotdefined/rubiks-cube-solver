@@ -16,9 +16,20 @@ describe('SEO route metadata', () => {
 
     expect(metadata.locale).toBe('en')
     expect(metadata.path).toBe('/algoritmos/3x3/oll')
-    expect(metadata.canonicalUrl).toBe('https://speedcube.com.br/en/algoritmos/3x3/oll')
+    expect(metadata.canonicalUrl).toBe('https://speedcube.com.br/en/algoritmos/3x3/oll/')
     expect(metadata.title).toContain('3x3 OLL Algorithms')
     expect(metadata.noindex).toBe(false)
+  })
+
+  it('keeps indexable routes indexable when the server adds trailing slashes', () => {
+    for (const pathname of ['/solve/', '/timer/', '/channels/', '/en/solve/', '/en/timer/']) {
+      const metadata = getSeoMetadata(pathname)
+
+      expect(metadata.noindex).toBe(false)
+      expect(metadata.canonicalUrl.endsWith('/')).toBe(true)
+    }
+
+    expect(stripLocalePrefix('/en/algoritmos/3x3/oll/')).toBe('/algoritmos/3x3/oll')
   })
 
   it('marks unknown routes as noindex', () => {
