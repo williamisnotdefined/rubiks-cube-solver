@@ -1,0 +1,1 @@
+export { usePageActivity } from './usePageActivity'

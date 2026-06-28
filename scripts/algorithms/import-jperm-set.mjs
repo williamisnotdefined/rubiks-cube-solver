@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process'
 import { mkdirSync, writeFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { JSDOM } from 'jsdom'
 
@@ -242,10 +242,11 @@ function extractCase(row, set, outputDir, index, fileSlugCounts) {
 }
 
 function writeSetFile(set, cases) {
-  const tsPath = join(repoRoot, 'web/src/pages/AlgorithmsPage/sets', set.tsPath)
+  const modulePath = set.tsPath.replace(/\.ts$/, '')
+  const tsPath = join(repoRoot, 'web/src/pages/AlgorithmsPage/sets', modulePath, `${basename(modulePath)}.ts`)
   mkdirSync(dirname(tsPath), { recursive: true })
   const lines = [
-    "import type { AlgorithmCase } from '../types'",
+    `import type { AlgorithmCase } from '${typeImportPath(set.tsPath)}'`,
     '',
     `export const ${set.exportName}: AlgorithmCase[] = [`,
     ...cases.map((caseItem) => `  ${formatObject(caseItem)},`),
@@ -253,6 +254,12 @@ function writeSetFile(set, cases) {
     '',
   ]
   writeFileSync(tsPath, lines.join('\n'))
+  writeFileSync(join(dirname(tsPath), 'index.ts'), `export * from './${basename(modulePath)}'\n`)
+}
+
+function typeImportPath(tsPath) {
+  const depth = tsPath.replace(/\.ts$/, '').split('/').length
+  return `${'../'.repeat(depth)}types`
 }
 
 function formatObject(caseItem) {

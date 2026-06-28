@@ -1,0 +1,1 @@
+export { getPuzzles } from './getPuzzles'

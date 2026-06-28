@@ -34,9 +34,9 @@ const copy = {
 }
 
 const sourceFiles = [
-  resolve(webRoot, 'src/pages/AlgorithmsPage/sets/algorithmSetMetadata.ts'),
-  resolve(webRoot, 'src/pages/AlgorithmsPage/sets/speedCubeDbSetSummaries.ts'),
-  resolve(webRoot, 'src/pages/NotationsPage/notationGuides.ts'),
+  resolve(webRoot, 'src/pages/AlgorithmsPage/sets/algorithmSetMetadata/algorithmSetMetadata.ts'),
+  resolve(webRoot, 'src/pages/AlgorithmsPage/sets/speedCubeDbSetSummaries/speedCubeDbSetSummaries.ts'),
+  resolve(webRoot, 'src/pages/NotationsPage/notationGuides/notationGuides.ts'),
 ]
 
 const sourceText = (await Promise.all(sourceFiles.map((file) => readFile(file, 'utf8')))).join('\n')

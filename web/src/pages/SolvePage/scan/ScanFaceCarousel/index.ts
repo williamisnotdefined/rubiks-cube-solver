@@ -1,0 +1,1 @@
+export { ScanFaceCarousel } from './ScanFaceCarousel'

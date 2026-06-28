@@ -1,0 +1,1 @@
+export { buildJsonLd } from './jsonLd'

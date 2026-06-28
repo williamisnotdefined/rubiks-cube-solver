@@ -65,7 +65,12 @@ function EmptySolveTable({ className }: Pick<SolveTableProps, 'className'>) {
   )
 }
 
-function PlainSolveTable({ className, rows, showMilliseconds = false, onDeleteSolve }: SolveTableProps) {
+function PlainSolveTable({
+  className,
+  rows,
+  showMilliseconds = false,
+  onDeleteSolve,
+}: SolveTableProps) {
   const { t } = useTranslation()
 
   return (
@@ -108,7 +113,12 @@ function PlainSolveTable({ className, rows, showMilliseconds = false, onDeleteSo
   )
 }
 
-function VirtualizedSolveTable({ className, rows, showMilliseconds = false, onDeleteSolve }: SolveTableProps) {
+function VirtualizedSolveTable({
+  className,
+  rows,
+  showMilliseconds = false,
+  onDeleteSolve,
+}: SolveTableProps) {
   const { t } = useTranslation()
   const [scrollParentElement, setScrollParentElement] = useState<HTMLElement | null>(null)
   const data = useMemo(() => [...rows], [rows])
@@ -243,7 +253,10 @@ function DeleteSolveButton({
       disabled={disabled}
       type="button"
       variant="ghost"
-      onClick={() => onDeleteSolve?.(solveId)}
+      onClick={(event) => {
+        event.currentTarget.blur()
+        onDeleteSolve?.(solveId)
+      }}
     >
       {t('timer.solves.delete')}
     </Button>

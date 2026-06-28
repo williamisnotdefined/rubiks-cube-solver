@@ -52,7 +52,8 @@ describe('TimerPage', () => {
     const user = userEvent.setup()
     renderTimerPage()
 
-    await user.click(screen.getByRole('button', { name: '+2' }))
+    const timer = screen.getByRole('timer', { name: 'Speedsolve timer' })
+    await user.click(within(timer).getByRole('button', { name: '+2' }))
 
     expect(screen.getByText('No solves yet')).toBeInTheDocument()
   })
@@ -82,7 +83,7 @@ describe('TimerPage', () => {
     expect(within(screen.getByRole('table')).getByText('1')).toBeInTheDocument()
   })
 
-  it('updates the latest solve penalty between +2, DNF, and OK', async () => {
+  it('toggles the latest solve penalty between +2, DNF, and OK', async () => {
     const user = userEvent.setup()
     renderTimerPage()
     await waitForScrambleReady()
@@ -92,16 +93,26 @@ describe('TimerPage', () => {
     await waitFor(() => expect(screen.getByText('Solving')).toBeInTheDocument())
     fireEvent.keyDown(window, { code: 'KeyA', key: 'a' })
     await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument())
+    const timer = screen.getByRole('timer', { name: 'Speedsolve timer' })
 
-    await user.click(screen.getByRole('button', { name: '+2' }))
+    expect(screen.queryByRole('button', { name: 'OK' })).not.toBeInTheDocument()
+    expect(within(timer).getByRole('button', { name: '+2' })).toBeInTheDocument()
+    expect(within(timer).getByRole('button', { name: 'DNF' })).toBeInTheDocument()
+
+    await user.click(within(timer).getByRole('button', { name: '+2' }))
 
     expect(within(screen.getByRole('table')).getByText('+2')).toBeInTheDocument()
+    expect(document.activeElement).toBe(timer)
 
-    await user.click(screen.getByRole('button', { name: 'DNF' }))
+    await user.click(within(timer).getByRole('button', { name: '+2' }))
+
+    expect(within(screen.getByRole('table')).getByText('OK')).toBeInTheDocument()
+
+    await user.click(within(timer).getByRole('button', { name: 'DNF' }))
 
     expect(within(screen.getByRole('table')).getAllByText('DNF').length).toBeGreaterThan(0)
 
-    await user.click(screen.getByRole('button', { name: 'OK' }))
+    await user.click(within(timer).getByRole('button', { name: 'DNF' }))
 
     expect(within(screen.getByRole('table')).getByText('OK')).toBeInTheDocument()
   })
@@ -161,6 +172,31 @@ describe('TimerPage', () => {
     expect(screen.getByRole('button', { name: 'Previous scramble' })).toBeEnabled()
 
     await user.click(screen.getByRole('button', { name: 'Previous scramble' }))
+    expect(screen.getByRole('button', { name: 'Previous scramble' })).toBeDisabled()
+  })
+
+  it('blocks timing and lets the user retry when competition-quality scramble generation fails', async () => {
+    const user = userEvent.setup()
+    highQualityMocks.generateHighQualityScrambleForEvent
+      .mockRejectedValueOnce(new Error('provider unavailable'))
+      .mockResolvedValueOnce({
+        event: scrambleEventById('333'),
+        scramble: 'retry high-quality scramble',
+      })
+
+    renderTimerPage()
+
+    await waitFor(() => {
+      expect(screen.getByText('Could not generate a competition-quality scramble. Try again.')).toBeInTheDocument()
+    })
+    expect(screen.getByRole('timer', { name: 'Speedsolve timer' })).toHaveAttribute('aria-disabled', 'true')
+    expect(screen.getByRole('button', { name: 'Copy scramble' })).toBeDisabled()
+
+    await user.click(screen.getByRole('button', { name: 'Next scramble' }))
+    await waitForScrambleReady()
+
+    expect(screen.getByText('retry high-quality scramble')).toBeInTheDocument()
+    expect(screen.getByRole('timer', { name: 'Speedsolve timer' })).toHaveAttribute('aria-disabled', 'false')
     expect(screen.getByRole('button', { name: 'Previous scramble' })).toBeDisabled()
   })
 
