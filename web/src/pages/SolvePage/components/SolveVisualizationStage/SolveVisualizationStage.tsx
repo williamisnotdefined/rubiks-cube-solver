@@ -4,14 +4,12 @@ import type { RubiksCubeElement } from '@rubiks-cube-solver/rubiks-cube/view'
 import { CubeStage, type CubeStageCubeType } from '../../visualization/CubeStage'
 
 type SolveVisualizationStageProps = {
-  active: boolean
   cubeRef: RefObject<RubiksCubeElement | null>
   cubeType?: CubeStageCubeType
   onReady: () => void
 }
 
 export function SolveVisualizationStage({
-  active,
   cubeRef,
   cubeType,
   onReady,
@@ -32,7 +30,6 @@ export function SolveVisualizationStage({
   return (
     <CubeStage
       key={cubeType}
-      active={active}
       cubeType={cubeType}
       cubeRef={cubeRef}
       onReady={onReady}
