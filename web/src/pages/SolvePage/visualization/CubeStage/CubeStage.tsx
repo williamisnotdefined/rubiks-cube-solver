@@ -20,6 +20,8 @@ export function CubeStage({ cubeType, cubeRef, onReady }: CubeStageProps) {
 
   useEffect(() => {
     let mounted = true
+    let fallbackTimeout: number | undefined
+    let idleCallbackId: number | undefined
 
     async function registerCubeElement() {
       if (!customElements.get(cubeElementName)) {
@@ -35,10 +37,24 @@ export function CubeStage({ cubeType, cubeRef, onReady }: CubeStageProps) {
       }
     }
 
-    void registerCubeElement()
+    if (window.requestIdleCallback !== undefined) {
+      idleCallbackId = window.requestIdleCallback(() => {
+        void registerCubeElement()
+      }, { timeout: 1500 })
+    } else {
+      fallbackTimeout = window.setTimeout(() => {
+        void registerCubeElement()
+      }, 0)
+    }
 
     return () => {
       mounted = false
+      if (idleCallbackId !== undefined) {
+        window.cancelIdleCallback(idleCallbackId)
+      }
+      if (fallbackTimeout !== undefined) {
+        window.clearTimeout(fallbackTimeout)
+      }
     }
   }, [onReady])
 

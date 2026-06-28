@@ -53,7 +53,7 @@ describe('SolveResult', () => {
 
     await user.click(screen.getByRole('button', { name: 'see more' }))
 
-    const dialog = screen.getByRole('dialog', { name: 'Solver details' })
+    const dialog = await screen.findByRole('dialog', { name: 'Solver details' })
     expect(within(dialog).getByText('Generated two-phase quality solver')).toBeInTheDocument()
     expect(within(dialog).getAllByText('12,345 nodes').length).toBeGreaterThan(0)
     expect(within(dialog).getAllByText('response in 27.0 s').length).toBeGreaterThan(0)
@@ -81,7 +81,7 @@ describe('SolveResult', () => {
 
     await user.click(screen.getByRole('button', { name: 'see more' }))
 
-    const dialog = screen.getByRole('dialog', { name: 'Solver details' })
+    const dialog = await screen.findByRole('dialog', { name: 'Solver details' })
     expect(within(dialog).getByText('2x2 PDB IDA*')).toBeInTheDocument()
     expect(within(dialog).getByText('replay not verified')).toBeInTheDocument()
     expect(within(dialog).getByText(/The deterministic backend solver strategy/)).toBeInTheDocument()

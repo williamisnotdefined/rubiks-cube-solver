@@ -6,7 +6,6 @@ import { Camera } from 'lucide-react'
 import { Button } from '@components/Button'
 import { Field } from '@components/Field'
 import { TextInput } from '@components/FormControls'
-import { Loader3x3 } from '@components/Loader3x3'
 import {
   Select,
   SelectContent,
@@ -205,7 +204,7 @@ export function SolveForm({
           type="submit"
           disabled={disabled}
         >
-          {buttonLoading ? <Loader3x3 decorative className="size-8" registerDelayMs={150} /> : t('solve.form.solve')}
+          {buttonLoading ? t('common.loading') : t('solve.form.solve')}
         </Button>
       </div>
     </form>

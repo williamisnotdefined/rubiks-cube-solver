@@ -1,10 +1,12 @@
+import { lazy, Suspense } from 'react'
 import { SolveVisualizationStage } from './components/SolveVisualizationStage'
 import { useSolvePageController } from './hooks/useSolvePageController'
-import { ScanCubeModal } from './scan/ScanCubeModal'
-import { NoSolutionLimitsModal } from './solve/NoSolutionLimitsModal'
 import { SolveForm } from './solve/SolveForm'
 import { SolveResult } from './solve/SolveResult'
 import { SolutionPlayback } from './solve/SolutionPlayback'
+
+const ScanCubeModal = lazy(() => import('./scan/ScanCubeModal').then((module) => ({ default: module.ScanCubeModal })))
+const NoSolutionLimitsModal = lazy(() => import('./solve/NoSolutionLimitsModal').then((module) => ({ default: module.NoSolutionLimitsModal })))
 
 export function SolvePage() {
   const solvePage = useSolvePageController()
@@ -19,10 +21,14 @@ export function SolvePage() {
           <SolutionPlayback {...solvePage.playback} />
         ) : null}
         {solvePage.scanModal !== undefined ? (
-          <ScanCubeModal {...solvePage.scanModal} />
+          <Suspense fallback={null}>
+            <ScanCubeModal {...solvePage.scanModal} />
+          </Suspense>
         ) : null}
         {solvePage.limitFailureModal !== undefined ? (
-          <NoSolutionLimitsModal {...solvePage.limitFailureModal} />
+          <Suspense fallback={null}>
+            <NoSolutionLimitsModal {...solvePage.limitFailureModal} />
+          </Suspense>
         ) : null}
       </section>
     </main>

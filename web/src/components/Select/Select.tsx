@@ -1,7 +1,6 @@
 import cls from 'classnames'
 import * as SelectPrimitive from '@radix-ui/react-select'
 import { Check, ChevronDown, ChevronUp } from 'lucide-react'
-import { motion, useReducedMotion } from 'motion/react'
 import type { ComponentPropsWithoutRef } from 'react'
 
 export const Select = SelectPrimitive.Root
@@ -27,8 +26,6 @@ export function SelectTrigger({ children, className, ...props }: SelectTriggerPr
 type SelectContentProps = ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
 
 export function SelectContent({ children, className, ...props }: SelectContentProps) {
-  const reduceMotion = useReducedMotion()
-
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
@@ -36,14 +33,11 @@ export function SelectContent({ children, className, ...props }: SelectContentPr
         position="popper"
         {...props}
       >
-        <motion.div
-          animate={{ opacity: 1, y: 0 }}
+        <div
           className={cls(
             'z-[90] min-w-[var(--radix-select-trigger-width)] overflow-hidden border border-app-border bg-app-surface-raised text-app-text shadow-2xl',
             className,
           )}
-          initial={reduceMotion ? false : { opacity: 0, y: -4 }}
-          transition={{ duration: reduceMotion ? 0 : 0.12, ease: 'easeOut' }}
         >
           <SelectPrimitive.ScrollUpButton className="flex h-6 cursor-default items-center justify-center border-b border-app-border bg-app-surface-raised text-app-muted">
             <ChevronUp aria-hidden="true" className="size-4" strokeWidth={2.6} />
@@ -54,7 +48,7 @@ export function SelectContent({ children, className, ...props }: SelectContentPr
           <SelectPrimitive.ScrollDownButton className="flex h-6 cursor-default items-center justify-center border-t border-app-border bg-app-surface-raised text-app-muted">
             <ChevronDown aria-hidden="true" className="size-4" strokeWidth={2.6} />
           </SelectPrimitive.ScrollDownButton>
-        </motion.div>
+        </div>
       </SelectPrimitive.Content>
     </SelectPrimitive.Portal>
   )

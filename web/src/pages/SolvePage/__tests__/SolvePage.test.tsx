@@ -353,7 +353,7 @@ describe('SolvePage', () => {
 
     await user.click(screen.getByRole('button', { name: 'Scan cube with camera' }))
 
-    expect(screen.getByRole('dialog', { name: 'Scan cube' })).toBeInTheDocument()
+    expect(await screen.findByRole('dialog', { name: 'Scan cube' })).toBeInTheDocument()
     expect(screen.getByText('Face 1 of 6')).toBeInTheDocument()
   })
 

@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { SolveResult as ApiSolveResult } from '@api/solver/types'
 import { Loader3x3 } from '@components/Loader3x3'
 import { formatElapsedMs } from '@core/format/formatElapsedMs'
-import { SolveDetailsModal } from '../SolveDetailsModal'
 import { solveErrorDetail, solveErrorMessage } from '../solveMessages'
+
+const SolveDetailsModal = lazy(() => import('../SolveDetailsModal').then((module) => ({ default: module.SolveDetailsModal })))
 
 type SolveResultProps = {
   result?: ApiSolveResult
@@ -83,7 +84,9 @@ export function SolveResult({
         ) : null}
       </output>
       {successResult !== undefined && detailsOpen ? (
-        <SolveDetailsModal result={successResult} onClose={() => setDetailsOpen(false)} />
+        <Suspense fallback={null}>
+          <SolveDetailsModal result={successResult} onClose={() => setDetailsOpen(false)} />
+        </Suspense>
       ) : null}
     </>
   )
