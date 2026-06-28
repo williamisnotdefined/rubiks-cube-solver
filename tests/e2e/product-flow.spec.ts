@@ -5,12 +5,15 @@ const scramblePlaceholder = "R2 D2 F2 D L2 F2 U' R2 D B2 L2 U' B' R' B' R2 B2 L 
 const realNotation = "U' F2 U2 B2 F2 D' F2 D' F2 L2 U' B' L' D B L' R B2 D2 F'"
 const solvePath = '/en/solve/'
 const timerPath = '/en/timer/'
+const cubeActivationTimeout = 15_000
 
 test.describe('product solve flow', () => {
   test('renders notation-only controls and caps the cube size', async ({ page }) => {
     await page.goto(solvePath)
 
-    await expect(page.locator('.cube-stage rubiks-cube')).toBeVisible()
+    await expect(page.locator('.cube-stage rubiks-cube')).toBeVisible({
+      timeout: cubeActivationTimeout,
+    })
     await expect(page.getByText(/facelets/i)).toHaveCount(0)
 
     const cubeBox = await page.locator('.cube-stage').boundingBox()
@@ -58,6 +61,7 @@ test.describe('product solve flow', () => {
     const input = page.getByLabel('Scramble')
     const cube = page.locator('.cube-stage rubiks-cube')
     await expect(input).toBeEnabled({ timeout: 15_000 })
+    await expect(cube).toBeVisible({ timeout: cubeActivationTimeout })
     await expect.poll(() => cubeState(cube)).not.toBe('')
     const initialState = await cubeState(cube)
 
