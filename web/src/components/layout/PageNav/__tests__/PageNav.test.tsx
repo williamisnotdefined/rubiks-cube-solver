@@ -20,57 +20,57 @@ describe('PageNav', () => {
     const solveLink = within(navigation).getByRole('link', { name: 'Solver' })
     const timerLink = within(navigation).getByRole('link', { name: 'Timer' })
 
-    expect(solveLink).toHaveAttribute('href', '/solve')
-    expect(timerLink).toHaveAttribute('href', '/timer')
+    expect(solveLink).toHaveAttribute('href', '/solve/')
+    expect(timerLink).toHaveAttribute('href', '/timer/')
     expect(solveLink).toHaveClass('bg-app-text')
     expect(timerLink).toHaveClass('bg-app-surface')
   })
 
   it('marks timer as active and solve as inactive', () => {
-    renderWithRouter(<PageNav activeRoute="timer" />, '/timer')
+    renderWithRouter(<PageNav activeRoute="timer" />, '/timer/')
 
     expect(screen.getByRole('link', { name: 'Timer' })).toHaveClass('bg-app-text')
     expect(screen.getByRole('link', { name: 'Solver' })).toHaveClass('bg-app-surface')
   })
 
   it('marks YT Channels as active and keeps the English route', () => {
-    renderWithRouter(<PageNav activeRoute="channels" />, '/channels')
+    renderWithRouter(<PageNav activeRoute="channels" />, '/channels/')
 
     const channelsLink = screen.getByRole('link', { name: 'YT Channels' })
 
-    expect(channelsLink).toHaveAttribute('href', '/channels')
+    expect(channelsLink).toHaveAttribute('href', '/channels/')
     expect(channelsLink).toHaveClass('bg-app-text')
   })
 
   it('marks algorithms as active and opens method links', async () => {
     const user = userEvent.setup()
-    renderWithRouter(<PageNav activeRoute="algorithms" />, '/algoritmos')
+    renderWithRouter(<PageNav activeRoute="algorithms" />, '/algoritmos/')
 
     const algorithmsButton = screen.getByRole('button', { name: 'Algorithms' })
     expect(algorithmsButton).toHaveClass('bg-app-text')
 
     await user.click(algorithmsButton)
 
-    expect(screen.getByRole('link', { name: '3x3 OLL' })).toHaveAttribute('href', '/algoritmos/3x3/oll')
-    expect(screen.getByRole('link', { name: '2x2 CLL' })).toHaveAttribute('href', '/algoritmos/2x2/cll')
-    expect(screen.getByRole('link', { name: '4x4 PLL' })).toHaveAttribute('href', '/algoritmos/4x4/pll')
-    expect(screen.getByRole('link', { name: 'Square-1 Cubeshape' })).toHaveAttribute('href', '/algoritmos/sq1/cubeshape')
-    expect(screen.getByRole('link', { name: 'Megaminx OLL' })).toHaveAttribute('href', '/algoritmos/megaminx/oll')
+    expect(screen.getByRole('link', { name: '3x3 OLL' })).toHaveAttribute('href', '/algoritmos/3x3/oll/')
+    expect(screen.getByRole('link', { name: '2x2 CLL' })).toHaveAttribute('href', '/algoritmos/2x2/cll/')
+    expect(screen.getByRole('link', { name: '4x4 PLL' })).toHaveAttribute('href', '/algoritmos/4x4/pll/')
+    expect(screen.getByRole('link', { name: 'Square-1 Cubeshape' })).toHaveAttribute('href', '/algoritmos/sq1/cubeshape/')
+    expect(screen.getByRole('link', { name: 'Megaminx OLL' })).toHaveAttribute('href', '/algoritmos/megaminx/oll/')
   })
 
   it('marks notations as active and opens puzzle notation links', async () => {
     const user = userEvent.setup()
-    renderWithRouter(<PageNav activeRoute="notations" />, '/notations/3x3')
+    renderWithRouter(<PageNav activeRoute="notations" />, '/notations/3x3/')
 
     const notationsButton = screen.getByRole('button', { name: 'Notations' })
     expect(notationsButton).toHaveClass('bg-app-text')
 
     await user.click(notationsButton)
 
-    expect(screen.getByRole('link', { name: '3x3' })).toHaveAttribute('href', '/notations/3x3')
-    expect(screen.getByRole('link', { name: 'Pyraminx' })).toHaveAttribute('href', '/notations/pyraminx')
-    expect(screen.getByRole('link', { name: 'Square-1' })).toHaveAttribute('href', '/notations/square-1')
-    expect(screen.getByRole('link', { name: 'Clock' })).toHaveAttribute('href', '/notations/clock')
+    expect(screen.getByRole('link', { name: '3x3' })).toHaveAttribute('href', '/notations/3x3/')
+    expect(screen.getByRole('link', { name: 'Pyraminx' })).toHaveAttribute('href', '/notations/pyraminx/')
+    expect(screen.getByRole('link', { name: 'Square-1' })).toHaveAttribute('href', '/notations/square-1/')
+    expect(screen.getByRole('link', { name: 'Clock' })).toHaveAttribute('href', '/notations/clock/')
   })
 
   it('links to the project on GitHub', () => {
@@ -84,7 +84,7 @@ describe('PageNav', () => {
 
   it('opens and closes the mobile menu drawer', async () => {
     const user = userEvent.setup()
-    renderWithRouter(<PageNav activeRoute="timer" />, '/timer')
+    renderWithRouter(<PageNav activeRoute="timer" />, '/timer/')
 
     expect(screen.queryAllByRole('button', { name: 'Close menu' })).toHaveLength(0)
 
@@ -101,7 +101,7 @@ describe('PageNav', () => {
 
   it('closes the mobile menu with Escape', async () => {
     const user = userEvent.setup()
-    renderWithRouter(<PageNav activeRoute="timer" />, '/timer')
+    renderWithRouter(<PageNav activeRoute="timer" />, '/timer/')
 
     await user.click(screen.getByRole('button', { name: 'Open menu' }))
     await user.keyboard('{Escape}')
@@ -127,7 +127,7 @@ describe('PageNav', () => {
   })
 })
 
-function renderWithRouter(ui: ReactNode, path = '/solve') {
+function renderWithRouter(ui: ReactNode, path = '/solve/') {
   return render(
     <MemoryRouter initialEntries={[path]}>
       {ui}
