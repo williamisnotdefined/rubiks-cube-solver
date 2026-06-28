@@ -135,7 +135,7 @@ const cube3TargetSolveResponseMs = 20_000
 const cube2TargetSolveResponseMs = 10_000
 const maxNodesMillion = '25'
 const maxNodes = 25_000_000
-const solvePath = '/en/solve'
+const solvePath = '/en/solve/'
 
 test.describe('manual scan solve flow', () => {
   test.describe.configure({ timeout: 120_000 })

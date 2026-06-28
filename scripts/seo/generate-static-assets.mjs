@@ -404,7 +404,7 @@ function prerenderHtml(html, metadata) {
   const headTags = [
     `<link rel="canonical" href="${escapeHtml(metadata.canonicalUrl)}" />`,
     ...seoLocales.map((locale) => `<link rel="alternate" hreflang="${locale}" href="${escapeHtml(`${siteOrigin}${localizedPath(metadata.path, locale)}`)}" />`),
-    `<link rel="alternate" hreflang="x-default" href="${escapeHtml(`${siteOrigin}${metadata.path}`)}" />`,
+    `<link rel="alternate" hreflang="x-default" href="${escapeHtml(`${siteOrigin}${localizedPath(metadata.path, defaultLocale)}`)}" />`,
     `<meta name="robots" content="index,follow" />`,
     `<meta property="og:site_name" content="${siteName}" />`,
     '<meta property="og:type" content="website" />',
@@ -429,13 +429,13 @@ function prerenderHtml(html, metadata) {
 
 function staticBody(metadata) {
   const breadcrumbHtml = metadata.breadcrumbs.length > 1
-    ? `<nav aria-label="Breadcrumb"><ol>${metadata.breadcrumbs.map((item) => `<li><a href="${localizedPath(item.path, metadata.locale)}">${escapeHtml(item.name)}</a></li>`).join('')}</ol></nav>`
+    ? `<nav aria-label="Breadcrumb" style="font-size:0.75rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--app-muted)"><ol style="display:flex;flex-wrap:wrap;gap:0.5rem;list-style:none;margin:0;padding:0">${metadata.breadcrumbs.map((item) => `<li><a href="${localizedPath(item.path, metadata.locale)}" style="color:inherit;text-decoration:none">${escapeHtml(item.name)}</a></li>`).join('')}</ol></nav>`
     : ''
   const listHtml = metadata.itemList === undefined
     ? ''
-    : `<ul>${metadata.itemList.slice(0, 30).map((item) => `<li><a href="${localizedPath(item.path, metadata.locale)}">${escapeHtml(item.name)}</a></li>`).join('')}</ul>`
+    : `<ul style="display:grid;gap:0.5rem;margin:0;padding-left:1rem;color:var(--app-muted)">${metadata.itemList.slice(0, 30).map((item) => `<li><a href="${localizedPath(item.path, metadata.locale)}" style="color:inherit">${escapeHtml(item.name)}</a></li>`).join('')}</ul>`
 
-  return `<main><section><p>${siteName}</p><h1>${escapeHtml(metadata.title.replace(` | ${siteName}`, ''))}</h1><p>${escapeHtml(metadata.description)}</p>${breadcrumbHtml}${listHtml}</section></main>`
+  return `<main style="min-height:100vh;display:grid;place-items:center;background:var(--app-bg);color:var(--app-text);padding:1rem;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"><section style="box-sizing:border-box;display:grid;gap:0.75rem;width:min(100%,72rem);border:1px solid var(--app-border);background:var(--app-surface);padding:1rem"><p style="margin:0;color:var(--app-muted);font-size:0.75rem;font-weight:900;letter-spacing:0.18em;text-transform:uppercase">${siteName}</p><h1 style="margin:0;font-size:clamp(2rem,8vw,4.5rem);font-weight:900;letter-spacing:-0.06em;line-height:0.9;text-transform:uppercase">${escapeHtml(metadata.title.replace(` | ${siteName}`, ''))}</h1><p style="max-width:42rem;margin:0;color:var(--app-muted);font-size:0.95rem;line-height:1.6">${escapeHtml(metadata.description)}</p>${breadcrumbHtml}${listHtml}</section></main>`
 }
 
 function sitemap(paths) {
@@ -470,28 +470,41 @@ ${alternates}
 
 function localizedPath(path, locale) {
   const prefix = localePrefixes[locale]
+  const normalizedPath = withTrailingSlash(normalizePath(path))
 
   if (prefix !== '') {
-    return path === '/' ? `/${prefix}` : `/${prefix}${path}`
+    return normalizedPath === '/' ? `/${prefix}/` : `/${prefix}${normalizedPath}`
   }
 
-  return path
+  return normalizedPath
 }
 
 function stripLocalePrefix(path) {
+  const normalizedPath = normalizePath(path)
+
   for (const locale of seoLocales) {
     const prefix = localePrefixes[locale]
 
-    if (prefix !== '' && path === `/${prefix}`) {
+    if (prefix !== '' && normalizedPath === `/${prefix}`) {
       return '/'
     }
 
-    if (prefix !== '' && path.startsWith(`/${prefix}/`)) {
-      return path.slice(prefix.length + 1)
+    if (prefix !== '' && normalizedPath.startsWith(`/${prefix}/`)) {
+      return normalizePath(normalizedPath.slice(prefix.length + 1))
     }
   }
 
-  return path
+  return normalizedPath
+}
+
+function normalizePath(path) {
+  const pathWithLeadingSlash = path === '' || path === '/' ? '/' : path.startsWith('/') ? path : `/${path}`
+
+  return pathWithLeadingSlash === '/' ? '/' : pathWithLeadingSlash.replace(/\/+$/, '')
+}
+
+function withTrailingSlash(path) {
+  return path === '/' ? '/' : `${path}/`
 }
 
 function escapeHtml(value) {

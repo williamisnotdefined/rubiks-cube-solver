@@ -3,8 +3,8 @@ import { chooseRadixSelectOption, expectRadixSelectOptions, expectRadixSelectVal
 
 const scramblePlaceholder = "R2 D2 F2 D L2 F2 U' R2 D B2 L2 U' B' R' B' R2 B2 L B U'"
 const realNotation = "U' F2 U2 B2 F2 D' F2 D' F2 L2 U' B' L' D B L' R B2 D2 F'"
-const solvePath = '/en/solve'
-const timerPath = '/en/timer'
+const solvePath = '/en/solve/'
+const timerPath = '/en/timer/'
 
 test.describe('product solve flow', () => {
   test('renders notation-only controls and caps the cube size', async ({ page }) => {

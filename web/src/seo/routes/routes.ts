@@ -302,7 +302,7 @@ export function localeFromPathname(pathname: string): SeoLocale {
 }
 
 export function stripLocalePrefix(pathname: string): string {
-  const normalizedPath = pathname || '/'
+  const normalizedPath = normalizePath(pathname)
   const matchingLocale = prefixedSeoLocales.find((locale) => {
     const prefix = `/${localePrefixes[locale]}`
     return normalizedPath === prefix || normalizedPath.startsWith(`${prefix}/`)
@@ -313,18 +313,18 @@ export function stripLocalePrefix(pathname: string): string {
   }
 
   const prefix = `/${localePrefixes[matchingLocale]}`
-  return normalizedPath === prefix ? '/' : normalizedPath.slice(prefix.length)
+  return normalizedPath === prefix ? '/' : normalizePath(normalizedPath.slice(prefix.length))
 }
 
 export function localizedPath(path: string, locale: SeoLocale): string {
-  const normalizedPath = normalizePath(path)
+  const normalizedPath = withTrailingSlash(normalizePath(path))
   const prefix = localePrefixes[locale]
 
   if (prefix === '') {
     return normalizedPath
   }
 
-  return normalizedPath === '/' ? `/${prefix}` : `/${prefix}${normalizedPath}`
+  return normalizedPath === '/' ? `/${prefix}/` : `/${prefix}${normalizedPath}`
 }
 
 export function localizedUrl(path: string, locale: SeoLocale): string {
@@ -472,11 +472,13 @@ function firstPathSegment(pathname: string): string {
 }
 
 function normalizePath(path: string): string {
-  if (path === '') {
-    return '/'
-  }
+  const pathWithLeadingSlash = path === '' || path === '/' ? '/' : path.startsWith('/') ? path : `/${path}`
 
-  return path.startsWith('/') ? path : `/${path}`
+  return pathWithLeadingSlash === '/' ? '/' : pathWithLeadingSlash.replace(/\/+$/, '')
+}
+
+function withTrailingSlash(path: string): string {
+  return path === '/' ? '/' : `${path}/`
 }
 
 export const seoIndexablePaths = [

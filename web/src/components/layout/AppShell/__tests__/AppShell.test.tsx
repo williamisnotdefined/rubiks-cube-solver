@@ -14,11 +14,11 @@ describe('AppShell', () => {
 
     expect(screen.getByRole('navigation', { name: 'Primary navigation' })).toBeInTheDocument()
     expect(screen.getByText('Solver workspace')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Solver' })).toHaveAttribute('href', '/solve')
+    expect(screen.getByRole('link', { name: 'Solver' })).toHaveAttribute('href', '/solve/')
   })
 })
 
-function renderWithRouter(ui: ReactNode, path = '/solve') {
+function renderWithRouter(ui: ReactNode, path = '/solve/') {
   return render(
     <MemoryRouter initialEntries={[path]}>
       {ui}

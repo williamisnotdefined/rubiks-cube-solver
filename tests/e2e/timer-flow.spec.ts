@@ -9,7 +9,7 @@ type PersistedTimerSolve = {
   scramble: string
 }
 
-const timerPath = '/en/timer'
+const timerPath = '/en/timer/'
 
 test.describe('timer flow', () => {
   test.describe.configure({ timeout: 60_000 })
