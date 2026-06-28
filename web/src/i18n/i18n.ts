@@ -1,19 +1,25 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
-import de from './locales/de.json'
 import en from './locales/en.json'
-import es from './locales/es.json'
-import fr from './locales/fr.json'
-import it from './locales/it.json'
-import ja from './locales/ja.json'
 import ptBr from './locales/pt-BR.json'
-import ru from './locales/ru.json'
-import zh from './locales/zh.json'
 
 export const supportedLanguages = ['en', 'es', 'pt-BR', 'it', 'de', 'fr', 'ru', 'zh', 'ja'] as const
 export type SupportedLanguage = (typeof supportedLanguages)[number]
+type StaticLanguage = 'en' | 'pt-BR'
+type DynamicLanguage = Exclude<SupportedLanguage, StaticLanguage>
+type LocaleModule = { default: typeof en }
 
 export const fallbackLanguage: SupportedLanguage = 'en'
+
+const localeLoaders: Record<DynamicLanguage, () => Promise<LocaleModule>> = {
+  de: () => import('./locales/de.json'),
+  es: () => import('./locales/es.json'),
+  fr: () => import('./locales/fr.json'),
+  it: () => import('./locales/it.json'),
+  ja: () => import('./locales/ja.json'),
+  ru: () => import('./locales/ru.json'),
+  zh: () => import('./locales/zh.json'),
+}
 
 const supportedBaseLanguages: Partial<Record<string, SupportedLanguage>> = {
   de: 'de',
@@ -53,7 +59,7 @@ export function languageFromRoute(pathname: string = browserPathname()): Support
   return firstSegment === undefined ? 'pt-BR' : routeLanguages[firstSegment] ?? 'pt-BR'
 }
 
-i18n.use(initReactI18next).init({
+void i18n.use(initReactI18next).init({
   fallbackLng: fallbackLanguage,
   initAsync: false,
   interpolation: {
@@ -61,20 +67,33 @@ i18n.use(initReactI18next).init({
   },
   lng: languageFromRoute(),
   resources: {
-    de: { translation: de },
     en: { translation: en },
-    es: { translation: es },
-    fr: { translation: fr },
-    it: { translation: it },
-    ja: { translation: ja },
     'pt-BR': { translation: ptBr },
-    ru: { translation: ru },
-    zh: { translation: zh },
   },
   supportedLngs: supportedLanguages,
 })
 
 export default i18n
+
+export async function ensureLanguageResources(language: SupportedLanguage): Promise<void> {
+  if (i18n.hasResourceBundle(language, 'translation')) {
+    return
+  }
+
+  if (language === 'en' || language === 'pt-BR') {
+    return
+  }
+
+  const locale = await localeLoaders[language]()
+  if (!i18n.hasResourceBundle(language, 'translation')) {
+    i18n.addResourceBundle(language, 'translation', locale.default, true, true)
+  }
+}
+
+export async function changeLanguage(language: SupportedLanguage): Promise<void> {
+  await ensureLanguageResources(language)
+  await i18n.changeLanguage(language)
+}
 
 function browserLanguages(): readonly string[] {
   if (typeof navigator === 'undefined') {

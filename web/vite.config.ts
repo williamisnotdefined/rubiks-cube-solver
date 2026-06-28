@@ -18,7 +18,12 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes(i18nLocaleMarker)) {
-            return 'i18n-locales'
+            const localeFile = id.slice(id.indexOf(i18nLocaleMarker) + i18nLocaleMarker.length)
+            const locale = localeFile.split('.')[0]
+
+            return locale === 'en' || locale === 'pt-BR'
+              ? 'i18n-default-locales'
+              : `i18n-${locale}`
           }
 
           if (id.includes('/node_modules/three/examples/')) {

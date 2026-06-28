@@ -1,7 +1,6 @@
 import cls from 'classnames'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { useRef, type ComponentPropsWithoutRef } from 'react'
-import { motion, useReducedMotion } from 'motion/react'
 
 export const Dialog = DialogPrimitive.Root
 export const DialogTrigger = DialogPrimitive.Trigger
@@ -25,25 +24,13 @@ export function DialogContent({
   ...props
 }: DialogContentProps) {
   const contentRef = useRef<HTMLDivElement | null>(null)
-  const reduceMotion = useReducedMotion()
-  const contentInitial = reduceMotion
-    ? false
-    : motionPreset === 'drawer'
-      ? { opacity: 0, x: -24 }
-      : { opacity: 0, scale: 0.97, y: -4 }
-  const contentAnimate = motionPreset === 'drawer'
-    ? { opacity: 1, x: 0 }
-    : { opacity: 1, scale: 1, y: 0 }
 
   return (
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay asChild>
-        <motion.button
-          animate={{ opacity: 1 }}
+        <button
           aria-label={overlayLabel}
           className={cls('fixed inset-0 z-50 border-0 bg-app-bg/85 p-0', overlayClassName)}
-          initial={reduceMotion ? false : { opacity: 0 }}
-          transition={{ duration: reduceMotion ? 0 : 0.14 }}
           type="button"
         />
       </DialogPrimitive.Overlay>
@@ -61,14 +48,12 @@ export function DialogContent({
         }}
         {...props}
       >
-        <motion.div
-          animate={contentAnimate}
+        <div
           className={cls('fixed z-50 outline-none', className)}
-          initial={contentInitial}
-          transition={{ duration: reduceMotion ? 0 : 0.16, ease: 'easeOut' }}
+          data-motion-preset={motionPreset}
         >
           {children}
-        </motion.div>
+        </div>
       </DialogPrimitive.Content>
     </DialogPrimitive.Portal>
   )

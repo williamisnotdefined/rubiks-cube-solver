@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import i18n, { fallbackLanguage, languageFromBrowser, languageFromRoute, supportedLanguages } from '../i18n'
+import i18n, { ensureLanguageResources, fallbackLanguage, languageFromBrowser, languageFromRoute, supportedLanguages } from '../i18n'
 
 describe('i18n language support', () => {
   it.each([
@@ -38,7 +38,7 @@ describe('i18n language support', () => {
     expect(languageFromRoute('/en/algoritmos/3x3/oll')).toBe('en')
   })
 
-  it('registers resources for every supported language', () => {
+  it('loads resources for every supported language on demand', async () => {
     const configuredLanguages = i18n.options.supportedLngs
 
     expect(configuredLanguages).toBeDefined()
@@ -51,6 +51,7 @@ describe('i18n language support', () => {
     expect(configuredLanguages.filter((language) => language !== 'cimode')).toEqual([...supportedLanguages])
 
     for (const language of supportedLanguages) {
+      await ensureLanguageResources(language)
       expect(i18n.hasResourceBundle(language, 'translation')).toBe(true)
     }
   })

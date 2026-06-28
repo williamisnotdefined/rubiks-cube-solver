@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router'
+import i18n, { changeLanguage } from '@src/i18n/i18n'
 import { buildJsonLd } from '../jsonLd'
 import { alternateUrl, defaultLocale, defaultOgImageUrl, getSeoMetadata, seoLocales, siteName } from '../routes'
 
@@ -11,13 +11,12 @@ const jsonLdScriptNonce = 'speedcube-jsonld'
 export function Seo() {
   const location = useLocation()
   const metadata = useMemo(() => getSeoMetadata(location.pathname), [location.pathname])
-  const { i18n } = useTranslation()
 
   useEffect(() => {
     if (i18n.language !== metadata.locale) {
-      void i18n.changeLanguage(metadata.locale)
+      void changeLanguage(metadata.locale)
     }
-  }, [i18n, metadata.locale])
+  }, [metadata.locale])
 
   useEffect(() => {
     document.documentElement.lang = metadata.htmlLang
