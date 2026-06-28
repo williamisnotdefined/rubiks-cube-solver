@@ -1,4 +1,3 @@
-import type { gsap } from 'gsap';
 import { AnimationStyles } from '../../../shared/animation';
 import { DEFAULT_CAMERA_RADIUS } from '../../../shared/cameraDefaults';
 import { DEFAULT_SQUARE1_ANIMATION_SPEED_MS } from '../three/square1D';

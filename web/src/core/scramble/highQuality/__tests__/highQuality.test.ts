@@ -7,6 +7,10 @@ vi.mock('cubing/scramble', () => ({
   randomScrambleForEvent: vi.fn(),
 }))
 
+vi.mock('cubing/search', () => ({
+  setSearchDebug: vi.fn(),
+}))
+
 const randomScrambleForEventMock = vi.mocked(randomScrambleForEvent)
 type CubingScramble = Awaited<ReturnType<typeof randomScrambleForEvent>>
 

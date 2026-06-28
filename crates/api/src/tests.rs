@@ -1456,6 +1456,7 @@ async fn router_with_web_dist_applies_security_headers_to_static_and_spa_fallbac
     }
 
     let response = app
+        .clone()
         .oneshot(
             Request::builder()
                 .method(Method::GET)
@@ -1480,6 +1481,21 @@ async fn router_with_web_dist_applies_security_headers_to_static_and_spa_fallbac
         .await
         .expect("body should be readable");
     assert!(String::from_utf8_lossy(&body).contains("console.log"));
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/assets/missing-worker.js")
+                .body(Body::empty())
+                .expect("request should build"),
+        )
+        .await
+        .expect("request should complete");
+
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+    assert_security_headers(response.headers());
+    assert_eq!(response.headers().get("cache-control"), None);
 
     std::fs::remove_dir_all(web_dist_dir).expect("web dist should be removed");
 }
@@ -2129,8 +2145,9 @@ fn assert_security_headers(headers: &HeaderMap) {
         .expect("content-security-policy should be set")
         .to_str()
         .expect("content-security-policy should be valid");
-    assert!(content_security_policy
-        .contains("script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com"));
+    assert!(content_security_policy.contains(
+        "script-src 'self' 'nonce-speedcube-jsonld' 'wasm-unsafe-eval' https://static.cloudflareinsights.com"
+    ));
     assert!(content_security_policy
         .contains("img-src 'self' data: blob: https://yt3.googleusercontent.com"));
     assert!(content_security_policy.contains(

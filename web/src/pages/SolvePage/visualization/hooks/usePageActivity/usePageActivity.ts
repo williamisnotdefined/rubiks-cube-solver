@@ -1,18 +1,40 @@
 import { useEffect, useState } from 'react'
 
+const initialActivationDelayMs = 6000
+
 export function usePageActivity(): boolean {
-  const [active, setActive] = useState(getInitialPageActivity)
+  const [active, setActive] = useState(false)
 
   useEffect(() => {
+    let activationTimeout: number | undefined
+
+    function clearActivationTimeout() {
+      if (activationTimeout !== undefined) {
+        window.clearTimeout(activationTimeout)
+        activationTimeout = undefined
+      }
+    }
+
     function activateIfVisible() {
-      setActive(document.visibilityState === 'visible')
+      clearActivationTimeout()
+
+      if (document.visibilityState !== 'visible') {
+        setActive(false)
+        return
+      }
+
+      activationTimeout = window.setTimeout(() => {
+        setActive(true)
+        activationTimeout = undefined
+      }, initialActivationDelayMs)
     }
 
     function handleVisibilityChange() {
-      setActive(document.visibilityState === 'visible')
+      activateIfVisible()
     }
 
     function deactivate() {
+      clearActivationTimeout()
       setActive(false)
     }
 
@@ -30,12 +52,9 @@ export function usePageActivity(): boolean {
       window.removeEventListener('focus', activateIfVisible)
       window.removeEventListener('pagehide', deactivate)
       window.removeEventListener('pageshow', activateIfVisible)
+      clearActivationTimeout()
     }
   }, [])
 
   return active
-}
-
-function getInitialPageActivity(): boolean {
-  return document.visibilityState === 'visible' && document.hasFocus()
 }

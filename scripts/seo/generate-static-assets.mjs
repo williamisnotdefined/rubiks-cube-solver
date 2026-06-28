@@ -9,6 +9,7 @@ const siteOrigin = 'https://speedcube.com.br'
 const siteName = 'Speedcube'
 const defaultOgImageUrl = `${siteOrigin}/og-default.svg`
 const defaultLocale = 'pt-BR'
+const jsonLdScriptNonce = 'speedcube-jsonld'
 const seoLocales = ['pt-BR', 'en', 'es', 'it', 'de', 'fr', 'ru', 'zh', 'ja']
 const localePrefixes = {
   de: 'de',
@@ -22,15 +23,15 @@ const localePrefixes = {
   zh: 'zh',
 }
 const copy = {
-  de: { algorithms: 'Algorithmen', channels: 'Kanaele', notations: 'Notationen', solver: 'Solver', timer: 'Timer' },
-  en: { algorithms: 'Algorithms', channels: 'Channels', notations: 'Notations', solver: 'Solver', timer: 'Timer' },
-  es: { algorithms: 'Algoritmos', channels: 'Canales', notations: 'Notaciones', solver: 'Solver', timer: 'Cronometro' },
-  fr: { algorithms: 'Algorithmes', channels: 'Chaines', notations: 'Notations', solver: 'Solver', timer: 'Timer' },
-  it: { algorithms: 'Algoritmi', channels: 'Canali', notations: 'Notazioni', solver: 'Solver', timer: 'Timer' },
-  ja: { algorithms: 'アルゴリズム', channels: 'チャンネル', notations: '記法', solver: 'ソルバー', timer: 'タイマー' },
-  'pt-BR': { algorithms: 'Algoritmos', channels: 'Canais', notations: 'Notacoes', solver: 'Solver', timer: 'Cronometro' },
-  ru: { algorithms: 'Алгоритмы', channels: 'Каналы', notations: 'Нотации', solver: 'Решатель', timer: 'Таймер' },
-  zh: { algorithms: '算法', channels: '频道', notations: '记号', solver: '求解器', timer: '计时器' },
+  de: { algorithms: 'Algorithmen', channels: 'Kanaele', notations: 'Notationen', sites: 'Sites', solver: 'Solver', timer: 'Timer' },
+  en: { algorithms: 'Algorithms', channels: 'Channels', notations: 'Notations', sites: 'Sites', solver: 'Solver', timer: 'Timer' },
+  es: { algorithms: 'Algoritmos', channels: 'Canales', notations: 'Notaciones', sites: 'Sitios', solver: 'Solver', timer: 'Cronometro' },
+  fr: { algorithms: 'Algorithmes', channels: 'Chaines', notations: 'Notations', sites: 'Sites', solver: 'Solver', timer: 'Timer' },
+  it: { algorithms: 'Algoritmi', channels: 'Canali', notations: 'Notazioni', sites: 'Siti', solver: 'Solver', timer: 'Timer' },
+  ja: { algorithms: 'アルゴリズム', channels: 'チャンネル', notations: '記法', sites: 'サイト', solver: 'ソルバー', timer: 'タイマー' },
+  'pt-BR': { algorithms: 'Algoritmos', channels: 'Canais', notations: 'Notacoes', sites: 'Sites', solver: 'Solver', timer: 'Cronometro' },
+  ru: { algorithms: 'Алгоритмы', channels: 'Каналы', notations: 'Нотации', sites: 'Сайты', solver: 'Решатель', timer: 'Таймер' },
+  zh: { algorithms: '算法', channels: '频道', notations: '记号', sites: '网站', solver: '求解器', timer: '计时器' },
 }
 
 const sourceFiles = [
@@ -38,10 +39,15 @@ const sourceFiles = [
   resolve(webRoot, 'src/pages/AlgorithmsPage/sets/speedCubeDbSetSummaries/speedCubeDbSetSummaries.ts'),
   resolve(webRoot, 'src/pages/NotationsPage/notationGuides/notationGuides.ts'),
 ]
+const cubingSitesSourceFile = resolve(webRoot, 'src/pages/CubingSitesPage/sites/sites.ts')
 
-const sourceText = (await Promise.all(sourceFiles.map((file) => readFile(file, 'utf8')))).join('\n')
+const [sourceText, cubingSitesSourceText] = await Promise.all([
+  Promise.all(sourceFiles.map((file) => readFile(file, 'utf8'))).then((files) => files.join('\n')),
+  readFile(cubingSitesSourceFile, 'utf8'),
+])
 const titleByPath = extractTitleByPath(sourceText)
 const puzzleByPath = extractPuzzleByPath(sourceText)
+const cubingSiteItems = extractCubingSiteItems(cubingSitesSourceText)
 const indexableBasePaths = indexablePaths(sourceText)
 const baseHtml = await readFile(resolve(distDir, 'index.html'), 'utf8')
 
@@ -64,7 +70,7 @@ async function writePrerenderedHtml(routePath, locale) {
 }
 
 function indexablePaths(text) {
-  const paths = new Set(['/solve', '/timer', '/channels', '/algoritmos'])
+  const paths = new Set(['/solve', '/timer', '/channels', '/sites', '/algoritmos'])
   const pathRegex = /path:\s*["']([^"']+)["']/g
   let match = pathRegex.exec(text)
 
@@ -100,6 +106,19 @@ function extractPuzzleByPath(text) {
   }
 
   return puzzles
+}
+
+function extractCubingSiteItems(text) {
+  const items = []
+  const objectRegex = /\{[\s\S]*?name:\s*["']([^"']+)["'][\s\S]*?url:\s*["']([^"']+)["'][\s\S]*?\}/g
+  let match = objectRegex.exec(text)
+
+  while (match !== null) {
+    items.push({ name: match[1], path: match[2] })
+    match = objectRegex.exec(text)
+  }
+
+  return items
 }
 
 function pathSort(a, b) {
@@ -152,6 +171,22 @@ function titleForPath(path, locale) {
     return `${copy[locale].channels} YouTube Cubing`
   }
 
+  if (path === '/sites') {
+    const titles = {
+      de: 'Cubing Websites',
+      en: 'Cubing Websites',
+      es: 'Sitios de Cubing',
+      fr: 'Sites de Cubing',
+      it: 'Siti Cubing',
+      ja: 'キューブ系サイト',
+      'pt-BR': 'Sites de Cubo Magico',
+      ru: 'Сайты о кубинге',
+      zh: '魔方网站',
+    }
+
+    return titles[locale]
+  }
+
   if (path === '/algoritmos') {
     return locale === 'en' ? 'Rubik\'s Cube Algorithms' : copy[locale].algorithms
   }
@@ -192,6 +227,10 @@ function descriptionForPath(path, locale) {
 
   if (path === '/channels') {
     return channelsDescription(locale)
+  }
+
+  if (path === '/sites') {
+    return sitesDescription(locale)
   }
 
   if (path === '/algoritmos') {
@@ -236,6 +275,20 @@ function channelsDescription(locale) {
     'pt-BR': 'Conheca canais de cubo magico no YouTube com tutoriais, speedcubing, reviews e aprendizado de puzzles.',
     ru: 'YouTube-каналы о кубинге: обучение, спидкубинг, обзоры и изучение головоломок.',
     zh: '发现用于教程、速拧、评测和学习的魔方 YouTube 频道。',
+  }[locale]
+}
+
+function sitesDescription(locale) {
+  return {
+    de: 'Entdecke validierte Cubing-Websites fuer Loesungen, Tools, Wettbewerbe, Shops, Marken und Community.',
+    en: 'Discover validated cubing websites for solutions, tools, competitions, shops, brands, and community.',
+    es: 'Descubre sitios de cubing validados para soluciones, herramientas, competiciones, tiendas, marcas y comunidad.',
+    fr: 'Decouvrez des sites de cubing valides pour solutions, outils, competitions, boutiques, marques et communaute.',
+    it: 'Scopri siti cubing verificati per soluzioni, strumenti, competizioni, negozi, marchi e community.',
+    ja: '解法、ツール、大会、ショップ、ブランド、コミュニティ向けの検証済みキューブ系サイトを探せます。',
+    'pt-BR': 'Conheca sites validados de cubo magico para solucoes, ferramentas, competicoes, lojas, marcas e comunidade.',
+    ru: 'Проверенные сайты о кубинге: решения, инструменты, соревнования, магазины, бренды и сообщества.',
+    zh: '发现经过验证的魔方网站，涵盖解法、工具、比赛、商店、品牌和社区。',
   }[locale]
 }
 
@@ -307,6 +360,7 @@ function breadcrumbsForPath(path, locale) {
   const labels = {
     '/algoritmos': copy[locale].algorithms,
     '/channels': copy[locale].channels,
+    '/sites': copy[locale].sites,
     '/solve': copy[locale].solver,
     '/timer': copy[locale].timer,
   }
@@ -315,6 +369,10 @@ function breadcrumbsForPath(path, locale) {
 }
 
 function itemListForPath(path) {
+  if (path === '/sites') {
+    return cubingSiteItems
+  }
+
   if (path === '/algoritmos') {
     return [...titleByPath]
       .filter(([itemPath]) => itemPath.split('/').length === 3 && itemPath.startsWith('/algoritmos/'))
@@ -377,7 +435,7 @@ function jsonLdForPath(path, locale, title, description, breadcrumbs, itemList) 
       '@type': 'ItemList',
       itemListElement: itemList.map((item, index) => ({
         '@type': 'ListItem',
-        item: `${siteOrigin}${localizedPath(item.path, locale)}`,
+        item: itemUrl(item.path, locale),
         name: item.name,
         position: index + 1,
       })),
@@ -416,7 +474,7 @@ function prerenderHtml(html, metadata) {
     `<meta name="twitter:title" content="${escapeHtml(metadata.title)}" />`,
     `<meta name="twitter:description" content="${escapeHtml(metadata.description)}" />`,
     `<meta name="twitter:image" content="${escapeHtml(defaultOgImageUrl)}" />`,
-    ...metadata.jsonLd.map((jsonLd) => `<script type="application/ld+json">${escapeScript(JSON.stringify(jsonLd))}</script>`),
+    ...metadata.jsonLd.map((jsonLd) => `<script type="application/ld+json" nonce="${jsonLdScriptNonce}">${escapeScript(JSON.stringify(jsonLd))}</script>`),
   ].join('\n    ')
 
   return html
@@ -428,14 +486,22 @@ function prerenderHtml(html, metadata) {
 }
 
 function staticBody(metadata) {
+  if (metadata.path === '/timer') {
+    return staticTimerBody(metadata)
+  }
+
   const breadcrumbHtml = metadata.breadcrumbs.length > 1
     ? `<nav aria-label="Breadcrumb" style="font-size:0.75rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--app-muted)"><ol style="display:flex;flex-wrap:wrap;gap:0.5rem;list-style:none;margin:0;padding:0">${metadata.breadcrumbs.map((item) => `<li><a href="${localizedPath(item.path, metadata.locale)}" style="color:inherit;text-decoration:none">${escapeHtml(item.name)}</a></li>`).join('')}</ol></nav>`
     : ''
   const listHtml = metadata.itemList === undefined
     ? ''
-    : `<ul style="display:grid;gap:0.5rem;margin:0;padding-left:1rem;color:var(--app-muted)">${metadata.itemList.slice(0, 30).map((item) => `<li><a href="${localizedPath(item.path, metadata.locale)}" style="color:inherit">${escapeHtml(item.name)}</a></li>`).join('')}</ul>`
+    : `<ul style="display:grid;gap:0.5rem;margin:0;padding-left:1rem;color:var(--app-muted)">${metadata.itemList.slice(0, 30).map((item) => `<li><a href="${itemHref(item.path, metadata.locale)}" style="color:inherit">${escapeHtml(item.name)}</a></li>`).join('')}</ul>`
 
   return `<main style="min-height:100vh;display:grid;place-items:center;background:var(--app-bg);color:var(--app-text);padding:1rem;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"><section style="box-sizing:border-box;display:grid;gap:0.75rem;width:min(100%,72rem);border:1px solid var(--app-border);background:var(--app-surface);padding:1rem"><p style="margin:0;color:var(--app-muted);font-size:0.75rem;font-weight:900;letter-spacing:0.18em;text-transform:uppercase">${siteName}</p><h1 style="margin:0;font-size:clamp(2rem,8vw,4.5rem);font-weight:900;letter-spacing:-0.06em;line-height:0.9;text-transform:uppercase">${escapeHtml(metadata.title.replace(` | ${siteName}`, ''))}</h1><p style="max-width:42rem;margin:0;color:var(--app-muted);font-size:0.95rem;line-height:1.6">${escapeHtml(metadata.description)}</p>${breadcrumbHtml}${listHtml}</section></main>`
+}
+
+function staticTimerBody(metadata) {
+  return `<main style="box-sizing:border-box;min-height:100vh;display:grid;grid-template-rows:auto minmax(0,1fr);background:var(--app-bg);color:var(--app-text);font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"><header style="box-sizing:border-box;min-height:3.5rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--app-border);background:var(--app-nav);padding:0 0.75rem"><span style="font-size:0.875rem;font-weight:900;letter-spacing:0.2em;text-transform:uppercase">${escapeHtml(copy[metadata.locale].timer)}</span><span style="width:2.5rem;height:2.5rem;border:1px solid var(--app-border);background:var(--app-surface)"></span></header><section style="box-sizing:border-box;display:grid;min-height:0;grid-template-rows:auto minmax(0,1fr);gap:0.5rem;padding:0.5rem 0.75rem"><div style="box-sizing:border-box;display:grid;gap:0.35rem;border:1px solid var(--app-border);background:var(--app-surface);padding:0.75rem"><p style="margin:0;color:var(--app-muted);font-size:0.7rem;font-weight:900;letter-spacing:0.18em;text-transform:uppercase">${siteName}</p><h1 style="margin:0;font-size:clamp(1.15rem,5vw,2rem);font-weight:900;letter-spacing:-0.04em;line-height:1;text-transform:uppercase">${escapeHtml(metadata.title.replace(` | ${siteName}`, ''))}</h1><p style="margin:0;color:var(--app-muted);font-size:0.875rem;line-height:1.45">${escapeHtml(metadata.description)}</p></div><div style="display:grid;min-height:0;grid-template-rows:minmax(12rem,2fr) minmax(7rem,1fr);gap:0.5rem;overflow:hidden"><section style="box-sizing:border-box;display:grid;place-items:center;border:1px solid var(--app-border);background:var(--app-surface);padding:1rem;text-align:center"><div><p style="margin:0 0 0.75rem;color:var(--app-muted);font-size:0.75rem;font-weight:900;letter-spacing:0.18em;text-transform:uppercase">Speedcube Timer</p><div style="font-variant-numeric:tabular-nums;font-size:clamp(4rem,24vw,8rem);font-weight:900;letter-spacing:-0.08em;line-height:0.85">0.000</div></div></section><aside style="box-sizing:border-box;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.5rem;min-height:0"><div style="border:1px solid var(--app-border);background:var(--app-surface);padding:0.75rem;color:var(--app-muted);font-size:0.75rem;font-weight:900;letter-spacing:0.14em;text-transform:uppercase">Best</div><div style="border:1px solid var(--app-border);background:var(--app-surface);padding:0.75rem;color:var(--app-muted);font-size:0.75rem;font-weight:900;letter-spacing:0.14em;text-transform:uppercase">Mean</div></aside></div></section></main>`
 }
 
 function sitemap(paths) {
@@ -477,6 +543,18 @@ function localizedPath(path, locale) {
   }
 
   return normalizedPath
+}
+
+function itemUrl(path, locale) {
+  return isExternalUrl(path) ? path : `${siteOrigin}${localizedPath(path, locale)}`
+}
+
+function itemHref(path, locale) {
+  return isExternalUrl(path) ? path : localizedPath(path, locale)
+}
+
+function isExternalUrl(path) {
+  return path.startsWith('http://') || path.startsWith('https://')
 }
 
 function stripLocalePrefix(path) {

@@ -83,7 +83,16 @@ function scrambleToString(scramble: CubingScramble, eventId: string): string {
 }
 
 function loadRandomScrambleForEvent(): Promise<RandomScrambleForEvent> {
-  randomScrambleForEventPromise ??= import('cubing/scramble')
+  randomScrambleForEventPromise ??= import('cubing/search')
+    .then(({ setSearchDebug }) => {
+      setSearchDebug({
+        logPerf: false,
+        prioritizeEsbuildWorkaroundForWorkerInstantiation: true,
+        showWorkerInstantiationWarnings: false,
+      })
+
+      return import('cubing/scramble')
+    })
     .then((module) => module.randomScrambleForEvent)
 
   return randomScrambleForEventPromise

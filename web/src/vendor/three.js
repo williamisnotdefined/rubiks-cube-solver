@@ -1,4 +1,4 @@
-export { MOUSE, SRGBColorSpace, TOUCH } from 'three/src/constants.js'
+export { DoubleSide, MOUSE, SRGBColorSpace, TOUCH } from 'three/src/constants.js'
 export { AmbientLight } from 'three/src/lights/AmbientLight.js'
 export { Box2 } from 'three/src/math/Box2.js'
 export { BoxGeometry } from 'three/src/geometries/BoxGeometry.js'

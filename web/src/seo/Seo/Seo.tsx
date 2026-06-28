@@ -6,6 +6,7 @@ import { alternateUrl, defaultLocale, defaultOgImageUrl, getSeoMetadata, seoLoca
 
 const seoLinkSelector = 'link[data-speedcube-seo="true"], link[rel="canonical"], link[rel="alternate"][hreflang]'
 const seoJsonLdSelector = 'script[data-speedcube-seo-jsonld="true"], script[type="application/ld+json"]'
+const jsonLdScriptNonce = 'speedcube-jsonld'
 
 export function Seo() {
   const location = useLocation()
@@ -46,6 +47,7 @@ export function Seo() {
     for (const jsonLd of buildJsonLd(metadata)) {
       const script = document.createElement('script')
       script.type = 'application/ld+json'
+      script.nonce = jsonLdScriptNonce
       script.dataset.speedcubeSeoJsonld = 'true'
       script.text = JSON.stringify(jsonLd)
       document.head.append(script)
