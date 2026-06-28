@@ -12,6 +12,7 @@ const TimerPage = lazy(() => import('../pages/TimerPage/TimerPage').then((module
 const AlgorithmsIndexPage = lazy(() => import('../pages/AlgorithmsPage/AlgorithmsIndexPage').then((module) => ({ default: module.AlgorithmsIndexPage })))
 const AlgorithmsPuzzlePage = lazy(() => import('../pages/AlgorithmsPage/AlgorithmsPuzzlePage').then((module) => ({ default: module.AlgorithmsPuzzlePage })))
 const AlgorithmSetPage = lazy(() => import('../pages/AlgorithmsPage/AlgorithmSetPage').then((module) => ({ default: module.AlgorithmSetPage })))
+const CubingSitesPage = lazy(() => import('../pages/CubingSitesPage/CubingSitesPage').then((module) => ({ default: module.CubingSitesPage })))
 const NotationGuidePage = lazy(() => import('../pages/NotationsPage/NotationGuidePage').then((module) => ({ default: module.NotationGuidePage })))
 const YouTubeChannelsPage = lazy(() => import('../pages/YouTubeChannelsPage/YouTubeChannelsPage').then((module) => ({ default: module.YouTubeChannelsPage })))
 
@@ -30,6 +31,7 @@ function App() {
             <Route path="/solve" element={<SolvePage />} />
             <Route path="/timer" element={<TimerPage />} />
             <Route path="/channels" element={<YouTubeChannelsPage />} />
+            <Route path="/sites" element={<CubingSitesPage />} />
             <Route path="/algoritmos" element={<AlgorithmsIndexPage />} />
             <Route path="/algoritmos/:puzzleId" element={<AlgorithmsPuzzlePage />} />
             <Route path="/algoritmos/:puzzleId/:methodId" element={<AlgorithmSetPage />} />
@@ -43,6 +45,7 @@ function App() {
                 <Route key={`${prefix}-solve`} path={`/${prefix}/solve`} element={<SolvePage />} />,
                 <Route key={`${prefix}-timer`} path={`/${prefix}/timer`} element={<TimerPage />} />,
                 <Route key={`${prefix}-channels`} path={`/${prefix}/channels`} element={<YouTubeChannelsPage />} />,
+                <Route key={`${prefix}-sites`} path={`/${prefix}/sites`} element={<CubingSitesPage />} />,
                 <Route key={`${prefix}-algoritmos`} path={`/${prefix}/algoritmos`} element={<AlgorithmsIndexPage />} />,
                 <Route key={`${prefix}-algoritmos-puzzle`} path={`/${prefix}/algoritmos/:puzzleId`} element={<AlgorithmsPuzzlePage />} />,
                 <Route key={`${prefix}-algoritmos-method`} path={`/${prefix}/algoritmos/:puzzleId/:methodId`} element={<AlgorithmSetPage />} />,
@@ -61,6 +64,10 @@ function App() {
 function activeRouteFromPath(pagePath: string): PageNavRoute {
   if (pagePath === '/channels') {
     return 'channels'
+  }
+
+  if (pagePath === '/sites') {
+    return 'sites'
   }
 
   if (pagePath.startsWith('/notations')) {

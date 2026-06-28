@@ -1,4 +1,5 @@
 import { algorithmPuzzles, algorithmSetSummaries, getAlgorithmPuzzle, setsForPuzzle } from '@pages/AlgorithmsPage/sets/algorithmSetMetadata'
+import { cubingSites } from '@pages/CubingSitesPage/sites'
 import { getNotationGuide, notationGuides } from '@pages/NotationsPage/notationGuides'
 
 export const seoLocales = ['pt-BR', 'en', 'es', 'it', 'de', 'fr', 'ru', 'zh', 'ja'] as const
@@ -44,6 +45,9 @@ type SeoCopy = {
   notFoundDescription: string
   notFoundTitle: string
   puzzleAlgorithmsTitle: (puzzle: string) => string
+  sites: string
+  sitesDescription: string
+  sitesTitle: string
   solver: string
   solverDescription: string
   solverTitle: string
@@ -90,6 +94,9 @@ const copy: Record<SeoLocale, SeoCopy> = {
     notFoundDescription: 'Diese Speedcube-Seite wurde nicht gefunden.',
     notFoundTitle: 'Seite nicht gefunden',
     puzzleAlgorithmsTitle: (puzzle) => `${puzzle} Algorithmen`,
+    sites: 'Sites',
+    sitesDescription: 'Entdecke validierte Cubing-Websites fuer Loesungen, Tools, Wettbewerbe, Shops, Marken und Community.',
+    sitesTitle: 'Cubing Websites',
     solver: 'Solver',
     solverDescription: 'Loese unterstuetzte Rubik-Cube-Scrambles online mit Rust-Solver, Zugwiedergabe und Cube-Visualisierung.',
     solverTitle: 'Online Rubik Cube Solver',
@@ -114,6 +121,9 @@ const copy: Record<SeoLocale, SeoCopy> = {
     notFoundDescription: 'This Speedcube page could not be found.',
     notFoundTitle: 'Page not found',
     puzzleAlgorithmsTitle: (puzzle) => `${puzzle} Algorithms`,
+    sites: 'Sites',
+    sitesDescription: 'Discover validated cubing websites for solutions, tools, competitions, shops, brands, and community.',
+    sitesTitle: 'Cubing Websites',
     solver: 'Solver',
     solverDescription: "Solve supported Rubik's Cube scrambles online with a Rust-powered solver, move playback, and cube visualization.",
     solverTitle: "Online Rubik's Cube Solver",
@@ -138,6 +148,9 @@ const copy: Record<SeoLocale, SeoCopy> = {
     notFoundDescription: 'Esta pagina de Speedcube no se encontro.',
     notFoundTitle: 'Pagina no encontrada',
     puzzleAlgorithmsTitle: (puzzle) => `Algoritmos ${puzzle}`,
+    sites: 'Sitios',
+    sitesDescription: 'Descubre sitios de cubing validados para soluciones, herramientas, competiciones, tiendas, marcas y comunidad.',
+    sitesTitle: 'Sitios de Cubing',
     solver: 'Solver',
     solverDescription: 'Resuelve scrambles de cubo Rubik online con solver en Rust, reproduccion de movimientos y visualizacion del cubo.',
     solverTitle: 'Solver de Cubo Rubik Online',
@@ -162,6 +175,9 @@ const copy: Record<SeoLocale, SeoCopy> = {
     notFoundDescription: 'Cette page Speedcube est introuvable.',
     notFoundTitle: 'Page introuvable',
     puzzleAlgorithmsTitle: (puzzle) => `Algorithmes ${puzzle}`,
+    sites: 'Sites',
+    sitesDescription: 'Decouvrez des sites de cubing valides pour solutions, outils, competitions, boutiques, marques et communaute.',
+    sitesTitle: 'Sites de Cubing',
     solver: 'Solver',
     solverDescription: 'Resoudre des scrambles de Rubik Cube en ligne avec un solver Rust, lecture des mouvements et visualisation du cube.',
     solverTitle: 'Solver Rubik Cube en Ligne',
@@ -186,6 +202,9 @@ const copy: Record<SeoLocale, SeoCopy> = {
     notFoundDescription: 'Questa pagina Speedcube non e stata trovata.',
     notFoundTitle: 'Pagina non trovata',
     puzzleAlgorithmsTitle: (puzzle) => `Algoritmi ${puzzle}`,
+    sites: 'Siti',
+    sitesDescription: 'Scopri siti cubing verificati per soluzioni, strumenti, competizioni, negozi, marchi e community.',
+    sitesTitle: 'Siti Cubing',
     solver: 'Solver',
     solverDescription: 'Risolvi scramble del Cubo di Rubik online con solver Rust, playback mosse e visualizzazione del cubo.',
     solverTitle: 'Solver Cubo di Rubik Online',
@@ -210,6 +229,9 @@ const copy: Record<SeoLocale, SeoCopy> = {
     notFoundDescription: 'この Speedcube ページは見つかりませんでした。',
     notFoundTitle: 'ページが見つかりません',
     puzzleAlgorithmsTitle: (puzzle) => `${puzzle} アルゴリズム`,
+    sites: 'サイト',
+    sitesDescription: '解法、ツール、大会、ショップ、ブランド、コミュニティ向けの検証済みキューブ系サイトを探せます。',
+    sitesTitle: 'キューブ系サイト',
     solver: 'ソルバー',
     solverDescription: 'Rust 製ソルバー、手順再生、キューブ表示で対応パズルのスクランブルをオンラインで解けます。',
     solverTitle: 'オンライン ルービックキューブ ソルバー',
@@ -234,6 +256,9 @@ const copy: Record<SeoLocale, SeoCopy> = {
     notFoundDescription: 'Esta pagina do Speedcube nao foi encontrada.',
     notFoundTitle: 'Pagina nao encontrada',
     puzzleAlgorithmsTitle: (puzzle) => `Algoritmos ${puzzle}`,
+    sites: 'Sites',
+    sitesDescription: 'Conheca sites validados de cubo magico para solucoes, ferramentas, competicoes, lojas, marcas e comunidade.',
+    sitesTitle: 'Sites de Cubo Magico',
     solver: 'Solver',
     solverDescription: 'Resolva scrambles de cubo magico online com solver em Rust, reproducao de movimentos e visualizacao do cubo.',
     solverTitle: 'Solver de Cubo Magico Online',
@@ -258,6 +283,9 @@ const copy: Record<SeoLocale, SeoCopy> = {
     notFoundDescription: 'Эта страница Speedcube не найдена.',
     notFoundTitle: 'Страница не найдена',
     puzzleAlgorithmsTitle: (puzzle) => `${puzzle} алгоритмы`,
+    sites: 'Сайты',
+    sitesDescription: 'Проверенные сайты о кубинге: решения, инструменты, соревнования, магазины, бренды и сообщества.',
+    sitesTitle: 'Сайты о кубинге',
     solver: 'Решатель',
     solverDescription: 'Решайте поддерживаемые скрамблы онлайн с Rust-решателем, воспроизведением ходов и визуализацией куба.',
     solverTitle: 'Онлайн-решатель кубика Рубика',
@@ -282,6 +310,9 @@ const copy: Record<SeoLocale, SeoCopy> = {
     notFoundDescription: '未找到此 Speedcube 页面。',
     notFoundTitle: '页面未找到',
     puzzleAlgorithmsTitle: (puzzle) => `${puzzle} 算法`,
+    sites: '网站',
+    sitesDescription: '发现经过验证的魔方网站，涵盖解法、工具、比赛、商店、品牌和社区。',
+    sitesTitle: '魔方网站',
     solver: '求解器',
     solverDescription: '使用 Rust 驱动的求解器、步骤回放和魔方可视化在线求解支持的打乱。',
     solverTitle: '在线魔方求解器',
@@ -393,6 +424,16 @@ function metadataForPath(path: string, locale: SeoLocale): Omit<SeoMetadata, 'ca
     }
   }
 
+  if (path === '/sites') {
+    return {
+      breadcrumbs: [breadcrumb(locale, 'sites', '/sites')],
+      description: localeCopy.sitesDescription,
+      itemList: cubingSites.map((site) => ({ name: site.name, path: site.url })),
+      jsonLdKind: 'item-list',
+      title: localeCopy.sitesTitle,
+    }
+  }
+
   if (path === '/algoritmos') {
     return {
       breadcrumbs: [breadcrumb(locale, 'algorithms', '/algoritmos')],
@@ -461,7 +502,7 @@ function metadataForPath(path: string, locale: SeoLocale): Omit<SeoMetadata, 'ca
   return undefined
 }
 
-function breadcrumb(locale: SeoLocale, key: 'algorithms' | 'channels' | 'home' | 'notations' | 'solver' | 'timer', path: string): SeoBreadcrumb {
+function breadcrumb(locale: SeoLocale, key: 'algorithms' | 'channels' | 'home' | 'notations' | 'sites' | 'solver' | 'timer', path: string): SeoBreadcrumb {
   const labels = copy[locale]
 
   return { name: labels[key], path }
@@ -485,6 +526,7 @@ export const seoIndexablePaths = [
   '/solve',
   '/timer',
   '/channels',
+  '/sites',
   '/algoritmos',
   ...algorithmPuzzles.map((puzzle) => puzzle.path),
   ...algorithmSetSummaries.map((set) => set.path),

@@ -10,7 +10,7 @@ import { algorithmPuzzles, setsForPuzzle } from '@pages/AlgorithmsPage/sets/algo
 import { notationPuzzleGroups } from '@pages/NotationsPage/notationGuides'
 import { localeFromPathname, localizedPath } from '@src/seo/routes'
 
-export type PageNavRoute = 'algorithms' | 'channels' | 'notations' | 'solve' | 'timer'
+export type PageNavRoute = 'algorithms' | 'channels' | 'notations' | 'sites' | 'solve' | 'timer'
 
 const githubUrl = 'https://github.com/williamisnotdefined/rubiks-cube-solver'
 
@@ -107,6 +107,9 @@ function NavContent({ activeRoute, onNavigate }: NavContentProps) {
         <PageNavLink active={activeRoute === 'channels'} to={toLocalizedPath('/channels')} onClick={onNavigate}>
           {t('navigation.channels')}
         </PageNavLink>
+        <PageNavLink active={activeRoute === 'sites'} to={toLocalizedPath('/sites')} onClick={onNavigate}>
+          {t('navigation.sites')}
+        </PageNavLink>
         <NotationsMenu active={activeRoute === 'notations'} locale={locale} onNavigate={onNavigate} />
         <AlgorithmsMenu active={activeRoute === 'algorithms'} locale={locale} onNavigate={onNavigate} />
       </div>
@@ -142,6 +145,10 @@ function activeRouteLabelKey(activeRoute: PageNavRoute) {
 
   if (activeRoute === 'channels') {
     return 'navigation.channels'
+  }
+
+  if (activeRoute === 'sites') {
+    return 'navigation.sites'
   }
 
   return 'navigation.solve'

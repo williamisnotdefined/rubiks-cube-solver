@@ -42,6 +42,15 @@ describe('PageNav', () => {
     expect(channelsLink).toHaveClass('bg-app-text')
   })
 
+  it('marks Sites as active and keeps the English route', () => {
+    renderWithRouter(<PageNav activeRoute="sites" />, '/sites/')
+
+    const sitesLink = screen.getByRole('link', { name: 'Sites' })
+
+    expect(sitesLink).toHaveAttribute('href', '/sites/')
+    expect(sitesLink).toHaveClass('bg-app-text')
+  })
+
   it('marks algorithms as active and opens method links', async () => {
     const user = userEvent.setup()
     renderWithRouter(<PageNav activeRoute="algorithms" />, '/algoritmos/')

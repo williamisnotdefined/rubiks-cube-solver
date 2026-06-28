@@ -15,6 +15,23 @@
     "openInYouTube": "YouTubeで開く",
     "title": "YT チャンネル"
   },
+  "sites": {
+    "categories": {
+      "algorithms": "アルゴリズム",
+      "brands": "ブランド",
+      "community": "コミュニティ",
+      "competitions": "大会",
+      "shops": "ショップ",
+      "solutions": "解法",
+      "tools": "ツール"
+    },
+    "description": "解法、アルゴリズム、ツール、大会、ショップ、ブランド、コミュニティ向けの検証済みキューブ系サイト {{count}} 件の厳選リスト。",
+    "imageAlt": "{{site}} サイトアイコン",
+    "kicker": "キューブ系サイトディレクトリ",
+    "openSite": "{{site}} のサイトを開く",
+    "openWebsite": "サイトを開く",
+    "title": "サイト"
+  },
   "algorithms": {
     "index": {
       "description": "静的アルゴリズム シート: 症例画像とアルゴリズム。 API、トレーナーの状態、編集テキストはありません。",
@@ -641,6 +658,7 @@
     "algorithms": "アルゴリズム",
     "algorithmsMenu": "パズルの方法",
     "channels": "YT チャンネル",
+    "sites": "サイト",
     "closeMenu": "メニューを閉じる",
     "github": "GitHub でプロジェクトを開く",
     "menu": "メニュー",

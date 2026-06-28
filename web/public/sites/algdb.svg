@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="AlgDb">
+  <rect width="256" height="256" fill="black" />
+  <path d="M58 184l50-112h40l50 112h-30l-10-24H98l-10 24zm50-48h40l-20-48z" fill="white" />
+  <text x="128" y="230" fill="white" font-family="Arial, sans-serif" font-size="26" font-weight="700" text-anchor="middle">AlgDb</text>
+</svg>

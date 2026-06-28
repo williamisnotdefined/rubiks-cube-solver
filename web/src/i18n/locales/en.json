@@ -15,6 +15,23 @@
     "openInYouTube": "Open on YouTube",
     "title": "YT Channels"
   },
+  "sites": {
+    "categories": {
+      "algorithms": "Algorithms",
+      "brands": "Brands",
+      "community": "Community",
+      "competitions": "Competitions",
+      "shops": "Shops",
+      "solutions": "Solutions",
+      "tools": "Tools"
+    },
+    "description": "A curated list of {{count}} validated cubing websites for solutions, algorithms, tools, competitions, shops, brands, and community.",
+    "imageAlt": "{{site}} site icon",
+    "kicker": "Cubing web directory",
+    "openSite": "Open {{site}} website",
+    "openWebsite": "Open website",
+    "title": "Sites"
+  },
   "algorithms": {
     "index": {
       "description": "Static algorithm sheets: case image plus algorithm. No API, no trainer state, no editorial text.",
@@ -641,6 +658,7 @@
     "algorithms": "Algorithms",
     "algorithmsMenu": "Puzzle methods",
     "channels": "YT Channels",
+    "sites": "Sites",
     "closeMenu": "Close menu",
     "github": "Open project on GitHub",
     "menu": "Menu",

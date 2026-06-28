@@ -51,7 +51,7 @@ export function buildJsonLd(metadata: SeoMetadata): JsonLd[] {
       '@type': 'ItemList',
       itemListElement: metadata.itemList.map((item, index) => ({
         '@type': 'ListItem',
-        item: alternateUrl(item.path, metadata.locale),
+        item: itemUrl(item.path, metadata.locale),
         name: item.name,
         position: index + 1,
       })),
@@ -72,4 +72,8 @@ export function buildJsonLd(metadata: SeoMetadata): JsonLd[] {
   }
 
   return graph
+}
+
+function itemUrl(path: string, locale: SeoMetadata['locale']): string {
+  return path.startsWith('http://') || path.startsWith('https://') ? path : alternateUrl(path, locale)
 }

@@ -4,7 +4,6 @@
 
 - pyraminx U and U' are reversed, i think all moves are wrong
 - megaminx U is not on U, check all others
-- relevant sites list
 - WCA data
   - https://wca-rest-api.robiningelbrecht.be/
   - https://chatgpt.com/share/6a40801c-5634-83e9-9140-46b95446820a

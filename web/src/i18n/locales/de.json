@@ -15,6 +15,23 @@
     "openInYouTube": "Auf YouTube öffnen",
     "title": "YT Channels"
   },
+  "sites": {
+    "categories": {
+      "algorithms": "Algorithmen",
+      "brands": "Marken",
+      "community": "Community",
+      "competitions": "Wettbewerbe",
+      "shops": "Shops",
+      "solutions": "Lösungen",
+      "tools": "Tools"
+    },
+    "description": "Eine kuratierte Liste mit {{count}} validierten Cubing-Websites für Lösungen, Algorithmen, Tools, Wettbewerbe, Shops, Marken und Community.",
+    "imageAlt": "Icon der Website {{site}}",
+    "kicker": "Cubing Web-Verzeichnis",
+    "openSite": "Website {{site}} öffnen",
+    "openWebsite": "Website öffnen",
+    "title": "Sites"
+  },
   "algorithms": {
     "index": {
       "description": "Statische Algorithmus-Blätter: Fallbild plus Algorithmus. Keine API, kein Trainer-Status, kein redaktioneller Text.",
@@ -641,6 +658,7 @@
     "algorithms": "Algorithmen",
     "algorithmsMenu": "Puzzle-Methoden",
     "channels": "YT Channels",
+    "sites": "Sites",
     "closeMenu": "Menü schließen",
     "github": "Projekt auf GitHub öffnen",
     "menu": "Menü",
