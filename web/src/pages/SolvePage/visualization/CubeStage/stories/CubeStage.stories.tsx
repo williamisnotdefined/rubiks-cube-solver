@@ -7,7 +7,6 @@ const cubeRef = { current: null } as RefObject<RubiksCubeElement | null>
 
 const meta = {
   args: {
-    active: true,
     cubeType: 'Three',
     cubeRef,
     onReady: () => undefined,

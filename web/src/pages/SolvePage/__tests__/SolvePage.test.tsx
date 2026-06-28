@@ -5,7 +5,6 @@ import type { PuzzleVisualizationKind, SolveResult } from '@api/solver/types'
 import { SolvePage } from '../SolvePage'
 import { useSolveSettingsStore } from '../solve/solveSettingsStore'
 import { useCubeVisualization } from '../visualization/hooks/useCubeVisualization'
-import { usePageActivity } from '../visualization/hooks/usePageActivity'
 
 const scramblePlaceholder =
   "R2 D2 F2 D L2 F2 U' R2 D B2 L2 U' B' R' B' R2 B2 L B U'"
@@ -246,19 +245,15 @@ vi.mock('../visualization/CubeStage', async () => {
 
   return {
     CubeStage: ({
-      active,
       cubeType,
       onReady,
     }: {
-      active: boolean
       cubeType: 'Two' | 'Three'
       onReady: () => void
     }) => {
       useEffect(() => {
-        if (active) {
-          onReady()
-        }
-      }, [active, onReady])
+        onReady()
+      }, [onReady])
 
       return (
         <section
@@ -266,7 +261,7 @@ vi.mock('../visualization/CubeStage', async () => {
           data-cube-type={cubeType}
           data-testid="cube-stage"
         >
-          {active ? <div data-testid="cube-stage-enabled" /> : null}
+          <div data-testid="cube-stage-enabled" />
         </section>
       )
     },
@@ -275,10 +270,6 @@ vi.mock('../visualization/CubeStage', async () => {
 
 vi.mock('../visualization/hooks/useCubeVisualization', () => ({
   useCubeVisualization: vi.fn(),
-}))
-
-vi.mock('../visualization/hooks/usePageActivity', () => ({
-  usePageActivity: vi.fn(),
 }))
 
 vi.mock('@components/Loader3x3', () => ({
@@ -292,7 +283,6 @@ vi.mock('@components/Loader3x3', () => ({
 }))
 
 const useCubeVisualizationMock = vi.mocked(useCubeVisualization)
-const usePageActivityMock = vi.mocked(usePageActivity)
 
 describe('SolvePage', () => {
   beforeEach(() => {
@@ -303,7 +293,6 @@ describe('SolvePage', () => {
     apiMocks.scanSessionSolveResult = scanSuccessResult()
     apiMocks.solveData = undefined
     apiMocks.solveError = null
-    usePageActivityMock.mockReturnValue(true)
     useSolveSettingsStore.getState().resetSolveSettings()
     useCubeVisualizationMock.mockClear()
   })
@@ -329,23 +318,6 @@ describe('SolvePage', () => {
       undefined,
       'Three',
       true,
-    )
-  })
-
-  it('keeps the cube visualization unmounted and unsynced while the page is inactive', () => {
-    usePageActivityMock.mockReturnValue(false)
-
-    render(<SolvePage />)
-
-    expect(screen.queryByTestId('cube-stage-enabled')).not.toBeInTheDocument()
-    expect(useCubeVisualizationMock).toHaveBeenLastCalledWith(
-      expect.anything(),
-      '',
-      expect.any(Number),
-      undefined,
-      undefined,
-      'Three',
-      false,
     )
   })
 

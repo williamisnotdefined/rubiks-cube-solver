@@ -27,7 +27,6 @@ import {
 } from '../../solve/validation'
 import type { CubeStageCubeType } from '../../visualization/CubeStage'
 import { useCubeVisualization } from '../../visualization/hooks/useCubeVisualization'
-import { usePageActivity } from '../../visualization/hooks/usePageActivity'
 
 const defaultPuzzleSlug = 'cube-3x3x3'
 const cube3VisualizationKind = 'cube3-facelets-v1'
@@ -47,7 +46,6 @@ export function useSolvePageController() {
     puzzleSlug: selectedPuzzleSlug,
   })
   const solveMutation = useSolvePuzzleNotation()
-  const cubeActive = usePageActivity()
   const [cubeReadyRevision, markCubeReady] = useReducer(
     (revision: number) => revision + 1,
     0,
@@ -109,7 +107,7 @@ export function useSolvePageController() {
     visualizationSupported ? visualizationStateForCube : undefined,
     visualizationSupported ? visualizationStateKindForCube : undefined,
     visualizationCubeType,
-    cubeActive && visualizationSupported,
+    visualizationSupported,
   )
 
   useEffect(() => {
@@ -329,7 +327,6 @@ export function useSolvePageController() {
         }
       : undefined,
     visualization: {
-      active: cubeActive,
       cubeRef,
       cubeType: visualizationCubeType,
       onReady: markCubeReady,
