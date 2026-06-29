@@ -1,5 +1,6 @@
 import { createRef } from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { CubeStage } from '../CubeStage'
 
@@ -23,7 +24,9 @@ describe('CubeStage', () => {
       <CubeStage
         cubeType="Three"
         cubeRef={createRef()}
+        loadRequested
         onReady={onReady}
+        onLoadRequest={vi.fn()}
       />,
     )
 
@@ -43,7 +46,9 @@ describe('CubeStage', () => {
       <CubeStage
         cubeType="Two"
         cubeRef={createRef()}
+        loadRequested
         onReady={onReady}
+        onLoadRequest={vi.fn()}
       />,
     )
 
@@ -63,7 +68,9 @@ describe('CubeStage', () => {
       <CubeStage
         cubeType="Three"
         cubeRef={createRef()}
+        loadRequested
         onReady={onReady}
+        onLoadRequest={vi.fn()}
       />,
     )
 
@@ -72,6 +79,26 @@ describe('CubeStage', () => {
     )
     expect(register).not.toHaveBeenCalled()
     expect(onReady).toHaveBeenCalled()
+  })
+
+  it('renders a lightweight load button before the cube is requested', async () => {
+    const user = userEvent.setup()
+    const onLoadRequest = vi.fn()
+
+    render(
+      <CubeStage
+        cubeType="Three"
+        cubeRef={createRef()}
+        loadRequested={false}
+        onReady={vi.fn()}
+        onLoadRequest={onLoadRequest}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Cube visualization' }))
+
+    expect(register).not.toHaveBeenCalled()
+    expect(onLoadRequest).toHaveBeenCalled()
   })
 
 })

@@ -1,9 +1,26 @@
-import { algorithmPuzzles, algorithmSetSummaries, getAlgorithmPuzzle, setsForPuzzle } from '@pages/AlgorithmsPage/sets/algorithmSetMetadata'
-import { cubingSites } from '@pages/CubingSitesPage/sites'
-import { getNotationGuide, notationGuides } from '@pages/NotationsPage/notationGuides'
-
 export const seoLocales = ['pt-BR', 'en', 'es', 'it', 'de', 'fr', 'ru', 'zh', 'ja'] as const
 export type SeoLocale = (typeof seoLocales)[number]
+
+type AlgorithmPuzzleId = '2x2' | '3x3' | '4x4' | '5x5' | '6x6' | 'megaminx' | 'pyraminx' | 'sq1'
+
+type AlgorithmPuzzleSummary = {
+  id: AlgorithmPuzzleId
+  path: string
+  title: string
+}
+
+type AlgorithmSetSummary = {
+  path: string
+  puzzleId: AlgorithmPuzzleId
+  routeSlug: string
+  title: string
+}
+
+type NotationGuideSummary = {
+  id: string
+  path: string
+  puzzle: string
+}
 
 export type SeoBreadcrumb = {
   name: string
@@ -75,6 +92,125 @@ const localePrefixes: Record<SeoLocale, string> = {
 }
 
 export const prefixedSeoLocales = seoLocales.filter((locale) => locale !== defaultLocale)
+
+const algorithmPuzzles: AlgorithmPuzzleSummary[] = [
+  { id: '3x3', path: '/algoritmos/3x3', title: '3x3' },
+  { id: '2x2', path: '/algoritmos/2x2', title: '2x2' },
+  { id: '4x4', path: '/algoritmos/4x4', title: '4x4' },
+  { id: '5x5', path: '/algoritmos/5x5', title: '5x5' },
+  { id: '6x6', path: '/algoritmos/6x6', title: '6x6' },
+  { id: 'sq1', path: '/algoritmos/sq1', title: 'Square-1' },
+  { id: 'pyraminx', path: '/algoritmos/pyraminx', title: 'Pyraminx' },
+  { id: 'megaminx', path: '/algoritmos/megaminx', title: 'Megaminx' },
+]
+
+const algorithmSetSummaries: AlgorithmSetSummary[] = [
+  { path: '/algoritmos/3x3/oll', puzzleId: '3x3', routeSlug: 'oll', title: '3x3 OLL' },
+  { path: '/algoritmos/3x3/pll', puzzleId: '3x3', routeSlug: 'pll', title: '3x3 PLL' },
+  { path: '/algoritmos/3x3/2look-oll', puzzleId: '3x3', routeSlug: '2look-oll', title: '3x3 2-Look OLL' },
+  { path: '/algoritmos/3x3/2look-pll', puzzleId: '3x3', routeSlug: '2look-pll', title: '3x3 2-Look PLL' },
+  { path: '/algoritmos/3x3/coll', puzzleId: '3x3', routeSlug: 'coll', title: '3x3 COLL' },
+  { path: '/algoritmos/3x3/winter-variation', puzzleId: '3x3', routeSlug: 'winter-variation', title: '3x3 Winter Variation' },
+  { path: '/algoritmos/3x3/oh-oll', puzzleId: '3x3', routeSlug: 'oh-oll', title: '3x3 OH OLL' },
+  { path: '/algoritmos/3x3/oh-pll', puzzleId: '3x3', routeSlug: 'oh-pll', title: '3x3 OH PLL' },
+  { path: '/algoritmos/2x2/oll', puzzleId: '2x2', routeSlug: 'oll', title: '2x2 OLL' },
+  { path: '/algoritmos/2x2/pbl', puzzleId: '2x2', routeSlug: 'pbl', title: '2x2 PBL' },
+  { path: '/algoritmos/2x2/cll', puzzleId: '2x2', routeSlug: 'cll', title: '2x2 CLL' },
+  { path: '/algoritmos/2x2/eg-1', puzzleId: '2x2', routeSlug: 'eg-1', title: '2x2 EG-1' },
+  { path: '/algoritmos/4x4/oll', puzzleId: '4x4', routeSlug: 'oll', title: '4x4 OLL' },
+  { path: '/algoritmos/4x4/pll', puzzleId: '4x4', routeSlug: 'pll', title: '4x4 PLL' },
+  { path: '/algoritmos/3x3/f2l', puzzleId: '3x3', routeSlug: 'f2l', title: '3x3 F2L' },
+  { path: '/algoritmos/3x3/advanced-f2l', puzzleId: '3x3', routeSlug: 'advanced-f2l', title: '3x3 Advanced F2L' },
+  { path: '/algoritmos/2x2/eg-2', puzzleId: '2x2', routeSlug: 'eg-2', title: '2x2 EG-2' },
+  { path: '/algoritmos/3x3/zbll-t', puzzleId: '3x3', routeSlug: 'zbll-t', title: '3x3 ZBLL T' },
+  { path: '/algoritmos/3x3/zbll-u', puzzleId: '3x3', routeSlug: 'zbll-u', title: '3x3 ZBLL U' },
+  { path: '/algoritmos/3x3/zbll-l', puzzleId: '3x3', routeSlug: 'zbll-l', title: '3x3 ZBLL L' },
+  { path: '/algoritmos/3x3/zbll-sune', puzzleId: '3x3', routeSlug: 'zbll-sune', title: '3x3 ZBLL Sune' },
+  { path: '/algoritmos/3x3/zbll-antisune', puzzleId: '3x3', routeSlug: 'zbll-antisune', title: '3x3 ZBLL Antisune' },
+  { path: '/algoritmos/3x3/zbll-pi', puzzleId: '3x3', routeSlug: 'zbll-pi', title: '3x3 ZBLL Pi' },
+  { path: '/algoritmos/3x3/zbll-h', puzzleId: '3x3', routeSlug: 'zbll-h', title: '3x3 ZBLL H' },
+  { path: '/algoritmos/3x3/vls-ub', puzzleId: '3x3', routeSlug: 'vls-ub', title: '3x3 VLS UB' },
+  { path: '/algoritmos/3x3/vls-ub-ul', puzzleId: '3x3', routeSlug: 'vls-ub-ul', title: '3x3 VLS UB UL' },
+  { path: '/algoritmos/3x3/vls-uf', puzzleId: '3x3', routeSlug: 'vls-uf', title: '3x3 VLS UF' },
+  { path: '/algoritmos/3x3/vls-uf-ub', puzzleId: '3x3', routeSlug: 'vls-uf-ub', title: '3x3 VLS UF UB' },
+  { path: '/algoritmos/3x3/vls-uf-ul', puzzleId: '3x3', routeSlug: 'vls-uf-ul', title: '3x3 VLS UF UL' },
+  { path: '/algoritmos/3x3/vls-ul', puzzleId: '3x3', routeSlug: 'vls-ul', title: '3x3 VLS UL' },
+  { path: '/algoritmos/3x3/vls-no-edges', puzzleId: '3x3', routeSlug: 'vls-no-edges', title: '3x3 VLS No Edges' },
+  { path: '/algoritmos/sq1/cubeshape', puzzleId: 'sq1', routeSlug: 'cubeshape', title: 'Square-1 Cubeshape' },
+  { path: '/algoritmos/sq1/cp', puzzleId: 'sq1', routeSlug: 'cp', title: 'Square-1 CP' },
+  { path: '/algoritmos/sq1/ep', puzzleId: 'sq1', routeSlug: 'ep', title: 'Square-1 EP' },
+  { path: '/algoritmos/sq1/parity', puzzleId: 'sq1', routeSlug: 'parity', title: 'Square-1 Parity' },
+  { path: '/algoritmos/pyraminx/l4e', puzzleId: 'pyraminx', routeSlug: 'l4e', title: 'Pyraminx L4E' },
+  { path: '/algoritmos/pyraminx/l3e', puzzleId: 'pyraminx', routeSlug: 'l3e', title: 'Pyraminx L3E' },
+  { path: '/algoritmos/megaminx/oll', puzzleId: 'megaminx', routeSlug: 'oll', title: 'Megaminx OLL' },
+  { path: '/algoritmos/megaminx/pll', puzzleId: 'megaminx', routeSlug: 'pll', title: 'Megaminx PLL' },
+  { path: '/algoritmos/megaminx/eo', puzzleId: 'megaminx', routeSlug: 'eo', title: 'Megaminx EO' },
+  { path: '/algoritmos/megaminx/co', puzzleId: 'megaminx', routeSlug: 'co', title: 'Megaminx CO' },
+  { path: '/algoritmos/megaminx/ep', puzzleId: 'megaminx', routeSlug: 'ep', title: 'Megaminx EP' },
+  { path: '/algoritmos/megaminx/cp', puzzleId: 'megaminx', routeSlug: 'cp', title: 'Megaminx CP' },
+  { path: '/algoritmos/4x4/oll-parity', puzzleId: '4x4', routeSlug: 'oll-parity', title: '4x4 OLL Parity' },
+  { path: '/algoritmos/4x4/pll-parity', puzzleId: '4x4', routeSlug: 'pll-parity', title: '4x4 PLL Parity' },
+  { path: '/algoritmos/5x5/l2e', puzzleId: '5x5', routeSlug: 'l2e', title: '5x5 L2E' },
+  { path: '/algoritmos/5x5/l2c', puzzleId: '5x5', routeSlug: 'l2c', title: '5x5 L2C' },
+  { path: '/algoritmos/6x6/l2e', puzzleId: '6x6', routeSlug: 'l2e', title: '6x6 L2E' },
+  { path: '/algoritmos/6x6/l2c', puzzleId: '6x6', routeSlug: 'l2c', title: '6x6 L2C' },
+]
+
+const notationGuides: NotationGuideSummary[] = [
+  { id: '2x2', path: '/notations/2x2', puzzle: '2x2' },
+  { id: '3x3', path: '/notations/3x3', puzzle: '3x3' },
+  { id: '4x4', path: '/notations/4x4', puzzle: '4x4' },
+  { id: '5x5', path: '/notations/5x5', puzzle: '5x5' },
+  { id: '6x6', path: '/notations/6x6', puzzle: '6x6' },
+  { id: '7x7', path: '/notations/7x7', puzzle: '7x7' },
+  { id: 'pyraminx', path: '/notations/pyraminx', puzzle: 'Pyraminx' },
+  { id: 'square-1', path: '/notations/square-1', puzzle: 'Square-1' },
+  { id: 'megaminx', path: '/notations/megaminx', puzzle: 'Megaminx' },
+  { id: 'skewb', path: '/notations/skewb', puzzle: 'Skewb' },
+  { id: 'clock', path: '/notations/clock', puzzle: 'Clock' },
+]
+
+const cubingSiteItems: SeoItem[] = [
+  { name: 'World Cube Association', path: 'https://www.worldcubeassociation.org/' },
+  { name: 'csTimer', path: 'https://cstimer.net/' },
+  { name: 'J Perm', path: 'https://jperm.net/' },
+  { name: 'Speedsolving Forum', path: 'https://www.speedsolving.com/' },
+  { name: 'Ruwix', path: 'https://ruwix.com/' },
+  { name: 'alg.cubing.net', path: 'https://alg.cubing.net/' },
+  { name: 'CubeSkills', path: 'https://www.cubeskills.com/' },
+  { name: 'CubeDesk', path: 'https://www.cubedesk.io/home' },
+  { name: 'The Cubicle', path: 'https://www.thecubicle.com/' },
+  { name: 'SpeedCubeShop', path: 'https://speedcubeshop.com/' },
+  { name: 'Cubo Velocidade', path: 'https://cubovelocidade.com.br/' },
+  { name: 'SpeedCubeDB', path: 'https://speedcubedb.com/' },
+  { name: 'CubingApp', path: 'https://cubingapp.com/' },
+  { name: 'Cubing.net', path: 'https://www.cubing.net/' },
+  { name: 'TNOODLE', path: 'https://tnoodle.cubing.net/' },
+  { name: 'WCA Live', path: 'https://live.worldcubeassociation.org/' },
+  { name: 'CubingUSA', path: 'https://www.cubingusa.org/' },
+  { name: 'Reddit r/Cubers', path: 'https://www.reddit.com/r/Cubers/' },
+  { name: "Rubik's Official", path: 'https://www.rubiks.com/' },
+  { name: 'GAN Cube', path: 'https://www.gancube.com/' },
+  { name: 'MoYu', path: 'https://www.moyustore.com/' },
+  { name: 'QiYi', path: 'https://www.qiyitoys.net/' },
+  { name: 'YJ Cube', path: 'https://www.yjcube.com/' },
+  { name: 'Ziicube', path: 'https://www.ziicube.com/' },
+  { name: 'Cubezz', path: 'https://www.cubezz.com/' },
+  { name: 'KewbzUK', path: 'https://kewbz.co.uk/' },
+  { name: 'DailyPuzzles', path: 'https://dailypuzzles.com.au/' },
+  { name: 'SpeedCubeReview', path: 'https://www.speedcubereview.com/' },
+  { name: "Sarah's Cubing Site", path: 'https://sarah.cubing.net/' },
+  { name: "Jaap's Puzzle Page", path: 'https://www.jaapsch.net/puzzles/' },
+  { name: 'Ryan Heise', path: 'https://www.ryanheise.com/cube/' },
+  { name: 'Lars Petrus Method', path: 'https://lar5.com/cube/' },
+  { name: 'Speedsolving Wiki', path: 'https://www.speedsolving.com/wiki/index.php/Main_Page' },
+  { name: 'Badmephisto', path: 'http://badmephisto.com/' },
+  { name: 'Ruwix Solvers', path: 'https://ruwix.com/cube-solver/' },
+  { name: 'Grubiks', path: 'https://www.grubiks.com/solvers/rubiks-cube-3x3x3/' },
+  { name: 'CubeSolve', path: 'https://cubesolve.com/' },
+  { name: 'AlgDb', path: 'https://algdb.net/' },
+  { name: 'Cubefreak', path: 'http://www.cubefreak.net/' },
+]
 
 const copy: Record<SeoLocale, SeoCopy> = {
   de: {
@@ -396,6 +532,18 @@ export function alternateUrl(path: string, locale: SeoLocale): string {
   return localizedUrl(path, locale)
 }
 
+function getAlgorithmPuzzle(puzzleId: string | undefined): AlgorithmPuzzleSummary | undefined {
+  return algorithmPuzzles.find((puzzle) => puzzle.id === puzzleId)
+}
+
+function setsForPuzzle(puzzleId: AlgorithmPuzzleId): AlgorithmSetSummary[] {
+  return algorithmSetSummaries.filter((set) => set.puzzleId === puzzleId)
+}
+
+function getNotationGuide(puzzleId: string | undefined): NotationGuideSummary | undefined {
+  return notationGuides.find((guide) => guide.id === puzzleId)
+}
+
 function metadataForPath(path: string, locale: SeoLocale): Omit<SeoMetadata, 'canonicalUrl' | 'htmlLang' | 'locale' | 'noindex' | 'path'> | undefined {
   const localeCopy = copy[locale]
 
@@ -428,7 +576,7 @@ function metadataForPath(path: string, locale: SeoLocale): Omit<SeoMetadata, 'ca
     return {
       breadcrumbs: [breadcrumb(locale, 'sites', '/sites')],
       description: localeCopy.sitesDescription,
-      itemList: cubingSites.map((site) => ({ name: site.name, path: site.url })),
+      itemList: cubingSiteItems,
       jsonLdKind: 'item-list',
       title: localeCopy.sitesTitle,
     }

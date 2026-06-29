@@ -9,7 +9,9 @@ const meta = {
   args: {
     cubeType: 'Three',
     cubeRef,
+    loadRequested: true,
     onReady: () => undefined,
+    onLoadRequest: () => undefined,
   },
   component: CubeStage,
   title: 'SolvePage/CubeStage',

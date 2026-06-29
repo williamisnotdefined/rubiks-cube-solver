@@ -11,9 +11,8 @@ test.describe('product solve flow', () => {
   test('renders notation-only controls and caps the cube size', async ({ page }) => {
     await page.goto(solvePath)
 
-    await expect(page.locator('.cube-stage rubiks-cube')).toBeVisible({
-      timeout: cubeActivationTimeout,
-    })
+    await expect(page.getByRole('button', { name: 'Cube visualization' })).toBeVisible()
+    await expect(page.locator('.cube-stage rubiks-cube')).toHaveCount(0)
     await expect(page.getByText(/facelets/i)).toHaveCount(0)
 
     const cubeBox = await page.locator('.cube-stage').boundingBox()
@@ -61,6 +60,7 @@ test.describe('product solve flow', () => {
     const input = page.getByLabel('Scramble')
     const cube = page.locator('.cube-stage rubiks-cube')
     await expect(input).toBeEnabled({ timeout: 15_000 })
+    await page.getByRole('button', { name: 'Cube visualization' }).click()
     await expect(cube).toBeVisible({ timeout: cubeActivationTimeout })
     await expect.poll(() => cubeState(cube)).not.toBe('')
     const initialState = await cubeState(cube)

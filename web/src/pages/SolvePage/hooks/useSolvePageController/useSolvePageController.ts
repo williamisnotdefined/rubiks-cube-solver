@@ -63,6 +63,7 @@ export function useSolvePageController() {
   const [activeSolveSource, setActiveSolveSource] = useState<'notation' | 'scan'>('notation')
   const [scanSessionSolveResult, setScanSessionSolveResult] = useState<ApiSolveResult | undefined>()
   const [limitFailureModalDismissed, setLimitFailureModalDismissed] = useState(false)
+  const [visualizationRequested, setVisualizationRequested] = useState(false)
   const activeSolveResult = activeSolveSource === 'scan' ? scanSessionSolveResult : solveMutation.data
   const activeSolveError = activeSolveSource === 'scan' ? null : solveMutation.error
   const successResult =
@@ -99,6 +100,8 @@ export function useSolvePageController() {
           : ''
   const visualizationStateForCube = useInverseSolutionVisualization ? undefined : visualizationState
   const visualizationStateKindForCube = useInverseSolutionVisualization ? undefined : visualizationStateKind
+  const shouldAutoLoadVisualization =
+    visualizationSupported && (notation.trim().length > 0 || successResult !== undefined)
 
   useCubeVisualization(
     cubeRef,
@@ -107,8 +110,14 @@ export function useSolvePageController() {
     visualizationSupported ? visualizationStateForCube : undefined,
     visualizationSupported ? visualizationStateKindForCube : undefined,
     visualizationCubeType,
-    visualizationSupported,
+    visualizationSupported && visualizationRequested,
   )
+
+  useEffect(() => {
+    if (shouldAutoLoadVisualization) {
+      setVisualizationRequested(true)
+    }
+  }, [shouldAutoLoadVisualization])
 
   useEffect(() => {
     setLimitFailureModalDismissed(false)
@@ -331,7 +340,9 @@ export function useSolvePageController() {
     visualization: {
       cubeRef,
       cubeType: visualizationCubeType,
+      loadRequested: visualizationRequested,
       onReady: markCubeReady,
+      onLoadRequest: () => setVisualizationRequested(true),
     },
   }
 }
