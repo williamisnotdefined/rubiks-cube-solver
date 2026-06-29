@@ -21,6 +21,7 @@ test.describe('responsive UI smoke', () => {
     await page.goto('/en/solve/')
 
     const cube = page.locator('.cube-stage rubiks-cube')
+    await page.getByRole('button', { name: 'Cube visualization' }).click()
     await expect(cube).toBeVisible({ timeout: 15_000 })
 
     const box = await cube.boundingBox()
