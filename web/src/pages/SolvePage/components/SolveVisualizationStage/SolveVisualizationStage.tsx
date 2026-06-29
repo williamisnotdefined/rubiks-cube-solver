@@ -5,14 +5,18 @@ import { CubeStage, type CubeStageCubeType } from '../../visualization/CubeStage
 
 type SolveVisualizationStageProps = {
   cubeRef: RefObject<RubiksCubeElement | null>
+  loadRequested: boolean
   cubeType?: CubeStageCubeType
   onReady: () => void
+  onLoadRequest: () => void
 }
 
 export function SolveVisualizationStage({
   cubeRef,
+  loadRequested,
   cubeType,
   onReady,
+  onLoadRequest,
 }: SolveVisualizationStageProps) {
   const { t } = useTranslation()
 
@@ -32,7 +36,9 @@ export function SolveVisualizationStage({
       key={cubeType}
       cubeType={cubeType}
       cubeRef={cubeRef}
+      loadRequested={loadRequested}
       onReady={onReady}
+      onLoadRequest={onLoadRequest}
     />
   )
 }

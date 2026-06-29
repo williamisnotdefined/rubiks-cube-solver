@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { algorithmSetSummaries } from '@pages/AlgorithmsPage/sets/algorithmSetMetadata'
 import { cubingSites } from '@pages/CubingSitesPage/sites'
 import { getSeoMetadata, localeFromPathname, localizedPath, prefixedSeoLocales, stripLocalePrefix } from '../routes'
 
@@ -22,6 +23,17 @@ describe('SEO route metadata', () => {
     expect(metadata.noindex).toBe(false)
   })
 
+  it('keeps lightweight algorithm metadata aligned with algorithm page labels', () => {
+    const puzzleMetadata = getSeoMetadata('/en/algoritmos/3x3')
+    const setMetadata = getSeoMetadata('/en/algoritmos/2x2/eg-1')
+    const expected3x3Items = algorithmSetSummaries
+      .filter((set) => set.puzzleId === '3x3')
+      .map((set) => ({ name: set.title, path: set.path }))
+
+    expect(puzzleMetadata.itemList).toEqual(expected3x3Items)
+    expect(setMetadata.title).toContain('2x2 EG-1 Algorithms')
+  })
+
   it('builds canonical metadata for the English cubing sites page', () => {
     const metadata = getSeoMetadata('/en/sites')
 
@@ -30,6 +42,7 @@ describe('SEO route metadata', () => {
     expect(metadata.canonicalUrl).toBe('https://speedcube.com.br/en/sites/')
     expect(metadata.title).toContain('Cubing Websites')
     expect(metadata.itemList).toHaveLength(cubingSites.length)
+    expect(metadata.itemList).toEqual(cubingSites.map((site) => ({ name: site.name, path: site.url })))
     expect(metadata.itemList?.[0]).toEqual({ name: 'World Cube Association', path: 'https://www.worldcubeassociation.org/' })
     expect(metadata.noindex).toBe(false)
   })

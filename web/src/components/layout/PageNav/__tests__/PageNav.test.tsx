@@ -60,7 +60,7 @@ describe('PageNav', () => {
 
     await user.click(algorithmsButton)
 
-    const methodsDialog = screen.getByRole('dialog', { name: 'Puzzle methods' })
+    const methodsDialog = await screen.findByRole('dialog', { name: 'Puzzle methods' })
 
     expect(within(methodsDialog).getByRole('link', { name: '3x3 OLL' })).toHaveAttribute('href', '/algoritmos/3x3/oll/')
     expect(within(methodsDialog).getByRole('link', { name: '2x2 CLL' })).toHaveAttribute('href', '/algoritmos/2x2/cll/')
@@ -78,7 +78,7 @@ describe('PageNav', () => {
 
     await user.click(notationsButton)
 
-    const notationsDialog = screen.getByRole('dialog', { name: 'Puzzle notations' })
+    const notationsDialog = await screen.findByRole('dialog', { name: 'Puzzle notations' })
 
     expect(within(notationsDialog).getByRole('link', { name: '3x3' })).toHaveAttribute('href', '/notations/3x3/')
     expect(within(notationsDialog).getByRole('link', { name: 'Pyraminx' })).toHaveAttribute('href', '/notations/pyraminx/')
@@ -103,7 +103,7 @@ describe('PageNav', () => {
 
     await user.click(screen.getByRole('button', { name: 'Open menu' }))
 
-    const drawer = screen.getByRole('dialog', { name: 'Menu' })
+    const drawer = await screen.findByRole('dialog', { name: 'Menu' })
     expect(within(drawer).getByRole('navigation', { name: 'Primary navigation' })).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: 'Timer' })).toHaveLength(1)
 
@@ -118,10 +118,10 @@ describe('PageNav', () => {
 
     await user.click(screen.getByRole('button', { name: 'Open menu' }))
 
-    const drawer = screen.getByRole('dialog', { name: 'Menu' })
+    const drawer = await screen.findByRole('dialog', { name: 'Menu' })
     await user.click(within(drawer).getByRole('button', { name: 'Algorithms' }))
 
-    const methodsDialog = screen.getByRole('dialog', { name: 'Puzzle methods' })
+    const methodsDialog = await screen.findByRole('dialog', { name: 'Puzzle methods' })
     await user.click(within(methodsDialog).getByRole('link', { name: '3x3 OLL' }))
 
     expect(screen.queryByRole('dialog', { name: 'Puzzle methods' })).not.toBeInTheDocument()
@@ -133,6 +133,7 @@ describe('PageNav', () => {
     renderWithRouter(<PageNav activeRoute="timer" />, '/timer/')
 
     await user.click(screen.getByRole('button', { name: 'Open menu' }))
+    await screen.findByRole('dialog', { name: 'Menu' })
     await user.keyboard('{Escape}')
 
     expect(screen.queryAllByRole('button', { name: 'Close menu' })).toHaveLength(0)
@@ -143,13 +144,13 @@ describe('PageNav', () => {
     renderWithRouter(<PageNav activeRoute="solve" />)
 
     await user.click(screen.getByRole('button', { name: 'Theme' }))
-    await user.click(screen.getByRole('menuitemradio', { name: 'Light' }))
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Light' }))
 
     expect(document.documentElement).toHaveAttribute('data-theme', 'light')
     expect(window.localStorage.getItem('rubiks-cube-solver-theme')).toBe('light')
 
     await user.click(screen.getByRole('button', { name: 'Theme' }))
-    await user.click(screen.getByRole('menuitemradio', { name: 'System' }))
+    await user.click(await screen.findByRole('menuitemradio', { name: 'System' }))
 
     expect(document.documentElement).not.toHaveAttribute('data-theme')
     expect(window.localStorage.getItem('rubiks-cube-solver-theme')).toBeNull()

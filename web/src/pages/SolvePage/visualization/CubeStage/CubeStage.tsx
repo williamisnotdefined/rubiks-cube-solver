@@ -9,10 +9,18 @@ export type CubeStageCubeType = 'Two' | 'Three'
 type CubeStageProps = {
   cubeType: CubeStageCubeType
   cubeRef: RefObject<RubiksCubeElement | null>
+  loadRequested: boolean
   onReady: () => void
+  onLoadRequest: () => void
 }
 
-export function CubeStage({ cubeType, cubeRef, onReady }: CubeStageProps) {
+export function CubeStage({
+  cubeType,
+  cubeRef,
+  loadRequested,
+  onReady,
+  onLoadRequest,
+}: CubeStageProps) {
   const { t } = useTranslation()
   const [registered, setRegistered] = useState(
     () => customElements.get(cubeElementName) !== undefined,
@@ -22,6 +30,10 @@ export function CubeStage({ cubeType, cubeRef, onReady }: CubeStageProps) {
     let mounted = true
     let fallbackTimeout: number | undefined
     let idleCallbackId: number | undefined
+
+    if (!loadRequested) {
+      return undefined
+    }
 
     async function registerCubeElement() {
       if (!customElements.get(cubeElementName)) {
@@ -56,14 +68,22 @@ export function CubeStage({ cubeType, cubeRef, onReady }: CubeStageProps) {
         window.clearTimeout(fallbackTimeout)
       }
     }
-  }, [onReady])
+  }, [loadRequested, onReady])
 
   return (
     <section
       className="cube-stage aspect-square w-[min(280px,calc(100vw-24px))] overflow-hidden border border-app-border bg-app-surface"
       aria-label={t('cube.visualization')}
     >
-      {registered ? (
+      {!loadRequested ? (
+        <button
+          className="grid size-full place-items-center px-5 text-center text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted outline-none transition-colors hover:bg-app-surface-raised hover:text-app-text focus-visible:ring-2 focus-visible:ring-app-focus/50"
+          type="button"
+          onClick={onLoadRequest}
+        >
+          {t('cube.visualization')}
+        </button>
+      ) : registered ? (
         <rubiks-cube
           className="block size-full brightness-[0.78] saturate-[0.9] contrast-[0.96]"
           ref={cubeRef}
@@ -75,7 +95,14 @@ export function CubeStage({ cubeType, cubeRef, onReady }: CubeStageProps) {
           cube-type={cubeType}
           piece-gap="1.045"
         />
-      ) : null}
+      ) : (
+        <div
+          className="grid size-full place-items-center px-5 text-center text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted"
+          role="status"
+        >
+          {t('common.loading')}
+        </div>
+      )}
     </section>
   )
 }

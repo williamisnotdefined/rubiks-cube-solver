@@ -246,22 +246,33 @@ vi.mock('../visualization/CubeStage', async () => {
   return {
     CubeStage: ({
       cubeType,
+      loadRequested,
       onReady,
+      onLoadRequest,
     }: {
       cubeType: 'Two' | 'Three'
+      loadRequested: boolean
       onReady: () => void
+      onLoadRequest: () => void
     }) => {
       useEffect(() => {
-        onReady()
-      }, [onReady])
+        if (loadRequested) {
+          onReady()
+        }
+      }, [loadRequested, onReady])
 
       return (
         <section
           aria-label="Cube visualization"
           data-cube-type={cubeType}
+          data-load-requested={String(loadRequested)}
           data-testid="cube-stage"
         >
-          <div data-testid="cube-stage-enabled" />
+          {loadRequested ? (
+            <div data-testid="cube-stage-enabled" />
+          ) : (
+            <button type="button" onClick={onLoadRequest}>Cube visualization</button>
+          )}
         </section>
       )
     },
@@ -304,7 +315,7 @@ describe('SolvePage', () => {
 
     expect(input).toHaveValue('')
     expect(input).toHaveAttribute('placeholder', scramblePlaceholder)
-    expect(screen.getByTestId('cube-stage-enabled')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Cube visualization' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Solve' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Scan cube with camera' })).toBeInTheDocument()
     expect(screen.getByRole('combobox', { name: 'Puzzle' })).toHaveTextContent('3x3x3 Cube')
@@ -317,7 +328,7 @@ describe('SolvePage', () => {
       undefined,
       undefined,
       'Three',
-      true,
+      false,
     )
   })
 
@@ -478,7 +489,7 @@ describe('SolvePage', () => {
       undefined,
       undefined,
       'Two',
-      true,
+      false,
     )
   })
 
