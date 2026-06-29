@@ -7,8 +7,10 @@ const meta = {
     buttonLoading: false,
     disabled: false,
     maxMovesInput: '20',
+    maxMovesInvalid: false,
     maxMovesLimit: cube3MaxMovesLimit,
     maxNodesMillionInput: '10',
+    maxNodesMillionInvalid: false,
     notation: '',
     puzzleOptions: [
       {

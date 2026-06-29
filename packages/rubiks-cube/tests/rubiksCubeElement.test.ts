@@ -265,6 +265,10 @@ describe('RubiksCubeElement', () => {
     await expect(element.peek(PeekActions.LeftDown, { cameraSpeedMs: 0 })).resolves.toBe(PeekStates.LeftDown);
     await expect(element.peek('invalid' as PeekActions)).rejects.toThrow('Invalid peek action');
 
+    expect(gsapMocks.to).not.toHaveBeenCalled();
+
+    element.setAttribute(AttributeNames.animationSpeed, '40');
+    await expect(element.move(Movements.Single.U)).resolves.toEqual(expect.any(String));
     expect(gsapMocks.to).toHaveBeenCalled();
   });
 

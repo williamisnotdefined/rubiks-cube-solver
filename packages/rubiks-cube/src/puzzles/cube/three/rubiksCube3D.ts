@@ -1,4 +1,3 @@
-import { gsap } from 'gsap';
 import type { ColorRepresentation } from 'three';
 import { Group, Mesh, MeshBasicMaterial, Object3D, Vector3 } from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
@@ -325,21 +324,32 @@ export default class RubiksCube3D extends Object3D implements RubiksCubeViewInte
     this.setStickerState(defaultStickerState(cubeType));
   }
 
-  slice(slice: Slice, options: SliceAnimationOptions = {}): Promise<void> {
+  async slice(slice: Slice, options: SliceAnimationOptions = {}): Promise<void> {
+    this._currentAnimation?.progress(1);
+    this.fillAnimationGroup(slice);
+    const target = { rotation: 0 };
+    const animationGroup = this._animationGroup;
+    const rotationAxis = new Vector3(
+      slice.axis === Axi.x ? slice.direction : 0,
+      slice.axis === Axi.y ? slice.direction : 0,
+      slice.axis === Axi.z ? slice.direction : 0,
+    ).normalize();
+    const targetRotation = (Math.abs(slice.direction) * Math.PI) / 2;
+    const animationSpeedMs = options?.animationSpeedMs ?? this._cubeSettings.animationSpeedMs;
+
+    if (animationSpeedMs <= 0) {
+      animationGroup.rotateOnWorldAxis(rotationAxis, targetRotation);
+      this.clearAnimationGroup();
+      return;
+    }
+
+    const { gsap } = await import('gsap');
+
     return new Promise((resolve) => {
-      this._currentAnimation?.progress(1);
-      this.fillAnimationGroup(slice);
-      const target = { rotation: 0 };
-      const animationGroup = this._animationGroup;
-      const rotationAxis = new Vector3(
-        slice.axis === Axi.x ? slice.direction : 0,
-        slice.axis === Axi.y ? slice.direction : 0,
-        slice.axis === Axi.z ? slice.direction : 0,
-      ).normalize();
       let previousRotation = 0;
       this._currentAnimation = gsap.to(target, {
-        rotation: (Math.abs(slice.direction) * Math.PI) / 2,
-        duration: (options?.animationSpeedMs ?? this._cubeSettings.animationSpeedMs) / 1000,
+        rotation: targetRotation,
+        duration: animationSpeedMs / 1000,
         ease: options?.ease ?? this._cubeSettings.animationStyle,
         onComplete: () => {
           this.clearAnimationGroup();

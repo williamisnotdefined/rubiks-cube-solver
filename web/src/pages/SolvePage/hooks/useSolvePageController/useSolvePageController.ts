@@ -38,11 +38,11 @@ export function useSolvePageController() {
   const { t } = useTranslation()
   const cubeRef = useRef<RubiksCubeElement | null>(null)
   const healthQuery = useGetHealth()
-  const puzzlesQuery = useGetPuzzles({ enabled: healthQuery.data?.ok === true })
+  const puzzlesQuery = useGetPuzzles()
   const [selectedPuzzleSlug, setSelectedPuzzleSlug] = useState(defaultPuzzleSlug)
   const selectedPuzzle = puzzleBySlug(puzzlesQuery.data, selectedPuzzleSlug)
   const strategiesQuery = useGetPuzzleStrategies({
-    enabled: healthQuery.data?.ok === true && selectedPuzzle !== undefined,
+    enabled: selectedPuzzleSlug.length > 0,
     puzzleSlug: selectedPuzzleSlug,
   })
   const solveMutation = useSolvePuzzleNotation()
@@ -274,8 +274,10 @@ export function useSolvePageController() {
       puzzleOptions,
       selectedPuzzleSlug,
       maxMovesInput,
+      maxMovesInvalid: maxMovesValidation !== undefined,
       maxMovesLimit: activeMaxMovesLimit,
       maxNodesMillionInput,
+      maxNodesMillionInvalid: maxNodesValidation !== undefined,
       buttonLoading,
       disabled,
       scanAvailable,
