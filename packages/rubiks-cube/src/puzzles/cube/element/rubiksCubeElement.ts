@@ -1,4 +1,3 @@
-import { gsap } from 'gsap';
 import { AmbientLight, DirectionalLight, PerspectiveCamera, Scene, Spherical, WebGLRenderer } from 'three';
 import { CameraState } from '../../../shared/cameraState';
 import { debounce } from '../../../shared/debouncer';
@@ -473,14 +472,25 @@ export class RubiksCubeElement extends HTMLElement {
     );
     resizeObserver.observe(this);
 
-    const updateCameraPosition = (
+    const updateCameraPosition = async (
       targetSpherical: Spherical,
       cameraSpeedMs: number,
       ease: gsap.EaseString | gsap.EaseFunction | undefined,
       completedCallback: (() => void) | undefined = undefined,
-    ): void => {
+    ): Promise<void> => {
       const startSpherical = new Spherical().setFromVector3(camera.position);
+
+      if (cameraSpeedMs <= 0) {
+        camera.position.setFromSpherical(targetSpherical);
+        camera.lookAt(cube.position);
+        controls.update();
+        requestRender();
+        completedCallback?.();
+        return;
+      }
+
       const stopRendering = startRenderLoop(false);
+      const { gsap } = await import('gsap');
       gsap.to(startSpherical, {
         radius: targetSpherical.radius,
         theta: targetSpherical.theta,
@@ -510,7 +520,7 @@ export class RubiksCubeElement extends HTMLElement {
       const completedCallback = () =>
         this.dispatchEvent(new CustomEvent(InternalEvents.cameraPeekComplete, { detail: data }));
       const targetSpherical = getTargetCameraSpherical();
-      updateCameraPosition(
+      void updateCameraPosition(
         targetSpherical,
         customEvent.detail.options?.cameraSpeedMs ?? this.settings.cameraSpeedMs,
         'none',
@@ -520,13 +530,13 @@ export class RubiksCubeElement extends HTMLElement {
 
     const onCameraSettingsChanged = () => {
       const targetSpherical = getTargetCameraSpherical();
-      updateCameraPosition(targetSpherical, this.settings.cameraSpeedMs, 'none');
+      void updateCameraPosition(targetSpherical, this.settings.cameraSpeedMs, 'none');
     };
 
     const onCameraRadiusChanged = () => {
       const targetSpherical = new Spherical().setFromVector3(camera.position);
       targetSpherical.radius = this.settings.cameraRadius;
-      updateCameraPosition(targetSpherical, this.settings.cameraSpeedMs, 'none');
+      void updateCameraPosition(targetSpherical, this.settings.cameraSpeedMs, 'none');
     };
 
     const onCameraFieldOfViewChanged = () => {

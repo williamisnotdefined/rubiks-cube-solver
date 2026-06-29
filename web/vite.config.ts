@@ -7,6 +7,17 @@ const threeSourceMarker = '/node_modules/three/src/'
 const rubiksCubeSourceMarker = '/packages/rubiks-cube/src/'
 const i18nLocaleMarker = '/web/src/i18n/locales/'
 
+const radixChunkPackages: Record<string, string> = {
+  '@radix-ui/react-alert-dialog': 'vendor-radix-alert-dialog',
+  '@radix-ui/react-checkbox': 'vendor-radix-checkbox',
+  '@radix-ui/react-dialog': 'vendor-radix-dialog',
+  '@radix-ui/react-popover': 'vendor-radix-popover',
+  '@radix-ui/react-select': 'vendor-radix-select',
+  '@radix-ui/react-switch': 'vendor-radix-switch',
+  '@radix-ui/react-toast': 'vendor-radix-toast',
+  '@radix-ui/react-tooltip': 'vendor-radix-tooltip',
+}
+
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   build: {
@@ -54,15 +65,45 @@ export default defineConfig({
           }
 
           if (id.includes(rubiksCubeSourceMarker)) {
-            return 'vendor-rubiks-cube'
+            const sourcePath = id.slice(id.indexOf(rubiksCubeSourceMarker) + rubiksCubeSourceMarker.length)
+            const [, puzzle] = sourcePath.match(/^puzzles\/([^/]+)\//) ?? []
+
+            if (puzzle !== undefined) {
+              return `vendor-rubiks-${puzzle}`
+            }
+
+            return 'vendor-rubiks-shared'
           }
 
-          if (id.includes('/node_modules/@tanstack/')) {
+          if (
+            id.includes('/node_modules/@tanstack/react-query/') ||
+            id.includes('/node_modules/@tanstack/query-core/')
+          ) {
             return 'vendor-react-query'
           }
 
+          if (
+            id.includes('/node_modules/@tanstack/react-table/') ||
+            id.includes('/node_modules/@tanstack/table-core/')
+          ) {
+            return 'vendor-tanstack-table'
+          }
+
+          if (
+            id.includes('/node_modules/@tanstack/react-virtual/') ||
+            id.includes('/node_modules/@tanstack/virtual-core/')
+          ) {
+            return 'vendor-tanstack-virtual'
+          }
+
           if (id.includes('/node_modules/@radix-ui/')) {
-            return 'vendor-radix'
+            for (const [packageName, chunkName] of Object.entries(radixChunkPackages)) {
+              if (id.includes(`/node_modules/${packageName}/`)) {
+                return chunkName
+              }
+            }
+
+            return 'vendor-radix-core'
           }
 
           if (id.includes('/node_modules/i18next/') || id.includes('/node_modules/react-i18next/')) {
