@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PuzzleVisualizationKind, SolveResult } from '@api/solver/types'
@@ -271,7 +271,7 @@ vi.mock('../visualization/CubeStage', async () => {
           {loadRequested ? (
             <div data-testid="cube-stage-enabled" />
           ) : (
-            <button type="button" onClick={onLoadRequest}>Cube visualization</button>
+            <button type="button" onClick={onLoadRequest}>Preparing cube</button>
           )}
         </section>
       )
@@ -315,7 +315,7 @@ describe('SolvePage', () => {
 
     expect(input).toHaveValue('')
     expect(input).toHaveAttribute('placeholder', scramblePlaceholder)
-    expect(screen.getByRole('button', { name: 'Cube visualization' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Preparing cube' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Solve' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Scan cube with camera' })).toBeInTheDocument()
     expect(screen.getByRole('combobox', { name: 'Puzzle' })).toHaveTextContent('3x3x3 Cube')
@@ -330,6 +330,30 @@ describe('SolvePage', () => {
       'Three',
       false,
     )
+  })
+
+  it('auto-loads the empty cube after a delayed idle period', () => {
+    vi.useFakeTimers()
+
+    try {
+      render(<SolvePage />)
+
+      expect(screen.getByTestId('cube-stage')).toHaveAttribute('data-load-requested', 'false')
+
+      act(() => {
+        vi.advanceTimersByTime(2999)
+      })
+
+      expect(screen.getByTestId('cube-stage')).toHaveAttribute('data-load-requested', 'false')
+
+      act(() => {
+        vi.advanceTimersByTime(1)
+      })
+
+      expect(screen.getByTestId('cube-stage')).toHaveAttribute('data-load-requested', 'true')
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('keeps the scramble field on its own row and limits plus submit on the next row', () => {
@@ -645,6 +669,16 @@ describe('SolvePage', () => {
 
     expect(screen.queryByRole('dialog', { name: 'Scan cube' })).not.toBeInTheDocument()
     expect(screen.getByText('No solution within the configured limits')).toBeInTheDocument()
+  })
+
+  it('loads immediately when the cube renderer is already registered', () => {
+    if (!customElements.get('rubiks-cube')) {
+      customElements.define('rubiks-cube', class extends HTMLElement {})
+    }
+
+    render(<SolvePage />)
+
+    expect(screen.getByTestId('cube-stage')).toHaveAttribute('data-load-requested', 'true')
   })
 })
 

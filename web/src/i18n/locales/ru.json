@@ -645,6 +645,7 @@
     }
   },
   "cube": {
+    "preparingVisualization": "Подготавливаем куб",
     "visualization": "Визуализация куба",
     "visualizationUnavailable": "Визуализация для этой головоломки пока недоступна."
   },
