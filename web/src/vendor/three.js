@@ -1,8 +1,18 @@
-export { DoubleSide, MOUSE, SRGBColorSpace, TOUCH } from 'three/src/constants.js'
+export {
+  ClampToEdgeWrapping,
+  DoubleSide,
+  MirroredRepeatWrapping,
+  MOUSE,
+  RepeatWrapping,
+  SRGBColorSpace,
+  TOUCH,
+} from 'three/src/constants.js'
 export { AmbientLight } from 'three/src/lights/AmbientLight.js'
 export { Box2 } from 'three/src/math/Box2.js'
 export { BoxGeometry } from 'three/src/geometries/BoxGeometry.js'
 export { BufferGeometry } from 'three/src/core/BufferGeometry.js'
+export { CanvasTexture } from 'three/src/textures/CanvasTexture.js'
+export { Color } from 'three/src/math/Color.js'
 export { Controls } from 'three/src/extras/Controls.js'
 export { DirectionalLight } from 'three/src/lights/DirectionalLight.js'
 export { Euler } from 'three/src/math/Euler.js'
