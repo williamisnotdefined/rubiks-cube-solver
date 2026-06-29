@@ -645,6 +645,7 @@
     }
   },
   "cube": {
+    "preparingVisualization": "Préparation du cube",
     "visualization": "Visualisation du cube",
     "visualizationUnavailable": "La visualisation n'est pas encore disponible pour ce puzzle."
   },

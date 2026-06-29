@@ -31,6 +31,8 @@ import { useCubeVisualization } from '../../visualization/hooks/useCubeVisualiza
 const defaultPuzzleSlug = 'cube-3x3x3'
 const cube3VisualizationKind = 'cube3-facelets-v1'
 const cube2VisualizationKind = 'cube2-facelets-v1'
+const cubeElementName = 'rubiks-cube'
+const idleVisualizationAutoLoadDelayMs = 3000
 
 export type SolvePageController = ReturnType<typeof useSolvePageController>
 
@@ -63,7 +65,7 @@ export function useSolvePageController() {
   const [activeSolveSource, setActiveSolveSource] = useState<'notation' | 'scan'>('notation')
   const [scanSessionSolveResult, setScanSessionSolveResult] = useState<ApiSolveResult | undefined>()
   const [limitFailureModalDismissed, setLimitFailureModalDismissed] = useState(false)
-  const [visualizationRequested, setVisualizationRequested] = useState(false)
+  const [visualizationRequested, setVisualizationRequested] = useState(isCubeRendererRegistered)
   const activeSolveResult = activeSolveSource === 'scan' ? scanSessionSolveResult : solveMutation.data
   const activeSolveError = activeSolveSource === 'scan' ? null : solveMutation.error
   const successResult =
@@ -113,11 +115,43 @@ export function useSolvePageController() {
     visualizationSupported && visualizationRequested,
   )
 
+  const requestVisualization = useCallback(() => {
+    setVisualizationRequested(true)
+  }, [])
+
   useEffect(() => {
     if (shouldAutoLoadVisualization) {
-      setVisualizationRequested(true)
+      requestVisualization()
     }
-  }, [shouldAutoLoadVisualization])
+  }, [requestVisualization, shouldAutoLoadVisualization])
+
+  useEffect(() => {
+    let fallbackTimeout: number | undefined
+    let idleCallbackId: number | undefined
+
+    if (!visualizationSupported || visualizationRequested) {
+      return undefined
+    }
+
+    fallbackTimeout = window.setTimeout(() => {
+      fallbackTimeout = undefined
+
+      if (window.requestIdleCallback !== undefined) {
+        idleCallbackId = window.requestIdleCallback(requestVisualization, { timeout: 1500 })
+      } else {
+        requestVisualization()
+      }
+    }, idleVisualizationAutoLoadDelayMs)
+
+    return () => {
+      if (fallbackTimeout !== undefined) {
+        window.clearTimeout(fallbackTimeout)
+      }
+      if (idleCallbackId !== undefined) {
+        window.cancelIdleCallback(idleCallbackId)
+      }
+    }
+  }, [requestVisualization, visualizationRequested, visualizationSupported])
 
   useEffect(() => {
     setLimitFailureModalDismissed(false)
@@ -342,9 +376,13 @@ export function useSolvePageController() {
       cubeType: visualizationCubeType,
       loadRequested: visualizationRequested,
       onReady: markCubeReady,
-      onLoadRequest: () => setVisualizationRequested(true),
+      onLoadRequest: requestVisualization,
     },
   }
+}
+
+function isCubeRendererRegistered(): boolean {
+  return customElements.get(cubeElementName) !== undefined
 }
 
 function puzzleBySlug<TPuzzle extends { slug: string }>(

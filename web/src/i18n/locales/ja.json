@@ -645,6 +645,7 @@
     }
   },
   "cube": {
+    "preparingVisualization": "キューブを準備中",
     "visualization": "キューブの視覚化",
     "visualizationUnavailable": "このパズルでは視覚化はまだ利用できません。"
   },

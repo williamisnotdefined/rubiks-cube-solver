@@ -645,6 +645,7 @@
     }
   },
   "cube": {
+    "preparingVisualization": "正在准备魔方",
     "visualization": "魔方可视化",
     "visualizationUnavailable": "此项目暂不可用可视化。"
   },

@@ -341,6 +341,7 @@
     }
   },
   "cube": {
+    "preparingVisualization": "Preparando cubo",
     "visualization": "Visualización del cubo",
     "visualizationUnavailable": "La visualización aún no está disponible para este puzzle."
   },

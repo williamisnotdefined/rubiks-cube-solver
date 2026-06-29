@@ -81,7 +81,7 @@ describe('CubeStage', () => {
     expect(onReady).toHaveBeenCalled()
   })
 
-  it('renders a lightweight load button before the cube is requested', async () => {
+  it('renders a lightweight preparing control before the cube is requested', async () => {
     const user = userEvent.setup()
     const onLoadRequest = vi.fn()
 
@@ -95,7 +95,7 @@ describe('CubeStage', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: 'Cube visualization' }))
+    await user.click(screen.getByRole('button', { name: 'Preparing cube' }))
 
     expect(register).not.toHaveBeenCalled()
     expect(onLoadRequest).toHaveBeenCalled()

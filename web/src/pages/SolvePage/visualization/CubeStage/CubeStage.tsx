@@ -28,8 +28,6 @@ export function CubeStage({
 
   useEffect(() => {
     let mounted = true
-    let fallbackTimeout: number | undefined
-    let idleCallbackId: number | undefined
 
     if (!loadRequested) {
       return undefined
@@ -49,24 +47,10 @@ export function CubeStage({
       }
     }
 
-    if (window.requestIdleCallback !== undefined) {
-      idleCallbackId = window.requestIdleCallback(() => {
-        void registerCubeElement()
-      }, { timeout: 1500 })
-    } else {
-      fallbackTimeout = window.setTimeout(() => {
-        void registerCubeElement()
-      }, 0)
-    }
+    void registerCubeElement()
 
     return () => {
       mounted = false
-      if (idleCallbackId !== undefined) {
-        window.cancelIdleCallback(idleCallbackId)
-      }
-      if (fallbackTimeout !== undefined) {
-        window.clearTimeout(fallbackTimeout)
-      }
     }
   }, [loadRequested, onReady])
 
@@ -81,7 +65,13 @@ export function CubeStage({
           type="button"
           onClick={onLoadRequest}
         >
-          {t('cube.visualization')}
+          <span className="flex flex-col items-center gap-3">
+            <span
+              className="size-7 animate-spin border-2 border-app-border border-t-app-muted"
+              aria-hidden="true"
+            />
+            <span>{t('cube.preparingVisualization')}</span>
+          </span>
         </button>
       ) : registered ? (
         <rubiks-cube
