@@ -1,0 +1,4 @@
+id	competition_id	event_id	round_type_id	pos	best	average	person_name	person_id	person_country_id	format_id	regional_single_record	regional_average_record
+1	FixtureOpen2026	333	f	1	1000	1200	Fixture Solver	2026FIXT01	PL	a	NR	NR
+2	BrizZonSylwesterOpen2022	clock	f	1	539	564	Przemysław Rogalski	2013ROGA02	PL	a	NR	NR
+3	BrizZonSylwesterOpen2022	clock	f	2	438	576	Tymon Grodzki	2020GROD01	PL	a	NR	NR

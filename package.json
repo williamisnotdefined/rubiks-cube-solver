@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "workspaces": [
+    "apps/wca-data",
     "web",
     "packages/rubiks-cube"
   ],
@@ -23,6 +24,13 @@
     "dev:local:stop": "node scripts/runtime/stop-dev-local.mjs",
     "dev:local:status": "node scripts/runtime/status-dev-local.mjs",
     "web:dev": "npm run dev -w @rubiks-cube-solver/web",
+    "wca:api:dev": "npm run dev:api -w @rubiks-cube-solver/wca-data",
+    "wca:worker:dev": "npm run dev:worker -w @rubiks-cube-solver/wca-data",
+    "wca:sync-once": "npm run sync:once -w @rubiks-cube-solver/wca-data --",
+    "wca:smoke:public": "node scripts/wca-data/public-smoke.mjs",
+    "wca:test": "npm run test -w @rubiks-cube-solver/wca-data",
+    "wca:build": "npm run build -w @rubiks-cube-solver/wca-data",
+    "wca:db:migrate": "npm run db:migrate -w @rubiks-cube-solver/wca-data",
     "api:dev": "cargo run -p rubiks-cube-solver-api",
     "api:dev:watch": "if command -v cargo-watch >/dev/null 2>&1; then cargo watch -x \"run -p rubiks-cube-solver-api\"; else cargo run -p rubiks-cube-solver-api; fi",
     "vision:dev": "if [ -x .venv/bin/python ]; then .venv/bin/python -m uvicorn scanner.runtime.app:app --host 127.0.0.1 --port 8790 --reload; else python -m uvicorn scanner.runtime.app:app --host 127.0.0.1 --port 8790 --reload; fi",
@@ -111,7 +119,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
-    "@types/node": "^26.0.0",
+    "@types/node": "^24.13.2",
     "concurrently": "^10.0.3",
     "husky": "^9.1.7",
     "typescript": "^6.0.3",

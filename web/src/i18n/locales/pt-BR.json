@@ -353,6 +353,7 @@
   },
   "navigation": {
     "algorithms": "Algoritmos",
+    "api": "API",
     "algorithmsMenu": "Métodos por puzzle",
     "channels": "Canais YT",
     "sites": "Sites",
@@ -369,6 +370,13 @@
     "themeLight": "Claro",
     "themeSystem": "Sistema",
     "timer": "Timer"
+  },
+  "wcaDataApi": {
+    "docsLink": "Abrir docs",
+    "disclaimer": "Esta API não é oficial e não é afiliada à World Cube Association. Os dados vêm do WCA Results Export público.",
+    "kicker": "API para devs",
+    "subtitle": "API JSON pública para competições, pessoas, rankings e resultados WCA, atualizada diariamente pelo WCA Results Export oficial.",
+    "title": "WCA Data API não oficial"
   },
   "notations": {
     "groups": {

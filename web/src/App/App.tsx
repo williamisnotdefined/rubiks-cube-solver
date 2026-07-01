@@ -3,9 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router'
 import { AppErrorBoundary } from '@components/AppErrorBoundary'
 import { AppShell } from '@components/layout/AppShell'
-import type { PageNavRoute } from '@components/layout/PageNav'
 import { Seo } from '@src/seo/Seo'
 import { localeFromPathname, localePrefix, localizedPath, prefixedSeoLocales, stripLocalePrefix } from '@src/seo/routes'
+import { activeRouteFromPath } from './activeRouteFromPath'
 
 const SolvePage = lazy(() => import('../pages/SolvePage/SolvePageRoute').then((module) => ({ default: module.SolvePageRoute })))
 const TimerPage = lazy(() => import('../pages/TimerPage/TimerPage').then((module) => ({ default: module.TimerPage })))
@@ -14,6 +14,7 @@ const AlgorithmsPuzzlePage = lazy(() => import('../pages/AlgorithmsPage/Algorith
 const AlgorithmSetPage = lazy(() => import('../pages/AlgorithmsPage/AlgorithmSetPage').then((module) => ({ default: module.AlgorithmSetPage })))
 const CubingSitesPage = lazy(() => import('../pages/CubingSitesPage/CubingSitesPage').then((module) => ({ default: module.CubingSitesPage })))
 const NotationGuidePage = lazy(() => import('../pages/NotationsPage/NotationGuidePage').then((module) => ({ default: module.NotationGuidePage })))
+const WcaDataApiPage = lazy(() => import('../pages/WcaDataApiPage/WcaDataApiPage').then((module) => ({ default: module.WcaDataApiPage })))
 const YouTubeChannelsPage = lazy(() => import('../pages/YouTubeChannelsPage/YouTubeChannelsPage').then((module) => ({ default: module.YouTubeChannelsPage })))
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
             <Route path="/timer" element={<TimerPage />} />
             <Route path="/channels" element={<YouTubeChannelsPage />} />
             <Route path="/sites" element={<CubingSitesPage />} />
+            <Route path="/api/wca-data" element={<WcaDataApiPage />} />
             <Route path="/algoritmos" element={<AlgorithmsIndexPage />} />
             <Route path="/algoritmos/:puzzleId" element={<AlgorithmsPuzzlePage />} />
             <Route path="/algoritmos/:puzzleId/:methodId" element={<AlgorithmSetPage />} />
@@ -46,6 +48,7 @@ function App() {
                 <Route key={`${prefix}-timer`} path={`/${prefix}/timer`} element={<TimerPage />} />,
                 <Route key={`${prefix}-channels`} path={`/${prefix}/channels`} element={<YouTubeChannelsPage />} />,
                 <Route key={`${prefix}-sites`} path={`/${prefix}/sites`} element={<CubingSitesPage />} />,
+                <Route key={`${prefix}-api-wca-data`} path={`/${prefix}/api/wca-data`} element={<WcaDataApiPage />} />,
                 <Route key={`${prefix}-algoritmos`} path={`/${prefix}/algoritmos`} element={<AlgorithmsIndexPage />} />,
                 <Route key={`${prefix}-algoritmos-puzzle`} path={`/${prefix}/algoritmos/:puzzleId`} element={<AlgorithmsPuzzlePage />} />,
                 <Route key={`${prefix}-algoritmos-method`} path={`/${prefix}/algoritmos/:puzzleId/:methodId`} element={<AlgorithmSetPage />} />,
@@ -59,30 +62,6 @@ function App() {
       </AppErrorBoundary>
     </AppShell>
   )
-}
-
-function activeRouteFromPath(pagePath: string): PageNavRoute {
-  if (pagePath === '/channels') {
-    return 'channels'
-  }
-
-  if (pagePath === '/sites') {
-    return 'sites'
-  }
-
-  if (pagePath.startsWith('/notations')) {
-    return 'notations'
-  }
-
-  if (pagePath.startsWith('/algoritmos')) {
-    return 'algorithms'
-  }
-
-  if (pagePath === '/timer') {
-    return 'timer'
-  }
-
-  return 'solve'
 }
 
 function NotFoundPage() {

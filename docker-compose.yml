@@ -9,6 +9,23 @@ x-runtime-hardening: &runtime-hardening
     - /tmp:size=64m,mode=1777
 
 services:
+  edge:
+    <<: *runtime-hardening
+    image: nginxinc/nginx-unprivileged:1.29-alpine
+    depends_on:
+      app:
+        condition: service_started
+      wca-data-api:
+        condition: service_healthy
+    volumes:
+      - ./deploy/nginx/speedcube.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "127.0.0.1:${RUBIKS_APP_HOST_PORT:-8787}:8080"
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+      - /var/cache/nginx:size=64m,mode=1777
+      - /var/run:size=8m,mode=1777
+
   vision:
     <<: *runtime-hardening
     build:
@@ -42,5 +59,95 @@ services:
       RUBIKS_WEB_DIST_DIR: /app/web
       RUBIKS_PRUNING_TABLE_DIR: /app/pruning-tables
       RUBIKS_VISION_URL: http://vision:8790
+    expose:
+      - "8787"
+
+  wca-data-postgres:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_DB: wca_data
+      POSTGRES_USER: wca_data
+      POSTGRES_PASSWORD: ${WCA_DATA_POSTGRES_PASSWORD:?Set WCA_DATA_POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wca_data -d wca_data"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    volumes:
+      - wca-data-postgres-data:/var/lib/postgresql/data
+
+  wca-data-migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.wca-data
+    depends_on:
+      wca-data-postgres:
+        condition: service_healthy
+    command: ["node", "dist/db/migrate.js"]
+    environment:
+      WCA_DATA_DATABASE_URL: postgres://wca_data:${WCA_DATA_POSTGRES_PASSWORD:?Set WCA_DATA_POSTGRES_PASSWORD}@wca-data-postgres:5432/wca_data
+      WCA_DATA_NODE_ENV: production
+      WCA_DATA_PUBLIC_BASE_URL: http://speedcube.com.br/api
+
+  wca-data-api:
+    <<: *runtime-hardening
+    build:
+      context: .
+      dockerfile: Dockerfile.wca-data
+    depends_on:
+      wca-data-migrate:
+        condition: service_completed_successfully
+    environment:
+      WCA_DATA_DATABASE_URL: postgres://wca_data:${WCA_DATA_POSTGRES_PASSWORD:?Set WCA_DATA_POSTGRES_PASSWORD}@wca-data-postgres:5432/wca_data
+      WCA_DATA_HOST: 0.0.0.0
+      WCA_DATA_NODE_ENV: production
+      WCA_DATA_PORT: 8796
+      WCA_DATA_PUBLIC_BASE_URL: http://speedcube.com.br/api
+    expose:
+      - "8796"
     ports:
-      - "127.0.0.1:${RUBIKS_APP_HOST_PORT:-8787}:8787"
+      - "${WCA_DATA_API_HOST_IP:-127.0.0.1}:${WCA_DATA_API_HOST_PORT:-8796}:8796"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8796/health').then((response)=>process.exit(response.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  wca-data-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.wca-data
+    depends_on:
+      wca-data-migrate:
+        condition: service_completed_successfully
+    command: ["npm", "run", "start:worker"]
+    environment:
+      WCA_DATA_DATABASE_URL: postgres://wca_data:${WCA_DATA_POSTGRES_PASSWORD:?Set WCA_DATA_POSTGRES_PASSWORD}@wca-data-postgres:5432/wca_data
+      WCA_DATA_NODE_ENV: production
+      WCA_DATA_PUBLIC_BASE_URL: http://speedcube.com.br/api
+      WCA_DATA_STORAGE_DIR: /var/lib/wca-data/storage
+      WCA_DATA_SYNC_ENABLED: ${WCA_DATA_SYNC_ENABLED:-true}
+    volumes:
+      - wca-data-storage:/var/lib/wca-data/storage
+
+  wca-data-sync-once:
+    build:
+      context: .
+      dockerfile: Dockerfile.wca-data
+    profiles:
+      - manual
+    depends_on:
+      wca-data-migrate:
+        condition: service_completed_successfully
+    command: ["npm", "run", "sync:once"]
+    environment:
+      WCA_DATA_DATABASE_URL: postgres://wca_data:${WCA_DATA_POSTGRES_PASSWORD:?Set WCA_DATA_POSTGRES_PASSWORD}@wca-data-postgres:5432/wca_data
+      WCA_DATA_NODE_ENV: production
+      WCA_DATA_PUBLIC_BASE_URL: http://speedcube.com.br/api
+      WCA_DATA_STORAGE_DIR: /var/lib/wca-data/storage
+    volumes:
+      - wca-data-storage:/var/lib/wca-data/storage
+
+volumes:
+  wca-data-postgres-data:
+  wca-data-storage:

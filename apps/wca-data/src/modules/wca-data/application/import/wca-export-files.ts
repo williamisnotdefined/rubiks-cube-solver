@@ -1,0 +1,18 @@
+export const requiredWcaExportFiles = [
+  'WCA_export_continents.tsv',
+  'WCA_export_countries.tsv',
+  'WCA_export_events.tsv',
+  'WCA_export_competitions.tsv',
+  'WCA_export_persons.tsv',
+  'WCA_export_results.tsv',
+  'WCA_export_result_attempts.tsv',
+  'WCA_export_ranks_single.tsv',
+  'WCA_export_ranks_average.tsv',
+  'WCA_export_round_types.tsv',
+  'WCA_export_formats.tsv',
+  'WCA_export_championships.tsv',
+  'WCA_export_scrambles.tsv',
+  'WCA_export_eligible_country_iso2s_for_championship.tsv',
+  'metadata.json',
+  'README.md',
+] as const

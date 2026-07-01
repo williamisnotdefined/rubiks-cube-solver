@@ -52,6 +52,9 @@ type SeoCopy = {
   algorithms: string
   algorithmsDescription: string
   algorithmsTitle: string
+  apiWcaData: string
+  apiWcaDataDescription: string
+  apiWcaDataTitle: string
   channels: string
   channelsDescription: string
   channelsTitle: string
@@ -220,6 +223,9 @@ const copy: Record<SeoLocale, SeoCopy> = {
     algorithms: 'Algorithmen',
     algorithmsDescription: 'Durchsuche Speedcubing-Algorithmen fuer 2x2, 3x3, Big Cubes, Pyraminx, Megaminx, Square-1 und mehr.',
     algorithmsTitle: 'Rubik Cube Algorithmen',
+    apiWcaData: 'WCA Data API',
+    apiWcaDataDescription: 'Public JSON API for WCA competitions, people, rankings and results, updated from the WCA Results Export.',
+    apiWcaDataTitle: 'Unofficial WCA Data API',
     channels: 'Kanaele',
     channelsDescription: 'Entdecke Cubing-YouTube-Kanaele fuer Tutorials, Speedcubing, Reviews und Puzzle-Lernen.',
     channelsTitle: 'Cubing YouTube Kanaele',
@@ -247,6 +253,9 @@ const copy: Record<SeoLocale, SeoCopy> = {
     algorithms: 'Algorithms',
     algorithmsDescription: 'Browse speedcubing algorithm sets for 2x2, 3x3, big cubes, Pyraminx, Megaminx, Square-1, and more.',
     algorithmsTitle: "Rubik's Cube Algorithms",
+    apiWcaData: 'WCA Data API',
+    apiWcaDataDescription: 'Public JSON API for WCA competitions, people, rankings and results, updated from the WCA Results Export.',
+    apiWcaDataTitle: 'Unofficial WCA Data API',
     channels: 'Channels',
     channelsDescription: 'Discover cubing YouTube channels for tutorials, speedcubing walkthroughs, reviews, and puzzle learning.',
     channelsTitle: 'Cubing YouTube Channels',
@@ -274,6 +283,9 @@ const copy: Record<SeoLocale, SeoCopy> = {
     algorithms: 'Algoritmos',
     algorithmsDescription: 'Explora algoritmos de speedcubing para 2x2, 3x3, cubos grandes, Pyraminx, Megaminx, Square-1 y mas.',
     algorithmsTitle: 'Algoritmos de Cubo Rubik',
+    apiWcaData: 'WCA Data API',
+    apiWcaDataDescription: 'API JSON publica para competiciones, personas, rankings y resultados WCA, actualizada desde WCA Results Export.',
+    apiWcaDataTitle: 'API WCA Data no oficial',
     channels: 'Canales',
     channelsDescription: 'Descubre canales de YouTube de cubing con tutoriales, speedcubing, reseñas y aprendizaje de puzzles.',
     channelsTitle: 'Canales de Cubing en YouTube',
@@ -301,6 +313,9 @@ const copy: Record<SeoLocale, SeoCopy> = {
     algorithms: 'Algorithmes',
     algorithmsDescription: 'Parcourez des algorithmes de speedcubing pour 2x2, 3x3, grands cubes, Pyraminx, Megaminx, Square-1 et plus.',
     algorithmsTitle: 'Algorithmes de Rubik Cube',
+    apiWcaData: 'WCA Data API',
+    apiWcaDataDescription: 'API JSON publique pour competitions WCA, personnes, classements et resultats, mise a jour depuis WCA Results Export.',
+    apiWcaDataTitle: 'API WCA Data non officielle',
     channels: 'Chaines',
     channelsDescription: 'Decouvrez des chaines YouTube de cubing pour tutoriels, speedcubing, avis et apprentissage des puzzles.',
     channelsTitle: 'Chaines YouTube Cubing',
@@ -328,6 +343,9 @@ const copy: Record<SeoLocale, SeoCopy> = {
     algorithms: 'Algoritmi',
     algorithmsDescription: 'Sfoglia set di algoritmi speedcubing per 2x2, 3x3, big cube, Pyraminx, Megaminx, Square-1 e altro.',
     algorithmsTitle: 'Algoritmi Cubo di Rubik',
+    apiWcaData: 'WCA Data API',
+    apiWcaDataDescription: 'API JSON pubblica per competizioni WCA, persone, ranking e risultati, aggiornata da WCA Results Export.',
+    apiWcaDataTitle: 'API WCA Data non ufficiale',
     channels: 'Canali',
     channelsDescription: 'Scopri canali YouTube di cubing per tutorial, speedcubing, recensioni e apprendimento puzzle.',
     channelsTitle: 'Canali YouTube Cubing',
@@ -355,6 +373,9 @@ const copy: Record<SeoLocale, SeoCopy> = {
     algorithms: 'アルゴリズム',
     algorithmsDescription: '2x2、3x3、多分割キューブ、Pyraminx、Megaminx、Square-1 などのスピードキューブ用アルゴリズムを閲覧できます。',
     algorithmsTitle: 'ルービックキューブ アルゴリズム',
+    apiWcaData: 'WCA Data API',
+    apiWcaDataDescription: 'WCA Results Export をもとにした大会、人物、ランキング、結果向けの公開 JSON API。',
+    apiWcaDataTitle: '非公式 WCA Data API',
     channels: 'チャンネル',
     channelsDescription: 'チュートリアル、スピードキューブ、レビュー、学習に役立つキューブ系 YouTube チャンネルを見つけましょう。',
     channelsTitle: 'キューブ系 YouTube チャンネル',
@@ -382,6 +403,9 @@ const copy: Record<SeoLocale, SeoCopy> = {
     algorithms: 'Algoritmos',
     algorithmsDescription: 'Explore algoritmos de speedcubing para 2x2, 3x3, cubos grandes, Pyraminx, Megaminx, Square-1 e mais.',
     algorithmsTitle: 'Algoritmos de Cubo Magico',
+    apiWcaData: 'WCA Data API',
+    apiWcaDataDescription: 'API JSON publica para competicoes, pessoas, rankings e resultados WCA, atualizada pelo WCA Results Export.',
+    apiWcaDataTitle: 'WCA Data API nao oficial',
     channels: 'Canais',
     channelsDescription: 'Conheca canais de cubo magico no YouTube com tutoriais, speedcubing, reviews e aprendizado de puzzles.',
     channelsTitle: 'Canais de Cubo Magico no YouTube',
@@ -409,6 +433,9 @@ const copy: Record<SeoLocale, SeoCopy> = {
     algorithms: 'Алгоритмы',
     algorithmsDescription: 'Алгоритмы для 2x2, 3x3, больших кубов, Pyraminx, Megaminx, Square-1 и других головоломок.',
     algorithmsTitle: 'Алгоритмы кубика Рубика',
+    apiWcaData: 'WCA Data API',
+    apiWcaDataDescription: 'Публичный JSON API для соревнований WCA, участников, рейтингов и результатов на основе WCA Results Export.',
+    apiWcaDataTitle: 'Неофициальный WCA Data API',
     channels: 'Каналы',
     channelsDescription: 'YouTube-каналы о кубинге: обучение, спидкубинг, обзоры и изучение головоломок.',
     channelsTitle: 'YouTube-каналы о кубинге',
@@ -436,6 +463,9 @@ const copy: Record<SeoLocale, SeoCopy> = {
     algorithms: '算法',
     algorithmsDescription: '浏览 2x2、3x3、高阶魔方、Pyraminx、Megaminx、Square-1 等速拧算法。',
     algorithmsTitle: '魔方算法',
+    apiWcaData: 'WCA Data API',
+    apiWcaDataDescription: '基于 WCA Results Export 的公开 JSON API，用于 WCA 比赛、选手、排名和成绩。',
+    apiWcaDataTitle: '非官方 WCA Data API',
     channels: '频道',
     channelsDescription: '发现用于教程、速拧、评测和学习的魔方 YouTube 频道。',
     channelsTitle: '魔方 YouTube 频道',
@@ -582,6 +612,15 @@ function metadataForPath(path: string, locale: SeoLocale): Omit<SeoMetadata, 'ca
     }
   }
 
+  if (path === '/api/wca-data') {
+    return {
+      breadcrumbs: [breadcrumb(locale, 'apiWcaData', '/api/wca-data')],
+      description: localeCopy.apiWcaDataDescription,
+      jsonLdKind: 'tech-article',
+      title: localeCopy.apiWcaDataTitle,
+    }
+  }
+
   if (path === '/algoritmos') {
     return {
       breadcrumbs: [breadcrumb(locale, 'algorithms', '/algoritmos')],
@@ -650,7 +689,7 @@ function metadataForPath(path: string, locale: SeoLocale): Omit<SeoMetadata, 'ca
   return undefined
 }
 
-function breadcrumb(locale: SeoLocale, key: 'algorithms' | 'channels' | 'home' | 'notations' | 'sites' | 'solver' | 'timer', path: string): SeoBreadcrumb {
+function breadcrumb(locale: SeoLocale, key: 'algorithms' | 'apiWcaData' | 'channels' | 'home' | 'notations' | 'sites' | 'solver' | 'timer', path: string): SeoBreadcrumb {
   const labels = copy[locale]
 
   return { name: labels[key], path }
@@ -675,6 +714,7 @@ export const seoIndexablePaths = [
   '/timer',
   '/channels',
   '/sites',
+  '/api/wca-data',
   '/algoritmos',
   ...algorithmPuzzles.map((puzzle) => puzzle.path),
   ...algorithmSetSummaries.map((set) => set.path),

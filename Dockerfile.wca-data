@@ -1,0 +1,20 @@
+FROM node:24-bookworm-slim
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+COPY apps/wca-data/package.json apps/wca-data/package.json
+COPY packages/rubiks-cube/package.json packages/rubiks-cube/package.json
+COPY web/package.json web/package.json
+
+RUN npm ci --workspace @rubiks-cube-solver/wca-data --include-workspace-root=false --ignore-scripts
+
+COPY apps/wca-data apps/wca-data
+
+RUN npm run build -w @rubiks-cube-solver/wca-data
+
+ENV WCA_DATA_NODE_ENV=production
+
+WORKDIR /app/apps/wca-data
+
+CMD ["npm", "run", "start:api"]

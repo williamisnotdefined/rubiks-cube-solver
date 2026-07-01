@@ -22,6 +22,8 @@ scanner/models
 scanner/outputs
 scanner/references
 scanner/runs
+apps/wca-data/storage
+storage/wca-data
 *.log
 *.onnx
 *.onnx.data
