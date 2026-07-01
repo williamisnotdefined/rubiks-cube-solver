@@ -172,7 +172,7 @@ export class PostgresGeneralCanonicalTransformer implements GeneralCanonicalTran
           and championship_type <> ''
           and eligible_country_iso2 is not null
           and eligible_country_iso2 <> ''
-        order by championship_type, eligible_country_iso2
+        order by 2, 3
         returning 1
       )
       select count(*)::integer as count from inserted
