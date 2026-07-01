@@ -123,6 +123,15 @@ describe('WCA control schema migrations', () => {
     expect(sql).toContain('create table wca_scrambles')
     expect(sql).toContain('wca_scrambles_dataset_full_filter_idx')
   })
+
+  it('defines staging and canonical championship eligible country tables', async () => {
+    const sql = await migrationSql('0015_create_wca_championship_eligible_country_tables.sql')
+
+    expect(sql).toContain('create table wca_staging_eligible_country_iso2s_for_championship')
+    expect(sql).toContain('create table wca_championship_eligible_countries')
+    expect(sql).toContain('primary key (dataset_id, championship_type, eligible_country_iso2)')
+    expect(sql).toContain('wca_championship_eligible_countries_dataset_country_idx')
+  })
 })
 
 function migrationSql(fileName: string): Promise<string> {

@@ -30,6 +30,7 @@ describe('WcaSyncCycleService', () => {
       transformGeneral: {
         execute: async () => ({
           championships: 0,
+          championshipEligibleCountries: 2,
           competitions: 1,
           continents: 2,
           countries: 2,
@@ -70,7 +71,7 @@ describe('WcaSyncCycleService', () => {
       },
       staging: { totalRows: 2 },
       status: 'published',
-      transform: { championships: 0, competitions: 1, continents: 2, countries: 2, events: 2, formats: 1, persons: 1, ranksAverage: 1, ranksSingle: 1, resultAttempts: 3, results: 1, roundTypes: 1, scrambles: 1 },
+      transform: { championships: 0, championshipEligibleCountries: 2, competitions: 1, continents: 2, countries: 2, events: 2, formats: 1, persons: 1, ranksAverage: 1, ranksSingle: 1, resultAttempts: 3, results: 1, roundTypes: 1, scrambles: 1 },
     })
     expect(datasetVersions.records).toMatchObject([{ id: 'dataset-1', isActive: true, status: 'active' }])
     expect(importRuns.records).toHaveLength(1)

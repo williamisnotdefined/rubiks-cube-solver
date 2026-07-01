@@ -10,6 +10,7 @@ export type DatasetRepository = {
 
 export type DatasetRecordCounts = {
   championships: number
+  championshipEligibleCountries: number
   competitions: number
   continents: number
   countries: number

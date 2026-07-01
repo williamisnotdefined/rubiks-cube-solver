@@ -58,7 +58,7 @@ describe('createPostgresSyncWcaExportService', () => {
       publish: { publishedAt: '2026-06-30T12:00:00.000Z' },
       staging: { totalRows: 1 },
       status: 'published',
-      transform: { championships: 0, competitions: 1, continents: 2, countries: 2, events: 2, formats: 1, persons: 1, ranksAverage: 1, ranksSingle: 1, resultAttempts: 3, results: 1, roundTypes: 1, scrambles: 1 },
+      transform: { championships: 0, championshipEligibleCountries: 2, competitions: 1, continents: 2, countries: 2, events: 2, formats: 1, persons: 1, ranksAverage: 1, ranksSingle: 1, resultAttempts: 3, results: 1, roundTypes: 1, scrambles: 1 },
     })
     expect(result.dataset.id).toMatch(/^[0-9a-f-]{36}$/)
     expect(result.importRun.id).toMatch(/^[0-9a-f-]{36}$/)
@@ -124,6 +124,10 @@ function fakeDb(calls: Array<{ params?: unknown[]; sql: string }>): Queryable {
 
       if (query.includes('insert into wca_championships')) {
         return { rows: [{ count: 0 }] }
+      }
+
+      if (query.includes('insert into wca_championship_eligible_countries')) {
+        return { rows: [{ count: 2 }] }
       }
 
       if (query.includes('insert into wca_scrambles')) {

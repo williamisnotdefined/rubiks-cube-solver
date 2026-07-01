@@ -101,9 +101,9 @@ describe('WCA Data CLI', () => {
           publishedAt: '2026-06-30T12:34:56.000Z',
         },
         publish: { publishedAt: '2026-06-30T12:34:56.000Z' },
-        staging: { totalRows: 35 },
+        staging: { totalRows: 37 },
         status: 'published',
-        transform: { championships: 1, competitions: 3, continents: 2, countries: 2, events: 2, formats: 1, persons: 4, ranksAverage: 1, ranksSingle: 1, resultAttempts: 13, results: 3, roundTypes: 1, scrambles: 1 },
+        transform: { championships: 1, championshipEligibleCountries: 2, competitions: 3, continents: 2, countries: 2, events: 2, formats: 1, persons: 4, ranksAverage: 1, ranksSingle: 1, resultAttempts: 13, results: 3, roundTypes: 1, scrambles: 1 },
       },
     })
   })

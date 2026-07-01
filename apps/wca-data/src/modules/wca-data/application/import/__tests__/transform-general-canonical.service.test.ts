@@ -5,6 +5,7 @@ describe('TransformGeneralCanonicalService', () => {
   it('delegates dataset-scoped transform work to the transformer', async () => {
     const replaceGeneralTables = vi.fn(async () => ({
       championships: 0,
+      championshipEligibleCountries: 2,
       competitions: 1,
       continents: 7,
       countries: 200,
@@ -25,6 +26,7 @@ describe('TransformGeneralCanonicalService', () => {
       importRunId: '22222222-2222-4222-8222-222222222222',
     })).resolves.toEqual({
       championships: 0,
+      championshipEligibleCountries: 2,
       competitions: 1,
       continents: 7,
       countries: 200,

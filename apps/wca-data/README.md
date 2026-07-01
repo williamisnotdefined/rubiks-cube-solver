@@ -40,7 +40,7 @@ Dry run may contact the configured WCA export metadata URL. It does not download
 
 ## Real TSV Import Notes
 
-The importer supports the current WCA export v2 snake_case TSV filenames and the legacy fixture filenames used by local tests. Supported canonical data currently includes championships, competitions, continents, countries, events, formats, persons, rankings, result attempts, results, round types, and scrambles.
+The importer supports the current WCA export v2 snake_case TSV filenames and the legacy fixture filenames used by local tests. Supported canonical data currently includes championships, championship eligible countries, competitions, continents, countries, events, formats, persons, rankings, result attempts, results, round types, and scrambles.
 
 Downloads retry transient HTTP `429` and `5xx` responses. If the WCA TSV endpoint continues returning an HTTP error after retries, treat it as an external blocker and rerun later with the same disposable database/storage checks.
 
@@ -158,6 +158,7 @@ Production rollout recommendation:
 - `GET http://speedcube.com.br/api/wca-data/v1/openapi.yaml`
 - `GET http://speedcube.com.br/api/wca-data/v1/openapi.json`
 - `GET http://speedcube.com.br/api/wca-data/v1/docs`
+- `GET http://speedcube.com.br/api/wca-data/v1/championship-eligible-countries`
 - `GET http://speedcube.com.br/api/wca-data/v1/championships`
 - `GET http://speedcube.com.br/api/wca-data/v1/continents`
 - `GET http://speedcube.com.br/api/wca-data/v1/events`
@@ -191,6 +192,7 @@ List endpoints use this envelope:
 Common filters:
 
 - `/competitions`: `countryIso2`, `eventId`, `year`, `page`, `pageSize`
+- `/championship-eligible-countries`: `championshipType`, `countryIso2`, `page`, `pageSize`
 - `/persons`: `countryIso2`, `search`, `page`, `pageSize`
 - `/rankings`: `eventId`, `type`, `region`, `countryIso2`, `continentId`, `page`, `pageSize`
 - `/results`: `competitionId`, `eventId`, `personId`, `page`, `pageSize`

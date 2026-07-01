@@ -7,7 +7,7 @@ info:
 
     Welcome to the **unofficial WCA Data API** for speedcube.com.br.
 
-    This API provides public JSON access to World Cube Association competition data: events, countries, competitions, competitors, rankings, results, and scrambles. It is designed for applications that need a stable HTTP API backed by the public WCA Results Export without executing downloaded SQL or coupling data ingestion to user requests.
+    This API provides public JSON access to World Cube Association competition data: events, countries, competitions, competitors, rankings, results, scrambles, and championship eligibility references. It is designed for applications that need a stable HTTP API backed by the public WCA Results Export without executing downloaded SQL or coupling data ingestion to user requests.
 
     > This API is not affiliated with, endorsed by, or operated by the World Cube Association.
 
@@ -189,6 +189,7 @@ paths:
                           ranksSingle: 1021599
                           ranksAverage: 886204
                           scrambles: 1234567
+                          championshipEligibleCountries: 4
                           championships: 894
                           continents: 7
                           countries: 207
@@ -533,6 +534,56 @@ paths:
                       exportDate: '2026-06-30T00:00:16.000Z'
                       exportVersion: v2.0.2
                       source: World Cube Association Results Export
+        '503':
+          $ref: '#/components/responses/DatasetUnavailable'
+
+  /wca-data/v1/championship-eligible-countries:
+    get:
+      tags: [Reference data]
+      summary: List championship eligible countries
+      operationId: listChampionshipEligibleCountries
+      description: |
+        Lists country ISO2 codes eligible for special cross-country championship types from the WCA export.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - name: championshipType
+          in: query
+          description: Filter by championship type, for example `greater_china` or `world`.
+          schema:
+            type: string
+            example: greater_china
+        - name: countryIso2
+          in: query
+          description: Filter by eligible country ISO2 code.
+          schema:
+            type: string
+            example: CN
+      responses:
+        '200':
+          description: Championship eligible country rows.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChampionshipEligibleCountryListResponse'
+              examples:
+                eligibleCountries:
+                  value:
+                    data:
+                      - championshipType: greater_china
+                        eligibleCountryIso2: CN
+                    pagination:
+                      page: 1
+                      pageSize: 50
+                      total: 4
+                      hasNextPage: false
+                    meta:
+                      datasetId: 2026-06-30-v2.0.2
+                      exportDate: '2026-06-30T00:00:16.000Z'
+                      exportVersion: v2.0.2
+                      source: World Cube Association Results Export
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
         '503':
           $ref: '#/components/responses/DatasetUnavailable'
 
@@ -1211,7 +1262,7 @@ components:
           example: 102666
     DatasetRecordCounts:
       type: object
-      required: [totalRows, championships, competitions, continents, countries, events, formats, persons, ranksAverage, ranksSingle, resultAttempts, results, roundTypes, scrambles]
+      required: [totalRows, championships, championshipEligibleCountries, competitions, continents, countries, events, formats, persons, ranksAverage, ranksSingle, resultAttempts, results, roundTypes, scrambles]
       properties:
         totalRows:
           type: integer
@@ -1221,6 +1272,10 @@ components:
           type: integer
           minimum: 0
           example: 894
+        championshipEligibleCountries:
+          type: integer
+          minimum: 0
+          example: 4
         competitions:
           type: integer
           minimum: 0
@@ -1413,6 +1468,16 @@ components:
         championshipType:
           type: string
           example: world
+    ChampionshipEligibleCountry:
+      type: object
+      required: [championshipType, eligibleCountryIso2]
+      properties:
+        championshipType:
+          type: string
+          example: greater_china
+        eligibleCountryIso2:
+          type: string
+          example: CN
     Competition:
       type: object
       required: [id, name, city, countryIso2, information, date, events, delegates, organizers, venue, externalWebsite, cancelled]
@@ -1711,6 +1776,15 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/Championship'
+    ChampionshipEligibleCountryListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ListEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/ChampionshipEligibleCountry'
     CompetitionListResponse:
       allOf:
         - $ref: '#/components/schemas/ListEnvelope'

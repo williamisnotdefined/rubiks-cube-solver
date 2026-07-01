@@ -9,6 +9,11 @@ export type WcaChampionshipRecord = {
   id: number
 }
 
+export type WcaChampionshipEligibleCountryRecord = {
+  championshipType: string
+  eligibleCountryIso2: string
+}
+
 export type WcaCompetitionRecord = {
   cancelled: boolean
   cellName: string

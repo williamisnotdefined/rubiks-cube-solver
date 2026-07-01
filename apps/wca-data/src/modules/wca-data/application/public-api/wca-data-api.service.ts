@@ -2,6 +2,7 @@ import { AppError } from '../../../../shared/errors/app-error.js'
 import type { DatasetMetadata } from '../../domain/dataset-metadata.js'
 import type {
   WcaChampionshipRecord,
+  WcaChampionshipEligibleCountryRecord,
   WcaContinentRecord,
   WcaCompetitionRecord,
   WcaCountryRecord,
@@ -61,6 +62,11 @@ export type ListScramblesInput = WcaDataListInput & {
 export type ListChampionshipsInput = WcaDataListInput & {
   championshipType?: string | undefined
   competitionId?: string | undefined
+}
+
+export type ListChampionshipEligibleCountriesInput = WcaDataListInput & {
+  championshipType?: string | undefined
+  countryIso2?: string | undefined
 }
 
 export type WcaDataMeta = {
@@ -171,6 +177,15 @@ export function createWcaDataApiService({ data, datasets }: WcaDataApiServiceDep
       return pageResponse(championships, input, meta)
     },
 
+    async listChampionshipEligibleCountries(
+      input: ListChampionshipEligibleCountriesInput = {},
+    ): Promise<WcaDataListResponse<PublicChampionshipEligibleCountry>> {
+      const { dataset, meta } = await activeDatasetContext()
+      const items = (await data.listChampionshipEligibleCountries(dataset.id, input)).map(publicChampionshipEligibleCountry)
+
+      return pageResponse(items, input, meta)
+    },
+
     async listContinents(input: WcaDataListInput = {}): Promise<WcaDataListResponse<WcaContinentRecord>> {
       const { dataset, meta } = await activeDatasetContext()
       return pageResponse(await data.listContinents(dataset.id), input, meta)
@@ -252,6 +267,11 @@ type PublicChampionship = {
   id: number
 }
 
+type PublicChampionshipEligibleCountry = {
+  championshipType: string
+  eligibleCountryIso2: string
+}
+
 type PublicRoundType = {
   cellName: string
   id: string
@@ -291,6 +311,13 @@ function publicChampionship(championship: WcaChampionshipRecord): PublicChampion
     championshipType: championship.championshipType,
     competitionId: championship.competitionId,
     id: championship.id,
+  }
+}
+
+function publicChampionshipEligibleCountry(record: WcaChampionshipEligibleCountryRecord): PublicChampionshipEligibleCountry {
+  return {
+    championshipType: record.championshipType,
+    eligibleCountryIso2: record.eligibleCountryIso2,
   }
 }
 

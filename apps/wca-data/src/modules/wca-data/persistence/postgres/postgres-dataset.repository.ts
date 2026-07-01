@@ -163,6 +163,7 @@ function datasetRecordCounts(metadata: Record<string, unknown> | undefined): Dat
 
   const counts = {
     championships: recordCount(transform, 'championships'),
+    championshipEligibleCountries: recordCount(transform, 'championshipEligibleCountries') ?? 0,
     competitions: recordCount(transform, 'competitions'),
     continents: recordCount(transform, 'continents'),
     countries: recordCount(transform, 'countries'),

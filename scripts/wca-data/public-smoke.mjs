@@ -11,6 +11,7 @@ const checks = [
   { kind: 'list', path: '/continents?pageSize=1' },
   { kind: 'list', path: '/formats?pageSize=1' },
   { kind: 'list', path: '/round-types?pageSize=1' },
+  { kind: 'list', path: '/championship-eligible-countries?championshipType=greater_china&pageSize=1' },
   { kind: 'list', path: '/championships?pageSize=1' },
   { kind: 'list', path: '/competitions?pageSize=1&eventId=333' },
   { kind: 'list', path: '/persons?pageSize=1&search=park' },

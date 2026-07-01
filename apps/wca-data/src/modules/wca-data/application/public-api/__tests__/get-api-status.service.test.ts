@@ -94,6 +94,7 @@ function scheduler() {
 function counts(): DatasetRecordCounts {
   return {
     championships: 1,
+    championshipEligibleCountries: 2,
     competitions: 3,
     continents: 2,
     countries: 2,
@@ -106,6 +107,6 @@ function counts(): DatasetRecordCounts {
     results: 3,
     roundTypes: 1,
     scrambles: 1,
-    totalRows: 35,
+    totalRows: 37,
   }
 }

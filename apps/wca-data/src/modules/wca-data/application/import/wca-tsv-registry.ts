@@ -3,6 +3,7 @@ export type WcaTsvFileKey =
   | 'competitions'
   | 'continents'
   | 'countries'
+  | 'eligibleCountryIso2sForChampionship'
   | 'events'
   | 'formats'
   | 'persons'
@@ -33,6 +34,7 @@ const v2FileNameAliasesByKey: Record<WcaTsvFileKey, readonly string[]> = {
   competitions: ['WCA_export_competitions.tsv'],
   continents: ['WCA_export_continents.tsv'],
   countries: ['WCA_export_countries.tsv'],
+  eligibleCountryIso2sForChampionship: ['WCA_export_eligible_country_iso2s_for_championship.tsv'],
   events: ['WCA_export_events.tsv'],
   formats: ['WCA_export_formats.tsv'],
   persons: ['WCA_export_persons.tsv'],
@@ -212,6 +214,13 @@ export const wcaTsvFileDefinitions = [
     { aliases: ['isExtra'], name: 'is_extra' },
     { aliases: ['scrambleNum'], name: 'scramble_num' },
     { name: 'scramble' },
+  ]),
+  define('eligibleCountryIso2sForChampionship', 'WCA_export_EligibleCountryIso2sForChampionship.tsv', 'wca_staging_eligible_country_iso2s_for_championship', [
+    'championship_type',
+    'eligible_country_iso2',
+  ], [
+    { aliases: ['championshipType'], name: 'championship_type' },
+    { aliases: ['eligibleCountryIso2'], name: 'eligible_country_iso2' },
   ]),
 ] as const satisfies readonly WcaTsvFileDefinition[]
 

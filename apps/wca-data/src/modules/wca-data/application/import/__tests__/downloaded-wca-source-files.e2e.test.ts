@@ -75,10 +75,11 @@ describe('downloaded WCA source files ZIP E2E', () => {
         status: 'published',
       },
       publish: { publishedAt: '2026-06-30T12:00:00.000Z' },
-      staging: { totalRows: 35 },
+      staging: { totalRows: 37 },
       status: 'published',
       transform: {
         championships: 1,
+        championshipEligibleCountries: 2,
         competitions: 3,
         continents: 2,
         countries: 2,
@@ -170,7 +171,7 @@ describe('downloaded WCA source files ZIP E2E', () => {
         id: 'local-import-run-1',
         status: 'published',
       },
-      staging: { totalRows: 35 },
+      staging: { totalRows: 37 },
       status: 'published',
     })
     expect(result.importRun.log).toMatchObject({

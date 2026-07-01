@@ -23,6 +23,7 @@ export class PostgresGeneralCanonicalTransformer implements GeneralCanonicalTran
       roundTypes: await this.insertRoundTypes(input),
       competitions: await this.insertCompetitions(input),
       championships: await this.insertChampionships(input),
+      championshipEligibleCountries: await this.insertChampionshipEligibleCountries(input),
       scrambles: await this.insertScrambles(input),
       persons: await this.insertPersons(input),
       results: await this.insertResults(input),
@@ -43,6 +44,7 @@ export class PostgresGeneralCanonicalTransformer implements GeneralCanonicalTran
     await this.db.query('delete from wca_results where dataset_id = $1', [datasetId])
     await this.db.query('delete from wca_scrambles where dataset_id = $1', [datasetId])
     await this.db.query('delete from wca_persons where dataset_id = $1', [datasetId])
+    await this.db.query('delete from wca_championship_eligible_countries where dataset_id = $1', [datasetId])
     await this.db.query('delete from wca_championships where dataset_id = $1', [datasetId])
     await this.db.query('delete from wca_competitions where dataset_id = $1', [datasetId])
     await this.db.query('delete from wca_formats where dataset_id = $1', [datasetId])
@@ -62,6 +64,7 @@ export class PostgresGeneralCanonicalTransformer implements GeneralCanonicalTran
         wca_round_types,
         wca_competitions,
         wca_championships,
+        wca_championship_eligible_countries,
         wca_scrambles,
         wca_persons,
         wca_results,
@@ -147,6 +150,29 @@ export class PostgresGeneralCanonicalTransformer implements GeneralCanonicalTran
         from wca_staging_championships
         where import_run_id = $2 and id is not null
         order by id
+        returning 1
+      )
+      select count(*)::integer as count from inserted
+    `, [input.datasetId, input.importRunId])
+
+    return countFromResult(result.rows[0])
+  }
+
+  private async insertChampionshipEligibleCountries(input: TransformGeneralCanonicalInput): Promise<number> {
+    const result = await this.db.query<CountRow>(`
+      with inserted as (
+        insert into wca_championship_eligible_countries (dataset_id, championship_type, eligible_country_iso2)
+        select distinct
+          $1,
+          coalesce(championship_type, ''),
+          coalesce(eligible_country_iso2, '')
+        from wca_staging_eligible_country_iso2s_for_championship
+        where import_run_id = $2
+          and championship_type is not null
+          and championship_type <> ''
+          and eligible_country_iso2 is not null
+          and eligible_country_iso2 <> ''
+        order by championship_type, eligible_country_iso2
         returning 1
       )
       select count(*)::integer as count from inserted

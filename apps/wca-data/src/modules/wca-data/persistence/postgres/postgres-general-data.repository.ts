@@ -1,5 +1,6 @@
 import type {
   GeneralDataRepository,
+  ListWcaChampionshipEligibleCountriesReadInput,
   ListWcaCompetitionsReadInput,
   ListWcaPersonsReadInput,
   ListWcaRankingsReadInput,
@@ -14,6 +15,7 @@ import type {
 import type {
   WcaContinentRecord,
   WcaChampionshipRecord,
+  WcaChampionshipEligibleCountryRecord,
   WcaCompetitionRecord,
   WcaCountryRecord,
   WcaEventRecord,
@@ -28,6 +30,7 @@ import type { Queryable } from './queryable.js'
 
 type ContinentRow = { id: string; name: string }
 type ChampionshipRow = { championship_type: string; competition_id: string | null; id: number | string }
+type ChampionshipEligibleCountryRow = { championship_type: string; eligible_country_iso2: string }
 type CompetitionRow = {
   cancelled: boolean
   cell_name: string
@@ -117,6 +120,24 @@ export class PostgresGeneralDataRepository implements GeneralDataRepository {
       championshipType: row.championship_type,
       competitionId: row.competition_id,
       id: numberLikeToNumber(row.id),
+    }))
+  }
+
+  async listChampionshipEligibleCountries(
+    datasetId: string,
+    input: ListWcaChampionshipEligibleCountriesReadInput,
+  ): Promise<WcaChampionshipEligibleCountryRecord[]> {
+    const filters = championshipEligibleCountryFilters(datasetId, input)
+    const result = await this.db.query<ChampionshipEligibleCountryRow>(`
+      select championship_type, eligible_country_iso2
+      from wca_championship_eligible_countries e
+      where ${filters.whereSql}
+      order by championship_type, eligible_country_iso2
+    `, filters.params)
+
+    return result.rows.map((row) => ({
+      championshipType: row.championship_type,
+      eligibleCountryIso2: row.eligible_country_iso2,
     }))
   }
 
@@ -548,6 +569,26 @@ export class PostgresGeneralDataRepository implements GeneralDataRepository {
       total,
     }
   }
+}
+
+function championshipEligibleCountryFilters(
+  datasetId: string,
+  input: ListWcaChampionshipEligibleCountriesReadInput,
+): { params: unknown[]; whereSql: string } {
+  const params: unknown[] = [datasetId]
+  const clauses = ['e.dataset_id = $1']
+
+  if (input.championshipType !== undefined) {
+    params.push(input.championshipType)
+    clauses.push(`e.championship_type = $${params.length}`)
+  }
+
+  if (input.countryIso2 !== undefined) {
+    params.push(input.countryIso2)
+    clauses.push(`e.eligible_country_iso2 = $${params.length}`)
+  }
+
+  return { params, whereSql: clauses.join(' and ') }
 }
 
 function scrambleFilters(datasetId: string, input: ListWcaScramblesReadInput): { params: unknown[]; whereSql: string } {

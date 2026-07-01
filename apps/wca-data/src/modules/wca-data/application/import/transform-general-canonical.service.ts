@@ -1,5 +1,6 @@
 export type GeneralCanonicalTransformCounts = {
   championships: number
+  championshipEligibleCountries: number
   competitions: number
   continents: number
   countries: number

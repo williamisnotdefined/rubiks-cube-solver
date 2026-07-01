@@ -39,6 +39,11 @@ const championshipsQuerySchema = listQuerySchema.extend({
   competitionId: z.string().min(1).optional(),
 })
 
+const championshipEligibleCountriesQuerySchema = listQuerySchema.extend({
+  championshipType: z.string().min(1).optional(),
+  countryIso2: z.string().min(1).optional(),
+})
+
 const personsQuerySchema = listQuerySchema.extend({
   countryIso2: z.string().min(1).optional(),
   search: z.string().min(1).optional(),
@@ -70,6 +75,7 @@ const idParamsSchema = z.object({ id: z.string().min(1) })
 
 export async function registerWcaDataRoutes(app: FastifyInstance, options: WcaDataRouteOptions) {
   app.get('/status', async () => options.wcaData.getApiStatus.execute())
+  app.get('/championship-eligible-countries', async (request) => options.wcaData.wcaDataApi.listChampionshipEligibleCountries(championshipEligibleCountriesQuerySchema.parse(request.query)))
   app.get('/championships', async (request) => options.wcaData.wcaDataApi.listChampionships(championshipsQuerySchema.parse(request.query)))
   app.get('/continents', async (request) => options.wcaData.wcaDataApi.listContinents(listQuerySchema.parse(request.query)))
   app.get('/events', async (request) => options.wcaData.wcaDataApi.listEvents(listQuerySchema.parse(request.query)))

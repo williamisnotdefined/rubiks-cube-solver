@@ -66,6 +66,7 @@ export function createWcaDataModuleFromRepositories({
 
 const fixtureDatasetCounts: DatasetRecordCounts = {
   championships: 1,
+  championshipEligibleCountries: 2,
   competitions: 3,
   continents: 2,
   countries: 2,
@@ -78,7 +79,7 @@ const fixtureDatasetCounts: DatasetRecordCounts = {
   results: 3,
   roundTypes: 1,
   scrambles: 1,
-  totalRows: 35,
+  totalRows: 37,
 }
 
 export function schedulerFromEnv(env: WcaDataEnv) {

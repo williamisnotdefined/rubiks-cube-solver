@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import type {
   GeneralDataRepository,
+  ListWcaChampionshipEligibleCountriesReadInput,
   ListWcaCompetitionsReadInput,
   ListWcaPersonsReadInput,
   ListWcaRankingsReadInput,
@@ -26,6 +27,7 @@ import type { WcaTsvFileDefinition } from '../application/import/wca-tsv-registr
 import type {
   WcaContinentRecord,
   WcaChampionshipRecord,
+  WcaChampionshipEligibleCountryRecord,
   WcaCompetitionRecord,
   WcaCountryRecord,
   WcaEventRecord,
@@ -39,6 +41,7 @@ import type {
 
 type StagingGeneralRows = {
   championships: WcaChampionshipRecord[]
+  championshipEligibleCountries: WcaChampionshipEligibleCountryRecord[]
   competitions: WcaCompetitionRecord[]
   continents: WcaContinentRecord[]
   countries: WcaCountryRecord[]
@@ -129,6 +132,7 @@ export class InMemoryWcaImportRepository implements WcaStagingLoader, GeneralCan
 
     return {
       championships: canonicalRows.championships.length,
+      championshipEligibleCountries: canonicalRows.championshipEligibleCountries.length,
       competitions: canonicalRows.competitions.length,
       continents: canonicalRows.continents.length,
       countries: canonicalRows.countries.length,
@@ -152,6 +156,16 @@ export class InMemoryWcaImportRepository implements WcaStagingLoader, GeneralCan
   async listChampionships(datasetId: string): Promise<WcaChampionshipRecord[]> {
     return [...(this.canonical.get(datasetId)?.championships ?? [])]
       .sort((left, right) => left.championshipType.localeCompare(right.championshipType) || left.id - right.id)
+  }
+
+  async listChampionshipEligibleCountries(
+    datasetId: string,
+    input: ListWcaChampionshipEligibleCountriesReadInput,
+  ): Promise<WcaChampionshipEligibleCountryRecord[]> {
+    return [...(this.canonical.get(datasetId)?.championshipEligibleCountries ?? [])]
+      .filter((record) => input.championshipType === undefined || record.championshipType === input.championshipType)
+      .filter((record) => input.countryIso2 === undefined || record.eligibleCountryIso2 === input.countryIso2)
+      .sort(compareChampionshipEligibleCountries)
   }
 
   async getCompetition(datasetId: string, id: string): Promise<WcaCompetitionRecord | null> {
@@ -342,6 +356,12 @@ export class InMemoryWcaImportRepository implements WcaStagingLoader, GeneralCan
           id: integer(record.id ?? ''),
         })
         break
+      case 'eligibleCountryIso2sForChampionship':
+        rows.championshipEligibleCountries.push({
+          championshipType: record.championship_type ?? '',
+          eligibleCountryIso2: record.eligible_country_iso2 ?? '',
+        })
+        break
       case 'competitions':
         rows.competitions.push({
           cancelled: integer(record.cancelled ?? '0') !== 0,
@@ -524,6 +544,7 @@ function integer(value: string): number {
 function emptyRows(): StagingGeneralRows {
   return {
     championships: [],
+    championshipEligibleCountries: [],
     competitions: [],
     continents: [],
     countries: [],
@@ -542,6 +563,7 @@ function emptyRows(): StagingGeneralRows {
 function cloneRows(rows: StagingGeneralRows): StagingGeneralRows {
   return {
     championships: rows.championships.map((championship) => ({ ...championship })),
+    championshipEligibleCountries: rows.championshipEligibleCountries.map((record) => ({ ...record })),
     competitions: rows.competitions.map((competition) => ({ ...competition })),
     continents: rows.continents.map((continent) => ({ ...continent })),
     countries: rows.countries.map((country) => ({ ...country })),
@@ -569,6 +591,14 @@ function compareScrambles(left: WcaScrambleRecord, right: WcaScrambleRecord): nu
     || Number(left.isExtra) - Number(right.isExtra)
     || left.scrambleNumber - right.scrambleNumber
     || left.id - right.id
+}
+
+function compareChampionshipEligibleCountries(
+  left: WcaChampionshipEligibleCountryRecord,
+  right: WcaChampionshipEligibleCountryRecord,
+): number {
+  return left.championshipType.localeCompare(right.championshipType)
+    || left.eligibleCountryIso2.localeCompare(right.eligibleCountryIso2)
 }
 
 function rankRecord(record: Record<string, string>): InMemoryRankRecord {

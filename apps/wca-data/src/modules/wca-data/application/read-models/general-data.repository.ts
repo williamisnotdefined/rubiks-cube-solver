@@ -1,6 +1,7 @@
 import type {
   WcaContinentRecord,
   WcaChampionshipRecord,
+  WcaChampionshipEligibleCountryRecord,
   WcaCompetitionRecord,
   WcaCountryRecord,
   WcaEventRecord,
@@ -82,9 +83,15 @@ export type WcaScramblePage = {
   total: number
 }
 
+export type ListWcaChampionshipEligibleCountriesReadInput = {
+  championshipType?: string | undefined
+  countryIso2?: string | undefined
+}
+
 export type GeneralDataRepository = {
   getCompetition: (datasetId: string, id: string) => Promise<WcaCompetitionRecord | null>
   getPerson: (datasetId: string, id: string) => Promise<WcaPersonRecord | null>
+  listChampionshipEligibleCountries: (datasetId: string, input: ListWcaChampionshipEligibleCountriesReadInput) => Promise<WcaChampionshipEligibleCountryRecord[]>
   listChampionships: (datasetId: string) => Promise<WcaChampionshipRecord[]>
   listCompetitionsPage: (datasetId: string, input: ListWcaCompetitionsReadInput) => Promise<WcaCompetitionPage>
   listCompetitions: (datasetId: string) => Promise<WcaCompetitionRecord[]>

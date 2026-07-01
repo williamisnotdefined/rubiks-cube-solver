@@ -28,6 +28,10 @@ describe('PostgresGeneralDataRepository', () => {
           }
         }
 
+        if (sql.includes('from wca_championship_eligible_countries')) {
+          return { rows: [{ championship_type: 'world', eligible_country_iso2: 'PL' }] }
+        }
+
         if (sql.includes('from wca_championships')) {
           return { rows: [{ championship_type: 'world', competition_id: 'FixtureOpen2026', id: '1' }] }
         }
@@ -161,6 +165,12 @@ describe('PostgresGeneralDataRepository', () => {
       competitionId: 'FixtureOpen2026',
       id: 1,
     }])
+    await expect(repository.listChampionshipEligibleCountries('dataset-1', {
+      championshipType: 'world',
+      countryIso2: 'PL',
+    })).resolves.toEqual([{ championshipType: 'world', eligibleCountryIso2: 'PL' }])
+    const championshipEligibleCountriesCall = calls.find((call) => call.sql.includes('from wca_championship_eligible_countries e'))
+    expect(championshipEligibleCountriesCall?.params).toEqual(['dataset-1', 'world', 'PL'])
     await expect(repository.listCompetitions('dataset-1')).resolves.toEqual([{
       cancelled: false,
       cellName: 'Fixture Open',

@@ -36,7 +36,7 @@ describe('WCA Data API', () => {
       lastImportRun: null,
       metrics: {
         activeDataset: {
-          counts: { totalRows: 35, results: 3, resultAttempts: 13, scrambles: 1 },
+          counts: { totalRows: 37, results: 3, resultAttempts: 13, scrambles: 1, championshipEligibleCountries: 2 },
         },
       },
       scheduler: { cron: '30 4 * * *', enabled: true, timezone: 'UTC' },
@@ -97,11 +97,17 @@ describe('WCA Data API', () => {
   it('lists reference data for continents, formats, round types, and championships', async () => {
     app = await testApp()
 
+    const eligibleCountriesResponse = await app.inject({ method: 'GET', url: '/api/wca-data/v1/championship-eligible-countries?championshipType=world&countryIso2=PL' })
     const continentsResponse = await app.inject({ method: 'GET', url: '/api/wca-data/v1/continents?pageSize=1' })
     const formatsResponse = await app.inject({ method: 'GET', url: '/api/wca-data/v1/formats' })
     const roundTypesResponse = await app.inject({ method: 'GET', url: '/api/wca-data/v1/round-types' })
     const championshipsResponse = await app.inject({ method: 'GET', url: '/api/wca-data/v1/championships?championshipType=world' })
 
+    expect(eligibleCountriesResponse.statusCode).toBe(200)
+    expect(eligibleCountriesResponse.json()).toMatchObject({
+      data: [{ championshipType: 'world', eligibleCountryIso2: 'PL' }],
+      pagination: { total: 1 },
+    })
     expect(continentsResponse.statusCode).toBe(200)
     expect(continentsResponse.json()).toMatchObject({
       data: [{ id: 'europe', name: 'Europe' }],
@@ -297,7 +303,7 @@ class FakeWcaDataApiDatabase implements WcaDataApiDatabase {
             export_date: new Date('2026-06-30T00:00:16Z'),
             export_version: 'v2.0.2',
             id: 'dataset-1',
-            metadata: { transform: { championships: 1, competitions: 1, continents: 1, countries: 1, events: 1, formats: 1, persons: 1, ranksAverage: 1, ranksSingle: 1, resultAttempts: 1, results: 1, roundTypes: 1, scrambles: 1 } },
+            metadata: { transform: { championships: 1, championshipEligibleCountries: 1, competitions: 1, continents: 1, countries: 1, events: 1, formats: 1, persons: 1, ranksAverage: 1, ranksSingle: 1, resultAttempts: 1, results: 1, roundTypes: 1, scrambles: 1 } },
             published_at: new Date('2026-06-30T04:58:00Z'),
           } as TRow],
       }
