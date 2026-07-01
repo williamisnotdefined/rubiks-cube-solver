@@ -163,7 +163,7 @@ export class PostgresGeneralCanonicalTransformer implements GeneralCanonicalTran
       with inserted as (
         insert into wca_championship_eligible_countries (dataset_id, championship_type, eligible_country_iso2)
         select distinct
-          $1,
+          $1::uuid,
           coalesce(championship_type, ''),
           coalesce(eligible_country_iso2, '')
         from wca_staging_eligible_country_iso2s_for_championship
