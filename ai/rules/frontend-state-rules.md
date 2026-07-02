@@ -1,11 +1,11 @@
 # Frontend State Rules
 
-Rules for client-side state ownership in `web`.
+Rules for client-side state ownership in `apps/web`.
 
 ## Always
 
 - Classify state as API load state, solve result state, form state, visualization state, page workflow state, or component-only UI state before moving it.
-- Keep API request details and response normalization in `web/src/api`.
+- Keep API request details and response normalization in `apps/web/src/api`.
 - Use React Query as the owner for API health, strategy metadata, solve mutation state, and future server-state operations.
 - Keep API load state separate from solve result state.
 - Keep form input state separate from visualization playback state.
@@ -28,8 +28,8 @@ Rules for client-side state ownership in `web`.
 
 ## Ownership Order
 
-1. `web/src/api/client.ts` for shared HTTP details.
-2. React Query hooks under `web/src/api/<domain>` for server/cache and mutation state.
+1. `apps/web/src/api/client.ts` for shared HTTP details.
+2. React Query hooks under `apps/web/src/api/<domain>` for server/cache and mutation state.
 3. Nearest page or screen component for coordinated product workflow state.
 4. Focused hooks for repeated or stateful UI behavior.
 5. Component-local `useState` for component-only state.

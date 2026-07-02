@@ -15,31 +15,31 @@
       "@core/*": ["./src/core/*"],
       "@pages/*": ["./src/pages/*"],
       "@rubiks-cube-solver/rubiks-cube/controller": [
-        "../packages/rubiks-cube/src/puzzles/cube/controller/index.ts"
+        "../../packages/rubiks-cube/src/puzzles/cube/controller/index.ts"
       ],
       "@rubiks-cube-solver/rubiks-cube/core": [
-        "../packages/rubiks-cube/src/puzzles/cube/core/index.ts"
+        "../../packages/rubiks-cube/src/puzzles/cube/core/index.ts"
       ],
       "@rubiks-cube-solver/rubiks-cube/player": [
-        "../packages/rubiks-cube/src/puzzles/cube/player/index.ts"
+        "../../packages/rubiks-cube/src/puzzles/cube/player/index.ts"
       ],
       "@rubiks-cube-solver/rubiks-cube/state": [
-        "../packages/rubiks-cube/src/puzzles/cube/state/index.ts"
+        "../../packages/rubiks-cube/src/puzzles/cube/state/index.ts"
       ],
       "@rubiks-cube-solver/rubiks-cube/three": [
-        "../packages/rubiks-cube/src/puzzles/cube/three/index.ts"
+        "../../packages/rubiks-cube/src/puzzles/cube/three/index.ts"
       ],
       "@rubiks-cube-solver/rubiks-cube/view": [
-        "../packages/rubiks-cube/src/puzzles/cube/element/index.ts"
+        "../../packages/rubiks-cube/src/puzzles/cube/element/index.ts"
       ],
       "@rubiks-cube-solver/rubiks-cube/puzzles/megaminx": [
-        "../packages/rubiks-cube/src/puzzles/megaminx/index.ts"
+        "../../packages/rubiks-cube/src/puzzles/megaminx/index.ts"
       ],
       "@rubiks-cube-solver/rubiks-cube/puzzles/pyraminx": [
-        "../packages/rubiks-cube/src/puzzles/pyraminx/index.ts"
+        "../../packages/rubiks-cube/src/puzzles/pyraminx/index.ts"
       ],
       "@rubiks-cube-solver/rubiks-cube/puzzles/square1": [
-        "../packages/rubiks-cube/src/puzzles/square1/index.ts"
+        "../../packages/rubiks-cube/src/puzzles/square1/index.ts"
       ],
       "@src/*": ["./src/*"]
     },

@@ -5,7 +5,7 @@ import { defineConfig } from 'vitest/config'
 
 const threeSourceMarker = '/node_modules/three/src/'
 const rubiksCubeSourceMarker = '/packages/rubiks-cube/src/'
-const i18nLocaleMarker = '/web/src/i18n/locales/'
+const i18nLocaleMarker = '/apps/web/src/i18n/locales/'
 const wcaDataApiProxyTarget = process.env.VITE_WCA_DATA_API_URL ?? 'http://127.0.0.1:8796'
 
 const radixChunkPackages: Record<string, string> = {
@@ -160,55 +160,55 @@ export default defineConfig({
       {
         find: /^@rubiks-cube-solver\/rubiks-cube\/controller$/,
         replacement: fileURLToPath(
-          new URL('../packages/rubiks-cube/src/puzzles/cube/controller/index.ts', import.meta.url),
+          new URL('../../packages/rubiks-cube/src/puzzles/cube/controller/index.ts', import.meta.url),
         ),
       },
       {
         find: /^@rubiks-cube-solver\/rubiks-cube\/core$/,
         replacement: fileURLToPath(
-          new URL('../packages/rubiks-cube/src/puzzles/cube/core/index.ts', import.meta.url),
+          new URL('../../packages/rubiks-cube/src/puzzles/cube/core/index.ts', import.meta.url),
         ),
       },
       {
         find: /^@rubiks-cube-solver\/rubiks-cube\/player$/,
         replacement: fileURLToPath(
-          new URL('../packages/rubiks-cube/src/puzzles/cube/player/index.ts', import.meta.url),
+          new URL('../../packages/rubiks-cube/src/puzzles/cube/player/index.ts', import.meta.url),
         ),
       },
       {
         find: /^@rubiks-cube-solver\/rubiks-cube\/state$/,
         replacement: fileURLToPath(
-          new URL('../packages/rubiks-cube/src/puzzles/cube/state/index.ts', import.meta.url),
+          new URL('../../packages/rubiks-cube/src/puzzles/cube/state/index.ts', import.meta.url),
         ),
       },
       {
         find: /^@rubiks-cube-solver\/rubiks-cube\/three$/,
         replacement: fileURLToPath(
-          new URL('../packages/rubiks-cube/src/puzzles/cube/three/index.ts', import.meta.url),
+          new URL('../../packages/rubiks-cube/src/puzzles/cube/three/index.ts', import.meta.url),
         ),
       },
       {
         find: /^@rubiks-cube-solver\/rubiks-cube\/view$/,
         replacement: fileURLToPath(
-          new URL('../packages/rubiks-cube/src/puzzles/cube/element/index.ts', import.meta.url),
+          new URL('../../packages/rubiks-cube/src/puzzles/cube/element/index.ts', import.meta.url),
         ),
       },
       {
         find: /^@rubiks-cube-solver\/rubiks-cube\/puzzles\/megaminx$/,
         replacement: fileURLToPath(
-          new URL('../packages/rubiks-cube/src/puzzles/megaminx/index.ts', import.meta.url),
+          new URL('../../packages/rubiks-cube/src/puzzles/megaminx/index.ts', import.meta.url),
         ),
       },
       {
         find: /^@rubiks-cube-solver\/rubiks-cube\/puzzles\/pyraminx$/,
         replacement: fileURLToPath(
-          new URL('../packages/rubiks-cube/src/puzzles/pyraminx/index.ts', import.meta.url),
+          new URL('../../packages/rubiks-cube/src/puzzles/pyraminx/index.ts', import.meta.url),
         ),
       },
       {
         find: /^@rubiks-cube-solver\/rubiks-cube\/puzzles\/square1$/,
         replacement: fileURLToPath(
-          new URL('../packages/rubiks-cube/src/puzzles/square1/index.ts', import.meta.url),
+          new URL('../../packages/rubiks-cube/src/puzzles/square1/index.ts', import.meta.url),
         ),
       },
       { find: '@api', replacement: fileURLToPath(new URL('./src/api', import.meta.url)) },

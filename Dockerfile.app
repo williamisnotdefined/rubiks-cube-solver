@@ -3,12 +3,12 @@ FROM node:24-bookworm-slim AS web-build
 WORKDIR /src
 COPY package.json package-lock.json ./
 COPY packages/rubiks-cube/package.json packages/rubiks-cube/package.json
-COPY web/package.json web/package.json
+COPY apps/web/package.json apps/web/package.json
 RUN npm ci
 
 COPY packages/rubiks-cube packages/rubiks-cube
 COPY scripts/seo scripts/seo
-COPY web web
+COPY apps/web apps/web
 RUN npm run build -w @rubiks-cube-solver/web
 
 FROM rust:1.96-bookworm AS rust-build
@@ -27,7 +27,7 @@ FROM debian:bookworm-slim AS runtime
 WORKDIR /app
 COPY --from=rust-build /src/target/release/rubiks-cube-solver-api /usr/local/bin/rubiks-cube-solver-api
 COPY --chown=10001:10001 --from=rust-build /artifacts/pruning-tables /app/pruning-tables
-COPY --chown=10001:10001 --from=web-build /src/web/dist /app/web
+COPY --chown=10001:10001 --from=web-build /src/apps/web/dist /app/web
 
 ENV RUBIKS_API_ADDR=0.0.0.0:8787 \
   RUBIKS_WEB_DIST_DIR=/app/web \

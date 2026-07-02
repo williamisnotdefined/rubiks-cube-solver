@@ -5,7 +5,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/wca-data/package.json apps/wca-data/package.json
 COPY packages/rubiks-cube/package.json packages/rubiks-cube/package.json
-COPY web/package.json web/package.json
+COPY apps/web/package.json apps/web/package.json
 
 RUN npm ci --workspace @rubiks-cube-solver/wca-data --include-workspace-root=false --ignore-scripts
 

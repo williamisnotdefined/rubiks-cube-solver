@@ -118,7 +118,7 @@ Services:
 
 | Service | Role | Host Port |
 | --- | --- | --- |
-| `app` | Rust API, cube-engine, generated pruning tables, and `web/dist` | `8787` |
+| `app` | Rust API, cube-engine, generated pruning tables, and `apps/web/dist` | `8787` |
 | `vision` | Python FastAPI scanner runtime and ONNX inference | internal only |
 
 The `app` container calls vision at `http://vision:8790`. The scanner model is mounted from `./scanner/models:/models:ro`.

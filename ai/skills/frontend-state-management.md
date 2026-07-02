@@ -1,6 +1,6 @@
 # Frontend State Management
 
-Use this skill when adding or changing client-side state, custom hooks, visualization synchronization, or API load/result flow in `web`.
+Use this skill when adding or changing client-side state, custom hooks, visualization synchronization, or API load/result flow in `apps/web`.
 
 ## Goal
 
@@ -18,8 +18,8 @@ Place each frontend state concern at the narrowest correct owner without duplica
 ## Workflow
 
 - Classify state as API load state, solve result state, form state, visualization state, page workflow state, or component-only state.
-- Keep API server state and solve mutation state in React Query hooks under `web/src/api`.
-- Keep request construction and response normalization in `web/src/api`, not page components.
+- Keep API server state and solve mutation state in React Query hooks under `apps/web/src/api`.
+- Keep request construction and response normalization in `apps/web/src/api`, not page components.
 - Keep page workflow state in the nearest page component that coordinates it.
 - Use existing Zustand stores only for scoped shared state such as timer sessions/settings, solve settings, theme, and toasts.
 - Keep imperative custom-element sync in focused hooks and refs.

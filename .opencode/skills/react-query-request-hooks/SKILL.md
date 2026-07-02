@@ -22,7 +22,7 @@ This file is compiled from canonical AI knowledge files. Edit canonical files un
 
 # React Query Request Hooks
 
-Use this skill when adding or changing `web` API query hooks, mutation hooks, request functions, query keys, or response normalization.
+Use this skill when adding or changing `apps/web` API query hooks, mutation hooks, request functions, query keys, or response normalization.
 
 ## Goal
 
@@ -51,8 +51,8 @@ Keep React Query as the frontend server-state boundary while keeping raw HTTP de
 
 - UI-facing barrels export hooks, not raw request functions.
 - Components do not import `fetch`, raw requests, or query keys.
-- Request details stay behind `web/src/api/client.ts`.
-- Solve response status parsing stays in `web/src/api`, not page components.
+- Request details stay behind `apps/web/src/api/client.ts`.
+- Solve response status parsing stays in `apps/web/src/api`, not page components.
 - Browser notation clients submit move notation and limits, while scan flows use scan-session contracts instead of raw facelets or sticker state.
 - Request functions and hooks have Vitest coverage for success, API failure payloads, disabled queries, and mutation behavior when changed.
 
@@ -70,12 +70,12 @@ Keep React Query as the frontend server-state boundary while keeping raw HTTP de
 
 # Frontend API Hook Rules
 
-Rules for React Query API operations in `web/src/api`.
+Rules for React Query API operations in `apps/web/src/api`.
 
 ## Always
 
-- Group frontend API code by domain under `web/src/api`.
-- Keep shared HTTP details in `web/src/api/client.ts`, including base URL resolution, JSON headers, request helpers, and transport error mapping.
+- Group frontend API code by domain under `apps/web/src/api`.
+- Keep shared HTTP details in `apps/web/src/api/client.ts`, including base URL resolution, JSON headers, request helpers, and transport error mapping.
 - Split every operation into a raw request function, a React Query hook, and an operation `index.ts` when the operation is consumed by UI.
 - Keep request functions free of React imports.
 - Use `useQuery` for cached server state such as API health and strategy metadata.
@@ -93,7 +93,7 @@ Rules for React Query API operations in `web/src/api`.
 - Do not call raw request functions from React components.
 - Do not expose request functions from barrels consumed by UI components.
 - Do not import query keys into components.
-- Do not call `fetch` directly outside `web/src/api/client.ts` unless the request is intentionally outside the app API contract.
+- Do not call `fetch` directly outside `apps/web/src/api/client.ts` unless the request is intentionally outside the app API contract.
 - Do not duplicate API status parsing or solve response normalization inside React components.
 - Do not create fake fallback solve metadata for transport errors.
 - Do not use React Query as the canonical solver state; the Rust API and engine remain authoritative.
@@ -101,12 +101,12 @@ Rules for React Query API operations in `web/src/api`.
 
 ## Layout
 
-- Request file: `web/src/api/<domain>/<operation>/<operation>.ts`.
-- Hook file: `web/src/api/<domain>/<operation>/use<Operation>.ts`.
-- Operation barrel: `web/src/api/<domain>/<operation>/index.ts`.
-- Domain barrel: `web/src/api/<domain>/index.ts`.
-- Query keys: `web/src/api/<domain>/queryKeys.ts`.
-- Domain types: `web/src/api/<domain>/types.ts` when multiple operations share API types.
+- Request file: `apps/web/src/api/<domain>/<operation>/<operation>.ts`.
+- Hook file: `apps/web/src/api/<domain>/<operation>/use<Operation>.ts`.
+- Operation barrel: `apps/web/src/api/<domain>/<operation>/index.ts`.
+- Domain barrel: `apps/web/src/api/<domain>/index.ts`.
+- Query keys: `apps/web/src/api/<domain>/queryKeys.ts`.
+- Domain types: `apps/web/src/api/<domain>/types.ts` when multiple operations share API types.
 
 ## Verification
 
@@ -119,12 +119,12 @@ Rules for React Query API operations in `web/src/api`.
 
 # Frontend State Rules
 
-Rules for client-side state ownership in `web`.
+Rules for client-side state ownership in `apps/web`.
 
 ## Always
 
 - Classify state as API load state, solve result state, form state, visualization state, page workflow state, or component-only UI state before moving it.
-- Keep API request details and response normalization in `web/src/api`.
+- Keep API request details and response normalization in `apps/web/src/api`.
 - Use React Query as the owner for API health, strategy metadata, solve mutation state, and future server-state operations.
 - Keep API load state separate from solve result state.
 - Keep form input state separate from visualization playback state.
@@ -147,8 +147,8 @@ Rules for client-side state ownership in `web`.
 
 ## Ownership Order
 
-1. `web/src/api/client.ts` for shared HTTP details.
-2. React Query hooks under `web/src/api/<domain>` for server/cache and mutation state.
+1. `apps/web/src/api/client.ts` for shared HTTP details.
+2. React Query hooks under `apps/web/src/api/<domain>` for server/cache and mutation state.
 3. Nearest page or screen component for coordinated product workflow state.
 4. Focused hooks for repeated or stateful UI behavior.
 5. Component-local `useState` for component-only state.
@@ -175,11 +175,11 @@ Rules for the Axum HTTP API and the frontend API contract.
 - Keep notation solve requests on move notation and route scan solves through scan-session contracts.
 - Validate API safety limits before parsing notation or invoking search.
 - Use named constants for public API caps such as maximum depth, maximum nodes, notation bytes, and JSON body bytes.
-- Preserve stable response status strings, error kinds, and metadata fields because `web/src/api` normalizes them.
+- Preserve stable response status strings, error kinds, and metadata fields because `apps/web/src/api` normalizes them.
 - Verify returned solutions by replay before reporting success.
 - Keep generated pruning-table availability and corruption errors explicit in API responses.
 - Keep CORS origins narrow to known local web development and preview origins unless deployment requirements change.
-- Update `web/src/api` types and normalization when API response fields or status values change.
+- Update `apps/web/src/api` types and normalization when API response fields or status values change.
 
 ## Never
 
@@ -188,7 +188,7 @@ Rules for the Axum HTTP API and the frontend API contract.
 - Do not let handlers panic or leak internal errors when a stable error response can represent the failure.
 - Do not accept unbounded request depth, node count, notation length, or JSON body size.
 - Do not add broad authentication, tenants, tokens, rate-limit frameworks, or OpenAPI layers without a current product requirement.
-- Do not make the frontend duplicate API status parsing or solver response normalization outside `web/src/api`.
+- Do not make the frontend duplicate API status parsing or solver response normalization outside `apps/web/src/api`.
 
 ## Verification
 
@@ -216,7 +216,7 @@ Rules for the Axum HTTP API and the frontend API contract.
 
 - Requests use move notation, `maxDepth`, optional `maxNodes`, and optional `strategyId`.
 - Responses include `ok`, `status`, strategy metadata, generated-table status, effective limits, solution moves, explored nodes, replay verification, optional visualization state, and optional error metadata.
-- Status strings and error kinds are part of the frontend contract and should change only with matching updates in `web/src/api`.
+- Status strings and error kinds are part of the frontend contract and should change only with matching updates in `apps/web/src/api`.
 - The API may return visualization adapter state, but browser clients should not submit facelet or Kociemba payloads.
 
 ## Validation And Safety
@@ -228,7 +228,7 @@ Rules for the Axum HTTP API and the frontend API contract.
 
 ## Frontend Boundary
 
-- `web/src/api` owns base URL handling, health/strategy probing, solve request construction, response normalization, and API error fallback.
+- `apps/web/src/api` owns base URL handling, health/strategy probing, solve request construction, response normalization, and API error fallback.
 - React components should consume normalized API-client results instead of parsing raw HTTP responses.
 - UI copy should describe scrambles, moves, limits, strategies, and solver statuses, not internal facelet/Kociemba representations.
 
@@ -247,7 +247,7 @@ The frontend renders solver interaction, scan workflows, notation pages, algorit
 ## Boundary
 
 - The Rust HTTP API and `cube-engine` own solver behavior, puzzle validation, search, heuristics, and replay verification.
-- `web/src/api` owns HTTP request details, response normalization, typed results, API base URL handling, and API error mapping.
+- `apps/web/src/api` owns HTTP request details, response normalization, typed results, API base URL handling, and API error mapping.
 - React components own user interaction, form controls, loading indicators, result display, visualization playback, and local UI state.
 - `@rubiks-cube-solver/rubiks-cube` is a private visualization package and adapter surface, not the solver core.
 - Facelet, Kociemba, sticker-state, and visual-state strings are adapter details. UI copy should speak in puzzles, moves, limits, strategies, scanner review, and solver statuses.
@@ -256,7 +256,7 @@ The frontend renders solver interaction, scan workflows, notation pages, algorit
 
 ```txt
 React page/component
-        -> web/src/api request or React Query hook
+        -> apps/web/src/api request or React Query hook
         -> Rust HTTP API
         -> cube-engine solve or scan contract
         -> normalized API result

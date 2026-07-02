@@ -21,7 +21,7 @@ This file is compiled from canonical AI knowledge files. Edit canonical files un
 
 # Frontend Testing
 
-Use this skill when adding or changing `web` Vitest tests, Testing Library tests, React Query hook tests, coverage configuration, or Storybook stories.
+Use this skill when adding or changing `apps/web` Vitest tests, Testing Library tests, React Query hook tests, coverage configuration, or Storybook stories.
 
 ## Goal
 
@@ -41,9 +41,9 @@ Protect observable frontend behavior with Vitest, Testing Library, Storybook, an
 - Use Testing Library accessibility queries for React components.
 - Use Playwright accessibility queries for E2E flows.
 - Use `tests/e2e/select-helpers.ts` for Radix Select controls instead of native `selectOption()` assumptions.
-- Use shared web test helpers under `web/src/test` for React Query providers and fetch mocks.
+- Use shared web test helpers under `apps/web/src/test` for React Query providers and fetch mocks.
 - Test API request functions and hooks with mocked success and API-error responses.
-- Keep core helper tests under `web/src/core/<category>/__tests__`.
+- Keep core helper tests under `apps/web/src/core/<category>/__tests__`.
 - Add or update one Storybook story per component, using controls for prop variation.
 - Keep coverage thresholds at 95% or higher when changing coverage configuration.
 
@@ -87,8 +87,8 @@ Testing rules for this repository.
 - Keep `web` tests in `__tests__/` folders beside the source area they cover.
 - Use Testing Library for React component behavior and public accessibility queries.
 - Use Playwright accessibility queries for E2E flows and shared E2E helpers for non-native controls such as Radix Select.
-- Keep `web/src/api` request and hook tests in `web/src/api/__tests__`, using shared fetch and React Query helpers under `web/src/test`.
-- Keep `web/src/core` tests under `web/src/core/<category>/__tests__/<name>.test.ts`.
+- Keep `apps/web/src/api` request and hook tests in `apps/web/src/api/__tests__`, using shared fetch and React Query helpers under `apps/web/src/test`.
+- Keep `apps/web/src/core` tests under `apps/web/src/core/<category>/__tests__/<name>.test.ts`.
 - Keep `web` coverage thresholds at 95% or higher for statements, branches, functions, and lines when coverage is configured.
 
 ## Never
@@ -100,7 +100,7 @@ Testing rules for this repository.
 - Do not add tests for future surfaces that do not exist yet.
 - Do not use Jest-only APIs or `jest.mock` patterns in Vitest tests.
 - Do not place `web` tests as loose sibling `*.test.ts(x)` files when a nearby `__tests__/` folder is available.
-- Do not add duplicate web test helpers when `web/src/test/render.tsx` or `web/src/test/api.ts` already covers the setup.
+- Do not add duplicate web test helpers when `apps/web/src/test/render.tsx` or `apps/web/src/test/api.ts` already covers the setup.
 - Do not use Playwright `selectOption()` or `locator('option')` for Radix Select controls; use helpers under `tests/e2e/select-helpers.ts`.
 
 ## Verification
@@ -121,25 +121,25 @@ Testing rules for this repository.
 
 # Frontend Component Rules
 
-Rules for React component boundaries in `web`.
+Rules for React component boundaries in `apps/web`.
 
 ## Always
 
 - Keep route or screen files readable as composition.
-- Keep frontend route paths and URL segments in English stable slugs; translate menu labels, headings, and copy through `react-i18next` locale files under `web/src/i18n/locales` instead of localizing URLs.
+- Keep frontend route paths and URL segments in English stable slugs; translate menu labels, headings, and copy through `react-i18next` locale files under `apps/web/src/i18n/locales` instead of localizing URLs.
 - When adding or changing translation keys, update every supported locale file: `en`, `es`, `pt-BR`, `it`, `de`, `fr`, `ru`, `zh` for Simplified Chinese, and `ja`, preserving interpolation placeholders.
 - Extract components when UI repeats or a named component clarifies ownership, state boundaries, or screen structure.
 - Keep one-off UI inline when extraction only adds indirection.
-- Keep page-level screens under `web/src/pages`.
+- Keep page-level screens under `apps/web/src/pages`.
 - Keep page-specific components, hooks, and helpers under the owning page folder until reused elsewhere.
-- Keep shared reusable components under `web/src/components` only after there is a real shared consumer.
+- Keep shared reusable components under `apps/web/src/components` only after there is a real shared consumer.
 - Keep visualization-specific components and hooks near the owning visualization feature unless reused.
-- Keep context-independent helpers in focused `web/src/core/<category>/<name>.ts` files, not inside React components.
+- Keep context-independent helpers in focused `apps/web/src/core/<category>/<name>.ts` files, not inside React components.
 - Import core helpers from direct file paths; do not add `src/core` barrels.
 - Keep React component props explicit and small.
 - Prefer `children` for layout wrappers such as panels, shells, and result regions.
 - Use `lucide-react` for UI icons; import icon components directly from `lucide-react` instead of authoring local SVG icons.
-- Use shared Radix-backed primitives under `web/src/components`, including `Dialog`, `AlertDialog`, `Select`, `Switch`, `Checkbox`, `Toast`, `Popover`, and `Tooltip`, so portal, focus, escape, and outside-click behavior stay consistent.
+- Use shared Radix-backed primitives under `apps/web/src/components`, including `Dialog`, `AlertDialog`, `Select`, `Switch`, `Checkbox`, `Toast`, `Popover`, and `Tooltip`, so portal, focus, escape, and outside-click behavior stay consistent.
 - Extract focused hooks for repeated or stateful UI behavior, but do not hide an oversized component in a single oversized hook.
 - Keep new or substantially changed React component files at or below 400 lines where practical.
 - Keep Storybook stories in a `stories/` child folder beside the source area they cover.
@@ -158,7 +158,7 @@ Rules for React component boundaries in `web`.
 - Do not mix cube validation, search, or solver behavior into React components.
 - Do not write inline `<svg>` icons, local `*Icon` components, or custom icon path data in React components; choose the closest `lucide-react` icon instead.
 - Do not hand-roll dialog, select, switch, checkbox, toast, popover/dropdown state, document outside-click listeners, focus handling, or portal positioning when a shared primitive can represent the behavior.
-- Do not import Radix packages directly outside the corresponding wrapper under `web/src/components` unless a new shared primitive is being created.
+- Do not import Radix packages directly outside the corresponding wrapper under `apps/web/src/components` unless a new shared primitive is being created.
 - Do not place component stories in a shared fixtures folder; reserve shared story data for `src/stories` if it exists.
 
 ## Data-Driven Rendering
@@ -171,19 +171,19 @@ Rules for React component boundaries in `web`.
 - Ensure extracted components do not change user-visible behavior.
 - Run `npm run build` after TypeScript or React component moves.
 - Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
-- Search changed frontend files for inline `<svg>`, local `*Icon` components, custom icon path data, and direct Radix package imports outside `web/src/components` wrappers before finishing.
+- Search changed frontend files for inline `<svg>`, local `*Icon` components, custom icon path data, and direct Radix package imports outside `apps/web/src/components` wrappers before finishing.
 - Run `npm run storybook:build -w @rubiks-cube-solver/web` after adding or changing stories.
 
 ## Reference: `ai/rules/frontend-api-hook-rules.md`
 
 # Frontend API Hook Rules
 
-Rules for React Query API operations in `web/src/api`.
+Rules for React Query API operations in `apps/web/src/api`.
 
 ## Always
 
-- Group frontend API code by domain under `web/src/api`.
-- Keep shared HTTP details in `web/src/api/client.ts`, including base URL resolution, JSON headers, request helpers, and transport error mapping.
+- Group frontend API code by domain under `apps/web/src/api`.
+- Keep shared HTTP details in `apps/web/src/api/client.ts`, including base URL resolution, JSON headers, request helpers, and transport error mapping.
 - Split every operation into a raw request function, a React Query hook, and an operation `index.ts` when the operation is consumed by UI.
 - Keep request functions free of React imports.
 - Use `useQuery` for cached server state such as API health and strategy metadata.
@@ -201,7 +201,7 @@ Rules for React Query API operations in `web/src/api`.
 - Do not call raw request functions from React components.
 - Do not expose request functions from barrels consumed by UI components.
 - Do not import query keys into components.
-- Do not call `fetch` directly outside `web/src/api/client.ts` unless the request is intentionally outside the app API contract.
+- Do not call `fetch` directly outside `apps/web/src/api/client.ts` unless the request is intentionally outside the app API contract.
 - Do not duplicate API status parsing or solve response normalization inside React components.
 - Do not create fake fallback solve metadata for transport errors.
 - Do not use React Query as the canonical solver state; the Rust API and engine remain authoritative.
@@ -209,12 +209,12 @@ Rules for React Query API operations in `web/src/api`.
 
 ## Layout
 
-- Request file: `web/src/api/<domain>/<operation>/<operation>.ts`.
-- Hook file: `web/src/api/<domain>/<operation>/use<Operation>.ts`.
-- Operation barrel: `web/src/api/<domain>/<operation>/index.ts`.
-- Domain barrel: `web/src/api/<domain>/index.ts`.
-- Query keys: `web/src/api/<domain>/queryKeys.ts`.
-- Domain types: `web/src/api/<domain>/types.ts` when multiple operations share API types.
+- Request file: `apps/web/src/api/<domain>/<operation>/<operation>.ts`.
+- Hook file: `apps/web/src/api/<domain>/<operation>/use<Operation>.ts`.
+- Operation barrel: `apps/web/src/api/<domain>/<operation>/index.ts`.
+- Domain barrel: `apps/web/src/api/<domain>/index.ts`.
+- Query keys: `apps/web/src/api/<domain>/queryKeys.ts`.
+- Domain types: `apps/web/src/api/<domain>/types.ts` when multiple operations share API types.
 
 ## Verification
 
@@ -232,7 +232,7 @@ The frontend renders solver interaction, scan workflows, notation pages, algorit
 ## Boundary
 
 - The Rust HTTP API and `cube-engine` own solver behavior, puzzle validation, search, heuristics, and replay verification.
-- `web/src/api` owns HTTP request details, response normalization, typed results, API base URL handling, and API error mapping.
+- `apps/web/src/api` owns HTTP request details, response normalization, typed results, API base URL handling, and API error mapping.
 - React components own user interaction, form controls, loading indicators, result display, visualization playback, and local UI state.
 - `@rubiks-cube-solver/rubiks-cube` is a private visualization package and adapter surface, not the solver core.
 - Facelet, Kociemba, sticker-state, and visual-state strings are adapter details. UI copy should speak in puzzles, moves, limits, strategies, scanner review, and solver statuses.
@@ -241,7 +241,7 @@ The frontend renders solver interaction, scan workflows, notation pages, algorit
 
 ```txt
 React page/component
-        -> web/src/api request or React Query hook
+        -> apps/web/src/api request or React Query hook
         -> Rust HTTP API
         -> cube-engine solve or scan contract
         -> normalized API result

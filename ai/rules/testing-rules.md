@@ -17,8 +17,8 @@ Testing rules for this repository.
 - Keep `web` tests in `__tests__/` folders beside the source area they cover.
 - Use Testing Library for React component behavior and public accessibility queries.
 - Use Playwright accessibility queries for E2E flows and shared E2E helpers for non-native controls such as Radix Select.
-- Keep `web/src/api` request and hook tests in `web/src/api/__tests__`, using shared fetch and React Query helpers under `web/src/test`.
-- Keep `web/src/core` tests under `web/src/core/<category>/__tests__/<name>.test.ts`.
+- Keep `apps/web/src/api` request and hook tests in `apps/web/src/api/__tests__`, using shared fetch and React Query helpers under `apps/web/src/test`.
+- Keep `apps/web/src/core` tests under `apps/web/src/core/<category>/__tests__/<name>.test.ts`.
 - Keep `web` coverage thresholds at 95% or higher for statements, branches, functions, and lines when coverage is configured.
 
 ## Never
@@ -30,7 +30,7 @@ Testing rules for this repository.
 - Do not add tests for future surfaces that do not exist yet.
 - Do not use Jest-only APIs or `jest.mock` patterns in Vitest tests.
 - Do not place `web` tests as loose sibling `*.test.ts(x)` files when a nearby `__tests__/` folder is available.
-- Do not add duplicate web test helpers when `web/src/test/render.tsx` or `web/src/test/api.ts` already covers the setup.
+- Do not add duplicate web test helpers when `apps/web/src/test/render.tsx` or `apps/web/src/test/api.ts` already covers the setup.
 - Do not use Playwright `selectOption()` or `locator('option')` for Radix Select controls; use helpers under `tests/e2e/select-helpers.ts`.
 
 ## Verification

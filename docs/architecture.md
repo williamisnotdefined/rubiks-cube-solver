@@ -19,7 +19,7 @@ User
 | --- | --- |
 | `crates/cube-engine` | Puzzle state, notation, validation, search, heuristics, pruning artifacts, solver strategies, quality reporting, and replay verification. |
 | `crates/api` | Axum HTTP contracts, limit validation, puzzle routing, scanner integration, artifact loading, and response mapping. |
-| `web` | React UI for solve flows, scan flows, visualization, playback, algorithms pages, notation pages, and timer flows. |
+| `apps/web` | React UI for solve flows, scan flows, visualization, playback, algorithms pages, notation pages, and timer flows. |
 | `packages/rubiks-cube` | Private visualization package for puzzle rendering and playback support. |
 | `scanner` | Python YOLO/ONNX scanner runtime, contracts, and training/evaluation helpers. |
 | `ai` | Canonical AI guidance and generated route source. |

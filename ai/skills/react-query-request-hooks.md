@@ -1,6 +1,6 @@
 # React Query Request Hooks
 
-Use this skill when adding or changing `web` API query hooks, mutation hooks, request functions, query keys, or response normalization.
+Use this skill when adding or changing `apps/web` API query hooks, mutation hooks, request functions, query keys, or response normalization.
 
 ## Goal
 
@@ -29,8 +29,8 @@ Keep React Query as the frontend server-state boundary while keeping raw HTTP de
 
 - UI-facing barrels export hooks, not raw request functions.
 - Components do not import `fetch`, raw requests, or query keys.
-- Request details stay behind `web/src/api/client.ts`.
-- Solve response status parsing stays in `web/src/api`, not page components.
+- Request details stay behind `apps/web/src/api/client.ts`.
+- Solve response status parsing stays in `apps/web/src/api`, not page components.
 - Browser notation clients submit move notation and limits, while scan flows use scan-session contracts instead of raw facelets or sticker state.
 - Request functions and hooks have Vitest coverage for success, API failure payloads, disabled queries, and mutation behavior when changed.
 
