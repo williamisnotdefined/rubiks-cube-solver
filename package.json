@@ -12,7 +12,8 @@
     "packages/rubiks-cube"
   ],
   "overrides": {
-    "esbuild": "0.28.1"
+    "esbuild": "0.28.1",
+    "strtok3": "10.3.4"
   },
   "scripts": {
     "prepare": "husky",
