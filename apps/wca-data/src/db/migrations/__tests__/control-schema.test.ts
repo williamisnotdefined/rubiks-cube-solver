@@ -132,6 +132,17 @@ describe('WCA control schema migrations', () => {
     expect(sql).toContain('primary key (dataset_id, championship_type, eligible_country_iso2)')
     expect(sql).toContain('wca_championship_eligible_countries_dataset_country_idx')
   })
+
+  it('defines derived count summary tables for large public endpoints', async () => {
+    const sql = await migrationSql('0016_create_wca_count_summary_tables.sql')
+
+    expect(sql).toContain('create table wca_result_count_summaries')
+    expect(sql).toContain('create table wca_scramble_count_summaries')
+    expect(sql).toContain('create table wca_rank_count_summaries')
+    expect(sql).toContain("rank_type in ('average', 'single')")
+    expect(sql).toContain("region in ('continent', 'country', 'world')")
+    expect(sql).toContain('primary key (dataset_id, rank_type, event_id, region, region_id)')
+  })
 })
 
 function migrationSql(fileName: string): Promise<string> {

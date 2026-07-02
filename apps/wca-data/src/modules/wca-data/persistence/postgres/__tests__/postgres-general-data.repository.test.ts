@@ -13,6 +13,10 @@ describe('PostgresGeneralDataRepository', () => {
           return { rows: [{ total: '1' }] }
         }
 
+        if (sql.includes('from wca_rank_count_summaries')) {
+          return { rows: [{ total: '1' }] }
+        }
+
         if (sql.includes('from wca_ranks_single r') && sql.includes('order by r.country_rank')) {
           return {
             rows: [{
@@ -288,9 +292,9 @@ describe('PostgresGeneralDataRepository', () => {
       }],
       total: 1,
     })
-    const rankCountCall = calls.find((call) => call.sql.includes('select count(*) as total') && call.sql.includes('from wca_ranks_single'))
+    const rankSummaryCall = calls.find((call) => call.sql.includes('from wca_rank_count_summaries'))
     const rankPageCall = calls.find((call) => call.sql.includes('from wca_ranks_single r') && call.sql.includes('order by r.country_rank'))
-    expect(rankCountCall?.params).toEqual(['dataset-1', '333', 'BR'])
+    expect(rankSummaryCall?.params).toEqual(['dataset-1', 'single', '333', 'country', 'BR'])
     expect(rankPageCall?.params).toEqual(['dataset-1', '333', 'BR', 10, 10])
     await expect(repository.listResultDocuments('dataset-1')).resolves.toEqual([{
       path: 'results/FixtureOpen2026/333.json',
@@ -361,5 +365,95 @@ describe('PostgresGeneralDataRepository', () => {
     const scramblePageCall = calls.find((call) => call.sql.includes('from wca_scrambles s') && call.sql.includes('order by competition_id'))
     expect(scrambleCountCall?.params).toEqual(['dataset-1', 'FixtureOpen2026', '333', 'f', 'A', false])
     expect(scramblePageCall?.params).toEqual(['dataset-1', 'FixtureOpen2026', '333', 'f', 'A', false, 10, 10])
+  })
+
+  it('uses event count summaries for event-only result and scramble totals', async () => {
+    const calls: Array<{ params?: unknown[]; sql: string }> = []
+    const db: Queryable = {
+      async query(sql, params) {
+        calls.push({ params, sql })
+
+        if (sql.includes('from wca_result_count_summaries')) {
+          return { rows: [{ total: '1807149' }] }
+        }
+
+        if (sql.includes('from wca_scramble_count_summaries')) {
+          return { rows: [{ total: '718856' }] }
+        }
+
+        if (sql.includes('with selected_results')) {
+          return {
+            rows: [{
+              average: '1200',
+              best: '1000',
+              competition_id: 'FixtureOpen2026',
+              event_id: '333',
+              format_name: 'Average of 5',
+              is_final_round: true,
+              person_id: '2026FIXT01',
+              pos: '1',
+              regional_average_record: null,
+              regional_single_record: 'NR',
+              round_name: 'Final',
+              solves: [1000, 1200, 1400],
+            }],
+          }
+        }
+
+        if (sql.includes('from wca_scrambles s')) {
+          return {
+            rows: [{
+              competition_id: 'FixtureOpen2026',
+              event_id: '333',
+              group_id: 'A',
+              id: '1',
+              is_extra: false,
+              round_type_id: 'f',
+              scramble: "R U R' U'",
+              scramble_num: '1',
+            }],
+          }
+        }
+
+        return { rows: [] }
+      },
+    }
+    const repository = new PostgresGeneralDataRepository(db)
+
+    await expect(repository.listResults('dataset-1', { eventId: '333', page: 1, pageSize: 1 })).resolves.toMatchObject({
+      total: 1807149,
+    })
+    await expect(repository.listScrambles('dataset-1', { eventId: '333', page: 1, pageSize: 1 })).resolves.toMatchObject({
+      total: 718856,
+    })
+    expect(calls.some((call) => call.sql.includes('select count(*) as total'))).toBe(false)
+    expect(calls.find((call) => call.sql.includes('from wca_result_count_summaries'))?.params).toEqual(['dataset-1', '333'])
+    expect(calls.find((call) => call.sql.includes('from wca_scramble_count_summaries'))?.params).toEqual(['dataset-1', '333'])
+  })
+
+  it('falls back to count queries when derived summaries are missing', async () => {
+    const calls: Array<{ params?: unknown[]; sql: string }> = []
+    const db: Queryable = {
+      async query(sql, params) {
+        calls.push({ params, sql })
+
+        if (sql.includes('_count_summaries')) {
+          return { rows: [] }
+        }
+
+        if (sql.includes('select count(*) as total')) {
+          return { rows: [{ total: '7' }] }
+        }
+
+        return { rows: [] }
+      },
+    }
+    const repository = new PostgresGeneralDataRepository(db)
+
+    await expect(repository.listRankings('dataset-1', { eventId: '333', page: 1, pageSize: 1, region: 'world', type: 'single' })).resolves.toMatchObject({ total: 7 })
+    await expect(repository.listResults('dataset-1', { eventId: '333', page: 1, pageSize: 1 })).resolves.toMatchObject({ total: 7 })
+    await expect(repository.listScrambles('dataset-1', { eventId: '333', page: 1, pageSize: 1 })).resolves.toMatchObject({ total: 7 })
+
+    expect(calls.filter((call) => call.sql.includes('select count(*) as total'))).toHaveLength(3)
   })
 })
