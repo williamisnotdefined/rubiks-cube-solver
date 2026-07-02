@@ -158,6 +158,8 @@ jobs:
     name: docker
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      WCA_DATA_POSTGRES_PASSWORD: placeholder
 
     steps:
       - name: Checkout
