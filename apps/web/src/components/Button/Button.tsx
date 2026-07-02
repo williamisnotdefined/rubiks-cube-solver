@@ -1,33 +1,43 @@
-import cls from 'classnames'
+import { Slot } from '@radix-ui/react-slot'
+import { cva, type VariantProps } from 'class-variance-authority'
 import type { ComponentPropsWithoutRef } from 'react'
+import { cn } from '@src/lib/utils'
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost'
-type ButtonSize = 'md' | 'sm'
+const buttonVariants = cva(
+  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40",
+  {
+    defaultVariants: {
+      size: 'default',
+      variant: 'primary',
+    },
+    variants: {
+      size: {
+        default: 'h-9 px-4 py-2 has-[>svg]:px-3',
+        icon: 'size-9',
+        lg: 'h-10 px-6 has-[>svg]:px-4',
+        md: 'h-9 px-4 py-2 has-[>svg]:px-3',
+        sm: 'h-8 gap-1.5 px-3 has-[>svg]:px-2.5',
+      },
+      variant: {
+        default: 'bg-primary text-primary-foreground shadow-xs hover:bg-primary/90',
+        destructive: 'bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40',
+        ghost: 'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
+        link: 'text-primary underline-offset-4 hover:underline',
+        outline: 'border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50',
+        primary: 'bg-primary text-primary-foreground shadow-xs hover:bg-primary/90',
+        secondary: 'bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80',
+      },
+    },
+  },
+)
 
-const baseButtonClassName =
-  'inline-flex shrink-0 items-center justify-center gap-2 border text-sm font-extrabold uppercase tracking-[0.16em] outline-none transition-colors focus-visible:border-app-text focus-visible:ring-2 focus-visible:ring-app-focus/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0'
+type ButtonProps = ComponentPropsWithoutRef<'button'> &
+  VariantProps<typeof buttonVariants> & {
+    asChild?: boolean
+  }
 
-const buttonSizeClassNames: Record<ButtonSize, string> = {
-  md: 'min-h-12 px-5 py-3',
-  sm: 'min-h-10 px-4 py-2',
-}
+export function Button({ asChild = false, className, size, variant, ...props }: ButtonProps) {
+  const Comp = asChild ? Slot : 'button'
 
-const buttonClassNames: Record<ButtonVariant, string> = {
-  ghost:
-    'border-transparent bg-transparent text-app-text hover:border-app-border hover:bg-app-surface-raised',
-  primary:
-    'border-app-text bg-app-text text-app-inverse hover:border-app-text hover:bg-app-text',
-  secondary:
-    'border-app-border bg-app-surface text-app-text hover:border-app-text hover:bg-app-surface-raised',
-}
-
-type ButtonProps = ComponentPropsWithoutRef<'button'> & {
-  size?: ButtonSize
-  variant?: ButtonVariant
-}
-
-export function Button({ className, size = 'md', variant = 'primary', ...props }: ButtonProps) {
-  return (
-    <button className={cls(baseButtonClassName, buttonSizeClassNames[size], buttonClassNames[variant], className)} {...props} />
-  )
+  return <Comp className={cn(buttonVariants({ className, size, variant }))} data-slot="button" {...props} />
 }

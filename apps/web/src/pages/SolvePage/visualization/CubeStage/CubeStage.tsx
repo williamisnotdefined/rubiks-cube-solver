@@ -56,18 +56,18 @@ export function CubeStage({
 
   return (
     <section
-      className="cube-stage aspect-square w-[min(280px,calc(100vw-24px))] overflow-hidden border border-app-border bg-app-surface"
+      className="cube-stage aspect-square w-[min(280px,calc(100vw-24px))] overflow-hidden border bg-card shadow-sm"
       aria-label={t('cube.visualization')}
     >
       {!loadRequested ? (
         <button
-          className="grid size-full place-items-center px-5 text-center text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted outline-none transition-colors hover:bg-app-surface-raised hover:text-app-text focus-visible:ring-2 focus-visible:ring-app-focus/50"
+          className="grid size-full place-items-center px-5 text-center text-sm font-medium text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
           type="button"
           onClick={onLoadRequest}
         >
           <span className="flex flex-col items-center gap-3">
             <span
-              className="size-7 animate-spin border-2 border-app-border border-t-app-muted"
+              className="size-7 animate-spin rounded-full border-2 border-border border-t-muted-foreground"
               aria-hidden="true"
             />
             <span>{t('cube.preparingVisualization')}</span>
@@ -87,7 +87,7 @@ export function CubeStage({
         />
       ) : (
         <div
-          className="grid size-full place-items-center px-5 text-center text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted"
+          className="grid size-full place-items-center px-5 text-center text-sm text-muted-foreground"
           role="status"
         >
           {t('common.loading')}

@@ -49,7 +49,7 @@ describe('ScrambleViewer', () => {
     expect(screen.queryByText('Copy scramble')).not.toBeInTheDocument()
   })
 
-  it('keeps active action buttons on the surface instead of the text color', () => {
+  it('marks the copied action through its accessible label', () => {
     render(
       <ScrambleViewer
         copied
@@ -59,7 +59,7 @@ describe('ScrambleViewer', () => {
       />,
     )
 
-    expect(screen.getByRole('button', { name: 'Copied' })).toHaveClass('bg-app-surface-raised')
-    expect(screen.getByRole('button', { name: 'Copied' })).not.toHaveClass('bg-app-text')
+    expect(screen.getByRole('button', { name: 'Copied' })).toBeEnabled()
+    expect(screen.queryByRole('button', { name: 'Copy scramble' })).not.toBeInTheDocument()
   })
 })

@@ -138,23 +138,23 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
   }
 
   return (
-    <section className="grid gap-4 border border-app-border bg-app-surface p-4">
-      <div className="grid gap-2">
-        <h2 className="text-xl font-black uppercase tracking-[-0.03em] text-app-text sm:text-2xl">
+    <section className="grid gap-6 py-6">
+      <header className="grid gap-1.5 px-6">
+        <h2 className="text-2xl font-semibold tracking-tight">
           {t('notations.page.demoTitle')}
         </h2>
-        <p className="max-w-3xl text-sm font-semibold leading-6 text-app-muted">
+        <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
           {t('notations.page.demoDescription')}
         </p>
-      </div>
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
+      </header>
+      <div className="grid gap-4 px-6 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
         <div className="flex justify-center lg:justify-start">
           <div
             aria-label={t('notations.page.visualizationLabel', { puzzle: guide.puzzle })}
-            className="aspect-square w-[min(280px,calc(100vw-48px))] overflow-hidden border border-app-border bg-app-control"
+            className="aspect-square w-[min(280px,calc(100vw-48px))] overflow-hidden rounded-xl border bg-muted"
           >
             {registered ? renderVisualizationElement(activeVisualization, puzzleRef, viewResetIndex) : (
-              <div className="flex size-full items-center justify-center px-4 text-center text-sm font-semibold text-app-muted">
+              <div className="flex size-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
                 {t('notations.page.loadingVisualization')}
               </div>
             )}
@@ -162,7 +162,7 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
         </div>
         <div className="grid content-start gap-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h3 className="text-sm font-black uppercase tracking-[0.14em] text-app-text">
+            <h3 className="text-sm font-semibold">
               {t('notations.page.actionsTitle')}
             </h3>
             <Button size="sm" type="button" variant="secondary" disabled={!registered} onClick={handleReset}>
@@ -190,7 +190,7 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
               )
             })}
           </div>
-          <p className="text-sm font-semibold text-app-muted" role="status" aria-live="polite">
+          <p className="text-sm text-muted-foreground" role="status" aria-live="polite">
             {registered ? statusLabel : t('notations.page.loadingVisualization')}
           </p>
         </div>

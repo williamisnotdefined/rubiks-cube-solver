@@ -35,14 +35,14 @@ export function ScrambleViewer({
     || actionSlot !== undefined
 
   return (
-    <section className={cls('grid min-h-0 gap-2 border border-app-border bg-app-surface px-3 py-2 text-center', className)}>
+    <section className={cls('grid min-h-0 gap-3 px-3 py-3 text-center text-foreground', className)}>
       <div className="grid min-h-8 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
         <span aria-hidden="true" />
-        <div className="min-w-0 justify-self-center text-xs font-extrabold uppercase tracking-[0.18em] text-app-muted">
+        <div className="min-w-0 justify-self-center text-sm font-medium text-muted-foreground">
           {eventControl ?? <span>{eventLabel}</span>}
         </div>
         {hasActions ? (
-          <div className="flex justify-self-end border border-app-border bg-app-control">
+          <div className="flex justify-self-end overflow-hidden rounded-md border bg-background shadow-xs">
             <button
               aria-label={t('timer.scramble.previous')}
               className={scrambleActionButtonClassName}
@@ -64,7 +64,7 @@ export function ScrambleViewer({
             <button
               aria-label={copied ? t('timer.scramble.copied') : t('timer.scramble.copy')}
               className={cls(scrambleActionButtonClassName, {
-                'border-app-border-strong bg-app-surface-raised text-app-text': copied,
+                'bg-accent text-accent-foreground': copied,
               })}
               disabled={onCopy === undefined}
               type="button"
@@ -78,7 +78,7 @@ export function ScrambleViewer({
           <span aria-hidden="true" />
         )}
       </div>
-      <p className="mx-auto max-w-5xl whitespace-pre-wrap font-mono text-base font-black leading-relaxed tracking-[0.08em] text-app-text sm:text-lg">
+      <p className="mx-auto max-w-5xl whitespace-pre-wrap font-mono text-base font-semibold leading-relaxed tracking-[0.04em] sm:text-lg">
         {scramble}
       </p>
     </section>
@@ -86,7 +86,7 @@ export function ScrambleViewer({
 }
 
 const scrambleActionButtonClassName =
-  'inline-flex min-h-8 min-w-8 items-center justify-center border-l border-app-border text-app-text outline-none transition-colors first:border-l-0 hover:bg-app-surface-raised focus-visible:ring-2 focus-visible:ring-app-focus/50 disabled:pointer-events-none disabled:opacity-40'
+  'inline-flex min-h-8 min-w-8 items-center justify-center border-l text-foreground outline-none transition-colors first:border-l-0 hover:bg-accent hover:text-accent-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-40'
 
 function handleActionClick(
   event: MouseEvent<HTMLButtonElement>,

@@ -22,12 +22,12 @@ export const TimerDisplay = forwardRef<HTMLDivElement, TimerDisplayProps>(functi
     <div
       ref={ref}
       className={cls(
-        'flex min-h-[12rem] w-full cursor-pointer touch-none select-none flex-col items-center justify-center border border-app-border bg-app-stage px-4 py-8 text-center outline-none transition-colors focus-visible:ring-2 focus-visible:ring-app-focus/50 sm:min-h-[15rem]',
+        'flex min-h-[12rem] w-full cursor-pointer touch-none select-none flex-col items-center justify-center rounded-xl border bg-card px-4 py-8 text-center shadow-sm outline-none transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:min-h-[15rem]',
         {
-          'border-app-border text-app-text': status === 'idle' || status === 'stopped',
-          'border-app-muted text-app-muted': status === 'holding' || status === 'inspection',
-          'border-app-text bg-app-text text-app-inverse': status === 'ready',
-          'border-app-text text-app-text': status === 'running',
+          'text-foreground': status === 'idle' || status === 'stopped',
+          'border-muted-foreground/40 text-muted-foreground': status === 'holding' || status === 'inspection',
+          'border-primary bg-primary text-primary-foreground': status === 'ready',
+          'border-primary text-foreground': status === 'running',
         },
         className,
       )}
@@ -35,7 +35,7 @@ export const TimerDisplay = forwardRef<HTMLDivElement, TimerDisplayProps>(functi
       tabIndex={0}
       {...props}
     >
-      <span className="font-mono text-[clamp(4rem,20vw,10rem)] font-black leading-none tracking-[-0.08em]">
+      <span className="font-mono text-[clamp(4rem,20vw,10rem)] font-bold leading-none tracking-[-0.08em]">
         {formatTimerTime(elapsedMs, { showMilliseconds })}
       </span>
       {children}

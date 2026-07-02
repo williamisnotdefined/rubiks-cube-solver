@@ -14,7 +14,7 @@ const AlgorithmsPuzzlePage = lazy(() => import('../pages/AlgorithmsPage/Algorith
 const AlgorithmSetPage = lazy(() => import('../pages/AlgorithmsPage/AlgorithmSetPage').then((module) => ({ default: module.AlgorithmSetPage })))
 const CubingSitesPage = lazy(() => import('../pages/CubingSitesPage/CubingSitesPage').then((module) => ({ default: module.CubingSitesPage })))
 const NotationGuidePage = lazy(() => import('../pages/NotationsPage/NotationGuidePage').then((module) => ({ default: module.NotationGuidePage })))
-const WcaDataApiPage = lazy(() => import('../pages/WcaDataApiPage/WcaDataApiPage').then((module) => ({ default: module.WcaDataApiPage })))
+const WcaDataDocsRedirectPage = lazy(() => import('../pages/WcaDataApiPage/WcaDataDocsRedirectPage').then((module) => ({ default: module.WcaDataDocsRedirectPage })))
 const YouTubeChannelsPage = lazy(() => import('../pages/YouTubeChannelsPage/YouTubeChannelsPage').then((module) => ({ default: module.YouTubeChannelsPage })))
 
 function App() {
@@ -33,7 +33,7 @@ function App() {
             <Route path="/timer" element={<TimerPage />} />
             <Route path="/channels" element={<YouTubeChannelsPage />} />
             <Route path="/sites" element={<CubingSitesPage />} />
-            <Route path="/api/wca-data" element={<WcaDataApiPage />} />
+            <Route path="/api/wca-data" element={<WcaDataDocsRedirectPage />} />
             <Route path="/algoritmos" element={<AlgorithmsIndexPage />} />
             <Route path="/algoritmos/:puzzleId" element={<AlgorithmsPuzzlePage />} />
             <Route path="/algoritmos/:puzzleId/:methodId" element={<AlgorithmSetPage />} />
@@ -48,7 +48,7 @@ function App() {
                 <Route key={`${prefix}-timer`} path={`/${prefix}/timer`} element={<TimerPage />} />,
                 <Route key={`${prefix}-channels`} path={`/${prefix}/channels`} element={<YouTubeChannelsPage />} />,
                 <Route key={`${prefix}-sites`} path={`/${prefix}/sites`} element={<CubingSitesPage />} />,
-                <Route key={`${prefix}-api-wca-data`} path={`/${prefix}/api/wca-data`} element={<WcaDataApiPage />} />,
+                <Route key={`${prefix}-api-wca-data`} path={`/${prefix}/api/wca-data`} element={<WcaDataDocsRedirectPage />} />,
                 <Route key={`${prefix}-algoritmos`} path={`/${prefix}/algoritmos`} element={<AlgorithmsIndexPage />} />,
                 <Route key={`${prefix}-algoritmos-puzzle`} path={`/${prefix}/algoritmos/:puzzleId`} element={<AlgorithmsPuzzlePage />} />,
                 <Route key={`${prefix}-algoritmos-method`} path={`/${prefix}/algoritmos/:puzzleId/:methodId`} element={<AlgorithmSetPage />} />,
@@ -70,16 +70,16 @@ function NotFoundPage() {
   const solvePath = localizedPath('/solve', localeFromPathname(location.pathname))
 
   return (
-    <main className="grid min-h-0 flex-1 place-items-center bg-app-bg p-6 text-app-text">
-      <section className="grid max-w-xl gap-4 border border-app-border bg-app-surface p-6">
-        <h1 className="text-3xl font-black uppercase tracking-[-0.04em] text-app-text">
+    <main className="grid min-h-0 flex-1 place-items-center bg-background p-6 text-foreground">
+      <section className="grid max-w-xl gap-4 rounded-xl border bg-card p-6 text-card-foreground shadow-sm">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">
           {t('common.notFoundTitle')}
         </h1>
-        <p className="text-sm leading-6 text-app-muted">
+        <p className="text-sm leading-6 text-muted-foreground">
           {t('common.notFoundBody')}
         </p>
         <Link
-          className="inline-flex w-fit border border-app-border bg-app-text px-4 py-3 text-xs font-extrabold uppercase tracking-[0.14em] text-app-inverse outline-none focus-visible:ring-2 focus-visible:ring-app-focus/50"
+          className="inline-flex h-9 w-fit items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-xs outline-none transition-colors hover:bg-primary/90 focus-visible:ring-[3px] focus-visible:ring-ring/50"
           to={solvePath}
         >
           {t('navigation.solve')}
@@ -93,7 +93,7 @@ function RouteFallback() {
   const { t } = useTranslation()
 
   return (
-    <div className="grid min-h-0 flex-1 place-items-center border border-app-border bg-app-surface p-6 text-xs font-extrabold uppercase tracking-[0.18em] text-app-muted" role="status">
+    <div className="grid min-h-0 flex-1 place-items-center rounded-xl border bg-card p-6 text-sm font-medium text-muted-foreground shadow-sm" role="status">
       {t('common.loadingRoute')}
     </div>
   )

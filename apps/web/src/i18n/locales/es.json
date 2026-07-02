@@ -352,12 +352,18 @@
     "title": "Algo salió mal"
   },
   "navigation": {
+    "allAlgorithms": "Todos los algoritmos",
     "algorithms": "Algoritmos",
     "api": "API",
     "algorithmsMenu": "Métodos por puzzle",
     "channels": "Canales YT",
     "sites": "Sitios",
     "closeMenu": "Cerrar menú",
+    "groups": {
+      "explore": "Explorar",
+      "learn": "Aprender",
+      "main": "Principal"
+    },
     "github": "Abrir proyecto en GitHub",
     "menu": "Menú",
     "notations": "Notaciones",
@@ -370,13 +376,6 @@
     "themeLight": "Claro",
     "themeSystem": "Sistema",
     "timer": "Timer"
-  },
-  "wcaDataApi": {
-    "docsLink": "Abrir docs",
-    "disclaimer": "Esta API no es oficial y no está afiliada a World Cube Association. Los datos se basan en WCA Results Export público.",
-    "kicker": "API para devs",
-    "subtitle": "API JSON pública para competiciones, personas, rankings y resultados WCA, actualizada desde WCA Results Export oficial.",
-    "title": "API WCA Data no oficial"
   },
   "notations": {
     "groups": {

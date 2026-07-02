@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { create } from 'zustand'
 
 export type ThemePreference = 'dark' | 'light' | 'system'
+export type ResolvedThemePreference = Exclude<ThemePreference, 'system'>
 
 export const themeStorageKey = 'rubiks-cube-solver-theme'
 
@@ -24,6 +25,18 @@ export function useThemePreferenceSync() {
   useEffect(() => {
     applyThemePreference(theme)
   }, [theme])
+
+  useEffect(() => {
+    if (theme !== 'system' || typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return undefined
+    }
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const handleChange = () => applyThemePreference('system')
+
+    mediaQuery.addEventListener('change', handleChange)
+    return () => mediaQuery.removeEventListener('change', handleChange)
+  }, [theme])
 }
 
 export function storedThemePreference(): ThemePreference {
@@ -40,12 +53,26 @@ export function applyThemePreference(theme: ThemePreference) {
     return
   }
 
+  const root = document.documentElement
+
+  root.classList.remove('dark', 'light')
+
   if (theme === 'system') {
     window.localStorage.removeItem(themeStorageKey)
-    delete document.documentElement.dataset.theme
+    delete root.dataset.theme
+    root.classList.add(systemThemePreference())
     return
   }
 
   window.localStorage.setItem(themeStorageKey, theme)
-  document.documentElement.dataset.theme = theme
+  root.dataset.theme = theme
+  root.classList.add(theme)
+}
+
+function systemThemePreference(): ResolvedThemePreference {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return 'light'
+  }
+
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }

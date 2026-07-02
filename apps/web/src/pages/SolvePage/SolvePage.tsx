@@ -12,7 +12,7 @@ export function SolvePage() {
   const solvePage = useSolvePageController()
 
   return (
-    <main className="app-shell min-h-0 flex-1 overflow-auto bg-app-bg px-3 py-4 text-app-text sm:px-5 sm:py-6">
+    <main className="app-shell min-h-0 flex-1 overflow-auto bg-background px-4 py-6 text-foreground">
       <section className="mx-auto grid w-full max-w-4xl content-start justify-items-center gap-4">
         <SolveVisualizationStage {...solvePage.visualization} />
         <SolveForm {...solvePage.form} />

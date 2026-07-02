@@ -1,5 +1,6 @@
 import type { SyntheticEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Badge } from '@components/Badge'
 import type { CubingSite } from '../../sites'
 
 type SiteCardProps = {
@@ -12,13 +13,13 @@ export function SiteCard({ site }: SiteCardProps) {
   return (
     <a
       aria-label={t('sites.openSite', { site: site.name })}
-      className="group grid border border-app-border bg-app-surface text-app-text outline-none transition-colors hover:border-app-text hover:bg-app-surface-raised focus-visible:ring-2 focus-visible:ring-app-focus/50"
+      className="group grid overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm outline-none transition-all hover:bg-accent hover:text-accent-foreground hover:shadow-md focus-visible:ring-[3px] focus-visible:ring-ring/50"
       href={site.url}
       rel="noreferrer"
       target="_blank"
     >
-      <div className="flex items-start gap-3 border-b border-app-border p-3">
-        <div className="grid size-14 shrink-0 place-items-center border border-app-border bg-app-control">
+      <div className="flex items-start gap-3 border-b p-4">
+        <div className="grid size-14 shrink-0 place-items-center rounded-lg border bg-background shadow-xs">
           <img
             alt={t('sites.imageAlt', { site: site.name })}
             className="size-10 object-contain"
@@ -28,19 +29,19 @@ export function SiteCard({ site }: SiteCardProps) {
           />
         </div>
         <div className="grid min-w-0 gap-1">
-          <p className="text-[0.65rem] font-extrabold uppercase tracking-[0.18em] text-app-muted">
+          <Badge className="w-fit" variant="secondary">
             {t(`sites.categories.${site.category}`)}
-          </p>
-          <h2 className="truncate text-base font-black uppercase tracking-[0.08em] text-app-text">
+          </Badge>
+          <h2 className="truncate text-base font-semibold">
             {site.name}
           </h2>
         </div>
       </div>
-      <div className="grid gap-2 p-3">
-        <p className="truncate text-xs font-semibold text-app-muted">
+      <div className="grid gap-2 p-4">
+        <p className="truncate text-sm text-muted-foreground">
           {site.host}
         </p>
-        <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted group-hover:text-app-text">
+        <p className="text-sm text-muted-foreground group-hover:text-accent-foreground">
           {t('sites.openWebsite')}
         </p>
       </div>

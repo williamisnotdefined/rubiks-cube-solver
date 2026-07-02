@@ -20,15 +20,15 @@ export function AlgorithmSetHeader({
 
   return (
     <PageHeader surface={false}>
-      <Link className="text-xs font-extrabold uppercase tracking-[0.18em] text-app-muted hover:text-app-text" to={puzzlePath}>
+      <Link className="text-sm font-medium text-muted-foreground hover:text-foreground" to={puzzlePath}>
         {t('algorithms.page.backToIndex')}
       </Link>
       <PageTitle>
         {title}
       </PageTitle>
-      <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
+      <p className="text-sm text-muted-foreground">
         {t('algorithms.table.source')}:{' '}
-        <a className="text-app-text underline decoration-app-border underline-offset-4 hover:text-app-muted" href={sourceUrl} rel="noreferrer" target="_blank">
+        <a className="font-medium text-foreground underline underline-offset-4 hover:text-muted-foreground" href={sourceUrl} rel="noreferrer" target="_blank">
           {sourceLabel}
         </a>
       </p>

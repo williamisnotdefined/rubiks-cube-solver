@@ -1,9 +1,9 @@
-import cls from 'classnames'
 import type { ComponentPropsWithRef } from 'react'
+import { cn } from '@src/lib/utils'
 
 const fieldClassName =
-  'h-12 w-full min-w-0 border border-app-border bg-app-control px-4 py-3 text-base text-app-text outline-none transition-colors placeholder:text-app-muted focus-visible:border-app-text focus-visible:ring-2 focus-visible:ring-app-focus/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-app-text md:text-sm'
+  'flex h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs outline-none transition-[color,box-shadow] selection:bg-primary selection:text-primary-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:aria-invalid:ring-destructive/40'
 
 export function TextInput({ className, ...props }: ComponentPropsWithRef<'input'>) {
-  return <input className={cls(fieldClassName, className)} {...props} />
+  return <input className={cn(fieldClassName, className)} data-slot="input" {...props} />
 }

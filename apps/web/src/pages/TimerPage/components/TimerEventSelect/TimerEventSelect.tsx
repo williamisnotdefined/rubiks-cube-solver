@@ -30,7 +30,7 @@ export function TimerEventSelect() {
     >
       <SelectTrigger
         aria-label={t('timer.scramble.event')}
-        className="h-7 max-w-40 px-2 py-1 text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted"
+        className="h-8 max-w-44 px-2 py-1 text-sm text-muted-foreground"
       >
         <SelectValue />
       </SelectTrigger>
