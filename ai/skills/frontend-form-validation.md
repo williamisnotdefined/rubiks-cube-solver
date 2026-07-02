@@ -1,6 +1,6 @@
 # Frontend Form Validation
 
-Use this skill when adding or changing solve controls, scramble inputs, frontend limit validation, or form behavior in `web`.
+Use this skill when adding or changing solve controls, scramble inputs, frontend limit validation, or form behavior in `apps/web`.
 
 ## Goal
 
@@ -31,7 +31,7 @@ Keep form state and lightweight validation clear while preserving Rust-owned puz
 - Empty default scramble keeps solve disabled and visualization solved.
 - Invalid notation remains API-owned behavior.
 - Form code does not expose facelets, Kociemba strings, or sticker-state inputs.
-- Request details remain behind `web/src/api`.
+- Request details remain behind `apps/web/src/api`.
 
 ## Verification
 

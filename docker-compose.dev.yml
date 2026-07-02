@@ -57,7 +57,7 @@ services:
     volumes:
       - .:/workspace
       - node-modules:/workspace/node_modules
-      - web-node-modules:/workspace/web/node_modules
+      - web-node-modules:/workspace/apps/web/node_modules
 
 volumes:
   cargo-git:

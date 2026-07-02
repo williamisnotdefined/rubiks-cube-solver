@@ -8,7 +8,7 @@ The product goal is a web interface where a user can input a valid puzzle state 
 
 - `crates/cube-engine` owns state, moves, notation, validation, search, heuristics, pruning tables, solver strategies, and replay verification.
 - `crates/api` exposes the Rust engine through Axum HTTP endpoints.
-- `web` provides puzzle-aware solve flows, visualization, playback, and locale resources.
+- `apps/web` provides puzzle-aware solve flows, visualization, playback, and locale resources.
 - `scanner` is Python-only and YOLO-only for camera analysis, training helpers, and ONNX export.
 - AI routing is generated from canonical files under `ai/`.
 
@@ -21,7 +21,7 @@ The product goal is a web interface where a user can input a valid puzzle state 
 
 ## Prerequisites
 
-- Node.js and npm for running repository scripts.
+- Node.js 24 and npm 10.9+ for running repository scripts.
 - Docker with Compose for the default development and production runtimes.
 - Rust toolchain for API, engine tests, and pruning-table generation.
 - Python 3.14+ for optional scanner runtime and scanner training helpers.
@@ -172,6 +172,20 @@ Useful endpoints:
 - `POST /puzzles/:puzzleSlug/scan/solve-session`
 
 Every successful API solve includes `replayVerified=true`.
+
+## WCA Data API
+
+`apps/wca-data` provides an unofficial WCA data service for public reference, competition, person, ranking, result, and scramble data. It is intentionally separate from the Rust solver API: a worker imports official WCA TSV exports into PostgreSQL, publishes an active dataset version, and the public API serves typed JSON endpoints.
+
+Public base route:
+
+```txt
+http://speedcube.com.br/api/wca-data/v1
+```
+
+Useful endpoints include `GET /status`, `GET /docs`, `GET /competitions`, `GET /persons`, `GET /rankings`, `GET /results`, `GET /scrambles`, and `GET /speedcubers/top` under that base route.
+
+See `apps/wca-data/README.md` for local commands, import safety rules, environment variables, API routes, and production deploy notes.
 
 ## Solver Quality Commands
 

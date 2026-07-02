@@ -141,11 +141,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "crates/api/**/*.{rs,toml},web/src/api/**/*.{ts,tsx},docs/project-plan.md",
+          "globs": "crates/api/**/*.{rs,toml},apps/web/src/api/**/*.{ts,tsx},docs/project-plan.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "crates/api/**/*.{rs,toml},web/src/api/**/*.{ts,tsx},docs/project-plan.md"
+          "applyTo": "crates/api/**/*.{rs,toml},apps/web/src/api/**/*.{ts,tsx},docs/project-plan.md"
         }
       }
     },
@@ -172,11 +172,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "web/**/*.{ts,tsx,css},crates/api/**/*,docs/project-plan.md",
+          "globs": "apps/web/**/*.{ts,tsx,css},crates/api/**/*,docs/project-plan.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "web/**/*.{ts,tsx,css},crates/api/**/*,docs/project-plan.md"
+          "applyTo": "apps/web/**/*.{ts,tsx,css},crates/api/**/*,docs/project-plan.md"
         }
       }
     },
@@ -199,11 +199,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "web/**/*.{ts,tsx,css},docs/project-plan.md",
+          "globs": "apps/web/**/*.{ts,tsx,css},docs/project-plan.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "web/**/*.{ts,tsx,css},docs/project-plan.md"
+          "applyTo": "apps/web/**/*.{ts,tsx,css},docs/project-plan.md"
         }
       }
     },
@@ -226,11 +226,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "web/**/*.{ts,tsx},docs/project-plan.md",
+          "globs": "apps/web/**/*.{ts,tsx},docs/project-plan.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "web/**/*.{ts,tsx},docs/project-plan.md"
+          "applyTo": "apps/web/**/*.{ts,tsx},docs/project-plan.md"
         }
       }
     },
@@ -252,11 +252,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "web/**/*.{ts,tsx},crates/api/**/*.{rs,toml},docs/project-plan.md",
+          "globs": "apps/web/**/*.{ts,tsx},crates/api/**/*.{rs,toml},docs/project-plan.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "web/**/*.{ts,tsx},crates/api/**/*.{rs,toml},docs/project-plan.md"
+          "applyTo": "apps/web/**/*.{ts,tsx},crates/api/**/*.{rs,toml},docs/project-plan.md"
         }
       }
     },
@@ -276,11 +276,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "web/**/*.{ts,tsx,css},docs/project-plan.md",
+          "globs": "apps/web/**/*.{ts,tsx,css},docs/project-plan.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "web/**/*.{ts,tsx,css},docs/project-plan.md"
+          "applyTo": "apps/web/**/*.{ts,tsx,css},docs/project-plan.md"
         }
       }
     },
@@ -302,11 +302,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "web/src/api/**/*.{ts,tsx},web/src/pages/**/*.{ts,tsx},crates/api/**/*.{rs,toml},docs/project-plan.md",
+          "globs": "apps/web/src/api/**/*.{ts,tsx},apps/web/src/pages/**/*.{ts,tsx},crates/api/**/*.{rs,toml},docs/project-plan.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "web/src/api/**/*.{ts,tsx},web/src/pages/**/*.{ts,tsx},crates/api/**/*.{rs,toml},docs/project-plan.md"
+          "applyTo": "apps/web/src/api/**/*.{ts,tsx},apps/web/src/pages/**/*.{ts,tsx},crates/api/**/*.{rs,toml},docs/project-plan.md"
         }
       }
     },
@@ -327,11 +327,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "web/**/*.{ts,tsx,css},web/.storybook/**/*,docs/project-plan.md",
+          "globs": "apps/web/**/*.{ts,tsx,css},apps/web/.storybook/**/*,docs/project-plan.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "web/**/*.{ts,tsx,css},web/.storybook/**/*,docs/project-plan.md"
+          "applyTo": "apps/web/**/*.{ts,tsx,css},apps/web/.storybook/**/*,docs/project-plan.md"
         }
       }
     }

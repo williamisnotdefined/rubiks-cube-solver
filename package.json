@@ -2,9 +2,13 @@
   "name": "rubiks-cube-solver",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=24.0.0 <25",
+    "npm": ">=10.9.0"
+  },
   "workspaces": [
     "apps/wca-data",
-    "web",
+    "apps/web",
     "packages/rubiks-cube"
   ],
   "overrides": {

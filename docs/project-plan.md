@@ -18,7 +18,7 @@ Current priorities:
 
 - `crates/cube-engine` owns 3x3 cubie state, 2x2 state, moves, notation, validation, bounded IDA*, generated two-phase search, pruning tables, solver strategies, quality reporting, and puzzle metadata.
 - `crates/api` exposes the Rust engine through Axum, validates request limits, scopes strategies to puzzles, loads generated artifacts, and maps typed results to HTTP contracts.
-- `web` provides puzzle-aware solve flows, scan flows, visualization, playback, locale resources, algorithms pages, notation pages, and timer flows.
+- `apps/web` provides puzzle-aware solve flows, scan flows, visualization, playback, locale resources, algorithms pages, notation pages, and timer flows.
 - `packages/rubiks-cube` is a private visualization package. It is rendering code, not the solver core.
 - `scanner` is Python-only and YOLO-only for camera analysis, scan-session tooling, training helpers, and ONNX export.
 - `ai` is the canonical AI guidance source. Generated routes under `.opencode`, `.cursor`, and `.github/instructions` must be updated through `npm run ai:sync`.

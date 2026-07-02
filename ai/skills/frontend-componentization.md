@@ -1,6 +1,6 @@
 # Frontend Componentization
 
-Use this skill when adding, changing, extracting, or reusing React components, page-level screens, large frontend files, Storybook stories, or repeated UI in `web`.
+Use this skill when adding, changing, extracting, or reusing React components, page-level screens, large frontend files, Storybook stories, or repeated UI in `apps/web`.
 
 ## Goal
 
@@ -19,14 +19,14 @@ Split UI by real ownership and reuse while keeping solver logic in Rust and avoi
 
 - Identify whether the change is page composition, shared UI, page-specific UI, form behavior, visualization behavior, story coverage, or state ownership cleanup.
 - Keep one-off UI inline unless extraction improves reuse, naming, or state boundaries.
-- Move page-level screens under `web/src/pages`.
+- Move page-level screens under `apps/web/src/pages`.
 - Keep page-specific components, hooks, and helpers under the owning page folder until reused.
-- Move shared primitives to `web/src/components` only when there is a real shared consumer.
+- Move shared primitives to `apps/web/src/components` only when there is a real shared consumer.
 - Use existing shared primitives for Radix-backed dialogs, alert dialogs, selects, switches, checkboxes, toasts, popovers, and tooltips instead of direct Radix imports in feature code.
-- Move context-independent helpers such as formatting and paint timing to `web/src/core/<category>/<name>.ts` with direct imports.
+- Move context-independent helpers such as formatting and paint timing to `apps/web/src/core/<category>/<name>.ts` with direct imports.
 - Extract focused hooks for stateful behavior such as API loading, form workflow, or custom-element synchronization.
 - Add or update one Storybook story per component, using controls for props instead of separate prop-variant stories.
-- Keep API request details behind `web/src/api`.
+- Keep API request details behind `apps/web/src/api`.
 - Keep cube validation, search, and solver behavior out of React components.
 
 ## Expected Output

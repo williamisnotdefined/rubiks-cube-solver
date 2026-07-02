@@ -5,7 +5,7 @@ The frontend renders solver interaction, scan workflows, notation pages, algorit
 ## Boundary
 
 - The Rust HTTP API and `cube-engine` own solver behavior, puzzle validation, search, heuristics, and replay verification.
-- `web/src/api` owns HTTP request details, response normalization, typed results, API base URL handling, and API error mapping.
+- `apps/web/src/api` owns HTTP request details, response normalization, typed results, API base URL handling, and API error mapping.
 - React components own user interaction, form controls, loading indicators, result display, visualization playback, and local UI state.
 - `@rubiks-cube-solver/rubiks-cube` is a private visualization package and adapter surface, not the solver core.
 - Facelet, Kociemba, sticker-state, and visual-state strings are adapter details. UI copy should speak in puzzles, moves, limits, strategies, scanner review, and solver statuses.
@@ -14,7 +14,7 @@ The frontend renders solver interaction, scan workflows, notation pages, algorit
 
 ```txt
 React page/component
-        -> web/src/api request or React Query hook
+        -> apps/web/src/api request or React Query hook
         -> Rust HTTP API
         -> cube-engine solve or scan contract
         -> normalized API result

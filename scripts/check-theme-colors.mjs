@@ -7,20 +7,20 @@ import { promisify } from 'node:util'
 
 const execFileAsync = promisify(execFile)
 const rootDir = path.resolve(import.meta.dirname, '..')
-const themeCssPath = 'web/src/index.css'
+const themeCssPath = 'apps/web/src/index.css'
 const arbitraryHexPattern = new RegExp(`(-${'\\['}#|${'\\['}#)`)
 const rawHexPattern = /#[0-9a-fA-F]{3,8}\b/
 
 const checkedPathPrefixes = [
-  'web/index.html',
-  'web/src/',
+  'apps/web/index.html',
+  'apps/web/src/',
   'ai/',
   '.cursor/rules/',
   '.opencode/skills/',
   '.github/instructions/',
 ]
 
-const appPathPrefixes = ['web/index.html', 'web/src/']
+const appPathPrefixes = ['apps/web/index.html', 'apps/web/src/']
 const docPathPrefixes = ['ai/', '.cursor/rules/', '.opencode/skills/', '.github/instructions/']
 
 const { stdout } = await execFileAsync('git', ['ls-files'], { cwd: rootDir })
@@ -48,7 +48,7 @@ for (const filePath of files) {
   const docFile = docPathPrefixes.some((prefix) => filePath.startsWith(prefix))
 
   if (appFile && filePath !== themeCssPath) {
-    collectMatches(filePath, content, rawHexPattern, 'raw hex color outside web/src/index.css')
+    collectMatches(filePath, content, rawHexPattern, 'raw hex color outside apps/web/src/index.css')
   }
 
   if (appFile || docFile) {

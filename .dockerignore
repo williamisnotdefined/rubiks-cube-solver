@@ -13,8 +13,8 @@ blob-report
 logs
 
 crates/cube-engine/pruning-tables
-web/dist
-web/public/generated-pruning-tables
+apps/web/dist
+apps/web/public/generated-pruning-tables
 
 scanner/checkpoints
 scanner/local-images

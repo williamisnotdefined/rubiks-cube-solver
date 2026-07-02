@@ -3,7 +3,7 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
-const webRoot = resolve(repoRoot, 'web')
+const webRoot = resolve(repoRoot, 'apps', 'web')
 const distDir = resolve(webRoot, 'dist')
 const siteOrigin = 'https://speedcube.com.br'
 const siteName = 'Speedcube'

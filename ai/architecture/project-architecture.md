@@ -6,7 +6,7 @@ The target is a Rubik's Cube solver with a Rust engine, search algorithms, heuri
 
 - `crates/cube-engine`: Rust crate for cube representation, moves, notation, scramble handling, search, and heuristics.
 - `crates/api`: Axum HTTP API around the Rust engine and generated pruning-table artifacts.
-- `web`: Vite React app for puzzle-aware solve flows, scan flows, visualization, playback, algorithms pages, notation pages, and timer flows.
+- `apps/web`: Vite React app for puzzle-aware solve flows, scan flows, visualization, playback, algorithms pages, notation pages, and timer flows.
 - `scanner`: Python scanner contracts, FastAPI runtime, and offline scanner training/evaluation tooling.
 - `ai`: canonical AI knowledge base and route generation system.
 - `docs/project-plan.md`: current technical direction, implementation rules, and puzzle boundaries.

@@ -12,7 +12,7 @@ The repository is a Rust-first Rubik's Cube solver with these primary boundaries
 | --- | --- | --- |
 | Puzzle state, notation, validation, search, heuristics, pruning tables, and replay verification | `crates/cube-engine` | Authoritative; successful solutions must be replay verified before exposure. |
 | HTTP API contracts, request limits, puzzle strategy selection, scanner handoff, and result mapping | `crates/api` | Adapter around Rust-owned solver behavior; must reject invalid inputs with typed errors. |
-| Web visualization, solve forms, playback, scanner UI, algorithms pages, and timer flows | `web` and `packages/rubiks-cube` | Presentation and request orchestration only; no solver logic or validation authority. |
+| Web visualization, solve forms, playback, scanner UI, algorithms pages, and timer flows | `apps/web` and `packages/rubiks-cube` | Presentation and request orchestration only; no solver logic or validation authority. |
 | Scanner runtime and training | `scanner` | YOLO/ONNX evidence pipeline only; scanner predictions are not proof of a valid cube state. |
 | AI guidance routes | `ai` canonical files | Source of truth; generated `.opencode`, `.cursor`, and `.github/instructions` files are updated only by `npm run ai:sync`. |
 | Runtime containers | `Dockerfile.app`, `Dockerfile.vision`, `docker-compose*.yml` | Local production-like deployment; generated pruning tables and scanner models stay local artifacts unless explicitly approved. |
@@ -105,7 +105,7 @@ Read-only evidence from repository metadata:
 
 | Component | Gate |
 | --- | --- |
-| Web app | Vitest coverage thresholds at 95% for branches, functions, lines, and statements in `web/vite.config.ts`. |
+| Web app | Vitest coverage thresholds at 95% for branches, functions, lines, and statements in `apps/web/vite.config.ts`. |
 | Visualization package | Vitest coverage thresholds at 95% for branches, functions, lines, and statements in `packages/rubiks-cube/vitest.config.ts`. |
 | Rust | No coverage threshold configured; correctness is enforced by tests and replay verification. |
 | Scanner | `pyproject.toml` configures `pytest-cov` with branch coverage and a practical 60% starting threshold. |

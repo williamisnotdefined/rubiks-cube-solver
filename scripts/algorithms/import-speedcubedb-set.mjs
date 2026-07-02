@@ -62,7 +62,7 @@ writeRegistryFile()
 writeSummaryFile()
 
 async function importSet(set) {
-  const outputDir = join(repoRoot, 'web/public/algorithms', set.imageDir)
+  const outputDir = join(repoRoot, 'apps/web/public/algorithms', set.imageDir)
   const fileSlugCounts = new Map()
   const cases = []
 
@@ -236,7 +236,7 @@ function imageExtension(url, contentType) {
 
 function writeSetFile(set, cases) {
   const modulePath = set.tsPath.replace(/\.ts$/, '')
-  const tsPath = join(repoRoot, 'web/src/pages/AlgorithmsPage/sets', modulePath, `${basename(modulePath)}.ts`)
+  const tsPath = join(repoRoot, 'apps/web/src/pages/AlgorithmsPage/sets', modulePath, `${basename(modulePath)}.ts`)
   mkdirSync(dirname(tsPath), { recursive: true })
   const lines = [
     `import type { AlgorithmCase } from '${typeImportPath(set.tsPath)}'`,
@@ -251,7 +251,7 @@ function writeSetFile(set, cases) {
 }
 
 function writeRegistryFile() {
-  const tsPath = join(repoRoot, 'web/src/pages/AlgorithmsPage/sets/speedCubeDbSets/speedCubeDbSets.ts')
+  const tsPath = join(repoRoot, 'apps/web/src/pages/AlgorithmsPage/sets/speedCubeDbSets/speedCubeDbSets.ts')
   mkdirSync(dirname(tsPath), { recursive: true })
   const lines = [
     "import type { AlgorithmSet } from '../types'",
@@ -269,7 +269,7 @@ function writeRegistryFile() {
 }
 
 function writeSummaryFile() {
-  const tsPath = join(repoRoot, 'web/src/pages/AlgorithmsPage/sets/speedCubeDbSetSummaries/speedCubeDbSetSummaries.ts')
+  const tsPath = join(repoRoot, 'apps/web/src/pages/AlgorithmsPage/sets/speedCubeDbSetSummaries/speedCubeDbSetSummaries.ts')
   mkdirSync(dirname(tsPath), { recursive: true })
   const lines = [
     "import type { AlgorithmSetSummary } from '../types'",
