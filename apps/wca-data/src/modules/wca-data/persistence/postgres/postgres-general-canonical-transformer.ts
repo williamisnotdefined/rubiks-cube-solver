@@ -32,12 +32,16 @@ export class PostgresGeneralCanonicalTransformer implements GeneralCanonicalTran
       ranksAverage: await this.insertRanks(input, 'average'),
     }
 
+    await this.insertCountSummaries(input)
     await this.analyzeGeneralTables()
 
     return counts
   }
 
   private async deleteExistingGeneralRows(datasetId: string): Promise<void> {
+    await this.db.query('delete from wca_rank_count_summaries where dataset_id = $1', [datasetId])
+    await this.db.query('delete from wca_scramble_count_summaries where dataset_id = $1', [datasetId])
+    await this.db.query('delete from wca_result_count_summaries where dataset_id = $1', [datasetId])
     await this.db.query('delete from wca_ranks_average where dataset_id = $1', [datasetId])
     await this.db.query('delete from wca_ranks_single where dataset_id = $1', [datasetId])
     await this.db.query('delete from wca_result_attempts where dataset_id = $1', [datasetId])
@@ -70,8 +74,83 @@ export class PostgresGeneralCanonicalTransformer implements GeneralCanonicalTran
         wca_results,
         wca_result_attempts,
         wca_ranks_single,
-        wca_ranks_average
+        wca_ranks_average,
+        wca_result_count_summaries,
+        wca_scramble_count_summaries,
+        wca_rank_count_summaries
     `)
+  }
+
+  private async insertCountSummaries(input: TransformGeneralCanonicalInput): Promise<void> {
+    await this.insertResultCountSummaries(input)
+    await this.insertScrambleCountSummaries(input)
+    await this.insertRankCountSummaries(input, 'single')
+    await this.insertRankCountSummaries(input, 'average')
+  }
+
+  private async insertResultCountSummaries(input: TransformGeneralCanonicalInput): Promise<void> {
+    await this.db.query(`
+      insert into wca_result_count_summaries (dataset_id, event_id, total)
+      select $1, event_id, count(*)::integer
+      from wca_results
+      where dataset_id = $1
+        and competition_id is not null
+        and event_id is not null
+      group by event_id
+      order by event_id
+    `, [input.datasetId])
+  }
+
+  private async insertScrambleCountSummaries(input: TransformGeneralCanonicalInput): Promise<void> {
+    await this.db.query(`
+      insert into wca_scramble_count_summaries (dataset_id, event_id, total)
+      select $1, event_id, count(*)::integer
+      from wca_scrambles
+      where dataset_id = $1
+      group by event_id
+      order by event_id
+    `, [input.datasetId])
+  }
+
+  private async insertRankCountSummaries(input: TransformGeneralCanonicalInput, rankType: 'average' | 'single'): Promise<void> {
+    const canonicalTable = rankType === 'single' ? 'wca_ranks_single' : 'wca_ranks_average'
+
+    await this.db.query(`
+      with summary_rows as (
+        select $1::uuid as dataset_id, $2::text as rank_type, r.event_id, 'world'::text as region, ''::text as region_id, count(*)::integer as total
+        from ${canonicalTable} r
+        where r.dataset_id = $1
+        group by r.event_id
+        union all
+        select $1::uuid, $2::text, r.event_id, 'continent'::text, ''::text, count(*)::integer
+        from ${canonicalTable} r
+        where r.dataset_id = $1 and r.continent_rank > 0
+        group by r.event_id
+        union all
+        select $1::uuid, $2::text, r.event_id, 'continent'::text, c.continent_id, count(*)::integer
+        from ${canonicalTable} r
+        left join wca_persons p on p.dataset_id = r.dataset_id and p.id = r.person_id and p.sub_id = 1
+        left join wca_countries c on c.dataset_id = r.dataset_id and c.iso2_code = p.country_id
+        where r.dataset_id = $1 and c.continent_id is not null and c.continent_id <> ''
+        group by r.event_id, c.continent_id
+        union all
+        select $1::uuid, $2::text, r.event_id, 'country'::text, ''::text, count(*)::integer
+        from ${canonicalTable} r
+        where r.dataset_id = $1 and r.country_rank > 0
+        group by r.event_id
+        union all
+        select $1::uuid, $2::text, r.event_id, 'country'::text, p.country_id, count(*)::integer
+        from ${canonicalTable} r
+        left join wca_persons p on p.dataset_id = r.dataset_id and p.id = r.person_id and p.sub_id = 1
+        where r.dataset_id = $1 and p.country_id is not null and p.country_id <> ''
+        group by r.event_id, p.country_id
+      )
+      insert into wca_rank_count_summaries (dataset_id, rank_type, event_id, region, region_id, total)
+      select dataset_id, rank_type, event_id, region, region_id, total
+      from summary_rows
+      where event_id is not null and event_id <> '' and total > 0
+      order by event_id, region, region_id
+    `, [input.datasetId, rankType])
   }
 
   private async insertCompetitions(input: TransformGeneralCanonicalInput): Promise<number> {

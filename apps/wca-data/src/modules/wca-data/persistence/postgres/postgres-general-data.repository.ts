@@ -386,14 +386,7 @@ export class PostgresGeneralDataRepository implements GeneralDataRepository {
   async listRankings(datasetId: string, input: ListWcaRankingsReadInput): Promise<WcaRankPage> {
     const rankSource = rankTableAndColumn(input)
     const filters = rankFilters(datasetId, input)
-    const count = await this.db.query<CountRow>(`
-      select count(*) as total
-      from ${rankSource.tableName} r
-      left join wca_persons p on p.dataset_id = r.dataset_id and p.id = r.person_id and p.sub_id = 1
-      left join wca_countries c on c.dataset_id = r.dataset_id and c.iso2_code = p.country_id
-      where ${filters.whereSql}
-    `, filters.params)
-    const total = numberLikeToNumber(count.rows[0]?.total ?? 0)
+    const total = await this.rankSummaryTotal(datasetId, input) ?? await this.rankCountTotal(rankSource.tableName, filters)
     const limitParam = filters.params.length + 1
     const offsetParam = filters.params.length + 2
     const result = await this.db.query<RankDocumentRow>(`
@@ -474,12 +467,7 @@ export class PostgresGeneralDataRepository implements GeneralDataRepository {
 
   async listResults(datasetId: string, input: ListWcaResultsReadInput): Promise<WcaResultPage> {
     const filters = resultFilters(datasetId, input)
-    const count = await this.db.query<CountRow>(`
-      select count(*) as total
-      from wca_results r
-      where ${filters.whereSql}
-    `, filters.params)
-    const total = numberLikeToNumber(count.rows[0]?.total ?? 0)
+    const total = await this.resultSummaryTotal(datasetId, input) ?? await this.resultCountTotal(filters)
     const limitParam = filters.params.length + 1
     const offsetParam = filters.params.length + 2
     const result = await this.db.query<ResultDocumentRow>(`
@@ -547,12 +535,7 @@ export class PostgresGeneralDataRepository implements GeneralDataRepository {
 
   async listScrambles(datasetId: string, input: ListWcaScramblesReadInput): Promise<WcaScramblePage> {
     const filters = scrambleFilters(datasetId, input)
-    const count = await this.db.query<CountRow>(`
-      select count(*) as total
-      from wca_scrambles s
-      where ${filters.whereSql}
-    `, filters.params)
-    const total = numberLikeToNumber(count.rows[0]?.total ?? 0)
+    const total = await this.scrambleSummaryTotal(datasetId, input) ?? await this.scrambleCountTotal(filters)
     const limitParam = filters.params.length + 1
     const offsetParam = filters.params.length + 2
     const result = await this.db.query<ScrambleRow>(`
@@ -568,6 +551,86 @@ export class PostgresGeneralDataRepository implements GeneralDataRepository {
       items: result.rows.map(scrambleRecord),
       total,
     }
+  }
+
+  private async rankSummaryTotal(datasetId: string, input: ListWcaRankingsReadInput): Promise<number | null> {
+    const regionId = rankSummaryRegionId(input)
+    const result = await this.db.query<CountRow>(`
+      select total
+      from wca_rank_count_summaries
+      where dataset_id = $1 and rank_type = $2 and event_id = $3 and region = $4 and region_id = $5
+      limit 1
+    `, [datasetId, input.type, input.eventId, input.region, regionId])
+
+    return countRowTotal(result.rows[0])
+  }
+
+  private async rankCountTotal(tableName: string, filters: { params: unknown[]; whereSql: string }): Promise<number> {
+    const count = await this.db.query<CountRow>(`
+      select count(*) as total
+      from ${tableName} r
+      left join wca_persons p on p.dataset_id = r.dataset_id and p.id = r.person_id and p.sub_id = 1
+      left join wca_countries c on c.dataset_id = r.dataset_id and c.iso2_code = p.country_id
+      where ${filters.whereSql}
+    `, filters.params)
+
+    return countRowTotal(count.rows[0]) ?? 0
+  }
+
+  private async resultSummaryTotal(datasetId: string, input: ListWcaResultsReadInput): Promise<number | null> {
+    if (input.eventId === undefined || input.competitionId !== undefined || input.personId !== undefined) {
+      return null
+    }
+
+    const result = await this.db.query<CountRow>(`
+      select total
+      from wca_result_count_summaries
+      where dataset_id = $1 and event_id = $2
+      limit 1
+    `, [datasetId, input.eventId])
+
+    return countRowTotal(result.rows[0])
+  }
+
+  private async resultCountTotal(filters: { params: unknown[]; whereSql: string }): Promise<number> {
+    const count = await this.db.query<CountRow>(`
+      select count(*) as total
+      from wca_results r
+      where ${filters.whereSql}
+    `, filters.params)
+
+    return countRowTotal(count.rows[0]) ?? 0
+  }
+
+  private async scrambleSummaryTotal(datasetId: string, input: ListWcaScramblesReadInput): Promise<number | null> {
+    if (
+      input.eventId === undefined
+      || input.competitionId !== undefined
+      || input.roundTypeId !== undefined
+      || input.groupId !== undefined
+      || input.isExtra !== undefined
+    ) {
+      return null
+    }
+
+    const result = await this.db.query<CountRow>(`
+      select total
+      from wca_scramble_count_summaries
+      where dataset_id = $1 and event_id = $2
+      limit 1
+    `, [datasetId, input.eventId])
+
+    return countRowTotal(result.rows[0])
+  }
+
+  private async scrambleCountTotal(filters: { params: unknown[]; whereSql: string }): Promise<number> {
+    const count = await this.db.query<CountRow>(`
+      select count(*) as total
+      from wca_scrambles s
+      where ${filters.whereSql}
+    `, filters.params)
+
+    return countRowTotal(count.rows[0]) ?? 0
   }
 }
 
@@ -726,6 +789,17 @@ function rankTableAndColumn(input: ListWcaRankingsReadInput): { rankColumn: stri
   }
 }
 
+function rankSummaryRegionId(input: ListWcaRankingsReadInput): string {
+  switch (input.region) {
+    case 'continent':
+      return input.continentId ?? ''
+    case 'country':
+      return input.countryIso2 ?? ''
+    case 'world':
+      return ''
+  }
+}
+
 function rankFilters(datasetId: string, input: ListWcaRankingsReadInput): { params: unknown[]; whereSql: string } {
   const params: unknown[] = [datasetId, input.eventId]
   const clauses = ['r.dataset_id = $1', 'r.event_id = $2']
@@ -792,6 +866,14 @@ function resultRecord(row: ResultDocumentRow) {
 
 function numberLikeToNumber(value: number | string): number {
   return typeof value === 'number' ? value : Number(value)
+}
+
+function countRowTotal(row: CountRow | undefined): number | null {
+  if (row === undefined || row.total === undefined) {
+    return null
+  }
+
+  return numberLikeToNumber(row.total)
 }
 
 function integerArray(value: number[] | string | null): number[] {
