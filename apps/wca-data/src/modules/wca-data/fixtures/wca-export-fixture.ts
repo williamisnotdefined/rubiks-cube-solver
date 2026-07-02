@@ -3,8 +3,8 @@ import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import type { WcaExportClient } from '../../../infra/http/wca-export-client.js'
 import { safeJoin } from '../../../shared/files/safe-path.js'
-import type { WcaStagingFile } from '../application/import/load-wca-staging.service.js'
-import { wcaTsvFileDefinitions } from '../application/import/wca-tsv-registry.js'
+import type { WcaStagingFile } from '../import/load-wca-staging.service.js'
+import { wcaTsvFileDefinitions } from '../import/wca-tsv-registry.js'
 import type { WcaExportMetadata } from '../domain/export-metadata.js'
 
 export function defaultFixtureWcaExportDir(): string {

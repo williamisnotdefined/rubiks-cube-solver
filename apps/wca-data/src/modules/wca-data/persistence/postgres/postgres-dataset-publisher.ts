@@ -1,4 +1,4 @@
-import type { DatasetPublisher } from '../../application/publish/publish-dataset.service.js'
+import type { DatasetPublisher } from '../../publish/publish-dataset.service.js'
 import type { Queryable } from './queryable.js'
 
 export class PostgresDatasetPublisher implements DatasetPublisher {

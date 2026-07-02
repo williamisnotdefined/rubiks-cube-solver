@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createPostgresSyncWcaExportService } from '../postgres-sync-service.js'
-import type { WcaStagingLoader } from '../application/import/load-wca-staging.service.js'
-import type { WcaSourceFilesService } from '../application/import/wca-source-files.service.js'
+import type { WcaStagingLoader } from '../import/load-wca-staging.service.js'
+import type { WcaSourceFilesService } from '../import/wca-source-files.service.js'
 import type { Queryable } from '../persistence/postgres/queryable.js'
 
 let tempDir: string | undefined

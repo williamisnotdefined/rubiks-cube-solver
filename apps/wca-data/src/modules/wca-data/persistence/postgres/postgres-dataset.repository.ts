@@ -8,7 +8,7 @@ import type {
   DatasetRecordCounts,
   DatasetVersionRepository,
   UpdateDatasetStatusInput,
-} from '../repositories.js'
+} from '../../repositories/wca-data.repositories.js'
 import type { Queryable } from './queryable.js'
 
 type ActiveDatasetRow = {

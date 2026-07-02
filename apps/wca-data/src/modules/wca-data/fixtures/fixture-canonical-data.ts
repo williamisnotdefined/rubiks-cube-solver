@@ -1,7 +1,7 @@
-import { createLoadWcaStagingService } from '../application/import/load-wca-staging.service.js'
-import { createTransformGeneralCanonicalService } from '../application/import/transform-general-canonical.service.js'
-import type { GeneralDataRepository } from '../application/read-models/general-data.repository.js'
-import { InMemoryWcaImportRepository } from '../persistence/in-memory-wca-import.repository.js'
+import { createLoadWcaStagingService } from '../import/load-wca-staging.service.js'
+import { createTransformGeneralCanonicalService } from '../import/transform-general-canonical.service.js'
+import { InMemoryWcaImportRepository } from '../persistence/memory/in-memory-wca-import.repository.js'
+import type { GeneralDataRepository } from '../repositories/general-data.repository.js'
 import { fixtureDataset } from './fixture-manifest.js'
 import { defaultFixtureWcaExportDir, fixtureWcaExportFiles } from './wca-export-fixture.js'
 

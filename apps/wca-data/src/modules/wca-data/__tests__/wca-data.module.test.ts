@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { GeneralDataRepository } from '../application/read-models/general-data.repository.js'
+import type { GeneralDataRepository } from '../repositories/general-data.repository.js'
 import type { DatasetMetadata } from '../domain/dataset-metadata.js'
 import { createWcaDataModuleFromRepositories } from '../wca-data.module.js'
 
@@ -36,7 +36,7 @@ describe('createWcaDataModuleFromRepositories', () => {
     })
 
     await expect(module.getApiStatus.execute()).resolves.toMatchObject({ activeDataset: dataset, status: 'ok' })
-    await expect(module.wcaDataApi.listEvents()).resolves.toMatchObject({
+    await expect(module.publicApi.listEvents()).resolves.toMatchObject({
       data: [{ id: '333', name: '3x3x3 Cube' }],
       meta: { datasetId: 'dataset-1' },
     })

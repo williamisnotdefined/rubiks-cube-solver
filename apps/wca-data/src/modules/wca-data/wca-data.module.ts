@@ -1,20 +1,20 @@
 import type { WcaDataEnv } from '../../config/env.schema.js'
-import { createGetApiStatusService, type GetApiStatusService } from './application/public-api/get-api-status.service.js'
-import { createWcaDataApiService, type WcaDataApiService } from './application/public-api/wca-data-api.service.js'
-import type { GeneralDataRepository } from './application/read-models/general-data.repository.js'
+import { createGetApiStatusService, type GetApiStatusService } from './public-api/get-api-status.service.js'
+import { createWcaDataPublicService, type WcaDataPublicService } from './public-api/wca-data-public.service.js'
+import type { GeneralDataRepository } from './repositories/general-data.repository.js'
 import { createFixtureCanonicalDataRepository } from './fixtures/fixture-canonical-data.js'
 import { fixtureDataset } from './fixtures/fixture-manifest.js'
-import { InMemoryDatasetRepository } from './persistence/in-memory-dataset.repository.js'
+import { InMemoryDatasetRepository } from './persistence/memory/in-memory-dataset.repository.js'
 import type {
   DatasetMetricsRepository,
   DatasetRecordCounts,
   DatasetRepository,
   ImportRunHistoryRepository,
-} from './persistence/repositories.js'
+} from './repositories/wca-data.repositories.js'
 
 export type WcaDataModule = {
   getApiStatus: GetApiStatusService
-  wcaDataApi: WcaDataApiService
+  publicApi: WcaDataPublicService
 }
 
 export type CreateWcaDataModuleDeps = {
@@ -60,7 +60,7 @@ export function createWcaDataModuleFromRepositories({
       ...(importRuns === undefined ? {} : { importRuns }),
       scheduler,
     }),
-    wcaDataApi: createWcaDataApiService({ data, datasets }),
+    publicApi: createWcaDataPublicService({ data, datasets }),
   }
 }
 

@@ -2,9 +2,9 @@ import { createReadStream } from 'node:fs'
 import { Transform, Writable, type TransformCallback } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { from as copyFrom } from 'pg-copy-streams'
-import type { WcaStagingFileLoadResult, WcaStagingLoader } from '../../application/import/load-wca-staging.service.js'
-import { createValidateWcaTsvHeadersService, type ValidatedWcaTsvHeaders } from '../../application/import/validate-wca-tsv-headers.service.js'
-import type { WcaTsvFileDefinition } from '../../application/import/wca-tsv-registry.js'
+import type { WcaStagingFileLoadResult, WcaStagingLoader } from '../../import/load-wca-staging.service.js'
+import { createValidateWcaTsvHeadersService, type ValidatedWcaTsvHeaders } from '../../import/validate-wca-tsv-headers.service.js'
+import type { WcaTsvFileDefinition } from '../../import/wca-tsv-registry.js'
 
 export type CopyQueryClient = {
   query: (query: string | Writable, params?: unknown[]) => unknown
