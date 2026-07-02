@@ -10,7 +10,7 @@ const AlgorithmsMenuDialog = lazy(() => import('./PageNavMenus').then((module) =
 const NotationsMenuDialog = lazy(() => import('./PageNavMenus').then((module) => ({ default: module.NotationsMenuDialog })))
 const ThemeMenuDialog = lazy(() => import('./PageNavMenus').then((module) => ({ default: module.ThemeMenuDialog })))
 
-export type PageNavRoute = 'algorithms' | 'channels' | 'notations' | 'sites' | 'solve' | 'timer'
+export type PageNavRoute = 'algorithms' | 'api' | 'channels' | 'notations' | 'sites' | 'solve' | 'timer'
 
 const githubUrl = 'https://github.com/williamisnotdefined/rubiks-cube-solver'
 
@@ -144,6 +144,9 @@ function NavContent({
         <PageNavLink active={activeRoute === 'sites'} to={toLocalizedPath('/sites')} onClick={onNavigate}>
           {t('navigation.sites')}
         </PageNavLink>
+        <PageNavLink active={activeRoute === 'api'} to={toLocalizedPath('/api/wca-data')} onClick={onNavigate}>
+          {t('navigation.api')}
+        </PageNavLink>
         <PageNavButton active={activeRoute === 'notations'} onClick={onNotationsClick}>
           {t('navigation.notations')}
         </PageNavButton>
@@ -194,6 +197,10 @@ function activeRouteLabelKey(activeRoute: PageNavRoute) {
 
   if (activeRoute === 'sites') {
     return 'navigation.sites'
+  }
+
+  if (activeRoute === 'api') {
+    return 'navigation.api'
   }
 
   return 'navigation.solve'

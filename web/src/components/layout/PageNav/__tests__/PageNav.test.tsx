@@ -51,6 +51,15 @@ describe('PageNav', () => {
     expect(sitesLink).toHaveClass('bg-app-text')
   })
 
+  it('marks API as active and keeps the English route', () => {
+    renderWithRouter(<PageNav activeRoute="api" />, '/api/wca-data/')
+
+    const apiLink = screen.getByRole('link', { name: 'API' })
+
+    expect(apiLink).toHaveAttribute('href', '/api/wca-data/')
+    expect(apiLink).toHaveClass('bg-app-text')
+  })
+
   it('marks algorithms as active and opens method links', async () => {
     const user = userEvent.setup()
     renderWithRouter(<PageNav activeRoute="algorithms" />, '/algoritmos/')

@@ -1,5 +1,6 @@
 import { AnimationStyles } from '../../../shared/animation';
 import { DEFAULT_CAMERA_RADIUS } from '../../../shared/cameraDefaults';
+import { isNullOrEmptyString } from '../../../shared/string';
 import { DEFAULT_SQUARE1_ANIMATION_SPEED_MS } from '../three/square1D';
 
 export type Square1AnimationStyle = gsap.EaseString | gsap.EaseFunction;
@@ -58,7 +59,7 @@ export function setSquare1AnimationSpeed(target: Square1ElementSettings, value: 
 }
 
 export function setSquare1AnimationStyle(target: Square1ElementSettings, value: unknown): void {
-  if (value == null || value === '') {
+  if (isNullOrEmptyString(value)) {
     target.animationStyle = defaultSquare1ElementSettings.animationStyle;
     return;
   }
@@ -146,7 +147,7 @@ export function setSquare1CameraPeekAngleVertical(target: Square1ElementSettings
 }
 
 export function setSquare1MaxDevicePixelRatio(target: Square1ElementSettings, value: string | null): void {
-  if (value == null || value === '') {
+  if (isNullOrEmptyString(value)) {
     target.maxDevicePixelRatio = defaultSquare1ElementSettings.maxDevicePixelRatio;
     return;
   }

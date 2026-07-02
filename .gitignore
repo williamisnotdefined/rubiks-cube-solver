@@ -45,6 +45,10 @@ labels.zip
 logs/
 *.log
 
+# WCA data runtime artifacts
+storage/wca-data/
+apps/wca-data/storage/
+
 # Environment
 .env
 .env.*

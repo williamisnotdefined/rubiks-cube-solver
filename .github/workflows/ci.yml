@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: "26"
+  NODE_VERSION: "24"
   PYTHON_VERSION: "3.14"
   RUST_VERSION: "1.96.0"
 
@@ -158,6 +158,8 @@ jobs:
     name: docker
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      WCA_DATA_POSTGRES_PASSWORD: placeholder
 
     steps:
       - name: Checkout

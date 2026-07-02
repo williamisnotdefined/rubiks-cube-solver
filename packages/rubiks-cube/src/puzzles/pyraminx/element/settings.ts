@@ -1,5 +1,6 @@
 import { type AnimationStyle, AnimationStyles } from '../../../shared/animation';
 import { DEFAULT_CAMERA_RADIUS } from '../../../shared/cameraDefaults';
+import { isNullOrEmptyString } from '../../../shared/string';
 import { DEFAULT_PYRAMINX_ANIMATION_SPEED_MS } from '../three/pyraminx3D';
 
 export type PyraminxElementSettings = {
@@ -113,7 +114,7 @@ export function setPyraminxCameraPeekAngleVertical(target: PyraminxElementSettin
 }
 
 export function setPyraminxMaxDevicePixelRatio(target: PyraminxElementSettings, value: string | null): void {
-  if (value == null || value === '') {
+  if (isNullOrEmptyString(value)) {
     target.maxDevicePixelRatio = defaultPyraminxElementSettings.maxDevicePixelRatio;
     return;
   }

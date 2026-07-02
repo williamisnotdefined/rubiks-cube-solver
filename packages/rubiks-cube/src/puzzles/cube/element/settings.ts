@@ -1,4 +1,5 @@
 import { DEFAULT_CAMERA_RADIUS } from '../../../shared/cameraDefaults';
+import { isNullOrEmptyString } from '../../../shared/string';
 import type { CubeType } from '../core';
 import { CubeTypes } from '../core';
 import RubiksCube3DSettings from '../three/cubeSettings';
@@ -164,7 +165,7 @@ export default class Settings {
   }
 
   setMaxDevicePixelRatio(value: string | null): void {
-    if (value == null || value === '') {
+    if (isNullOrEmptyString(value)) {
       this.maxDevicePixelRatio = defaultSettings.maxDevicePixelRatio;
       return;
     }

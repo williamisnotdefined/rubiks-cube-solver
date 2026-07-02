@@ -1,5 +1,6 @@
 import { type AnimationStyle, AnimationStyles } from '../../../shared/animation';
 import { DEFAULT_CAMERA_RADIUS } from '../../../shared/cameraDefaults';
+import { isNullOrEmptyString } from '../../../shared/string';
 import {
   DEFAULT_MEGAMINX_ANIMATION_SPEED_MS,
   DEFAULT_MEGAMINX_VISUAL_STYLE,
@@ -120,7 +121,7 @@ export function setMegaminxCameraPeekAngleVertical(target: MegaminxElementSettin
 }
 
 export function setMegaminxMaxDevicePixelRatio(target: MegaminxElementSettings, value: string | null): void {
-  if (value == null || value === '') {
+  if (isNullOrEmptyString(value)) {
     target.maxDevicePixelRatio = defaultMegaminxElementSettings.maxDevicePixelRatio;
     return;
   }
@@ -152,7 +153,7 @@ export function setMegaminxAntialias(target: MegaminxElementSettings, value: str
 }
 
 export function setMegaminxVisualStyle(target: MegaminxElementSettings, value: string | null): void {
-  if (value == null || value === '') {
+  if (isNullOrEmptyString(value)) {
     target.visualStyle = defaultMegaminxElementSettings.visualStyle;
     return;
   }

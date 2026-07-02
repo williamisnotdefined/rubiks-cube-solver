@@ -1,0 +1,1848 @@
+openapi: 3.0.3
+info:
+  title: Unofficial WCA Data API
+  version: 0.1.0
+  description: |
+    # Introduction
+
+    Welcome to the **unofficial WCA Data API** for speedcube.com.br.
+
+    This API provides public JSON access to World Cube Association competition data: events, countries, competitions, competitors, rankings, results, scrambles, and championship eligibility references. It is designed for applications that need a stable HTTP API backed by the public WCA Results Export without executing downloaded SQL or coupling data ingestion to user requests.
+
+    > This API is not affiliated with, endorsed by, or operated by the World Cube Association.
+
+    ## Data source
+
+    Data is imported from the public **World Cube Association Results Export**. The import worker downloads the official TSV export, loads it into staging tables, transforms it into canonical PostgreSQL tables, and atomically publishes a dataset version when the import succeeds.
+
+    The public API reads only from the active dataset in our database. It does not call the WCA during API requests.
+
+    ## Freshness and availability
+
+    The WCA export is not realtime. Results, rankings, and competition metadata reflect the last successfully published dataset. Use `GET /wca-data/v1/status` to inspect the active dataset, export date, scheduler configuration, and the most recent import run.
+
+    If no active dataset exists, data endpoints return `503 dataset_unavailable`. This is intentional: production never falls back to fixture data.
+
+    ## Response format
+
+    List endpoints use a consistent envelope:
+
+    ```json
+    {
+      "data": [],
+      "pagination": {
+        "page": 1,
+        "pageSize": 50,
+        "total": 0,
+        "hasNextPage": false
+      },
+      "meta": {
+        "datasetId": "2026-06-30-v2.0.2",
+        "exportDate": "2026-06-30T00:00:16.000Z",
+        "exportVersion": "v2.0.2",
+        "source": "World Cube Association Results Export"
+      }
+    }
+    ```
+
+    Item endpoints use `{ data, meta }` with the same dataset metadata.
+
+    ## Pagination
+
+    Use `page` and `pageSize` on list endpoints. Pages are 1-indexed. `pageSize` defaults to `50` and is capped at `100` to keep responses predictable.
+
+    ## Result values
+
+    WCA result values are exposed as raw WCA integer values. Timed events use centiseconds, so `539` means `5.39` seconds. WCA sentinel values are preserved: `-1` means DNF, `-2` means DNS, and `0` can mean no result depending on the event and round format.
+
+    ## Attribution
+
+    This information is based on competition results owned and maintained by the World Cube Association, published at https://www.worldcubeassociation.org/export/results.
+  contact:
+    name: speedcube.com.br
+    url: http://speedcube.com.br/api/wca-data
+  license:
+    name: WCA Results Export terms apply to source data
+    url: https://www.worldcubeassociation.org/export/results
+servers:
+  - url: http://speedcube.com.br/api
+    description: Public API
+externalDocs:
+  description: WCA Results Export
+  url: https://www.worldcubeassociation.org/export/results
+x-tagGroups:
+  - name: API
+    tags:
+      - Status
+      - Reference data
+      - Competitions
+      - Persons
+      - Rankings
+      - Results
+      - Scrambles
+  - name: Models
+    tags:
+      - Dataset model
+      - Envelope model
+      - Competition model
+      - Person model
+      - Ranking model
+      - Result model
+      - Scramble model
+      - Error model
+tags:
+  - name: Status
+    description: |
+      Inspect API process health, active dataset freshness, source attribution, and import state.
+  - name: Reference data
+    description: |
+      Reference endpoints expose WCA identifiers used by the rest of the API. Use these endpoints to discover valid event ids and country codes before filtering competitions, rankings, or results.
+  - name: Competitions
+    description: |
+      Search and retrieve WCA competitions. Competition records include date range, country, city, venue, coordinates, organizers, delegates, event ids, and cancellation status.
+  - name: Persons
+    description: |
+      Search and retrieve WCA persons. Person records expose public WCA id, display name, country, and gender from the WCA Results Export.
+  - name: Rankings
+    description: |
+      Retrieve rankings by event and ranking type. Rankings can be filtered by world, continent, or country region.
+  - name: Results
+    description: |
+      Retrieve competition result rows with best, average, round, format, record markers, and individual solve values.
+  - name: Scrambles
+    description: |
+      Retrieve official scramble strings by competition, event, round type, group, and extra-scramble flag.
+  - name: Dataset model
+    x-displayName: Dataset
+    description: |
+      <SchemaDefinition schemaRef="#/components/schemas/DatasetMetadata" />
+  - name: Envelope model
+    x-displayName: Envelopes and pagination
+    description: |
+      <SchemaDefinition schemaRef="#/components/schemas/ListEnvelope" />
+      <SchemaDefinition schemaRef="#/components/schemas/ResponseMeta" />
+      <SchemaDefinition schemaRef="#/components/schemas/Pagination" />
+  - name: Competition model
+    x-displayName: Competition
+    description: |
+      <SchemaDefinition schemaRef="#/components/schemas/Competition" />
+  - name: Person model
+    x-displayName: Person
+    description: |
+      <SchemaDefinition schemaRef="#/components/schemas/Person" />
+  - name: Ranking model
+    x-displayName: Ranking
+    description: |
+      <SchemaDefinition schemaRef="#/components/schemas/RankEntry" />
+  - name: Result model
+    x-displayName: Result
+    description: |
+      <SchemaDefinition schemaRef="#/components/schemas/ResultEntry" />
+      <SchemaDefinition schemaRef="#/components/schemas/ResultValue" />
+  - name: Scramble model
+    x-displayName: Scramble
+    description: |
+      <SchemaDefinition schemaRef="#/components/schemas/ScrambleEntry" />
+  - name: Error model
+    x-displayName: Error
+    description: |
+      <SchemaDefinition schemaRef="#/components/schemas/ErrorEnvelope" />
+paths:
+  /wca-data/v1/status:
+    get:
+      tags: [Status]
+      summary: Dataset status
+      operationId: getWcaDataStatus
+      description: |
+        Reports the active dataset, most recent import run, scheduler settings, and source attribution.
+
+        Use this endpoint before relying on data endpoints. When `status` is `dataset_unavailable`, the API is healthy but no active dataset has been published yet.
+      responses:
+        '200':
+          description: Current WCA Data API status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WcaDataStatus'
+              examples:
+                ready:
+                  summary: Active dataset available
+                  value:
+                    status: ok
+                    activeDataset:
+                      id: 2026-06-30-v2.0.2
+                      exportDate: '2026-06-30T00:00:16.000Z'
+                      exportVersion: v2.0.2
+                      publishedAt: '2026-07-01T04:31:22.000Z'
+                    metrics:
+                      checkedAt: '2026-07-01T04:58:10.000Z'
+                      activeDataset:
+                        exportAgeSeconds: 104274
+                        publishedAgeSeconds: 1618
+                        publishDelaySeconds: 102666
+                        counts:
+                          totalRows: 39665867
+                          competitions: 18035
+                          persons: 292171
+                          results: 6679551
+                          resultAttempts: 30767160
+                          ranksSingle: 1021599
+                          ranksAverage: 886204
+                          scrambles: 1234567
+                          championshipEligibleCountries: 4
+                          championships: 894
+                          continents: 7
+                          countries: 207
+                          events: 21
+                          formats: 7
+                          roundTypes: 11
+                    lastImportRun: null
+                    scheduler:
+                      enabled: true
+                      cron: 30 4 * * *
+                      timezone: UTC
+                    source:
+                      provider: World Cube Association Results Export
+                      official: false
+                unavailable:
+                  summary: API healthy, no active dataset
+                  value:
+                    status: dataset_unavailable
+                    activeDataset: null
+                    metrics:
+                      checkedAt: '2026-07-01T04:58:10.000Z'
+                      activeDataset: null
+                    lastImportRun:
+                      id: f6e4a267-1b56-43cb-8ec3-5261866fb8c3
+                      datasetId: d9becc3e-210f-438b-bcb3-04a97e75ff7a
+                      reason: manual
+                      status: failed
+                      remoteExportDate: '2026-06-30T00:00:16.000Z'
+                      remoteExportVersion: v2.0.2
+                      startedAt: '2026-07-01T18:30:32.745Z'
+                      finishedAt: '2026-07-01T18:30:35.413Z'
+                      errorCode: wca_export_download_http_error
+                      errorMessage: WCA TSV export download failed with HTTP 500
+                      log: {}
+                    scheduler:
+                      enabled: true
+                      cron: 30 4 * * *
+                      timezone: UTC
+                    source:
+                      provider: World Cube Association Results Export
+                      official: false
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl 'http://speedcube.com.br/api/wca-data/v1/status'
+        - lang: JavaScript
+          source: |
+            const response = await fetch('http://speedcube.com.br/api/wca-data/v1/status');
+            const status = await response.json();
+
+  /wca-data/v1/openapi.yaml:
+    get:
+      tags: [Status]
+      summary: OpenAPI YAML
+      operationId: getOpenApiYaml
+      description: Returns this OpenAPI document as YAML.
+      responses:
+        '200':
+          description: OpenAPI YAML document.
+          content:
+            application/yaml:
+              schema:
+                type: string
+
+  /wca-data/v1/openapi.json:
+    get:
+      tags: [Status]
+      summary: OpenAPI JSON
+      operationId: getOpenApiJson
+      description: Returns this OpenAPI document as JSON, derived from the YAML source.
+      responses:
+        '200':
+          description: OpenAPI JSON document.
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /wca-data/v1/docs:
+    get:
+      tags: [Status]
+      summary: Redoc API reference
+      operationId: getApiDocs
+      description: Serves the human API reference rendered from the OpenAPI document.
+      responses:
+        '200':
+          description: HTML Redoc documentation page.
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /wca-data/v1/events:
+    get:
+      tags: [Reference data]
+      summary: List WCA events
+      operationId: listEvents
+      description: |
+        Lists WCA event identifiers and display names. Use `id` values such as `333`, `222`, or `clock` when filtering rankings, competitions, or results.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: WCA events.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventListResponse'
+              examples:
+                events:
+                  value:
+                    data:
+                      - id: '333'
+                        name: 3x3x3 Cube
+                        format: time
+                      - id: clock
+                        name: Clock
+                        format: time
+                    pagination:
+                      page: 1
+                      pageSize: 50
+                      total: 2
+                      hasNextPage: false
+                    meta:
+                      datasetId: 2026-06-30-v2.0.2
+                      exportDate: '2026-06-30T00:00:16.000Z'
+                      exportVersion: v2.0.2
+                      source: World Cube Association Results Export
+        '503':
+          $ref: '#/components/responses/DatasetUnavailable'
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl 'http://speedcube.com.br/api/wca-data/v1/events?pageSize=25'
+        - lang: JavaScript
+          source: |
+            const response = await fetch('http://speedcube.com.br/api/wca-data/v1/events?pageSize=25');
+            const events = await response.json();
+
+  /wca-data/v1/countries:
+    get:
+      tags: [Reference data]
+      summary: List WCA countries
+      operationId: listCountries
+      description: |
+        Lists WCA country records and ISO2 codes. Use `iso2Code` values when filtering competitions, persons, or country rankings.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: WCA countries.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountryListResponse'
+              examples:
+                countries:
+                  value:
+                    data:
+                      - iso2Code: PL
+                        name: Poland
+                        continentId: europe
+                      - iso2Code: US
+                        name: United States
+                        continentId: north-america
+                    pagination:
+                      page: 1
+                      pageSize: 50
+                      total: 2
+                      hasNextPage: false
+                    meta:
+                      datasetId: 2026-06-30-v2.0.2
+                      exportDate: '2026-06-30T00:00:16.000Z'
+                      exportVersion: v2.0.2
+                      source: World Cube Association Results Export
+        '503':
+          $ref: '#/components/responses/DatasetUnavailable'
+
+  /wca-data/v1/continents:
+    get:
+      tags: [Reference data]
+      summary: List WCA continents
+      operationId: listContinents
+      description: |
+        Lists WCA continent identifiers used by country records and regional ranking filters. The identifiers are the raw WCA export values, such as `_Europe` and `_South America`.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: WCA continents.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContinentListResponse'
+              examples:
+                continents:
+                  value:
+                    data:
+                      - id: _Europe
+                        name: Europe
+                      - id: _South America
+                        name: South America
+                    pagination:
+                      page: 1
+                      pageSize: 50
+                      total: 7
+                      hasNextPage: false
+                    meta:
+                      datasetId: 2026-06-30-v2.0.2
+                      exportDate: '2026-06-30T00:00:16.000Z'
+                      exportVersion: v2.0.2
+                      source: World Cube Association Results Export
+        '503':
+          $ref: '#/components/responses/DatasetUnavailable'
+
+  /wca-data/v1/formats:
+    get:
+      tags: [Reference data]
+      summary: List WCA formats
+      operationId: listFormats
+      description: |
+        Lists WCA round formats. Format records describe how many solves are expected, which solves are trimmed, and whether ranking is based on best, average, or another secondary value.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: WCA formats.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormatListResponse'
+              examples:
+                formats:
+                  value:
+                    data:
+                      - id: a
+                        name: Average of 5
+                        shortName: Ao5
+                        sortBy: average
+                        sortBySecond: best
+                        expectedSolveCount: 5
+                        trimFastestN: 1
+                        trimSlowestN: 1
+                    pagination:
+                      page: 1
+                      pageSize: 50
+                      total: 7
+                      hasNextPage: false
+                    meta:
+                      datasetId: 2026-06-30-v2.0.2
+                      exportDate: '2026-06-30T00:00:16.000Z'
+                      exportVersion: v2.0.2
+                      source: World Cube Association Results Export
+        '503':
+          $ref: '#/components/responses/DatasetUnavailable'
+
+  /wca-data/v1/round-types:
+    get:
+      tags: [Reference data]
+      summary: List WCA round types
+      operationId: listRoundTypes
+      description: |
+        Lists WCA round type identifiers and display names. Result entries include the resolved round name, while this endpoint exposes the full reference table.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: WCA round types.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoundTypeListResponse'
+              examples:
+                roundTypes:
+                  value:
+                    data:
+                      - id: f
+                        name: Final
+                        cellName: Final
+                        isFinal: true
+                    pagination:
+                      page: 1
+                      pageSize: 50
+                      total: 11
+                      hasNextPage: false
+                    meta:
+                      datasetId: 2026-06-30-v2.0.2
+                      exportDate: '2026-06-30T00:00:16.000Z'
+                      exportVersion: v2.0.2
+                      source: World Cube Association Results Export
+        '503':
+          $ref: '#/components/responses/DatasetUnavailable'
+
+  /wca-data/v1/championships:
+    get:
+      tags: [Reference data]
+      summary: List WCA championships
+      operationId: listChampionships
+      description: |
+        Lists championship annotations from the WCA export. Use `championshipType` to find world, continental, national, or special championship designations, and `competitionId` to inspect championship annotations for one competition.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - name: championshipType
+          in: query
+          description: Filter by championship type, for example `world`.
+          schema:
+            type: string
+            example: world
+        - name: competitionId
+          in: query
+          description: Filter by competition id.
+          schema:
+            type: string
+            example: WorldChampionship2023
+      responses:
+        '200':
+          description: WCA championship annotations.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChampionshipListResponse'
+              examples:
+                championships:
+                  value:
+                    data:
+                      - id: 1
+                        competitionId: WorldChampionship2023
+                        championshipType: world
+                    pagination:
+                      page: 1
+                      pageSize: 50
+                      total: 1
+                      hasNextPage: false
+                    meta:
+                      datasetId: 2026-06-30-v2.0.2
+                      exportDate: '2026-06-30T00:00:16.000Z'
+                      exportVersion: v2.0.2
+                      source: World Cube Association Results Export
+        '503':
+          $ref: '#/components/responses/DatasetUnavailable'
+
+  /wca-data/v1/championship-eligible-countries:
+    get:
+      tags: [Reference data]
+      summary: List championship eligible countries
+      operationId: listChampionshipEligibleCountries
+      description: |
+        Lists country ISO2 codes eligible for special cross-country championship types from the WCA export.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - name: championshipType
+          in: query
+          description: Filter by championship type, for example `greater_china` or `world`.
+          schema:
+            type: string
+            example: greater_china
+        - name: countryIso2
+          in: query
+          description: Filter by eligible country ISO2 code.
+          schema:
+            type: string
+            example: CN
+      responses:
+        '200':
+          description: Championship eligible country rows.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChampionshipEligibleCountryListResponse'
+              examples:
+                eligibleCountries:
+                  value:
+                    data:
+                      - championshipType: greater_china
+                        eligibleCountryIso2: CN
+                    pagination:
+                      page: 1
+                      pageSize: 50
+                      total: 4
+                      hasNextPage: false
+                    meta:
+                      datasetId: 2026-06-30-v2.0.2
+                      exportDate: '2026-06-30T00:00:16.000Z'
+                      exportVersion: v2.0.2
+                      source: World Cube Association Results Export
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '503':
+          $ref: '#/components/responses/DatasetUnavailable'
+
+  /wca-data/v1/competitions:
+    get:
+      tags: [Competitions]
+      summary: List competitions
+      operationId: listCompetitions
+      description: |
+        Lists competitions from the active dataset. Filters can be combined to narrow results by country, event, and year.
+
+        Common use cases include listing all competitions in a country, finding competitions that held a given event, or browsing competitions for a calendar year.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - name: countryIso2
+          in: query
+          description: Filter competitions by WCA country ISO2 code.
+          schema:
+            type: string
+            example: PL
+        - name: eventId
+          in: query
+          description: Filter competitions that include a specific WCA event id.
+          schema:
+            type: string
+            example: '333'
+        - name: year
+          in: query
+          description: Filter competitions that start in this year.
+          schema:
+            type: integer
+            minimum: 1982
+            example: 2026
+      responses:
+        '200':
+          description: Competition list.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompetitionListResponse'
+              examples:
+                competitions:
+                  value:
+                    data:
+                      - id: FixtureOpen2026
+                        name: Fixture Open 2026
+                        city: Warsaw
+                        countryIso2: PL
+                        information: Example competition loaded from WCA export data.
+                        date:
+                          start: '2026-06-30'
+                          end: '2026-06-30'
+                          numberOfDays: 1
+                        events: ['333', clock]
+                        delegates:
+                          - name: Delegate Example
+                            email: null
+                        organizers:
+                          - name: Organizer Example
+                            email: null
+                        venue:
+                          name: Main venue
+                          address: Warsaw, Poland
+                          details: Main hall
+                          coordinates:
+                            latitude: 52.123456
+                            longitude: 21.012345
+                        externalWebsite: null
+                        cancelled: false
+                    pagination:
+                      page: 1
+                      pageSize: 50
+                      total: 1
+                      hasNextPage: false
+                    meta:
+                      datasetId: 2026-06-30-v2.0.2
+                      exportDate: '2026-06-30T00:00:16.000Z'
+                      exportVersion: v2.0.2
+                      source: World Cube Association Results Export
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '503':
+          $ref: '#/components/responses/DatasetUnavailable'
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl 'http://speedcube.com.br/api/wca-data/v1/competitions?countryIso2=PL&eventId=333&year=2026'
+        - lang: JavaScript
+          source: |
+            const url = new URL('http://speedcube.com.br/api/wca-data/v1/competitions');
+            url.searchParams.set('countryIso2', 'PL');
+            url.searchParams.set('eventId', '333');
+            const response = await fetch(url);
+            const competitions = await response.json();
+
+  /wca-data/v1/competitions/{id}:
+    get:
+      tags: [Competitions]
+      summary: Get competition by id
+      operationId: getCompetition
+      description: Returns a single competition by its WCA competition id.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: WCA competition id.
+          schema:
+            type: string
+            example: WorldChampionship2023
+      responses:
+        '200':
+          description: Competition record.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompetitionResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/DatasetUnavailable'
+
+  /wca-data/v1/persons:
+    get:
+      tags: [Persons]
+      summary: List persons
+      operationId: listPersons
+      description: |
+        Lists WCA persons. Use `search` for name or id matching and `countryIso2` to restrict results to one WCA country.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - name: countryIso2
+          in: query
+          description: Filter persons by WCA country ISO2 code.
+          schema:
+            type: string
+            example: US
+        - name: search
+          in: query
+          description: Case-insensitive search by person name or WCA id.
+          schema:
+            type: string
+            example: Park
+      responses:
+        '200':
+          description: Person list.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonListResponse'
+              examples:
+                persons:
+                  value:
+                    data:
+                      - id: 2012PARK03
+                        name: Max Park
+                        countryIso2: US
+                        gender: m
+                    pagination:
+                      page: 1
+                      pageSize: 50
+                      total: 1
+                      hasNextPage: false
+                    meta:
+                      datasetId: 2026-06-30-v2.0.2
+                      exportDate: '2026-06-30T00:00:16.000Z'
+                      exportVersion: v2.0.2
+                      source: World Cube Association Results Export
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '503':
+          $ref: '#/components/responses/DatasetUnavailable'
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl 'http://speedcube.com.br/api/wca-data/v1/persons?search=park'
+
+  /wca-data/v1/persons/{id}:
+    get:
+      tags: [Persons]
+      summary: Get person by WCA id
+      operationId: getPerson
+      description: Returns one public WCA person record by WCA id.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: WCA person id.
+          schema:
+            type: string
+            example: 2012PARK03
+      responses:
+        '200':
+          description: Person record.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/DatasetUnavailable'
+
+  /wca-data/v1/rankings:
+    get:
+      tags: [Rankings]
+      summary: List rankings
+      operationId: listRankings
+      description: |
+        Lists rankings for one event and ranking type. Set `region=world` for world rankings, `region=country` with `countryIso2` for country rankings, or `region=continent` with `continentId` for continent rankings.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - name: eventId
+          in: query
+          required: true
+          description: WCA event id.
+          schema:
+            type: string
+            example: '333'
+        - name: type
+          in: query
+          required: true
+          description: Ranking type.
+          schema:
+            type: string
+            enum: [average, single]
+            example: single
+        - name: region
+          in: query
+          description: Ranking region. Defaults to `world` when omitted.
+          schema:
+            type: string
+            enum: [continent, country, world]
+            example: world
+        - name: countryIso2
+          in: query
+          description: Required when `region=country`.
+          schema:
+            type: string
+            example: US
+        - name: continentId
+          in: query
+          description: Required when `region=continent`.
+          schema:
+            type: string
+            example: europe
+      responses:
+        '200':
+          description: Ranking entries.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RankListResponse'
+              examples:
+                rankings:
+                  value:
+                    data:
+                      - personId: 2012PARK03
+                        eventId: '333'
+                        type: single
+                        region: world
+                        best:
+                          raw: 313
+                        rank:
+                          world: 1
+                          continent: 1
+                          country: 1
+                          selected: 1
+                    pagination:
+                      page: 1
+                      pageSize: 50
+                      total: 1
+                      hasNextPage: false
+                    meta:
+                      datasetId: 2026-06-30-v2.0.2
+                      exportDate: '2026-06-30T00:00:16.000Z'
+                      exportVersion: v2.0.2
+                      source: World Cube Association Results Export
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '503':
+          $ref: '#/components/responses/DatasetUnavailable'
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl 'http://speedcube.com.br/api/wca-data/v1/rankings?eventId=333&type=single&region=world'
+
+  /wca-data/v1/speedcubers/top:
+    get:
+      tags: [Rankings]
+      summary: List top speedcubers
+      operationId: listTopSpeedcubers
+      description: Shortcut for world rankings by event and type.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - name: eventId
+          in: query
+          required: true
+          description: WCA event id.
+          schema:
+            type: string
+            example: '333'
+        - name: type
+          in: query
+          required: true
+          description: Ranking type.
+          schema:
+            type: string
+            enum: [average, single]
+            example: average
+      responses:
+        '200':
+          description: Top world ranking entries.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RankListResponse'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '503':
+          $ref: '#/components/responses/DatasetUnavailable'
+
+  /wca-data/v1/results:
+    get:
+      tags: [Results]
+      summary: List results
+      operationId: listResults
+      description: |
+        Lists result rows. Filter by competition, event, and person id to retrieve the subset needed by an application.
+
+        Result values are raw WCA integers. For timed events, values are centiseconds. For Fewest Moves, values are move counts or WCA scaled averages. For multi-blind, values follow WCA multi-blind encoding.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - name: competitionId
+          in: query
+          description: Filter by WCA competition id.
+          schema:
+            type: string
+            example: WorldChampionship2023
+        - name: eventId
+          in: query
+          description: Filter by WCA event id.
+          schema:
+            type: string
+            example: '333'
+        - name: personId
+          in: query
+          description: Filter by WCA person id.
+          schema:
+            type: string
+            example: 2012PARK03
+      responses:
+        '200':
+          description: Result entries.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultListResponse'
+              examples:
+                results:
+                  value:
+                    data:
+                      - competitionId: BrizZonSylwesterOpen2022
+                        eventId: clock
+                        personId: 2013ROGA02
+                        position: 1
+                        best:
+                          raw: 539
+                        average:
+                          raw: 564
+                        solves:
+                          - raw: 587
+                          - raw: 615
+                          - raw: 543
+                          - raw: 539
+                          - raw: 561
+                        round: Final
+                        format: Average of 5
+                        regionalSingleRecord: null
+                        regionalAverageRecord: null
+                    pagination:
+                      page: 1
+                      pageSize: 50
+                      total: 1
+                      hasNextPage: false
+                    meta:
+                      datasetId: 2026-06-30-v2.0.2
+                      exportDate: '2026-06-30T00:00:16.000Z'
+                      exportVersion: v2.0.2
+                      source: World Cube Association Results Export
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '503':
+          $ref: '#/components/responses/DatasetUnavailable'
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl 'http://speedcube.com.br/api/wca-data/v1/results?competitionId=WorldChampionship2023&eventId=333'
+
+  /wca-data/v1/scrambles:
+    get:
+      tags: [Scrambles]
+      summary: List scrambles
+      operationId: listScrambles
+      description: |
+        Lists official WCA scramble strings from the active dataset. Filter by competition and event for the most common use case, and add round type, group, or extra-scramble filters when reconstructing a specific scramble set.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - name: competitionId
+          in: query
+          description: Filter by WCA competition id.
+          schema:
+            type: string
+            example: WorldChampionship2023
+        - name: eventId
+          in: query
+          description: Filter by WCA event id.
+          schema:
+            type: string
+            example: '333'
+        - name: roundTypeId
+          in: query
+          description: Filter by WCA round type id.
+          schema:
+            type: string
+            example: f
+        - name: groupId
+          in: query
+          description: Filter by scramble group id.
+          schema:
+            type: string
+            example: A
+        - name: isExtra
+          in: query
+          description: Filter regular scrambles (`false`) or extra scrambles (`true`).
+          schema:
+            type: boolean
+            example: false
+      responses:
+        '200':
+          description: Scramble entries.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScrambleListResponse'
+              examples:
+                scrambles:
+                  value:
+                    data:
+                      - id: 1
+                        competitionId: FixtureOpen2026
+                        eventId: '333'
+                        roundTypeId: f
+                        groupId: A
+                        isExtra: false
+                        scrambleNumber: 1
+                        scramble: R U R' U'
+                    pagination:
+                      page: 1
+                      pageSize: 50
+                      total: 1
+                      hasNextPage: false
+                    meta:
+                      datasetId: 2026-06-30-v2.0.2
+                      exportDate: '2026-06-30T00:00:16.000Z'
+                      exportVersion: v2.0.2
+                      source: World Cube Association Results Export
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '503':
+          $ref: '#/components/responses/DatasetUnavailable'
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl 'http://speedcube.com.br/api/wca-data/v1/scrambles?competitionId=WorldChampionship2023&eventId=333&pageSize=100'
+
+components:
+  parameters:
+    Page:
+      name: page
+      in: query
+      description: 1-indexed page number.
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+        example: 1
+    PageSize:
+      name: pageSize
+      in: query
+      description: Number of items per page. The maximum is 100.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+        example: 50
+  responses:
+    InvalidRequest:
+      description: The request query or path parameters are invalid.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            error:
+              code: invalid_request
+              message: Invalid request parameters
+              requestId: req-123
+    NotFound:
+      description: The requested item was not found in the active dataset.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            error:
+              code: not_found
+              message: WCA person not found
+              requestId: req-123
+    DatasetUnavailable:
+      description: The API is healthy, but no active dataset is available.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            error:
+              code: dataset_unavailable
+              message: WCA Data API dataset is unavailable
+              requestId: req-123
+  schemas:
+    WcaDataStatus:
+      type: object
+      required: [status, activeDataset, lastImportRun, metrics, scheduler, source]
+      properties:
+        status:
+          type: string
+          enum: [ok, dataset_unavailable]
+        activeDataset:
+          allOf:
+            - $ref: '#/components/schemas/DatasetMetadata'
+          nullable: true
+        lastImportRun:
+          allOf:
+            - $ref: '#/components/schemas/ImportRunRecord'
+          nullable: true
+        metrics:
+          $ref: '#/components/schemas/StatusMetrics'
+        scheduler:
+          $ref: '#/components/schemas/SchedulerStatus'
+        source:
+          $ref: '#/components/schemas/SourceAttribution'
+    DatasetMetadata:
+      type: object
+      required: [id, exportDate, exportVersion, publishedAt]
+      properties:
+        id:
+          type: string
+          example: 2026-06-30-v2.0.2
+        exportDate:
+          type: string
+          format: date-time
+          example: '2026-06-30T00:00:16.000Z'
+        exportVersion:
+          type: string
+          example: v2.0.2
+        publishedAt:
+          type: string
+          format: date-time
+          example: '2026-07-01T04:31:22.000Z'
+    ImportRunRecord:
+      type: object
+      required: [id, datasetId, reason, status, remoteExportDate, remoteExportVersion, startedAt, finishedAt, errorCode, errorMessage, log]
+      properties:
+        id:
+          type: string
+          example: f6e4a267-1b56-43cb-8ec3-5261866fb8c3
+        datasetId:
+          type: string
+          nullable: true
+        reason:
+          type: string
+          enum: [schedule, manual, retry, test]
+        status:
+          type: string
+          enum: [checking, skipped, running, imported, built, validated, published, failed]
+        remoteExportDate:
+          type: string
+          format: date-time
+          nullable: true
+        remoteExportVersion:
+          type: string
+          nullable: true
+        startedAt:
+          type: string
+          format: date-time
+        finishedAt:
+          type: string
+          format: date-time
+          nullable: true
+        errorCode:
+          type: string
+          nullable: true
+        errorMessage:
+          type: string
+          nullable: true
+        log:
+          type: object
+          additionalProperties: true
+    SchedulerStatus:
+      type: object
+      required: [enabled, cron, timezone]
+      properties:
+        enabled:
+          type: boolean
+          example: true
+        cron:
+          type: string
+          example: 30 4 * * *
+        timezone:
+          type: string
+          example: UTC
+    SourceAttribution:
+      type: object
+      required: [provider, official]
+      properties:
+        provider:
+          type: string
+          enum: [World Cube Association Results Export]
+        official:
+          type: boolean
+          example: false
+          description: Always false because this API is not operated by the WCA.
+    StatusMetrics:
+      type: object
+      required: [checkedAt, activeDataset]
+      properties:
+        checkedAt:
+          type: string
+          format: date-time
+          description: Server timestamp when the status payload was generated.
+          example: '2026-07-01T04:58:10.000Z'
+        activeDataset:
+          allOf:
+            - $ref: '#/components/schemas/ActiveDatasetMetrics'
+          nullable: true
+    ActiveDatasetMetrics:
+      type: object
+      required: [counts, exportAgeSeconds, publishedAgeSeconds, publishDelaySeconds]
+      properties:
+        counts:
+          allOf:
+            - $ref: '#/components/schemas/DatasetRecordCounts'
+          nullable: true
+          description: Canonical row counts recorded when the active dataset was transformed. Null when the active dataset predates count metadata.
+        exportAgeSeconds:
+          type: integer
+          minimum: 0
+          description: Seconds between the WCA export timestamp and `checkedAt`.
+          example: 104274
+        publishedAgeSeconds:
+          type: integer
+          minimum: 0
+          description: Seconds between the dataset publication timestamp and `checkedAt`.
+          example: 1618
+        publishDelaySeconds:
+          type: integer
+          minimum: 0
+          description: Seconds between the WCA export timestamp and local dataset publication.
+          example: 102666
+    DatasetRecordCounts:
+      type: object
+      required: [totalRows, championships, championshipEligibleCountries, competitions, continents, countries, events, formats, persons, ranksAverage, ranksSingle, resultAttempts, results, roundTypes, scrambles]
+      properties:
+        totalRows:
+          type: integer
+          minimum: 0
+          example: 39665867
+        championships:
+          type: integer
+          minimum: 0
+          example: 894
+        championshipEligibleCountries:
+          type: integer
+          minimum: 0
+          example: 4
+        competitions:
+          type: integer
+          minimum: 0
+          example: 18035
+        continents:
+          type: integer
+          minimum: 0
+          example: 7
+        countries:
+          type: integer
+          minimum: 0
+          example: 207
+        events:
+          type: integer
+          minimum: 0
+          example: 21
+        formats:
+          type: integer
+          minimum: 0
+          example: 7
+        persons:
+          type: integer
+          minimum: 0
+          example: 292171
+        ranksAverage:
+          type: integer
+          minimum: 0
+          example: 886204
+        ranksSingle:
+          type: integer
+          minimum: 0
+          example: 1021599
+        resultAttempts:
+          type: integer
+          minimum: 0
+          example: 30767160
+        results:
+          type: integer
+          minimum: 0
+          example: 6679551
+        roundTypes:
+          type: integer
+          minimum: 0
+          example: 11
+        scrambles:
+          type: integer
+          minimum: 0
+          example: 1234567
+    ListEnvelope:
+      type: object
+      required: [data, pagination, meta]
+      properties:
+        data:
+          type: array
+          items: {}
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    Pagination:
+      type: object
+      required: [page, pageSize, total, hasNextPage]
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          example: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 50
+        total:
+          type: integer
+          minimum: 0
+          example: 3465
+        hasNextPage:
+          type: boolean
+          example: true
+    ResponseMeta:
+      type: object
+      required: [datasetId, exportDate, exportVersion, source]
+      properties:
+        datasetId:
+          type: string
+          example: 2026-06-30-v2.0.2
+        exportDate:
+          type: string
+          format: date-time
+          example: '2026-06-30T00:00:16.000Z'
+        exportVersion:
+          type: string
+          example: v2.0.2
+        source:
+          type: string
+          enum: [World Cube Association Results Export]
+    Event:
+      type: object
+      required: [id, name, format]
+      properties:
+        id:
+          type: string
+          example: '333'
+        name:
+          type: string
+          example: 3x3x3 Cube
+        format:
+          type: string
+          enum: [time, number, multi]
+          example: time
+    Country:
+      type: object
+      required: [iso2Code, name, continentId]
+      properties:
+        iso2Code:
+          type: string
+          example: PL
+        name:
+          type: string
+          example: Poland
+        continentId:
+          type: string
+          nullable: true
+          example: europe
+    Continent:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+          example: _South America
+        name:
+          type: string
+          example: South America
+    Format:
+      type: object
+      required: [id, sortBy, sortBySecond, expectedSolveCount, trimFastestN, trimSlowestN, name, shortName]
+      properties:
+        id:
+          type: string
+          example: a
+        sortBy:
+          type: string
+          example: average
+        sortBySecond:
+          type: string
+          example: best
+        expectedSolveCount:
+          type: integer
+          example: 5
+        trimFastestN:
+          type: integer
+          example: 1
+        trimSlowestN:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Average of 5
+        shortName:
+          type: string
+          example: Ao5
+    RoundType:
+      type: object
+      required: [id, name, cellName, isFinal]
+      properties:
+        id:
+          type: string
+          example: f
+        name:
+          type: string
+          example: Final
+        cellName:
+          type: string
+          example: Final
+        isFinal:
+          type: boolean
+          example: true
+    Championship:
+      type: object
+      required: [id, competitionId, championshipType]
+      properties:
+        id:
+          type: integer
+          example: 1
+        competitionId:
+          type: string
+          nullable: true
+          example: WorldChampionship2023
+        championshipType:
+          type: string
+          example: world
+    ChampionshipEligibleCountry:
+      type: object
+      required: [championshipType, eligibleCountryIso2]
+      properties:
+        championshipType:
+          type: string
+          example: greater_china
+        eligibleCountryIso2:
+          type: string
+          example: CN
+    Competition:
+      type: object
+      required: [id, name, city, countryIso2, information, date, events, delegates, organizers, venue, externalWebsite, cancelled]
+      properties:
+        id:
+          type: string
+          example: WorldChampionship2023
+        name:
+          type: string
+          example: WCA World Championship 2023
+        city:
+          type: string
+          example: Incheon
+        countryIso2:
+          type: string
+          nullable: true
+          example: KR
+        information:
+          type: string
+        date:
+          $ref: '#/components/schemas/CompetitionDate'
+        events:
+          type: array
+          items:
+            type: string
+          example: ['333', '222', clock]
+        delegates:
+          type: array
+          items:
+            $ref: '#/components/schemas/PersonName'
+        organizers:
+          type: array
+          items:
+            $ref: '#/components/schemas/PersonName'
+        venue:
+          $ref: '#/components/schemas/Venue'
+        externalWebsite:
+          type: string
+          nullable: true
+          example: https://www.worldcubeassociation.org/competitions/WorldChampionship2023
+        cancelled:
+          type: boolean
+          example: false
+    CompetitionDate:
+      type: object
+      required: [start, end, numberOfDays]
+      properties:
+        start:
+          type: string
+          format: date
+          example: '2023-08-12'
+        end:
+          type: string
+          format: date
+          example: '2023-08-15'
+        numberOfDays:
+          type: integer
+          minimum: 1
+          example: 4
+    PersonName:
+      type: object
+      required: [name, email]
+      properties:
+        name:
+          type: string
+          example: Delegate Example
+        email:
+          type: string
+          nullable: true
+          example: delegate@example.test
+    Venue:
+      type: object
+      required: [name, address, details, coordinates]
+      properties:
+        name:
+          type: string
+          example: Main venue
+        address:
+          type: string
+          example: Incheon, South Korea
+        details:
+          type: string
+        coordinates:
+          $ref: '#/components/schemas/Coordinates'
+    Coordinates:
+      type: object
+      required: [latitude, longitude]
+      properties:
+        latitude:
+          type: number
+          nullable: true
+          example: 37.456255
+        longitude:
+          type: number
+          nullable: true
+          example: 126.705206
+    Person:
+      type: object
+      required: [id, name, countryIso2, gender]
+      properties:
+        id:
+          type: string
+          example: 2012PARK03
+        name:
+          type: string
+          example: Max Park
+        countryIso2:
+          type: string
+          nullable: true
+          example: US
+        gender:
+          type: string
+          example: m
+    ResultValue:
+      type: object
+      required: [raw]
+      properties:
+        raw:
+          type: integer
+          description: Raw WCA result value. Timed events use centiseconds. WCA sentinel values are preserved.
+          example: 539
+    RankEntry:
+      type: object
+      required: [personId, eventId, type, region, best, rank]
+      properties:
+        personId:
+          type: string
+          example: 2012PARK03
+        eventId:
+          type: string
+          example: '333'
+        type:
+          type: string
+          enum: [average, single]
+          example: single
+        region:
+          type: string
+          enum: [continent, country, world]
+          example: world
+        best:
+          $ref: '#/components/schemas/ResultValue'
+        rank:
+          $ref: '#/components/schemas/RankPositions'
+    RankPositions:
+      type: object
+      required: [world, continent, country, selected]
+      properties:
+        world:
+          type: integer
+          example: 1
+        continent:
+          type: integer
+          example: 1
+        country:
+          type: integer
+          example: 1
+        selected:
+          type: integer
+          description: Rank in the selected region.
+          example: 1
+    ResultEntry:
+      type: object
+      required: [competitionId, eventId, personId, position, best, average, solves, round, format, regionalSingleRecord, regionalAverageRecord]
+      properties:
+        competitionId:
+          type: string
+          example: BrizZonSylwesterOpen2022
+        eventId:
+          type: string
+          example: clock
+        personId:
+          type: string
+          example: 2013ROGA02
+        position:
+          type: integer
+          example: 1
+        best:
+          $ref: '#/components/schemas/ResultValue'
+        average:
+          $ref: '#/components/schemas/ResultValue'
+        solves:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResultValue'
+        round:
+          type: string
+          example: Final
+        format:
+          type: string
+          example: Average of 5
+        regionalSingleRecord:
+          type: string
+          nullable: true
+          example: NR
+        regionalAverageRecord:
+          type: string
+          nullable: true
+          example: NR
+    ScrambleEntry:
+      type: object
+      required: [id, competitionId, eventId, roundTypeId, groupId, isExtra, scrambleNumber, scramble]
+      properties:
+        id:
+          type: integer
+          example: 1
+        competitionId:
+          type: string
+          example: FixtureOpen2026
+        eventId:
+          type: string
+          example: '333'
+        roundTypeId:
+          type: string
+          example: f
+        groupId:
+          type: string
+          example: A
+        isExtra:
+          type: boolean
+          example: false
+        scrambleNumber:
+          type: integer
+          example: 1
+        scramble:
+          type: string
+          example: R U R' U'
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, requestId]
+          properties:
+            code:
+              type: string
+              enum: [invalid_request, not_found, dataset_unavailable, internal_error]
+              example: dataset_unavailable
+            message:
+              type: string
+              example: WCA Data API dataset is unavailable
+            requestId:
+              type: string
+              example: req-123
+    EventListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ListEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Event'
+    CountryListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ListEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Country'
+    ContinentListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ListEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Continent'
+    FormatListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ListEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Format'
+    RoundTypeListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ListEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/RoundType'
+    ChampionshipListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ListEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Championship'
+    ChampionshipEligibleCountryListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ListEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/ChampionshipEligibleCountry'
+    CompetitionListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ListEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Competition'
+    CompetitionResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/Competition'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    PersonListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ListEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Person'
+    PersonResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/Person'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    RankListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ListEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/RankEntry'
+    ResultListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ListEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/ResultEntry'
+    ScrambleListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ListEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/ScrambleEntry'

@@ -1,0 +1,2 @@
+id	sort_by	sort_by_second	expected_solve_count	trim_fastest_n	trim_slowest_n	name	short_name
+a	average	best	5	1	1	Average of 5	Ao5
