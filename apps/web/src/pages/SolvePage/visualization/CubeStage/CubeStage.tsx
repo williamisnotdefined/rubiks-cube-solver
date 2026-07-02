@@ -56,7 +56,7 @@ export function CubeStage({
 
   return (
     <section
-      className="cube-stage aspect-square w-[min(280px,calc(100vw-24px))] overflow-hidden rounded-xl border bg-card shadow-sm"
+      className="cube-stage aspect-square w-[min(280px,calc(100vw-24px))] overflow-hidden border bg-card shadow-sm"
       aria-label={t('cube.visualization')}
     >
       {!loadRequested ? (
