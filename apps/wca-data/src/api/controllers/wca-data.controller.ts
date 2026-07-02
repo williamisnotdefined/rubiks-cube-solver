@@ -1,4 +1,4 @@
-import type { FastifyRequest } from 'fastify'
+import { Controller, Get, Inject, Param, Query } from '@nestjs/common'
 import type { WcaDataModule } from '../../modules/wca-data/wca-data.module.js'
 import {
   championshipEligibleCountriesQuerySchema,
@@ -12,41 +12,91 @@ import {
   scramblesQuerySchema,
   topSpeedcubersQuerySchema,
 } from '../schemas/wca-data-http.schemas.js'
+import { WCA_DATA_MODULE } from '../tokens.js'
 
-export function createWcaDataController(wcaData: WcaDataModule) {
-  return {
-    status: async () => wcaData.getApiStatus.execute(),
+@Controller('api/wca-data/v1')
+export class WcaDataController {
+  constructor(@Inject(WCA_DATA_MODULE) private readonly wcaData: WcaDataModule) {}
 
-    listChampionshipEligibleCountries: async (request: FastifyRequest) => wcaData.publicApi.listChampionshipEligibleCountries(
-      championshipEligibleCountriesQuerySchema.parse(request.query),
-    ),
+  @Get('status')
+  status() {
+    return this.wcaData.getApiStatus.execute()
+  }
 
-    listChampionships: async (request: FastifyRequest) => wcaData.publicApi.listChampionships(
-      championshipsQuerySchema.parse(request.query),
-    ),
+  @Get('championship-eligible-countries')
+  listChampionshipEligibleCountries(@Query() query: unknown) {
+    return this.wcaData.publicApi.listChampionshipEligibleCountries(championshipEligibleCountriesQuerySchema.parse(query))
+  }
 
-    listContinents: async (request: FastifyRequest) => wcaData.publicApi.listContinents(listQuerySchema.parse(request.query)),
-    listEvents: async (request: FastifyRequest) => wcaData.publicApi.listEvents(listQuerySchema.parse(request.query)),
-    listFormats: async (request: FastifyRequest) => wcaData.publicApi.listFormats(listQuerySchema.parse(request.query)),
-    listCountries: async (request: FastifyRequest) => wcaData.publicApi.listCountries(listQuerySchema.parse(request.query)),
-    listCompetitions: async (request: FastifyRequest) => wcaData.publicApi.listCompetitions(competitionsQuerySchema.parse(request.query)),
+  @Get('championships')
+  listChampionships(@Query() query: unknown) {
+    return this.wcaData.publicApi.listChampionships(championshipsQuerySchema.parse(query))
+  }
 
-    getCompetition: async (request: FastifyRequest) => {
-      const { id } = idParamsSchema.parse(request.params)
-      return wcaData.publicApi.getCompetition(id)
-    },
+  @Get('continents')
+  listContinents(@Query() query: unknown) {
+    return this.wcaData.publicApi.listContinents(listQuerySchema.parse(query))
+  }
 
-    listPersons: async (request: FastifyRequest) => wcaData.publicApi.listPersons(personsQuerySchema.parse(request.query)),
+  @Get('events')
+  listEvents(@Query() query: unknown) {
+    return this.wcaData.publicApi.listEvents(listQuerySchema.parse(query))
+  }
 
-    getPerson: async (request: FastifyRequest) => {
-      const { id } = idParamsSchema.parse(request.params)
-      return wcaData.publicApi.getPerson(id)
-    },
+  @Get('formats')
+  listFormats(@Query() query: unknown) {
+    return this.wcaData.publicApi.listFormats(listQuerySchema.parse(query))
+  }
 
-    listRankings: async (request: FastifyRequest) => wcaData.publicApi.listRankings(rankingsQuerySchema.parse(request.query)),
-    listResults: async (request: FastifyRequest) => wcaData.publicApi.listResults(resultsQuerySchema.parse(request.query)),
-    listRoundTypes: async (request: FastifyRequest) => wcaData.publicApi.listRoundTypes(listQuerySchema.parse(request.query)),
-    listScrambles: async (request: FastifyRequest) => wcaData.publicApi.listScrambles(scramblesQuerySchema.parse(request.query)),
-    listTopSpeedcubers: async (request: FastifyRequest) => wcaData.publicApi.listTopSpeedcubers(topSpeedcubersQuerySchema.parse(request.query)),
+  @Get('countries')
+  listCountries(@Query() query: unknown) {
+    return this.wcaData.publicApi.listCountries(listQuerySchema.parse(query))
+  }
+
+  @Get('competitions')
+  listCompetitions(@Query() query: unknown) {
+    return this.wcaData.publicApi.listCompetitions(competitionsQuerySchema.parse(query))
+  }
+
+  @Get('competitions/:id')
+  getCompetition(@Param() params: unknown) {
+    const { id } = idParamsSchema.parse(params)
+    return this.wcaData.publicApi.getCompetition(id)
+  }
+
+  @Get('persons')
+  listPersons(@Query() query: unknown) {
+    return this.wcaData.publicApi.listPersons(personsQuerySchema.parse(query))
+  }
+
+  @Get('persons/:id')
+  getPerson(@Param() params: unknown) {
+    const { id } = idParamsSchema.parse(params)
+    return this.wcaData.publicApi.getPerson(id)
+  }
+
+  @Get('rankings')
+  listRankings(@Query() query: unknown) {
+    return this.wcaData.publicApi.listRankings(rankingsQuerySchema.parse(query))
+  }
+
+  @Get('results')
+  listResults(@Query() query: unknown) {
+    return this.wcaData.publicApi.listResults(resultsQuerySchema.parse(query))
+  }
+
+  @Get('round-types')
+  listRoundTypes(@Query() query: unknown) {
+    return this.wcaData.publicApi.listRoundTypes(listQuerySchema.parse(query))
+  }
+
+  @Get('scrambles')
+  listScrambles(@Query() query: unknown) {
+    return this.wcaData.publicApi.listScrambles(scramblesQuerySchema.parse(query))
+  }
+
+  @Get('speedcubers/top')
+  listTopSpeedcubers(@Query() query: unknown) {
+    return this.wcaData.publicApi.listTopSpeedcubers(topSpeedcubersQuerySchema.parse(query))
   }
 }

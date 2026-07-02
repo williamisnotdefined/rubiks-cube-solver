@@ -1,33 +1,43 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import type { FastifyInstance } from 'fastify'
+import { Controller, Get, Inject, Res } from '@nestjs/common'
+import type { FastifyReply } from 'fastify'
 import { parse } from 'yaml'
+import type { WcaDataEnv } from '../../config/env.schema.js'
+import { WCA_DATA_ENV } from '../tokens.js'
 
 const openApiSpecPath = join(process.cwd(), 'openapi', 'wca-data-v1.yaml')
 
-export type OpenApiRoutesOptions = {
-  publicBaseUrl: string
-}
+@Controller('api/wca-data/v1')
+export class OpenApiController {
+  constructor(@Inject(WCA_DATA_ENV) private readonly env: WcaDataEnv) {}
 
-export async function registerOpenApiRoutes(app: FastifyInstance, options: OpenApiRoutesOptions) {
-  app.get('/openapi.yaml', async (_request, reply) => {
-    const spec = await readOpenApiSpec()
-
-    return reply
+  @Get('openapi.yaml')
+  async getOpenApiYaml(@Res({ passthrough: true }) reply: FastifyReply): Promise<string> {
+    reply
       .header('cache-control', 'public, max-age=300')
       .type('application/yaml; charset=utf-8')
-      .send(spec)
-  })
 
-  app.get('/openapi.json', async (_request, reply) => reply
-    .header('cache-control', 'public, max-age=300')
-    .type('application/json; charset=utf-8')
-    .send(parse(await readOpenApiSpec())))
+    return readOpenApiSpec()
+  }
 
-  app.get('/docs', async (_request, reply) => reply
-    .header('cache-control', 'public, max-age=300')
-    .type('text/html; charset=utf-8')
-    .send(apiDocsHtml(options.publicBaseUrl)))
+  @Get('openapi.json')
+  async getOpenApiJson(@Res({ passthrough: true }) reply: FastifyReply): Promise<unknown> {
+    reply
+      .header('cache-control', 'public, max-age=300')
+      .type('application/json; charset=utf-8')
+
+    return parse(await readOpenApiSpec())
+  }
+
+  @Get('docs')
+  getDocs(@Res({ passthrough: true }) reply: FastifyReply): string {
+    reply
+      .header('cache-control', 'public, max-age=300')
+      .type('text/html; charset=utf-8')
+
+    return apiDocsHtml(this.env.WCA_DATA_PUBLIC_BASE_URL)
+  }
 }
 
 async function readOpenApiSpec(): Promise<string> {
