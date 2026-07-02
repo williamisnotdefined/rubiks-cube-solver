@@ -11,13 +11,10 @@ export function YouTubeChannelsPage() {
   return (
     <PageScaffold contentClassName="max-w-7xl gap-5">
       <PageHeader>
-        <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-app-muted">
-          {t('channels.kicker')}
-        </p>
         <PageTitle>
           {t('channels.title')}
         </PageTitle>
-        <p className="max-w-3xl text-sm font-semibold leading-6 text-app-muted">
+        <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
           {t('channels.description', { count: youtubeChannels.length })}
         </p>
       </PageHeader>

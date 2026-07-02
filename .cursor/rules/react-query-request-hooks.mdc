@@ -276,5 +276,5 @@ API load state, solve result state, form state, scan workflow state, and visuali
 
 ## Current Frontend Stack
 
-- Vite, React, TypeScript, React Router, React Query, React Hook Form, Zod, Zustand, Tailwind CSS v4, Radix-backed shared primitives, `classnames` as `cls`, `react-i18next`, Motion, Vitest, Storybook, and Playwright are the current frontend stack.
+- Vite, React, TypeScript, React Router, React Query, React Hook Form, Zod, Zustand, Tailwind CSS v4, shadcn/Radix-backed shared primitives, `cn` class merging, `react-i18next`, Motion, Vitest, Storybook, and Playwright are the current frontend stack.
 - Additional global state, routing, form, animation, styling, or component dependencies should wait until the existing stack cannot satisfy a concrete current need.

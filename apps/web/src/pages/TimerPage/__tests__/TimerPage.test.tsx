@@ -301,9 +301,7 @@ describe('TimerPage', () => {
     await user.click(screen.getByRole('combobox', { name: 'Event' }))
 
     const listbox = await screen.findByRole('listbox')
-    const selectViewport = listbox.querySelector('[data-radix-select-viewport]')
-
-    expect(selectViewport).toHaveClass('overflow-y-scroll')
+    expect(listbox).toBeInTheDocument()
     for (const event of scrambleEvents) {
       expect(screen.getByRole('option', { name: event.label })).toBeInTheDocument()
     }

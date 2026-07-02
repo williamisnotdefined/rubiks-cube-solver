@@ -9,11 +9,11 @@ export function TimerStatusBar({ status }: TimerStatusBarProps) {
   const { t } = useTranslation()
 
   return (
-    <div className="grid gap-1 border-x border-b border-app-border bg-app-surface px-4 py-3 text-center">
-      <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-app-muted">
+    <div className="grid gap-1 rounded-xl border bg-card px-4 py-3 text-center shadow-sm">
+      <p className="text-sm font-medium text-muted-foreground">
         {t(`timer.status.${status}`)}
       </p>
-      <p className="text-xs text-app-muted">{t('timer.instructions.space')}</p>
+      <p className="text-xs text-muted-foreground">{t('timer.instructions.space')}</p>
     </div>
   )
 }

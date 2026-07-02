@@ -4,6 +4,8 @@ import type { ReactNode } from 'react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it } from 'vitest'
 import { useThemeStore } from '@core/theme/themeStore'
+import { algorithmPuzzles } from '@pages/AlgorithmsPage/sets/algorithmSetMetadata'
+import { notationGuides } from '@pages/NotationsPage/notationGuides'
 import { PageNav } from '../PageNav'
 
 afterEach(() => {
@@ -22,15 +24,15 @@ describe('PageNav', () => {
 
     expect(solveLink).toHaveAttribute('href', '/solve/')
     expect(timerLink).toHaveAttribute('href', '/timer/')
-    expect(solveLink).toHaveClass('bg-app-text')
-    expect(timerLink).toHaveClass('bg-app-surface')
+    expect(solveLink).toHaveAttribute('aria-current', 'page')
+    expect(timerLink).not.toHaveAttribute('aria-current')
   })
 
   it('marks timer as active and solve as inactive', () => {
     renderWithRouter(<PageNav activeRoute="timer" />, '/timer/')
 
-    expect(screen.getByRole('link', { name: 'Timer' })).toHaveClass('bg-app-text')
-    expect(screen.getByRole('link', { name: 'Solver' })).toHaveClass('bg-app-surface')
+    expect(screen.getByRole('link', { name: 'Timer' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('link', { name: 'Solver' })).not.toHaveAttribute('aria-current')
   })
 
   it('marks YT Channels as active and keeps the English route', () => {
@@ -39,7 +41,7 @@ describe('PageNav', () => {
     const channelsLink = screen.getByRole('link', { name: 'YT Channels' })
 
     expect(channelsLink).toHaveAttribute('href', '/channels/')
-    expect(channelsLink).toHaveClass('bg-app-text')
+    expect(channelsLink).toHaveAttribute('aria-current', 'page')
   })
 
   it('marks Sites as active and keeps the English route', () => {
@@ -48,7 +50,7 @@ describe('PageNav', () => {
     const sitesLink = screen.getByRole('link', { name: 'Sites' })
 
     expect(sitesLink).toHaveAttribute('href', '/sites/')
-    expect(sitesLink).toHaveClass('bg-app-text')
+    expect(sitesLink).toHaveAttribute('aria-current', 'page')
   })
 
   it('marks API as active and keeps the English route', () => {
@@ -57,42 +59,56 @@ describe('PageNav', () => {
     const apiLink = screen.getByRole('link', { name: 'API' })
 
     expect(apiLink).toHaveAttribute('href', '/api/wca-data/')
-    expect(apiLink).toHaveClass('bg-app-text')
+    expect(apiLink).toHaveAttribute('aria-current', 'page')
   })
 
-  it('marks algorithms as active and opens method links', async () => {
-    const user = userEvent.setup()
+  it('uses the site favicon in the brand and removes the old solver subtitle', () => {
+    const { container } = renderWithRouter(<PageNav activeRoute="solve" />)
+
+    expect(container.querySelector('img[src="/favicon.svg"]')).toBeInTheDocument()
+    expect(screen.getAllByText(/Speedcube/)).not.toHaveLength(0)
+    expect(screen.queryByText('Rust solver')).not.toBeInTheDocument()
+  })
+
+  it('marks algorithms as active and opens method links', () => {
     renderWithRouter(<PageNav activeRoute="algorithms" />, '/algoritmos/')
 
     const algorithmsButton = screen.getByRole('button', { name: 'Algorithms' })
-    expect(algorithmsButton).toHaveClass('bg-app-text')
+    expect(algorithmsButton).toHaveAttribute('aria-current', 'page')
+    expect(algorithmsButton).toHaveAttribute('aria-expanded', 'true')
 
-    await user.click(algorithmsButton)
+    const navigation = screen.getByRole('navigation', { name: 'Primary navigation' })
 
-    const methodsDialog = await screen.findByRole('dialog', { name: 'Puzzle methods' })
+    expect(within(navigation).getByRole('link', { name: 'All algorithms' })).toHaveAttribute('href', '/algoritmos/')
 
-    expect(within(methodsDialog).getByRole('link', { name: '3x3 OLL' })).toHaveAttribute('href', '/algoritmos/3x3/oll/')
-    expect(within(methodsDialog).getByRole('link', { name: '2x2 CLL' })).toHaveAttribute('href', '/algoritmos/2x2/cll/')
-    expect(within(methodsDialog).getByRole('link', { name: '4x4 PLL' })).toHaveAttribute('href', '/algoritmos/4x4/pll/')
-    expect(within(methodsDialog).getByRole('link', { name: 'Square-1 Cubeshape' })).toHaveAttribute('href', '/algoritmos/sq1/cubeshape/')
-    expect(within(methodsDialog).getByRole('link', { name: 'Megaminx OLL' })).toHaveAttribute('href', '/algoritmos/megaminx/oll/')
+    for (const puzzle of algorithmPuzzles) {
+      expect(within(navigation).getByRole('link', { name: puzzle.title })).toHaveAttribute('href', `${puzzle.path}/`)
+    }
   })
 
-  it('marks notations as active and opens puzzle notation links', async () => {
-    const user = userEvent.setup()
-    renderWithRouter(<PageNav activeRoute="notations" />, '/notations/3x3/')
+  it('marks the current algorithm puzzle as active on method pages', () => {
+    renderWithRouter(<PageNav activeRoute="algorithms" />, '/algoritmos/megaminx/pll/')
+
+    const navigation = screen.getByRole('navigation', { name: 'Primary navigation' })
+
+    expect(within(navigation).getByRole('link', { name: 'Megaminx' })).toHaveAttribute('aria-current', 'page')
+    expect(within(navigation).getByRole('link', { name: 'All algorithms' })).not.toHaveAttribute('aria-current')
+  })
+
+  it('marks notations as active and opens puzzle notation links', () => {
+    renderWithRouter(<PageNav activeRoute="notations" />, '/notations/square-1/')
 
     const notationsButton = screen.getByRole('button', { name: 'Notations' })
-    expect(notationsButton).toHaveClass('bg-app-text')
+    expect(notationsButton).toHaveAttribute('aria-current', 'page')
+    expect(notationsButton).toHaveAttribute('aria-expanded', 'true')
 
-    await user.click(notationsButton)
+    const navigation = screen.getByRole('navigation', { name: 'Primary navigation' })
 
-    const notationsDialog = await screen.findByRole('dialog', { name: 'Puzzle notations' })
+    for (const guide of notationGuides) {
+      expect(within(navigation).getByRole('link', { name: guide.puzzle })).toHaveAttribute('href', `${guide.path}/`)
+    }
 
-    expect(within(notationsDialog).getByRole('link', { name: '3x3' })).toHaveAttribute('href', '/notations/3x3/')
-    expect(within(notationsDialog).getByRole('link', { name: 'Pyraminx' })).toHaveAttribute('href', '/notations/pyraminx/')
-    expect(within(notationsDialog).getByRole('link', { name: 'Square-1' })).toHaveAttribute('href', '/notations/square-1/')
-    expect(within(notationsDialog).getByRole('link', { name: 'Clock' })).toHaveAttribute('href', '/notations/clock/')
+    expect(within(navigation).getByRole('link', { name: 'Square-1' })).toHaveAttribute('aria-current', 'page')
   })
 
   it('links to the project on GitHub', () => {
@@ -108,17 +124,17 @@ describe('PageNav', () => {
     const user = userEvent.setup()
     renderWithRouter(<PageNav activeRoute="timer" />, '/timer/')
 
-    expect(screen.queryAllByRole('button', { name: 'Close menu' })).toHaveLength(0)
+    expect(screen.queryByRole('dialog', { name: 'Menu' })).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Open menu' }))
 
     const drawer = await screen.findByRole('dialog', { name: 'Menu' })
     expect(within(drawer).getByRole('navigation', { name: 'Primary navigation' })).toBeInTheDocument()
-    expect(screen.getAllByRole('link', { name: 'Timer' })).toHaveLength(1)
+    expect(within(drawer).getByRole('link', { name: 'Timer' })).toHaveAttribute('aria-current', 'page')
 
-    await user.click(screen.getAllByRole('button', { name: 'Close menu' })[0])
+    await user.click(within(drawer).getByRole('button', { name: 'Close' }))
 
-    expect(screen.queryAllByRole('button', { name: 'Close menu' })).toHaveLength(0)
+    expect(screen.queryByRole('dialog', { name: 'Menu' })).not.toBeInTheDocument()
   })
 
   it('opens mobile drawer submenus in dialogs and closes after navigation', async () => {
@@ -128,12 +144,9 @@ describe('PageNav', () => {
     await user.click(screen.getByRole('button', { name: 'Open menu' }))
 
     const drawer = await screen.findByRole('dialog', { name: 'Menu' })
-    await user.click(within(drawer).getByRole('button', { name: 'Algorithms' }))
 
-    const methodsDialog = await screen.findByRole('dialog', { name: 'Puzzle methods' })
-    await user.click(within(methodsDialog).getByRole('link', { name: '3x3 OLL' }))
+    await user.click(within(drawer).getByRole('link', { name: '3x3' }))
 
-    expect(screen.queryByRole('dialog', { name: 'Puzzle methods' })).not.toBeInTheDocument()
     expect(screen.queryByRole('dialog', { name: 'Menu' })).not.toBeInTheDocument()
   })
 
@@ -145,7 +158,7 @@ describe('PageNav', () => {
     await screen.findByRole('dialog', { name: 'Menu' })
     await user.keyboard('{Escape}')
 
-    expect(screen.queryAllByRole('button', { name: 'Close menu' })).toHaveLength(0)
+    expect(screen.queryByRole('dialog', { name: 'Menu' })).not.toBeInTheDocument()
   })
 
   it('persists explicit theme choices and returns to system mode', async () => {

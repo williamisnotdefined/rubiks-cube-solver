@@ -12,13 +12,13 @@ export function ChannelCard({ channel }: ChannelCardProps) {
   return (
     <a
       aria-label={t('channels.openChannel', { channel: channel.name })}
-      className="group border border-app-border bg-app-surface text-app-text outline-none transition-colors hover:border-app-text hover:bg-app-surface-raised focus-visible:ring-2 focus-visible:ring-app-focus/50"
+      className="group overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm outline-none transition-all hover:bg-accent hover:text-accent-foreground hover:shadow-md focus-visible:ring-[3px] focus-visible:ring-ring/50"
       href={channel.url}
       rel="noreferrer"
       target="_blank"
     >
-      <div className="relative aspect-video overflow-hidden border-b border-app-border bg-app-control">
-        <div className="absolute inset-0 grid place-items-center px-4 text-center text-lg font-black uppercase tracking-[0.12em] text-app-muted" aria-hidden="true">
+      <div className="relative aspect-video overflow-hidden border-b bg-muted">
+        <div className="absolute inset-0 grid place-items-center px-4 text-center text-lg font-semibold text-muted-foreground" aria-hidden="true">
           {channel.name}
         </div>
         {channel.bannerUrl !== undefined && (
@@ -31,11 +31,11 @@ export function ChannelCard({ channel }: ChannelCardProps) {
           />
         )}
       </div>
-      <div className="grid gap-1 p-3">
-        <h2 className="text-base font-black uppercase tracking-[0.08em] text-app-text">
+      <div className="grid gap-1 p-4">
+        <h2 className="text-base font-semibold">
           {channel.name}
         </h2>
-        <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted group-hover:text-app-text">
+        <p className="text-sm text-muted-foreground group-hover:text-accent-foreground">
           {t('channels.openInYouTube')}
         </p>
       </div>

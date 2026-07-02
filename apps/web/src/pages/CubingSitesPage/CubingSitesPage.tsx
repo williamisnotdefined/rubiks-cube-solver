@@ -11,13 +11,10 @@ export function CubingSitesPage() {
   return (
     <PageScaffold contentClassName="max-w-7xl gap-5">
       <PageHeader>
-        <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-app-muted">
-          {t('sites.kicker')}
-        </p>
         <PageTitle>
           {t('sites.title')}
         </PageTitle>
-        <p className="max-w-3xl text-sm font-semibold leading-6 text-app-muted">
+        <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
           {t('sites.description', { count: cubingSites.length })}
         </p>
       </PageHeader>

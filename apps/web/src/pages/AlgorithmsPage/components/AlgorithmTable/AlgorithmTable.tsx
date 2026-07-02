@@ -1,40 +1,41 @@
 import { useTranslation } from 'react-i18next'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@components/Table'
 import type { AlgorithmCase } from '../../sets/types'
 
 export function AlgorithmTable({ altPrefix, cases }: { altPrefix: string; cases: AlgorithmCase[] }) {
   const { t } = useTranslation()
 
   return (
-    <div className="overflow-x-auto border border-app-text bg-app-surface">
-      <table className="w-full min-w-[44rem] border-collapse text-app-text">
-        <thead>
-          <tr className="bg-app-control text-sm font-black uppercase tracking-[0.08em]">
-            <th className="w-20 border border-app-text px-3 py-2 text-center">{t('algorithms.table.name')}</th>
-            <th className="w-44 border border-app-text px-3 py-2 text-center">{t('algorithms.table.case')}</th>
-            <th className="border border-app-text px-3 py-2 text-center">{t('algorithms.table.algorithm')}</th>
-          </tr>
-        </thead>
-        <tbody>
+    <div className="overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm">
+      <Table className="min-w-[44rem]">
+        <TableHeader>
+          <TableRow className="bg-muted/50">
+            <TableHead className="w-20 text-center">{t('algorithms.table.name')}</TableHead>
+            <TableHead className="w-44 text-center">{t('algorithms.table.case')}</TableHead>
+            <TableHead className="text-center">{t('algorithms.table.algorithm')}</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {cases.map((caseItem, index) => (
-            <tr key={`${caseItem.name}-${index}`}>
-              <td className="border border-app-text px-3 py-4 text-center text-base font-semibold">
+            <TableRow key={`${caseItem.name}-${index}`}>
+              <TableCell className="px-3 py-4 text-center text-base font-medium">
                 {caseItem.name}
-              </td>
-              <td className="border border-app-text px-3 py-3 text-center">
+              </TableCell>
+              <TableCell className="px-3 py-3 text-center">
                 <img
                   alt={`${altPrefix} ${caseItem.name}`}
                   className="mx-auto max-h-28 max-w-40 object-contain"
                   loading="lazy"
                   src={caseItem.image}
                 />
-              </td>
-              <td className="border border-app-text px-4 py-4 text-center font-mono text-sm font-semibold sm:text-base">
+              </TableCell>
+              <TableCell className="px-4 py-4 text-center font-mono text-sm sm:text-base">
                 {caseItem.algorithm}
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   )
 }

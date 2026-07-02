@@ -1,6 +1,6 @@
-import cls from 'classnames'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { useRef, type ComponentPropsWithoutRef } from 'react'
+import { cn } from '@src/lib/utils'
 
 export const Dialog = DialogPrimitive.Root
 export const DialogTrigger = DialogPrimitive.Trigger
@@ -30,7 +30,7 @@ export function DialogContent({
       <DialogPrimitive.Overlay asChild>
         <button
           aria-label={overlayLabel}
-          className={cls('fixed inset-0 z-50 border-0 bg-app-bg/85 p-0', overlayClassName)}
+          className={cn('fixed inset-0 z-50 border-0 bg-black/50 p-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0', overlayClassName)}
           type="button"
         />
       </DialogPrimitive.Overlay>
@@ -49,7 +49,7 @@ export function DialogContent({
         {...props}
       >
         <div
-          className={cls('fixed z-50 outline-none', className)}
+          className={cn('fixed z-50 rounded-lg outline-none', className)}
           data-motion-preset={motionPreset}
         >
           {children}

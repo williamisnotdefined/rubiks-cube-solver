@@ -55,4 +55,25 @@ describe('i18n language support', () => {
       expect(i18n.hasResourceBundle(language, 'translation')).toBe(true)
     }
   })
+
+  it('keeps locale resource keys in parity across supported languages', async () => {
+    await ensureLanguageResources(fallbackLanguage)
+
+    const fallbackKeys = resourceKeyPaths(i18n.getResourceBundle(fallbackLanguage, 'translation'))
+
+    for (const language of supportedLanguages) {
+      await ensureLanguageResources(language)
+      expect(resourceKeyPaths(i18n.getResourceBundle(language, 'translation'))).toEqual(fallbackKeys)
+    }
+  })
 })
+
+function resourceKeyPaths(resource: unknown, prefix = ''): string[] {
+  if (resource === null || typeof resource !== 'object' || Array.isArray(resource)) {
+    return prefix === '' ? [] : [prefix]
+  }
+
+  return Object.entries(resource)
+    .flatMap(([key, value]) => resourceKeyPaths(value, prefix === '' ? key : `${prefix}.${key}`))
+    .sort()
+}

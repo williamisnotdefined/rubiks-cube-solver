@@ -32,57 +32,50 @@ export function SolveResult({
 
   return (
     <>
-      <output
-        className="result flex min-h-11 w-full flex-col items-center justify-center gap-2 text-center text-lg font-extrabold text-app-text sm:text-xl"
-        aria-live="polite"
-      >
-        {solving ? <Loader3x3 label={t('common.loading')} /> : null}
-        {successResult !== undefined ? (
-          <>
-            <code className="max-w-full text-inherit [font:inherit] [overflow-wrap:anywhere]">
-              {successResult.moves.length === 0 ? t('solve.result.solved') : successResult.moves.join(' ')}
-            </code>
-            <span className="result-meta text-sm font-semibold text-app-muted">
-              {t('solve.result.successMeta', {
-                count: successResult.length,
-                elapsed: t('solve.result.foundIn', {
-                  elapsed: formatElapsedMs(successResult.requestElapsedMs),
-                }),
-              })}{' '}
-              <button
-                className="border-0 bg-transparent p-0 font-semibold text-app-text underline underline-offset-4 outline-none transition-colors hover:text-app-muted focus-visible:ring-2 focus-visible:ring-app-focus/50"
-                type="button"
-                onClick={() => setDetailsOpen(true)}
-              >
-                {t('solve.result.seeMore')}
-              </button>
-            </span>
-          </>
-        ) : null}
-        {!solving && result === undefined && error === null && localValidationMessage !== undefined ? (
-          <span>{localValidationMessage}</span>
-        ) : null}
-        {failureResult !== undefined ? (
-          <>
-            <span>{solveErrorMessage(failureResult, t)}</span>
-            {failureDetail === undefined ? null : (
-              <span className="result-meta text-sm font-semibold text-app-muted">
-                {failureDetail}
+      <section className="w-full max-w-4xl px-6 py-6">
+        <output
+          aria-label="Solve result"
+          aria-live="polite"
+          className="result flex min-h-11 w-full flex-col items-center justify-center gap-2 text-center text-lg font-semibold text-foreground sm:text-xl"
+        >
+          {solving ? <Loader3x3 label={t('common.loading')} /> : null}
+          {successResult !== undefined ? (
+            <>
+              <code aria-label="Solution moves" className="max-w-full text-inherit [font:inherit] [overflow-wrap:anywhere]">
+                {successResult.moves.length === 0 ? t('solve.result.solved') : successResult.moves.join(' ')}
+              </code>
+              <span className="result-meta text-sm text-muted-foreground">
+                {t('solve.result.successMeta', {
+                  count: successResult.length,
+                  elapsed: t('solve.result.foundIn', {
+                    elapsed: formatElapsedMs(successResult.requestElapsedMs),
+                  }),
+                })}{' '}
+                <button
+                  className="border-0 bg-transparent p-0 font-medium text-foreground underline underline-offset-4 outline-none transition-colors hover:text-muted-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  type="button"
+                  onClick={() => setDetailsOpen(true)}
+                >
+                  {t('solve.result.seeMore')}
+                </button>
               </span>
-            )}
-          </>
-        ) : null}
-        {error !== null ? (
-          <>
-            <span>{t('solve.errors.status.api_error')}</span>
-            {error.message.length === 0 ? null : (
-              <span className="result-meta text-sm font-semibold text-app-muted">
-                {error.message}
-              </span>
-            )}
-          </>
-        ) : null}
-      </output>
+            </>
+          ) : null}
+          {!solving && result === undefined && error === null && localValidationMessage !== undefined ? <span>{localValidationMessage}</span> : null}
+          {failureResult !== undefined ? (
+            <>
+              <span>{solveErrorMessage(failureResult, t)}</span>
+              {failureDetail === undefined ? null : <span className="result-meta text-sm text-muted-foreground">{failureDetail}</span>}
+            </>
+          ) : null}
+          {error !== null ? (
+            <>
+              <span>{t('solve.errors.status.api_error')}</span>
+              {error.message.length === 0 ? null : <span className="result-meta text-sm text-muted-foreground">{error.message}</span>}
+            </>
+          ) : null}
+        </output>
+      </section>
       {successResult !== undefined && detailsOpen ? (
         <Suspense fallback={null}>
           <SolveDetailsModal result={successResult} onClose={() => setDetailsOpen(false)} />

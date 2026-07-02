@@ -66,7 +66,7 @@ function PenaltyButton({
     <Button
       className={cls('w-full', {
         '!min-h-8 px-3 py-1 text-xs': compact,
-        'border-app-text bg-app-text text-app-inverse': active,
+        'bg-primary text-primary-foreground': active,
       })}
       aria-pressed={active}
       disabled={disabled}

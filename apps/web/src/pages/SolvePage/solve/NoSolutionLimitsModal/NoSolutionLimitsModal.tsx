@@ -92,29 +92,29 @@ export function NoSolutionLimitsModal({
       }
     }}>
       <DialogContent
-        className="left-1/2 top-1/2 max-h-[calc(100vh-3rem)] w-[calc(100vw-1.5rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-auto border border-app-border bg-app-surface p-4 text-left text-app-text shadow-2xl sm:w-[calc(100vw-3rem)] sm:p-6"
-        overlayClassName="bg-app-bg/85 backdrop-blur-sm"
+        className="left-1/2 top-1/2 max-h-[calc(100vh-3rem)] w-[calc(100vw-1.5rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-auto border bg-card p-4 text-left text-card-foreground shadow-lg sm:w-[calc(100vw-3rem)] sm:p-6"
+        overlayClassName="backdrop-blur-sm"
         overlayLabel={t('solve.noSolution.dismiss')}
       >
         <form className="grid gap-5" onSubmit={handleSubmit}>
           <div className="grid gap-2">
             <DialogTitle asChild>
-              <h2 className="text-lg font-extrabold uppercase tracking-[0.16em]">
+              <h2 className="text-lg font-semibold tracking-tight">
                 {t('solve.noSolution.title')}
               </h2>
             </DialogTitle>
             <DialogDescription asChild>
-              <p className="text-sm font-semibold leading-relaxed text-app-muted">
+              <p className="text-sm leading-relaxed text-muted-foreground">
                 {t('solve.noSolution.description')}
               </p>
             </DialogDescription>
           </div>
 
-          <div className="grid gap-2 border border-app-border bg-app-surface-raised p-3 text-sm">
-            <p className="font-extrabold uppercase tracking-[0.16em] text-app-muted">
+          <div className="grid gap-2 rounded-lg border bg-muted/40 p-3 text-sm">
+            <p className="font-medium text-muted-foreground">
               {t('solve.noSolution.previousAttempt')}
             </p>
-            <p className="font-semibold text-app-text">
+            <p className="font-medium text-foreground">
               {t('solve.noSolution.attempted', {
                 maxDepth: result.maxDepth,
                 maxNodes: attemptedNodes,
@@ -122,7 +122,7 @@ export function NoSolutionLimitsModal({
               })}
             </p>
             {detail === undefined ? null : (
-              <p className="font-semibold text-app-muted">{detail}</p>
+              <p className="text-muted-foreground">{detail}</p>
             )}
           </div>
 
@@ -164,7 +164,7 @@ export function NoSolutionLimitsModal({
           </div>
 
           {localValidationMessage === undefined ? null : (
-            <p className="text-sm font-semibold text-app-text" role="alert">
+            <p className="text-sm font-medium text-destructive" role="alert">
               {localValidationMessage}
             </p>
           )}

@@ -2,6 +2,7 @@ import type { ChangeEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@components/Button'
+import { Card, CardContent } from '@components/Card'
 
 type SolutionPlaybackProps = {
   moves: readonly string[]
@@ -31,49 +32,34 @@ export function SolutionPlayback({
   }
 
   return (
-    <section
-      className="solution-playback grid w-full max-w-xl gap-3 border border-app-border bg-app-surface p-3"
-      aria-label={t('solve.playback.ariaLabel')}
-    >
-      <div className="playback-summary flex items-center justify-between gap-3 text-sm font-extrabold text-app-text sm:text-base">
-        <span>{currentLabel}</span>
-        <span className="playback-step whitespace-nowrap text-xs font-bold text-app-muted sm:text-sm">
-          {step} / {moves.length}
-          {isFinalStep ? t('solve.playback.solved') : ''}
-        </span>
-      </div>
-      <div className="playback-controls flex items-center gap-3">
-        <Button
-          type="button"
-          className="playback-button size-12 p-0"
-          variant="secondary"
-          aria-label={t('solve.playback.previousMove')}
-          disabled={step === 0}
-          onClick={() => onStepChange(step - 1)}
-        >
-          <ChevronLeft aria-hidden="true" size={22} strokeWidth={2.6} />
-        </Button>
-        <input
-          className="playback-range w-full accent-app-text focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-app-focus"
-          type="range"
-          aria-label={t('solve.playback.solutionStep')}
-          min="0"
-          max={moves.length}
-          step="1"
-          value={step}
-          onChange={handleRangeChange}
-        />
-        <Button
-          type="button"
-          className="playback-button size-12 p-0"
-          variant="secondary"
-          aria-label={t('solve.playback.nextMove')}
-          disabled={isFinalStep}
-          onClick={() => onStepChange(step + 1)}
-        >
-          <ChevronRight aria-hidden="true" size={22} strokeWidth={2.6} />
-        </Button>
-      </div>
-    </section>
+    <Card className="solution-playback w-full max-w-xl">
+      <CardContent aria-label={t('solve.playback.ariaLabel')} className="grid gap-3" role="group">
+        <div className="playback-summary flex items-center justify-between gap-3 text-sm font-medium sm:text-base">
+          <span>{currentLabel}</span>
+          <span className="playback-step whitespace-nowrap text-xs text-muted-foreground sm:text-sm">
+            {step} / {moves.length}
+            {isFinalStep ? t('solve.playback.solved') : ''}
+          </span>
+        </div>
+        <div className="playback-controls flex items-center gap-3">
+          <Button aria-label={t('solve.playback.previousMove')} className="playback-button size-10 p-0" disabled={step === 0} type="button" variant="outline" onClick={() => onStepChange(step - 1)}>
+            <ChevronLeft aria-hidden="true" size={22} strokeWidth={2.6} />
+          </Button>
+          <input
+            aria-label={t('solve.playback.solutionStep')}
+            className="playback-range w-full accent-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+            max={moves.length}
+            min="0"
+            step="1"
+            type="range"
+            value={step}
+            onChange={handleRangeChange}
+          />
+          <Button aria-label={t('solve.playback.nextMove')} className="playback-button size-10 p-0" disabled={isFinalStep} type="button" variant="outline" onClick={() => onStepChange(step + 1)}>
+            <ChevronRight aria-hidden="true" size={22} strokeWidth={2.6} />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

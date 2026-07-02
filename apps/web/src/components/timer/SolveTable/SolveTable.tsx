@@ -10,6 +10,7 @@ import {
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@components/Button'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@components/Table'
 import { formatTimerTime } from '@core/timer/formatTimerTime'
 import type { TimerPenalty } from '@core/timer/penalties'
 
@@ -58,8 +59,8 @@ function EmptySolveTable({ className }: Pick<SolveTableProps, 'className'>) {
   const { t } = useTranslation()
 
   return (
-    <section className={cls('flex h-full min-h-0 items-center justify-center border border-app-border bg-app-surface p-4 text-center', className)} aria-label={t('timer.solves.label')}>
-      <p className="text-sm font-extrabold uppercase tracking-[0.16em] text-app-muted">
+    <section className={cls('flex h-full min-h-0 items-center justify-center p-4 text-center text-foreground', className)} aria-label={t('timer.solves.label')}>
+      <p className="text-sm font-medium text-muted-foreground">
         {t('timer.solves.empty')}
       </p>
     </section>
@@ -75,43 +76,43 @@ function PlainSolveTable({
   const { t } = useTranslation()
 
   return (
-    <section className={cls('h-full min-h-0 w-full overflow-auto border border-app-border bg-app-surface', className)} aria-label={t('timer.solves.label')}>
-      <table className="w-full min-w-[32rem] border-collapse text-left text-sm">
-        <thead className="sticky top-0 border-b border-app-border bg-app-surface text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
-          <tr>
-            <th className="w-10 px-2 py-3">
+    <section className={cls('h-full min-h-0 w-full overflow-auto text-foreground', className)} aria-label={t('timer.solves.label')}>
+      <Table className="min-w-[32rem]">
+        <TableHeader className="sticky top-0 bg-card">
+          <TableRow>
+            <TableHead className="w-10 px-2 py-3">
               <span className="sr-only">{t('timer.solves.actions')}</span>
-            </th>
-            <th className="px-4 py-3">#</th>
-            <th className="px-4 py-3">{t('timer.solves.time')}</th>
-            <th className="px-4 py-3">{t('timer.solves.penalty')}</th>
-            <th className="px-4 py-3">{t('timer.solves.scramble')}</th>
-          </tr>
-        </thead>
-        <tbody>
+            </TableHead>
+            <TableHead className="px-4 py-3">#</TableHead>
+            <TableHead className="px-4 py-3">{t('timer.solves.time')}</TableHead>
+            <TableHead className="px-4 py-3">{t('timer.solves.penalty')}</TableHead>
+            <TableHead className="px-4 py-3">{t('timer.solves.scramble')}</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {rows.map((row) => (
-            <tr key={row.id} className="border-b border-app-border last:border-b-0">
-              <td className="px-2 py-3">
+            <TableRow key={row.id}>
+              <TableCell className="px-2 py-3">
                 <DeleteSolveButton
                   disabled={onDeleteSolve === undefined}
                   solveId={row.id}
                   onDeleteSolve={onDeleteSolve}
                 />
-              </td>
-              <td className="px-4 py-3 font-mono text-app-muted">{row.index}</td>
-              <td className="px-4 py-3 font-mono text-lg font-black text-app-text">
+              </TableCell>
+              <TableCell className="px-4 py-3 font-mono text-muted-foreground">{row.index}</TableCell>
+              <TableCell className="px-4 py-3 font-mono text-lg font-bold">
                 {formatTimerTime(row.finalTimeMs, { showMilliseconds })}
-              </td>
-              <td className="px-4 py-3 text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
+              </TableCell>
+              <TableCell className="px-4 py-3 text-sm text-muted-foreground">
                 {t(`timer.penalty.${row.penalty}`)}
-              </td>
-              <td className="max-w-md truncate px-4 py-3 font-mono text-xs text-app-muted">
+              </TableCell>
+              <TableCell className="max-w-md truncate px-4 py-3 font-mono text-xs text-muted-foreground">
                 {row.scramble}
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </section>
   )
 }
@@ -140,14 +141,14 @@ function VirtualizedSolveTable({
     {
       accessorKey: 'index',
       cell: ({ row }) => (
-        <span className="font-mono text-app-muted">{row.original.index}</span>
+        <span className="font-mono text-muted-foreground">{row.original.index}</span>
       ),
       header: '#',
     },
     {
       accessorKey: 'finalTimeMs',
       cell: ({ row }) => (
-        <span className="font-mono text-lg font-black text-app-text">
+        <span className="font-mono text-lg font-bold text-foreground">
           {formatTimerTime(row.original.finalTimeMs, { showMilliseconds })}
         </span>
       ),
@@ -195,9 +196,9 @@ function VirtualizedSolveTable({
     : totalSize - visibleVirtualRows[visibleVirtualRows.length - 1]!.end
 
   return (
-    <section ref={setScrollParentElement} className={cls('h-full min-h-0 w-full overflow-auto border border-app-border bg-app-surface', className)} aria-label={t('timer.solves.label')}>
-      <table className="w-full min-w-[32rem] border-collapse text-left text-sm">
-        <thead className="sticky top-0 border-b border-app-border bg-app-surface text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
+    <section ref={setScrollParentElement} className={cls('h-full min-h-0 w-full overflow-auto text-foreground', className)} aria-label={t('timer.solves.label')}>
+      <table className="w-full min-w-[32rem] caption-bottom text-left text-sm">
+        <thead className="sticky top-0 border-b bg-card text-sm font-medium text-muted-foreground">
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
@@ -220,7 +221,7 @@ function VirtualizedSolveTable({
             const row = tableRows[virtualRow.index]!
 
             return (
-              <tr key={row.id} className="border-b border-app-border last:border-b-0">
+              <tr key={row.id} className="border-b transition-colors hover:bg-muted/50 last:border-b-0">
                 {row.getVisibleCells().map((cell) => (
                   <td className={cellClassName(cell.column.id)} key={cell.id}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -307,11 +308,11 @@ function cellClassName(columnId: string): string {
   }
 
   if (columnId === 'scramble') {
-    return 'max-w-md truncate px-4 py-3 font-mono text-xs text-app-muted'
+    return 'max-w-md truncate px-4 py-3 font-mono text-xs text-muted-foreground'
   }
 
   if (columnId === 'penalty') {
-    return 'px-4 py-3 text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted'
+    return 'px-4 py-3 text-sm text-muted-foreground'
   }
 
   return 'px-4 py-3'

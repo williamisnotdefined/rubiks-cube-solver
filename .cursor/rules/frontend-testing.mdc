@@ -140,7 +140,7 @@ Rules for React component boundaries in `apps/web`.
 - Keep React component props explicit and small.
 - Prefer `children` for layout wrappers such as panels, shells, and result regions.
 - Use `lucide-react` for UI icons; import icon components directly from `lucide-react` instead of authoring local SVG icons.
-- Use shared Radix-backed primitives under `apps/web/src/components`, including `Dialog`, `AlertDialog`, `Select`, `Switch`, `Checkbox`, `Toast`, `Popover`, and `Tooltip`, so portal, focus, escape, and outside-click behavior stay consistent.
+- Use shared shadcn/Radix-backed primitives directly under `apps/web/src/components` for new admin-style UI, including `Dialog`, `AlertDialog`, `Sheet`, `Select`, `Switch`, `Checkbox`, `DropdownMenu`, `Toast`/`Toaster`, `Popover`, `Tooltip`, `Tabs`, `Table`, and `Sidebar`, so portal, focus, escape, and outside-click behavior stay consistent.
 - Extract focused hooks for repeated or stateful UI behavior, but do not hide an oversized component in a single oversized hook.
 - Keep new or substantially changed React component files at or below 400 lines where practical.
 - Keep Storybook stories in a `stories/` child folder beside the source area they cover.
@@ -261,5 +261,5 @@ API load state, solve result state, form state, scan workflow state, and visuali
 
 ## Current Frontend Stack
 
-- Vite, React, TypeScript, React Router, React Query, React Hook Form, Zod, Zustand, Tailwind CSS v4, Radix-backed shared primitives, `classnames` as `cls`, `react-i18next`, Motion, Vitest, Storybook, and Playwright are the current frontend stack.
+- Vite, React, TypeScript, React Router, React Query, React Hook Form, Zod, Zustand, Tailwind CSS v4, shadcn/Radix-backed shared primitives, `cn` class merging, `react-i18next`, Motion, Vitest, Storybook, and Playwright are the current frontend stack.
 - Additional global state, routing, form, animation, styling, or component dependencies should wait until the existing stack cannot satisfy a concrete current need.
