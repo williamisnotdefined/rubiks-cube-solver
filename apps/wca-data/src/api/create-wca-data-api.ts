@@ -1,5 +1,6 @@
-import cors from '@fastify/cors'
-import Fastify from 'fastify'
+import 'reflect-metadata'
+import { NestFactory } from '@nestjs/core'
+import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify'
 import type { WcaDataDatabaseEnv, WcaDataEnv } from '../config/env.schema.js'
 import { requireDatabaseEnv } from '../config/env.js'
 import { createPgPool } from '../db/postgres.js'
@@ -8,10 +9,8 @@ import { PostgresDatasetRepository } from '../modules/wca-data/persistence/postg
 import { PostgresGeneralDataRepository } from '../modules/wca-data/persistence/postgres/postgres-general-data.repository.js'
 import { PostgresImportRunRepository } from '../modules/wca-data/persistence/postgres/postgres-import-run.repository.js'
 import type { Queryable } from '../modules/wca-data/persistence/postgres/queryable.js'
-import { registerErrorHandlerPlugin } from './plugins/error-handler.plugin.js'
-import { registerHealthRoutes } from './routes/health.routes.js'
-import { registerOpenApiRoutes } from './routes/openapi.routes.js'
-import { registerWcaDataRoutes } from './routes/wca-data.routes.js'
+import { WcaDataExceptionFilter } from './filters/wca-data-exception.filter.js'
+import { WcaDataApiModule } from './wca-data-api.module.js'
 
 export type WcaDataApiDatabase = Queryable & {
   end: () => Promise<void>
@@ -23,56 +22,66 @@ export type CreateWcaDataApiDeps = {
   wcaData?: WcaDataModule
 }
 
-export async function createWcaDataApi({ env, pgPoolFactory = createPgPool, wcaData }: CreateWcaDataApiDeps) {
-  const app = Fastify({
+export async function createWcaDataApi({ env, pgPoolFactory = createPgPool, wcaData }: CreateWcaDataApiDeps): Promise<NestFastifyApplication> {
+  const registration: WcaDataModuleRegistration = wcaData === undefined
+    ? await createDefaultWcaDataModule({ env, pgPoolFactory })
+    : { wcaData }
+  const apiModule = registration.close === undefined
+    ? WcaDataApiModule.register({ env, wcaData: registration.wcaData })
+    : WcaDataApiModule.register({ close: registration.close, env, wcaData: registration.wcaData })
+  const adapter = new FastifyAdapter({
     logger: env.WCA_DATA_NODE_ENV === 'test' ? false : { level: env.WCA_DATA_LOG_LEVEL },
     trustProxy: true,
   })
+  const app = await NestFactory.create<NestFastifyApplication>(
+    apiModule,
+    adapter,
+    env.WCA_DATA_NODE_ENV === 'test' ? { logger: false } : {},
+  )
 
-  await registerErrorHandlerPlugin(app)
-  await app.register(cors, { origin: true })
+  app.enableCors({ origin: true })
+  app.enableShutdownHooks()
+  app.useGlobalFilters(new WcaDataExceptionFilter())
 
-  const module = wcaData ?? await createDefaultWcaDataModule({ env, pgPoolFactory, onDatabaseClose: (database) => {
-    app.addHook('onClose', async () => {
-      await database.end()
-    })
-  } })
-
-  await app.register(registerHealthRoutes, { prefix: '/health' })
-  await app.register(registerWcaDataRoutes, { prefix: '/api/wca-data/v1', wcaData: module })
-  await app.register(registerOpenApiRoutes, { prefix: '/api/wca-data/v1', publicBaseUrl: env.WCA_DATA_PUBLIC_BASE_URL })
+  await app.init()
+  await app.getHttpAdapter().getInstance().ready()
 
   return app
 }
 
+type WcaDataModuleRegistration = {
+  close?: () => Promise<void>
+  wcaData: WcaDataModule
+}
+
 type CreateDefaultWcaDataModuleDeps = {
   env: WcaDataEnv
-  onDatabaseClose: (database: WcaDataApiDatabase) => void
   pgPoolFactory: (env: WcaDataDatabaseEnv) => WcaDataApiDatabase
 }
 
 async function createDefaultWcaDataModule({
   env,
-  onDatabaseClose,
   pgPoolFactory,
-}: CreateDefaultWcaDataModuleDeps): Promise<WcaDataModule> {
+}: CreateDefaultWcaDataModuleDeps): Promise<WcaDataModuleRegistration> {
   if (env.WCA_DATA_DATABASE_URL === undefined) {
     if (env.WCA_DATA_NODE_ENV === 'production') {
       throw new Error('WCA_DATA_DATABASE_URL is required for WCA Data API production runtime.')
     }
 
-    return createWcaDataModule({ env })
+    return { wcaData: await createWcaDataModule({ env }) }
   }
 
   const database = pgPoolFactory(requireDatabaseEnv(env))
-  onDatabaseClose(database)
   const datasets = new PostgresDatasetRepository(database)
 
-  return createWcaDataModuleFromRepositories({
-    data: new PostgresGeneralDataRepository(database),
-    datasetMetrics: datasets,
-    datasets,
-    importRuns: new PostgresImportRunRepository(database),
-    scheduler: schedulerFromEnv(env),
-  })
+  return {
+    close: () => database.end(),
+    wcaData: createWcaDataModuleFromRepositories({
+      data: new PostgresGeneralDataRepository(database),
+      datasetMetrics: datasets,
+      datasets,
+      importRuns: new PostgresImportRunRepository(database),
+      scheduler: schedulerFromEnv(env),
+    }),
+  }
 }

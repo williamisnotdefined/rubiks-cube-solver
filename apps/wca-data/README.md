@@ -4,6 +4,15 @@ Unofficial WCA data service for public reference, competition, person, ranking, 
 
 This app is intentionally separate from the Rust solver API. The worker imports official WCA TSV exports into canonical PostgreSQL tables and publishes an active dataset version. The public API reads that active dataset and serves typed JSON endpoints at `http://speedcube.com.br/api/wca-data/v1`.
 
+## Architecture
+
+- The public HTTP API uses NestJS with `FastifyAdapter`; Fastify remains the HTTP runtime.
+- Domain/import/public API services stay framework-light and are wired into Nest through explicit providers.
+- PostgreSQL access uses `pg`, SQL migrations, and `pg-copy-streams` for import paths; Prisma is intentionally not part of this app.
+- The worker remains a separate `pg-boss` process for scheduling, singleton policy, retries, and queue execution.
+- OpenAPI is contract-first from `openapi/wca-data-v1.yaml`; do not replace it with generated Swagger decorators without a separate decision.
+- The current public contract uses modern paths such as `/api/wca-data/v1/persons/:id`; `.json` compatibility endpoints are not part of the MVP contract.
+
 ## Hard Stops
 
 - Do not execute downloaded WCA SQL files.

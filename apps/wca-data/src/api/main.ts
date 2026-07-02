@@ -1,12 +1,13 @@
+import 'reflect-metadata'
 import { loadEnv } from '../config/env.js'
 import { createWcaDataApi } from './create-wca-data-api.js'
 
-const env = loadEnv()
-const app = await createWcaDataApi({ env })
-
 try {
-  await app.listen({ host: env.WCA_DATA_HOST, port: env.WCA_DATA_PORT })
+  const env = loadEnv()
+  const app = await createWcaDataApi({ env })
+
+  await app.listen(env.WCA_DATA_PORT, env.WCA_DATA_HOST)
 } catch (error) {
-  app.log.error({ error }, 'Failed to start WCA Data API')
+  console.error('Failed to start WCA Data API.', error)
   process.exitCode = 1
 }

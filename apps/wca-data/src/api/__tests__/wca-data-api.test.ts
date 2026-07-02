@@ -4,7 +4,12 @@ import { loadEnv } from '../../config/env.js'
 import type { WcaDataApiDatabase } from '../create-wca-data-api.js'
 import { createWcaDataApi } from '../create-wca-data-api.js'
 
-let app: FastifyInstance | undefined
+type TestWcaDataApi = {
+  close: () => Promise<void>
+  inject: FastifyInstance['inject']
+}
+
+let app: TestWcaDataApi | undefined
 
 afterEach(async () => {
   await app?.close()
@@ -255,13 +260,13 @@ describe('WCA Data API', () => {
 
   it('uses Postgres-backed repositories when database URL is configured', async () => {
     const database = new FakeWcaDataApiDatabase()
-    app = await createWcaDataApi({
+    app = await testApi(await createWcaDataApi({
       env: loadEnv({
         WCA_DATA_DATABASE_URL: 'postgres://localhost/wca',
         WCA_DATA_NODE_ENV: 'test',
       }),
       pgPoolFactory: () => database,
-    })
+    }))
 
     const statusResponse = await app.inject({ method: 'GET', url: '/api/wca-data/v1/status' })
     const eventsResponse = await app.inject({ method: 'GET', url: '/api/wca-data/v1/events' })
@@ -285,8 +290,17 @@ describe('WCA Data API', () => {
   })
 })
 
-function testApp(): Promise<FastifyInstance> {
-  return createWcaDataApi({ env: loadEnv({ WCA_DATA_NODE_ENV: 'test' }) })
+async function testApp(): Promise<TestWcaDataApi> {
+  return testApi(await createWcaDataApi({ env: loadEnv({ WCA_DATA_NODE_ENV: 'test' }) }))
+}
+
+function testApi(app: Awaited<ReturnType<typeof createWcaDataApi>>): TestWcaDataApi {
+  const fastify = app.getHttpAdapter().getInstance()
+
+  return {
+    close: () => app.close(),
+    inject: fastify.inject.bind(fastify) as FastifyInstance['inject'],
+  }
 }
 
 class FakeWcaDataApiDatabase implements WcaDataApiDatabase {
