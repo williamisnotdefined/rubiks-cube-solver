@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Writable } from 'node:stream'
 import { afterEach, describe, expect, it } from 'vitest'
-import { getWcaTsvDefinitionByFileName } from '../../../application/import/wca-tsv-registry.js'
+import { getWcaTsvDefinitionByFileName } from '../../../import/wca-tsv-registry.js'
 import { copySql, PostgresCopyStagingLoader, WcaTsvCopyTransform } from '../postgres-copy-staging-loader.js'
 import type { CopyQueryClient } from '../postgres-copy-staging-loader.js'
 

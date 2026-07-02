@@ -11,7 +11,7 @@ import type {
   WcaRankPage,
   WcaResultPage,
   WcaScramblePage,
-} from '../../application/read-models/general-data.repository.js'
+} from '../../repositories/general-data.repository.js'
 import type {
   WcaContinentRecord,
   WcaChampionshipRecord,
@@ -25,7 +25,7 @@ import type {
   WcaResultDocument,
   WcaRoundTypeRecord,
   WcaScrambleRecord,
-} from '../../domain/general-records.js'
+} from '../../domain/wca-records.js'
 import type { Queryable } from './queryable.js'
 
 type ContinentRow = { id: string; name: string }

@@ -1,4 +1,4 @@
-import type { SyncWcaExportResult, SyncWcaExportService } from '../modules/wca-data/application/import/sync-wca-export.service.js'
+import type { SyncWcaExportResult, SyncWcaExportService } from '../modules/wca-data/import/sync-wca-export.service.js'
 
 export const syncWcaExportJobName = 'wca-data.sync-export'
 export const syncWcaExportScheduleKey = 'daily-wca-export-sync'

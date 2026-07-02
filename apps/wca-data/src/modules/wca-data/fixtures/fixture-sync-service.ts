@@ -1,14 +1,14 @@
 import type { Clock } from '../../../shared/time/clock.js'
 import { systemClock } from '../../../shared/time/system-clock.js'
-import { createLoadWcaStagingService } from '../application/import/load-wca-staging.service.js'
-import { createSyncWcaExportService, type SyncWcaExportService } from '../application/import/sync-wca-export.service.js'
-import { createTransformGeneralCanonicalService } from '../application/import/transform-general-canonical.service.js'
-import { createStaticWcaSourceFilesService } from '../application/import/wca-source-files.service.js'
-import { createLocalWcaSyncCycleService } from '../application/import/wca-sync-cycle.service.js'
-import { createPublishDatasetService } from '../application/publish/publish-dataset.service.js'
-import { InMemoryDatasetVersionRepository } from '../persistence/in-memory-dataset-version.repository.js'
-import { InMemoryImportRunRepository } from '../persistence/in-memory-import-run.repository.js'
-import { InMemoryWcaImportRepository } from '../persistence/in-memory-wca-import.repository.js'
+import { createLoadWcaStagingService } from '../import/load-wca-staging.service.js'
+import { createSyncWcaExportService, type SyncWcaExportService } from '../import/sync-wca-export.service.js'
+import { createTransformGeneralCanonicalService } from '../import/transform-general-canonical.service.js'
+import { createStaticWcaSourceFilesService } from '../import/wca-source-files.service.js'
+import { createLocalWcaSyncCycleService } from '../import/wca-sync-cycle.service.js'
+import { createPublishDatasetService } from '../publish/publish-dataset.service.js'
+import { InMemoryDatasetVersionRepository } from '../persistence/memory/in-memory-dataset-version.repository.js'
+import { InMemoryImportRunRepository } from '../persistence/memory/in-memory-import-run.repository.js'
+import { InMemoryWcaImportRepository } from '../persistence/memory/in-memory-wca-import.repository.js'
 import {
   createFixtureWcaExportClient,
   defaultFixtureWcaExportDir,

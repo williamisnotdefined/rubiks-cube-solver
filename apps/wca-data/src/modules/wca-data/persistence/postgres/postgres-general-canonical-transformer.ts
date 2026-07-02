@@ -2,7 +2,7 @@ import type {
   GeneralCanonicalTransformer,
   GeneralCanonicalTransformCounts,
   TransformGeneralCanonicalInput,
-} from '../../application/import/transform-general-canonical.service.js'
+} from '../../import/transform-general-canonical.service.js'
 import type { Queryable } from './queryable.js'
 
 type CountRow = {

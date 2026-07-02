@@ -7,7 +7,7 @@ import type {
   RecordSkippedImportRunInput,
   StartImportRunInput,
   UpdateImportRunStatusInput,
-} from '../repositories.js'
+} from '../../repositories/wca-data.repositories.js'
 import type { Queryable } from './queryable.js'
 
 type ImportRunRow = {

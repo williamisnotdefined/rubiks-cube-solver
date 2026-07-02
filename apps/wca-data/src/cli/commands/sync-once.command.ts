@@ -4,10 +4,10 @@ import { loadEnv, requireDatabaseEnv } from '../../config/env.js'
 import { createPgPool } from '../../db/postgres.js'
 import { YauzlZipReader } from '../../infra/archive/yauzl-zip-reader.js'
 import { createWcaExportClient, type WcaExportClient } from '../../infra/http/wca-export-client.js'
-import { createCheckWcaExportVersionService } from '../../modules/wca-data/application/import/check-wca-export-version.service.js'
-import { createExtractWcaExportService } from '../../modules/wca-data/application/import/extract-wca-export.service.js'
-import { createLocalWcaExportZipClient } from '../../modules/wca-data/application/import/local-wca-export-zip.js'
-import { createLocalZipWcaSourceFilesService } from '../../modules/wca-data/application/import/wca-source-files.service.js'
+import { createCheckWcaExportVersionService } from '../../modules/wca-data/import/check-wca-export-version.service.js'
+import { createExtractWcaExportService } from '../../modules/wca-data/import/extract-wca-export.service.js'
+import { createLocalWcaExportZipClient } from '../../modules/wca-data/import/local-wca-export-zip.js'
+import { createLocalZipWcaSourceFilesService } from '../../modules/wca-data/import/wca-source-files.service.js'
 import type { WcaDataEnv } from '../../config/env.schema.js'
 import type { Clock } from '../../shared/time/clock.js'
 import { createFixtureSyncWcaExportService } from '../../modules/wca-data/fixtures/fixture-sync-service.js'
@@ -16,7 +16,7 @@ import { createPostgresSyncWcaExportService } from '../../modules/wca-data/postg
 import {
   type SyncWcaExportResult,
   type SyncWcaExportService,
-} from '../../modules/wca-data/application/import/sync-wca-export.service.js'
+} from '../../modules/wca-data/import/sync-wca-export.service.js'
 import { systemClock } from '../../shared/time/system-clock.js'
 
 export type SyncOnceOptions = {
