@@ -7,11 +7,13 @@ import type {
   ListWcaRankingsReadInput,
   ListWcaResultsReadInput,
   ListWcaScramblesReadInput,
+  ListWcaWorldRecordsReadInput,
   WcaCompetitionPage,
   WcaPersonPage,
   WcaRankPage,
   WcaResultPage,
   WcaScramblePage,
+  WcaWorldRecordPage,
 } from '../../repositories/general-data.repository.js'
 import type {
   GeneralCanonicalTransformer,
@@ -37,6 +39,8 @@ import type {
   WcaResultDocument,
   WcaRoundTypeRecord,
   WcaScrambleRecord,
+  WcaWorldRecordEntry,
+  WcaWorldRecordType,
 } from '../../domain/wca-records.js'
 
 type StagingGeneralRows = {
@@ -333,6 +337,21 @@ export class InMemoryWcaImportRepository implements WcaStagingLoader, GeneralCan
     return {
       items: scrambles.slice(start, start + input.pageSize),
       total: scrambles.length,
+    }
+  }
+
+  async listWorldRecords(datasetId: string, input: ListWcaWorldRecordsReadInput): Promise<WcaWorldRecordPage> {
+    const rows = this.canonical.get(datasetId) ?? emptyRows()
+    const records = worldRecordRanks(rows, input)
+      .map((record) => worldRecordEntry(rows, record))
+      .filter((record): record is WcaWorldRecordEntry => record !== null)
+      .filter((record) => worldRecordMatchesSearch(record, input.search))
+      .sort(compareWorldRecords)
+    const start = (input.page - 1) * input.pageSize
+
+    return {
+      items: records.slice(start, start + input.pageSize),
+      total: records.length,
     }
   }
 
@@ -638,6 +657,206 @@ function rankDocuments(
   return [...groups.values()]
 }
 
+type InMemoryWorldRecordRank = InMemoryRankRecord & { type: WcaWorldRecordType }
+
+function worldRecordRanks(rows: StagingGeneralRows, input: ListWcaWorldRecordsReadInput): InMemoryWorldRecordRank[] {
+  const ranks: InMemoryWorldRecordRank[] = []
+
+  if (input.type === undefined || input.type === 'single') {
+    ranks.push(...rows.ranksSingle.map((rank) => ({ ...rank, type: 'single' as const })))
+  }
+
+  if (input.type === undefined || input.type === 'average') {
+    ranks.push(...rows.ranksAverage.map((rank) => ({ ...rank, type: 'average' as const })))
+  }
+
+  return ranks
+    .filter((rank) => rank.eventId === input.eventId)
+}
+
+function worldRecordEntry(rows: StagingGeneralRows, rank: InMemoryWorldRecordRank): WcaWorldRecordEntry | null {
+  const event = rows.events.find((item) => item.id === rank.eventId)
+  const athlete = rows.persons.find((person) => person.id === rank.personId && person.subId === 1)
+
+  if (event === undefined || athlete === undefined) {
+    return null
+  }
+
+  const country = athlete.countryId === null
+    ? null
+    : rows.countries.find((item) => item.iso2Code === athlete.countryId) ?? null
+  const result = worldRecordResult(rows, rank)
+  const competition = result === null
+    ? null
+    : rows.competitions.find((item) => item.id === result.competitionId) ?? null
+  const candidates = result === null ? [] : rows.scrambles
+    .filter((scramble) => scramble.competitionId === result.competitionId)
+    .filter((scramble) => scramble.eventId === rank.eventId)
+    .filter((scramble) => scramble.roundTypeId === result.roundTypeId)
+    .filter((scramble) => !scramble.isExtra)
+    .filter((scramble) => rank.type === 'average' || result.attemptNumbers.includes(scramble.scrambleNumber))
+    .sort(compareScrambles)
+
+  return {
+    athlete,
+    competition: competition === null ? null : {
+      city: competition.city,
+      countryIso2: competition.countryId,
+      date: {
+        end: dateString(competition.year, competition.endMonth, competition.endDay),
+        numberOfDays: daysBetween(
+          new Date(Date.UTC(competition.year, competition.month - 1, competition.day)),
+          new Date(Date.UTC(competition.year, competition.endMonth - 1, competition.endDay)),
+        ) + 1,
+        start: dateString(competition.year, competition.month, competition.day),
+      },
+      id: competition.id,
+      name: competition.name,
+    },
+    country,
+    event: {
+      format: event.format,
+      id: event.id,
+      name: event.name,
+    },
+    rank: {
+      continent: rank.continentRank,
+      country: rank.countryRank,
+      world: rank.worldRank,
+    },
+    result,
+    scramble: {
+      candidates,
+      status: worldRecordScrambleStatus(rank.type, candidates),
+    },
+    type: rank.type,
+    value: rank.best,
+  }
+}
+
+type InMemoryWorldRecordResult = WcaWorldRecordEntry['result'] & { competitionId: string; roundTypeId: string }
+
+function worldRecordResult(rows: StagingGeneralRows, rank: InMemoryWorldRecordRank): InMemoryWorldRecordResult | null {
+  const formatNames = new Map(rows.formats.map((format) => [format.id, format.name]))
+  const roundTypesById = new Map(rows.roundTypes.map((roundType) => [roundType.id, roundType]))
+  const attemptsByResultId = new Map<number, InMemoryResultAttemptRecord[]>()
+
+  for (const attempt of rows.resultAttempts) {
+    const attempts = attemptsByResultId.get(attempt.resultId) ?? []
+    attempts.push(attempt)
+    attemptsByResultId.set(attempt.resultId, attempts)
+  }
+
+  const candidates = rows.results
+    .filter((result) => result.personId === rank.personId)
+    .filter((result) => result.eventId === rank.eventId)
+    .filter((result) => rank.type === 'single' ? result.best === rank.best : result.average === rank.best)
+    .sort((left, right) => compareWorldRecordResults(rows, rank.type, left, right))
+  const result = candidates[0]
+
+  if (result === undefined) {
+    return null
+  }
+
+  const attempts = [...(attemptsByResultId.get(result.id) ?? [])].sort((left, right) => left.attemptNumber - right.attemptNumber)
+
+  return {
+    attemptNumbers: rank.type === 'single'
+      ? attempts.filter((attempt) => attempt.result === rank.best).map((attempt) => attempt.attemptNumber)
+      : [],
+    average: result.average,
+    best: result.best,
+    competitionId: result.competitionId,
+    format: formatNames.get(result.formatId) ?? result.formatId,
+    id: result.id,
+    position: result.position,
+    regionalAverageRecord: result.regionalAverageRecord,
+    regionalSingleRecord: result.regionalSingleRecord,
+    round: roundTypesById.get(result.roundTypeId)?.name ?? result.roundTypeId,
+    roundTypeId: result.roundTypeId,
+    solves: padSolves(attempts.map((attempt) => attempt.result)),
+  }
+}
+
+function compareWorldRecordResults(rows: StagingGeneralRows, type: WcaWorldRecordType, left: InMemoryResultRecord, right: InMemoryResultRecord): number {
+  return recordMarkerPriority(type, left) - recordMarkerPriority(type, right)
+    || compareCompetitionDateAsc(competitionForResult(rows, left), competitionForResult(rows, right))
+    || left.id - right.id
+}
+
+function recordMarkerPriority(type: WcaWorldRecordType, result: InMemoryResultRecord): number {
+  if (type === 'single') {
+    return result.regionalSingleRecord === 'WR' ? 0 : 1
+  }
+
+  return result.regionalAverageRecord === 'WR' ? 0 : 1
+}
+
+function competitionForResult(rows: StagingGeneralRows, result: InMemoryResultRecord): WcaCompetitionRecord {
+  return rows.competitions.find((competition) => competition.id === result.competitionId) ?? emptyCompetition(result.competitionId)
+}
+
+function emptyCompetition(id: string): WcaCompetitionRecord {
+  return {
+    cancelled: false,
+    cellName: '',
+    city: '',
+    countryId: null,
+    day: 0,
+    endDay: 0,
+    endMonth: 0,
+    eventSpecs: '',
+    externalWebsite: '',
+    id,
+    information: '',
+    latitude: '',
+    longitude: '',
+    month: 0,
+    name: id,
+    organisers: '',
+    venue: '',
+    venueAddress: '',
+    venueDetails: '',
+    wcaDelegates: '',
+    year: 0,
+  }
+}
+
+function worldRecordMatchesSearch(record: WcaWorldRecordEntry, searchValue: string | undefined): boolean {
+  const search = searchValue?.trim().toLocaleLowerCase()
+
+  if (search === undefined || search.length === 0) {
+    return true
+  }
+
+  return [
+    record.athlete.id,
+    record.athlete.name,
+    record.athlete.countryId ?? '',
+    record.country?.name ?? '',
+    record.event.id,
+    record.event.name,
+    record.competition?.id ?? '',
+    record.competition?.name ?? '',
+  ].some((value) => value.toLocaleLowerCase().includes(search))
+}
+
+function compareWorldRecords(left: WcaWorldRecordEntry, right: WcaWorldRecordEntry): number {
+  return left.event.name.localeCompare(right.event.name)
+    || left.event.id.localeCompare(right.event.id)
+    || right.type.localeCompare(left.type)
+    || left.value - right.value
+    || left.athlete.id.localeCompare(right.athlete.id)
+}
+
+function worldRecordScrambleStatus(type: WcaWorldRecordType, candidates: WcaScrambleRecord[]) {
+  if (candidates.length === 0) {
+    return 'unavailable'
+  }
+
+  return type === 'single' && candidates.length === 1 ? 'exact' : 'ambiguous'
+}
+
 function rankMatchesRegion(rank: WcaRankDocument['items'][number], input: ListWcaRankingsReadInput): boolean {
   switch (input.region) {
     case 'continent':
@@ -661,11 +880,23 @@ function rankValue(rank: WcaRankDocument['items'][number], region: ListWcaRankin
 }
 
 function nullIfEmpty(value: string): string | null {
-  return value === '' ? null : value
+  return value === '' || value === 'NULL' ? null : value
+}
+
+function dateString(year: number, month: number, day: number): string {
+  return `${year.toString().padStart(4, '0')}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`
+}
+
+function daysBetween(start: Date, end: Date): number {
+  return Math.max(0, Math.round((end.getTime() - start.getTime()) / 86_400_000))
 }
 
 function compareCompetitionDateDesc(left: WcaCompetitionRecord, right: WcaCompetitionRecord): number {
   return right.year - left.year || right.month - left.month || right.day - left.day
+}
+
+function compareCompetitionDateAsc(left: WcaCompetitionRecord, right: WcaCompetitionRecord): number {
+  return left.year - right.year || left.month - right.month || left.day - right.day
 }
 
 function competitionEventIds(competition: WcaCompetitionRecord): string[] {

@@ -6,7 +6,7 @@ import { defineConfig } from 'vitest/config'
 const threeSourceMarker = '/node_modules/three/src/'
 const rubiksCubeSourceMarker = '/packages/rubiks-cube/src/'
 const i18nLocaleMarker = '/apps/web/src/i18n/locales/'
-const wcaDataApiProxyTarget = process.env.VITE_WCA_DATA_API_URL ?? 'http://127.0.0.1:8796'
+const wcaDataApiProxyTarget = process.env.WCA_DATA_API_PROXY_TARGET ?? 'https://speedcube.com.br'
 
 const radixChunkPackages: Record<string, string> = {
   '@radix-ui/react-alert-dialog': 'vendor-radix-alert-dialog',
@@ -23,7 +23,10 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     proxy: {
-      '/api/wca-data/v1': wcaDataApiProxyTarget,
+      '/api/wca-data/v1': {
+        changeOrigin: true,
+        target: wcaDataApiProxyTarget,
+      },
     },
   },
   build: {

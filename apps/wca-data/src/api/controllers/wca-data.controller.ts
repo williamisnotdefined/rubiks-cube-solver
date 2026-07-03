@@ -11,6 +11,7 @@ import {
   resultsQuerySchema,
   scramblesQuerySchema,
   topSpeedcubersQuerySchema,
+  worldRecordsQuerySchema,
 } from '../schemas/wca-data-http.schemas.js'
 import { WCA_DATA_MODULE } from '../tokens.js'
 
@@ -69,6 +70,12 @@ export class WcaDataController {
     return this.wcaData.publicApi.listPersons(personsQuerySchema.parse(query))
   }
 
+  @Get('persons/:id/profile')
+  getPersonProfile(@Param() params: unknown) {
+    const { id } = idParamsSchema.parse(params)
+    return this.wcaData.publicApi.getPersonProfile(id)
+  }
+
   @Get('persons/:id')
   getPerson(@Param() params: unknown) {
     const { id } = idParamsSchema.parse(params)
@@ -83,6 +90,11 @@ export class WcaDataController {
   @Get('results')
   listResults(@Query() query: unknown) {
     return this.wcaData.publicApi.listResults(resultsQuerySchema.parse(query))
+  }
+
+  @Get('records/world')
+  listWorldRecords(@Query() query: unknown) {
+    return this.wcaData.publicApi.listWorldRecords(worldRecordsQuerySchema.parse(query))
   }
 
   @Get('round-types')

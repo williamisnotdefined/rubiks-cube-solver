@@ -666,7 +666,8 @@
     "groups": {
       "explore": "探索",
       "learn": "学习",
-      "main": "主要"
+      "main": "主要",
+      "recordsAndData": "Records and Data"
     },
     "github": "在 GitHub 打开项目",
     "menu": "菜单",
@@ -679,7 +680,8 @@
     "themeDark": "深色",
     "themeLight": "浅色",
     "themeSystem": "系统",
-    "timer": "计时器"
+    "timer": "计时器",
+    "worldRecords": "World Records"
   },
   "notations": {
     "groups": {

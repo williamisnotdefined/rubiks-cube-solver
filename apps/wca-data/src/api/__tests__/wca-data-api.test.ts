@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { loadEnv } from '../../config/env.js'
 import type { WcaDataApiDatabase } from '../create-wca-data-api.js'
 import { createWcaDataApi } from '../create-wca-data-api.js'
@@ -14,6 +14,7 @@ let app: TestWcaDataApi | undefined
 afterEach(async () => {
   await app?.close()
   app = undefined
+  vi.unstubAllGlobals()
 })
 
 describe('WCA Data API', () => {
@@ -180,6 +181,47 @@ describe('WCA Data API', () => {
     })
   })
 
+  it('fetches enriched WCA person profiles with approved avatars', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      competition_count: 80,
+      medals: { bronze: 34, gold: 88, silver: 59, total: 181 },
+      person: {
+        avatar: {
+          is_default: false,
+          thumb_url: 'https://avatars.worldcubeassociation.org/thumb',
+          url: 'https://avatars.worldcubeassociation.org/full',
+        },
+        country: { name: 'Poland' },
+        country_iso2: 'PL',
+        gender: 'o',
+        name: 'Fixture Solver',
+        url: 'https://www.worldcubeassociation.org/persons/2026FIXT01',
+        wca_id: '2026FIXT01',
+      },
+      records: { continental: 4, national: 4, total: 10, world: 2 },
+      total_solves: 5373,
+    }), {
+      headers: { 'Content-Type': 'application/json' },
+      status: 200,
+    })))
+    app = await testApp()
+
+    const response = await app.inject({ method: 'GET', url: '/api/wca-data/v1/persons/2026FIXT01/profile' })
+
+    expect(response.statusCode).toBe(200)
+    expect(response.json()).toMatchObject({
+      data: {
+        avatarThumbUrl: 'https://avatars.worldcubeassociation.org/thumb',
+        avatarUrl: 'https://avatars.worldcubeassociation.org/full',
+        competitionCount: 80,
+        id: '2026FIXT01',
+        medals: { total: 181 },
+        records: { world: 2 },
+        totalSolves: 5373,
+      },
+    })
+  })
+
   it('lists rankings and top speedcubers', async () => {
     app = await testApp()
 
@@ -194,6 +236,43 @@ describe('WCA Data API', () => {
     expect(topResponse.statusCode).toBe(200)
     expect(topResponse.json()).toMatchObject({
       data: [{ best: { raw: 1200 }, eventId: '333', personId: '2026FIXT01', type: 'average' }],
+      pagination: { total: 1 },
+    })
+  })
+
+  it('lists enriched current world records with scramble candidates', async () => {
+    app = await testApp()
+
+    const response = await app.inject({ method: 'GET', url: '/api/wca-data/v1/records/world?eventId=333&type=single&search=fixture' })
+
+    expect(response.statusCode).toBe(200)
+    expect(response.json()).toMatchObject({
+      data: [{
+        athlete: {
+          countryIso2: 'PL',
+          countryName: 'Poland',
+          id: '2026FIXT01',
+          name: 'Fixture Solver',
+          wcaUrl: 'https://www.worldcubeassociation.org/persons/2026FIXT01',
+        },
+        competition: {
+          date: { start: '2026-06-30' },
+          id: 'FixtureOpen2026',
+          name: 'Fixture Open 2026',
+        },
+        event: { id: '333', name: '3x3x3 Cube' },
+        result: {
+          attemptNumbers: [1],
+          best: { raw: 1000 },
+          solves: [{ raw: 1000 }, { raw: 1200 }, { raw: 1400 }, { raw: 0 }, { raw: 0 }],
+        },
+        scramble: {
+          candidates: [{ groupId: 'A', scramble: "R U R' U'", scrambleNumber: 1 }],
+          status: 'exact',
+        },
+        type: 'single',
+        value: { raw: 1000 },
+      }],
       pagination: { total: 1 },
     })
   })
@@ -251,11 +330,14 @@ describe('WCA Data API', () => {
 
     const missingResponse = await app.inject({ method: 'GET', url: '/api/wca-data/v1/persons/MISSING' })
     const invalidResponse = await app.inject({ method: 'GET', url: '/api/wca-data/v1/rankings?eventId=333&type=best' })
+    const missingEventResponse = await app.inject({ method: 'GET', url: '/api/wca-data/v1/records/world' })
 
     expect(missingResponse.statusCode).toBe(404)
     expect(missingResponse.json()).toMatchObject({ error: { code: 'not_found', message: 'WCA person not found' } })
     expect(invalidResponse.statusCode).toBe(400)
     expect(invalidResponse.json()).toMatchObject({ error: { code: 'invalid_request' } })
+    expect(missingEventResponse.statusCode).toBe(400)
+    expect(missingEventResponse.json()).toMatchObject({ error: { code: 'invalid_request' } })
   })
 
   it('uses Postgres-backed repositories when database URL is configured', async () => {

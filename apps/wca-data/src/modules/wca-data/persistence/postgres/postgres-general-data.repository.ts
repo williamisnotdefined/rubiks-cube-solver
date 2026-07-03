@@ -6,11 +6,13 @@ import type {
   ListWcaRankingsReadInput,
   ListWcaResultsReadInput,
   ListWcaScramblesReadInput,
+  ListWcaWorldRecordsReadInput,
   WcaCompetitionPage,
   WcaPersonPage,
   WcaRankPage,
   WcaResultPage,
   WcaScramblePage,
+  WcaWorldRecordPage,
 } from '../../repositories/general-data.repository.js'
 import type {
   WcaContinentRecord,
@@ -25,6 +27,9 @@ import type {
   WcaResultDocument,
   WcaRoundTypeRecord,
   WcaScrambleRecord,
+  WcaWorldRecordEntry,
+  WcaWorldRecordScrambleStatus,
+  WcaWorldRecordType,
 } from '../../domain/wca-records.js'
 import type { Queryable } from './queryable.js'
 
@@ -103,6 +108,45 @@ type ScrambleRow = {
   round_type_id: string
   scramble: string
   scramble_num: number | string
+}
+type WorldRecordRow = {
+  athlete_country_id: string | null
+  athlete_gender: string
+  athlete_id: string
+  athlete_name: string
+  average: number | string | null
+  best: number | string | null
+  competition_city: string | null
+  competition_country_id: string | null
+  competition_end_day: number | string | null
+  competition_end_month: number | string | null
+  competition_id: string | null
+  competition_name: string | null
+  competition_start_day: number | string | null
+  competition_start_month: number | string | null
+  competition_year: number | string | null
+  continent_id: string | null
+  continent_rank: number | string
+  country_continent_id: string | null
+  country_name: string | null
+  country_rank: number | string
+  event_format: 'multi' | 'number' | 'time'
+  event_id: string
+  event_name: string
+  format_name: string | null
+  pos: number | string | null
+  record_attempt_numbers: number[] | string | null
+  record_type: WcaWorldRecordType
+  regional_average_record: string | null
+  regional_single_record: string | null
+  result_id: number | string | null
+  round_name: string | null
+  round_type_id: string | null
+  scramble_candidates: unknown
+  solves: number[] | string | null
+  total: number | string
+  value: number | string
+  world_rank: number | string
 }
 
 export class PostgresGeneralDataRepository implements GeneralDataRepository {
@@ -553,6 +597,157 @@ export class PostgresGeneralDataRepository implements GeneralDataRepository {
     }
   }
 
+  async listWorldRecords(datasetId: string, input: ListWcaWorldRecordsReadInput): Promise<WcaWorldRecordPage> {
+    const query = worldRecordQuery(datasetId, input)
+    const limitParam = query.params.length + 1
+    const offsetParam = query.params.length + 2
+    const result = await this.db.query<WorldRecordRow>(`
+      with rank_rows as (
+        ${query.rankSql}
+      ), filtered_records as (
+        select
+          rr.record_type,
+          rr.person_id as athlete_id,
+          rr.event_id,
+          rr.value,
+          rr.world_rank,
+          rr.continent_rank,
+          rr.country_rank,
+          e.name as event_name,
+          e.format as event_format,
+          p.name as athlete_name,
+          p.country_id as athlete_country_id,
+          p.gender as athlete_gender,
+          country.name as country_name,
+          country.continent_id as country_continent_id
+        from rank_rows rr
+        join wca_events e on e.dataset_id = $1 and e.id = rr.event_id
+        left join wca_persons p on p.dataset_id = $1 and p.id = rr.person_id and p.sub_id = 1
+        left join wca_countries country on country.dataset_id = $1 and country.iso2_code = p.country_id
+        where ${query.whereSql}
+      ), paged_records as (
+        select *, count(*) over() as total
+        from filtered_records
+        order by record_type desc, world_rank, value, athlete_id
+        limit $${limitParam}
+        offset $${offsetParam}
+      )
+      select
+        pr.record_type,
+        pr.athlete_id,
+        pr.event_id,
+        pr.value,
+        pr.world_rank,
+        pr.continent_rank,
+        pr.country_rank,
+        pr.event_name,
+        pr.event_format,
+        pr.athlete_name,
+        pr.athlete_country_id,
+        pr.athlete_gender,
+        pr.country_name,
+        pr.country_continent_id,
+        result.result_id,
+        result.competition_id,
+        result.competition_name,
+        result.competition_city,
+        result.competition_country_id,
+        result.competition_year,
+        result.competition_start_month,
+        result.competition_start_day,
+        result.competition_end_month,
+        result.competition_end_day,
+        result.round_type_id,
+        result.round_name,
+        result.format_name,
+        result.pos,
+        result.best,
+        result.average,
+        result.regional_single_record,
+        result.regional_average_record,
+        result.solves,
+        result.record_attempt_numbers,
+        scramble.candidates as scramble_candidates,
+        pr.total
+      from paged_records pr
+        left join lateral (
+          select
+            r.id as result_id,
+            r.competition_id,
+            c.name as competition_name,
+            c.city as competition_city,
+            c.country_id as competition_country_id,
+            c.year as competition_year,
+            c.month as competition_start_month,
+            c.day as competition_start_day,
+            c.end_month as competition_end_month,
+            c.end_day as competition_end_day,
+            r.round_type_id,
+            coalesce(rt.name, r.round_type_id, '') as round_name,
+            coalesce(f.name, r.format_id, '') as format_name,
+            r.pos,
+            r.best,
+            r.average,
+            r.regional_single_record,
+            r.regional_average_record,
+            coalesce(array_agg(a.result order by a.attempt_number) filter (where a.attempt_number is not null), array[]::integer[]) as solves,
+            coalesce(array_agg(a.attempt_number order by a.attempt_number) filter (where pr.record_type = 'single' and a.result = pr.value), array[]::integer[]) as record_attempt_numbers
+          from wca_results r
+          left join wca_competitions c on c.dataset_id = r.dataset_id and c.id = r.competition_id
+          left join wca_round_types rt on rt.dataset_id = r.dataset_id and rt.id = r.round_type_id
+          left join wca_formats f on f.dataset_id = r.dataset_id and f.id = r.format_id
+          left join wca_result_attempts a on a.dataset_id = r.dataset_id and a.result_id = r.id
+          where r.dataset_id = $1
+            and r.person_id = pr.athlete_id
+            and r.event_id = pr.event_id
+            and (
+              (pr.record_type = 'single' and r.best = pr.value)
+              or (pr.record_type = 'average' and r.average = pr.value)
+            )
+          group by r.id, r.competition_id, c.name, c.city, c.country_id, c.year, c.month, c.day, c.end_month, c.end_day, r.round_type_id, rt.name, r.format_id, f.name, r.pos, r.best, r.average, r.regional_single_record, r.regional_average_record
+          order by
+            case
+              when pr.record_type = 'single' and r.regional_single_record = 'WR' then 0
+              when pr.record_type = 'average' and r.regional_average_record = 'WR' then 0
+              else 1
+            end,
+            c.year asc nulls last,
+            c.month asc nulls last,
+            c.day asc nulls last,
+            r.id asc
+          limit 1
+        ) result on true
+        left join lateral (
+          select coalesce(jsonb_agg(jsonb_build_object(
+            'competitionId', s.competition_id,
+            'eventId', s.event_id,
+            'groupId', s.group_id,
+            'id', s.id,
+            'isExtra', s.is_extra,
+            'roundTypeId', s.round_type_id,
+            'scramble', s.scramble,
+            'scrambleNumber', s.scramble_num
+          ) order by s.group_id, s.scramble_num, s.id), '[]'::jsonb) as candidates
+          from wca_scrambles s
+          where s.dataset_id = $1
+            and s.competition_id = result.competition_id
+            and s.event_id = pr.event_id
+            and s.round_type_id = result.round_type_id
+            and s.is_extra = false
+            and (
+              pr.record_type = 'average'
+              or s.scramble_num = any(result.record_attempt_numbers)
+            )
+        ) scramble on true
+      order by pr.record_type desc, pr.world_rank, pr.value, pr.athlete_id
+    `, [...query.params, input.pageSize, (input.page - 1) * input.pageSize])
+
+    return {
+      items: result.rows.map(worldRecordEntry),
+      total: countRowTotal(result.rows[0]) ?? 0,
+    }
+  }
+
   private async rankSummaryTotal(datasetId: string, input: ListWcaRankingsReadInput): Promise<number | null> {
     const regionId = rankSummaryRegionId(input)
     const result = await this.db.query<CountRow>(`
@@ -696,6 +891,175 @@ function scrambleRecord(row: ScrambleRow): WcaScrambleRecord {
     roundTypeId: row.round_type_id,
     scramble: row.scramble,
     scrambleNumber: numberLikeToNumber(row.scramble_num),
+  }
+}
+
+type WorldRecordQuery = {
+  params: unknown[]
+  rankSql: string
+  whereSql: string
+}
+
+function worldRecordQuery(datasetId: string, input: ListWcaWorldRecordsReadInput): WorldRecordQuery {
+  const params: unknown[] = [datasetId, input.eventId]
+  const eventParam = params.length
+
+  const rankSources: string[] = []
+
+  if (input.type === undefined || input.type === 'single') {
+    rankSources.push(worldRecordRankSource('wca_ranks_single', 'single', eventParam))
+  }
+
+  if (input.type === undefined || input.type === 'average') {
+    rankSources.push(worldRecordRankSource('wca_ranks_average', 'average', eventParam))
+  }
+
+  const clauses = ['true']
+  const search = input.search?.trim()
+
+  if (search !== undefined && search.length > 0) {
+    params.push(search)
+    clauses.push(`(
+      lower(rr.person_id) like '%' || lower($${params.length}) || '%'
+      or lower(coalesce(p.name, '')) like '%' || lower($${params.length}) || '%'
+      or lower(rr.event_id) like '%' || lower($${params.length}) || '%'
+      or lower(e.name) like '%' || lower($${params.length}) || '%'
+      or lower(coalesce(p.country_id, '')) like '%' || lower($${params.length}) || '%'
+      or lower(coalesce(country.name, '')) like '%' || lower($${params.length}) || '%'
+    )`)
+  }
+
+  return {
+    params,
+    rankSql: rankSources.join('\n        union all\n        '),
+    whereSql: clauses.join(' and '),
+  }
+}
+
+function worldRecordRankSource(tableName: string, type: WcaWorldRecordType, eventParam: number): string {
+  return `
+    select '${type}'::text as record_type, r.person_id, r.event_id, r.best as value, r.world_rank, r.continent_rank, r.country_rank
+    from ${tableName} r
+    where r.dataset_id = $1 and r.event_id = $${eventParam}
+  `
+}
+
+function worldRecordEntry(row: WorldRecordRow): WcaWorldRecordEntry {
+  const type = row.record_type
+  const candidates = jsonArray<ScrambleCandidateJson>(row.scramble_candidates).map(scrambleCandidateRecord)
+
+  return {
+    athlete: {
+      countryId: row.athlete_country_id,
+      gender: row.athlete_gender,
+      id: row.athlete_id,
+      name: row.athlete_name,
+      subId: 1,
+    },
+    competition: worldRecordCompetition(row),
+    country: row.athlete_country_id === null
+      ? null
+      : {
+        continentId: row.country_continent_id,
+        iso2Code: row.athlete_country_id,
+        name: row.country_name ?? row.athlete_country_id,
+      },
+    event: {
+      format: row.event_format,
+      id: row.event_id,
+      name: row.event_name,
+    },
+    rank: {
+      continent: numberLikeToNumber(row.continent_rank),
+      country: numberLikeToNumber(row.country_rank),
+      world: numberLikeToNumber(row.world_rank),
+    },
+    result: worldRecordResult(row),
+    scramble: {
+      candidates,
+      status: worldRecordScrambleStatus(type, candidates),
+    },
+    type,
+    value: numberLikeToNumber(row.value),
+  }
+}
+
+function worldRecordCompetition(row: WorldRecordRow): WcaWorldRecordEntry['competition'] {
+  if (row.competition_id === null) {
+    return null
+  }
+
+  const year = nullableNumberLikeToNumber(row.competition_year)
+  const startMonth = nullableNumberLikeToNumber(row.competition_start_month)
+  const startDay = nullableNumberLikeToNumber(row.competition_start_day)
+  const endMonth = nullableNumberLikeToNumber(row.competition_end_month)
+  const endDay = nullableNumberLikeToNumber(row.competition_end_day)
+
+  return {
+    city: row.competition_city ?? '',
+    countryIso2: row.competition_country_id,
+    date: {
+      end: dateString(year, endMonth, endDay),
+      numberOfDays: daysBetween(
+        new Date(Date.UTC(year, startMonth - 1, startDay)),
+        new Date(Date.UTC(year, endMonth - 1, endDay)),
+      ) + 1,
+      start: dateString(year, startMonth, startDay),
+    },
+    id: row.competition_id,
+    name: row.competition_name ?? row.competition_id,
+  }
+}
+
+function worldRecordResult(row: WorldRecordRow): WcaWorldRecordEntry['result'] {
+  if (row.result_id === null || row.best === null || row.average === null || row.pos === null) {
+    return null
+  }
+
+  return {
+    attemptNumbers: integerArray(row.record_attempt_numbers),
+    average: numberLikeToNumber(row.average),
+    best: numberLikeToNumber(row.best),
+    format: row.format_name ?? '',
+    id: numberLikeToNumber(row.result_id),
+    position: numberLikeToNumber(row.pos),
+    regionalAverageRecord: nullIfEmpty(row.regional_average_record),
+    regionalSingleRecord: nullIfEmpty(row.regional_single_record),
+    round: row.round_name ?? '',
+    roundTypeId: row.round_type_id ?? '',
+    solves: padSolves(integerArray(row.solves)),
+  }
+}
+
+function worldRecordScrambleStatus(type: WcaWorldRecordType, candidates: WcaScrambleRecord[]): WcaWorldRecordScrambleStatus {
+  if (candidates.length === 0) {
+    return 'unavailable'
+  }
+
+  return type === 'single' && candidates.length === 1 ? 'exact' : 'ambiguous'
+}
+
+type ScrambleCandidateJson = {
+  competitionId?: unknown
+  eventId?: unknown
+  groupId?: unknown
+  id?: unknown
+  isExtra?: unknown
+  roundTypeId?: unknown
+  scramble?: unknown
+  scrambleNumber?: unknown
+}
+
+function scrambleCandidateRecord(candidate: ScrambleCandidateJson): WcaScrambleRecord {
+  return {
+    competitionId: stringValue(candidate.competitionId),
+    eventId: stringValue(candidate.eventId),
+    groupId: stringValue(candidate.groupId),
+    id: numberLikeToNumber(numberLikeValue(candidate.id)),
+    isExtra: booleanValue(candidate.isExtra),
+    roundTypeId: stringValue(candidate.roundTypeId),
+    scramble: stringValue(candidate.scramble),
+    scrambleNumber: numberLikeToNumber(numberLikeValue(candidate.scrambleNumber)),
   }
 }
 
@@ -864,8 +1228,44 @@ function resultRecord(row: ResultDocumentRow) {
   }
 }
 
+function dateString(year: number, month: number, day: number): string {
+  return `${year.toString().padStart(4, '0')}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`
+}
+
+function daysBetween(start: Date, end: Date): number {
+  return Math.max(0, Math.round((end.getTime() - start.getTime()) / 86_400_000))
+}
+
+function nullIfEmpty(value: string | null): string | null {
+  return value === null || value === '' || value === 'NULL' ? null : value
+}
+
 function numberLikeToNumber(value: number | string): number {
   return typeof value === 'number' ? value : Number(value)
+}
+
+function nullableNumberLikeToNumber(value: number | string | null): number {
+  return value === null ? 0 : numberLikeToNumber(value)
+}
+
+function numberLikeValue(value: unknown): number | string {
+  return typeof value === 'number' || typeof value === 'string' ? value : 0
+}
+
+function stringValue(value: unknown): string {
+  return typeof value === 'string' ? value : value === null || value === undefined ? '' : String(value)
+}
+
+function booleanValue(value: unknown): boolean {
+  if (typeof value === 'boolean') {
+    return value
+  }
+
+  if (typeof value === 'string') {
+    return value === '1' || value.toLocaleLowerCase() === 'true'
+  }
+
+  return value === 1
 }
 
 function countRowTotal(row: CountRow | undefined): number | null {
@@ -874,6 +1274,19 @@ function countRowTotal(row: CountRow | undefined): number | null {
   }
 
   return numberLikeToNumber(row.total)
+}
+
+function jsonArray<TItem>(value: unknown): TItem[] {
+  if (Array.isArray(value)) {
+    return value as TItem[]
+  }
+
+  if (typeof value !== 'string') {
+    return []
+  }
+
+  const parsed = JSON.parse(value) as unknown
+  return Array.isArray(parsed) ? parsed as TItem[] : []
 }
 
 function integerArray(value: number[] | string | null): number[] {

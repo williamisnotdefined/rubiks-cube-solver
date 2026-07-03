@@ -17,6 +17,58 @@ describe('PostgresGeneralDataRepository', () => {
           return { rows: [{ total: '1' }] }
         }
 
+        if (sql.includes('with rank_rows')) {
+          return {
+            rows: [{
+              athlete_country_id: 'PL',
+              athlete_gender: 'o',
+              athlete_id: '2026FIXT01',
+              athlete_name: 'Fixture Solver',
+              average: '1200',
+              best: '1000',
+              competition_city: 'Warsaw',
+              competition_country_id: 'PL',
+              competition_end_day: '30',
+              competition_end_month: '6',
+              competition_id: 'FixtureOpen2026',
+              competition_name: 'Fixture Open 2026',
+              competition_start_day: '30',
+              competition_start_month: '6',
+              competition_year: '2026',
+              continent_rank: '1',
+              country_continent_id: 'europe',
+              country_name: 'Poland',
+              country_rank: '1',
+              event_format: 'time',
+              event_id: '333',
+              event_name: '3x3x3 Cube',
+              format_name: 'Average of 5',
+              pos: '1',
+              record_attempt_numbers: [1],
+              record_type: 'single',
+              regional_average_record: null,
+              regional_single_record: 'WR',
+              result_id: '1',
+              round_name: 'Final',
+              round_type_id: 'f',
+              scramble_candidates: [{
+                competitionId: 'FixtureOpen2026',
+                eventId: '333',
+                groupId: 'A',
+                id: 1,
+                isExtra: false,
+                roundTypeId: 'f',
+                scramble: "R U R' U'",
+                scrambleNumber: 1,
+              }],
+              solves: [1000, 1200, 1400, 0, 0],
+              total: '1',
+              value: '1000',
+              world_rank: '1',
+            }],
+          }
+        }
+
         if (sql.includes('from wca_ranks_single r') && sql.includes('order by r.country_rank')) {
           return {
             rows: [{
@@ -365,6 +417,18 @@ describe('PostgresGeneralDataRepository', () => {
     const scramblePageCall = calls.find((call) => call.sql.includes('from wca_scrambles s') && call.sql.includes('order by competition_id'))
     expect(scrambleCountCall?.params).toEqual(['dataset-1', 'FixtureOpen2026', '333', 'f', 'A', false])
     expect(scramblePageCall?.params).toEqual(['dataset-1', 'FixtureOpen2026', '333', 'f', 'A', false, 10, 10])
+    await expect(repository.listWorldRecords('dataset-1', { eventId: '333', page: 1, pageSize: 10, type: 'single' })).resolves.toMatchObject({
+      items: [{
+        athlete: { id: '2026FIXT01', name: 'Fixture Solver' },
+        event: { id: '333', name: '3x3x3 Cube' },
+        scramble: { status: 'exact' },
+        type: 'single',
+        value: 1000,
+      }],
+      total: 1,
+    })
+    const worldRecordsCall = calls.find((call) => call.sql.includes('with rank_rows'))
+    expect(worldRecordsCall?.params).toEqual(['dataset-1', '333', 10, 0])
   })
 
   it('uses event count summaries for event-only result and scramble totals', async () => {

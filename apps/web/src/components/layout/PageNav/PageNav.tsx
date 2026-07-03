@@ -46,6 +46,7 @@ import {
   Palette,
   PanelLeft,
   Sun,
+  Trophy,
   Video,
 } from "lucide-react";
 import { type ReactNode, useState } from "react";
@@ -57,6 +58,7 @@ export type PageNavRoute =
   | "api"
   | "channels"
   | "notations"
+  | "records"
   | "sites"
   | "solve"
   | "timer";
@@ -217,6 +219,15 @@ function NavContent({
               icon={Database}
               label={t("navigation.api")}
               to={localizedPath("/api/wca-data", locale)}
+              onNavigate={onNavigate}
+            />
+          </SidebarGroup>
+          <SidebarGroup label={t("navigation.groups.recordsAndData")}>
+            <SidebarLink
+              active={activeRoute === "records"}
+              icon={Trophy}
+              label={t("navigation.worldRecords")}
+              to={localizedPath("/records/world", locale)}
               onNavigate={onNavigate}
             />
           </SidebarGroup>
@@ -433,6 +444,10 @@ function activeRouteLabelKey(activeRoute: PageNavRoute) {
 
   if (activeRoute === "sites") {
     return "navigation.sites";
+  }
+
+  if (activeRoute === "records") {
+    return "navigation.worldRecords";
   }
 
   if (activeRoute === "api") {

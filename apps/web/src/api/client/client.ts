@@ -1,4 +1,5 @@
 export const defaultApiBaseUrl = 'http://127.0.0.1:8787'
+export const defaultWcaDataApiBaseUrl = '/api/wca-data/v1'
 
 export type ApiJsonResponse<TResponse> = {
   payload: TResponse
@@ -38,6 +39,14 @@ export function apiUrl(path: string): string {
   return `${apiBaseUrl()}${path.startsWith('/') ? path : `/${path}`}`
 }
 
+export function wcaDataApiBaseUrl(): string {
+  return defaultWcaDataApiBaseUrl
+}
+
+export function wcaDataApiUrl(path: string): string {
+  return `${wcaDataApiBaseUrl()}${path.startsWith('/') ? path : `/${path}`}`
+}
+
 export async function apiRequest<TResponse>(
   path: string,
   options: RequestInit = {},
@@ -59,8 +68,32 @@ export async function apiJsonResponse<TResponse>(
   path: string,
   options: RequestInit = {},
 ): Promise<ApiJsonResponse<TResponse>> {
+  return jsonResponseFromUrl(apiUrl(path), options)
+}
+
+export async function wcaDataApiRequest<TResponse>(
+  path: string,
+  options: RequestInit = {},
+): Promise<TResponse> {
+  const result = await jsonResponseFromUrl<TResponse>(wcaDataApiUrl(path), options)
+
+  if (!result.httpOk) {
+    throw new ApiRequestError(
+      errorMessageFromPayload(result.payload, result.statusText),
+      result.status,
+      result.payload,
+    )
+  }
+
+  return result.payload
+}
+
+async function jsonResponseFromUrl<TResponse>(
+  url: string,
+  options: RequestInit = {},
+): Promise<ApiJsonResponse<TResponse>> {
   const startedAt = nowMs()
-  const response = await fetch(apiUrl(path), {
+  const response = await fetch(url, {
     ...options,
     headers: jsonHeaders(options.headers),
   })

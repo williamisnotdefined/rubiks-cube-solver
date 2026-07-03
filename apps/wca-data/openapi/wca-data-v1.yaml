@@ -762,6 +762,32 @@ paths:
           source: |
             curl 'http://speedcube.com.br/api/wca-data/v1/persons?search=park'
 
+  /wca-data/v1/persons/{id}/profile:
+    get:
+      tags: [Persons]
+      summary: Get enriched WCA person profile
+      operationId: getPersonProfile
+      description: Returns local WCA person data enriched with public WCA profile details such as avatar and headline counts when available.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: WCA person id.
+          schema:
+            type: string
+            example: 2012PARK03
+      responses:
+        '200':
+          description: Enriched person profile.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonProfileResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/DatasetUnavailable'
+
   /wca-data/v1/persons/{id}:
     get:
       tags: [Persons]
@@ -904,6 +930,50 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RankListResponse'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '503':
+          $ref: '#/components/responses/DatasetUnavailable'
+
+  /wca-data/v1/records/world:
+    get:
+      tags: [Records]
+      summary: List world leaderboard records
+      operationId: listWorldRecords
+      description: |
+        Lists WCA world leaderboard rows for a selected event, enriched with athlete, event, competition, result attempts, and official scramble candidates.
+
+        Scramble links are exact only when the result attempt maps to a single official scramble candidate. The WCA Results Export does not include athlete group assignment, so multi-group rounds can be marked as ambiguous.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - name: eventId
+          in: query
+          required: true
+          description: WCA event id. World records are queried per event.
+          schema:
+            type: string
+            example: '333'
+        - name: type
+          in: query
+          description: Filter by record type. When omitted, both single and average records are returned.
+          schema:
+            type: string
+            enum: [average, single]
+            example: single
+        - name: search
+          in: query
+          description: Search athlete id, athlete name, event, or country.
+          schema:
+            type: string
+            example: Max Park
+      responses:
+        '200':
+          description: Current world record entries.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldRecordListResponse'
         '400':
           $ref: '#/components/responses/InvalidRequest'
         '503':
@@ -1591,6 +1661,84 @@ components:
         gender:
           type: string
           example: m
+    PersonProfile:
+      type: object
+      required: [id, name, countryIso2, countryName, gender, avatarUrl, avatarThumbUrl, wcaUrl, competitionCount, totalSolves, medals, records]
+      properties:
+        id:
+          type: string
+          example: 2012PARK03
+        name:
+          type: string
+          example: Max Park
+        countryIso2:
+          type: string
+          nullable: true
+          example: US
+        countryName:
+          type: string
+          nullable: true
+          example: United States
+        gender:
+          type: string
+          example: m
+        avatarUrl:
+          type: string
+          nullable: true
+          example: https://avatars.worldcubeassociation.org/example
+        avatarThumbUrl:
+          type: string
+          nullable: true
+          example: https://avatars.worldcubeassociation.org/example-thumb
+        wcaUrl:
+          type: string
+          example: https://www.worldcubeassociation.org/persons/2012PARK03
+        competitionCount:
+          type: integer
+          nullable: true
+          example: 120
+        totalSolves:
+          type: integer
+          nullable: true
+          example: 5373
+        medals:
+          $ref: '#/components/schemas/PersonProfileMedals'
+          nullable: true
+        records:
+          $ref: '#/components/schemas/PersonProfileRecords'
+          nullable: true
+    PersonProfileMedals:
+      type: object
+      required: [gold, silver, bronze, total]
+      properties:
+        gold:
+          type: integer
+          example: 88
+        silver:
+          type: integer
+          example: 59
+        bronze:
+          type: integer
+          example: 34
+        total:
+          type: integer
+          example: 181
+    PersonProfileRecords:
+      type: object
+      required: [world, continental, national, total]
+      properties:
+        world:
+          type: integer
+          example: 2
+        continental:
+          type: integer
+          example: 4
+        national:
+          type: integer
+          example: 4
+        total:
+          type: integer
+          example: 10
     ResultValue:
       type: object
       required: [raw]
@@ -1704,6 +1852,142 @@ components:
         scramble:
           type: string
           example: R U R' U'
+    WorldRecordEntry:
+      type: object
+      required: [athlete, competition, event, rank, result, scramble, type, value]
+      properties:
+        athlete:
+          $ref: '#/components/schemas/WorldRecordAthlete'
+        competition:
+          $ref: '#/components/schemas/WorldRecordCompetition'
+          nullable: true
+        event:
+          $ref: '#/components/schemas/Event'
+        rank:
+          $ref: '#/components/schemas/WorldRecordRank'
+        result:
+          $ref: '#/components/schemas/WorldRecordResult'
+          nullable: true
+        scramble:
+          $ref: '#/components/schemas/WorldRecordScramble'
+        type:
+          type: string
+          enum: [average, single]
+          example: single
+        value:
+          $ref: '#/components/schemas/ResultValue'
+    WorldRecordAthlete:
+      type: object
+      required: [id, name, countryIso2, countryName, gender, avatarUrl, wcaUrl]
+      properties:
+        id:
+          type: string
+          example: 2012PARK03
+        name:
+          type: string
+          example: Max Park
+        countryIso2:
+          type: string
+          nullable: true
+          example: US
+        countryName:
+          type: string
+          nullable: true
+          example: United States
+        gender:
+          type: string
+          example: m
+        avatarUrl:
+          type: string
+          nullable: true
+          example: null
+        wcaUrl:
+          type: string
+          example: https://www.worldcubeassociation.org/persons/2012PARK03
+    WorldRecordCompetition:
+      type: object
+      required: [id, name, city, countryIso2, date]
+      properties:
+        id:
+          type: string
+          example: WorldChampionship2023
+        name:
+          type: string
+          example: WCA World Championship 2023
+        city:
+          type: string
+          example: Incheon
+        countryIso2:
+          type: string
+          nullable: true
+          example: KR
+        date:
+          $ref: '#/components/schemas/CompetitionDate'
+    WorldRecordRank:
+      type: object
+      required: [world, continent, country]
+      properties:
+        world:
+          type: integer
+          example: 1
+        continent:
+          type: integer
+          example: 1
+        country:
+          type: integer
+          example: 1
+    WorldRecordResult:
+      type: object
+      required: [id, position, best, average, solves, attemptNumbers, round, roundTypeId, format, regionalSingleRecord, regionalAverageRecord]
+      properties:
+        id:
+          type: integer
+          example: 12345
+        position:
+          type: integer
+          example: 1
+        best:
+          $ref: '#/components/schemas/ResultValue'
+        average:
+          $ref: '#/components/schemas/ResultValue'
+        solves:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResultValue'
+        attemptNumbers:
+          type: array
+          items:
+            type: integer
+          example: [2]
+        round:
+          type: string
+          example: Final
+        roundTypeId:
+          type: string
+          example: f
+        format:
+          type: string
+          example: Average of 5
+        regionalSingleRecord:
+          type: string
+          nullable: true
+          example: WR
+        regionalAverageRecord:
+          type: string
+          nullable: true
+          example: null
+    WorldRecordScramble:
+      type: object
+      required: [status, candidates]
+      properties:
+        status:
+          type: string
+          enum: [ambiguous, exact, unavailable]
+          example: exact
+        candidates:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScrambleEntry'
     ErrorEnvelope:
       type: object
       required: [error]
@@ -1819,6 +2103,14 @@ components:
           $ref: '#/components/schemas/Person'
         meta:
           $ref: '#/components/schemas/ResponseMeta'
+    PersonProfileResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/PersonProfile'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
     RankListResponse:
       allOf:
         - $ref: '#/components/schemas/ListEnvelope'
@@ -1828,6 +2120,15 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/RankEntry'
+    WorldRecordListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ListEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/WorldRecordEntry'
     ResultListResponse:
       allOf:
         - $ref: '#/components/schemas/ListEnvelope'

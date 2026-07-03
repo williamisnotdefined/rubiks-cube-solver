@@ -66,4 +66,9 @@ export const scramblesQuerySchema = listQuerySchema.extend({
 })
 
 export const topSpeedcubersQuerySchema = rankingsQuerySchema.omit({ region: true })
+export const worldRecordsQuerySchema = listQuerySchema.extend({
+  eventId: z.string().min(1),
+  search: z.string().min(1).optional(),
+  type: z.enum(['average', 'single']).optional(),
+})
 export const idParamsSchema = z.object({ id: z.string().min(1) })

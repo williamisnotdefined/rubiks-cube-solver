@@ -666,7 +666,8 @@
     "groups": {
       "explore": "探索",
       "learn": "学ぶ",
-      "main": "メイン"
+      "main": "メイン",
+      "recordsAndData": "Records and Data"
     },
     "github": "GitHub でプロジェクトを開く",
     "menu": "メニュー",
@@ -679,7 +680,8 @@
     "themeDark": "暗い",
     "themeLight": "ライト",
     "themeSystem": "システム",
-    "timer": "タイマー"
+    "timer": "タイマー",
+    "worldRecords": "World Records"
   },
   "notations": {
     "groups": {

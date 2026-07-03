@@ -13,6 +13,10 @@ export function activeRouteFromPath(pagePath: string): PageNavRoute {
     return 'api'
   }
 
+  if (pagePath.startsWith('/records')) {
+    return 'records'
+  }
+
   if (pagePath.startsWith('/notations')) {
     return 'notations'
   }

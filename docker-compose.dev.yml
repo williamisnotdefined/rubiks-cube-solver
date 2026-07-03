@@ -49,9 +49,7 @@ services:
       '
     environment:
       VITE_RUBIKS_API_URL: http://127.0.0.1:8788
-      VITE_WCA_DATA_API_URL: http://host.docker.internal:8796
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      WCA_DATA_API_PROXY_TARGET: https://speedcube.com.br
     ports:
       - "127.0.0.1:5173:5173"
     volumes:

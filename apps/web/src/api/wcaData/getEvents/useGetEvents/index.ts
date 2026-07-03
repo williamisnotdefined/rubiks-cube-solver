@@ -1,0 +1,1 @@
+export { useGetWcaEvents } from './useGetEvents'

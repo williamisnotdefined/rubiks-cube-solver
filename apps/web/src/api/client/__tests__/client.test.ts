@@ -5,6 +5,8 @@ import {
   apiUrl,
   postJson,
   postJsonResponse,
+  wcaDataApiRequest,
+  wcaDataApiUrl,
 } from '../client'
 
 describe('api client', () => {
@@ -15,6 +17,11 @@ describe('api client', () => {
   it('builds API URLs with or without a leading slash', () => {
     expect(apiUrl('health')).toBe('http://127.0.0.1:8787/health')
     expect(apiUrl('/health')).toBe('http://127.0.0.1:8787/health')
+  })
+
+  it('keeps WCA Data API URLs relative so the Vite server proxy handles dev targets', () => {
+    expect(wcaDataApiUrl('events')).toBe('/api/wca-data/v1/events')
+    expect(wcaDataApiUrl('/records/world')).toBe('/api/wca-data/v1/records/world')
   })
 
   it('returns JSON payloads and adds JSON headers', async () => {
@@ -30,6 +37,19 @@ describe('api client', () => {
 
     expect(fetchMock.mock.calls[0][0]).toBe('http://127.0.0.1:8787/health')
     expect(new Headers(init?.headers).get('content-type')).toBe('application/json')
+  })
+
+  it('requests the WCA Data API through the relative browser URL', async () => {
+    const fetchMock = vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify({ data: [] }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+      }),
+    )
+
+    await expect(wcaDataApiRequest('/events?pageSize=100')).resolves.toEqual({ data: [] })
+
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/wca-data/v1/events?pageSize=100')
   })
 
   it('posts JSON bodies', async () => {
