@@ -362,7 +362,8 @@
     "groups": {
       "explore": "Explorar",
       "learn": "Aprender",
-      "main": "Principal"
+      "main": "Principal",
+      "recordsAndData": "Records and Data"
     },
     "github": "Abrir proyecto en GitHub",
     "menu": "Menú",
@@ -375,7 +376,8 @@
     "themeDark": "Oscuro",
     "themeLight": "Claro",
     "themeSystem": "Sistema",
-    "timer": "Timer"
+    "timer": "Timer",
+    "worldRecords": "World Records"
   },
   "notations": {
     "groups": {

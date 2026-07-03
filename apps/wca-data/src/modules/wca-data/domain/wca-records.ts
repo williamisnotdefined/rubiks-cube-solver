@@ -122,3 +122,52 @@ export type WcaScrambleRecord = {
   scramble: string
   scrambleNumber: number
 }
+
+export type WcaWorldRecordType = 'average' | 'single'
+
+export type WcaWorldRecordScrambleStatus = 'ambiguous' | 'exact' | 'unavailable'
+
+export type WcaWorldRecordCompetition = {
+  city: string
+  countryIso2: string | null
+  date: {
+    end: string
+    numberOfDays: number
+    start: string
+  }
+  id: string
+  name: string
+}
+
+export type WcaWorldRecordResult = {
+  attemptNumbers: number[]
+  average: number
+  best: number
+  format: string
+  id: number
+  position: number
+  regionalAverageRecord: string | null
+  regionalSingleRecord: string | null
+  round: string
+  roundTypeId: string
+  solves: number[]
+}
+
+export type WcaWorldRecordEntry = {
+  athlete: WcaPersonRecord
+  competition: WcaWorldRecordCompetition | null
+  country: WcaCountryRecord | null
+  event: WcaEventRecord
+  rank: {
+    continent: number
+    country: number
+    world: number
+  }
+  result: WcaWorldRecordResult | null
+  scramble: {
+    candidates: WcaScrambleRecord[]
+    status: WcaWorldRecordScrambleStatus
+  }
+  type: WcaWorldRecordType
+  value: number
+}

@@ -9,6 +9,7 @@ import { activeRouteFromPath } from './activeRouteFromPath'
 
 const SolvePage = lazy(() => import('../pages/SolvePage/SolvePageRoute').then((module) => ({ default: module.SolvePageRoute })))
 const TimerPage = lazy(() => import('../pages/TimerPage/TimerPage').then((module) => ({ default: module.TimerPage })))
+const WorldRecordsPage = lazy(() => import('../pages/WorldRecordsPage/WorldRecordsPageRoute').then((module) => ({ default: module.WorldRecordsPageRoute })))
 const AlgorithmsIndexPage = lazy(() => import('../pages/AlgorithmsPage/AlgorithmsIndexPage').then((module) => ({ default: module.AlgorithmsIndexPage })))
 const AlgorithmsPuzzlePage = lazy(() => import('../pages/AlgorithmsPage/AlgorithmsPuzzlePage').then((module) => ({ default: module.AlgorithmsPuzzlePage })))
 const AlgorithmSetPage = lazy(() => import('../pages/AlgorithmsPage/AlgorithmSetPage').then((module) => ({ default: module.AlgorithmSetPage })))
@@ -31,6 +32,7 @@ function App() {
             <Route path="/" element={<Navigate replace to="/solve/" />} />
             <Route path="/solve" element={<SolvePage />} />
             <Route path="/timer" element={<TimerPage />} />
+            <Route path="/records/world" element={<WorldRecordsPage />} />
             <Route path="/channels" element={<YouTubeChannelsPage />} />
             <Route path="/sites" element={<CubingSitesPage />} />
             <Route path="/api/wca-data" element={<WcaDataDocsRedirectPage />} />
@@ -46,6 +48,7 @@ function App() {
                 <Route key={`${prefix}-root`} path={`/${prefix}`} element={<Navigate replace to={`/${prefix}/solve/`} />} />,
                 <Route key={`${prefix}-solve`} path={`/${prefix}/solve`} element={<SolvePage />} />,
                 <Route key={`${prefix}-timer`} path={`/${prefix}/timer`} element={<TimerPage />} />,
+                <Route key={`${prefix}-records-world`} path={`/${prefix}/records/world`} element={<WorldRecordsPage />} />,
                 <Route key={`${prefix}-channels`} path={`/${prefix}/channels`} element={<YouTubeChannelsPage />} />,
                 <Route key={`${prefix}-sites`} path={`/${prefix}/sites`} element={<CubingSitesPage />} />,
                 <Route key={`${prefix}-api-wca-data`} path={`/${prefix}/api/wca-data`} element={<WcaDataDocsRedirectPage />} />,

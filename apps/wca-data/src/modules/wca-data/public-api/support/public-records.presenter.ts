@@ -7,6 +7,7 @@ import type {
   WcaResultRecord,
   WcaRoundTypeRecord,
   WcaScrambleRecord,
+  WcaWorldRecordEntry,
 } from '../../domain/wca-records.js'
 
 export type PublicChampionship = {
@@ -103,6 +104,48 @@ export type PublicScramble = {
   roundTypeId: string
   scramble: string
   scrambleNumber: number
+}
+
+export type PublicWorldRecord = {
+  athlete: PublicWorldRecordAthlete
+  competition: WcaWorldRecordEntry['competition']
+  event: {
+    format: string
+    id: string
+    name: string
+  }
+  rank: WcaWorldRecordEntry['rank']
+  result: PublicWorldRecordResult | null
+  scramble: {
+    candidates: PublicScramble[]
+    status: WcaWorldRecordEntry['scramble']['status']
+  }
+  type: WcaWorldRecordEntry['type']
+  value: PublicResultValue
+}
+
+export type PublicWorldRecordAthlete = {
+  avatarUrl: string | null
+  countryIso2: string | null
+  countryName: string | null
+  gender: string
+  id: string
+  name: string
+  wcaUrl: string
+}
+
+export type PublicWorldRecordResult = {
+  attemptNumbers: number[]
+  average: PublicResultValue
+  best: PublicResultValue
+  format: string
+  id: number
+  position: number
+  regionalAverageRecord: string | null
+  regionalSingleRecord: string | null
+  round: string
+  roundTypeId: string
+  solves: PublicResultValue[]
 }
 
 export type PublicResultValue = {
@@ -216,6 +259,48 @@ export function publicScramble(scramble: WcaScrambleRecord): PublicScramble {
     roundTypeId: scramble.roundTypeId,
     scramble: scramble.scramble,
     scrambleNumber: scramble.scrambleNumber,
+  }
+}
+
+export function publicWorldRecord(record: WcaWorldRecordEntry): PublicWorldRecord {
+  return {
+    athlete: {
+      avatarUrl: null,
+      countryIso2: record.athlete.countryId,
+      countryName: record.country?.name ?? null,
+      gender: record.athlete.gender,
+      id: record.athlete.id,
+      name: record.athlete.name,
+      wcaUrl: `https://www.worldcubeassociation.org/persons/${record.athlete.id}`,
+    },
+    competition: record.competition,
+    event: {
+      format: record.event.format,
+      id: record.event.id,
+      name: record.event.name,
+    },
+    rank: record.rank,
+    result: record.result === null
+      ? null
+      : {
+        attemptNumbers: record.result.attemptNumbers,
+        average: resultValue(record.result.average),
+        best: resultValue(record.result.best),
+        format: record.result.format,
+        id: record.result.id,
+        position: record.result.position,
+        regionalAverageRecord: record.result.regionalAverageRecord,
+        regionalSingleRecord: record.result.regionalSingleRecord,
+        round: record.result.round,
+        roundTypeId: record.result.roundTypeId,
+        solves: record.result.solves.map(resultValue),
+      },
+    scramble: {
+      candidates: record.scramble.candidates.map(publicScramble),
+      status: record.scramble.status,
+    },
+    type: record.type,
+    value: resultValue(record.value),
   }
 }
 

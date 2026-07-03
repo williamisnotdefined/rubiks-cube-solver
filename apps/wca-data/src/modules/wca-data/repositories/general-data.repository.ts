@@ -13,6 +13,8 @@ import type {
   WcaResultRecord,
   WcaRoundTypeRecord,
   WcaScrambleRecord,
+  WcaWorldRecordEntry,
+  WcaWorldRecordType,
 } from '../domain/wca-records.js'
 
 export type ListWcaRankingsReadInput = {
@@ -83,6 +85,19 @@ export type WcaScramblePage = {
   total: number
 }
 
+export type ListWcaWorldRecordsReadInput = {
+  eventId: string
+  page: number
+  pageSize: number
+  search?: string | undefined
+  type?: WcaWorldRecordType | undefined
+}
+
+export type WcaWorldRecordPage = {
+  items: WcaWorldRecordEntry[]
+  total: number
+}
+
 export type ListWcaChampionshipEligibleCountriesReadInput = {
   championshipType?: string | undefined
   countryIso2?: string | undefined
@@ -107,4 +122,5 @@ export type GeneralDataRepository = {
   listResultDocuments: (datasetId: string) => Promise<WcaResultDocument[]>
   listRoundTypes: (datasetId: string) => Promise<WcaRoundTypeRecord[]>
   listScrambles: (datasetId: string, input: ListWcaScramblesReadInput) => Promise<WcaScramblePage>
+  listWorldRecords: (datasetId: string, input: ListWcaWorldRecordsReadInput) => Promise<WcaWorldRecordPage>
 }

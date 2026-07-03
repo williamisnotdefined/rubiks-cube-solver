@@ -22,6 +22,12 @@ export type ListRankingsInput = WcaDataListInput & {
   type: 'average' | 'single'
 }
 
+export type ListWorldRecordsInput = WcaDataListInput & {
+  eventId: string
+  search?: string | undefined
+  type?: 'average' | 'single' | undefined
+}
+
 export type ListResultsInput = WcaDataListInput & {
   competitionId?: string | undefined
   eventId?: string | undefined

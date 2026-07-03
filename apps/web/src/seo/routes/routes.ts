@@ -74,6 +74,9 @@ type SeoCopy = {
   timer: string
   timerDescription: string
   timerTitle: string
+  worldRecords: string
+  worldRecordsDescription: string
+  worldRecordsTitle: string
 }
 
 export const siteOrigin = 'https://speedcube.com.br'
@@ -245,6 +248,9 @@ const copy: Record<SeoLocale, SeoCopy> = {
     timer: 'Timer',
     timerDescription: 'Trainiere Speedcubing mit Timer, Scrambles, Inspektion, Session-Durchschnitten und Solve-Historie.',
     timerTitle: 'Speedcubing Timer',
+    worldRecords: 'World Records',
+    worldRecordsDescription: 'Explore current WCA world records with athlete, result, competition and scramble candidate data.',
+    worldRecordsTitle: 'WCA World Records',
   },
   en: {
     algorithmPuzzleDescription: (puzzle) => `Browse ${puzzle} algorithm sets for speedcubing practice, recognition, and move execution.`,
@@ -275,6 +281,9 @@ const copy: Record<SeoLocale, SeoCopy> = {
     timer: 'Timer',
     timerDescription: 'Practice speedcubing with a focused timer, generated scrambles, inspection, session averages, and solve history.',
     timerTitle: 'Speedcubing Timer',
+    worldRecords: 'World Records',
+    worldRecordsDescription: 'Explore current WCA world records with athlete, result, competition and scramble candidate data.',
+    worldRecordsTitle: 'WCA World Records',
   },
   es: {
     algorithmPuzzleDescription: (puzzle) => `Explora algoritmos de ${puzzle} para practica de speedcubing, reconocimiento y ejecucion de movimientos.`,
@@ -305,6 +314,9 @@ const copy: Record<SeoLocale, SeoCopy> = {
     timer: 'Cronometro',
     timerDescription: 'Practica speedcubing con cronometro, scrambles generados, inspeccion, medias de sesion e historial de solves.',
     timerTitle: 'Cronometro de Speedcubing',
+    worldRecords: 'World Records',
+    worldRecordsDescription: 'Explore current WCA world records with athlete, result, competition and scramble candidate data.',
+    worldRecordsTitle: 'WCA World Records',
   },
   fr: {
     algorithmPuzzleDescription: (puzzle) => `Parcourez les algorithmes ${puzzle} pour l'entrainement speedcubing, la reconnaissance et l'execution.`,
@@ -335,6 +347,9 @@ const copy: Record<SeoLocale, SeoCopy> = {
     timer: 'Timer',
     timerDescription: 'Entrainez-vous au speedcubing avec timer, scrambles, inspection, moyennes de session et historique.',
     timerTitle: 'Timer de Speedcubing',
+    worldRecords: 'World Records',
+    worldRecordsDescription: 'Explore current WCA world records with athlete, result, competition and scramble candidate data.',
+    worldRecordsTitle: 'WCA World Records',
   },
   it: {
     algorithmPuzzleDescription: (puzzle) => `Sfoglia algoritmi ${puzzle} per pratica speedcubing, riconoscimento ed esecuzione.`,
@@ -365,6 +380,9 @@ const copy: Record<SeoLocale, SeoCopy> = {
     timer: 'Timer',
     timerDescription: 'Pratica speedcubing con timer, scramble generati, ispezione, medie sessione e storico solve.',
     timerTitle: 'Timer Speedcubing',
+    worldRecords: 'World Records',
+    worldRecordsDescription: 'Explore current WCA world records with athlete, result, competition and scramble candidate data.',
+    worldRecordsTitle: 'WCA World Records',
   },
   ja: {
     algorithmPuzzleDescription: (puzzle) => `${puzzle} のスピードキューブ練習、認識、手順実行向けアルゴリズムを閲覧できます。`,
@@ -395,6 +413,9 @@ const copy: Record<SeoLocale, SeoCopy> = {
     timer: 'タイマー',
     timerDescription: 'スクランブル、インスペクション、セッション平均、履歴つきのスピードキューブ用タイマーです。',
     timerTitle: 'スピードキューブ タイマー',
+    worldRecords: 'World Records',
+    worldRecordsDescription: 'Explore current WCA world records with athlete, result, competition and scramble candidate data.',
+    worldRecordsTitle: 'WCA World Records',
   },
   'pt-BR': {
     algorithmPuzzleDescription: (puzzle) => `Explore algoritmos de ${puzzle} para treino de speedcubing, reconhecimento e execucao de movimentos.`,
@@ -425,6 +446,9 @@ const copy: Record<SeoLocale, SeoCopy> = {
     timer: 'Cronometro',
     timerDescription: 'Treine speedcubing com cronometro, scrambles gerados, inspecao, medias de sessao e historico de solves.',
     timerTitle: 'Cronometro de Speedcubing',
+    worldRecords: 'World Records',
+    worldRecordsDescription: 'Explore current WCA world records with athlete, result, competition and scramble candidate data.',
+    worldRecordsTitle: 'WCA World Records',
   },
   ru: {
     algorithmPuzzleDescription: (puzzle) => `Алгоритмы ${puzzle} для тренировки спидкубинга, распознавания и выполнения ходов.`,
@@ -455,6 +479,9 @@ const copy: Record<SeoLocale, SeoCopy> = {
     timer: 'Таймер',
     timerDescription: 'Тренируйте спидкубинг с таймером, скрамблами, инспекцией, средними и историей сборок.',
     timerTitle: 'Таймер для спидкубинга',
+    worldRecords: 'World Records',
+    worldRecordsDescription: 'Explore current WCA world records with athlete, result, competition and scramble candidate data.',
+    worldRecordsTitle: 'WCA World Records',
   },
   zh: {
     algorithmPuzzleDescription: (puzzle) => `浏览 ${puzzle} 速拧算法，用于练习、识别和执行手法。`,
@@ -485,6 +512,9 @@ const copy: Record<SeoLocale, SeoCopy> = {
     timer: '计时器',
     timerDescription: '使用打乱、观察、分组平均和还原历史来练习速拧。',
     timerTitle: '速拧计时器',
+    worldRecords: 'World Records',
+    worldRecordsDescription: 'Explore current WCA world records with athlete, result, competition and scramble candidate data.',
+    worldRecordsTitle: 'WCA World Records',
   },
 }
 
@@ -621,6 +651,14 @@ function metadataForPath(path: string, locale: SeoLocale): Omit<SeoMetadata, 'ca
     }
   }
 
+  if (path === '/records/world') {
+    return {
+      breadcrumbs: [breadcrumb(locale, 'worldRecords', '/records/world')],
+      description: localeCopy.worldRecordsDescription,
+      title: localeCopy.worldRecordsTitle,
+    }
+  }
+
   if (path === '/algoritmos') {
     return {
       breadcrumbs: [breadcrumb(locale, 'algorithms', '/algoritmos')],
@@ -689,7 +727,7 @@ function metadataForPath(path: string, locale: SeoLocale): Omit<SeoMetadata, 'ca
   return undefined
 }
 
-function breadcrumb(locale: SeoLocale, key: 'algorithms' | 'apiWcaData' | 'channels' | 'home' | 'notations' | 'sites' | 'solver' | 'timer', path: string): SeoBreadcrumb {
+function breadcrumb(locale: SeoLocale, key: 'algorithms' | 'apiWcaData' | 'channels' | 'home' | 'notations' | 'sites' | 'solver' | 'timer' | 'worldRecords', path: string): SeoBreadcrumb {
   const labels = copy[locale]
 
   return { name: labels[key], path }
@@ -715,6 +753,7 @@ export const seoIndexablePaths = [
   '/channels',
   '/sites',
   '/api/wca-data',
+  '/records/world',
   '/algoritmos',
   ...algorithmPuzzles.map((puzzle) => puzzle.path),
   ...algorithmSetSummaries.map((set) => set.path),

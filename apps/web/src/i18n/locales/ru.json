@@ -666,7 +666,8 @@
     "groups": {
       "explore": "Обзор",
       "learn": "Обучение",
-      "main": "Основное"
+      "main": "Основное",
+      "recordsAndData": "Records and Data"
     },
     "github": "Открыть проект на GitHub",
     "menu": "Меню",
@@ -679,7 +680,8 @@
     "themeDark": "Темная",
     "themeLight": "Светлая",
     "themeSystem": "Системная",
-    "timer": "Таймер"
+    "timer": "Таймер",
+    "worldRecords": "World Records"
   },
   "notations": {
     "groups": {

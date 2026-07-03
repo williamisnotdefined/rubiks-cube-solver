@@ -2,8 +2,10 @@ import type { GeneralDataRepository } from '../repositories/general-data.reposit
 import type { DatasetRepository } from '../repositories/wca-data.repositories.js'
 import { createActiveDatasetContextService } from './support/dataset-context.js'
 import { createCompetitionService } from './use-cases/competition.service.js'
+import { createPersonProfileService } from './use-cases/person-profile.service.js'
 import { createPersonService } from './use-cases/person.service.js'
 import { createRankingService } from './use-cases/ranking.service.js'
+import { createRecordService } from './use-cases/record.service.js'
 import { createReferenceDataService } from './use-cases/reference-data.service.js'
 import { createResultService } from './use-cases/result.service.js'
 import { createScrambleService } from './use-cases/scramble.service.js'
@@ -22,7 +24,9 @@ export function createWcaDataPublicService({ data, datasets }: WcaDataPublicServ
     ...createReferenceDataService({ data, datasetContext }),
     ...createCompetitionService({ data, datasetContext }),
     ...createPersonService({ data, datasetContext }),
+    ...createPersonProfileService({ data, datasetContext }),
     ...createRankingService({ data, datasetContext }),
+    ...createRecordService({ data, datasetContext }),
     ...createResultService({ data, datasetContext }),
     ...createScrambleService({ data, datasetContext }),
   }

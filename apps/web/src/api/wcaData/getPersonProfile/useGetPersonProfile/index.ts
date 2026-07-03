@@ -1,0 +1,1 @@
+export { useGetWcaPersonProfile } from './useGetPersonProfile'

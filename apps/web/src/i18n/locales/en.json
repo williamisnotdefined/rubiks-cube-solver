@@ -666,7 +666,8 @@
     "groups": {
       "explore": "Explore",
       "learn": "Learn",
-      "main": "Main"
+      "main": "Main",
+      "recordsAndData": "Records and Data"
     },
     "github": "Open project on GitHub",
     "menu": "Menu",
@@ -679,7 +680,8 @@
     "themeDark": "Dark",
     "themeLight": "Light",
     "themeSystem": "System",
-    "timer": "Timer"
+    "timer": "Timer",
+    "worldRecords": "World Records"
   },
   "notations": {
     "groups": {
