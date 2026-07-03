@@ -40,6 +40,7 @@ export function useTimerScrambleHistory() {
   const [copied, setCopied] = useState(false)
   const [scrambleLoadFailed, setScrambleLoadFailed] = useState(false)
   const [isScramblePending, setIsScramblePending] = useState(true)
+  const [lastCompletedSolveId, setLastCompletedSolveId] = useState<string | null>(null)
   const [timerResetSignal, setTimerResetSignal] = useState(0)
   const scrambleRequestIdRef = useRef(0)
   const generatedScramble = scrambleHistory.items[scrambleHistory.index]!
@@ -98,6 +99,7 @@ export function useTimerScrambleHistory() {
     }
 
     addSolve(solve)
+    setLastCompletedSolveId(solve.id)
     queueNextScramble(selectedEventId)
     setCopied(false)
   }
@@ -205,6 +207,7 @@ export function useTimerScrambleHistory() {
     copied,
     generatedScramble,
     isScramblePending,
+    lastCompletedSolveId,
     scrambleLoadFailed,
     timerDisabled: isScramblePending || scrambleLoadFailed,
     timerResetSignal,

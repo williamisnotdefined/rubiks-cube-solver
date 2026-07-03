@@ -144,7 +144,7 @@ test.describe('timer flow', () => {
     await expect(page.getByRole('button', { name: 'Previous scramble' })).toBeDisabled()
 
     await recordKeyboardSolve(page)
-    await dispatchClick(page.getByRole('button', { name: 'Delete' }))
+    await dispatchClick(page.getByRole('table').getByRole('button', { name: 'Delete' }))
     await expect(page.getByText('No solves yet')).toBeVisible()
     await expect.poll(() => persistedTimerSolves(page)).toHaveLength(0)
   })

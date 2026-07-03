@@ -20,6 +20,7 @@ export function TimerPage() {
           <div className="grid min-h-0 grid-rows-[minmax(12rem,2fr)_minmax(7rem,1fr)] gap-4 overflow-hidden lg:grid-cols-[minmax(0,1fr)_24rem] lg:grid-rows-none xl:grid-cols-[minmax(0,1fr)_30rem]">
             <TimerRuntime
               disabled={scramble.timerDisabled}
+              lastCompletedSolveId={scramble.lastCompletedSolveId}
               resetSignal={scramble.timerResetSignal}
               onSolveComplete={scramble.handleSolveComplete}
             />
