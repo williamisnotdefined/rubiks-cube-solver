@@ -5,6 +5,7 @@ import { scrambleEventById, scrambleEvents } from '@core/scramble/catalog'
 import { TimerPage } from '../TimerPage'
 import { useTimerSettingsStore } from '../timerSettingsStore'
 import { useTimerStore } from '../timerStore'
+import type { TimerSolve } from '../types'
 
 const highQualityMocks = vi.hoisted(() => ({
   generateHighQualityScrambleForEvent: vi.fn(),
@@ -114,6 +115,29 @@ describe('TimerPage', () => {
     expect(within(solveRows[0]!).getByText('latest scramble')).toBeInTheDocument()
     expect(within(solveRows[1]!).getByText('1')).toBeInTheDocument()
     expect(within(solveRows[1]!).getByText('first scramble')).toBeInTheDocument()
+  })
+
+  it('shows only solves for the selected WCA event', async () => {
+    const user = userEvent.setup()
+    useTimerStore.getState().addSolve(solve('solve-1', '333', '3x3 scramble', 1_000))
+    useTimerStore.getState().addSolve(solve('solve-2', '222', '2x2 scramble', 2_000))
+    useTimerSettingsStore.getState().setSelectedEventId('222')
+
+    renderTimerPage()
+    await waitForScrambleReady()
+
+    expect(within(screen.getByRole('table')).getByText('2x2 scramble')).toBeInTheDocument()
+    expect(within(screen.getByRole('table')).queryByText('3x3 scramble')).not.toBeInTheDocument()
+    expect(within(screen.getByRole('table')).getByRole('button', { name: 'Delete' })).toBeInTheDocument()
+    expect(within(screen.getByRole('timer', { name: 'Speedsolve timer' })).queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument()
+
+    await chooseSelectOption(user, 'Event', '3x3x3')
+
+    await waitFor(() => expect(within(screen.getByRole('table')).getByText('3x3 scramble')).toBeInTheDocument())
+    expect(within(screen.getByRole('table')).queryByText('2x2 scramble')).not.toBeInTheDocument()
+    expect(within(screen.getByRole('table')).getByRole('button', { name: 'Delete' })).toBeInTheDocument()
+    expect(within(screen.getByRole('timer', { name: 'Speedsolve timer' })).queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument()
+    expect(within(screen.getByRole('timer', { name: 'Speedsolve timer' })).getByRole('button', { name: '+2' })).toBeDisabled()
   })
 
   it('toggles the latest solve penalty between +2, DNF, and no penalty', async () => {
@@ -288,9 +312,29 @@ describe('TimerPage', () => {
     fireEvent.keyDown(window, { code: 'KeyA', key: 'a' })
     await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument())
 
-    await user.click(screen.getByRole('button', { name: 'Delete' }))
+    await user.click(within(screen.getByRole('table')).getByRole('button', { name: 'Delete' }))
 
     await waitFor(() => expect(screen.getByText('No solves yet')).toBeInTheDocument())
+  })
+
+  it('hides the timer delete button after deleting the latest timed solve', async () => {
+    const user = userEvent.setup()
+    useTimerStore.getState().addSolve(solve('old-solve', '333', 'old scramble', 1_000))
+    renderTimerPage()
+    await waitForScrambleReady()
+
+    fireEvent.keyDown(window, { code: 'Space', key: ' ' })
+    fireEvent.keyUp(window, { code: 'Space', key: ' ' })
+    await waitFor(() => expect(screen.getByText('Solving')).toBeInTheDocument())
+    fireEvent.keyDown(window, { code: 'KeyA', key: 'a' })
+    await waitFor(() => expect(within(screen.getByRole('timer', { name: 'Speedsolve timer' })).getByRole('button', { name: 'Delete' })).toBeInTheDocument())
+
+    const timer = screen.getByRole('timer', { name: 'Speedsolve timer' })
+    await user.click(within(timer).getByRole('button', { name: 'Delete' }))
+
+    await waitFor(() => expect(within(timer).queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument())
+    expect(within(screen.getByRole('table')).getByText('old scramble')).toBeInTheDocument()
+    expect(within(screen.getByRole('table')).getByRole('button', { name: 'Delete' })).toBeInTheDocument()
   })
 
   it('lists every WCA event in a scrollable event selector', async () => {
@@ -325,4 +369,18 @@ async function chooseSelectOption(user: TestUser, label: string, optionName: str
 
 async function waitForScrambleReady() {
   await waitFor(() => expect(screen.queryByText('Generating scramble...')).not.toBeInTheDocument())
+}
+
+function solve(id: string, eventId: string, scramble: string, endedAt: number): TimerSolve {
+  return {
+    comment: '',
+    endedAt,
+    eventId,
+    finalTimeMs: endedAt,
+    id,
+    penalty: 'ok',
+    rawTimeMs: endedAt,
+    scramble,
+    startedAt: 0,
+  }
 }

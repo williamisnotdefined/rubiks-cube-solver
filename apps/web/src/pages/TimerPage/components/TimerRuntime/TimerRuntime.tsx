@@ -14,12 +14,14 @@ import { useTimerStore } from "../../timerStore";
 
 type TimerRuntimeProps = {
   disabled: boolean;
+  lastCompletedSolveId: string | null;
   resetSignal: number;
   onSolveComplete: (rawTimeMs: number, penalty: TimerPenalty) => void;
 };
 
 export function TimerRuntime({
   disabled,
+  lastCompletedSolveId,
   resetSignal,
   onSolveComplete,
 }: TimerRuntimeProps) {
@@ -32,10 +34,13 @@ export function TimerRuntime({
   const showMilliseconds = useTimerSettingsStore(
     (state) => state.showMilliseconds,
   );
-  const updateLatestSolvePenalty = useTimerStore(
-    (state) => state.updateLatestSolvePenalty,
-  );
-  const lastSolve = activeSession.solves.at(-1);
+  const selectedEventId = useTimerSettingsStore((state) => state.selectedEventId);
+  const deleteSolve = useTimerStore((state) => state.deleteSolve);
+  const updateSolvePenalty = useTimerStore((state) => state.updateSolvePenalty);
+  const latestSessionSolve = activeSession.solves.at(-1);
+  const lastSolve = latestSessionSolve?.id === lastCompletedSolveId && latestSessionSolve.eventId === selectedEventId
+    ? latestSessionSolve
+    : undefined;
   const timer = useTimerMachine({
     holdToStartMs,
     inspectionEnabled,
@@ -53,6 +58,22 @@ export function TimerRuntime({
     }
   }, [resetSignal]);
 
+  function handlePenaltyChange(penalty: TimerPenalty) {
+    if (lastSolve === undefined) {
+      return;
+    }
+
+    updateSolvePenalty(lastSolve.id, penalty);
+  }
+
+  function handleDeleteLatestSolve() {
+    if (lastSolve === undefined) {
+      return;
+    }
+
+    deleteSolve(lastSolve.id);
+  }
+
   return (
     <section className="grid min-h-0 grid-rows-[minmax(0,1fr)_auto_auto] gap-2 overflow-hidden">
       <TimerDisplay
@@ -67,10 +88,11 @@ export function TimerRuntime({
       >
         <PenaltyControls
           compact
-          className="mt-5 w-full max-w-44"
+          className="mt-5 w-full max-w-64"
           disabled={lastSolve === undefined}
           penalty={lastSolve?.penalty ?? "ok"}
-          onPenaltyChange={updateLatestSolvePenalty}
+          onDeleteLatestSolve={lastSolve === undefined ? undefined : handleDeleteLatestSolve}
+          onPenaltyChange={handlePenaltyChange}
         />
       </TimerDisplay>
       <TimerStatusBar status={timer.status} />

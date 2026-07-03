@@ -41,7 +41,7 @@ use crate::solve::{
 use crate::state::ApiState;
 
 const HEALTH_VISION_TIMEOUT: Duration = Duration::from_millis(250);
-const CONTENT_SECURITY_POLICY: &str = "default-src 'self'; script-src 'self' 'nonce-speedcube-jsonld' 'wasm-unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://yt3.googleusercontent.com; connect-src 'self' http://127.0.0.1:* http://localhost:* https://cloudflareinsights.com; media-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'";
+const CONTENT_SECURITY_POLICY: &str = "default-src 'self'; script-src 'self' 'nonce-speedcube-jsonld' 'wasm-unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://yt3.googleusercontent.com https://avatars.worldcubeassociation.org; connect-src 'self' http://127.0.0.1:* http://localhost:* https://cloudflareinsights.com; media-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'";
 const VERSIONED_ASSET_CACHE_CONTROL: &str = "public, max-age=31536000, immutable";
 
 #[derive(serde::Deserialize)]

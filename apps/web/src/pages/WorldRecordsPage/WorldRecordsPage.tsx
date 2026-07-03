@@ -8,7 +8,7 @@ import { PageHeader } from '@components/layout/PageHeader'
 import { PageScaffold } from '@components/layout/PageScaffold'
 import { PageTitle } from '@components/layout/PageTitle'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/Select'
-import { ChevronLeft, ChevronRight, Database, RotateCcw, Search } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Database, RotateCcw, Search } from 'lucide-react'
 import { AthleteRecordSheet } from './components/AthleteRecordSheet'
 import { WorldRecordsTable } from './components/WorldRecordsTable'
 
@@ -28,6 +28,9 @@ export function WorldRecordsPage() {
   const eventsQuery = useGetWcaEvents()
   const recordsQuery = useGetWorldRecords(query)
   const pagination = recordsQuery.data?.pagination
+  const currentPage = pagination?.page ?? query.page
+  const totalPages = pagination === undefined ? 1 : Math.max(1, Math.ceil(pagination.total / pagination.pageSize))
+  const pageNumbers = worldRecordsPageNumbers(currentPage, totalPages)
 
   useEffect(() => {
     if (searchInputRef.current === searchValueFromUrl) {
@@ -193,16 +196,40 @@ export function WorldRecordsPage() {
           <span className="text-muted-foreground">Rows per page</span>
         </div>
         <span className="text-muted-foreground">
-          Page {pagination?.page ?? query.page} of {pagination === undefined ? 1 : Math.max(1, Math.ceil(pagination.total / pagination.pageSize))}
+          Page {currentPage} of {totalPages}
         </span>
-        <div className="flex gap-2 md:justify-end">
-          <Button disabled={(pagination?.page ?? query.page) <= 1 || recordsQuery.isFetching} type="button" variant="outline" onClick={() => updatePage(Math.max(1, query.page - 1))}>
-            <ChevronLeft aria-hidden="true" className="size-4" />
-            Previous
+        <div className="flex flex-wrap items-center gap-2 md:justify-end" aria-label="World records pagination">
+          <Button aria-label="First page" className="size-9 px-0" disabled={currentPage <= 1 || recordsQuery.isFetching} type="button" variant="outline" onClick={() => updatePage(1)}>
+            <ChevronsLeft aria-hidden="true" className="size-4" />
           </Button>
-          <Button disabled={!pagination?.hasNextPage || recordsQuery.isFetching} type="button" variant="outline" onClick={() => updatePage(query.page + 1)}>
-            Next
+          <Button aria-label="Previous page" className="size-9 px-0" disabled={currentPage <= 1 || recordsQuery.isFetching} type="button" variant="outline" onClick={() => updatePage(Math.max(1, currentPage - 1))}>
+            <ChevronLeft aria-hidden="true" className="size-4" />
+          </Button>
+          {pageNumbers.map((pageNumber, index) => (
+            pageNumber === 'ellipsis' ? (
+              <span className="grid size-9 place-items-center text-sm text-muted-foreground" key={`ellipsis-${index}`}>
+                ...
+              </span>
+            ) : (
+              <Button
+                aria-current={currentPage === pageNumber ? 'page' : undefined}
+                aria-label={`Page ${pageNumber}`}
+                className="size-9 px-0"
+                disabled={recordsQuery.isFetching}
+                key={pageNumber}
+                type="button"
+                variant={currentPage === pageNumber ? 'primary' : 'outline'}
+                onClick={() => updatePage(pageNumber)}
+              >
+                {pageNumber}
+              </Button>
+            )
+          ))}
+          <Button aria-label="Next page" className="size-9 px-0" disabled={currentPage >= totalPages || !pagination?.hasNextPage || recordsQuery.isFetching} type="button" variant="outline" onClick={() => updatePage(Math.min(totalPages, currentPage + 1))}>
             <ChevronRight aria-hidden="true" className="size-4" />
+          </Button>
+          <Button aria-label="Last page" className="size-9 px-0" disabled={currentPage >= totalPages || recordsQuery.isFetching} type="button" variant="outline" onClick={() => updatePage(totalPages)}>
+            <ChevronsRight aria-hidden="true" className="size-4" />
           </Button>
         </div>
       </div>
@@ -249,4 +276,20 @@ function worldRecordType(value: string | null): WcaWorldRecordType | null {
 
 function formatDatasetDate(value: string): string {
   return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(value))
+}
+
+function worldRecordsPageNumbers(currentPage: number, totalPages: number): Array<number | 'ellipsis'> {
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1)
+  }
+
+  if (currentPage <= 3) {
+    return [1, 2, 3, 4, 'ellipsis', totalPages]
+  }
+
+  if (currentPage >= totalPages - 2) {
+    return [1, 'ellipsis', totalPages - 3, totalPages - 2, totalPages - 1, totalPages]
+  }
+
+  return [1, 'ellipsis', currentPage - 1, currentPage, currentPage + 1, 'ellipsis', totalPages]
 }

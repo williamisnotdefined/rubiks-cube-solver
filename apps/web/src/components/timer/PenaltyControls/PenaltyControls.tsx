@@ -1,4 +1,5 @@
 import cls from 'classnames'
+import { Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@components/Button'
 import type { TimerPenalty } from '@core/timer/penalties'
@@ -8,6 +9,7 @@ type PenaltyControlsProps = {
   compact?: boolean
   disabled?: boolean
   penalty: TimerPenalty
+  onDeleteLatestSolve?: () => void
   onPenaltyChange: (penalty: TimerPenalty) => void
 }
 
@@ -16,15 +18,18 @@ export function PenaltyControls({
   compact = false,
   disabled = false,
   penalty,
+  onDeleteLatestSolve,
   onPenaltyChange,
 }: PenaltyControlsProps) {
   const { t } = useTranslation()
+  const showDeleteButton = onDeleteLatestSolve !== undefined
 
   return (
     <div
       className={cls(
-        'grid grid-cols-2 gap-2',
+        'grid gap-2',
         { 'gap-1': compact },
+        showDeleteButton ? 'grid-cols-3' : 'grid-cols-2',
         className,
       )}
       aria-label={t('timer.penalty.label')}
@@ -43,6 +48,23 @@ export function PenaltyControls({
         label={t('timer.penalty.dnf')}
         onClick={() => onPenaltyChange(nextTogglePenalty(penalty, 'dnf'))}
       />
+      {showDeleteButton ? (
+        <Button
+          aria-label={t('timer.solves.delete')}
+          className={cls('w-full', {
+            '!min-h-8 px-3 py-1 text-xs': compact,
+          })}
+          disabled={disabled}
+          type="button"
+          variant="secondary"
+          onClick={(event) => {
+            event.currentTarget.blur()
+            onDeleteLatestSolve()
+          }}
+        >
+          <Trash2 aria-hidden="true" className="size-4" strokeWidth={2.6} />
+        </Button>
+      ) : null}
     </div>
   )
 }

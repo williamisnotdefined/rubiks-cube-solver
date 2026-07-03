@@ -9,8 +9,12 @@ import { useTimerStore } from '../../timerStore'
 export function TimerSidebar() {
   const activeSession = useActiveTimerSession()
   const deleteSolve = useTimerStore((state) => state.deleteSolve)
+  const selectedEventId = useTimerSettingsStore((state) => state.selectedEventId)
   const showMilliseconds = useTimerSettingsStore((state) => state.showMilliseconds)
-  const solves = activeSession.solves
+  const solves = useMemo(
+    () => activeSession.solves.filter((solve) => solve.eventId === selectedEventId),
+    [activeSession.solves, selectedEventId],
+  )
   const solveRows = useMemo(
     () => solves.slice().reverse().map((solve, index) => ({
       ...solve,

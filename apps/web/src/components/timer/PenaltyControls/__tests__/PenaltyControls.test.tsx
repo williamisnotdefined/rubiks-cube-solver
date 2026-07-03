@@ -32,4 +32,17 @@ describe('PenaltyControls', () => {
     await user.click(screen.getByRole('button', { name: '+2' }))
     expect(onPenaltyChange).not.toHaveBeenCalled()
   })
+
+  it('renders a delete button only when latest solve deletion is available', async () => {
+    const user = userEvent.setup()
+    const onDeleteLatestSolve = vi.fn()
+
+    const { rerender } = render(<PenaltyControls penalty="ok" onDeleteLatestSolve={onDeleteLatestSolve} onPenaltyChange={vi.fn()} />)
+
+    await user.click(screen.getByRole('button', { name: 'Delete' }))
+    expect(onDeleteLatestSolve).toHaveBeenCalledTimes(1)
+
+    rerender(<PenaltyControls penalty="ok" onPenaltyChange={vi.fn()} />)
+    expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument()
+  })
 })

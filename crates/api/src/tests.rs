@@ -2148,8 +2148,9 @@ fn assert_security_headers(headers: &HeaderMap) {
     assert!(content_security_policy.contains(
         "script-src 'self' 'nonce-speedcube-jsonld' 'wasm-unsafe-eval' https://static.cloudflareinsights.com"
     ));
-    assert!(content_security_policy
-        .contains("img-src 'self' data: blob: https://yt3.googleusercontent.com"));
+    assert!(content_security_policy.contains(
+        "img-src 'self' data: blob: https://yt3.googleusercontent.com https://avatars.worldcubeassociation.org"
+    ));
     assert!(content_security_policy.contains(
         "connect-src 'self' http://127.0.0.1:* http://localhost:* https://cloudflareinsights.com"
     ));
