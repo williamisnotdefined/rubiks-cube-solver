@@ -701,6 +701,7 @@
       "demoTitle": "Интерактивная нотация",
       "guideNav": "Гайды по нотации",
       "loadingVisualization": "Загрузка визуализации...",
+      "preparingVisualization": "Подготавливаем визуализацию",
       "reset": "Reset",
       "underConstruction": "В разработке",
       "visualizationLabel": "Визуализация нотации {{puzzle}}"

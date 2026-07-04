@@ -701,6 +701,7 @@
       "demoTitle": "Notazione interattiva",
       "guideNav": "Guide di notazione",
       "loadingVisualization": "Caricamento visualizzazione...",
+      "preparingVisualization": "Preparazione della visualizzazione",
       "reset": "Reset",
       "underConstruction": "In costruzione",
       "visualizationLabel": "Visualizzazione della notazione {{puzzle}}"

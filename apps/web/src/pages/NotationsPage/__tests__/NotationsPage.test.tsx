@@ -1,8 +1,10 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { NotationGuidePage } from '../NotationGuidePage'
+
+const notationVisualizationAutoLoadDelayMs = 3000
 
 const visualizationMocks = vi.hoisted(() => {
   const cubeMove = vi.fn().mockResolvedValue('cube-state')
@@ -90,6 +92,33 @@ describe('Notation guides', () => {
     visualizationMocks.square1Reset.mockClear()
   })
 
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('delays notation visualization registration on first load', async () => {
+    vi.useFakeTimers()
+    const { container } = renderWithRoute('/notations/3x3')
+
+    expect(screen.getAllByText('Preparing visualization').length).toBeGreaterThan(0)
+    expect(container.querySelector('rubiks-cube')).not.toBeInTheDocument()
+    expect(visualizationMocks.cubeRegister).not.toHaveBeenCalled()
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(notationVisualizationAutoLoadDelayMs - 1)
+    })
+    expect(container.querySelector('rubiks-cube')).not.toBeInTheDocument()
+    expect(visualizationMocks.cubeRegister).not.toHaveBeenCalled()
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1)
+    })
+    vi.useRealTimers()
+
+    await waitFor(() => expect(container.querySelector('rubiks-cube')).toBeInTheDocument())
+    expect(visualizationMocks.cubeRegister).toHaveBeenCalled()
+  })
+
   it('renders a compact 3x3 notation reference', () => {
     renderWithRoute('/notations/3x3')
 
@@ -149,13 +178,13 @@ describe('Notation guides', () => {
     ['/notations/square-1', 'square1-puzzle', '4.4'],
     ['/notations/megaminx', 'megaminx-puzzle', '5.4'],
   ])('normalizes notation visualization size for %s', async (path, elementName, cameraRadius) => {
-    const { container } = renderWithRoute(path)
+    const { container } = await renderWithLoadedVisualization(path)
 
     await waitFor(() => expect(container.querySelector(elementName)?.getAttribute('camera-radius')).toBe(cameraRadius))
   })
 
   it('zooms Pyraminx with a valid field of view instead of an invalid camera radius', async () => {
-    const { container } = renderWithRoute('/notations/pyraminx')
+    const { container } = await renderWithLoadedVisualization('/notations/pyraminx')
 
     await waitFor(() => expect(container.querySelector('pyraminx-puzzle')).toHaveAttribute('camera-field-of-view', '56'))
   })
@@ -176,8 +205,8 @@ describe('Notation guides', () => {
   })
 
   it('runs and resets cube visualization actions', async () => {
+    const { container } = await renderWithLoadedVisualization('/notations/3x3')
     const user = userEvent.setup()
-    const { container } = renderWithRoute('/notations/3x3')
     const initialCubeElement = container.querySelector('rubiks-cube')
 
     const moveButton = screen.getByRole('button', { name: 'R' })
@@ -203,8 +232,8 @@ describe('Notation guides', () => {
   })
 
   it('runs Megaminx notation labels through the corrected visual face mapping', async () => {
+    await renderWithLoadedVisualization('/notations/megaminx')
     const user = userEvent.setup()
-    renderWithRoute('/notations/megaminx')
 
     const rightButton = screen.getByRole('button', { name: 'R' })
     await waitFor(() => expect(rightButton).toBeEnabled())
@@ -243,9 +272,8 @@ describe('Notation guides', () => {
   })
 
   it('runs Square-1 notation actions with its puzzle element', async () => {
+    await renderWithLoadedVisualization('/notations/square-1')
     const user = userEvent.setup()
-
-    renderWithRoute('/notations/square-1')
 
     const squareOneButton = screen.getByRole('button', { name: '(4,0)' })
     await waitFor(() => expect(squareOneButton).toBeEnabled())
@@ -276,4 +304,16 @@ function renderWithRoute(path: string) {
       </Routes>
     </MemoryRouter>,
   )
+}
+
+async function renderWithLoadedVisualization(path: string) {
+  vi.useFakeTimers()
+  const rendered = renderWithRoute(path)
+
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(notationVisualizationAutoLoadDelayMs)
+  })
+  vi.useRealTimers()
+
+  return rendered
 }

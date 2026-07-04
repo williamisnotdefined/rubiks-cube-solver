@@ -701,6 +701,7 @@
       "demoTitle": "インタラクティブ記法",
       "guideNav": "記法ガイド",
       "loadingVisualization": "ビジュアライゼーションを読み込み中...",
+      "preparingVisualization": "ビジュアライゼーションを準備中",
       "reset": "Reset",
       "underConstruction": "準備中",
       "visualizationLabel": "{{puzzle}} 記法ビジュアライゼーション"

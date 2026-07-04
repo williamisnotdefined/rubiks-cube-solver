@@ -70,7 +70,7 @@ const centerSVG = loader.parse(`
   <path  d="M 120 0 L 380 0 C 450 0 500 50 500 120 L 500 380 C 500 450 450 500 380 500 L 120 500 C 50 500 0 450 0 380 L 0 120 C 0 50 50 0 120 0 Z"></path>
 </svg>
 `);
-const centerGeometry = new ExtrudeGeometry(SVGLoader.createShapes(centerSVG.paths[0])[0], {
+const centerGeometry = new ExtrudeGeometry(centerSVG.paths[0].toShapes()[0], {
   depth: 15,
 })
   .scale(0.002, 0.002, 0.002)
