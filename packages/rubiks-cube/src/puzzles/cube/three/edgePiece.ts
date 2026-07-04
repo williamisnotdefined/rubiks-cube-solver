@@ -36,7 +36,7 @@ const edgeSVG = loader.parse(`
   <path d="M 150 0 L 350 0 C 450 0 500 50 500 120 L 500 500 L 0 500 L 0 120 C 0 50 50 0 150 0 Z"></path>
 </svg>
 `);
-const edgeGeometry = new ExtrudeGeometry(SVGLoader.createShapes(edgeSVG.paths[0])[0], {
+const edgeGeometry = new ExtrudeGeometry(edgeSVG.paths[0].toShapes()[0], {
   depth: 15,
 })
   .scale(0.002, 0.002, 0.002)

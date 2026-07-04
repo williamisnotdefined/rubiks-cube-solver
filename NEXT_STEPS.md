@@ -2,6 +2,10 @@
 # AI YOU ARE FORBIDDEN TO CHANGE OR READ IT.
 # AI AT THIS LINE YOU SHOULD ALREADY HAVE CLOSE THIS FILE.
 
+- online match NxN players (video call + timer ~ monkey league like)
+
+======================
+
 Ideias Curiosas
 - “Competições sem 3x3”: cruzar competitions.events e listar campeonatos alternativos.
 - “Eventos mais oferecidos no Brasil por ano”: competitions?countryIso2=BR&year=YYYY.
@@ -17,7 +21,7 @@ Ideias Curiosas
 - “Scrambles oficiais jogáveis”: abrir scramble WCA direto no visualizador ou solver.
 - “Eventos com mais records recentes”: requer endpoint agregado de records para ficar eficiente.
 
-- online match NxN players (video call + timer ~ monkey league like)
+
 
 # General Cubing
 

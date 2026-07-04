@@ -397,6 +397,7 @@
       "demoTitle": "Notação interativa",
       "guideNav": "Guias de notação",
       "loadingVisualization": "Carregando visualização...",
+      "preparingVisualization": "Preparando visualização",
       "reset": "Reset",
       "underConstruction": "Em construção",
       "visualizationLabel": "Visualização de notação {{puzzle}}"

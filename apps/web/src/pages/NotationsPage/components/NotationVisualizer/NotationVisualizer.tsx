@@ -27,6 +27,7 @@ const puzzleElementNames = {
   pyraminx: 'pyraminx-puzzle',
   square1: 'square1-puzzle',
 } as const satisfies Record<NotationVisualization['kind'], string>
+const idleVisualizationAutoLoadDelayMs = 3000
 
 const cubeCameraRadius = {
   Two: '7.2',
@@ -45,6 +46,7 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
   const [registered, setRegistered] = useState(() =>
     visualization === undefined ? false : customElements.get(puzzleElementNames[visualization.kind]) !== undefined,
   )
+  const [loadRequested, setLoadRequested] = useState(() => registered)
   const [runningAction, setRunningAction] = useState<string | undefined>(undefined)
   const [status, setStatus] = useState<DemoStatus>({ key: 'ready' })
   const [viewResetIndex, setViewResetIndex] = useState(0)
@@ -55,9 +57,13 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
     }
 
     let mounted = true
+    let fallbackTimeout: number | undefined
+    let idleCallbackId: number | undefined
     const currentVisualization = visualization
     const elementName = puzzleElementNames[currentVisualization.kind]
-    setRegistered(customElements.get(elementName) !== undefined)
+    const elementRegistered = customElements.get(elementName) !== undefined
+    setRegistered(elementRegistered)
+    setLoadRequested(elementRegistered)
     setRunningAction(undefined)
     setStatus({ key: 'ready' })
     setViewResetIndex(0)
@@ -73,10 +79,31 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
       }
     }
 
-    void registerPuzzleElement()
+    if (!elementRegistered) {
+      fallbackTimeout = window.setTimeout(() => {
+        fallbackTimeout = undefined
+        setLoadRequested(true)
+
+        if (window.requestIdleCallback !== undefined) {
+          idleCallbackId = window.requestIdleCallback(() => {
+            idleCallbackId = undefined
+            void registerPuzzleElement()
+          }, { timeout: 1500 })
+          return
+        }
+
+        void registerPuzzleElement()
+      }, idleVisualizationAutoLoadDelayMs)
+    }
 
     return () => {
       mounted = false
+      if (fallbackTimeout !== undefined) {
+        window.clearTimeout(fallbackTimeout)
+      }
+      if (idleCallbackId !== undefined) {
+        window.cancelIdleCallback(idleCallbackId)
+      }
       runIdRef.current += 1
     }
   }, [visualization])
@@ -89,6 +116,9 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
   const statusLabel = 'move' in status
     ? t(`notations.page.demoStatus.${status.key}`, { move: status.move })
     : t(`notations.page.demoStatus.${status.key}`)
+  const visualizationLoadLabel = loadRequested
+    ? t('notations.page.loadingVisualization')
+    : t('notations.page.preparingVisualization')
 
   async function handleAction(action: NotationVisualizationAction) {
     const puzzle = puzzleRef.current
@@ -155,7 +185,7 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
           >
             {registered ? renderVisualizationElement(activeVisualization, puzzleRef, viewResetIndex) : (
               <div className="flex size-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
-                {t('notations.page.loadingVisualization')}
+                {visualizationLoadLabel}
               </div>
             )}
           </div>
@@ -191,7 +221,7 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
             })}
           </div>
           <p className="text-sm text-muted-foreground" role="status" aria-live="polite">
-            {registered ? statusLabel : t('notations.page.loadingVisualization')}
+            {registered ? statusLabel : visualizationLoadLabel}
           </p>
         </div>
       </div>

@@ -40,19 +40,32 @@ const renderEventName = 'rubiks-cube-render';
 export class RubiksCubeElement extends HTMLElement {
   canvas: HTMLCanvasElement;
   settings: Settings;
+  private fallback: HTMLDivElement;
   private _rubiksCube3D: RubiksCube3D | null;
   private _rubiksCube: RubiksCubeController | null;
   private _renderOnce: (() => void) | null;
   private _startRenderLoop: RenderLoopStarter | null;
   private _updatePixelRatio: (() => void) | null;
   private _cleanup: (() => void) | null;
+  private _webGLUnavailable: boolean;
 
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
     const root = this.shadowRoot as ShadowRoot;
-    root.innerHTML = `<canvas id="cube-canvas" style="display:block;"></canvas>`;
+    root.innerHTML = `
+      <canvas id="cube-canvas" style="display:block;"></canvas>
+      <div
+        id="webgl-fallback"
+        role="status"
+        hidden
+        style="box-sizing:border-box;display:grid;width:100%;height:100%;min-height:8rem;place-items:center;padding:1rem;text-align:center;font:600 0.875rem/1.4 system-ui,sans-serif;color:currentColor;opacity:0.72;"
+      >
+        3D visualization unavailable. Enable browser hardware acceleration or WebGL to view the cube.
+      </div>
+    `;
     this.canvas = root.getElementById('cube-canvas') as HTMLCanvasElement;
+    this.fallback = root.getElementById('webgl-fallback') as HTMLDivElement;
     this.settings = new Settings();
     this._rubiksCube3D = null;
     this._rubiksCube = null;
@@ -60,6 +73,7 @@ export class RubiksCubeElement extends HTMLElement {
     this._startRenderLoop = null;
     this._updatePixelRatio = null;
     this._cleanup = null;
+    this._webGLUnavailable = false;
   }
 
   static register(tagName = 'rubiks-cube'): void {
@@ -260,6 +274,7 @@ export class RubiksCubeElement extends HTMLElement {
     this._updatePixelRatio = null;
     this._rubiksCube = null;
     this._rubiksCube3D = null;
+    this._webGLUnavailable = false;
   }
 
   /**
@@ -297,25 +312,32 @@ export class RubiksCubeElement extends HTMLElement {
   }
 
   private ensureInitialised(): void {
-    if (this._rubiksCube === null && this.isConnected) {
+    if (this._rubiksCube === null && this.isConnected && !this._webGLUnavailable) {
       this.init();
     }
   }
 
   private init(): void {
     this._cleanup?.();
+    this.hideWebGLFallback();
     const canvas = this.canvas.cloneNode(false) as HTMLCanvasElement;
     this.canvas.replaceWith(canvas);
     this.canvas = canvas;
+    const scene = new Scene();
+    let renderer: WebGLRenderer;
+    try {
+      renderer = new WebGLRenderer({
+        alpha: true,
+        canvas,
+        antialias: this.settings.antialias,
+      });
+    } catch {
+      this.showWebGLFallback();
+      return;
+    }
+
     this._rubiksCube3D = new RubiksCube3D(this.settings.rubiksCube3DSettings);
     this._rubiksCube = new RubiksCubeController(this.settings.rubiksCube3DSettings.cubeType, this._rubiksCube3D);
-
-    const scene = new Scene();
-    const renderer = new WebGLRenderer({
-      alpha: true,
-      canvas,
-      antialias: this.settings.antialias,
-    });
     renderer.setSize(this.clientWidth, this.clientHeight);
     const updatePixelRatio = () => {
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.settings.maxDevicePixelRatio));
@@ -569,5 +591,25 @@ export class RubiksCubeElement extends HTMLElement {
       controls.dispose();
       renderer.dispose();
     };
+  }
+
+  private showWebGLFallback(): void {
+    this._cleanup = null;
+    this._renderOnce = null;
+    this._startRenderLoop = null;
+    this._updatePixelRatio = null;
+    this._rubiksCube = null;
+    this._rubiksCube3D = null;
+    this._webGLUnavailable = true;
+    this.canvas.hidden = true;
+    this.fallback.hidden = false;
+    this.dataset.webglUnavailable = 'true';
+  }
+
+  private hideWebGLFallback(): void {
+    this._webGLUnavailable = false;
+    this.canvas.hidden = false;
+    this.fallback.hidden = true;
+    delete this.dataset.webglUnavailable;
   }
 }

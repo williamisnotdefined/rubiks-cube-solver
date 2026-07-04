@@ -10,6 +10,7 @@ const rendererMocks = vi.hoisted(() => ({
   setPixelRatio: vi.fn(),
   setSize: vi.fn(),
   dispose: vi.fn(),
+  throwOnCreate: false,
 }));
 
 const gsapMocks = vi.hoisted(() => ({
@@ -55,6 +56,10 @@ vi.mock('three', async (importOriginal) => {
       domElement: HTMLCanvasElement;
 
       constructor(options: { canvas: HTMLCanvasElement }) {
+        if (rendererMocks.throwOnCreate) {
+          throw new Error('WebGL unavailable');
+        }
+
         this.domElement = options.canvas;
       }
 
@@ -153,6 +158,7 @@ beforeEach(() => {
   rendererMocks.setPixelRatio.mockClear();
   rendererMocks.setSize.mockClear();
   rendererMocks.dispose.mockClear();
+  rendererMocks.throwOnCreate = false;
   rafCallbacks = [];
   vi.stubGlobal('ResizeObserver', MockResizeObserver);
   vi.stubGlobal(
@@ -248,6 +254,17 @@ describe('RubiksCubeElement', () => {
     expect(rendererMocks.dispose).toHaveBeenCalled();
     updateGap.mockRestore();
     addLogo.mockRestore();
+  });
+
+  test('shows a fallback instead of throwing when WebGL is unavailable', () => {
+    rendererMocks.throwOnCreate = true;
+    const element = createElement();
+
+    expect(() => document.body.append(element)).not.toThrow();
+    expect(element.dataset.webglUnavailable).toBe('true');
+    expect(element.shadowRoot?.getElementById('webgl-fallback')?.hidden).toBe(false);
+    expect(element.shadowRoot?.getElementById('webgl-fallback')?.textContent).toContain('WebGL');
+    expect(() => element.getState()).toThrow('not initialised');
   });
 
   test('performs cube actions and camera peek after connection', async () => {

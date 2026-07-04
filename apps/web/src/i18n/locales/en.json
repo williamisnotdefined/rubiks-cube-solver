@@ -701,6 +701,7 @@
       "demoTitle": "Interactive notation",
       "guideNav": "Notation guides",
       "loadingVisualization": "Loading visualization...",
+      "preparingVisualization": "Preparing visualization",
       "reset": "Reset",
       "underConstruction": "Under construction",
       "visualizationLabel": "{{puzzle}} notation visualization"

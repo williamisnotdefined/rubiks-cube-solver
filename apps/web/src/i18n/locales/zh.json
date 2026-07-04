@@ -701,6 +701,7 @@
       "demoTitle": "交互式记号",
       "guideNav": "记号指南",
       "loadingVisualization": "正在加载可视化...",
+      "preparingVisualization": "正在准备可视化",
       "reset": "重置",
       "underConstruction": "建设中",
       "visualizationLabel": "{{puzzle}} 记号可视化"

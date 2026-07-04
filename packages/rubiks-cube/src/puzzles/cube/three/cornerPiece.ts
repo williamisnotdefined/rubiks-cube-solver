@@ -90,7 +90,7 @@ const cornerSVG = loader.parse(`
   <path  d="M 25 0 H 500 V 500 H 0 V 25 A 25 25 0 0 1 25 0 Z" bx:shape="rect 0 0 500 500 25 0 0 0 1@a864c1ee"/>
 </svg>
 `);
-const cornerGeometry = new ExtrudeGeometry(SVGLoader.createShapes(cornerSVG.paths[0])[0], {
+const cornerGeometry = new ExtrudeGeometry(cornerSVG.paths[0].toShapes()[0], {
   depth: 15,
 })
   .scale(0.002, 0.002, 0.002)

@@ -9,14 +9,7 @@
     />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/site.webmanifest" />
-    <script>
-      try {
-        const theme = window.localStorage.getItem('rubiks-cube-solver-theme')
-        if (theme === 'dark' || theme === 'light') {
-          document.documentElement.dataset.theme = theme
-        }
-      } catch {}
-    </script>
+    <script src="/theme-init.js"></script>
     <title>Speedcube</title>
   </head>
   <body class="m-0 min-w-80 bg-app-bg text-app-text antialiased">
