@@ -1,33 +1,189 @@
 import { lazy, Suspense } from 'react'
+import type { SolveResult as ApiSolveResult } from '@api/solver/types'
 import { SolveVisualizationStage } from './components/SolveVisualizationStage'
-import { useSolvePageController } from './hooks/useSolvePageController'
+import { useSolveFormState } from './hooks/useSolveFormState'
+import { useSolvePuzzleMetadata } from './hooks/useSolvePuzzleMetadata'
+import { useSolveResultFlow } from './hooks/useSolveResultFlow'
+import { useSolveScanModalState } from './hooks/useSolveScanModalState'
+import { useSolveVisualizationController } from './hooks/useSolveVisualizationController'
+import { useSolutionPlayback } from './hooks/useSolutionPlayback'
+import { nodesPerMillion } from './solve/constants'
 import { SolveForm } from './solve/SolveForm'
+import type { NoSolutionRetryLimits } from './solve/NoSolutionLimitsModal'
 import { SolveResult } from './solve/SolveResult'
 import { SolutionPlayback } from './solve/SolutionPlayback'
+import type { SolveFormSubmit } from './solve/validation'
 
 const ScanCubeModal = lazy(() => import('./scan/ScanCubeModal').then((module) => ({ default: module.ScanCubeModal })))
 const NoSolutionLimitsModal = lazy(() => import('./solve/NoSolutionLimitsModal').then((module) => ({ default: module.NoSolutionLimitsModal })))
 
 export function SolvePage() {
-  const solvePage = useSolvePageController()
+  const formState = useSolveFormState()
+  const metadata = useSolvePuzzleMetadata(formState.selectedPuzzleSlug)
+  const solveFlow = useSolveResultFlow()
+  const scanState = useSolveScanModalState(metadata.scanAvailable)
+  const playback = useSolutionPlayback(solveFlow.successResult)
+  const solving = solveFlow.notationSolving || scanState.scanSessionSolving
+  const buttonLoading = !metadata.apiReady || solving
+  const disabled =
+    !metadata.apiReady ||
+    solving ||
+    formState.notation.trim().length === 0 ||
+    metadata.strategyOptions.length === 0 ||
+    metadata.strategyId.length === 0 ||
+    formState.localValidationMessage !== undefined
+  const visualization = useSolveVisualizationController({
+    activeSolveSource: solveFlow.activeSolveSource,
+    notation: formState.notation,
+    successResult: solveFlow.successResult,
+    visibleSolutionMoves: playback.visibleSolutionMoves,
+    visualizationCubeType: metadata.visualizationCubeType,
+    visualizationSupported: metadata.visualizationSupported,
+  })
+
+  function resetSolveResult() {
+    playback.resetSolutionStep()
+    solveFlow.resetSolveResult()
+  }
+
+  async function handleSubmit(formValues: SolveFormSubmit) {
+    if (!metadata.apiReady || formState.localValidationMessage !== undefined) {
+      return
+    }
+
+    playback.resetSolutionStep()
+    await solveFlow.submitNotationSolve({
+      maxDepth: formValues.maxMoves,
+      maxNodes: formValues.maxNodesMillion * nodesPerMillion,
+      notation: formValues.notation,
+      puzzleSlug: formValues.puzzleSlug,
+      strategyId: metadata.strategyId,
+    })
+  }
+
+  async function handleNoSolutionRetry(limits: NoSolutionRetryLimits) {
+    if (
+      !metadata.apiReady ||
+      formState.localValidationMessage !== undefined ||
+      formState.notation.trim().length === 0 ||
+      metadata.strategyId.length === 0
+    ) {
+      return
+    }
+
+    playback.resetSolutionStep()
+    await solveFlow.submitNotationSolve({
+      maxDepth: limits.maxDepth,
+      maxNodes: limits.maxNodes,
+      notation: formState.notation.trim(),
+      puzzleSlug: formState.selectedPuzzleSlug,
+      strategyId: metadata.strategyId,
+    })
+  }
+
+  function handleNotationChange(nextNotation: string) {
+    formState.setNotation(nextNotation)
+    resetSolveResult()
+  }
+
+  function handlePuzzleChange(nextPuzzleSlug: string) {
+    formState.updateSelectedPuzzleSlug(nextPuzzleSlug)
+    resetSolveResult()
+  }
+
+  function handleMaxMovesChange(nextMaxMoves: string) {
+    formState.setMaxMovesInput(nextMaxMoves)
+    resetSolveResult()
+  }
+
+  function handleMaxNodesMillionChange(nextMaxNodesMillion: string) {
+    formState.setMaxNodesMillionInput(nextMaxNodesMillion)
+    resetSolveResult()
+  }
+
+  function handleScanSessionSolveResult(solve: ApiSolveResult) {
+    playback.resetSolutionStep()
+    solveFlow.showScanSolveResult(solve)
+  }
+
+  const limitFailureModal =
+    solveFlow.notationLimitFailureResult !== undefined &&
+    !solveFlow.limitFailureModalDismissed
+      ? {
+          onClose: () => solveFlow.setLimitFailureModalDismissed(true),
+          onRetry: handleNoSolutionRetry,
+          puzzleSlug: formState.selectedPuzzleSlug,
+          result: solveFlow.notationLimitFailureResult,
+          solving,
+        }
+      : undefined
+  const playbackProps =
+    solveFlow.successResult !== undefined && metadata.visualizationSupported
+      ? {
+          moves: solveFlow.successResult.moves,
+          onStepChange: playback.onSolutionStepChange,
+          step: playback.visibleSolutionStep,
+        }
+      : undefined
+  const scanModal = scanState.scanModalOpen
+    ? {
+        apiReady: metadata.apiReady,
+        maxDepth: formState.maxMoves,
+        maxNodes: formState.maxNodes,
+        onClose: scanState.closeScanModal,
+        onSessionSolveResult: handleScanSessionSolveResult,
+        onSessionSolvingChange: scanState.onScanSessionSolvingChange,
+        puzzleSlug: formState.selectedPuzzleSlug,
+        solveDisabledReason: formState.localValidationMessage,
+        solving,
+        strategyId: metadata.strategyId,
+        visionOk: metadata.health?.visionOk,
+        visionTileDetectorAvailable: metadata.health?.visionTileDetectorAvailable,
+        visionTileDetectorReason: metadata.health?.visionTileDetectorReason,
+      }
+    : undefined
 
   return (
     <main className="app-shell min-h-0 flex-1 overflow-auto bg-background px-4 py-6 text-foreground">
       <section className="mx-auto grid w-full max-w-4xl content-start justify-items-center gap-4">
-        <SolveVisualizationStage {...solvePage.visualization} />
-        <SolveForm {...solvePage.form} />
-        <SolveResult {...solvePage.result} />
-        {solvePage.playback !== undefined ? (
-          <SolutionPlayback {...solvePage.playback} />
+        <SolveVisualizationStage {...visualization} />
+        <SolveForm
+          buttonLoading={buttonLoading}
+          disabled={disabled}
+          maxMovesInput={formState.maxMovesInput}
+          maxMovesInvalid={formState.maxMovesInvalid}
+          maxMovesLimit={formState.maxMovesLimit}
+          maxNodesMillionInput={formState.maxNodesMillionInput}
+          maxNodesMillionInvalid={formState.maxNodesMillionInvalid}
+          notation={formState.notation}
+          puzzleOptions={metadata.puzzleOptions}
+          scanAvailable={metadata.scanAvailable}
+          scramblePlaceholder={formState.activeScramblePlaceholder}
+          selectedPuzzleSlug={formState.selectedPuzzleSlug}
+          onMaxMovesChange={handleMaxMovesChange}
+          onMaxNodesMillionChange={handleMaxNodesMillionChange}
+          onNotationChange={handleNotationChange}
+          onPuzzleChange={handlePuzzleChange}
+          onScanClick={scanState.onScanClick}
+          onSubmit={handleSubmit}
+        />
+        <SolveResult
+          error={solveFlow.activeSolveError}
+          localValidationMessage={formState.localValidationMessage}
+          result={solveFlow.activeSolveResult}
+          solving={solving}
+        />
+        {playbackProps !== undefined ? (
+          <SolutionPlayback {...playbackProps} />
         ) : null}
-        {solvePage.scanModal !== undefined ? (
+        {scanModal !== undefined ? (
           <Suspense fallback={null}>
-            <ScanCubeModal {...solvePage.scanModal} />
+            <ScanCubeModal {...scanModal} />
           </Suspense>
         ) : null}
-        {solvePage.limitFailureModal !== undefined ? (
+        {limitFailureModal !== undefined ? (
           <Suspense fallback={null}>
-            <NoSolutionLimitsModal {...solvePage.limitFailureModal} />
+            <NoSolutionLimitsModal {...limitFailureModal} />
           </Suspense>
         ) : null}
       </section>
