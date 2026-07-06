@@ -100,6 +100,7 @@ describe('Notation guides', () => {
     vi.useFakeTimers()
     const { container } = renderWithRoute('/notations/3x3')
 
+    expect(screen.getByRole('button', { name: 'Preparing visualization' })).toBeInTheDocument()
     expect(screen.getAllByText('Preparing visualization').length).toBeGreaterThan(0)
     expect(container.querySelector('rubiks-cube')).not.toBeInTheDocument()
     expect(visualizationMocks.cubeRegister).not.toHaveBeenCalled()
@@ -117,6 +118,16 @@ describe('Notation guides', () => {
 
     await waitFor(() => expect(container.querySelector('rubiks-cube')).toBeInTheDocument())
     expect(visualizationMocks.cubeRegister).toHaveBeenCalled()
+  })
+
+  it('loads notation visualization from the preparing layer click', async () => {
+    const { container } = renderWithRoute('/notations/megaminx')
+    const user = userEvent.setup()
+
+    await user.click(screen.getByRole('button', { name: 'Preparing visualization' }))
+
+    await waitFor(() => expect(container.querySelector('megaminx-puzzle')).toBeInTheDocument())
+    expect(visualizationMocks.megaminxRegister).toHaveBeenCalled()
   })
 
   it('renders a compact 3x3 notation reference', () => {
@@ -165,6 +176,17 @@ describe('Notation guides', () => {
     expect(screen.getByRole('button', { name: 'L' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: "L'" })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'L2' })).toBeInTheDocument()
+  })
+
+  it.each(['4x4', '5x5', '6x6', '7x7'])('renders left wide and layer moves for %s notation', (puzzleId) => {
+    renderWithRoute(`/notations/${puzzleId}`)
+
+    expect(screen.getByRole('button', { name: 'Lw' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: "Lw'" })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '2L' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: "2L'" })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '3Lw' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: "3Lw'" })).toBeInTheDocument()
   })
 
   it.each([

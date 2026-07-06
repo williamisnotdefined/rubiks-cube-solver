@@ -42,7 +42,31 @@ export type NotationVisualizationAction = string | {
 
 const twoByTwoActions = ['R', "R'", 'R2', 'L', "L'", 'L2', 'U', "U'", 'F', 'x', 'y', 'z'] as const
 const threeByThreeActions = ['R', "R'", 'R2', 'L', "L'", 'L2', 'U', "U'", 'F', 'M', "M'", 'E', "E'", 'S', "S'", 'Rw', "Rw'", 'x', 'y', 'z'] as const
-const bigCubeActions = ['R', "R'", 'R2', 'L', "L'", 'L2', 'U', "U'", 'F', 'Rw', "Rw'", 'Uw', "Uw'", '2R', "2R'", '3Rw', "3Rw'"] as const
+const bigCubeActions = [
+  'R',
+  "R'",
+  'R2',
+  'L',
+  "L'",
+  'L2',
+  'U',
+  "U'",
+  'F',
+  'Rw',
+  "Rw'",
+  'Lw',
+  "Lw'",
+  'Uw',
+  "Uw'",
+  '2R',
+  "2R'",
+  '2L',
+  "2L'",
+  '3Rw',
+  "3Rw'",
+  '3Lw',
+  "3Lw'",
+] as const
 const pyraminxActions = ['U', "U'", 'L', "L'", 'R', "R'", 'B', "B'", 'u', "u'", 'l', "l'", 'r', "r'", 'b', "b'"] as const
 const squareOneActions = [
   '(1,0)',
