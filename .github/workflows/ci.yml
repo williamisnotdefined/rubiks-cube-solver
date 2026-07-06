@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: "24"
+  NODE_VERSION: "26"
   PYTHON_VERSION: "3.14"
   RUST_VERSION: "1.96.0"
 
