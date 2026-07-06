@@ -36,6 +36,9 @@ updates:
 
   - package-ecosystem: pip
     directory: /scanner
+    exclude-paths:
+      - runtime/**
+      - training/**
     schedule:
       interval: weekly
       day: monday
