@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=24.0.0 <25",
+    "node": ">=26.0.0 <27",
     "npm": ">=10.9.0"
   },
   "scripts": {
@@ -33,7 +33,7 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
-    "@types/node": "^24.13.2",
+    "@types/node": "^26.1.0",
     "@types/pg": "8.20.0",
     "@types/pg-copy-streams": "1.2.5",
     "@types/yauzl": "3.4.0",

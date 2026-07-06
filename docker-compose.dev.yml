@@ -40,7 +40,7 @@ services:
       - rust-target:/workspace/target
 
   web:
-    image: node:24-bookworm-slim
+    image: node:26-bookworm-slim
     working_dir: /workspace
     command: >-
       sh -lc '
