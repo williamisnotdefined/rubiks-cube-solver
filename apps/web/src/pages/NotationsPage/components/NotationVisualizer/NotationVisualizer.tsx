@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@components/Button'
+import { VisualizationLoadLayer } from '@components/VisualizationLoadLayer'
 import { IsRotation, isMovement, type Movement, type Rotation } from '@rubiks-cube-solver/rubiks-cube/core'
 import type { RubiksCubeElement } from '@rubiks-cube-solver/rubiks-cube/view'
 import type { MegaminxMove, MegaminxPuzzleElement } from '@rubiks-cube-solver/rubiks-cube/puzzles/megaminx'
@@ -56,11 +57,9 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
       return undefined
     }
 
-    let mounted = true
     let fallbackTimeout: number | undefined
     let idleCallbackId: number | undefined
-    const currentVisualization = visualization
-    const elementName = puzzleElementNames[currentVisualization.kind]
+    const elementName = puzzleElementNames[visualization.kind]
     const elementRegistered = customElements.get(elementName) !== undefined
     setRegistered(elementRegistered)
     setLoadRequested(elementRegistered)
@@ -68,6 +67,42 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
     setStatus({ key: 'ready' })
     setViewResetIndex(0)
     runIdRef.current += 1
+
+    if (!elementRegistered) {
+      fallbackTimeout = window.setTimeout(() => {
+        fallbackTimeout = undefined
+
+        if (window.requestIdleCallback !== undefined) {
+          idleCallbackId = window.requestIdleCallback(() => {
+            idleCallbackId = undefined
+            setLoadRequested(true)
+          }, { timeout: 1500 })
+          return
+        }
+
+        setLoadRequested(true)
+      }, idleVisualizationAutoLoadDelayMs)
+    }
+
+    return () => {
+      if (fallbackTimeout !== undefined) {
+        window.clearTimeout(fallbackTimeout)
+      }
+      if (idleCallbackId !== undefined) {
+        window.cancelIdleCallback(idleCallbackId)
+      }
+      runIdRef.current += 1
+    }
+  }, [visualization])
+
+  useEffect(() => {
+    if (visualization === undefined || !loadRequested || registered) {
+      return undefined
+    }
+
+    let mounted = true
+    const currentVisualization = visualization
+    const elementName = puzzleElementNames[currentVisualization.kind]
 
     async function registerPuzzleElement() {
       if (!customElements.get(elementName)) {
@@ -79,34 +114,12 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
       }
     }
 
-    if (!elementRegistered) {
-      fallbackTimeout = window.setTimeout(() => {
-        fallbackTimeout = undefined
-        setLoadRequested(true)
-
-        if (window.requestIdleCallback !== undefined) {
-          idleCallbackId = window.requestIdleCallback(() => {
-            idleCallbackId = undefined
-            void registerPuzzleElement()
-          }, { timeout: 1500 })
-          return
-        }
-
-        void registerPuzzleElement()
-      }, idleVisualizationAutoLoadDelayMs)
-    }
+    void registerPuzzleElement()
 
     return () => {
       mounted = false
-      if (fallbackTimeout !== undefined) {
-        window.clearTimeout(fallbackTimeout)
-      }
-      if (idleCallbackId !== undefined) {
-        window.cancelIdleCallback(idleCallbackId)
-      }
-      runIdRef.current += 1
     }
-  }, [visualization])
+  }, [loadRequested, registered, visualization])
 
   if (visualization === undefined) {
     return null
@@ -119,6 +132,10 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
   const visualizationLoadLabel = loadRequested
     ? t('notations.page.loadingVisualization')
     : t('notations.page.preparingVisualization')
+
+  function handleLoadRequest() {
+    setLoadRequested(true)
+  }
 
   async function handleAction(action: NotationVisualizationAction) {
     const puzzle = puzzleRef.current
@@ -181,12 +198,15 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
         <div className="flex justify-center lg:justify-start">
           <div
             aria-label={t('notations.page.visualizationLabel', { puzzle: guide.puzzle })}
-            className="aspect-square w-[min(280px,calc(100vw-48px))] overflow-hidden rounded-xl border bg-muted"
+            className="cube-stage aspect-square w-[min(280px,calc(100vw-48px))] overflow-hidden border bg-card shadow-sm"
           >
             {registered ? renderVisualizationElement(activeVisualization, puzzleRef, viewResetIndex) : (
-              <div className="flex size-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
-                {visualizationLoadLabel}
-              </div>
+              <VisualizationLoadLayer
+                label={t('notations.page.preparingVisualization')}
+                loadingLabel={t('notations.page.loadingVisualization')}
+                loadRequested={loadRequested}
+                onLoadRequest={handleLoadRequest}
+              />
             )}
           </div>
         </div>
