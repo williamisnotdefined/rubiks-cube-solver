@@ -194,11 +194,11 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
           {t('notations.page.demoDescription')}
         </p>
       </header>
-      <div className="grid gap-4 px-6 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
-        <div className="flex justify-center lg:justify-start">
+      <div className="grid items-start gap-4 px-6 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
+        <div className="flex self-start justify-center lg:justify-start">
           <div
             aria-label={t('notations.page.visualizationLabel', { puzzle: guide.puzzle })}
-            className="cube-stage aspect-square w-[min(280px,calc(100vw-48px))] overflow-hidden border bg-card shadow-sm"
+            className="cube-stage h-[min(280px,calc(100vw-48px))] w-[min(280px,calc(100vw-48px))] shrink-0 overflow-hidden border bg-card shadow-sm"
           >
             {registered ? renderVisualizationElement(activeVisualization, puzzleRef, viewResetIndex) : (
               <VisualizationLoadLayer

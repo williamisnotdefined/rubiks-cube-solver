@@ -40,33 +40,59 @@ export type NotationVisualizationAction = string | {
   move: string
 }
 
-const twoByTwoActions = ['R', "R'", 'R2', 'L', "L'", 'L2', 'U', "U'", 'F', 'x', 'y', 'z'] as const
-const threeByThreeActions = ['R', "R'", 'R2', 'L', "L'", 'L2', 'U', "U'", 'F', 'M', "M'", 'E', "E'", 'S', "S'", 'Rw', "Rw'", 'x', 'y', 'z'] as const
-const bigCubeActions = [
-  'R',
-  "R'",
-  'R2',
-  'L',
-  "L'",
-  'L2',
-  'U',
-  "U'",
-  'F',
-  'Rw',
-  "Rw'",
-  'Lw',
-  "Lw'",
-  'Uw',
-  "Uw'",
-  '2R',
-  "2R'",
-  '2L',
-  "2L'",
-  '3Rw',
-  "3Rw'",
-  '3Lw',
-  "3Lw'",
-] as const
+const cubeFaces = ['R', 'L', 'U', 'D', 'F', 'B'] as const
+const cubeWideFaces = ['Rw', 'Lw', 'Uw', 'Dw', 'Fw', 'Bw'] as const
+const cubeLowercaseWideFaces = ['r', 'l', 'u', 'd', 'f', 'b'] as const
+const cubeSlices = ['M', 'E', 'S'] as const
+const cubeRotations = ['x', 'y', 'z'] as const
+const cubeTurnSuffixes = ['', "'", '2'] as const
+
+const cubeActionsBySize = {
+  2: buildCubeActions(2),
+  3: buildCubeActions(3),
+  4: buildCubeActions(4),
+  5: buildCubeActions(5),
+  6: buildCubeActions(6),
+  7: buildCubeActions(7),
+} as const
+
+function buildCubeActions(size: 2 | 3 | 4 | 5 | 6 | 7): readonly string[] {
+  const actions = [
+    ...withCubeTurnSuffixes(cubeFaces),
+    ...withCubeTurnSuffixes(cubeRotations),
+  ]
+
+  if (size >= 3) {
+    actions.push(...withCubeTurnSuffixes(cubeWideFaces))
+    actions.push(...withCubeTurnSuffixes(cubeLowercaseWideFaces))
+  }
+
+  if (size % 2 === 1 && size >= 3) {
+    actions.push(...withCubeTurnSuffixes(cubeSlices))
+  }
+
+  if (size >= 4) {
+    const layerPrefixes = layerRange(2, Math.floor(size / 2))
+    actions.push(...withPrefixedCubeTurnSuffixes(layerPrefixes, cubeFaces))
+    actions.push(...withPrefixedCubeTurnSuffixes(layerPrefixes, cubeWideFaces))
+    actions.push(...withPrefixedCubeTurnSuffixes(layerPrefixes, cubeLowercaseWideFaces))
+  }
+
+  return actions
+}
+
+function withCubeTurnSuffixes(bases: readonly string[]): string[] {
+  return bases.flatMap((base) => cubeTurnSuffixes.map((suffix) => `${base}${suffix}`))
+}
+
+function withPrefixedCubeTurnSuffixes(prefixes: readonly number[], bases: readonly string[]): string[] {
+  return prefixes.flatMap((prefix) => withCubeTurnSuffixes(bases.map((base) => `${prefix}${base}`)))
+}
+
+function layerRange(first: number, last: number): number[] {
+  return Array.from({ length: last - first + 1 }, (_, index) => first + index)
+}
+
 const pyraminxActions = ['U', "U'", 'L', "L'", 'R', "R'", 'B', "B'", 'u', "u'", 'l', "l'", 'r', "r'", 'b', "b'"] as const
 const squareOneActions = [
   '(1,0)',
@@ -131,37 +157,37 @@ export const notationGuides: NotationGuide[] = [
     id: '2x2',
     path: '/notations/2x2',
     puzzle: '2x2',
-    visualization: { actions: twoByTwoActions, cubeType: 'Two', kind: 'cube' },
+    visualization: { actions: cubeActionsBySize[2], cubeType: 'Two', kind: 'cube' },
   },
   {
     id: '3x3',
     path: '/notations/3x3',
     puzzle: '3x3',
-    visualization: { actions: threeByThreeActions, cubeType: 'Three', kind: 'cube' },
+    visualization: { actions: cubeActionsBySize[3], cubeType: 'Three', kind: 'cube' },
   },
   {
     id: '4x4',
     path: '/notations/4x4',
     puzzle: '4x4',
-    visualization: { actions: bigCubeActions, cubeType: 'Four', kind: 'cube' },
+    visualization: { actions: cubeActionsBySize[4], cubeType: 'Four', kind: 'cube' },
   },
   {
     id: '5x5',
     path: '/notations/5x5',
     puzzle: '5x5',
-    visualization: { actions: bigCubeActions, cubeType: 'Five', kind: 'cube' },
+    visualization: { actions: cubeActionsBySize[5], cubeType: 'Five', kind: 'cube' },
   },
   {
     id: '6x6',
     path: '/notations/6x6',
     puzzle: '6x6',
-    visualization: { actions: bigCubeActions, cubeType: 'Six', kind: 'cube' },
+    visualization: { actions: cubeActionsBySize[6], cubeType: 'Six', kind: 'cube' },
   },
   {
     id: '7x7',
     path: '/notations/7x7',
     puzzle: '7x7',
-    visualization: { actions: bigCubeActions, cubeType: 'Seven', kind: 'cube' },
+    visualization: { actions: cubeActionsBySize[7], cubeType: 'Seven', kind: 'cube' },
   },
   {
     id: 'pyraminx',
