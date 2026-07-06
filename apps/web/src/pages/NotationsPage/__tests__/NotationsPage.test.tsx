@@ -130,7 +130,7 @@ describe('Notation guides', () => {
     expect(visualizationMocks.megaminxRegister).toHaveBeenCalled()
   })
 
-  it('renders a compact 3x3 notation reference', () => {
+  it('renders a complete 3x3 notation reference', () => {
     renderWithRoute('/notations/3x3')
 
     expect(screen.getByRole('heading', { name: 'Interactive notation' })).toBeInTheDocument()
@@ -138,8 +138,26 @@ describe('Notation guides', () => {
     expect(screen.getByRole('button', { name: 'L' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: "L'" })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'L2' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'D' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'B2' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'M2' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: "E'" })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'S' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Lw2' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'r2' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'x2' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: "z'" })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Core symbols' })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'How to read the moves' })).not.toBeInTheDocument()
+  })
+
+  it.each(['2x2', '3x3', '4x4', '5x5', '6x6', '7x7'])('does not render redundant triple-turn suffixes for %s notation', (puzzleId) => {
+    renderWithRoute(`/notations/${puzzleId}`)
+
+    expect(screen.queryByRole('button', { name: 'U3' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'F3' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'x3' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Lw3' })).not.toBeInTheDocument()
   })
 
   it('renders Megaminx double turns as degrees instead of vague clicks', () => {
@@ -178,15 +196,58 @@ describe('Notation guides', () => {
     expect(screen.getByRole('button', { name: 'L2' })).toBeInTheDocument()
   })
 
-  it.each(['4x4', '5x5', '6x6', '7x7'])('renders left wide and layer moves for %s notation', (puzzleId) => {
+  it.each(['4x4', '5x5', '6x6', '7x7'])('renders two-layer wide and inner moves for %s notation', (puzzleId) => {
     renderWithRoute(`/notations/${puzzleId}`)
 
     expect(screen.getByRole('button', { name: 'Lw' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: "Lw'" })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Lw2' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '2L' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: "2L'" })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '2L2' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '2Lw' })).toBeInTheDocument()
+  })
+
+  it.each(['6x6', '7x7'])('renders third-layer wide moves for %s notation', (puzzleId) => {
+    renderWithRoute(`/notations/${puzzleId}`)
+
     expect(screen.getByRole('button', { name: '3Lw' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: "3Lw'" })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '3Lw2' })).toBeInTheDocument()
+  })
+
+  it.each(['4x4', '5x5'])('does not render redundant third-layer moves for %s notation', (puzzleId) => {
+    renderWithRoute(`/notations/${puzzleId}`)
+
+    expect(screen.queryByRole('button', { name: '3Lw' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '3Fw' })).not.toBeInTheDocument()
+  })
+
+  it.each(['6x6', '7x7'])('does not render high mirrored layer prefixes for %s notation', (puzzleId) => {
+    renderWithRoute(`/notations/${puzzleId}`)
+
+    expect(screen.queryByRole('button', { name: "4Fw'" })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '5R' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '6B2' })).not.toBeInTheDocument()
+  })
+
+  it.each(['3x3', '5x5', '7x7'])('renders slice moves for odd cube %s notation', (puzzleId) => {
+    renderWithRoute(`/notations/${puzzleId}`)
+
+    expect(screen.getByRole('button', { name: 'M' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'M2' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'E' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'E2' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'S' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'S2' })).toBeInTheDocument()
+  })
+
+  it.each(['2x2', '4x4', '6x6'])('does not render slice moves for %s notation', (puzzleId) => {
+    renderWithRoute(`/notations/${puzzleId}`)
+
+    expect(screen.queryByRole('button', { name: 'M' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'E' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'S' })).not.toBeInTheDocument()
   })
 
   it.each([
@@ -203,6 +264,15 @@ describe('Notation guides', () => {
     const { container } = await renderWithLoadedVisualization(path)
 
     await waitFor(() => expect(container.querySelector(elementName)?.getAttribute('camera-radius')).toBe(cameraRadius))
+  })
+
+  it('keeps the cube stage fixed when the notation list grows', () => {
+    renderWithRoute('/notations/7x7')
+
+    const stage = screen.getByLabelText('7x7 notation visualization')
+
+    expect(stage).toHaveClass('h-[min(280px,calc(100vw-48px))]')
+    expect(stage).toHaveClass('w-[min(280px,calc(100vw-48px))]')
   })
 
   it('zooms Pyraminx with a valid field of view instead of an invalid camera radius', async () => {
@@ -246,6 +316,11 @@ describe('Notation guides', () => {
     await waitFor(() => expect(rotateButton).toBeEnabled())
     await user.click(rotateButton)
     await waitFor(() => expect(visualizationMocks.cubeRotate).toHaveBeenCalledWith('x'))
+
+    const wideHalfTurnButton = screen.getByRole('button', { name: 'Lw2' })
+    await waitFor(() => expect(wideHalfTurnButton).toBeEnabled())
+    await user.click(wideHalfTurnButton)
+    await waitFor(() => expect(visualizationMocks.cubeMove).toHaveBeenCalledWith('Lw2'))
 
     await user.click(screen.getByRole('button', { name: 'Reset' }))
 
