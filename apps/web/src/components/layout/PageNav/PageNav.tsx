@@ -52,6 +52,7 @@ import {
 import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink as RouterNavLink, useLocation } from "react-router";
+import { LanguageSelector } from "./LanguageSelector";
 
 export type PageNavRoute =
   | "algorithms"
@@ -244,6 +245,11 @@ function NavContent({
       </nav>
       <Separator />
       <div className="grid gap-1">
+        <LanguageSelector
+          locale={locale}
+          pagePath={pagePath}
+          onNavigate={onNavigate}
+        />
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
             <Button

@@ -1,18 +1,21 @@
 import { useTranslation } from 'react-i18next'
-import { Navigate, useParams } from 'react-router'
+import { Navigate, useLocation, useParams } from 'react-router'
 import { Card, CardContent, CardHeader } from '@components/Card'
 import { PageScaffold } from '@components/layout/PageScaffold'
+import { localeFromPathname, localizedPath } from '@src/seo/routes'
 import { NotationGuideNav } from '../components/NotationGuideNav'
 import { NotationVisualizer } from '../components/NotationVisualizer'
 import { getNotationGuide } from '../notationGuides'
 
 export function NotationGuidePage() {
   const { t } = useTranslation()
+  const location = useLocation()
   const { puzzleId } = useParams()
   const guide = getNotationGuide(puzzleId)
+  const locale = localeFromPathname(location.pathname)
 
   if (guide === undefined) {
-    return <Navigate replace to="/notations/3x3" />
+    return <Navigate replace to={localizedPath('/notations/3x3', locale)} />
   }
 
   return (

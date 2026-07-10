@@ -670,6 +670,8 @@
       "recordsAndData": "Records and Data"
     },
     "github": "在 GitHub 打开项目",
+    "language": "语言",
+    "languageAutomatic": "自动：{{language}}",
     "menu": "菜单",
     "notations": "记号",
     "notationsMenu": "项目记号",

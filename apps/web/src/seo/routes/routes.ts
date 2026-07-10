@@ -1,4 +1,4 @@
-export const seoLocales = ['pt-BR', 'en', 'es', 'it', 'de', 'fr', 'ru', 'zh', 'ja'] as const
+export const seoLocales = ['en-US', 'es', 'pt-BR', 'it', 'de', 'fr', 'ru', 'zh', 'ja'] as const
 export type SeoLocale = (typeof seoLocales)[number]
 
 type AlgorithmPuzzleId = '2x2' | '3x3' | '4x4' | '5x5' | '6x6' | 'megaminx' | 'pyraminx' | 'sq1'
@@ -81,20 +81,24 @@ type SeoCopy = {
 
 export const siteOrigin = 'https://speedcube.com.br'
 export const siteName = 'Speedcube'
-export const defaultLocale: SeoLocale = 'pt-BR'
+export const defaultLocale: SeoLocale = 'en-US'
 export const defaultSeoPath = '/solve'
 export const defaultOgImageUrl = `${siteOrigin}/og-default.svg`
 
 const localePrefixes: Record<SeoLocale, string> = {
   de: 'de',
-  en: 'en',
+  'en-US': '',
   es: 'es',
   fr: 'fr',
   it: 'it',
   ja: 'ja',
-  'pt-BR': '',
+  'pt-BR': 'pt-BR',
   ru: 'ru',
   zh: 'zh',
+}
+
+const legacyLocalePrefixes: Partial<Record<string, SeoLocale>> = {
+  en: 'en-US',
 }
 
 export const prefixedSeoLocales = seoLocales.filter((locale) => locale !== defaultLocale)
@@ -252,7 +256,7 @@ const copy: Record<SeoLocale, SeoCopy> = {
     worldRecordsDescription: 'Explore current WCA world records with athlete, result, competition and scramble candidate data.',
     worldRecordsTitle: 'WCA World Records',
   },
-  en: {
+  'en-US': {
     algorithmPuzzleDescription: (puzzle) => `Browse ${puzzle} algorithm sets for speedcubing practice, recognition, and move execution.`,
     algorithmSetDescription: (set) => `${set} algorithms for speedcubing practice, recognition, and solving workflows.`,
     algorithmSetTitle: (set) => `${set} Algorithms`,
@@ -525,21 +529,24 @@ export function localePrefix(locale: SeoLocale): string {
 export function localeFromPathname(pathname: string): SeoLocale {
   const prefix = firstPathSegment(pathname)
 
-  return seoLocales.find((locale) => localePrefixes[locale] === prefix) ?? defaultLocale
+  return seoLocales.find((locale) => localePrefixes[locale] === prefix)
+    ?? legacyLocalePrefixes[prefix]
+    ?? defaultLocale
 }
 
 export function stripLocalePrefix(pathname: string): string {
   const normalizedPath = normalizePath(pathname)
-  const matchingLocale = prefixedSeoLocales.find((locale) => {
-    const prefix = `/${localePrefixes[locale]}`
+  const routePrefixes = [...prefixedSeoLocales.map((locale) => localePrefixes[locale]), ...Object.keys(legacyLocalePrefixes)]
+  const matchingPrefix = routePrefixes.find((routePrefix) => {
+    const prefix = `/${routePrefix}`
     return normalizedPath === prefix || normalizedPath.startsWith(`${prefix}/`)
   })
 
-  if (matchingLocale === undefined) {
+  if (matchingPrefix === undefined) {
     return normalizedPath
   }
 
-  const prefix = `/${localePrefixes[matchingLocale]}`
+  const prefix = `/${matchingPrefix}`
   return normalizedPath === prefix ? '/' : normalizePath(normalizedPath.slice(prefix.length))
 }
 

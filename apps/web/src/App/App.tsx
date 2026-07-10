@@ -41,6 +41,7 @@ function App() {
             <Route path="/algoritmos/:puzzleId/:methodId" element={<AlgorithmSetPage />} />
             <Route path="/notations" element={<Navigate replace to="/notations/3x3/" />} />
             <Route path="/notations/:puzzleId" element={<NotationGuidePage />} />
+            <Route path="/en/*" element={<LegacyEnglishRedirect />} />
             {prefixedSeoLocales.map((locale) => {
               const prefix = localePrefix(locale)
 
@@ -65,6 +66,13 @@ function App() {
       </AppErrorBoundary>
     </AppShell>
   )
+}
+
+function LegacyEnglishRedirect() {
+  const location = useLocation()
+  const destination = localizedPath(stripLocalePrefix(location.pathname), 'en-US')
+
+  return <Navigate replace to={{ pathname: destination, search: location.search, hash: location.hash }} />
 }
 
 function NotFoundPage() {

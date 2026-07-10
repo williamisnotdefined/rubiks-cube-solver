@@ -4,7 +4,7 @@ test.describe('responsive UI smoke', () => {
   test('keeps browser routes, mobile navigation, and reduced-motion overlays usable', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.setViewportSize({ width: 390, height: 844 })
-    await page.goto('/en/solve/')
+    await page.goto('/solve/')
 
     await expect(page.getByRole('button', { name: 'Open menu' })).toBeVisible()
     await page.getByRole('button', { name: 'Open menu' }).click()
@@ -18,7 +18,7 @@ test.describe('responsive UI smoke', () => {
 
   test('keeps the cube visualization capped on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
-    await page.goto('/en/solve/')
+    await page.goto('/solve/')
 
     const cube = page.locator('.cube-stage rubiks-cube')
     await page.getByRole('button', { name: 'Preparing cube' }).click()

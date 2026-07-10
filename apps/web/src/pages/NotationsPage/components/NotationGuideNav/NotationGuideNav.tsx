@@ -1,10 +1,13 @@
 import { useTranslation } from 'react-i18next'
-import { NavLink } from 'react-router'
+import { NavLink, useLocation } from 'react-router'
 import { cn } from '@src/lib/utils'
+import { localeFromPathname, localizedPath } from '@src/seo/routes'
 import { notationPuzzleGroups } from '../../notationGuides'
 
 export function NotationGuideNav() {
   const { t } = useTranslation()
+  const location = useLocation()
+  const locale = localeFromPathname(location.pathname)
 
   return (
     <nav className="grid h-max content-start gap-3 rounded-xl border bg-card p-3 text-card-foreground shadow-sm lg:sticky lg:top-4" aria-label={t('notations.page.guideNav')}>
@@ -27,7 +30,7 @@ export function NotationGuideNav() {
                     'text-muted-foreground hover:bg-background hover:text-foreground': !isActive,
                   },
                 )}
-                to={guide.path}
+                to={localizedPath(guide.path, locale)}
               >
                 {guide.puzzle}
               </NavLink>

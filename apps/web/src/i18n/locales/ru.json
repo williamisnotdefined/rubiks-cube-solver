@@ -670,6 +670,8 @@
       "recordsAndData": "Records and Data"
     },
     "github": "Открыть проект на GitHub",
+    "language": "Язык",
+    "languageAutomatic": "Автоматически: {{language}}",
     "menu": "Меню",
     "notations": "Нотации",
     "notationsMenu": "Нотации головоломок",

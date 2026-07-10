@@ -366,6 +366,8 @@
       "recordsAndData": "Records and Data"
     },
     "github": "Abrir proyecto en GitHub",
+    "language": "Idioma",
+    "languageAutomatic": "Automático: {{language}}",
     "menu": "Menú",
     "notations": "Notaciones",
     "notationsMenu": "Notaciones por puzzle",

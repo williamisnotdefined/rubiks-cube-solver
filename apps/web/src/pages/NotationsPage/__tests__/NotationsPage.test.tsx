@@ -316,6 +316,18 @@ describe('Notation guides', () => {
     expect(screen.getByRole('heading', { name: 'Interactive notation' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'M' })).toBeInTheDocument()
   })
+
+  it('preserves locale prefixes in notation guide links', () => {
+    render(
+      <MemoryRouter initialEntries={['/fr/notations/3x3']}>
+        <Routes>
+          <Route path="/fr/notations/:puzzleId" element={<NotationGuidePage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('link', { name: 'Square-1' })).toHaveAttribute('href', '/fr/notations/square-1/')
+  })
 })
 
 function renderWithRoute(path: string) {
