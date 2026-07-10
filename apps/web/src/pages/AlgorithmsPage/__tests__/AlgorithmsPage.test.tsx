@@ -15,24 +15,34 @@ describe('Algorithms pages', () => {
     )
 
     expect(screen.getByRole('heading', { name: 'Algorithms' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: '3x3' })).toHaveAttribute('href', '/algoritmos/3x3')
-    expect(screen.getByRole('link', { name: '2x2' })).toHaveAttribute('href', '/algoritmos/2x2')
-    expect(screen.getByRole('link', { name: '4x4' })).toHaveAttribute('href', '/algoritmos/4x4')
-    expect(screen.getByRole('link', { name: '5x5' })).toHaveAttribute('href', '/algoritmos/5x5')
-    expect(screen.getByRole('link', { name: '6x6' })).toHaveAttribute('href', '/algoritmos/6x6')
-    expect(screen.getByRole('link', { name: 'Square-1' })).toHaveAttribute('href', '/algoritmos/sq1')
-    expect(screen.getByRole('link', { name: 'Pyraminx' })).toHaveAttribute('href', '/algoritmos/pyraminx')
-    expect(screen.getByRole('link', { name: 'Megaminx' })).toHaveAttribute('href', '/algoritmos/megaminx')
+    expect(screen.getByRole('link', { name: '3x3' })).toHaveAttribute('href', '/algoritmos/3x3/')
+    expect(screen.getByRole('link', { name: '2x2' })).toHaveAttribute('href', '/algoritmos/2x2/')
+    expect(screen.getByRole('link', { name: '4x4' })).toHaveAttribute('href', '/algoritmos/4x4/')
+    expect(screen.getByRole('link', { name: '5x5' })).toHaveAttribute('href', '/algoritmos/5x5/')
+    expect(screen.getByRole('link', { name: '6x6' })).toHaveAttribute('href', '/algoritmos/6x6/')
+    expect(screen.getByRole('link', { name: 'Square-1' })).toHaveAttribute('href', '/algoritmos/sq1/')
+    expect(screen.getByRole('link', { name: 'Pyraminx' })).toHaveAttribute('href', '/algoritmos/pyraminx/')
+    expect(screen.getByRole('link', { name: 'Megaminx' })).toHaveAttribute('href', '/algoritmos/megaminx/')
+  })
+
+  it('preserves locale prefixes in algorithm links', () => {
+    render(
+      <MemoryRouter initialEntries={['/pt-BR/algoritmos/']}>
+        <AlgorithmsIndexPage />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('link', { name: '3x3' })).toHaveAttribute('href', '/pt-BR/algoritmos/3x3/')
   })
 
   it('renders algorithm sets for a puzzle route', () => {
     renderWithRoute('/algoritmos/2x2', <Route path="/algoritmos/:puzzleId" element={<AlgorithmsPuzzlePage />} />)
 
     expect(screen.getByRole('heading', { name: '2x2' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: '2x2 OLL' })).toHaveAttribute('href', '/algoritmos/2x2/oll')
-    expect(screen.getByRole('link', { name: '2x2 CLL' })).toHaveAttribute('href', '/algoritmos/2x2/cll')
-    expect(screen.getByRole('link', { name: '2x2 EG-1' })).toHaveAttribute('href', '/algoritmos/2x2/eg-1')
-    expect(screen.getByRole('link', { name: '2x2 EG-2' })).toHaveAttribute('href', '/algoritmos/2x2/eg-2')
+    expect(screen.getByRole('link', { name: '2x2 OLL' })).toHaveAttribute('href', '/algoritmos/2x2/oll/')
+    expect(screen.getByRole('link', { name: '2x2 CLL' })).toHaveAttribute('href', '/algoritmos/2x2/cll/')
+    expect(screen.getByRole('link', { name: '2x2 EG-1' })).toHaveAttribute('href', '/algoritmos/2x2/eg-1/')
+    expect(screen.getByRole('link', { name: '2x2 EG-2' })).toHaveAttribute('href', '/algoritmos/2x2/eg-2/')
   })
 
   it('renders an OLL algorithm sheet with local case images', () => {

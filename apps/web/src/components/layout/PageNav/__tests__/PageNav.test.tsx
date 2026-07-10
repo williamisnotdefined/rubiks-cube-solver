@@ -1,17 +1,22 @@
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
-import { MemoryRouter } from 'react-router'
-import { afterEach, describe, expect, it } from 'vitest'
+import { MemoryRouter, useLocation } from 'react-router'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useThemeStore } from '@core/theme/themeStore'
 import { algorithmPuzzles } from '@pages/AlgorithmsPage/sets/algorithmSetMetadata'
 import { notationGuides } from '@pages/NotationsPage/notationGuides'
+import i18n, { languageStorageKey } from '@src/i18n/i18n'
 import { PageNav } from '../PageNav'
 
-afterEach(() => {
+afterEach(async () => {
+  if (i18n.language !== 'en-US') {
+    await act(() => i18n.changeLanguage('en-US'))
+  }
   useThemeStore.getState().setThemePreference('system')
   window.localStorage.clear()
   delete document.documentElement.dataset.theme
+  vi.restoreAllMocks()
 })
 
 describe('PageNav', () => {
@@ -120,6 +125,40 @@ describe('PageNav', () => {
     )
   })
 
+  it('lists native language names and persists navigation to the same localized page', async () => {
+    const user = userEvent.setup()
+    window.localStorage.setItem(languageStorageKey, 'pt-BR')
+    renderWithRouter(<PageNav activeRoute="solve" />, '/pt-BR/solve/?mode=guided#cube')
+
+    await user.click(screen.getByRole('button', { name: 'Language' }))
+
+    const options = await screen.findAllByRole('menuitemradio')
+    expect(options).toHaveLength(10)
+    expect(screen.getByRole('menuitemradio', { name: 'Português (Brasil)' })).toHaveAttribute('aria-checked', 'true')
+
+    await user.click(screen.getByRole('menuitemradio', { name: 'Español (España)' }))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('location')).toHaveTextContent('/es/solve/?mode=guided#cube')
+    })
+    expect(window.localStorage.getItem(languageStorageKey)).toBe('es')
+  })
+
+  it('returns to automatic browser language detection', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(window.navigator, 'languages', 'get').mockReturnValue(['pt-BR'])
+    window.localStorage.setItem(languageStorageKey, 'es')
+    renderWithRouter(<PageNav activeRoute="solve" />, '/es/solve/')
+
+    await user.click(screen.getByRole('button', { name: 'Language' }))
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Automatic: Português (Brasil)' }))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('location')).toHaveTextContent('/pt-BR/solve/')
+    })
+    expect(window.localStorage.getItem(languageStorageKey)).toBeNull()
+  })
+
   it('opens and closes the mobile menu drawer', async () => {
     const user = userEvent.setup()
     renderWithRouter(<PageNav activeRoute="timer" />, '/timer/')
@@ -148,6 +187,21 @@ describe('PageNav', () => {
     await user.click(within(drawer).getByRole('link', { name: '3x3' }))
 
     expect(screen.queryByRole('dialog', { name: 'Menu' })).not.toBeInTheDocument()
+  })
+
+  it('closes the mobile drawer after selecting a language', async () => {
+    const user = userEvent.setup()
+    renderWithRouter(<PageNav activeRoute="solve" />)
+
+    await user.click(screen.getByRole('button', { name: 'Open menu' }))
+    const drawer = await screen.findByRole('dialog', { name: 'Menu' })
+    await user.click(within(drawer).getByRole('button', { name: 'Language' }))
+    await user.click(screen.getByRole('menuitemradio', { name: 'Português (Brasil)' }))
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Menu' })).not.toBeInTheDocument()
+      expect(screen.getByTestId('location')).toHaveTextContent('/pt-BR/solve/')
+    })
   })
 
   it('closes the mobile menu with Escape', async () => {
@@ -183,6 +237,13 @@ function renderWithRouter(ui: ReactNode, path = '/solve/') {
   return render(
     <MemoryRouter initialEntries={[path]}>
       {ui}
+      <LocationProbe />
     </MemoryRouter>,
   )
+}
+
+function LocationProbe() {
+  const location = useLocation()
+
+  return <output data-testid="location">{`${location.pathname}${location.search}${location.hash}`}</output>
 }

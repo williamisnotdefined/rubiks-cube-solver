@@ -670,6 +670,8 @@
       "recordsAndData": "Records and Data"
     },
     "github": "GitHub でプロジェクトを開く",
+    "language": "言語",
+    "languageAutomatic": "自動: {{language}}",
     "menu": "メニュー",
     "notations": "記法",
     "notationsMenu": "パズル別記法",

@@ -670,6 +670,8 @@
       "recordsAndData": "Records and Data"
     },
     "github": "Open project on GitHub",
+    "language": "Language",
+    "languageAutomatic": "Automatic: {{language}}",
     "menu": "Menu",
     "notations": "Notations",
     "notationsMenu": "Puzzle notations",

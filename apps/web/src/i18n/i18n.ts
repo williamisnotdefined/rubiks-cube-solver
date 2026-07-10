@@ -1,15 +1,16 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
-import en from './locales/en.json'
+import enUs from './locales/en.json'
 import ptBr from './locales/pt-BR.json'
 
-export const supportedLanguages = ['en', 'es', 'pt-BR', 'it', 'de', 'fr', 'ru', 'zh', 'ja'] as const
+export const supportedLanguages = ['en-US', 'es', 'pt-BR', 'it', 'de', 'fr', 'ru', 'zh', 'ja'] as const
 export type SupportedLanguage = (typeof supportedLanguages)[number]
-type StaticLanguage = 'en' | 'pt-BR'
+type StaticLanguage = 'en-US' | 'pt-BR'
 type DynamicLanguage = Exclude<SupportedLanguage, StaticLanguage>
-type LocaleModule = { default: typeof en }
+type LocaleModule = { default: typeof enUs }
 
-export const fallbackLanguage: SupportedLanguage = 'en'
+export const fallbackLanguage: SupportedLanguage = 'en-US'
+export const languageStorageKey = 'rubiks-cube-solver-language'
 
 const localeLoaders: Record<DynamicLanguage, () => Promise<LocaleModule>> = {
   de: () => import('./locales/de.json'),
@@ -23,7 +24,7 @@ const localeLoaders: Record<DynamicLanguage, () => Promise<LocaleModule>> = {
 
 const supportedBaseLanguages: Partial<Record<string, SupportedLanguage>> = {
   de: 'de',
-  en: 'en',
+  en: 'en-US',
   es: 'es',
   fr: 'fr',
   it: 'it',
@@ -44,19 +45,62 @@ export function languageFromBrowser(languages: readonly string[] = browserLangua
 }
 
 export function languageFromRoute(pathname: string = browserPathname()): SupportedLanguage {
+  return explicitLanguageFromRoute(pathname) ?? fallbackLanguage
+}
+
+function explicitLanguageFromRoute(pathname: string): SupportedLanguage | undefined {
   const firstSegment = pathname.split('/').filter(Boolean)[0]
   const routeLanguages: Partial<Record<string, SupportedLanguage>> = {
     de: 'de',
-    en: 'en',
+    en: 'en-US',
     es: 'es',
     fr: 'fr',
     it: 'it',
     ja: 'ja',
+    'pt-BR': 'pt-BR',
     ru: 'ru',
     zh: 'zh',
   }
 
-  return firstSegment === undefined ? 'pt-BR' : routeLanguages[firstSegment] ?? 'pt-BR'
+  return firstSegment === undefined ? undefined : routeLanguages[firstSegment]
+}
+
+export function initialLanguage(pathname: string = browserPathname()): SupportedLanguage {
+  return resolveInitialLanguage(pathname, storedLanguagePreference(), browserLanguages())
+}
+
+export function resolveInitialLanguage(
+  pathname: string,
+  storedLanguage: SupportedLanguage | undefined,
+  browserLanguagePreferences: readonly string[],
+): SupportedLanguage {
+  const routeLanguage = explicitLanguageFromRoute(pathname)
+  if (routeLanguage !== undefined) {
+    return routeLanguage
+  }
+
+  return storedLanguage ?? languageFromBrowser(browserLanguagePreferences)
+}
+
+export function storedLanguagePreference(): SupportedLanguage | undefined {
+  if (typeof window === 'undefined') {
+    return undefined
+  }
+
+  const storedLanguage = window.localStorage.getItem(languageStorageKey)
+  return supportedLanguages.find((language) => language === storedLanguage)
+}
+
+export function saveLanguagePreference(language: SupportedLanguage): void {
+  if (typeof window !== 'undefined') {
+    window.localStorage.setItem(languageStorageKey, language)
+  }
+}
+
+export function clearLanguagePreference(): void {
+  if (typeof window !== 'undefined') {
+    window.localStorage.removeItem(languageStorageKey)
+  }
 }
 
 void i18n.use(initReactI18next).init({
@@ -65,9 +109,10 @@ void i18n.use(initReactI18next).init({
   interpolation: {
     escapeValue: false,
   },
+  load: 'currentOnly',
   lng: languageFromRoute(),
   resources: {
-    en: { translation: en },
+    'en-US': { translation: enUs },
     'pt-BR': { translation: ptBr },
   },
   supportedLngs: supportedLanguages,
@@ -80,7 +125,7 @@ export async function ensureLanguageResources(language: SupportedLanguage): Prom
     return
   }
 
-  if (language === 'en' || language === 'pt-BR') {
+  if (language === 'en-US' || language === 'pt-BR') {
     return
   }
 

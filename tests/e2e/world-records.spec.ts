@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test'
 import { chooseRadixSelectOption } from './select-helpers'
 
-const worldRecordsPath = '/en/records/world/'
+const worldRecordsPath = '/records/world/'
 
 test.describe('world records flow', () => {
   test.beforeEach(async ({ page }) => {

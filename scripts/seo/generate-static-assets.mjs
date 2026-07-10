@@ -8,23 +8,23 @@ const distDir = resolve(webRoot, 'dist')
 const siteOrigin = 'https://speedcube.com.br'
 const siteName = 'Speedcube'
 const defaultOgImageUrl = `${siteOrigin}/og-default.svg`
-const defaultLocale = 'pt-BR'
+const defaultLocale = 'en-US'
 const jsonLdScriptNonce = 'speedcube-jsonld'
-const seoLocales = ['pt-BR', 'en', 'es', 'it', 'de', 'fr', 'ru', 'zh', 'ja']
+const seoLocales = ['en-US', 'es', 'pt-BR', 'it', 'de', 'fr', 'ru', 'zh', 'ja']
 const localePrefixes = {
   de: 'de',
-  en: 'en',
+  'en-US': '',
   es: 'es',
   fr: 'fr',
   it: 'it',
   ja: 'ja',
-  'pt-BR': '',
+  'pt-BR': 'pt-BR',
   ru: 'ru',
   zh: 'zh',
 }
 const copy = {
   de: { algorithms: 'Algorithmen', channels: 'Kanaele', notations: 'Notationen', sites: 'Sites', solver: 'Solver', timer: 'Timer' },
-  en: { algorithms: 'Algorithms', channels: 'Channels', notations: 'Notations', sites: 'Sites', solver: 'Solver', timer: 'Timer' },
+  'en-US': { algorithms: 'Algorithms', channels: 'Channels', notations: 'Notations', sites: 'Sites', solver: 'Solver', timer: 'Timer' },
   es: { algorithms: 'Algoritmos', channels: 'Canales', notations: 'Notaciones', sites: 'Sitios', solver: 'Solver', timer: 'Cronometro' },
   fr: { algorithms: 'Algorithmes', channels: 'Chaines', notations: 'Notations', sites: 'Sites', solver: 'Solver', timer: 'Timer' },
   it: { algorithms: 'Algoritmi', channels: 'Canali', notations: 'Notazioni', sites: 'Siti', solver: 'Solver', timer: 'Timer' },
@@ -150,7 +150,7 @@ function titleForPath(path, locale) {
   if (path === '/solve') {
     const titles = {
       de: 'Online Rubik Cube Solver',
-      en: 'Online Rubik\'s Cube Solver',
+      'en-US': 'Online Rubik\'s Cube Solver',
       es: 'Solver de Cubo Rubik Online',
       fr: 'Solver Rubik Cube en Ligne',
       it: 'Solver Cubo di Rubik Online',
@@ -174,7 +174,7 @@ function titleForPath(path, locale) {
   if (path === '/sites') {
     const titles = {
       de: 'Cubing Websites',
-      en: 'Cubing Websites',
+      'en-US': 'Cubing Websites',
       es: 'Sitios de Cubing',
       fr: 'Sites de Cubing',
       it: 'Siti Cubing',
@@ -188,17 +188,17 @@ function titleForPath(path, locale) {
   }
 
   if (path === '/algoritmos') {
-    return locale === 'en' ? 'Rubik\'s Cube Algorithms' : copy[locale].algorithms
+    return locale === 'en-US' ? 'Rubik\'s Cube Algorithms' : copy[locale].algorithms
   }
 
   if (path.startsWith('/algoritmos/')) {
     const title = titleByPath.get(path) ?? path.split('/').at(-1)
-    return locale === 'en' ? `${title} Algorithms` : `${copy[locale].algorithms} ${title}`
+    return locale === 'en-US' ? `${title} Algorithms` : `${copy[locale].algorithms} ${title}`
   }
 
   if (path.startsWith('/notations/')) {
     const puzzle = puzzleByPath.get(path) ?? path.split('/').at(-1)
-    return locale === 'en' ? `${puzzle} Notation Guide` : `${copy[locale].notations} ${puzzle}`
+    return locale === 'en-US' ? `${puzzle} Notation Guide` : `${copy[locale].notations} ${puzzle}`
   }
 
   return siteName
@@ -208,7 +208,7 @@ function descriptionForPath(path, locale) {
   if (path === '/solve') {
     const descriptions = {
       de: 'Loese unterstuetzte Rubik-Cube-Scrambles online mit Rust-Solver, Zugwiedergabe und Cube-Visualisierung.',
-      en: 'Solve supported Rubik\'s Cube scrambles online with a Rust-powered solver, move playback, and cube visualization.',
+      'en-US': 'Solve supported Rubik\'s Cube scrambles online with a Rust-powered solver, move playback, and cube visualization.',
       es: 'Resuelve scrambles de cubo Rubik online con solver en Rust, reproduccion de movimientos y visualizacion del cubo.',
       fr: 'Resoudre des scrambles de Rubik Cube en ligne avec un solver Rust, lecture des mouvements et visualisation du cube.',
       it: 'Risolvi scramble del Cubo di Rubik online con solver Rust, playback mosse e visualizzazione del cubo.',
@@ -253,7 +253,7 @@ function descriptionForPath(path, locale) {
 function timerDescription(locale) {
   return {
     de: 'Trainiere Speedcubing mit Timer, Scrambles, Inspektion, Session-Durchschnitten und Solve-Historie.',
-    en: 'Practice speedcubing with a focused timer, generated scrambles, inspection, session averages, and solve history.',
+    'en-US': 'Practice speedcubing with a focused timer, generated scrambles, inspection, session averages, and solve history.',
     es: 'Practica speedcubing con cronometro, scrambles generados, inspeccion, medias de sesion e historial de solves.',
     fr: 'Entrainez-vous au speedcubing avec timer, scrambles, inspection, moyennes de session et historique.',
     it: 'Pratica speedcubing con timer, scramble generati, ispezione, medie sessione e storico solve.',
@@ -267,7 +267,7 @@ function timerDescription(locale) {
 function channelsDescription(locale) {
   return {
     de: 'Entdecke Cubing-YouTube-Kanaele fuer Tutorials, Speedcubing, Reviews und Puzzle-Lernen.',
-    en: 'Discover cubing YouTube channels for tutorials, speedcubing walkthroughs, reviews, and puzzle learning.',
+    'en-US': 'Discover cubing YouTube channels for tutorials, speedcubing walkthroughs, reviews, and puzzle learning.',
     es: 'Descubre canales de YouTube de cubing con tutoriales, speedcubing, reseñas y aprendizaje de puzzles.',
     fr: 'Decouvrez des chaines YouTube de cubing pour tutoriels, speedcubing, avis et apprentissage des puzzles.',
     it: 'Scopri canali YouTube di cubing per tutorial, speedcubing, recensioni e apprendimento puzzle.',
@@ -281,7 +281,7 @@ function channelsDescription(locale) {
 function sitesDescription(locale) {
   return {
     de: 'Entdecke validierte Cubing-Websites fuer Loesungen, Tools, Wettbewerbe, Shops, Marken und Community.',
-    en: 'Discover validated cubing websites for solutions, tools, competitions, shops, brands, and community.',
+    'en-US': 'Discover validated cubing websites for solutions, tools, competitions, shops, brands, and community.',
     es: 'Descubre sitios de cubing validados para soluciones, herramientas, competiciones, tiendas, marcas y comunidad.',
     fr: 'Decouvrez des sites de cubing valides pour solutions, outils, competitions, boutiques, marques et communaute.',
     it: 'Scopri siti cubing verificati per soluzioni, strumenti, competizioni, negozi, marchi e community.',
@@ -295,7 +295,7 @@ function sitesDescription(locale) {
 function algorithmsDescription(locale) {
   return {
     de: 'Durchsuche Speedcubing-Algorithmen fuer 2x2, 3x3, Big Cubes, Pyraminx, Megaminx, Square-1 und mehr.',
-    en: 'Browse speedcubing algorithm sets for 2x2, 3x3, big cubes, Pyraminx, Megaminx, Square-1, and more.',
+    'en-US': 'Browse speedcubing algorithm sets for 2x2, 3x3, big cubes, Pyraminx, Megaminx, Square-1, and more.',
     es: 'Explora algoritmos de speedcubing para 2x2, 3x3, cubos grandes, Pyraminx, Megaminx, Square-1 y mas.',
     fr: 'Parcourez des algorithmes de speedcubing pour 2x2, 3x3, grands cubes, Pyraminx, Megaminx, Square-1 et plus.',
     it: 'Sfoglia set di algoritmi speedcubing per 2x2, 3x3, big cube, Pyraminx, Megaminx, Square-1 e altro.',
@@ -309,7 +309,7 @@ function algorithmsDescription(locale) {
 function algorithmDescription(title, locale) {
   return {
     de: `${title}-Algorithmen fuer Speedcubing-Training, Erkennung und Loesungsablaeufe.`,
-    en: `${title} algorithms for speedcubing practice, recognition, and solving workflows.`,
+    'en-US': `${title} algorithms for speedcubing practice, recognition, and solving workflows.`,
     es: `Algoritmos ${title} para practica de speedcubing, reconocimiento y flujos de solucion.`,
     fr: `Algorithmes ${title} pour l'entrainement speedcubing, la reconnaissance et les flux de resolution.`,
     it: `Algoritmi ${title} per pratica speedcubing, riconoscimento e flussi di soluzione.`,
@@ -323,7 +323,7 @@ function algorithmDescription(title, locale) {
 function notationDescription(puzzle, locale) {
   return {
     de: `Lerne ${puzzle}-Notation mit Symbolen, Beispielen und praktischen Speedcubing-Referenzen.`,
-    en: `Learn ${puzzle} notation with move symbols, examples, and practical speedcubing references.`,
+    'en-US': `Learn ${puzzle} notation with move symbols, examples, and practical speedcubing references.`,
     es: `Aprende notacion ${puzzle} con simbolos de movimientos, ejemplos y referencias practicas de speedcubing.`,
     fr: `Apprenez la notation ${puzzle} avec symboles, exemples et references pratiques de speedcubing.`,
     it: `Impara la notazione ${puzzle} con simboli, esempi e riferimenti pratici di speedcubing.`,
@@ -522,7 +522,7 @@ ${entries.join('\n')}
 
 function sitemapEntry(path, locale) {
   const loc = `${siteOrigin}${localizedPath(path, locale)}`
-  const ptUrl = `${siteOrigin}${localizedPath(path, defaultLocale)}`
+  const defaultUrl = `${siteOrigin}${localizedPath(path, defaultLocale)}`
   const alternates = seoLocales
     .map((alternateLocale) => `    <xhtml:link rel="alternate" hreflang="${alternateLocale}" href="${escapeXml(`${siteOrigin}${localizedPath(path, alternateLocale)}`)}" />`)
     .join('\n')
@@ -530,7 +530,7 @@ function sitemapEntry(path, locale) {
   return `  <url>
     <loc>${escapeXml(loc)}</loc>
 ${alternates}
-    <xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(ptUrl)}" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(defaultUrl)}" />
   </url>`
 }
 
