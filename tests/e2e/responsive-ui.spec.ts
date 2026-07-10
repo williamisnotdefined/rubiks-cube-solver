@@ -11,7 +11,7 @@ test.describe('responsive UI smoke', () => {
     await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible()
 
     await page.getByRole('link', { name: 'Timer' }).click()
-    await expect(page).toHaveURL(/\/en\/timer\/$/)
+    await expect(page).toHaveURL(/\/timer\/$/)
     await expect(page.getByRole('timer', { name: 'Speedsolve timer' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Open menu' })).toBeVisible()
   })
