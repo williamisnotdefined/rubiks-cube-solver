@@ -10,11 +10,7 @@ const config: StorybookConfig = {
   },
   stories: ['../src/**/*.stories.@(ts|tsx|mdx)'],
   typescript: {
-    reactDocgen: 'react-docgen-typescript',
-    reactDocgenTypescriptOptions: {
-      exclude: ['**/.storybook/**'],
-      tsconfigPath: fileURLToPath(new URL('../tsconfig.app.json', import.meta.url)),
-    },
+    reactDocgen: 'react-docgen',
   },
   viteFinal: async (viteConfig) =>
     mergeConfig(viteConfig, {
