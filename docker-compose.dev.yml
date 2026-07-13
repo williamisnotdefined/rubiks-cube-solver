@@ -15,7 +15,7 @@ services:
       - ./scanner/models:/models:ro
 
   api:
-    image: rust:1.96-bookworm
+    image: rust:1.97-bookworm
     working_dir: /workspace
     command: >-
       sh -c '
