@@ -22,4 +22,11 @@ describe('generatePyraminxScramble', () => {
       }
     }
   })
+
+  it('skips a forced repeated main face', () => {
+    const indexes = [0, 0, 0, 1, 1, 0, 0, 0, 0][Symbol.iterator]()
+    const random = { nextIndex: () => indexes.next().value ?? 0 }
+
+    expect(generatePyraminxScramble({ length: 2, random })).toBe("U L' u l r b")
+  })
 })

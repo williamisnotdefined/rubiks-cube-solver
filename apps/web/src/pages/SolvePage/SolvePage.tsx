@@ -1,29 +1,27 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import type { SolveResult as ApiSolveResult } from '@api/solver/types'
+import { SolveFormWithScanModal } from './components/SolveFormWithScanModal'
 import { SolveVisualizationStage } from './components/SolveVisualizationStage'
 import { useSolveFormState } from './hooks/useSolveFormState'
 import { useSolvePuzzleMetadata } from './hooks/useSolvePuzzleMetadata'
 import { useSolveResultFlow } from './hooks/useSolveResultFlow'
-import { useSolveScanModalState } from './hooks/useSolveScanModalState'
 import { useSolveVisualizationController } from './hooks/useSolveVisualizationController'
 import { useSolutionPlayback } from './hooks/useSolutionPlayback'
 import { nodesPerMillion } from './solve/constants'
-import { SolveForm } from './solve/SolveForm'
 import type { NoSolutionRetryLimits } from './solve/NoSolutionLimitsModal'
 import { SolveResult } from './solve/SolveResult'
 import { SolutionPlayback } from './solve/SolutionPlayback'
 import type { SolveFormSubmit } from './solve/validation'
 
-const ScanCubeModal = lazy(() => import('./scan/ScanCubeModal').then((module) => ({ default: module.ScanCubeModal })))
 const NoSolutionLimitsModal = lazy(() => import('./solve/NoSolutionLimitsModal').then((module) => ({ default: module.NoSolutionLimitsModal })))
 
 export function SolvePage() {
   const formState = useSolveFormState()
   const metadata = useSolvePuzzleMetadata(formState.selectedPuzzleSlug)
   const solveFlow = useSolveResultFlow()
-  const scanState = useSolveScanModalState(metadata.scanAvailable)
+  const [scanSessionSolving, setScanSessionSolving] = useState(false)
   const playback = useSolutionPlayback(solveFlow.successResult)
-  const solving = solveFlow.notationSolving || scanState.scanSessionSolving
+  const solving = solveFlow.notationSolving || scanSessionSolving
   const buttonLoading = !metadata.apiReady || solving
   const disabled =
     !metadata.apiReady ||
@@ -125,29 +123,26 @@ export function SolvePage() {
           step: playback.visibleSolutionStep,
         }
       : undefined
-  const scanModal = scanState.scanModalOpen
-    ? {
-        apiReady: metadata.apiReady,
-        maxDepth: formState.maxMoves,
-        maxNodes: formState.maxNodes,
-        onClose: scanState.closeScanModal,
-        onSessionSolveResult: handleScanSessionSolveResult,
-        onSessionSolvingChange: scanState.onScanSessionSolvingChange,
-        puzzleSlug: formState.selectedPuzzleSlug,
-        solveDisabledReason: formState.localValidationMessage,
-        solving,
-        strategyId: metadata.strategyId,
-        visionOk: metadata.health?.visionOk,
-        visionTileDetectorAvailable: metadata.health?.visionTileDetectorAvailable,
-        visionTileDetectorReason: metadata.health?.visionTileDetectorReason,
-      }
-    : undefined
+  const scanModalProps = {
+    apiReady: metadata.apiReady,
+    maxDepth: formState.maxMoves,
+    maxNodes: formState.maxNodes,
+    onSessionSolveResult: handleScanSessionSolveResult,
+    onSessionSolvingChange: setScanSessionSolving,
+    puzzleSlug: formState.selectedPuzzleSlug,
+    solveDisabledReason: formState.localValidationMessage,
+    solving,
+    strategyId: metadata.strategyId,
+    visionOk: metadata.health?.visionOk,
+    visionTileDetectorAvailable: metadata.health?.visionTileDetectorAvailable,
+    visionTileDetectorReason: metadata.health?.visionTileDetectorReason,
+  }
 
   return (
     <main className="app-shell min-h-0 flex-1 overflow-auto bg-background px-4 py-6 text-foreground">
       <section className="mx-auto grid w-full max-w-4xl content-start justify-items-center gap-4">
         <SolveVisualizationStage {...visualization} />
-        <SolveForm
+        <SolveFormWithScanModal
           buttonLoading={buttonLoading}
           disabled={disabled}
           maxMovesInput={formState.maxMovesInput}
@@ -158,13 +153,13 @@ export function SolvePage() {
           notation={formState.notation}
           puzzleOptions={metadata.puzzleOptions}
           scanAvailable={metadata.scanAvailable}
+          scanModalProps={scanModalProps}
           scramblePlaceholder={formState.activeScramblePlaceholder}
           selectedPuzzleSlug={formState.selectedPuzzleSlug}
           onMaxMovesChange={handleMaxMovesChange}
           onMaxNodesMillionChange={handleMaxNodesMillionChange}
           onNotationChange={handleNotationChange}
           onPuzzleChange={handlePuzzleChange}
-          onScanClick={scanState.onScanClick}
           onSubmit={handleSubmit}
         />
         <SolveResult
@@ -175,11 +170,6 @@ export function SolvePage() {
         />
         {playbackProps !== undefined ? (
           <SolutionPlayback {...playbackProps} />
-        ) : null}
-        {scanModal !== undefined ? (
-          <Suspense fallback={null}>
-            <ScanCubeModal {...scanModal} />
-          </Suspense>
         ) : null}
         {limitFailureModal !== undefined ? (
           <Suspense fallback={null}>

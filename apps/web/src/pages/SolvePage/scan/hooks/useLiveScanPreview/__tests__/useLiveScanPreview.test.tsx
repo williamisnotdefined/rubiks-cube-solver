@@ -120,6 +120,45 @@ describe('useLiveScanPreview', () => {
     expect(result.current.shouldAutoFill).toBe(false)
   })
 
+  it('ignores an in-flight preview response after scanning is disabled', async () => {
+    let previewSignal: AbortSignal | undefined
+    let resolveAnalysis: ((analysis: AnalyzeScanFaceResponse) => void) | undefined
+    apiMocks.analyzeMutateAsync.mockImplementation(
+      ({ signal }: { signal?: AbortSignal }) => {
+        previewSignal = signal
+        return new Promise<AnalyzeScanFaceResponse>((resolve) => {
+          resolveAnalysis = resolve
+        })
+      },
+    )
+    const videoRef = { current: document.createElement('video') }
+    const { result, rerender } = renderHook(
+      ({ enabled }) =>
+        useLiveScanPreview({
+          enabled,
+          expectedCenter: 'U',
+          videoRef,
+        }),
+      { initialProps: { enabled: true } },
+    )
+
+    await advancePreviewFrames(1)
+    expect(apiMocks.analyzeMutateAsync).toHaveBeenCalledOnce()
+
+    rerender({ enabled: false })
+    expect(previewSignal?.aborted).toBe(true)
+
+    await act(async () => {
+      resolveAnalysis?.(stableAnalysis())
+      await vi.advanceTimersByTimeAsync(0)
+    })
+
+    expect(result.current.status).toBe('idle')
+    expect(result.current.latestAnalysis).toBeUndefined()
+    expect(result.current.latestCapture).toBeUndefined()
+    expect(result.current.shouldAutoFill).toBe(false)
+  })
+
   it('does not auto-fill center mismatches', async () => {
     apiMocks.analyzeMutateAsync.mockResolvedValue(stableAnalysis({ centerMismatch: true }))
     const videoRef = { current: document.createElement('video') }

@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
 import type { PointerEvent } from 'react'
+import { describe, expect, it, vi } from 'vitest'
 import type { TimerMachine } from '../../useTimerMachine'
 import { useTouchTimer } from '../useTouchTimer'
 
@@ -12,9 +12,7 @@ describe('useTouchTimer', () => {
     const preventDefault = vi.fn()
     const { result } = renderHook(() => useTouchTimer(timer))
 
-    result.current.onPointerDown(
-      pointerEvent({ pointerId: 7, preventDefault, setPointerCapture }),
-    )
+    result.current.onPointerDown(pointerEvent({ pointerId: 7, preventDefault, setPointerCapture }))
     result.current.onPointerUp(
       pointerEvent({ pointerId: 7, preventDefault, releasePointerCapture }),
     )
@@ -36,13 +34,25 @@ describe('useTouchTimer', () => {
     expect(timer.cancelHold).toHaveBeenCalledTimes(2)
   })
 
+  it('does not begin or capture a pointer when touch input is disabled', () => {
+    const timer = timerMachine()
+    const setPointerCapture = vi.fn()
+    const preventDefault = vi.fn()
+    const { result } = renderHook(() => useTouchTimer(timer, true))
+
+    result.current.onPointerDown(pointerEvent({ pointerId: 7, preventDefault, setPointerCapture }))
+
+    expect(preventDefault).toHaveBeenCalledTimes(1)
+    expect(setPointerCapture).not.toHaveBeenCalled()
+    expect(timer.beginHold).not.toHaveBeenCalled()
+  })
+
   it('keeps stable handlers while using the latest timer', () => {
     const firstTimer = timerMachine()
     const nextTimer = timerMachine()
-    const { result, rerender } = renderHook(
-      ({ timer }) => useTouchTimer(timer),
-      { initialProps: { timer: firstTimer } },
-    )
+    const { result, rerender } = renderHook(({ timer }) => useTouchTimer(timer), {
+      initialProps: { timer: firstTimer },
+    })
     const firstHandlers = result.current
 
     rerender({ timer: nextTimer })

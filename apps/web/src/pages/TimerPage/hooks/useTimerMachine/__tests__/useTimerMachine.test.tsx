@@ -160,4 +160,27 @@ describe('useTimerMachine', () => {
     expect(result.current.inspectionPenalty).toBe('dnf')
     expect(result.current.inspectionRemainingMs).toBe(0)
   })
+
+  it.each([
+    'holding',
+    'running',
+  ] as const)('clears pending timers when unmounted while %s', (status) => {
+    const onSolveComplete = vi.fn()
+    const holdToStartMs = status === 'holding' ? 1_000 : 0
+    const { result, unmount } = renderHook(() =>
+      useTimerMachine({ holdToStartMs, inspectionEnabled: false, onSolveComplete }),
+    )
+
+    act(() => result.current.beginHold())
+    if (status === 'running') {
+      act(() => result.current.releaseHold())
+    }
+
+    expect(result.current.status).toBe(status)
+    expect(vi.getTimerCount()).toBeGreaterThan(0)
+
+    unmount()
+
+    expect(vi.getTimerCount()).toBe(0)
+  })
 })

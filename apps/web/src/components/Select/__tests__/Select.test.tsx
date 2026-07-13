@@ -20,6 +20,20 @@ describe('Select', () => {
 
     expect(screen.getByRole('combobox', { name: 'Max nodes' })).toHaveTextContent('15')
   })
+
+  it('renders the selected value when the trigger has no children', () => {
+    render(
+      <Select defaultValue="15">
+        <SelectTrigger aria-label="Max nodes" />
+        <SelectContent>
+          <SelectItem value="10">10</SelectItem>
+          <SelectItem value="15">15</SelectItem>
+        </SelectContent>
+      </Select>,
+    )
+
+    expect(screen.getByRole('combobox', { name: 'Max nodes' })).toHaveTextContent('15')
+  })
 })
 
 function SelectHarness() {

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { CubingSitesPage } from '../CubingSitesPage'
 import { cubingSites } from '../sites'
@@ -23,5 +23,14 @@ describe('CubingSitesPage', () => {
     expect(jPermLink).toHaveAttribute('rel', 'noreferrer')
     expect(screen.getByRole('img', { name: 'J Perm site icon' })).toHaveAttribute('src', '/sites/j-perm.png')
     expect(cubingSites.every((site) => site.imagePath.startsWith('/sites/'))).toBe(true)
+  })
+
+  it('hides a site image when it fails to load', () => {
+    render(<CubingSitesPage />)
+    const jPermImage = screen.getByRole('img', { name: 'J Perm site icon' })
+
+    fireEvent.error(jPermImage)
+
+    expect(jPermImage).not.toBeVisible()
   })
 })

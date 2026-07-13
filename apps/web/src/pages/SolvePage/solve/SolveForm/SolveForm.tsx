@@ -1,6 +1,5 @@
-import type { ChangeEvent, FormEvent } from 'react'
+import type { ChangeEvent, FormEvent, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Camera } from 'lucide-react'
 import { Button } from '@components/Button'
 import { Field } from '@components/Field'
 import { TextInput } from '@components/FormControls'
@@ -15,7 +14,7 @@ import type { PuzzleDefinition } from '@api/solver/types'
 import { maxNodesMillionOptions } from '../constants'
 import type { SolveFormSubmit } from '../validation'
 
-type SolveFormProps = {
+export type SolveFormProps = {
   notation: string
   puzzleOptions: readonly PuzzleDefinition[]
   selectedPuzzleSlug: string
@@ -26,9 +25,8 @@ type SolveFormProps = {
   maxNodesMillionInvalid: boolean
   buttonLoading: boolean
   disabled: boolean
-  scanAvailable: boolean
+  scanAction: ReactNode
   scramblePlaceholder: string
-  onScanClick: () => void
   onNotationChange: (notation: string) => void
   onPuzzleChange: (puzzleSlug: string) => void
   onMaxMovesChange: (maxMoves: string) => void
@@ -47,9 +45,8 @@ export function SolveForm({
   maxNodesMillionInvalid,
   buttonLoading,
   disabled,
-  scanAvailable,
+  scanAction,
   scramblePlaceholder,
-  onScanClick,
   onNotationChange,
   onPuzzleChange,
   onMaxMovesChange,
@@ -104,17 +101,7 @@ export function SolveForm({
                   onNotationChange(event.target.value)
                 }}
               />
-              <Button
-                aria-label={t('solve.form.scanCube')}
-                className="aspect-square h-9 w-9 px-0 py-0"
-                disabled={!scanAvailable}
-                title={scanAvailable ? undefined : t('solve.form.scanUnavailableForPuzzle')}
-                type="button"
-                variant="outline"
-                onClick={onScanClick}
-              >
-                <Camera aria-hidden="true" />
-              </Button>
+              {scanAction}
             </div>
           </Field>
         </div>

@@ -1,23 +1,26 @@
-import { describe, expect, it } from 'vitest'
 import type { ScanFaceSymbol } from '@api/solver/types'
+import { describe, expect, it } from 'vitest'
+import {
+  type ScanFaceDrafts,
+  type ScanSticker,
+  scan2StickersPerFace,
+  scanFaceOrder,
+} from '../../scanState'
 import {
   allEvenCubeFacesConfirmed,
   createDefaultEvenCubeFaceRotations,
   createDefaultEvenCubeNetAssignments,
   evenCubeCornerDefinitions,
-  evenCubeFitSolution,
   evenCubeDraftsFromNet,
+  evenCubeFitSolution,
   evenCubeScanSessionFacesFromDrafts,
+  findEvenCubeFullFit,
+  findEvenCubeRotationFit,
+  rotateEvenCubeDrafts,
   rotateEvenCubeStickers,
   swapEvenCubeNetAssignments,
   validateEvenCubeScan,
 } from '../evenCubeScan'
-import {
-  scan2StickersPerFace,
-  scanFaceOrder,
-  type ScanFaceDrafts,
-  type ScanSticker,
-} from '../../scanState'
 
 describe('evenCubeScan', () => {
   it('uses corrected 2x2 defaults for left/right slots and the down face rotation', () => {
@@ -65,6 +68,25 @@ describe('evenCubeScan', () => {
     )).toBeUndefined()
   })
 
+  it('rejects incomplete drafts and drafts without exact color counts', () => {
+    const incompleteDrafts = validNetDrafts()
+    incompleteDrafts.U.stickers[0] = {
+      ...incompleteDrafts.U.stickers[0],
+      symbol: undefined,
+    }
+
+    expect(validateEvenCubeScan(incompleteDrafts, {}, identityNetAssignments())).toEqual({
+      invalidCorners: [],
+      ok: false,
+    })
+    expect(findEvenCubeFullFit(incompleteDrafts)).toEqual({ status: 'none' })
+
+    const unbalancedDrafts = validNetDrafts()
+    unbalancedDrafts.F.stickers = scanStickers(['U', 'U', 'U', 'U'])
+
+    expect(findEvenCubeFullFit(unbalancedDrafts)).toEqual({ status: 'none' })
+  })
+
   it('omits manual overrides for detector-sourced stickers', () => {
     const sessionFaces = evenCubeScanSessionFacesFromDrafts(
       scanDraftsWithStickers({}, 'detected'),
@@ -97,6 +119,74 @@ describe('evenCubeScan', () => {
     expect(rotateEvenCubeStickers(stickers, 180).map((sticker) => sticker.symbol)).toEqual(['D', 'F', 'R', 'U'])
     expect(rotateEvenCubeStickers(stickers, 270).map((sticker) => sticker.symbol)).toEqual(['R', 'D', 'U', 'F'])
     expect(rotateEvenCubeStickers(stickers.slice(0, 3), 90)).toEqual(stickers.slice(0, 3))
+  })
+
+  it('rotates complete draft records without mutating their stickers', () => {
+    const drafts = scanDraftsWithStickers({
+      F: ['U', 'R', 'F', 'D'],
+      U: ['B', 'L', 'D', 'F'],
+    })
+    const rotated = rotateEvenCubeDrafts(drafts, { F: 90, U: 180 })
+
+    expect(rotated.F.stickers.map((sticker) => sticker.symbol)).toEqual(['F', 'U', 'D', 'R'])
+    expect(rotated.U.stickers.map((sticker) => sticker.symbol)).toEqual(['F', 'D', 'L', 'B'])
+    expect(rotated.R.stickers).not.toBe(drafts.R.stickers)
+    expect(drafts.F.stickers.map((sticker) => sticker.symbol)).toEqual(['U', 'R', 'F', 'D'])
+  })
+
+  it('distinguishes none, unique, suggested, and ambiguous automatic fits', () => {
+    const ambiguousDrafts = capturedDraftsFromNet(
+      draftsFromVisualState('BRLFLFFUBUULRDDRDULFDRBB'),
+    )
+    expect(findEvenCubeRotationFit(
+      ambiguousDrafts,
+      createDefaultEvenCubeNetAssignments(),
+    )).toMatchObject({
+      alternatives: expect.any(Number),
+      status: 'ambiguous',
+    })
+    expect(findEvenCubeFullFit(ambiguousDrafts)).toMatchObject({
+      alternatives: expect.any(Number),
+      status: 'ambiguous',
+    })
+
+    const uniqueDrafts = swapDraftStickers(
+      capturedDraftsFromNet(draftsFromVisualState('RLDFUFDDFRBBURDFURLLUBLB')),
+      'F',
+      'U',
+    )
+    expect(findEvenCubeRotationFit(
+      uniqueDrafts,
+      createDefaultEvenCubeNetAssignments(),
+    )).toMatchObject({
+      solution: { score: expect.any(Number) },
+      status: 'unique',
+    })
+
+    const rotationSuggestedDrafts = capturedDraftsFromNet(
+      draftsFromVisualState('FFLRURBBUBRRDDDLDFLFULUB'),
+    )
+    expect(findEvenCubeRotationFit(
+      rotationSuggestedDrafts,
+      createDefaultEvenCubeNetAssignments(),
+    )).toMatchObject({
+      solution: { score: expect.any(Number) },
+      status: 'suggested',
+    })
+
+    const fullSuggestedDrafts = swapDraftStickers(
+      capturedDraftsFromNet(draftsFromVisualState('RLDFUFDDFRBBURDFURLLUBLB')),
+      'F',
+      'D',
+    )
+    expect(findEvenCubeRotationFit(
+      fullSuggestedDrafts,
+      createDefaultEvenCubeNetAssignments(),
+    )).toEqual({ status: 'none' })
+    expect(findEvenCubeFullFit(fullSuggestedDrafts)).toMatchObject({
+      solution: { score: expect.any(Number) },
+      status: 'suggested',
+    })
   })
 
   it('swaps net assignments and keeps same-slot swaps stable', () => {
@@ -146,6 +236,63 @@ function scanStickers(
     source,
     symbol,
   }))
+}
+
+function validNetDrafts(): ScanFaceDrafts {
+  return scanDraftsWithStickers({
+    B: ['F', 'R', 'F', 'B'],
+    D: ['D', 'L', 'L', 'U'],
+    F: ['R', 'D', 'R', 'F'],
+    L: ['B', 'B', 'U', 'F'],
+    R: ['L', 'L', 'D', 'R'],
+    U: ['U', 'U', 'D', 'B'],
+  })
+}
+
+function capturedDraftsFromNet(netDrafts: ScanFaceDrafts): ScanFaceDrafts {
+  return scanDraftsWithStickers({
+    B: stickerSymbols(netDrafts.B.stickers),
+    D: stickerSymbols(rotateEvenCubeStickers(netDrafts.D.stickers, 180)),
+    F: stickerSymbols(netDrafts.F.stickers),
+    L: stickerSymbols(netDrafts.R.stickers),
+    R: stickerSymbols(netDrafts.L.stickers),
+    U: stickerSymbols(netDrafts.U.stickers),
+  })
+}
+
+function swapDraftStickers(
+  drafts: ScanFaceDrafts,
+  first: ScanFaceSymbol,
+  second: ScanFaceSymbol,
+): ScanFaceDrafts {
+  return {
+    ...drafts,
+    [first]: { ...drafts[first], stickers: drafts[second].stickers },
+    [second]: { ...drafts[second], stickers: drafts[first].stickers },
+  }
+}
+
+function draftsFromVisualState(visualState: string): ScanFaceDrafts {
+  const [U, R, F, D, L, B] = visualState.match(/.{4}/g) as string[]
+
+  return scanDraftsWithStickers({
+    B: [...B] as ScanFaceSymbol[],
+    D: [...D] as ScanFaceSymbol[],
+    F: [...F] as ScanFaceSymbol[],
+    L: [...L] as ScanFaceSymbol[],
+    R: [...R] as ScanFaceSymbol[],
+    U: [...U] as ScanFaceSymbol[],
+  })
+}
+
+function identityNetAssignments() {
+  return Object.fromEntries(scanFaceOrder.map(({ symbol }) => [symbol, symbol])) as ReturnType<
+    typeof createDefaultEvenCubeNetAssignments
+  >
+}
+
+function stickerSymbols(stickers: readonly ScanSticker[]): ScanFaceSymbol[] {
+  return stickers.map((sticker) => sticker.symbol as ScanFaceSymbol)
 }
 
 function faceStickers(

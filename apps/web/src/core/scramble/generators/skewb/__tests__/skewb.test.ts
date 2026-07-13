@@ -21,4 +21,11 @@ describe('generateSkewbScramble', () => {
       }
     }
   })
+
+  it('skips a forced repeated face', () => {
+    const indexes = [0, 0, 0, 1, 1][Symbol.iterator]()
+    const random = { nextIndex: () => indexes.next().value ?? 0 }
+
+    expect(generateSkewbScramble({ length: 2, random })).toBe("U R'")
+  })
 })

@@ -166,6 +166,7 @@ vi.mock('../scan/ScanCubeModal', () => ({
       <button type="button" onClick={() => onSessionSolvingChange(true)}>
         Start scan solve
       </button>
+      <button type="button" onClick={onClose}>Close scan</button>
     </section>
   ),
 }))
@@ -390,6 +391,20 @@ describe('SolvePage', () => {
 
     expect(await screen.findByRole('dialog', { name: 'Scan cube' })).toBeInTheDocument()
     expect(screen.getByText('Face 1 of 6')).toBeInTheDocument()
+  })
+
+  it('keeps the scan modal closed after the focused scan owner dismisses it', async () => {
+    const user = userEvent.setup()
+    render(<SolvePage />)
+
+    await user.click(screen.getByRole('button', { name: 'Scan cube with camera' }))
+    expect(await screen.findByRole('dialog', { name: 'Scan cube' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Close scan' }))
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Scan cube' })).not.toBeInTheDocument()
+    })
   })
 
   it('shows the page cube loader while scan solve is pending', async () => {

@@ -39,6 +39,15 @@ describe('useKeyboardTimer', () => {
     expect(timer.releaseHold).not.toHaveBeenCalled()
   })
 
+  it('does not begin a hold when keyboard input is disabled', () => {
+    const timer = timerMachine({ status: 'idle' })
+    renderHook(() => useKeyboardTimer(timer, true))
+
+    window.dispatchEvent(keyboardEvent('keydown', { code: 'Space', key: ' ' }))
+
+    expect(timer.beginHold).not.toHaveBeenCalled()
+  })
+
   it('keeps one listener pair across rerenders and uses the latest timer', () => {
     const idleTimer = timerMachine({ status: 'idle' })
     const runningTimer = timerMachine({ status: 'running' })
@@ -48,10 +57,9 @@ describe('useKeyboardTimer', () => {
       addEventListener.mock.calls.filter(([type]) => type === eventType).length
     const removedListenerCount = (eventType: string) =>
       removeEventListener.mock.calls.filter(([type]) => type === eventType).length
-    const { rerender, unmount } = renderHook(
-      ({ timer }) => useKeyboardTimer(timer),
-      { initialProps: { timer: idleTimer } },
-    )
+    const { rerender, unmount } = renderHook(({ timer }) => useKeyboardTimer(timer), {
+      initialProps: { timer: idleTimer },
+    })
 
     expect(listenerCount('keydown')).toBe(1)
     expect(listenerCount('keyup')).toBe(1)

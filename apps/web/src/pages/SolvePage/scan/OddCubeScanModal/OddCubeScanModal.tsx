@@ -20,7 +20,6 @@ import {
   isNoSolutionLimitFailure,
   type NoSolutionLimitFailureResult,
 } from '../../solve/noSolutionLimits'
-import { ScanExitConfirmationModal } from '../ScanExitConfirmationModal'
 import { ScanFaceCaptureStep } from '../ScanFaceCaptureStep'
 import { ScanModalShell } from '../ScanModalShell'
 import {
@@ -91,7 +90,6 @@ export function OddCubeScanModal({
   const [backendReviewTargets, setBackendReviewTargets] = useState<BackendReviewTargets>(() =>
     emptyBackendReviewTargets(),
   )
-  const [exitConfirmationVisible, setExitConfirmationVisible] = useState(false)
   const [centerMismatchConfirmation, setCenterMismatchConfirmation] =
     useState<CenterMismatchConfirmation | undefined>()
   const [limitFailureResult, setLimitFailureResult] = useState<NoSolutionLimitFailureResult | undefined>()
@@ -160,15 +158,6 @@ export function OddCubeScanModal({
 
     return () => onSessionSolvingChange?.(false)
   }, [onSessionSolvingChange, sessionSolving])
-
-  function handleProtectedClose() {
-    if (hasScanProgress) {
-      setExitConfirmationVisible(true)
-      return
-    }
-
-    onClose()
-  }
 
   function clearBackendReviewForFace(symbol: ScanFaceSymbol) {
     setBackendReviewTargets((targets) => removeBackendReviewFace(targets, symbol))
@@ -266,14 +255,13 @@ export function OddCubeScanModal({
   }
 
   return (
-    <>
-      <ScanModalShell
-        visionOk={visionOk}
-        visionTileDetectorAvailable={visionTileDetectorAvailable}
-        visionTileDetectorReason={visionTileDetectorReason}
-        onClose={onClose}
-        onOverlayClose={handleProtectedClose}
-      >
+    <ScanModalShell
+      visionOk={visionOk}
+      visionTileDetectorAvailable={visionTileDetectorAvailable}
+      visionTileDetectorReason={visionTileDetectorReason}
+      hasProgress={hasScanProgress}
+      onClose={onClose}
+    >
 
         <ScanFaceCaptureStep
           autoScanEnabled={autoScanEnabled}
@@ -311,30 +299,23 @@ export function OddCubeScanModal({
           onFinalAction={() => void handleSolveScan()}
           onStickerColorChange={handleStickerColorChange}
         />
-      </ScanModalShell>
-      {centerMismatchConfirmation === undefined ? null : (
-        <CenterMismatchConfirmationModal
-          message={centerMismatchConfirmation.message}
-          onCancel={() => setCenterMismatchConfirmation(undefined)}
-          onConfirm={handleConfirmCenterMismatch}
-        />
-      )}
-      {exitConfirmationVisible ? (
-        <ScanExitConfirmationModal
-          onCancel={() => setExitConfirmationVisible(false)}
-          onConfirm={onClose}
-        />
-      ) : null}
-      {limitFailureResult === undefined ? null : (
-        <NoSolutionLimitsModal
-          puzzleSlug={puzzleSlug}
-          result={limitFailureResult}
-          solving={solving || sessionSolving}
-          onClose={() => setLimitFailureResult(undefined)}
-          onRetry={handleLimitFailureRetry}
-        />
-      )}
-    </>
+        {centerMismatchConfirmation === undefined ? null : (
+          <CenterMismatchConfirmationModal
+            message={centerMismatchConfirmation.message}
+            onCancel={() => setCenterMismatchConfirmation(undefined)}
+            onConfirm={handleConfirmCenterMismatch}
+          />
+        )}
+        {limitFailureResult === undefined ? null : (
+          <NoSolutionLimitsModal
+            puzzleSlug={puzzleSlug}
+            result={limitFailureResult}
+            solving={solving || sessionSolving}
+            onClose={() => setLimitFailureResult(undefined)}
+            onRetry={handleLimitFailureRetry}
+          />
+        )}
+    </ScanModalShell>
   )
 }
 

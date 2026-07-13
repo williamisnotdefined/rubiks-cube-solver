@@ -92,8 +92,12 @@ describe('timerStore', () => {
     useTimerStore.getState().deleteSolve('active-solve')
     useTimerStore.getState().clearActiveSession()
 
-    const inactiveSession = useTimerStore.getState().sessions.find((session) => session.id === inactiveSessionId)
-    const activeSession = useTimerStore.getState().sessions.find((session) => session.id === 'timer-session-default')
+    const inactiveSession = useTimerStore
+      .getState()
+      .sessions.find((session) => session.id === inactiveSessionId)
+    const activeSession = useTimerStore
+      .getState()
+      .sessions.find((session) => session.id === 'timer-session-default')
 
     expect(inactiveSession).toMatchObject({
       name: 'Inactive',
@@ -104,6 +108,30 @@ describe('timerStore', () => {
       name: 'Default renamed',
       solves: [],
     })
+  })
+
+  it('updates only the latest solve penalty in the active session', () => {
+    const firstSolve = solve('solve-1', 8_000)
+    const latestSolve = solve('solve-2', 10_000)
+    useTimerStore.getState().addSolve(firstSolve)
+    useTimerStore.getState().addSolve(latestSolve)
+    useTimerStore.getState().createSession('Empty session')
+    const emptySessionId = useTimerStore.getState().activeSessionId
+
+    useTimerStore.getState().updateLatestSolvePenalty('dnf')
+
+    expect(activeSolves()).toEqual([])
+
+    useTimerStore.getState().setActiveSessionId('timer-session-default')
+    useTimerStore.getState().updateLatestSolvePenalty('plus2')
+
+    expect(activeSolves()).toEqual([
+      firstSolve,
+      { ...latestSolve, finalTimeMs: 12_000, penalty: 'plus2' },
+    ])
+    expect(
+      useTimerStore.getState().sessions.find((session) => session.id === emptySessionId)?.solves,
+    ).toEqual([])
   })
 })
 

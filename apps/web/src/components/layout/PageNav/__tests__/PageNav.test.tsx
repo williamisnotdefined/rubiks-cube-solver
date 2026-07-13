@@ -67,6 +67,15 @@ describe('PageNav', () => {
     expect(apiLink).toHaveAttribute('aria-current', 'page')
   })
 
+  it('marks world records as active', () => {
+    renderWithRouter(<PageNav activeRoute="records" />, '/records/world/')
+
+    expect(screen.getByRole('link', { name: 'World Records' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+  })
+
   it('uses the site favicon in the brand and removes the old solver subtitle', () => {
     const { container } = renderWithRouter(<PageNav activeRoute="solve" />)
 
@@ -230,6 +239,18 @@ describe('PageNav', () => {
 
     expect(document.documentElement).not.toHaveAttribute('data-theme')
     expect(window.localStorage.getItem('rubiks-cube-solver-theme')).toBeNull()
+  })
+
+  it('shows the moon icon for the dark theme', () => {
+    act(() => useThemeStore.getState().setThemePreference('dark'))
+
+    renderWithRouter(<PageNav activeRoute="solve" />)
+
+    expect(
+      screen.getByRole('button', { name: 'Theme' }).querySelector('.lucide-moon'),
+    ).toBeInTheDocument()
+
+    act(() => useThemeStore.getState().setThemePreference('system'))
   })
 })
 

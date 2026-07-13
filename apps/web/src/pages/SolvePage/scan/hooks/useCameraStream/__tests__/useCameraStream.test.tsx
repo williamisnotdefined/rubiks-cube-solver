@@ -41,6 +41,29 @@ describe('useCameraStream', () => {
     })
   })
 
+  it('ignores a camera rejection after becoming inactive', async () => {
+    let rejectCamera!: (error: Error) => void
+    const getUserMediaPromise = new Promise<MediaStream>((_, reject) => {
+      rejectCamera = reject
+    })
+    const getUserMedia = vi.fn().mockReturnValue(getUserMediaPromise)
+    mockGetUserMedia(getUserMedia)
+    const { result, rerender } = renderHook(
+      ({ active }) => useCameraStream(active),
+      { initialProps: { active: true } },
+    )
+
+    await waitFor(() => expect(getUserMedia).toHaveBeenCalledOnce())
+    rerender({ active: false })
+
+    await act(async () => {
+      rejectCamera(new Error('late camera denial'))
+      await getUserMediaPromise.catch(() => undefined)
+    })
+
+    expect(result.current.status).toBe('idle')
+  })
+
   it('stops camera tracks when unmounted after the stream is ready', async () => {
     const { stop, stream } = createCameraStream()
     const getUserMedia = vi.fn().mockResolvedValue(stream)
