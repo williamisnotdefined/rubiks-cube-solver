@@ -185,7 +185,11 @@ export function useTimerMachine({
       setInspectionPenalty(nextPenalty)
       setInspectionRemainingMs(Math.max(0, inspectionLimitMs - elapsedInspectionMs))
 
-      if (statusRef.current === 'inspection') {
+      if (
+        statusRef.current === 'inspection' ||
+        ((statusRef.current === 'holding' || statusRef.current === 'ready') &&
+          previousStatusRef.current === 'inspection')
+      ) {
         inspectionTickRef.current = setTimeout(tick, displayTickMs)
       }
     }

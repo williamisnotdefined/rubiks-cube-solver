@@ -161,6 +161,33 @@ describe('useTimerMachine', () => {
     expect(result.current.inspectionRemainingMs).toBe(0)
   })
 
+  it('resumes inspection updates after canceling a hold during an inspection tick', () => {
+    const onSolveComplete = vi.fn()
+    const { result } = renderHook(() =>
+      useTimerMachine({
+        displayTickMs: 100,
+        holdToStartMs: 1_000,
+        inspectionEnabled: true,
+        onSolveComplete,
+      }),
+    )
+
+    act(() => result.current.beginHold())
+    act(() => vi.advanceTimersByTime(1_000))
+    act(() => result.current.releaseHold())
+    act(() => result.current.beginHold())
+    expect(result.current.status).toBe('holding')
+
+    act(() => vi.advanceTimersByTime(100))
+    const remainingWhileHolding = result.current.inspectionRemainingMs
+
+    act(() => result.current.cancelHold())
+    expect(result.current.status).toBe('inspection')
+
+    act(() => vi.advanceTimersByTime(100))
+    expect(result.current.inspectionRemainingMs).toBeLessThan(remainingWhileHolding)
+  })
+
   it.each([
     'holding',
     'running',
