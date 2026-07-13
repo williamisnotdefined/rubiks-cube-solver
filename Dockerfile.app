@@ -11,7 +11,7 @@ COPY scripts/seo scripts/seo
 COPY apps/web apps/web
 RUN npm run build -w @rubiks-cube-solver/web
 
-FROM rust:1.96-bookworm AS rust-build
+FROM rust:1.97-bookworm AS rust-build
 
 WORKDIR /src
 COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
