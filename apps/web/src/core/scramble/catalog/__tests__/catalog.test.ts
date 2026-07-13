@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { generateScrambleForEvent, scrambleEvents } from '../catalog'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { generateScrambleForEvent, scrambleEventById, scrambleEvents } from '../catalog'
 
 const expectedWcaEventIds = [
   '333',
@@ -21,7 +21,23 @@ const expectedWcaEventIds = [
   '333mbld',
 ] as const
 
+const localGeneratorEventIds = [
+  '333',
+  '222',
+  '444',
+  'clock',
+  'megaminx',
+  '333mbld',
+  'pyraminx',
+  'skewb',
+  'square1',
+] as const
+
 describe('WCA scramble catalog', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
   it('contains exactly the WCA timer events supported in this phase', () => {
     expect(scrambleEvents.map((event) => event.id)).toEqual(expectedWcaEventIds)
   })
@@ -81,5 +97,24 @@ describe('WCA scramble catalog', () => {
     for (const event of scrambleEvents) {
       expect(generateScrambleForEvent(event.id, 7).scramble.trim()).not.toBe('')
     }
+  })
+
+  it('generates through the public no-seed catalog path for all local generators', () => {
+    vi.stubGlobal('crypto', {
+      getRandomValues(values: Uint32Array) {
+        values[0] = 7
+        return values
+      },
+    })
+
+    const generated = localGeneratorEventIds.map((eventId) => generateScrambleForEvent(eventId))
+
+    expect(generated.map(({ event }) => event.id)).toEqual(localGeneratorEventIds)
+    expect(generated.every(({ scramble }) => scramble.trim() !== '')).toBe(true)
+  })
+
+  it('falls back to the default catalog event for an unknown id', () => {
+    expect(scrambleEventById('unknown').id).toBe('333')
+    expect(generateScrambleForEvent('unknown', 7).event.id).toBe('333')
   })
 })

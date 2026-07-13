@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { NotationGuidePage } from '../NotationGuidePage'
+import { NotationVisualizer } from '../components/NotationVisualizer'
 
 const notationVisualizationAutoLoadDelayMs = 3000
 
@@ -82,13 +83,17 @@ vi.mock('@rubiks-cube-solver/rubiks-cube/puzzles/square1', () => ({
 describe('Notation guides', () => {
   beforeEach(() => {
     visualizationMocks.cubeMove.mockClear()
+    visualizationMocks.cubeRegister.mockClear()
     visualizationMocks.cubeReset.mockClear()
     visualizationMocks.cubeRotate.mockClear()
     visualizationMocks.megaminxMove.mockClear()
+    visualizationMocks.megaminxRegister.mockClear()
     visualizationMocks.megaminxReset.mockClear()
     visualizationMocks.pyraminxMove.mockClear()
+    visualizationMocks.pyraminxRegister.mockClear()
     visualizationMocks.pyraminxReset.mockClear()
     visualizationMocks.square1Move.mockClear()
+    visualizationMocks.square1Register.mockClear()
     visualizationMocks.square1Reset.mockClear()
   })
 
@@ -120,6 +125,16 @@ describe('Notation guides', () => {
     expect(visualizationMocks.cubeRegister).toHaveBeenCalled()
   })
 
+  it('uses an already-registered visualization without registering it again', () => {
+    visualizationMocks.cubeRegister()
+    visualizationMocks.cubeRegister.mockClear()
+    const { container } = renderWithRoute('/notations/3x3')
+
+    expect(container.querySelector('rubiks-cube')).toBeInTheDocument()
+    expect(visualizationMocks.cubeRegister).not.toHaveBeenCalled()
+    expect(screen.getByRole('status')).toHaveTextContent('Ready')
+  })
+
   it('loads notation visualization from the preparing layer click', async () => {
     const { container } = renderWithRoute('/notations/megaminx')
     const user = userEvent.setup()
@@ -128,6 +143,54 @@ describe('Notation guides', () => {
 
     await waitFor(() => expect(container.querySelector('megaminx-puzzle')).toBeInTheDocument())
     expect(visualizationMocks.megaminxRegister).toHaveBeenCalled()
+  })
+
+  it('registers the visualization from an idle callback after the fallback delay', async () => {
+    vi.useFakeTimers()
+    let idleCallback: IdleRequestCallback | undefined
+    const requestIdleCallback = vi.fn((callback: IdleRequestCallback) => {
+      idleCallback = callback
+      return 41
+    })
+    vi.stubGlobal('requestIdleCallback', requestIdleCallback)
+    vi.stubGlobal('cancelIdleCallback', vi.fn())
+    const { container } = renderWithRoute('/notations/pyraminx')
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(notationVisualizationAutoLoadDelayMs)
+    })
+
+    expect(requestIdleCallback).toHaveBeenCalledWith(expect.any(Function), { timeout: 1500 })
+    expect(visualizationMocks.pyraminxRegister).not.toHaveBeenCalled()
+
+    await act(async () => {
+      idleCallback?.({ didTimeout: false, timeRemaining: () => 50 })
+    })
+    vi.useRealTimers()
+
+    await waitFor(() =>
+      expect(container.querySelector('pyraminx-puzzle')).toBeInTheDocument(),
+    )
+    expect(visualizationMocks.pyraminxRegister).toHaveBeenCalledOnce()
+  })
+
+  it('cancels pending idle registration when the visualization unmounts', async () => {
+    vi.useFakeTimers()
+    const requestIdleCallback = vi.fn(() => 73)
+    const cancelIdleCallback = vi.fn()
+    vi.stubGlobal('requestIdleCallback', requestIdleCallback)
+    vi.stubGlobal('cancelIdleCallback', cancelIdleCallback)
+    const { unmount } = renderWithRoute('/notations/square-1')
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(notationVisualizationAutoLoadDelayMs)
+    })
+    expect(requestIdleCallback).toHaveBeenCalledOnce()
+
+    unmount()
+
+    expect(cancelIdleCallback).toHaveBeenCalledWith(73)
+    expect(visualizationMocks.square1Register).not.toHaveBeenCalled()
   })
 
   it('renders a complete 3x3 notation reference', () => {
@@ -296,6 +359,16 @@ describe('Notation guides', () => {
     expect(screen.queryByRole('heading', { name: 'Interactive notation' })).not.toBeInTheDocument()
   })
 
+  it('renders nothing when NotationVisualizer receives a guide without visualization support', () => {
+    const { container } = render(
+      <NotationVisualizer
+        guide={{ id: 'skewb', path: '/notations/skewb', puzzle: 'Skewb' }}
+      />,
+    )
+
+    expect(container).toBeEmptyDOMElement()
+  })
+
   it('runs and resets cube visualization actions', async () => {
     const { container } = await renderWithLoadedVisualization('/notations/3x3')
     const user = userEvent.setup()
@@ -326,6 +399,46 @@ describe('Notation guides', () => {
 
     expect(visualizationMocks.cubeReset).toHaveBeenCalled()
     await waitFor(() => expect(container.querySelector('rubiks-cube')).not.toBe(initialCubeElement))
+  })
+
+  it('reports a failed visualization move and enables the actions again', async () => {
+    visualizationMocks.cubeMove.mockRejectedValueOnce(new Error('animation failed'))
+    await renderWithLoadedVisualization('/notations/3x3')
+    const user = userEvent.setup()
+    const moveButton = screen.getByRole('button', { name: 'R' })
+
+    await user.click(moveButton)
+
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent('R could not run'),
+    )
+    expect(moveButton).toBeEnabled()
+  })
+
+  it('falls back to ready when resetting the visualization throws', async () => {
+    visualizationMocks.cubeReset.mockImplementationOnce(() => {
+      throw new Error('reset failed')
+    })
+    const { container } = await renderWithLoadedVisualization('/notations/3x3')
+    const user = userEvent.setup()
+    const cubeElement = container.querySelector('rubiks-cube')
+
+    await user.click(screen.getByRole('button', { name: 'Reset' }))
+
+    expect(visualizationMocks.cubeReset).toHaveBeenCalledOnce()
+    expect(screen.getByRole('status')).toHaveTextContent('Ready')
+    expect(container.querySelector('rubiks-cube')).toBe(cubeElement)
+  })
+
+  it('runs Pyraminx notation actions with its puzzle element', async () => {
+    await renderWithLoadedVisualization('/notations/pyraminx')
+    const user = userEvent.setup()
+    const moveButton = screen.getByRole('button', { name: 'U' })
+
+    await user.click(moveButton)
+
+    await waitFor(() => expect(visualizationMocks.pyraminxMove).toHaveBeenCalledWith('U'))
+    expect(screen.getByRole('status')).toHaveTextContent('U applied')
   })
 
   it('runs Megaminx notation labels through the corrected visual face mapping', async () => {

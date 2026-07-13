@@ -183,6 +183,45 @@ describe('useCubeVisualization', () => {
     expect(cube.move).not.toHaveBeenCalled()
   })
 
+  it('ignores unsupported visual state kinds', async () => {
+    vi.useFakeTimers()
+    const cube = createFakeCube()
+
+    render(
+      <HookHarness
+        cube={cube}
+        notation="R"
+        visualState="unsupported"
+        visualStateKind="none"
+      />,
+    )
+    await runVisualizationSync()
+
+    expect(cube.reset).not.toHaveBeenCalled()
+    expect(cube.setState).not.toHaveBeenCalled()
+    expect(cube.move).not.toHaveBeenCalled()
+  })
+
+  it('ignores a 3x3 visual state for a 2x2 cube', async () => {
+    vi.useFakeTimers()
+    const cube = createFakeCube()
+
+    render(
+      <HookHarness
+        cube={cube}
+        cubeType="Two"
+        notation="R"
+        visualState="UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB"
+        visualStateKind="cube3-facelets-v1"
+      />,
+    )
+    await runVisualizationSync()
+
+    expect(cube.reset).not.toHaveBeenCalled()
+    expect(cube.setState).not.toHaveBeenCalled()
+    expect(cube.move).not.toHaveBeenCalled()
+  })
+
   it('animates appended moves from the same visual state', async () => {
     vi.useFakeTimers()
     const cube = createFakeCube()

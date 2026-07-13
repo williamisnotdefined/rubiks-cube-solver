@@ -69,6 +69,32 @@ describe('Algorithms pages', () => {
     expect(screen.getByRole('img', { name: '3x3 F2L F2L 1' })).toHaveAttribute('src', '/algorithms/3x3/f2l/f2l-f2l-1.svg')
     expect(screen.getByText("U R U' R'")).toBeInTheDocument()
   })
+
+  it('redirects a missing algorithm set to its localized puzzle page', async () => {
+    render(
+      <MemoryRouter initialEntries={['/fr/algoritmos/3x3/missing']}>
+        <Routes>
+          <Route path='/fr/algoritmos/:puzzleId/:methodId' element={<AlgorithmSetPage />} />
+          <Route path='/fr/algoritmos/:puzzleId' element={<p>Localized puzzle fallback</p>} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByText('Localized puzzle fallback')).toBeInTheDocument()
+  })
+
+  it('redirects an algorithm set route without a puzzle to the index', async () => {
+    render(
+      <MemoryRouter initialEntries={['/algoritmos/set']}>
+        <Routes>
+          <Route path='/algoritmos/set' element={<AlgorithmSetPage />} />
+          <Route path='/algoritmos' element={<p>Algorithm index fallback</p>} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByText('Algorithm index fallback')).toBeInTheDocument()
+  })
 })
 
 function renderWithRoute(path: string, route: ReactElement) {

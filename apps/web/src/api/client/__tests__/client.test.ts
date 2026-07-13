@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   ApiRequestError,
+  apiJsonResponse,
   apiRequest,
   apiUrl,
   postJson,
@@ -14,9 +15,26 @@ describe('api client', () => {
     vi.spyOn(globalThis, 'fetch')
   })
 
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
   it('builds API URLs with or without a leading slash', () => {
     expect(apiUrl('health')).toBe('http://127.0.0.1:8787/health')
     expect(apiUrl('/health')).toBe('http://127.0.0.1:8787/health')
+  })
+
+  it('uses the configured API base URL', () => {
+    vi.stubEnv('VITE_RUBIKS_API_URL', 'https://solver.example')
+
+    expect(apiUrl('/health')).toBe('https://solver.example/health')
+  })
+
+  it('uses the browser origin for production API requests', () => {
+    vi.stubEnv('VITE_RUBIKS_API_URL', undefined)
+    vi.stubEnv('PROD', true)
+
+    expect(apiUrl('/health')).toBe(`${window.location.origin}/health`)
   })
 
   it('keeps WCA Data API URLs relative so the Vite server proxy handles dev targets', () => {
@@ -118,6 +136,20 @@ describe('api client', () => {
       requestElapsedMs: expect.any(Number),
       status: 503,
       statusText: 'Service Unavailable',
+    })
+  })
+
+  it('falls back to Date.now when performance timing is unavailable', async () => {
+    const response = new Response(JSON.stringify({ ok: true }), {
+      headers: { 'Content-Type': 'application/json' },
+      status: 200,
+    })
+    vi.mocked(fetch).mockResolvedValue(response)
+    vi.stubGlobal('performance', undefined)
+    vi.spyOn(Date, 'now').mockReturnValueOnce(100).mockReturnValueOnce(142)
+
+    await expect(apiJsonResponse('/health')).resolves.toMatchObject({
+      requestElapsedMs: 42,
     })
   })
 

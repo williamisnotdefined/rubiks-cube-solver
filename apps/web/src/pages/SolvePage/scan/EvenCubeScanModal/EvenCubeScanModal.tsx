@@ -49,7 +49,6 @@ import {
   scanSessionMessage,
   scanSessionReadinessMessage,
 } from '../scanSessionMessages'
-import { ScanExitConfirmationModal } from '../ScanExitConfirmationModal'
 import { useScanCaptureWorkflow } from '../hooks/useScanCaptureWorkflow'
 
 export type ScanCubeModalProps = {
@@ -94,7 +93,6 @@ export function EvenCubeScanModal({
   const [evenFaceRotations, setEvenFaceRotations] = useState<EvenCubeFaceRotations>(() =>
     createDefaultEvenCubeFaceRotations(),
   )
-  const [exitConfirmationVisible, setExitConfirmationVisible] = useState(false)
   const [limitFailureResult, setLimitFailureResult] = useState<NoSolutionLimitFailureResult | undefined>()
   const [evenNetAssignments, setEvenNetAssignments] = useState<EvenCubeNetAssignments>(() =>
     createDefaultEvenCubeNetAssignments(),
@@ -172,15 +170,6 @@ export function EvenCubeScanModal({
 
     return () => onSessionSolvingChange?.(false)
   }, [onSessionSolvingChange, sessionSolving])
-
-  function handleProtectedClose() {
-    if (hasScanProgress) {
-      setExitConfirmationVisible(true)
-      return
-    }
-
-    onClose()
-  }
 
   function clearBackendReviewForFace(symbol: ScanFaceSymbol) {
     setBackendReviewTargets((targets) => removeBackendReviewFace(targets, symbol))
@@ -343,14 +332,13 @@ export function EvenCubeScanModal({
   }
 
   return (
-    <>
-      <ScanModalShell
-        visionOk={visionOk}
-        visionTileDetectorAvailable={visionTileDetectorAvailable}
-        visionTileDetectorReason={visionTileDetectorReason}
-        onClose={onClose}
-        onOverlayClose={handleProtectedClose}
-      >
+    <ScanModalShell
+      visionOk={visionOk}
+      visionTileDetectorAvailable={visionTileDetectorAvailable}
+      visionTileDetectorReason={visionTileDetectorReason}
+      hasProgress={hasScanProgress}
+      onClose={onClose}
+    >
 
         {evenReviewVisible ? (
           <EvenCubeReviewStep
@@ -407,23 +395,16 @@ export function EvenCubeScanModal({
             onStickerColorChange={handleStickerColorChange}
           />
         )}
-      </ScanModalShell>
-      {exitConfirmationVisible ? (
-        <ScanExitConfirmationModal
-          onCancel={() => setExitConfirmationVisible(false)}
-          onConfirm={onClose}
-        />
-      ) : null}
-      {limitFailureResult === undefined ? null : (
-        <NoSolutionLimitsModal
-          puzzleSlug={puzzleSlug}
-          result={limitFailureResult}
-          solving={solving || sessionSolving}
-          onClose={() => setLimitFailureResult(undefined)}
-          onRetry={handleLimitFailureRetry}
-        />
-      )}
-    </>
+        {limitFailureResult === undefined ? null : (
+          <NoSolutionLimitsModal
+            puzzleSlug={puzzleSlug}
+            result={limitFailureResult}
+            solving={solving || sessionSolving}
+            onClose={() => setLimitFailureResult(undefined)}
+            onRetry={handleLimitFailureRetry}
+          />
+        )}
+    </ScanModalShell>
   )
 }
 

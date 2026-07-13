@@ -1,5 +1,5 @@
 import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog'
-import type { ComponentPropsWithoutRef } from 'react'
+import type { ComponentPropsWithoutRef, MouseEventHandler } from 'react'
 import { cn } from '@src/lib/utils'
 
 export const AlertDialog = AlertDialogPrimitive.Root
@@ -11,7 +11,7 @@ export const AlertDialogDescription = AlertDialogPrimitive.Description
 type AlertDialogContentProps = ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content> & {
   overlayClassName?: string
   overlayLabel?: string
-  onOverlayClick?: () => void
+  onOverlayClick?: MouseEventHandler<HTMLButtonElement>
 }
 
 export function AlertDialogContent({

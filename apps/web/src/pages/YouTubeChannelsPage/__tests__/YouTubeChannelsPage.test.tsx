@@ -1,7 +1,7 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { YouTubeChannelsPage } from '../YouTubeChannelsPage'
 import { youtubeChannels } from '../channels'
+import { YouTubeChannelsPage } from '../YouTubeChannelsPage'
 
 describe('YouTubeChannelsPage', () => {
   it('renders the curated YouTube channel grid', () => {
@@ -25,5 +25,19 @@ describe('YouTubeChannelsPage', () => {
       'src',
       youtubeChannels[0]?.bannerUrl,
     )
+  })
+
+  it('keeps the name fallback for missing and failed channel banners', () => {
+    render(<YouTubeChannelsPage />)
+
+    expect(
+      screen.queryByRole('img', { name: 'TheSimonShi channel banner' }),
+    ).not.toBeInTheDocument()
+    expect(screen.getAllByText('TheSimonShi')).toHaveLength(2)
+
+    const jPermBanner = screen.getByRole('img', { name: 'J Perm channel banner' })
+    fireEvent.error(jPermBanner)
+
+    expect(jPermBanner).not.toBeVisible()
   })
 })

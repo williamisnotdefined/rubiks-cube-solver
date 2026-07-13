@@ -1,4 +1,6 @@
+import { Camera } from 'lucide-react'
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { Button } from '@components/Button'
 import { SolveForm } from '../SolveForm'
 import { cube3MaxMovesLimit, scramblePlaceholder } from '../../constants'
 
@@ -52,14 +54,17 @@ const meta = {
         supportedVisualizations: [],
       },
     ],
-    scanAvailable: true,
+    scanAction: (
+      <Button aria-label="Scan cube with camera" className="aspect-square h-9 w-9 px-0 py-0" type="button" variant="outline">
+        <Camera aria-hidden="true" />
+      </Button>
+    ),
     scramblePlaceholder,
     selectedPuzzleSlug: 'cube-3x3x3',
     onMaxMovesChange: () => undefined,
     onMaxNodesMillionChange: () => undefined,
     onNotationChange: () => undefined,
     onPuzzleChange: () => undefined,
-    onScanClick: () => undefined,
     onSubmit: () => undefined,
   },
   component: SolveForm,

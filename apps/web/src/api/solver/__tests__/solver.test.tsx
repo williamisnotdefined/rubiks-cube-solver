@@ -193,6 +193,38 @@ describe('solver API operations', () => {
     })
   })
 
+  it('normalizes legacy string visual states as 3x3 facelets', () => {
+    expect(
+      normalizeSolveResponse(
+        {
+          ...successPayload,
+          visualState: 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB',
+        },
+        true,
+        0,
+      ),
+    ).toMatchObject({
+      visualState: 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB',
+      visualStateKind: 'cube3-facelets-v1',
+    })
+  })
+
+  it('keeps none visualization metadata without a visual state value', () => {
+    expect(
+      normalizeSolveResponse(
+        {
+          ...successPayload,
+          visualState: { kind: 'none', value: '' },
+        },
+        true,
+        0,
+      ),
+    ).toMatchObject({
+      visualState: undefined,
+      visualStateKind: 'none',
+    })
+  })
+
   it('posts puzzle-aware 2x2 solve requests and ignores null visual states', async () => {
     const fetchMock = mockApiSuccess({
       ...successPayload,

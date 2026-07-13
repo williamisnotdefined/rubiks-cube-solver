@@ -338,6 +338,50 @@ describe('ScanCubeModal', () => {
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
+  it('keeps the scan open after dismissing the exit confirmation overlay', async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+    render(
+      <ScanCubeModal
+        apiReady
+        solving={false}
+        onClose={onClose}
+      />,
+    )
+
+    await user.click(screen.getByTestId('scan-sticker-0'))
+    await user.click(screen.getByRole('button', { name: 'Red' }))
+    await user.click(screen.getByLabelText('Dismiss scan cube'))
+    expect(screen.getByRole('alertdialog', { name: 'Leave scan?' })).toBeInTheDocument()
+
+    await user.click(screen.getByLabelText('Cancel leaving scan cube'))
+
+    await waitFor(() => {
+      expect(screen.queryByRole('alertdialog', { name: 'Leave scan?' })).not.toBeInTheDocument()
+    })
+    expect(screen.getByRole('dialog', { name: 'Scan cube' })).toBeInTheDocument()
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('asks for confirmation before the close button discards scan progress', async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+    render(
+      <ScanCubeModal
+        apiReady
+        solving={false}
+        onClose={onClose}
+      />,
+    )
+
+    await user.click(screen.getByTestId('scan-sticker-0'))
+    await user.click(screen.getByRole('button', { name: 'Red' }))
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+
+    expect(screen.getByRole('alertdialog', { name: 'Leave scan?' })).toBeInTheDocument()
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
   it('asks for confirmation before Escape closes a scan with progress', async () => {
     const user = userEvent.setup()
     const onClose = vi.fn()
@@ -354,6 +398,14 @@ describe('ScanCubeModal', () => {
     await user.keyboard('{Escape}')
 
     expect(onClose).not.toHaveBeenCalled()
+    expect(screen.getByRole('alertdialog', { name: 'Leave scan?' })).toBeInTheDocument()
+
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('alertdialog', { name: 'Leave scan?' })).not.toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: 'Scan cube' })).toBeInTheDocument()
+    expect(onClose).not.toHaveBeenCalled()
+
+    await user.keyboard('{Escape}')
     expect(screen.getByRole('alertdialog', { name: 'Leave scan?' })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Leave' }))
