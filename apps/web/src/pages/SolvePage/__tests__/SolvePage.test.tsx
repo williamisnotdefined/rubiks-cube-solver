@@ -611,6 +611,13 @@ describe('SolvePage', () => {
     }
 
     render(<SolvePage />)
+
+    const solutionMoves = screen.getByLabelText('Solution moves')
+    const solutionStep = screen.getByLabelText('Solution step')
+    expect(
+      solutionMoves.compareDocumentPosition(solutionStep) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+
     await user.click(screen.getByRole('button', { name: 'Next move' }))
 
     expect(screen.getByLabelText('Solution step')).toHaveValue('1')

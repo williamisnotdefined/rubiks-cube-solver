@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { SolveSuccessResult } from '@api/solver/types'
 import { SolveVisualizationStage } from '../SolveVisualizationStage'
 import { useSolutionPlayback } from '../../hooks/useSolutionPlayback'
@@ -8,6 +9,7 @@ import type { CubeStageCubeType } from '../../visualization/CubeStage'
 
 type SolvePlaybackStageProps = {
   activeSolveSource: SolveSource
+  children: ReactNode
   notation: string
   successResult?: SolveSuccessResult
   visualizationCubeType?: CubeStageCubeType
@@ -16,6 +18,7 @@ type SolvePlaybackStageProps = {
 
 export function SolvePlaybackStage({
   activeSolveSource,
+  children,
   notation,
   successResult,
   visualizationCubeType,
@@ -34,6 +37,7 @@ export function SolvePlaybackStage({
   return (
     <>
       <SolveVisualizationStage {...visualization} />
+      {children}
       {successResult !== undefined && visualizationSupported ? (
         <SolutionPlayback
           moves={successResult.moves}
