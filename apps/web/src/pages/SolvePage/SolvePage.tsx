@@ -122,33 +122,34 @@ export function SolvePage() {
           successResult={solveFlow.successResult}
           visualizationCubeType={metadata.visualizationCubeType}
           visualizationSupported={metadata.visualizationSupported}
-        />
-        <SolveFormWithScanModal
-          buttonLoading={buttonLoading}
-          disabled={disabled}
-          maxMovesInput={formState.maxMovesInput}
-          maxMovesInvalid={formState.maxMovesInvalid}
-          maxMovesLimit={formState.maxMovesLimit}
-          maxNodesMillionInput={formState.maxNodesMillionInput}
-          maxNodesMillionInvalid={formState.maxNodesMillionInvalid}
-          notation={formState.notation}
-          puzzleOptions={metadata.puzzleOptions}
-          scanAvailable={metadata.scanAvailable}
-          scanModalProps={scanModalProps}
-          scramblePlaceholder={formState.activeScramblePlaceholder}
-          selectedPuzzleSlug={formState.selectedPuzzleSlug}
-          onMaxMovesChange={handleMaxMovesChange}
-          onMaxNodesMillionChange={handleMaxNodesMillionChange}
-          onNotationChange={handleNotationChange}
-          onPuzzleChange={handlePuzzleChange}
-          onSubmit={handleSubmit}
-        />
-        <SolveResult
-          error={solveFlow.activeSolveError}
-          localValidationMessage={formState.localValidationMessage}
-          result={solveFlow.activeSolveResult}
-          solving={solving}
-        />
+        >
+          <SolveFormWithScanModal
+            buttonLoading={buttonLoading}
+            disabled={disabled}
+            maxMovesInput={formState.maxMovesInput}
+            maxMovesInvalid={formState.maxMovesInvalid}
+            maxMovesLimit={formState.maxMovesLimit}
+            maxNodesMillionInput={formState.maxNodesMillionInput}
+            maxNodesMillionInvalid={formState.maxNodesMillionInvalid}
+            notation={formState.notation}
+            puzzleOptions={metadata.puzzleOptions}
+            scanAvailable={metadata.scanAvailable}
+            scanModalProps={scanModalProps}
+            scramblePlaceholder={formState.activeScramblePlaceholder}
+            selectedPuzzleSlug={formState.selectedPuzzleSlug}
+            onMaxMovesChange={handleMaxMovesChange}
+            onMaxNodesMillionChange={handleMaxNodesMillionChange}
+            onNotationChange={handleNotationChange}
+            onPuzzleChange={handlePuzzleChange}
+            onSubmit={handleSubmit}
+          />
+          <SolveResult
+            error={solveFlow.activeSolveError}
+            localValidationMessage={formState.localValidationMessage}
+            result={solveFlow.activeSolveResult}
+            solving={solving}
+          />
+        </SolvePlaybackStage>
         {limitFailureModal !== undefined ? (
           <Suspense fallback={null}>
             <NoSolutionLimitsModal {...limitFailureModal} />
