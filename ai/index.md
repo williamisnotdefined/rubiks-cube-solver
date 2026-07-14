@@ -25,6 +25,7 @@ ai/
 `ai/registry.json` defines the routed skills and generated destinations:
 
 - OpenCode: `.opencode/skills/<skill-name>/SKILL.md`.
+- Codex: `.agents/skills/<skill-name>/SKILL.md`.
 - Cursor: `.cursor/rules/<skill-name>.mdc`.
 - GitHub Copilot: `.github/instructions/<skill-name>.instructions.md`.
 

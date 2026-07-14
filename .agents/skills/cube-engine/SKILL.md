@@ -1,0 +1,269 @@
+---
+name: "cube-engine"
+description: "Use when adding or changing the Rust cube representation, moves, notation, scrambles, or cube validation."
+---
+
+Generated from `ai/registry.json`. Do not edit manually.
+
+Canonical skill: `../../../ai/skills/cube-engine.md`.
+
+Referenced context:
+- `../../../ai/rules/cube-engine-rules.md`
+- `../../../ai/rules/testing-rules.md`
+- `../../../ai/architecture/project-architecture.md`
+- `../../../ai/architecture/cube-engine.md`
+- `../../../ai/glossary/cube-terms.md`
+
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai`, then run `npm run ai:sync`.
+
+# Compiled AI Skill: cube-engine
+
+## Canonical Skill: `ai/skills/cube-engine.md`
+
+# Cube Engine
+
+Use this skill when adding or changing the Rust cube representation, moves, notation, scrambles, or cube validation.
+
+## Goal
+
+Build the pure Rust engine first, using cubie representation and deterministic behavior that later search algorithms can trust.
+
+## Read First
+
+- `ai/rules/cube-engine-rules.md`
+- `ai/rules/testing-rules.md`
+- `ai/architecture/project-architecture.md`
+- `ai/architecture/cube-engine.md`
+- `ai/glossary/cube-terms.md`
+
+## Workflow
+
+- Keep work inside `crates/cube-engine` unless a current boundary requires otherwise.
+- Start with cubie state invariants before adding higher-level algorithms.
+- Keep notation parsing and state mutation separate.
+- Add tests for solved state, move/inverse behavior, and invalid notation as behavior appears.
+- Fail explicitly for bootstrap placeholders rather than silently producing incorrect cube states.
+
+## Expected Output
+
+- Primary state remains corner/edge permutation and orientation.
+- Move behavior is reversible and tested when implemented.
+- No JavaScript visualization dependency enters the Rust engine.
+
+## Verification
+
+- Run `cargo test -p cube-engine` when Rust is installed.
+- If Rust is unavailable, state the environment blocker clearly.
+
+# Referenced Context
+
+## Reference: `ai/rules/cube-engine-rules.md`
+
+# Cube Engine Rules
+
+Rules for the Rust cube engine.
+
+## Always
+
+- Use cubie representation as the primary state model: corner permutation, corner orientation, edge permutation, and edge orientation.
+- Keep move application pure and deterministic.
+- Make every implemented move reversible and test the inverse path.
+- Validate state invariants before solver algorithms depend on them.
+- Keep notation parsing separate from state mutation.
+- Keep serialization explicit and stable once external consumers exist.
+- When adding puzzles beyond 3x3, keep each puzzle's state representation, move model, notation parser, validator, and solver strategy puzzle-specific.
+
+## Never
+
+- Do not represent the primary engine as face colors, sticker arrays, or strings.
+- Do not depend on JavaScript visualization libraries in the Rust core.
+- Do not let search code mutate cube state through hidden global state.
+- Do not create a generic puzzle engine, universal move type, universal state type, `BaseMove`, `BaseState`, `BasePuzzle`, or inheritance-style puzzle hierarchy.
+- Do not add learned or external inference heuristics without an explicit current product requirement.
+
+## Verification
+
+- Test solved-state invariants.
+- Test move/inverse pairs.
+- Test parser rejection for invalid notation.
+- Run `cargo test -p cube-engine` when Rust is installed.
+
+## Reference: `ai/rules/testing-rules.md`
+
+# Testing Rules
+
+Testing rules for this repository.
+
+## Always
+
+- Add Rust unit tests next to pure functions when behavior is introduced.
+- Add integration tests under the owning crate when behavior crosses module boundaries.
+- Add regression tests next to changed behavior when fixing bugs.
+- Test observable cube behavior: solved state, inverse moves, notation parsing, scramble inversion, validation, and search output.
+- Test HTTP/API behavior through request and response contracts when `crates/api` behavior changes.
+- Test web API-client and UI behavior through public component or request boundaries when frontend behavior changes.
+- Test scanner training code with deterministic fixtures or fixed seeds.
+- Keep algorithm tests deterministic.
+- Run the narrowest test first, then the affected crate test command.
+- Use Vitest APIs such as `describe`, `it`, `expect`, `vi.fn`, and `vi.spyOn` for `web` unit and component tests.
+- Keep `web` tests in `__tests__/` folders beside the source area they cover.
+- Use Testing Library for React component behavior and public accessibility queries.
+- Use Playwright accessibility queries for E2E flows and shared E2E helpers for non-native controls such as Radix Select.
+- Keep `apps/web/src/api` request and hook tests in `apps/web/src/api/__tests__`, using shared fetch and React Query helpers under `apps/web/src/test`.
+- Keep `apps/web/src/core` tests under `apps/web/src/core/<category>/__tests__/<name>.test.ts`.
+- Keep `web` coverage thresholds at 95% or higher for statements, branches, functions, and lines when coverage is configured.
+
+## Never
+
+- Do not rely on random tests without a fixed seed.
+- Do not assert implementation details when public cube behavior can be asserted.
+- Do not leave focused-only tests such as `.only` in committed test files.
+- Do not add duplicate test helpers when nearby crate, web, API, or scanner helpers already cover the setup.
+- Do not add tests for future surfaces that do not exist yet.
+- Do not use Jest-only APIs or `jest.mock` patterns in Vitest tests.
+- Do not place `web` tests as loose sibling `*.test.ts(x)` files when a nearby `__tests__/` folder is available.
+- Do not add duplicate web test helpers when `apps/web/src/test/render.tsx` or `apps/web/src/test/api.ts` already covers the setup.
+- Do not use Playwright `selectOption()` or `locator('option')` for Radix Select controls; use helpers under `tests/e2e/select-helpers.ts`.
+
+## Verification
+
+- Cube engine tests: `cargo test -p cube-engine`.
+- API tests: `npm run api:test` or `cargo test -p rubiks-cube-solver-api`.
+- Workspace tests: `cargo test`.
+- Web build/lint: `npm run build` and `npm run lint -w @rubiks-cube-solver/web`.
+- Web unit tests: `npm run test -w @rubiks-cube-solver/web`.
+- Web coverage: `npm run test:coverage -w @rubiks-cube-solver/web`.
+- Web Storybook: `npm run storybook:build -w @rubiks-cube-solver/web`.
+- End-to-end tests: `npm run test:e2e` after the API, web app, and pruning-table prerequisites are available.
+- E2E split commands: `npm run test:e2e:smoke` for product/responsive/timer smoke, `npm run test:e2e:scan` for serial manual scan coverage, and `npm run test:e2e:full` for the complete non-heavy suite.
+- Product gate: `npm run product:gate` for release-level or cross-boundary validation.
+- AI routes: `npm run ai:check`.
+
+## Reference: `ai/architecture/project-architecture.md`
+
+# Project Architecture
+
+The target is a Rubik's Cube solver with a Rust engine, search algorithms, heuristics, pattern databases, a native HTTP API, optional scanner support, and a modern web visualization.
+
+## Current Structure
+
+- `crates/cube-engine`: Rust crate for cube representation, moves, notation, scramble handling, search, and heuristics.
+- `crates/api`: Axum HTTP API around the Rust engine and generated pruning-table artifacts.
+- `apps/web`: Vite React app for puzzle-aware solve flows, scan flows, visualization, playback, algorithms pages, notation pages, and timer flows.
+- `scanner`: Python scanner contracts, FastAPI runtime, and offline scanner training/evaluation tooling.
+- `ai`: canonical AI knowledge base and route generation system.
+- `docs/project-plan.md`: current technical direction, implementation rules, and puzzle boundaries.
+
+## Generated Artifacts
+
+- Native pruning tables are generated by `cube-engine` binaries and loaded by `crates/api`.
+- Solver quality reports and real-scramble gates are executable verification artifacts, not frontend behavior.
+
+## Runtime And Deployment
+
+- Docker dev is the default development runtime. Use `npm run dev` to build/recreate the `rubiks-dev` Compose project, wait for health, and serve web/API/vision on ports `5173`, `8788`, and `8791`.
+- Local non-Docker fallback uses `dev:local:prepare` and `dev:local` for development/debugging when Docker is not desired.
+- Docker production uses the `rubiks-prod` Compose project. Use `live:deploy` after merges to pull `origin/main`, rebuild/recreate containers, wait for app health, and print status.
+- Use `live:restart` only when the checkout is already current and containers need to be rebuilt/recreated.
+- `live:start` runs production deploy first and then starts the Cloudflare tunnel for `speedcube.com.br` with `cloudflared tunnel run --token "$CLOUDFLARED_TUNNEL_TOKEN"`. `live:tunnel` runs only the tunnel command and assumes production Docker is already healthy.
+- Docker dev, Docker production, and scanner training use separate Compose projects/commands so they do not collide.
+
+## Multi-Puzzle Direction
+
+- Additional puzzles must own puzzle-specific state, move models, notation parsers, validators, solvers, heuristics, coordinates, and artifact rules.
+- Shared multi-puzzle code is limited to metadata, registries, budgets, results, compatibility checks, API contracts, and visualization adapter selection.
+- Do not introduce a generic puzzle engine, universal move type, universal state type, `BaseMove`, `BaseState`, `BasePuzzle`, or inheritance-style puzzle hierarchy.
+
+## Future Or Optional Boundaries
+
+- `crates/wasm`: optional future wasm-bindgen bridge around the Rust engine if browser-local solving becomes a concrete product requirement.
+- Additional frontend routing, shared component libraries, or state managers should wait for current UI complexity to require them.
+
+## Ownership
+
+- Cube state, moves, validation, search, and heuristics belong in Rust.
+- The API validates HTTP contracts, applies safety limits, calls Rust solver code, and returns typed solver results.
+- Frontend code should only render, collect notation/limits, send solve requests, receive states, and play animations.
+- Scanner runtime code may produce visual evidence, but reviewed stickers, cube validation, and solving remain Rust/product boundaries.
+
+## Reference: `ai/architecture/cube-engine.md`
+
+# Cube Engine Architecture
+
+The cube engine is the source of truth for puzzle state, moves, validation, search, and replay verification. It must stay independent from UI, scanner, and HTTP transport concerns.
+
+## Modules
+
+- `cube/*`: current 3x3 state, moves, notation, facelets, scrambles, and high-level cube API.
+- `puzzles/cube2/*`: 2x2-specific state, moves, notation, solver, visual state, and quality reporting.
+- `puzzle/*`: puzzle identities, metadata, input kinds, visualization kinds, and strategy registry.
+- `search/*`: search, generated two-phase, pruning, and heuristic modules that consume puzzle state.
+
+## State Model
+
+The primary representation is cubie based:
+
+- corner permutation
+- corner orientation
+- edge permutation
+- edge orientation
+
+Sticker strings, Kociemba strings, and visual states are adapter formats; they should not replace the core model.
+
+## Multi-Puzzle Boundary
+
+Additional puzzles should live in puzzle-specific modules with their own state, move model, notation parser, validation, search, heuristics, coordinates, and artifacts.
+
+Do not add a generic puzzle engine, universal move type, universal state type, `BaseMove`, `BaseState`, `BasePuzzle`, or inheritance-style hierarchy. Shared Rust code should be limited to puzzle-neutral metadata, budgets, results, registries, compatibility checks, and artifact plumbing.
+
+## Unsupported Behavior
+
+Any unimplemented puzzle behavior must fail explicitly instead of pretending to mutate, validate, or solve a state.
+
+## Reference: `ai/glossary/cube-terms.md`
+
+# Cube Terms
+
+## Cubie
+
+A physical movable piece of the cube. The core engine tracks cubies rather than face colors as the primary model.
+
+## Corner
+
+A cubie with three stickers. A 3x3 cube has eight corners.
+
+## Edge
+
+A cubie with two stickers. A 3x3 cube has twelve edges.
+
+## Permutation
+
+Which cubie occupies each position.
+
+## Orientation
+
+How a cubie is twisted or flipped in its current position.
+
+## Move
+
+A face turn such as `R`, `U`, `R'`, or `U2`.
+
+## Scramble
+
+A sequence of moves applied from the solved state to produce a valid cube state.
+
+## Heuristic
+
+An estimate of distance from a cube state to the solved state.
+
+## Admissible Heuristic
+
+A heuristic that never overestimates the true distance to the solved state.
+
+## Pattern Database
+
+A precomputed lookup table mapping partial cube states to minimum solution distances.
+
+## Kociemba String
+
+A facelet string format commonly used by two-phase solvers. It can be an adapter format, not the primary engine model.

@@ -208,4 +208,4 @@ npm run ai:sync
 npm run ai:check
 ```
 
-Do not edit `.opencode/skills`, `.cursor/rules`, or `.github/instructions` manually.
+Do not edit `.agents/skills`, `.opencode/skills`, `.cursor/rules`, or `.github/instructions` manually.
