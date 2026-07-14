@@ -28,7 +28,7 @@ Global rules for changes anywhere in this repository.
 - Do not add a generic puzzle engine, universal state type, universal move type, `BaseMove`, `BaseState`, `BasePuzzle`, or inheritance-style puzzle abstraction.
 - Do not commit `.env` files, raw secrets, API tokens, model artifacts with private data, or local solver output that is not intended for source control.
 - Do not commit directly on `main`; create a task branch first and do not bypass branch-protection hooks with `--no-verify`.
-- Do not edit `.opencode/skills`, `.cursor/rules`, or `.github/instructions` AI route files manually.
+- Do not edit `.agents/skills`, `.opencode/skills`, `.cursor/rules`, or `.github/instructions` AI route files manually.
 - Do not add compatibility layers or future abstractions without a concrete current consumer.
 - Do not add a new formatter, linter, framework, or workspace-wide tool unless explicitly requested.
 - Do not use nested ternary expressions; use explicit `if`/`return`, a named helper, or a small lookup table instead.

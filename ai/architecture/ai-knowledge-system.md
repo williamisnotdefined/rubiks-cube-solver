@@ -22,6 +22,7 @@ Each skill entry defines the canonical skill file, its reusable references, gene
 `scripts/ai/sync-routes.mjs` compiles each canonical skill and its references into tool routes:
 
 - OpenCode: `.opencode/skills/<skill-name>/SKILL.md`.
+- Codex: `.agents/skills/<skill-name>/SKILL.md`.
 - Cursor: `.cursor/rules/<skill-name>.mdc`.
 - GitHub Copilot: `.github/instructions/<skill-name>.instructions.md`.
 
