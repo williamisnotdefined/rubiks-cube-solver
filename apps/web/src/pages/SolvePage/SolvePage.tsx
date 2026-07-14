@@ -1,16 +1,13 @@
 import { lazy, Suspense, useState } from 'react'
 import type { SolveResult as ApiSolveResult } from '@api/solver/types'
 import { SolveFormWithScanModal } from './components/SolveFormWithScanModal'
-import { SolveVisualizationStage } from './components/SolveVisualizationStage'
+import { SolvePlaybackStage } from './components/SolvePlaybackStage'
 import { useSolveFormState } from './hooks/useSolveFormState'
 import { useSolvePuzzleMetadata } from './hooks/useSolvePuzzleMetadata'
 import { useSolveResultFlow } from './hooks/useSolveResultFlow'
-import { useSolveVisualizationController } from './hooks/useSolveVisualizationController'
-import { useSolutionPlayback } from './hooks/useSolutionPlayback'
 import { nodesPerMillion } from './solve/constants'
 import type { NoSolutionRetryLimits } from './solve/NoSolutionLimitsModal'
 import { SolveResult } from './solve/SolveResult'
-import { SolutionPlayback } from './solve/SolutionPlayback'
 import type { SolveFormSubmit } from './solve/validation'
 
 const NoSolutionLimitsModal = lazy(() => import('./solve/NoSolutionLimitsModal').then((module) => ({ default: module.NoSolutionLimitsModal })))
@@ -20,7 +17,6 @@ export function SolvePage() {
   const metadata = useSolvePuzzleMetadata(formState.selectedPuzzleSlug)
   const solveFlow = useSolveResultFlow()
   const [scanSessionSolving, setScanSessionSolving] = useState(false)
-  const playback = useSolutionPlayback(solveFlow.successResult)
   const solving = solveFlow.notationSolving || scanSessionSolving
   const buttonLoading = !metadata.apiReady || solving
   const disabled =
@@ -30,17 +26,7 @@ export function SolvePage() {
     metadata.strategyOptions.length === 0 ||
     metadata.strategyId.length === 0 ||
     formState.localValidationMessage !== undefined
-  const visualization = useSolveVisualizationController({
-    activeSolveSource: solveFlow.activeSolveSource,
-    notation: formState.notation,
-    successResult: solveFlow.successResult,
-    visibleSolutionMoves: playback.visibleSolutionMoves,
-    visualizationCubeType: metadata.visualizationCubeType,
-    visualizationSupported: metadata.visualizationSupported,
-  })
-
   function resetSolveResult() {
-    playback.resetSolutionStep()
     solveFlow.resetSolveResult()
   }
 
@@ -49,7 +35,6 @@ export function SolvePage() {
       return
     }
 
-    playback.resetSolutionStep()
     await solveFlow.submitNotationSolve({
       maxDepth: formValues.maxMoves,
       maxNodes: formValues.maxNodesMillion * nodesPerMillion,
@@ -69,7 +54,6 @@ export function SolvePage() {
       return
     }
 
-    playback.resetSolutionStep()
     await solveFlow.submitNotationSolve({
       maxDepth: limits.maxDepth,
       maxNodes: limits.maxNodes,
@@ -100,7 +84,6 @@ export function SolvePage() {
   }
 
   function handleScanSessionSolveResult(solve: ApiSolveResult) {
-    playback.resetSolutionStep()
     solveFlow.showScanSolveResult(solve)
   }
 
@@ -113,14 +96,6 @@ export function SolvePage() {
           puzzleSlug: formState.selectedPuzzleSlug,
           result: solveFlow.notationLimitFailureResult,
           solving,
-        }
-      : undefined
-  const playbackProps =
-    solveFlow.successResult !== undefined && metadata.visualizationSupported
-      ? {
-          moves: solveFlow.successResult.moves,
-          onStepChange: playback.onSolutionStepChange,
-          step: playback.visibleSolutionStep,
         }
       : undefined
   const scanModalProps = {
@@ -141,7 +116,13 @@ export function SolvePage() {
   return (
     <main className="app-shell min-h-0 flex-1 overflow-auto bg-background px-4 py-6 text-foreground">
       <section className="mx-auto grid w-full max-w-4xl content-start justify-items-center gap-4">
-        <SolveVisualizationStage {...visualization} />
+        <SolvePlaybackStage
+          activeSolveSource={solveFlow.activeSolveSource}
+          notation={formState.notation}
+          successResult={solveFlow.successResult}
+          visualizationCubeType={metadata.visualizationCubeType}
+          visualizationSupported={metadata.visualizationSupported}
+        />
         <SolveFormWithScanModal
           buttonLoading={buttonLoading}
           disabled={disabled}
@@ -168,9 +149,6 @@ export function SolvePage() {
           result={solveFlow.activeSolveResult}
           solving={solving}
         />
-        {playbackProps !== undefined ? (
-          <SolutionPlayback {...playbackProps} />
-        ) : null}
         {limitFailureModal !== undefined ? (
           <Suspense fallback={null}>
             <NoSolutionLimitsModal {...limitFailureModal} />
