@@ -16,6 +16,7 @@ import {
   type SeoItem,
 } from '@src/seo/routes'
 import { activeRouteFromPath } from './activeRouteFromPath'
+import { RouteTransitionStage } from './RouteTransitionStage'
 
 const SolvePage = lazy(() =>
   import('../pages/SolvePage/SolvePageRoute').then((module) => ({
@@ -80,52 +81,65 @@ function App({ initialStatic = false }: AppProps) {
   return (
     <AppShell activeRoute={route}>
       <Seo />
-      <AppErrorBoundary resetKeys={[location.pathname]}>
-        {showStaticContent ? (
-          <StaticRouteContent />
-        ) : (
-          <Suspense fallback={<RouteFallback />}>
-            <Routes>
-              <Route path='/' element={<Navigate replace to='/solve/' />} />
-              <Route path='/notations' element={<Navigate replace to='/notations/3x3/' />} />
-              <Route path='/en/*' element={<LegacyEnglishRedirect />} />
-              {appRouteManifest.map((manifestRoute) => (
-                <Route
-                  key={manifestRoute.path}
-                  path={manifestRoute.path}
-                  element={elementForRoute(manifestRoute.kind)}
-                />
-              ))}
-              {prefixedSeoLocales.flatMap((locale) => {
-                const prefix = localePrefix(locale)
-
-                return [
-                  <Route
-                    key={`${prefix}-root`}
-                    path={`/${prefix}`}
-                    element={<Navigate replace to={`/${prefix}/solve/`} />}
-                  />,
-                  <Route
-                    key={`${prefix}-notations`}
-                    path={`/${prefix}/notations`}
-                    element={<Navigate replace to={`/${prefix}/notations/3x3/`} />}
-                  />,
-                  ...appRouteManifest.map((manifestRoute) => (
+      <RouteTransitionStage>
+        {(displayedLocation, markReady) => (
+          <AppErrorBoundary resetKeys={[displayedLocation.pathname]}>
+            {showStaticContent ? (
+              <StaticRouteContent />
+            ) : (
+              <Suspense fallback={<RouteFallback />}>
+                <Routes location={displayedLocation}>
+                  <Route path='/' element={<Navigate replace to='/solve/' />} />
+                  <Route path='/notations' element={<Navigate replace to='/notations/3x3/' />} />
+                  <Route path='/en/*' element={<LegacyEnglishRedirect />} />
+                  {appRouteManifest.map((manifestRoute) => (
                     <Route
-                      key={`${prefix}-${manifestRoute.path}`}
-                      path={`/${prefix}${manifestRoute.path}`}
+                      key={manifestRoute.path}
+                      path={manifestRoute.path}
                       element={elementForRoute(manifestRoute.kind)}
                     />
-                  )),
-                ]
-              })}
-              <Route path='*' element={<NotFoundPage />} />
-            </Routes>
-          </Suspense>
+                  ))}
+                  {prefixedSeoLocales.flatMap((locale) => {
+                    const prefix = localePrefix(locale)
+
+                    return [
+                      <Route
+                        key={`${prefix}-root`}
+                        path={`/${prefix}`}
+                        element={<Navigate replace to={`/${prefix}/solve/`} />}
+                      />,
+                      <Route
+                        key={`${prefix}-notations`}
+                        path={`/${prefix}/notations`}
+                        element={<Navigate replace to={`/${prefix}/notations/3x3/`} />}
+                      />,
+                      ...appRouteManifest.map((manifestRoute) => (
+                        <Route
+                          key={`${prefix}-${manifestRoute.path}`}
+                          path={`/${prefix}${manifestRoute.path}`}
+                          element={elementForRoute(manifestRoute.kind)}
+                        />
+                      )),
+                    ]
+                  })}
+                  <Route path='*' element={<NotFoundPage />} />
+                </Routes>
+                <RouteReady onReady={markReady} />
+              </Suspense>
+            )}
+          </AppErrorBoundary>
         )}
-      </AppErrorBoundary>
+      </RouteTransitionStage>
     </AppShell>
   )
+}
+
+function RouteReady({ onReady }: { onReady: () => void }) {
+  useEffect(() => {
+    onReady()
+  }, [onReady])
+
+  return null
 }
 
 function elementForRoute(kind: AppRouteKind): ReactElement {
