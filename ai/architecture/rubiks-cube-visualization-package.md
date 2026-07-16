@@ -2,14 +2,11 @@
 
 `@rubiks-cube-solver/rubiks-cube` is a private local workspace package under `packages/rubiks-cube`. It provides Three.js/web-component visualization code with subpath exports for cube view, cube 3D object, cube controller, cube notation constants, cube headless sticker state, and puzzle-specific visualization modules.
 
-## Useful Later
+## Active Integration
 
-- `@rubiks-cube-solver/rubiks-cube/view` can render a custom element.
-- `@rubiks-cube-solver/rubiks-cube/three` can provide a Three.js object.
-- `@rubiks-cube-solver/rubiks-cube/state` can provide headless sticker-state experiments and Kociemba string helpers.
-- `@rubiks-cube-solver/rubiks-cube/core` can provide notation constants and parsing helpers.
-- `@rubiks-cube-solver/rubiks-cube/puzzles/cube` can provide the cube visualization module barrel.
-- `@rubiks-cube-solver/rubiks-cube/puzzles/pyraminx` can provide the Pyraminx visualization module barrel.
+- `apps/web/vite.config.ts` maps package subpaths directly to workspace source for cube view, controller, state, Three.js, and puzzle-specific modules.
+- The web app uses these exports for rendering and playback. Changes MUST preserve package build types and browser bundle boundaries.
+- Headless sticker state and Kociemba helpers remain visualization adapters, not canonical solver state.
 
 ## Layout
 

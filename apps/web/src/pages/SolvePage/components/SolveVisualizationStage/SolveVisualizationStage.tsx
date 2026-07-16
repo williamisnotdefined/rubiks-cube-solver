@@ -23,7 +23,7 @@ export function SolveVisualizationStage({
   if (cubeType === undefined) {
     return (
       <section
-        className="cube-stage flex aspect-square w-[min(280px,calc(100vw-24px))] items-center justify-center border bg-card px-5 text-center text-sm text-muted-foreground shadow-sm"
+        className='cube-stage flex aspect-square w-[min(280px,calc(100vw-24px))] items-center justify-center border bg-card px-5 text-center text-sm text-muted-foreground shadow-sm'
         aria-label={t('cube.visualizationUnavailable')}
       >
         {t('cube.visualizationUnavailable')}

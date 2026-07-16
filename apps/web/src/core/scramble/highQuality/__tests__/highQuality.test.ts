@@ -46,23 +46,22 @@ describe('generateHighQualityScrambleForEvent', () => {
     )
   })
 
-  it.each(Object.entries(expectedCubingEventsByTimerEvent).filter(([eventId]) => eventId !== '333mbld'))(
-    'maps %s to cubing event %s',
-    async (eventId, cubingEventId) => {
-      randomScrambleForEventMock.mockResolvedValue(scrambleAlg(`${cubingEventId}-scramble`))
+  it.each(
+    Object.entries(expectedCubingEventsByTimerEvent).filter(([eventId]) => eventId !== '333mbld'),
+  )('maps %s to cubing event %s', async (eventId, cubingEventId) => {
+    randomScrambleForEventMock.mockResolvedValue(scrambleAlg(`${cubingEventId}-scramble`))
 
-      const scramble = await generateHighQualityScrambleForEvent(eventId)
+    const scramble = await generateHighQualityScrambleForEvent(eventId)
 
-      expect(scramble.event.id).toBe(eventId)
-      expect(scramble.scramble).toBe(`${cubingEventId}-scramble`)
-      expect(randomScrambleForEventMock).toHaveBeenCalledWith(cubingEventId)
-    },
-  )
+    expect(scramble.event.id).toBe(eventId)
+    expect(scramble.scramble).toBe(`${cubingEventId}-scramble`)
+    expect(randomScrambleForEventMock).toHaveBeenCalledWith(cubingEventId)
+  })
 
   it('generates numbered 3x3 blind scrambles for multi-blind', async () => {
-    randomScrambleForEventMock.mockImplementation(async () => (
-      scrambleAlg(`scramble-${randomScrambleForEventMock.mock.calls.length}`)
-    ))
+    randomScrambleForEventMock.mockImplementation(async () =>
+      scrambleAlg(`scramble-${randomScrambleForEventMock.mock.calls.length}`),
+    )
 
     const scramble = await generateHighQualityScrambleForEvent('333mbld')
 
@@ -81,7 +80,9 @@ describe('generateHighQualityScrambleForEvent', () => {
   it('rejects instead of falling back to a weaker local generator when cubing rejects', async () => {
     randomScrambleForEventMock.mockRejectedValue(new Error('worker unavailable'))
 
-    await expect(generateHighQualityScrambleForEvent('pyraminx')).rejects.toThrow('worker unavailable')
+    await expect(generateHighQualityScrambleForEvent('pyraminx')).rejects.toThrow(
+      'worker unavailable',
+    )
   })
 
   it('rejects empty provider output', async () => {

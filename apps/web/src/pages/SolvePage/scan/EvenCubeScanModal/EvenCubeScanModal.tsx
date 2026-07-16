@@ -1,14 +1,17 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  useSolveScanSession,
+  canonicalStickerIndexToVisual,
   type AnalyzeScanFaceResponse,
   type ScanSessionInvalidCorner,
   type ScanSessionResult,
 } from '@api/scan'
 import type { ScanFaceSymbol, SolveResult } from '@api/solver/types'
 import { EvenCubeReviewStep } from '../EvenCubeReviewStep'
-import { NoSolutionLimitsModal, type NoSolutionRetryLimits } from '../../solve/NoSolutionLimitsModal'
+import {
+  NoSolutionLimitsModal,
+  type NoSolutionRetryLimits,
+} from '../../solve/NoSolutionLimitsModal'
 import {
   isNoSolutionLimitFailure,
   type NoSolutionLimitFailureResult,
@@ -30,11 +33,8 @@ import {
 } from '../evenCubeScan'
 import { ScanFaceCaptureStep } from '../ScanFaceCaptureStep'
 import { ScanModalShell } from '../ScanModalShell'
-import {
-  scanFaceOrder,
-  scan2StickersPerFace,
-} from '../scanState'
-import { scanFaceDraftValidationMessage } from '../scanTranslations'
+import { scanFaceOrder, scan2StickersPerFace } from '../scanState'
+import { scanConfirmAllFacesMessage, scanFaceDraftValidationMessage } from '../scanTranslations'
 import { scanDraftsHaveProgress, scanQualityMessage } from '../scanCaptureWorkflowHelpers'
 import {
   backendReviewTargetsFromSessionResult,
@@ -45,11 +45,9 @@ import {
   removeBackendReviewFace,
   type BackendReviewTargets,
 } from '../scanSessionReview'
-import {
-  scanSessionMessage,
-  scanSessionReadinessMessage,
-} from '../scanSessionMessages'
+import { scanSessionMessage, scanSessionReadinessMessage } from '../scanSessionMessages'
 import { useScanCaptureWorkflow } from '../hooks/useScanCaptureWorkflow'
+import { useAbortableScanSession } from '../hooks/useAbortableScanSession'
 
 export type ScanCubeModalProps = {
   apiReady: boolean
@@ -83,7 +81,8 @@ export function EvenCubeScanModal({
 }: ScanCubeModalProps) {
   const { t } = useTranslation()
   const puzzleSlug: string = 'cube-2x2x2'
-  const solveScanSession = useSolveScanSession()
+  const scanSession = useAbortableScanSession()
+  const closingRef = useRef(false)
   const stickersPerFace = scan2StickersPerFace
   const gridSize = 2
   const [backendReviewTargets, setBackendReviewTargets] = useState<BackendReviewTargets>(() =>
@@ -93,12 +92,18 @@ export function EvenCubeScanModal({
   const [evenFaceRotations, setEvenFaceRotations] = useState<EvenCubeFaceRotations>(() =>
     createDefaultEvenCubeFaceRotations(),
   )
-  const [limitFailureResult, setLimitFailureResult] = useState<NoSolutionLimitFailureResult | undefined>()
+  const [limitFailureResult, setLimitFailureResult] = useState<
+    NoSolutionLimitFailureResult | undefined
+  >()
   const [evenNetAssignments, setEvenNetAssignments] = useState<EvenCubeNetAssignments>(() =>
     createDefaultEvenCubeNetAssignments(),
   )
-  const [evenAutoFitSuggestion, setEvenAutoFitSuggestion] = useState<EvenCubeFitSolution | undefined>()
-  const [backendEvenInvalidCorners, setBackendEvenInvalidCorners] = useState<EvenCubeInvalidCorner[]>([])
+  const [evenAutoFitSuggestion, setEvenAutoFitSuggestion] = useState<
+    EvenCubeFitSolution | undefined
+  >()
+  const [backendEvenInvalidCorners, setBackendEvenInvalidCorners] = useState<
+    EvenCubeInvalidCorner[]
+  >([])
   const {
     autoScanEnabled,
     camera,
@@ -122,32 +127,45 @@ export function EvenCubeScanModal({
     liveStableFrameCount,
     liveStatus,
     message,
+    invalidateCapture,
     previewCounts,
     scannerMessage,
     setCurrentFaceIndex,
     setMessage,
     videoRef,
   } = useScanCaptureWorkflow({
+    cameraActive: !evenReviewVisible,
     gridSize,
     stickersPerFace,
     getAnalysisMessage: (analysis) => scanAnalysisMessage(t, analysis),
     isReviewFace: (symbol) => isBackendReviewFace(backendReviewTargets, symbol),
     onDraftCleared: resetEvenReviewState,
     onDraftEdited: (symbol, index) => {
+      scanSession.invalidate()
       resetEvenReviewState()
       clearBackendManualTarget(symbol, index)
     },
-    onFaceChanged: resetEvenReviewState,
-    onFaceCleared: (symbol) => clearBackendReviewForFace(symbol),
+    onFaceChanged: () => {
+      scanSession.invalidate()
+      resetEvenReviewState()
+    },
+    onFaceCleared: (symbol) => {
+      scanSession.invalidate()
+      clearBackendReviewForFace(symbol)
+    },
   })
-  const sessionFaces = evenCubeScanSessionFacesFromDrafts(drafts, evenFaceRotations, evenNetAssignments, stickersPerFace)
+  const sessionFaces = evenCubeScanSessionFacesFromDrafts(
+    drafts,
+    evenFaceRotations,
+    evenNetAssignments,
+    stickersPerFace,
+  )
   const evenValidation = useMemo(
     () => validateEvenCubeScan(drafts, evenFaceRotations, evenNetAssignments, stickersPerFace),
     [drafts, evenFaceRotations, evenNetAssignments, stickersPerFace],
   )
-  const evenInvalidCorners = backendEvenInvalidCorners.length > 0
-    ? backendEvenInvalidCorners
-    : evenValidation.invalidCorners
+  const evenInvalidCorners =
+    backendEvenInvalidCorners.length > 0 ? backendEvenInvalidCorners : evenValidation.invalidCorners
   const scanSessionReadiness = scanSessionReadinessMessage(
     t,
     drafts,
@@ -155,12 +173,12 @@ export function EvenCubeScanModal({
     solveDisabledReason,
     { requirePhotos: false },
   )
-  const draftValidationMessage = scanFaceDraftValidationMessage(t, draftValidation)
-  const faceValidation = draftValidationMessage
-  const sessionSolving = solveScanSession.isPending
-  const solveScanDisabledReason = evenReviewVisible && evenInvalidCorners.length > 0
-    ? t('scan.evenReview.invalidSolveDisabled')
-    : scanSessionReadiness
+  const draftValidationMessage = scanFaceDraftValidationMessage(t, draftValidation, stickersPerFace)
+  // Local color-count/corner checks are advisory; the scan API owns cube validity.
+  const faceValidation =
+    draftValidation?.key === 'confirmAllColors' ? draftValidationMessage : undefined
+  const sessionSolving = scanSession.pending
+  const solveScanDisabledReason = scanSessionReadiness
   const solveScanDisabled = solving || sessionSolving || solveScanDisabledReason !== undefined
   const reviewTargetIndexes = backendReviewTargets.manualTargets[currentFace.symbol] ?? []
   const hasScanProgress = scanDraftsHaveProgress(drafts, undefined)
@@ -170,6 +188,10 @@ export function EvenCubeScanModal({
 
     return () => onSessionSolvingChange?.(false)
   }, [onSessionSolvingChange, sessionSolving])
+
+  useEffect(() => {
+    closingRef.current = false
+  })
 
   function clearBackendReviewForFace(symbol: ScanFaceSymbol) {
     setBackendReviewTargets((targets) => removeBackendReviewFace(targets, symbol))
@@ -199,7 +221,7 @@ export function EvenCubeScanModal({
 
     if (!evenReviewVisible) {
       if (!allEvenCubeFacesConfirmed(drafts)) {
-        setMessage(t('scan.messages.confirmAllFaces'))
+        setMessage(scanConfirmAllFacesMessage(t, stickersPerFace))
         return
       }
 
@@ -208,25 +230,21 @@ export function EvenCubeScanModal({
       return
     }
 
-    if (evenInvalidCorners.length > 0) {
-      setMessage(t('scan.evenReview.invalidSolveDisabled'))
-      return
-    }
-
     await submitScanSession()
   }
 
   async function submitScanSession(limits?: NoSolutionRetryLimits) {
     if (sessionFaces === undefined) {
-      setMessage(t('scan.messages.confirmAllFaces'))
+      setMessage(scanConfirmAllFacesMessage(t, stickersPerFace))
       return
     }
 
     const faces = sessionFaces!
 
     try {
+      invalidateCapture()
       setMessage(t('scan.messages.submittingSession'))
-      const result = await solveScanSession.mutateAsync({
+      const result = await scanSession.submit({
         faces,
         maxDepth: limits?.maxDepth ?? maxDepth,
         maxNodes: limits?.maxNodes ?? maxNodes,
@@ -234,13 +252,19 @@ export function EvenCubeScanModal({
         strategyId,
       })
 
-      handleScanSessionResult(result)
+      if (result !== undefined) {
+        handleScanSessionResult(result)
+      }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : t('scan.messages.solveFailed'))
     }
   }
 
   function handleEvenFaceRotation(face: ScanFaceSymbol, rotation: EvenCubeFaceRotation) {
+    if (sessionSolving) {
+      return
+    }
+    scanSession.invalidate()
     setBackendEvenInvalidCorners([])
     setEvenAutoFitSuggestion(undefined)
     setEvenFaceRotations((currentRotations) => {
@@ -255,15 +279,28 @@ export function EvenCubeScanModal({
   }
 
   function handleEvenFaceSwap(sourceSlot: ScanFaceSymbol, targetSlot: ScanFaceSymbol) {
+    if (sessionSolving) {
+      return
+    }
+    scanSession.invalidate()
     setBackendEvenInvalidCorners([])
     setEvenAutoFitSuggestion(undefined)
-    setEvenNetAssignments((assignments) => swapEvenCubeNetAssignments(assignments, sourceSlot, targetSlot))
+    setEvenNetAssignments((assignments) =>
+      swapEvenCubeNetAssignments(assignments, sourceSlot, targetSlot),
+    )
   }
 
   function handleEvenAutoFit(): 'ambiguous' | 'none' | 'suggested' | 'unique' {
+    if (sessionSolving) {
+      return 'none'
+    }
+    scanSession.invalidate()
     setEvenAutoFitSuggestion(undefined)
     const rotationOnlyResult = findEvenCubeRotationFit(drafts, evenNetAssignments, stickersPerFace)
-    const result = rotationOnlyResult.status === 'none' ? findEvenCubeFullFit(drafts, stickersPerFace) : rotationOnlyResult
+    const result =
+      rotationOnlyResult.status === 'none'
+        ? findEvenCubeFullFit(drafts, stickersPerFace)
+        : rotationOnlyResult
     if (result.status === 'unique') {
       setBackendEvenInvalidCorners([])
       setEvenFaceRotations(result.solution.rotations)
@@ -276,10 +313,11 @@ export function EvenCubeScanModal({
   }
 
   function handleEvenApplyAutoFitSuggestion() {
-    if (evenAutoFitSuggestion === undefined) {
+    if (evenAutoFitSuggestion === undefined || sessionSolving) {
       return
     }
 
+    scanSession.invalidate()
     setBackendEvenInvalidCorners([])
     setEvenFaceRotations(evenAutoFitSuggestion.rotations)
     setEvenNetAssignments(evenAutoFitSuggestion.assignments)
@@ -290,22 +328,28 @@ export function EvenCubeScanModal({
     if (result.solve?.ok === true) {
       setLimitFailureResult(undefined)
       onSessionSolveResult?.(result.solve)
-      onClose()
+      handleClose()
       return
     }
 
     if (isNoSolutionLimitFailure(result.solve)) {
       setLimitFailureResult(result.solve)
-      setMessage(result.solve.message ?? scanSessionMessage(t, result))
+      setMessage(scanSessionMessage(t, result))
       return
     }
 
     if (result.solve !== undefined) {
-      setMessage(result.solve.message ?? scanSessionMessage(t, result))
+      setMessage(scanSessionMessage(t, result))
       return
     }
 
-    const nextTargets = backendReviewTargetsFromSessionResult(result)
+    const nextTargets = backendReviewTargetsFromSessionResult(result, (face, index) => {
+      const capturedFace = evenNetAssignments[face]
+      return {
+        face: capturedFace,
+        index: canonicalStickerIndexToVisual(index, gridSize, evenFaceRotations[capturedFace] ?? 0),
+      }
+    })
     setBackendReviewTargets(nextTargets)
     const nextInvalidCorners = evenInvalidCornersFromSessionResult(result)
     if (nextInvalidCorners.length > 0) {
@@ -331,79 +375,88 @@ export function EvenCubeScanModal({
     await submitScanSession(limits)
   }
 
+  function handleClose() {
+    if (closingRef.current) {
+      return
+    }
+    closingRef.current = true
+    scanSession.invalidate()
+    onClose()
+  }
+
   return (
     <ScanModalShell
       visionOk={visionOk}
       visionTileDetectorAvailable={visionTileDetectorAvailable}
       visionTileDetectorReason={visionTileDetectorReason}
       hasProgress={hasScanProgress}
-      onClose={onClose}
+      onClose={handleClose}
     >
-
-        {evenReviewVisible ? (
-          <EvenCubeReviewStep
-            drafts={drafts}
-            assignments={evenNetAssignments}
-            gridSize={gridSize}
-            invalidCorners={evenInvalidCorners}
-            rotations={evenFaceRotations}
-            stickersPerFace={stickersPerFace}
-            solving={solving || sessionSolving}
-            onBack={() => setEvenReviewVisible(false)}
-            onRotateFace={handleEvenFaceRotation}
-            onSolve={() => void handleSolveScan()}
-            onSwapFaces={handleEvenFaceSwap}
-            onAutoFit={handleEvenAutoFit}
-            onApplyAutoFitSuggestion={handleEvenApplyAutoFitSuggestion}
-            autoFitSuggestion={evenAutoFitSuggestion}
-          />
-        ) : (
-          <ScanFaceCaptureStep
-            autoScanEnabled={autoScanEnabled}
-            cameraAnalysis={cameraAnalysis}
-            cameraMessage={camera.status === 'error' ? camera.message : undefined}
-            cameraStatus={camera.status}
-            cameraTemporalConsensus={cameraTemporalConsensus}
-            canClearPhoto={canClearPhoto}
-            capturing={capturing}
-            currentDraft={currentDraft}
-            currentFace={currentFace}
-            currentFaceIndex={currentFaceIndex}
-            drafts={drafts}
-            faceValidation={faceValidation}
-            faceStatuses={faceStatuses}
-            finalActionDisabled={solveScanDisabled}
-            finalActionDisabledReason={solveScanDisabledReason}
-            finalActionLabel={t('scan.evenReview.reviewAction')}
-            finalActionLoading={solving || sessionSolving}
-            liveStableFrameCount={liveStableFrameCount}
-            liveStatus={liveStatus}
-            message={message ?? (hasReviewContent ? faceValidation : undefined)}
-            messageFallback={solveDisabledReason}
-            previewCounts={previewCounts}
-            reviewTargetIndexes={reviewTargetIndexes}
-            scannerMessage={scannerMessage}
-            showExpectedCenter={false}
-            stickersPerFace={stickersPerFace}
-            videoRef={videoRef}
-            onAutoScanToggle={handleAutoScanToggle}
-            onCapture={() => void handleTakePhoto()}
-            onClear={handleClearPhoto}
-            onConfirmFace={handleConfirmFace}
-            onFaceIndexChange={handleFaceIndexChange}
-            onFinalAction={() => void handleSolveScan()}
-            onStickerColorChange={handleStickerColorChange}
-          />
-        )}
-        {limitFailureResult === undefined ? null : (
-          <NoSolutionLimitsModal
-            puzzleSlug={puzzleSlug}
-            result={limitFailureResult}
-            solving={solving || sessionSolving}
-            onClose={() => setLimitFailureResult(undefined)}
-            onRetry={handleLimitFailureRetry}
-          />
-        )}
+      {evenReviewVisible ? (
+        <EvenCubeReviewStep
+          drafts={drafts}
+          assignments={evenNetAssignments}
+          gridSize={gridSize}
+          invalidCorners={evenInvalidCorners}
+          rotations={evenFaceRotations}
+          stickersPerFace={stickersPerFace}
+          solving={solving || sessionSolving}
+          onBack={() => setEvenReviewVisible(false)}
+          onRotateFace={handleEvenFaceRotation}
+          onSolve={() => void handleSolveScan()}
+          onSwapFaces={handleEvenFaceSwap}
+          onAutoFit={handleEvenAutoFit}
+          onApplyAutoFitSuggestion={handleEvenApplyAutoFitSuggestion}
+          autoFitSuggestion={evenAutoFitSuggestion}
+        />
+      ) : (
+        <ScanFaceCaptureStep
+          autoScanEnabled={autoScanEnabled}
+          cameraAnalysis={cameraAnalysis}
+          cameraMessage={camera.status === 'error' ? camera.message : undefined}
+          cameraStatus={camera.status}
+          cameraTemporalConsensus={cameraTemporalConsensus}
+          canClearPhoto={canClearPhoto}
+          capturing={capturing}
+          currentDraft={currentDraft}
+          currentFace={currentFace}
+          currentFaceIndex={currentFaceIndex}
+          drafts={drafts}
+          faceValidation={faceValidation}
+          faceStatuses={faceStatuses}
+          finalActionDisabled={solveScanDisabled}
+          finalActionDisabledReason={solveScanDisabledReason}
+          finalActionLabel={t('scan.evenReview.reviewAction')}
+          finalActionLoading={solving || sessionSolving}
+          interactionDisabled={sessionSolving}
+          liveStableFrameCount={liveStableFrameCount}
+          liveStatus={liveStatus}
+          message={message ?? (hasReviewContent ? draftValidationMessage : undefined)}
+          messageFallback={solveDisabledReason}
+          previewCounts={previewCounts}
+          reviewTargetIndexes={reviewTargetIndexes}
+          scannerMessage={scannerMessage}
+          showExpectedCenter={false}
+          stickersPerFace={stickersPerFace}
+          videoRef={videoRef}
+          onAutoScanToggle={handleAutoScanToggle}
+          onCapture={() => void handleTakePhoto()}
+          onClear={handleClearPhoto}
+          onConfirmFace={handleConfirmFace}
+          onFaceIndexChange={handleFaceIndexChange}
+          onFinalAction={() => void handleSolveScan()}
+          onStickerColorChange={handleStickerColorChange}
+        />
+      )}
+      {limitFailureResult === undefined ? null : (
+        <NoSolutionLimitsModal
+          puzzleSlug={puzzleSlug}
+          result={limitFailureResult}
+          solving={solving || sessionSolving}
+          onClose={() => setLimitFailureResult(undefined)}
+          onRetry={handleLimitFailureRetry}
+        />
+      )}
     </ScanModalShell>
   )
 }
@@ -414,8 +467,14 @@ function evenInvalidCornersFromSessionResult(result: ScanSessionResult): EvenCub
     .filter((corner): corner is EvenCubeInvalidCorner => corner !== undefined)
 }
 
-function evenInvalidCornerFromApi(corner: ScanSessionInvalidCorner): EvenCubeInvalidCorner | undefined {
-  if (corner.faces.length !== 3 || corner.stickers.length !== 3 || (corner.targets?.length ?? 0) !== 3) {
+function evenInvalidCornerFromApi(
+  corner: ScanSessionInvalidCorner,
+): EvenCubeInvalidCorner | undefined {
+  if (
+    corner.faces.length !== 3 ||
+    corner.stickers.length !== 3 ||
+    (corner.targets?.length ?? 0) !== 3
+  ) {
     return undefined
   }
 

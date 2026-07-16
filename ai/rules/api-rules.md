@@ -7,7 +7,7 @@ Rules for the Axum HTTP API and the frontend API contract.
 - Keep route handlers thin: extract state and JSON, validate request limits, choose the solver strategy, delegate to Rust engine code, and map results to HTTP responses.
 - Keep solver behavior in `cube-engine`; `crates/api` owns HTTP shape, safety limits, generated-solver loading, CORS, and error/status mapping.
 - Use Serde request and response structs as the API contract.
-- Keep notation solve requests on move notation and route scan solves through scan-session contracts.
+- Keep notation solve requests on move notation and route scan solves through typed scan-session contracts, which MAY include reviewed stickers and manual overrides.
 - Validate API safety limits before parsing notation or invoking search.
 - Use named constants for public API caps such as maximum depth, maximum nodes, notation bytes, and JSON body bytes.
 - Preserve stable response status strings, error kinds, and metadata fields because `apps/web/src/api` normalizes them.
@@ -15,6 +15,7 @@ Rules for the Axum HTTP API and the frontend API contract.
 - Keep generated pruning-table availability and corruption errors explicit in API responses.
 - Keep CORS origins narrow to known local web development and preview origins unless deployment requirements change.
 - Update `apps/web/src/api` types and normalization when API response fields or status values change.
+- Keep `/api/wca-data` as an Axum HTTP 308 redirect to `/api/wca-data/v1/docs`; WCA data endpoints belong to `apps/wca-data`.
 
 ## Never
 

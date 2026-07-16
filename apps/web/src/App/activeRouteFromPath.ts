@@ -9,10 +9,6 @@ export function activeRouteFromPath(pagePath: string): PageNavRoute {
     return 'sites'
   }
 
-  if (pagePath.startsWith('/api/wca-data')) {
-    return 'api'
-  }
-
   if (pagePath.startsWith('/records')) {
     return 'records'
   }

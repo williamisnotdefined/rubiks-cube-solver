@@ -1,4 +1,4 @@
-import type { ScanSessionFaceRequest } from '@api/scan'
+import { buildScanSessionFaces, type VisualScanFace } from '@api/scan'
 import type { ScanFaceSymbol } from '@api/solver/types'
 import {
   isScanFaceComplete,
@@ -44,7 +44,11 @@ export type EvenCubeInvalidCorner = {
   faces: readonly [ScanFaceSymbol, ScanFaceSymbol, ScanFaceSymbol]
   position: string
   stickers: readonly [ScanFaceSymbol, ScanFaceSymbol, ScanFaceSymbol]
-  targets: readonly [EvenCubeCornerStickerTarget, EvenCubeCornerStickerTarget, EvenCubeCornerStickerTarget]
+  targets: readonly [
+    EvenCubeCornerStickerTarget,
+    EvenCubeCornerStickerTarget,
+    EvenCubeCornerStickerTarget,
+  ]
 }
 
 export type EvenCubeValidation = {
@@ -55,7 +59,11 @@ export type EvenCubeValidation = {
 type CornerDefinition = {
   faces: readonly [ScanFaceSymbol, ScanFaceSymbol, ScanFaceSymbol]
   position: string
-  stickers: readonly [readonly [ScanFaceSymbol, number], readonly [ScanFaceSymbol, number], readonly [ScanFaceSymbol, number]]
+  stickers: readonly [
+    readonly [ScanFaceSymbol, number],
+    readonly [ScanFaceSymbol, number],
+    readonly [ScanFaceSymbol, number],
+  ]
 }
 
 const validCornerKeys = new Set(['FRU', 'FLU', 'BLU', 'BRU', 'DFR', 'DFL', 'BDL', 'BDR'])
@@ -76,39 +84,29 @@ export function evenCubeScanSessionFacesFromDrafts(
   rotations: EvenCubeFaceRotations,
   assignments: EvenCubeNetAssignments,
   stickersPerFace = scan2StickersPerFace,
-): ScanSessionFaceRequest[] | undefined {
-  const netDrafts = evenCubeDraftsFromNet(drafts, rotations, assignments)
-  const faces: ScanSessionFaceRequest[] = []
+): ReturnType<typeof buildScanSessionFaces> | undefined {
+  const faces: VisualScanFace[] = []
 
-  for (const { symbol } of scanFaceOrder) {
-    const draft = netDrafts[symbol]
+  for (const { symbol: canonicalFace } of scanFaceOrder) {
+    const capturedFace = assignments[canonicalFace]
+    const draft = drafts[capturedFace]
     if (!draft.confirmed || !isScanFaceComplete(draft.stickers, stickersPerFace)) {
       return undefined
     }
 
-    const manualOverrides: Partial<Record<number, ScanFaceSymbol>> = {}
-    const reviewedStickers = draft.stickers.map((sticker, index) => {
-      if (sticker.symbol !== undefined && sticker.source === 'manual') {
-        manualOverrides[index] = sticker.symbol
-      }
-
-      return {
+    faces.push({
+      canonicalFace,
+      expectedTop: expectedTopForScanFace(canonicalFace),
+      rotation: rotations[capturedFace] ?? 0,
+      stickers: draft.stickers.map((sticker) => ({
         confidence: sticker.confidence,
-        index,
         source: sticker.source,
         symbol: sticker.symbol as ScanFaceSymbol,
-      }
-    })
-
-    faces.push({
-      expectedTop: expectedTopForScanFace(symbol),
-      manualOverrides: Object.keys(manualOverrides).length > 0 ? manualOverrides : undefined,
-      reviewedStickers,
-      symbol,
+      })),
     })
   }
 
-  return faces
+  return buildScanSessionFaces(faces)
 }
 
 export function validateEvenCubeScan(
@@ -117,7 +115,12 @@ export function validateEvenCubeScan(
   assignments: EvenCubeNetAssignments,
   stickersPerFace = scan2StickersPerFace,
 ): EvenCubeValidation {
-  const sessionFaces = evenCubeScanSessionFacesFromDrafts(drafts, rotations, assignments, stickersPerFace)
+  const sessionFaces = evenCubeScanSessionFacesFromDrafts(
+    drafts,
+    rotations,
+    assignments,
+    stickersPerFace,
+  )
   if (sessionFaces === undefined) {
     return { invalidCorners: [], ok: false }
   }
@@ -284,7 +287,8 @@ export function evenCubeFitSolution(
     assignments: { ...assignments },
     changes,
     rotations: { ...rotations },
-    score: changes.swappedSlots * 100 + changes.rotatedFaces * 25 + changes.rotationQuarterTurns * 5,
+    score:
+      changes.swappedSlots * 100 + changes.rotatedFaces * 25 + changes.rotationQuarterTurns * 5,
   }
 }
 
@@ -312,7 +316,10 @@ function evenCubeFitChanges(
   return { rotatedFaces, rotationQuarterTurns, swappedSlots }
 }
 
-function rotationDistance(rotation: EvenCubeFaceRotation, defaultRotation: EvenCubeFaceRotation): EvenCubeFaceRotation {
+function rotationDistance(
+  rotation: EvenCubeFaceRotation,
+  defaultRotation: EvenCubeFaceRotation,
+): EvenCubeFaceRotation {
   const clockwiseDistance = Math.abs(rotation - defaultRotation)
   return Math.min(clockwiseDistance, 360 - clockwiseDistance) as EvenCubeFaceRotation
 }
@@ -353,7 +360,10 @@ function partialEvenCubeCornersValid(
 }
 
 function hasEvenCubeExactColorCounts(drafts: ScanFaceDrafts, stickersPerFace: number): boolean {
-  const counts = Object.fromEntries(scanSymbols.map((symbol) => [symbol, 0])) as Record<ScanFaceSymbol, number>
+  const counts = Object.fromEntries(scanSymbols.map((symbol) => [symbol, 0])) as Record<
+    ScanFaceSymbol,
+    number
+  >
   for (const { symbol } of scanFaceOrder) {
     const draft = drafts[symbol]
     if (!draft.confirmed || !isScanFaceComplete(draft.stickers, stickersPerFace)) {
@@ -383,14 +393,24 @@ function evenCubeNetAssignmentPermutations(): EvenCubeNetAssignments[] {
 
   function permute(index: number) {
     if (index === capturedFaces.length) {
-      assignments.push(Object.fromEntries(slots.map((slot, slotIndex) => [slot, capturedFaces[slotIndex]])) as EvenCubeNetAssignments)
+      assignments.push(
+        Object.fromEntries(
+          slots.map((slot, slotIndex) => [slot, capturedFaces[slotIndex]]),
+        ) as EvenCubeNetAssignments,
+      )
       return
     }
 
     for (let swapIndex = index; swapIndex < capturedFaces.length; swapIndex += 1) {
-      ;[capturedFaces[index], capturedFaces[swapIndex]] = [capturedFaces[swapIndex], capturedFaces[index]]
+      ;[capturedFaces[index], capturedFaces[swapIndex]] = [
+        capturedFaces[swapIndex],
+        capturedFaces[index],
+      ]
       permute(index + 1)
-      ;[capturedFaces[index], capturedFaces[swapIndex]] = [capturedFaces[swapIndex], capturedFaces[index]]
+      ;[capturedFaces[index], capturedFaces[swapIndex]] = [
+        capturedFaces[swapIndex],
+        capturedFaces[index],
+      ]
     }
   }
 
@@ -450,7 +470,9 @@ export function allEvenCubeFacesConfirmed(drafts: ScanFaceDrafts): boolean {
   })
 }
 
-export function evenCubeCornerDefinitions(stickersPerFace = scan2StickersPerFace): readonly CornerDefinition[] {
+export function evenCubeCornerDefinitions(
+  stickersPerFace = scan2StickersPerFace,
+): readonly CornerDefinition[] {
   const gridSize = Math.sqrt(stickersPerFace)
   if (!Number.isInteger(gridSize) || gridSize < 2) {
     return []
@@ -462,14 +484,78 @@ export function evenCubeCornerDefinitions(stickersPerFace = scan2StickersPerFace
   const bottomRight = stickersPerFace - 1
 
   return [
-    { faces: ['U', 'R', 'F'], position: 'Urf', stickers: [['U', bottomRight], ['R', topLeft], ['F', topRight]] },
-    { faces: ['U', 'F', 'L'], position: 'Ufl', stickers: [['U', bottomLeft], ['F', topLeft], ['L', topRight]] },
-    { faces: ['U', 'L', 'B'], position: 'Ulb', stickers: [['U', topLeft], ['L', topLeft], ['B', topRight]] },
-    { faces: ['U', 'B', 'R'], position: 'Ubr', stickers: [['U', topRight], ['B', topLeft], ['R', topRight]] },
-    { faces: ['D', 'F', 'R'], position: 'Dfr', stickers: [['D', topRight], ['F', bottomRight], ['R', bottomLeft]] },
-    { faces: ['D', 'L', 'F'], position: 'Dlf', stickers: [['D', topLeft], ['L', bottomRight], ['F', bottomLeft]] },
-    { faces: ['D', 'B', 'L'], position: 'Dbl', stickers: [['D', bottomLeft], ['B', bottomRight], ['L', bottomLeft]] },
-    { faces: ['D', 'R', 'B'], position: 'Drb', stickers: [['D', bottomRight], ['R', bottomRight], ['B', bottomLeft]] },
+    {
+      faces: ['U', 'R', 'F'],
+      position: 'Urf',
+      stickers: [
+        ['U', bottomRight],
+        ['R', topLeft],
+        ['F', topRight],
+      ],
+    },
+    {
+      faces: ['U', 'F', 'L'],
+      position: 'Ufl',
+      stickers: [
+        ['U', bottomLeft],
+        ['F', topLeft],
+        ['L', topRight],
+      ],
+    },
+    {
+      faces: ['U', 'L', 'B'],
+      position: 'Ulb',
+      stickers: [
+        ['U', topLeft],
+        ['L', topLeft],
+        ['B', topRight],
+      ],
+    },
+    {
+      faces: ['U', 'B', 'R'],
+      position: 'Ubr',
+      stickers: [
+        ['U', topRight],
+        ['B', topLeft],
+        ['R', topRight],
+      ],
+    },
+    {
+      faces: ['D', 'F', 'R'],
+      position: 'Dfr',
+      stickers: [
+        ['D', topRight],
+        ['F', bottomRight],
+        ['R', bottomLeft],
+      ],
+    },
+    {
+      faces: ['D', 'L', 'F'],
+      position: 'Dlf',
+      stickers: [
+        ['D', topLeft],
+        ['L', bottomRight],
+        ['F', bottomLeft],
+      ],
+    },
+    {
+      faces: ['D', 'B', 'L'],
+      position: 'Dbl',
+      stickers: [
+        ['D', bottomLeft],
+        ['B', bottomRight],
+        ['L', bottomLeft],
+      ],
+    },
+    {
+      faces: ['D', 'R', 'B'],
+      position: 'Drb',
+      stickers: [
+        ['D', bottomRight],
+        ['R', bottomRight],
+        ['B', bottomLeft],
+      ],
+    },
   ]
 }
 
@@ -477,7 +563,11 @@ export function displayIndexToPayloadIndex(_slot: ScanFaceSymbol, index: number)
   return index
 }
 
-function rotateSquareItems<T>(items: readonly T[], gridSize: number, rotation: EvenCubeFaceRotation): T[] {
+function rotateSquareItems<T>(
+  items: readonly T[],
+  gridSize: number,
+  rotation: EvenCubeFaceRotation,
+): T[] {
   return Array.from({ length: items.length }, (_, targetIndex) => {
     const row = Math.floor(targetIndex / gridSize)
     const column = targetIndex % gridSize

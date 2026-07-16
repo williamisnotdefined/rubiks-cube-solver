@@ -11,26 +11,14 @@ import { WorldRecordsTable } from '../WorldRecordsTable'
 
 describe('WorldRecordsTable', () => {
   it('shows an accessible loading layout instead of an empty result', () => {
-    render(
-      <WorldRecordsTable
-        isLoading
-        records={[]}
-        onSelectRecord={vi.fn()}
-      />,
-    )
+    render(<WorldRecordsTable isLoading records={[]} onSelectRecord={vi.fn()} />)
 
     expect(screen.getAllByRole('row')).toHaveLength(9)
     expect(screen.queryByText('No world records matched these filters.')).not.toBeInTheDocument()
   })
 
   it('shows the empty-state message after loading completes', () => {
-    render(
-      <WorldRecordsTable
-        isLoading={false}
-        records={[]}
-        onSelectRecord={vi.fn()}
-      />,
-    )
+    render(<WorldRecordsTable isLoading={false} records={[]} onSelectRecord={vi.fn()} />)
 
     const message = screen.getByText('No world records matched these filters.')
 
@@ -44,11 +32,7 @@ describe('WorldRecordsTable', () => {
     const record = createWorldRecord()
 
     render(
-      <WorldRecordsTable
-        isLoading={false}
-        records={[record]}
-        onSelectRecord={onSelectRecord}
-      />,
+      <WorldRecordsTable isLoading={false} records={[record]} onSelectRecord={onSelectRecord} />,
     )
 
     const athleteButton = screen.getByRole('button', { name: /Feliks Zemdegs/ })

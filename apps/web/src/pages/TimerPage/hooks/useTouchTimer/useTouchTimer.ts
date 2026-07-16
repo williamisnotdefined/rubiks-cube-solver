@@ -14,27 +14,45 @@ export function useTouchTimer(timer: TimerMachine, disabled = false): TouchTimer
   timerRef.current = timer
   disabledRef.current = disabled
 
-  return useMemo(() => ({
-    onPointerCancel() {
-      timerRef.current.cancelHold()
-    },
-    onPointerDown(event) {
-      event.preventDefault()
+  return useMemo(
+    () => ({
+      onPointerCancel() {
+        timerRef.current.cancelHold()
+      },
+      onPointerDown(event) {
+        if (isInteractiveEvent(event)) {
+          return
+        }
 
-      if (disabledRef.current) {
-        return
-      }
+        event.preventDefault()
 
-      event.currentTarget.setPointerCapture?.(event.pointerId)
-      timerRef.current.beginHold()
-    },
-    onPointerLeave() {
-      timerRef.current.cancelHold()
-    },
-    onPointerUp(event) {
-      event.preventDefault()
-      event.currentTarget.releasePointerCapture?.(event.pointerId)
-      timerRef.current.releaseHold()
-    },
-  }), [])
+        if (disabledRef.current) {
+          return
+        }
+
+        event.currentTarget.setPointerCapture?.(event.pointerId)
+        timerRef.current.beginHold()
+      },
+      onPointerLeave() {
+        timerRef.current.cancelHold()
+      },
+      onPointerUp(event) {
+        if (isInteractiveEvent(event)) {
+          return
+        }
+
+        event.preventDefault()
+        event.currentTarget.releasePointerCapture?.(event.pointerId)
+        timerRef.current.releaseHold()
+      },
+    }),
+    [],
+  )
+}
+
+const interactiveSelector =
+  'a[href], button, input, select, textarea, [contenteditable="true"], [role="button"], [role="combobox"], [role="link"], [role="switch"]'
+
+function isInteractiveEvent(event: PointerEvent<HTMLElement>): boolean {
+  return event.target instanceof Element && event.target.closest(interactiveSelector) !== null
 }

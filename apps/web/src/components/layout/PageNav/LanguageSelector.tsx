@@ -47,7 +47,17 @@ const languageOptions: Record<SupportedLanguage, LanguageOption> = {
   zh: { flag: CN, label: '简体中文 (中国)', language: 'zh' },
 }
 
-const orderedLanguages: readonly SupportedLanguage[] = ['en-US', 'pt-BR', 'es', 'it', 'de', 'fr', 'ru', 'zh', 'ja']
+const orderedLanguages: readonly SupportedLanguage[] = [
+  'en-US',
+  'pt-BR',
+  'es',
+  'it',
+  'de',
+  'fr',
+  'ru',
+  'zh',
+  'ja',
+]
 
 export function LanguageSelector({ locale, pagePath, onNavigate }: LanguageSelectorProps) {
   const { t } = useTranslation()
@@ -92,19 +102,22 @@ export function LanguageSelector({ locale, pagePath, onNavigate }: LanguageSelec
       <DropdownMenuTrigger asChild>
         <Button
           aria-label={t('navigation.language')}
-          className="w-full justify-start gap-2"
-          type="button"
-          variant="ghost"
+          className='w-full justify-start gap-2'
+          type='button'
+          variant='ghost'
         >
-          <Languages aria-hidden="true" className="size-4" />
-          <span className="flex-1 text-start">{t('navigation.language')}</span>
-          <CurrentFlag aria-hidden="true" className="size-auto h-4 w-6 shrink-0 shadow-xs" />
+          <Languages aria-hidden='true' className='size-4' />
+          <span className='flex-1 text-start'>{t('navigation.language')}</span>
+          <CurrentFlag aria-hidden='true' className='size-auto h-4 w-6 shrink-0 shadow-xs' />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-64" side="top">
-        <DropdownMenuRadioGroup value={selectedPreference} onValueChange={(value) => void selectLanguage(value)}>
+      <DropdownMenuContent align='start' className='w-64' side='top'>
+        <DropdownMenuRadioGroup
+          value={selectedPreference}
+          onValueChange={(value) => void selectLanguage(value)}
+        >
           <DropdownMenuRadioItem value={automaticLanguageValue}>
-            <Languages aria-hidden="true" className="size-4 shrink-0" />
+            <Languages aria-hidden='true' className='size-4 shrink-0' />
             <span>{automaticLabel}</span>
           </DropdownMenuRadioItem>
           {orderedLanguages.map((language) => {
@@ -113,7 +126,7 @@ export function LanguageSelector({ locale, pagePath, onNavigate }: LanguageSelec
 
             return (
               <DropdownMenuRadioItem key={option.language} value={option.language}>
-                <Flag aria-hidden="true" className="size-auto h-4 w-6 shrink-0 shadow-xs" />
+                <Flag aria-hidden='true' className='size-auto h-4 w-6 shrink-0 shadow-xs' />
                 <span>{option.label}</span>
               </DropdownMenuRadioItem>
             )

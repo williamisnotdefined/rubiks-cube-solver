@@ -51,23 +51,14 @@ describe('useSolveVisualizationController', () => {
     )
   })
 
-  it('schedules idle loading and cancels it on cleanup', () => {
-    vi.useFakeTimers()
-    const requestIdleCallback = vi.fn(() => 73)
-    const cancelIdleCallback = vi.fn()
-    vi.stubGlobal('requestIdleCallback', requestIdleCallback)
-    vi.stubGlobal('cancelIdleCallback', cancelIdleCallback)
-    const { unmount } = renderController()
+  it('waits for explicit visualization activation', () => {
+    const { result } = renderController({ notation: 'R U' })
 
-    act(() => {
-      vi.advanceTimersByTime(3000)
-    })
+    expect(result.current.loadRequested).toBe(false)
 
-    expect(requestIdleCallback).toHaveBeenCalledWith(expect.any(Function), { timeout: 1500 })
+    act(() => result.current.onLoadRequest())
 
-    unmount()
-
-    expect(cancelIdleCallback).toHaveBeenCalledWith(73)
+    expect(result.current.loadRequested).toBe(true)
   })
 
   it('inverts prime and half-turn moves when reconstructing a 2x2 scan state', () => {
@@ -84,7 +75,7 @@ describe('useSolveVisualizationController', () => {
       undefined,
       undefined,
       'Two',
-      true,
+      false,
     )
   })
 })

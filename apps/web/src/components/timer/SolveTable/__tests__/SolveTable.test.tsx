@@ -38,9 +38,9 @@ describe('SolveTable', () => {
   })
 
   it('renders every row for small solve lists', () => {
-    const rows = Array.from({ length: 3 }, (_, index) => (
-      row(`solve-${index + 1}`, index + 1, `R U ${index + 1}`)
-    ))
+    const rows = Array.from({ length: 3 }, (_, index) =>
+      row(`solve-${index + 1}`, index + 1, `R U ${index + 1}`),
+    )
 
     render(<SolveTable rows={rows} />)
 
@@ -51,14 +51,16 @@ describe('SolveTable', () => {
   })
 
   it('virtualizes large solve lists without rendering every row', () => {
-    const rows = Array.from({ length: 100 }, (_, index) => (
-      row(`solve-${index + 1}`, index + 1, `R U ${index + 1}`)
-    ))
+    const rows = Array.from({ length: 100 }, (_, index) =>
+      row(`solve-${index + 1}`, index + 1, `R U ${index + 1}`),
+    )
 
     render(<SolveTable rows={rows} />)
 
     expect(screen.getByRole('table')).toBeInTheDocument()
-    expect(screen.getAllByRole('row').length).toBeLessThan(rows.length)
+    const renderedBodyRows = screen.getAllByRole('row').length - 1
+    expect(renderedBodyRows).toBeGreaterThan(0)
+    expect(renderedBodyRows).toBeLessThan(rows.length)
   })
 })
 

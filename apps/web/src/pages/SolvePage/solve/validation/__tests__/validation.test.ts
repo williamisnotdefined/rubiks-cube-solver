@@ -27,12 +27,12 @@ describe('solve validation', () => {
     expect(validationErrorMessage(i18n.t, validateMaxNodesMillionOption('', 'Max nodes (M)'))).toBe(
       'Max nodes (M) is required',
     )
-    expect(validationErrorMessage(i18n.t, validateMaxNodesMillionOption('1.5', 'Max nodes (M)'))).toBe(
-      'Max nodes (M) must be a whole number',
-    )
-    expect(validationErrorMessage(i18n.t, validateMaxNodesMillionOption('11', 'Max nodes (M)'))).toBe(
-      'Max nodes (M) must be one of 10, 15, 20, 25',
-    )
+    expect(
+      validationErrorMessage(i18n.t, validateMaxNodesMillionOption('1.5', 'Max nodes (M)')),
+    ).toBe('Max nodes (M) must be a whole number')
+    expect(
+      validationErrorMessage(i18n.t, validateMaxNodesMillionOption('11', 'Max nodes (M)')),
+    ).toBe('Max nodes (M) must be one of 10, 15, 20, 25')
     expect(validateMaxNodesMillionOption('25', 'Max nodes (M)')).toBeUndefined()
   })
 })

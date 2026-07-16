@@ -5,8 +5,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { NotationGuidePage } from '../NotationGuidePage'
 import { NotationVisualizer } from '../components/NotationVisualizer'
 
-const notationVisualizationAutoLoadDelayMs = 3000
-
 const visualizationMocks = vi.hoisted(() => {
   const cubeMove = vi.fn().mockResolvedValue('cube-state')
   const cubeReset = vi.fn()
@@ -22,11 +20,14 @@ const visualizationMocks = vi.hoisted(() => {
     cubeMove,
     cubeRegister: vi.fn(() => {
       if (!customElements.get('rubiks-cube')) {
-        customElements.define('rubiks-cube', class extends HTMLElement {
-          move = cubeMove
-          reset = cubeReset
-          rotate = cubeRotate
-        })
+        customElements.define(
+          'rubiks-cube',
+          class extends HTMLElement {
+            move = cubeMove
+            reset = cubeReset
+            rotate = cubeRotate
+          },
+        )
       }
     }),
     cubeReset,
@@ -34,30 +35,39 @@ const visualizationMocks = vi.hoisted(() => {
     megaminxMove,
     megaminxRegister: vi.fn(() => {
       if (!customElements.get('megaminx-puzzle')) {
-        customElements.define('megaminx-puzzle', class extends HTMLElement {
-          move = megaminxMove
-          reset = megaminxReset
-        })
+        customElements.define(
+          'megaminx-puzzle',
+          class extends HTMLElement {
+            move = megaminxMove
+            reset = megaminxReset
+          },
+        )
       }
     }),
     megaminxReset,
     pyraminxMove,
     pyraminxRegister: vi.fn(() => {
       if (!customElements.get('pyraminx-puzzle')) {
-        customElements.define('pyraminx-puzzle', class extends HTMLElement {
-          move = pyraminxMove
-          reset = pyraminxReset
-        })
+        customElements.define(
+          'pyraminx-puzzle',
+          class extends HTMLElement {
+            move = pyraminxMove
+            reset = pyraminxReset
+          },
+        )
       }
     }),
     pyraminxReset,
     square1Move,
     square1Register: vi.fn(() => {
       if (!customElements.get('square1-puzzle')) {
-        customElements.define('square1-puzzle', class extends HTMLElement {
-          move = square1Move
-          reset = square1Reset
-        })
+        customElements.define(
+          'square1-puzzle',
+          class extends HTMLElement {
+            move = square1Move
+            reset = square1Reset
+          },
+        )
       }
     }),
     square1Reset,
@@ -101,8 +111,7 @@ describe('Notation guides', () => {
     vi.useRealTimers()
   })
 
-  it('delays notation visualization registration on first load', async () => {
-    vi.useFakeTimers()
+  it('does not download notation visualization without activation or visibility', async () => {
     const { container } = renderWithRoute('/notations/3x3')
 
     expect(screen.getByRole('button', { name: 'Preparing visualization' })).toBeInTheDocument()
@@ -111,18 +120,10 @@ describe('Notation guides', () => {
     expect(visualizationMocks.cubeRegister).not.toHaveBeenCalled()
 
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(notationVisualizationAutoLoadDelayMs - 1)
+      await Promise.resolve()
     })
     expect(container.querySelector('rubiks-cube')).not.toBeInTheDocument()
     expect(visualizationMocks.cubeRegister).not.toHaveBeenCalled()
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(1)
-    })
-    vi.useRealTimers()
-
-    await waitFor(() => expect(container.querySelector('rubiks-cube')).toBeInTheDocument())
-    expect(visualizationMocks.cubeRegister).toHaveBeenCalled()
   })
 
   it('uses an already-registered visualization without registering it again', () => {
@@ -145,51 +146,59 @@ describe('Notation guides', () => {
     expect(visualizationMocks.megaminxRegister).toHaveBeenCalled()
   })
 
-  it('registers the visualization from an idle callback after the fallback delay', async () => {
-    vi.useFakeTimers()
-    let idleCallback: IdleRequestCallback | undefined
-    const requestIdleCallback = vi.fn((callback: IdleRequestCallback) => {
-      idleCallback = callback
-      return 41
-    })
-    vi.stubGlobal('requestIdleCallback', requestIdleCallback)
-    vi.stubGlobal('cancelIdleCallback', vi.fn())
+  it('registers the visualization when its stage enters the viewport', async () => {
+    let intersectionCallback: IntersectionObserverCallback | undefined
+    const disconnect = vi.fn()
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        constructor(callback: IntersectionObserverCallback) {
+          intersectionCallback = callback
+        }
+        disconnect = disconnect
+        observe = vi.fn()
+        takeRecords = vi.fn(() => [])
+        unobserve = vi.fn()
+        root = null
+        rootMargin = '200px'
+        scrollMargin = ''
+        thresholds = []
+      },
+    )
     const { container } = renderWithRoute('/notations/pyraminx')
 
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(notationVisualizationAutoLoadDelayMs)
+      intersectionCallback?.(
+        [{ isIntersecting: true } as IntersectionObserverEntry],
+        {} as IntersectionObserver,
+      )
     })
 
-    expect(requestIdleCallback).toHaveBeenCalledWith(expect.any(Function), { timeout: 1500 })
-    expect(visualizationMocks.pyraminxRegister).not.toHaveBeenCalled()
-
-    await act(async () => {
-      idleCallback?.({ didTimeout: false, timeRemaining: () => 50 })
-    })
-    vi.useRealTimers()
-
-    await waitFor(() =>
-      expect(container.querySelector('pyraminx-puzzle')).toBeInTheDocument(),
-    )
+    await waitFor(() => expect(container.querySelector('pyraminx-puzzle')).toBeInTheDocument())
     expect(visualizationMocks.pyraminxRegister).toHaveBeenCalledOnce()
+    expect(disconnect).toHaveBeenCalled()
   })
 
-  it('cancels pending idle registration when the visualization unmounts', async () => {
-    vi.useFakeTimers()
-    const requestIdleCallback = vi.fn(() => 73)
-    const cancelIdleCallback = vi.fn()
-    vi.stubGlobal('requestIdleCallback', requestIdleCallback)
-    vi.stubGlobal('cancelIdleCallback', cancelIdleCallback)
-    const { unmount } = renderWithRoute('/notations/square-1')
+  it('does not observe or load automatically when save-data is enabled', () => {
+    const observe = vi.fn()
+    vi.stubGlobal('navigator', { ...navigator, connection: { saveData: true } })
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        disconnect = vi.fn()
+        observe = observe
+        takeRecords = vi.fn(() => [])
+        unobserve = vi.fn()
+        root = null
+        rootMargin = ''
+        scrollMargin = ''
+        thresholds = []
+      },
+    )
+    const { container } = renderWithRoute('/notations/square-1')
 
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(notationVisualizationAutoLoadDelayMs)
-    })
-    expect(requestIdleCallback).toHaveBeenCalledOnce()
-
-    unmount()
-
-    expect(cancelIdleCallback).toHaveBeenCalledWith(73)
+    expect(observe).not.toHaveBeenCalled()
+    expect(container.querySelector('square1-puzzle')).not.toBeInTheDocument()
     expect(visualizationMocks.square1Register).not.toHaveBeenCalled()
   })
 
@@ -214,7 +223,14 @@ describe('Notation guides', () => {
     expect(screen.queryByRole('heading', { name: 'How to read the moves' })).not.toBeInTheDocument()
   })
 
-  it.each(['2x2', '3x3', '4x4', '5x5', '6x6', '7x7'])('does not render redundant triple-turn suffixes for %s notation', (puzzleId) => {
+  it.each([
+    '2x2',
+    '3x3',
+    '4x4',
+    '5x5',
+    '6x6',
+    '7x7',
+  ])('does not render redundant triple-turn suffixes for %s notation', (puzzleId) => {
     renderWithRoute(`/notations/${puzzleId}`)
 
     expect(screen.queryByRole('button', { name: 'U3' })).not.toBeInTheDocument()
@@ -244,14 +260,23 @@ describe('Notation guides', () => {
   it('preserves lowercase Pyraminx tip notation labels', () => {
     renderWithRoute('/notations/pyraminx')
 
-    expect(screen.getByRole('button', { name: 'u' }).querySelector('span')).toHaveClass('normal-case')
+    expect(screen.getByRole('button', { name: 'u' }).querySelector('span')).toHaveClass(
+      'normal-case',
+    )
     expect(screen.getByRole('button', { name: "u'" })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'l' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'r' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'b' })).toBeInTheDocument()
   })
 
-  it.each(['2x2', '3x3', '4x4', '5x5', '6x6', '7x7'])('renders L moves for %s notation', (puzzleId) => {
+  it.each([
+    '2x2',
+    '3x3',
+    '4x4',
+    '5x5',
+    '6x6',
+    '7x7',
+  ])('renders L moves for %s notation', (puzzleId) => {
     renderWithRoute(`/notations/${puzzleId}`)
 
     expect(screen.getByRole('button', { name: 'L' })).toBeInTheDocument()
@@ -259,7 +284,12 @@ describe('Notation guides', () => {
     expect(screen.getByRole('button', { name: 'L2' })).toBeInTheDocument()
   })
 
-  it.each(['4x4', '5x5', '6x6', '7x7'])('renders two-layer wide and inner moves for %s notation', (puzzleId) => {
+  it.each([
+    '4x4',
+    '5x5',
+    '6x6',
+    '7x7',
+  ])('renders two-layer wide and inner moves for %s notation', (puzzleId) => {
     renderWithRoute(`/notations/${puzzleId}`)
 
     expect(screen.getByRole('button', { name: 'Lw' })).toBeInTheDocument()
@@ -279,14 +309,20 @@ describe('Notation guides', () => {
     expect(screen.getByRole('button', { name: '3Lw2' })).toBeInTheDocument()
   })
 
-  it.each(['4x4', '5x5'])('does not render redundant third-layer moves for %s notation', (puzzleId) => {
+  it.each([
+    '4x4',
+    '5x5',
+  ])('does not render redundant third-layer moves for %s notation', (puzzleId) => {
     renderWithRoute(`/notations/${puzzleId}`)
 
     expect(screen.queryByRole('button', { name: '3Lw' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '3Fw' })).not.toBeInTheDocument()
   })
 
-  it.each(['6x6', '7x7'])('does not render high mirrored layer prefixes for %s notation', (puzzleId) => {
+  it.each([
+    '6x6',
+    '7x7',
+  ])('does not render high mirrored layer prefixes for %s notation', (puzzleId) => {
     renderWithRoute(`/notations/${puzzleId}`)
 
     expect(screen.queryByRole('button', { name: "4Fw'" })).not.toBeInTheDocument()
@@ -326,7 +362,11 @@ describe('Notation guides', () => {
   ])('normalizes notation visualization size for %s', async (path, elementName, cameraRadius) => {
     const { container } = await renderWithLoadedVisualization(path)
 
-    await waitFor(() => expect(container.querySelector(elementName)?.getAttribute('camera-radius')).toBe(cameraRadius))
+    await waitFor(() =>
+      expect(container.querySelector(elementName)?.getAttribute('camera-radius')).toBe(
+        cameraRadius,
+      ),
+    )
   })
 
   it('keeps the cube stage fixed when the notation list grows', () => {
@@ -341,7 +381,12 @@ describe('Notation guides', () => {
   it('zooms Pyraminx with a valid field of view instead of an invalid camera radius', async () => {
     const { container } = await renderWithLoadedVisualization('/notations/pyraminx')
 
-    await waitFor(() => expect(container.querySelector('pyraminx-puzzle')).toHaveAttribute('camera-field-of-view', '56'))
+    await waitFor(() =>
+      expect(container.querySelector('pyraminx-puzzle')).toHaveAttribute(
+        'camera-field-of-view',
+        '56',
+      ),
+    )
   })
 
   it('does not add visual actions for notation pages without visualization support', () => {
@@ -361,9 +406,7 @@ describe('Notation guides', () => {
 
   it('renders nothing when NotationVisualizer receives a guide without visualization support', () => {
     const { container } = render(
-      <NotationVisualizer
-        guide={{ id: 'skewb', path: '/notations/skewb', puzzle: 'Skewb' }}
-      />,
+      <NotationVisualizer guide={{ id: 'skewb', path: '/notations/skewb', puzzle: 'Skewb' }} />,
     )
 
     expect(container).toBeEmptyDOMElement()
@@ -409,9 +452,7 @@ describe('Notation guides', () => {
 
     await user.click(moveButton)
 
-    await waitFor(() =>
-      expect(screen.getByRole('status')).toHaveTextContent('R could not run'),
-    )
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('R could not run'))
     expect(moveButton).toBeEnabled()
   })
 
@@ -509,12 +550,15 @@ describe('Notation guides', () => {
     render(
       <MemoryRouter initialEntries={['/fr/notations/3x3']}>
         <Routes>
-          <Route path="/fr/notations/:puzzleId" element={<NotationGuidePage />} />
+          <Route path='/fr/notations/:puzzleId' element={<NotationGuidePage />} />
         </Routes>
       </MemoryRouter>,
     )
 
-    expect(screen.getByRole('link', { name: 'Square-1' })).toHaveAttribute('href', '/fr/notations/square-1/')
+    expect(screen.getByRole('link', { name: 'Square-1' })).toHaveAttribute(
+      'href',
+      '/fr/notations/square-1/',
+    )
   })
 })
 
@@ -522,20 +566,19 @@ function renderWithRoute(path: string) {
   return render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
-        <Route path="/notations/:puzzleId" element={<NotationGuidePage />} />
+        <Route path='/notations/:puzzleId' element={<NotationGuidePage />} />
       </Routes>
     </MemoryRouter>,
   )
 }
 
 async function renderWithLoadedVisualization(path: string) {
-  vi.useFakeTimers()
   const rendered = renderWithRoute(path)
+  const loadButton = screen.queryByRole('button', { name: 'Preparing visualization' })
 
-  await act(async () => {
-    await vi.advanceTimersByTimeAsync(notationVisualizationAutoLoadDelayMs)
-  })
-  vi.useRealTimers()
+  if (loadButton !== null) {
+    await userEvent.click(loadButton)
+  }
 
   return rendered
 }

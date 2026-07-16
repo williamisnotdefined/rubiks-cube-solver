@@ -1,4 +1,9 @@
-import type { AnalyzeScanFaceResponse, ScanSessionFaceRequest } from '@api/scan'
+import {
+  buildScanSessionFaces,
+  type AnalyzeScanFaceResponse,
+  type VisualScanFace,
+  type VisualScanSticker,
+} from '@api/scan'
 import type { ScanFaceSymbol, ScanFacesPayload } from '@api/solver/types'
 import type { ScanCaptureSource } from '../scanCapture'
 import { assignTileDetectionsToReviewGrid } from '../scanTileDetections'
@@ -85,9 +90,9 @@ export type ScanFaceDefinition = {
 }
 
 export type ScanFaceDraftValidation =
-  | { key: 'confirmAllNineColors' }
+  | { key: 'confirmAllColors' }
   | { key: 'centerColorMismatch' }
-  | { key: 'colorAppearsMoreThanNine'; values: { symbol: ScanFaceSymbol } }
+  | { key: 'colorAppearsMoreThanCount'; values: { symbol: ScanFaceSymbol } }
 
 type StickerCandidate = {
   score: number
@@ -99,8 +104,6 @@ type FlexibleStickerAssignment = {
   faceSymbol: ScanFaceSymbol
   index: number
 }
-
-type ScanSessionReviewedSticker = NonNullable<ScanSessionFaceRequest['reviewedStickers']>[number]
 
 export const scanFaceOrder = [
   {
@@ -141,7 +144,14 @@ export const scanFaceOrder = [
   },
 ] as const satisfies readonly ScanFaceDefinition[]
 
-export const scanSymbols = ['U', 'R', 'F', 'D', 'L', 'B'] as const satisfies readonly ScanFaceSymbol[]
+export const scanSymbols = [
+  'U',
+  'R',
+  'F',
+  'D',
+  'L',
+  'B',
+] as const satisfies readonly ScanFaceSymbol[]
 export const scan3StickersPerFace = 9
 export const scan2StickersPerFace = 4
 
@@ -160,7 +170,10 @@ export const scanSymbolDetails: Record<
 const lowConfidenceThreshold = 0.3
 const detectedOverwriteConfidenceMargin = 0.03
 
-export function createEmptyScanStickers(centerSymbol: ScanFaceSymbol, stickersPerFace = scan3StickersPerFace): ScanSticker[] {
+export function createEmptyScanStickers(
+  centerSymbol: ScanFaceSymbol,
+  stickersPerFace = scan3StickersPerFace,
+): ScanSticker[] {
   const centerIndex = scanCenterIndex(stickersPerFace)
   return Array.from({ length: stickersPerFace }, (_, index) =>
     centerIndex !== undefined && index === centerIndex
@@ -169,7 +182,9 @@ export function createEmptyScanStickers(centerSymbol: ScanFaceSymbol, stickersPe
   )
 }
 
-export function createInitialScanFaceDrafts(stickersPerFace = scan3StickersPerFace): ScanFaceDrafts {
+export function createInitialScanFaceDrafts(
+  stickersPerFace = scan3StickersPerFace,
+): ScanFaceDrafts {
   return Object.fromEntries(
     scanFaceOrder.map(({ symbol }) => [
       symbol,
@@ -182,8 +197,13 @@ export function createInitialScanFaceDrafts(stickersPerFace = scan3StickersPerFa
   ) as ScanFaceDrafts
 }
 
-export function isScanFaceComplete(stickers: readonly ScanSticker[], stickersPerFace = scan3StickersPerFace): boolean {
-  return stickers.length === stickersPerFace && stickers.every((sticker) => sticker.symbol !== undefined)
+export function isScanFaceComplete(
+  stickers: readonly ScanSticker[],
+  stickersPerFace = scan3StickersPerFace,
+): boolean {
+  return (
+    stickers.length === stickersPerFace && stickers.every((sticker) => sticker.symbol !== undefined)
+  )
 }
 
 export function validateScanFaceDraft(
@@ -193,7 +213,7 @@ export function validateScanFaceDraft(
   stickersPerFace = scan3StickersPerFace,
 ): ScanFaceDraftValidation | undefined {
   if (!isScanFaceComplete(stickers, stickersPerFace)) {
-    return { key: 'confirmAllNineColors' }
+    return { key: 'confirmAllColors' }
   }
 
   const centerIndex = scanCenterIndex(stickersPerFace)
@@ -208,14 +228,20 @@ export function validateScanFaceDraft(
   const counts = countScanSymbols(nextFaces)
   const overflowSymbol = scanSymbols.find((scanSymbol) => counts[scanSymbol] > stickersPerFace)
 
-  if (overflowSymbol !== undefined && balancedScanFaceSymbols(nextFaces, stickersPerFace) === undefined) {
-    return { key: 'colorAppearsMoreThanNine', values: { symbol: overflowSymbol } }
+  if (
+    overflowSymbol !== undefined &&
+    balancedScanFaceSymbols(nextFaces, stickersPerFace) === undefined
+  ) {
+    return { key: 'colorAppearsMoreThanCount', values: { symbol: overflowSymbol } }
   }
 
   return undefined
 }
 
-export function scanFacesToPayload(faces: ScanFaces, stickersPerFace = scan3StickersPerFace): ScanFacesPayload | undefined {
+export function scanFacesToPayload(
+  faces: ScanFaces,
+  stickersPerFace = scan3StickersPerFace,
+): ScanFacesPayload | undefined {
   if (!allScanFacesComplete(faces, stickersPerFace)) {
     return undefined
   }
@@ -264,8 +290,8 @@ export function scanFacesFromDrafts(drafts: ScanFaceDrafts): ScanFaces {
 export function scanSessionFacesFromDrafts(
   drafts: ScanFaceDrafts,
   stickersPerFace = scan3StickersPerFace,
-): ScanSessionFaceRequest[] | undefined {
-  const faces: ScanSessionFaceRequest[] = []
+): ReturnType<typeof buildScanSessionFaces> | undefined {
+  const faces: VisualScanFace[] = []
 
   for (const { symbol } of scanFaceOrder) {
     const draft = drafts[symbol]
@@ -274,31 +300,29 @@ export function scanSessionFacesFromDrafts(
     }
 
     const centerIndex = scanCenterIndex(stickersPerFace)
-    const reviewedStickers = orientScanFaceReviewedStickers(symbol, draft.stickers)
-    const manualOverrides: Partial<Record<number, ScanFaceSymbol>> = {}
-    for (const sticker of reviewedStickers) {
-      if (
-        sticker.symbol !== undefined &&
-        ((centerIndex === undefined || sticker.index !== centerIndex) && sticker.source === 'manual' ||
-          (centerIndex !== undefined && sticker.index === centerIndex && draft.centerOverrideConfirmed === true))
-      ) {
-        manualOverrides[sticker.index] = sticker.symbol
-      }
-    }
+    const visualStickers = draft.stickers.map((sticker, index) => ({
+      confidence: sticker.confidence,
+      source:
+        centerIndex !== undefined && index === centerIndex && draft.centerOverrideConfirmed !== true
+          ? 'detected'
+          : sticker.source,
+      symbol: sticker.symbol as ScanFaceSymbol,
+    }))
+    const allManuallyReviewed = draft.stickers.every(isManuallyReviewedSticker)
 
     faces.push({
-      clientRotation: reviewedStickers.every(isManuallyReviewedSticker) ? 0 : undefined,
+      canonicalFace: symbol,
+      clientRotation: allManuallyReviewed ? 0 : undefined,
       expectedTop: expectedTopForScanFace(symbol),
-      manualOverrides: Object.keys(manualOverrides).length > 0 ? manualOverrides : undefined,
-      reviewedStickers,
-      symbol,
+      rotation: canonicalRotationForVisualFace(symbol),
+      stickers: visualStickers,
     })
   }
 
-  return faces
+  return buildScanSessionFaces(faces)
 }
 
-function isManuallyReviewedSticker(sticker: ScanSessionReviewedSticker): boolean {
+function isManuallyReviewedSticker(sticker: Pick<VisualScanSticker, 'source'>): boolean {
   return sticker.source === 'manual' || sticker.source === 'center'
 }
 
@@ -419,7 +443,9 @@ export function scanStickersFromAnalysis(
   stickersPerFace = scan3StickersPerFace,
 ): ScanSticker[] {
   const stickers = createEmptyScanStickers(centerSymbol, stickersPerFace)
-  const analyzedStickersByIndex = new Map(analysis.stickers.map((sticker) => [sticker.index, sticker]))
+  const analyzedStickersByIndex = new Map(
+    analysis.stickers.map((sticker) => [sticker.index, sticker]),
+  )
   const assignedTiles = assignTileDetectionsToReviewGrid(analysis.tileDetections, {
     gridSize: stickersPerFace === scan2StickersPerFace ? 2 : 3,
   })
@@ -428,7 +454,10 @@ export function scanStickersFromAnalysis(
   for (let index = 0; index < stickersPerFace; index += 1) {
     const analyzedSticker = analyzedStickersByIndex.get(index)
     const assignedTile = assignedTiles?.[index]
-    const symbol = centerIndex !== undefined && index === centerIndex ? centerSymbol : assignedTile?.symbol ?? analyzedSticker?.symbol
+    const symbol =
+      centerIndex !== undefined && index === centerIndex
+        ? centerSymbol
+        : (assignedTile?.symbol ?? analyzedSticker?.symbol)
 
     if (symbol === undefined) {
       continue
@@ -439,7 +468,7 @@ export function scanStickersFromAnalysis(
       confidence:
         centerIndex !== undefined && index === centerIndex
           ? 1
-          : assignedTile?.confidence ?? analyzedSticker!.confidence,
+          : (assignedTile?.confidence ?? analyzedSticker!.confidence),
       rgb: analyzedSticker?.rgb,
       source: centerIndex !== undefined && index === centerIndex ? 'center' : 'detected',
       symbol,
@@ -456,16 +485,25 @@ export function scanStickersFromTemporalConsensus(
   stickersPerFace = scan3StickersPerFace,
 ): ScanSticker[] {
   const stickers = createEmptyScanStickers(centerSymbol, stickersPerFace)
-  const analyzedStickersByIndex = new Map(analysis?.stickers.map((sticker) => [sticker.index, sticker]))
+  const analyzedStickersByIndex = new Map(
+    analysis?.stickers.map((sticker) => [sticker.index, sticker]),
+  )
   const centerIndex = scanCenterIndex(stickersPerFace)
 
   for (const consensusSticker of consensus.stickers) {
-    if (consensusSticker.index < 0 || consensusSticker.index >= stickersPerFace || consensusSticker.symbol === undefined) {
+    if (
+      consensusSticker.index < 0 ||
+      consensusSticker.index >= stickersPerFace ||
+      consensusSticker.symbol === undefined
+    ) {
       continue
     }
 
     const analyzedSticker = analyzedStickersByIndex.get(consensusSticker.index)
-    const symbol = centerIndex !== undefined && consensusSticker.index === centerIndex ? centerSymbol : consensusSticker.symbol
+    const symbol =
+      centerIndex !== undefined && consensusSticker.index === centerIndex
+        ? centerSymbol
+        : consensusSticker.symbol
     const alternatives = consensusSticker.alternatives
       .filter((alternative) => alternative.symbol !== symbol)
       .map((alternative) => ({
@@ -475,9 +513,13 @@ export function scanStickersFromTemporalConsensus(
 
     stickers[consensusSticker.index] = {
       alternatives: alternatives.length > 0 ? alternatives : undefined,
-      confidence: centerIndex !== undefined && consensusSticker.index === centerIndex ? 1 : consensusSticker.confidence,
+      confidence:
+        centerIndex !== undefined && consensusSticker.index === centerIndex
+          ? 1
+          : consensusSticker.confidence,
       rgb: analyzedSticker?.rgb,
-      source: centerIndex !== undefined && consensusSticker.index === centerIndex ? 'center' : 'detected',
+      source:
+        centerIndex !== undefined && consensusSticker.index === centerIndex ? 'center' : 'detected',
       symbol,
     }
   }
@@ -597,17 +639,22 @@ function scanFaceSymbolsFromFaces(
   return faceSymbols
 }
 
-function balancedScanFaceSymbols(faces: ScanFaces, stickersPerFace: number): Partial<Record<ScanFaceSymbol, ScanFaceSymbol[]>> | undefined {
+function balancedScanFaceSymbols(
+  faces: ScanFaces,
+  stickersPerFace: number,
+): Partial<Record<ScanFaceSymbol, ScanFaceSymbol[]>> | undefined {
   const assignments: Partial<Record<ScanFaceSymbol, ScanFaceSymbol[]>> = {}
-  const quotas = Object.fromEntries(scanSymbols.map((symbol) => [symbol, stickersPerFace])) as Record<
-    ScanFaceSymbol,
-    number
-  >
+  const quotas = Object.fromEntries(
+    scanSymbols.map((symbol) => [symbol, stickersPerFace]),
+  ) as Record<ScanFaceSymbol, number>
   const flexibleStickers: FlexibleStickerAssignment[] = []
 
   for (const face of Object.values(faces)) {
     const completedFace = face!
-    assignments[completedFace.symbol] = Array.from({ length: stickersPerFace }, () => completedFace.symbol)
+    assignments[completedFace.symbol] = Array.from(
+      { length: stickersPerFace },
+      () => completedFace.symbol,
+    )
 
     for (const [index, sticker] of completedFace.stickers.entries()) {
       if (sticker.source === 'manual' || sticker.source === 'center') {
@@ -629,10 +676,7 @@ function balancedScanFaceSymbols(faces: ScanFaces, stickersPerFace: number): Par
     return undefined
   }
 
-  const flexibleSymbols = assignFlexibleStickerSymbols(
-    flexibleStickers,
-    quotas,
-  )
+  const flexibleSymbols = assignFlexibleStickerSymbols(flexibleStickers, quotas)
   if (flexibleSymbols === undefined) {
     return undefined
   }
@@ -651,7 +695,10 @@ function scanStickerCandidates(sticker: ScanSticker): StickerCandidate[] {
   scores.set(sticker.symbol!, sticker.confidence + 0.04)
 
   for (const alternative of sticker.alternatives ?? []) {
-    scores.set(alternative.symbol, Math.max(scores.get(alternative.symbol) ?? 0, alternative.confidence))
+    scores.set(
+      alternative.symbol,
+      Math.max(scores.get(alternative.symbol) ?? 0, alternative.confidence),
+    )
   }
 
   return [...scores.entries()]
@@ -740,24 +787,8 @@ function orientScanFaceSymbols(
   return faceSymbols.slice()
 }
 
-function orientScanFaceReviewedStickers(
-  symbol: ScanFaceSymbol,
-  stickers: readonly ScanSticker[],
-): ScanSessionReviewedSticker[] {
-  return orientScanFaceItems(symbol, stickers).map((sticker, index) => ({
-    confidence: sticker.confidence,
-    index,
-    source: sticker.source,
-    symbol: sticker.symbol as ScanFaceSymbol,
-  }))
-}
-
-function orientScanFaceItems<T>(symbol: ScanFaceSymbol, items: readonly T[]): T[] {
-  if (symbol === 'U') {
-    return rotateFaceSymbols180(items)
-  }
-
-  return items.slice()
+export function canonicalRotationForVisualFace(symbol: ScanFaceSymbol): 0 | 180 {
+  return symbol === 'U' ? 180 : 0
 }
 
 export function expectedTopForScanFace(symbol: ScanFaceSymbol): ScanFaceSymbol {
@@ -766,12 +797,7 @@ export function expectedTopForScanFace(symbol: ScanFaceSymbol): ScanFaceSymbol {
 
 function rotateFaceSymbols180<T>(faceSymbols: readonly T[]): T[] {
   if (faceSymbols.length === scan2StickersPerFace) {
-    return [
-      faceSymbols[3],
-      faceSymbols[2],
-      faceSymbols[1],
-      faceSymbols[0],
-    ]
+    return [faceSymbols[3], faceSymbols[2], faceSymbols[1], faceSymbols[0]]
   }
 
   return [

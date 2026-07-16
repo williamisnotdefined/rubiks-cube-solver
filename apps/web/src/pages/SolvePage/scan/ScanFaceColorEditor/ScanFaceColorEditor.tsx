@@ -24,7 +24,10 @@ export function ScanFaceColorEditor({
   const selectedSymbol = stickers[selectedStickerIndex]?.symbol
 
   function handleColorSelect(symbol: ScanFaceSymbol) {
-    onStickerColorChange(selectedStickerIndex, centerIndex !== undefined && selectedStickerIndex === centerIndex ? centerSymbol : symbol)
+    onStickerColorChange(
+      selectedStickerIndex,
+      centerIndex !== undefined && selectedStickerIndex === centerIndex ? centerSymbol : symbol,
+    )
   }
 
   return (

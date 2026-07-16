@@ -1,6 +1,6 @@
 import { apiRequest } from '@api/client'
-import type { HealthResponse } from '../../types'
+import { parseHealthResponse } from '../../types/validation'
 
-export function getHealth() {
-  return apiRequest<HealthResponse>('/health')
+export async function getHealth(signal?: AbortSignal) {
+  return parseHealthResponse(await apiRequest<unknown>('/health', { signal }))
 }

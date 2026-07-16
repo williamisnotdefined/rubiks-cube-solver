@@ -42,6 +42,7 @@
     },
     "table": {
       "algorithm": "Algorithm",
+      "caption": "{{name}} algorithm cases",
       "case": "Case",
       "name": "Name",
       "source": "Source"
@@ -269,8 +270,8 @@
             "title": "Last-layer corners"
           },
           "lastLayerEdges": {
-            "body": "Orient and permute the final edges. Some 3x3 last-layer ideas transfer, but the five-edge layout changes the cases."
-            ,"title": "Last-layer edges"
+            "body": "Orient and permute the final edges. Some 3x3 last-layer ideas transfer, but the five-edge layout changes the cases.",
+            "title": "Last-layer edges"
           },
           "s2l": {
             "body": "Continue around the puzzle with corner-edge pairs. The method feels like extended F2L with more slots and more color tracking.",
@@ -554,8 +555,8 @@
             "title": "EOLine or EOCross"
           },
           "lastLayer": {
-            "body": "Finish with a last-layer system that benefits from oriented edges: OCLL plus PLL, COLL plus EPLL, or eventually ZBLL."
-            ,"title": "Last layer"
+            "body": "Finish with a last-layer system that benefits from oriented edges: OCLL plus PLL, COLL plus EPLL, or eventually ZBLL.",
+            "title": "Last layer"
           },
           "zzF2l": {
             "body": "Complete F2L mostly with R, U, and L moves. Edge orientation reduces cases and keeps the cube grip stable.",
@@ -655,6 +656,68 @@
     "retry": "Try again",
     "title": "Something went wrong"
   },
+  "worldRecords": {
+    "kicker": "Records and Data",
+    "description": "WCA world leaderboard records enriched with athlete, competition, result attempts, and official scramble candidates.",
+    "dataset": "Dataset: {{date}}",
+    "loadError": "Could not load world records from the WCA Data API.",
+    "moves": "{{count}} moves",
+    "unknown": "Unknown",
+    "filters": {
+      "search": "Search",
+      "searchPlaceholder": "Athlete, WCA ID, country",
+      "event": "Event",
+      "type": "Type",
+      "reset": "Reset"
+    },
+    "types": { "all": "All types", "single": "Single", "average": "Average" },
+    "table": {
+      "caption": "WCA world records matching the selected filters",
+      "rank": "Rank",
+      "athlete": "Athlete",
+      "result": "Result",
+      "type": "Type",
+      "competition": "Competition",
+      "scramble": "Scramble",
+      "empty": "No world records matched these filters."
+    },
+    "pagination": {
+      "label": "World records pagination",
+      "rowsOption": "{{count}} rows",
+      "rowsPerPage": "Rows per page",
+      "pageOf": "Page {{current}} of {{total}}",
+      "first": "First page",
+      "previous": "Previous page",
+      "next": "Next page",
+      "last": "Last page",
+      "page": "Page {{page}}"
+    },
+    "scramble": {
+      "unavailable": "Unavailable",
+      "candidates": "{{count}} candidates",
+      "candidateLabel": "Group {{group}} · Scramble {{number}}",
+      "exactDescription": "This result maps to one official scramble in the WCA export.",
+      "ambiguousDescription": "The WCA export does not include athlete group assignment, so these are candidate scrambles for the selected result.",
+      "unavailableDescription": "No official scramble candidate could be linked from the export."
+    },
+    "athlete": {
+      "unknownCountry": "Unknown country",
+      "competitions": "Competitions",
+      "solves": "Solves",
+      "records": "Records",
+      "medals": "Medals",
+      "selectedResult": "Selected leaderboard result",
+      "worldRank": "World #{{rank}}",
+      "continentRank": "Continent #{{rank}}",
+      "countryRank": "Country #{{rank}}",
+      "competitionUnavailable": "Competition details are unavailable.",
+      "attemptsUnavailable": "Attempt details are unavailable.",
+      "unknownRound": "Unknown round",
+      "unknownFormat": "Unknown format",
+      "scrambleEvidence": "Scramble evidence",
+      "openProfile": "Open WCA profile"
+    }
+  },
   "navigation": {
     "allAlgorithms": "All algorithms",
     "algorithms": "Algorithms",
@@ -706,6 +769,7 @@
       "preparingVisualization": "Preparing visualization",
       "reset": "Reset",
       "underConstruction": "Under construction",
+      "title": "{{puzzle}} notation",
       "visualizationLabel": "{{puzzle}} notation visualization"
     }
   },
@@ -1075,6 +1139,7 @@
       }
     },
     "form": {
+      "formLabel": "Solve puzzle",
       "maxMoves": "Max moves",
       "maxNodesMillion": "Max nodes (M)",
       "puzzle": "Puzzle",
@@ -1093,6 +1158,8 @@
       "solved": " solved"
     },
     "result": {
+      "movesLabel": "Solution moves",
+      "regionLabel": "Solve result",
       "foundIn": "response in {{elapsed}}",
       "seeMore": "see more",
       "solved": "Solved",

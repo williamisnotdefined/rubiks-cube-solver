@@ -12,15 +12,27 @@ export function scanColorInitial(t: TFunction, symbol: ScanFaceSymbol): string {
   return scanColorCode(symbol)
 }
 
-export function scanFaceLabel(t: TFunction, symbol: ScanFaceSymbol, stickersPerFace?: number): string {
+export function scanFaceLabel(
+  t: TFunction,
+  symbol: ScanFaceSymbol,
+  stickersPerFace?: number,
+): string {
   return t(`${scanFaceTranslationNamespace(stickersPerFace)}.${symbol}.label`)
 }
 
-export function scanFaceInstruction(t: TFunction, symbol: ScanFaceSymbol, stickersPerFace?: number): string {
+export function scanFaceInstruction(
+  t: TFunction,
+  symbol: ScanFaceSymbol,
+  stickersPerFace?: number,
+): string {
   return t(`${scanFaceTranslationNamespace(stickersPerFace)}.${symbol}.instruction`)
 }
 
-export function scanFaceTopLabel(t: TFunction, symbol: ScanFaceSymbol, stickersPerFace?: number): string {
+export function scanFaceTopLabel(
+  t: TFunction,
+  symbol: ScanFaceSymbol,
+  stickersPerFace?: number,
+): string {
   return t(`${scanFaceTranslationNamespace(stickersPerFace)}.${symbol}.top`)
 }
 
@@ -31,16 +43,25 @@ function scanFaceTranslationNamespace(stickersPerFace: number | undefined): stri
 export function scanFaceDraftValidationMessage(
   t: TFunction,
   validation: ScanFaceDraftValidation | undefined,
+  stickersPerFace = 9,
 ): string | undefined {
   if (validation === undefined) {
     return undefined
   }
 
-  if (validation.key === 'colorAppearsMoreThanNine') {
+  if (validation.key === 'colorAppearsMoreThanCount') {
     return t('scan.validation.colorAppearsMoreThanNine', {
       color: scanColorLabel(t, validation.values.symbol),
-    })
+    }).replaceAll('9', String(stickersPerFace))
+  }
+
+  if (validation.key === 'confirmAllColors') {
+    return t('scan.validation.confirmAllNineColors').replaceAll('9', String(stickersPerFace))
   }
 
   return t(`scan.validation.${validation.key}`)
+}
+
+export function scanConfirmAllFacesMessage(t: TFunction, stickersPerFace: number): string {
+  return t('scan.messages.confirmAllFaces').replaceAll('9', String(stickersPerFace))
 }

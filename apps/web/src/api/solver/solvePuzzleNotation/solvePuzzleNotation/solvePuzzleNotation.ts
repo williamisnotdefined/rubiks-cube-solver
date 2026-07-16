@@ -1,5 +1,6 @@
 import { postJsonResponse } from '@api/client'
-import type { ApiSolveResponse, SolvePuzzleNotationVariables } from '../../types'
+import type { SolvePuzzleNotationVariables } from '../../types'
+import { parseApiSolveResponse } from '../../types/validation'
 import { normalizeSolveResponse } from '../../solveNotation/normalizeSolveResponse'
 
 export async function solvePuzzleNotation({
@@ -7,7 +8,7 @@ export async function solvePuzzleNotation({
   notation,
   puzzleSlug,
 }: SolvePuzzleNotationVariables) {
-  const result = await postJsonResponse<ApiSolveResponse>(
+  const result = await postJsonResponse<unknown>(
     `/puzzles/${encodeURIComponent(puzzleSlug)}/solve`,
     {
       input: {
@@ -23,5 +24,9 @@ export async function solvePuzzleNotation({
     },
   )
 
-  return normalizeSolveResponse(result.payload, result.httpOk, result.requestElapsedMs)
+  return normalizeSolveResponse(
+    parseApiSolveResponse(result.payload),
+    result.httpOk,
+    result.requestElapsedMs,
+  )
 }

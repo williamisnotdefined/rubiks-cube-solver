@@ -1,7 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import { algorithmSetSummaries } from '@pages/AlgorithmsPage/sets/algorithmSetMetadata'
 import { cubingSites } from '@pages/CubingSitesPage/sites'
-import { getSeoMetadata, localeFromPathname, localizedPath, prefixedSeoLocales, stripLocalePrefix } from '../routes'
+import {
+  appRouteManifest,
+  getSeoMetadata,
+  isSeoIndexablePath,
+  localeFromPathname,
+  localizedPath,
+  prefixedSeoLocales,
+  routableStaticPaths,
+  seoIndexablePaths,
+  stripLocalePrefix,
+} from '../routes'
 
 describe('SEO route metadata', () => {
   it('uses en-US for unprefixed routes and route prefixes for every indexed locale', () => {
@@ -9,7 +19,9 @@ describe('SEO route metadata', () => {
 
     for (const locale of prefixedSeoLocales) {
       expect(localeFromPathname(localizedPath('/solve', locale))).toBe(locale)
-      expect(stripLocalePrefix(localizedPath('/algoritmos/3x3/oll', locale))).toBe('/algoritmos/3x3/oll')
+      expect(stripLocalePrefix(localizedPath('/algoritmos/3x3/oll', locale))).toBe(
+        '/algoritmos/3x3/oll',
+      )
     }
   })
 
@@ -42,13 +54,26 @@ describe('SEO route metadata', () => {
     expect(metadata.canonicalUrl).toBe('https://speedcube.com.br/sites/')
     expect(metadata.title).toContain('Cubing Websites')
     expect(metadata.itemList).toHaveLength(cubingSites.length)
-    expect(metadata.itemList).toEqual(cubingSites.map((site) => ({ name: site.name, path: site.url })))
-    expect(metadata.itemList?.[0]).toEqual({ name: 'World Cube Association', path: 'https://www.worldcubeassociation.org/' })
+    expect(metadata.itemList).toEqual(
+      cubingSites.map((site) => ({ name: site.name, path: site.url })),
+    )
+    expect(metadata.itemList?.[0]).toEqual({
+      name: 'World Cube Association',
+      path: 'https://www.worldcubeassociation.org/',
+    })
     expect(metadata.noindex).toBe(false)
   })
 
   it('keeps indexable routes indexable when the server adds trailing slashes', () => {
-    for (const pathname of ['/solve/', '/timer/', '/channels/', '/sites/', '/pt-BR/solve/', '/pt-BR/timer/', '/pt-BR/sites/']) {
+    for (const pathname of [
+      '/solve/',
+      '/timer/',
+      '/channels/',
+      '/sites/',
+      '/pt-BR/solve/',
+      '/pt-BR/timer/',
+      '/pt-BR/sites/',
+    ]) {
       const metadata = getSeoMetadata(pathname)
 
       expect(metadata.noindex).toBe(false)
@@ -72,4 +97,49 @@ describe('SEO route metadata', () => {
     expect(metadata.noindex).toBe(true)
     expect(metadata.title).toContain('Pagina no encontrada')
   })
+
+  it('uses the runtime manifest as the source of indexable route families', () => {
+    const manifestPaths = appRouteManifest
+      .filter((route) => route.indexable)
+      .map((route) => route.path)
+
+    expect(manifestPaths).toContain('/solve')
+    expect(manifestPaths).toContain('/notations/:puzzleId')
+    expect(
+      seoIndexablePaths.every((path) =>
+        manifestPaths.some((route) => routeMatchesPath(route, path)),
+      ),
+    ).toBe(true)
+  })
+
+  it('excludes redirects, untranslated records, and incomplete pages from indexing', () => {
+    for (const path of [
+      '/api/wca-data',
+      '/records/world',
+      '/notations/skewb',
+      '/notations/clock',
+    ]) {
+      expect(isSeoIndexablePath(path)).toBe(false)
+      expect(getSeoMetadata(path).noindex).toBe(true)
+    }
+  })
+
+  it('keeps valid noindex pages in the routable static manifest', () => {
+    for (const path of ['/records/world', '/notations/skewb', '/notations/clock']) {
+      expect(routableStaticPaths).toContain(path)
+      expect(seoIndexablePaths).not.toContain(path)
+    }
+  })
 })
+
+function routeMatchesPath(route: string, path: string): boolean {
+  const routeSegments = route.split('/').filter(Boolean)
+  const pathSegments = path.split('/').filter(Boolean)
+
+  return (
+    routeSegments.length === pathSegments.length &&
+    routeSegments.every(
+      (segment, index) => segment.startsWith(':') || segment === pathSegments[index],
+    )
+  )
+}

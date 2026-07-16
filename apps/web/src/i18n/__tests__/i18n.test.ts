@@ -68,7 +68,9 @@ describe('i18n language support', () => {
       throw new Error('supportedLngs should list project languages')
     }
 
-    expect(configuredLanguages.filter((language) => language !== 'cimode')).toEqual([...supportedLanguages])
+    expect(configuredLanguages.filter((language) => language !== 'cimode')).toEqual([
+      ...supportedLanguages,
+    ])
 
     for (const language of supportedLanguages) {
       await ensureLanguageResources(language)
@@ -83,7 +85,9 @@ describe('i18n language support', () => {
 
     for (const language of supportedLanguages) {
       await ensureLanguageResources(language)
-      expect(resourceKeyPaths(i18n.getResourceBundle(language, 'translation'))).toEqual(fallbackKeys)
+      expect(resourceKeyPaths(i18n.getResourceBundle(language, 'translation'))).toEqual(
+        fallbackKeys,
+      )
     }
   })
 })

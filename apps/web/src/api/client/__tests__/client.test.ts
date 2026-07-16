@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   ApiRequestError,
+  ApiResponseParseError,
   apiJsonResponse,
   apiRequest,
   apiUrl,
@@ -94,10 +95,14 @@ describe('api client', () => {
       }),
     )
 
-    await postJsonResponse('/scan/analyze-face', { image: 'scan' }, {
-      headers: { 'x-scan-preview': '1' },
-      signal: controller.signal,
-    })
+    await postJsonResponse(
+      '/scan/analyze-face',
+      { image: 'scan' },
+      {
+        headers: { 'x-scan-preview': '1' },
+        signal: controller.signal,
+      },
+    )
     const [, init] = fetchMock.mock.calls[0]
 
     expect(init?.signal).toBe(controller.signal)
@@ -122,7 +127,7 @@ describe('api client', () => {
     } satisfies Partial<ApiRequestError>)
   })
 
-  it('keeps HTTP metadata for response helpers', async () => {
+  it('throws a typed parse error for non-JSON responses', async () => {
     vi.mocked(fetch).mockResolvedValue(
       new Response('not-json', {
         status: 503,
@@ -130,13 +135,37 @@ describe('api client', () => {
       }),
     )
 
-    await expect(postJsonResponse('/solve-notation', { moves: 'R' })).resolves.toMatchObject({
-      httpOk: false,
-      payload: undefined,
-      requestElapsedMs: expect.any(Number),
+    await expect(postJsonResponse('/solve-notation', { moves: 'R' })).rejects.toMatchObject({
+      name: 'ApiResponseParseError',
       status: 503,
       statusText: 'Service Unavailable',
-    })
+    } satisfies Partial<ApiResponseParseError>)
+  })
+
+  it('throws a typed parse error for invalid JSON on successful responses', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response('{invalid', {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+        statusText: 'OK',
+      }),
+    )
+
+    await expect(apiRequest('/health')).rejects.toBeInstanceOf(ApiResponseParseError)
+  })
+
+  it('passes abort signals to GET requests', async () => {
+    const controller = new AbortController()
+    const fetchMock = vi
+      .mocked(fetch)
+      .mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }))
+
+    await apiRequest('/health', { signal: controller.signal })
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:8787/health',
+      expect.objectContaining({ signal: controller.signal }),
+    )
   })
 
   it('falls back to Date.now when performance timing is unavailable', async () => {

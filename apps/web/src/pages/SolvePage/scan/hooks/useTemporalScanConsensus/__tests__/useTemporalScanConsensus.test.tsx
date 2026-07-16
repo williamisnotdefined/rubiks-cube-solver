@@ -26,10 +26,10 @@ describe('useTemporalScanConsensus', () => {
   it('resets when the expected center changes', () => {
     const { rerender, result } = renderHook(
       ({ expectedCenter }) =>
-      useTemporalScanConsensus({
-        enabled: true,
-        expectedCenter,
-      }),
+        useTemporalScanConsensus({
+          enabled: true,
+          expectedCenter,
+        }),
       { initialProps: { expectedCenter: 'U' as ScanFaceSymbol } },
     )
 

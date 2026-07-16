@@ -1,6 +1,10 @@
 import { wcaDataApiRequest } from '@api/client'
-import type { WcaDataItemResponse, WcaPersonProfile } from '../../types'
+import { parseWcaPersonProfileResponse } from '../../validation'
 
-export function getWcaPersonProfile(personId: string) {
-  return wcaDataApiRequest<WcaDataItemResponse<WcaPersonProfile>>(`/persons/${encodeURIComponent(personId)}/profile`)
+export async function getWcaPersonProfile(personId: string, signal?: AbortSignal) {
+  return parseWcaPersonProfileResponse(
+    await wcaDataApiRequest<unknown>(`/persons/${encodeURIComponent(personId)}/profile`, {
+      signal,
+    }),
+  )
 }

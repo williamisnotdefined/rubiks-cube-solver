@@ -43,68 +43,61 @@ export function SolveDetailsModal({ result, onClose }: SolveDetailsModalProps) {
   })
 
   return (
-    <Dialog open onOpenChange={(open) => {
-      if (!open) {
-        onClose()
-      }
-    }}>
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) {
+          onClose()
+        }
+      }}
+    >
       <DialogContent
-        className="left-1/2 top-1/2 max-h-[calc(100vh-3rem)] w-[calc(100vw-1.5rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-auto border bg-card p-4 text-left text-card-foreground shadow-lg sm:w-[calc(100vw-3rem)] sm:p-6"
-        overlayClassName="backdrop-blur-sm"
+        className='left-1/2 top-1/2 max-h-[calc(100vh-3rem)] w-[calc(100vw-1.5rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-auto border bg-card p-4 text-left text-card-foreground shadow-lg sm:w-[calc(100vw-3rem)] sm:p-6'
+        overlayClassName='backdrop-blur-sm'
         overlayLabel={t('solve.details.dismiss')}
       >
-        <div className="flex items-start justify-between gap-4">
-          <div className="grid gap-1">
+        <div className='flex items-start justify-between gap-4'>
+          <div className='grid gap-1'>
             <DialogTitle asChild>
-              <h2 className="text-lg font-semibold tracking-tight">
-                {t('solve.details.title')}
-              </h2>
+              <h2 className='text-lg font-semibold tracking-tight'>{t('solve.details.title')}</h2>
             </DialogTitle>
             <DialogDescription asChild>
-              <p className="text-sm text-muted-foreground">
-                {t('solve.details.subtitle')}
-              </p>
+              <p className='text-sm text-muted-foreground'>{t('solve.details.subtitle')}</p>
             </DialogDescription>
           </div>
-          <Button size="sm" type="button" variant="secondary" onClick={onClose}>
+          <Button size='sm' type='button' variant='secondary' onClick={onClose}>
             {t('common.close')}
           </Button>
         </div>
 
-        <dl className="mt-5 grid gap-2 text-sm sm:grid-cols-3">
-          <div className="rounded-lg border bg-muted/40 p-3">
-            <dt className="font-medium text-muted-foreground">{t('solve.details.solution')}</dt>
-            <dd className="mt-1 font-mono text-chart-2">{movesLabel}</dd>
+        <dl className='mt-5 grid gap-2 text-sm sm:grid-cols-3'>
+          <div className='rounded-lg border bg-muted/40 p-3'>
+            <dt className='font-medium text-muted-foreground'>{t('solve.details.solution')}</dt>
+            <dd className='mt-1 font-mono text-chart-2'>{movesLabel}</dd>
           </div>
-          <div className="rounded-lg border bg-muted/40 p-3">
-            <dt className="font-medium text-muted-foreground">{t('solve.details.search')}</dt>
-            <dd className="mt-1 font-mono text-chart-2">{nodesLabel}</dd>
+          <div className='rounded-lg border bg-muted/40 p-3'>
+            <dt className='font-medium text-muted-foreground'>{t('solve.details.search')}</dt>
+            <dd className='mt-1 font-mono text-chart-2'>{nodesLabel}</dd>
           </div>
-          <div className="rounded-lg border bg-muted/40 p-3">
-            <dt className="font-medium text-muted-foreground">{t('solve.details.time')}</dt>
-            <dd className="mt-1 font-mono text-chart-2">{elapsedLabel}</dd>
+          <div className='rounded-lg border bg-muted/40 p-3'>
+            <dt className='font-medium text-muted-foreground'>{t('solve.details.time')}</dt>
+            <dd className='mt-1 font-mono text-chart-2'>{elapsedLabel}</dd>
           </div>
         </dl>
 
-        <div className="mt-5 overflow-hidden rounded-lg border">
-          <Table className="min-w-[44rem]">
+        <div className='mt-5 overflow-hidden rounded-lg border'>
+          <Table className='min-w-[44rem]'>
             <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead className="w-48">
-                  {t('solve.details.columns.text')}
-                </TableHead>
-                <TableHead>
-                  {t('solve.details.columns.meaning')}
-                </TableHead>
+              <TableRow className='bg-muted/50'>
+                <TableHead className='w-48'>{t('solve.details.columns.text')}</TableHead>
+                <TableHead>{t('solve.details.columns.meaning')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {detailRows.map((row) => (
                 <TableRow key={row.text}>
-                  <TableCell className="align-top font-mono text-chart-2">
-                    {row.text}
-                  </TableCell>
-                  <TableCell className="align-top leading-relaxed">{row.meaning}</TableCell>
+                  <TableCell className='align-top font-mono text-chart-2'>{row.text}</TableCell>
+                  <TableCell className='align-top leading-relaxed'>{row.meaning}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -163,10 +156,16 @@ function strategyMeaning(strategyId: string, t: ReturnType<typeof useTranslation
   return t('solve.strategies.meaningDefault')
 }
 
-function tableStatusLabel(status: GeneratedTableStatus, t: ReturnType<typeof useTranslation>['t']): string {
+function tableStatusLabel(
+  status: GeneratedTableStatus,
+  t: ReturnType<typeof useTranslation>['t'],
+): string {
   return t(`solve.details.tables.${status}.label`)
 }
 
-function tableStatusMeaning(status: GeneratedTableStatus, t: ReturnType<typeof useTranslation>['t']): string {
+function tableStatusMeaning(
+  status: GeneratedTableStatus,
+  t: ReturnType<typeof useTranslation>['t'],
+): string {
   return t(`solve.details.tables.${status}.meaning`)
 }

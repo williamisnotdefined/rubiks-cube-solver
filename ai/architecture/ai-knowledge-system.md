@@ -9,6 +9,20 @@
 - `glossary`: cube and solver vocabulary.
 - `skills`: task-oriented workflows that reference the other layers.
 
+## Authority
+
+Resolve contradictions in this order:
+
+1. Executable contracts: checked types and schemas, tests, build output, and runtime behavior.
+2. Accepted ADRs under `docs/adr`, with newer decisions superseding older decisions on the same subject.
+3. Architecture documents in `ai/architecture`.
+4. Rules in `ai/rules`.
+5. Skills in `ai/skills`.
+
+Executable behavior is not permission to preserve an accidental bug. When a task intentionally changes a contract, update the executable contract, affected ADR or architecture, rules, and routes in the same change. Skills only orchestrate references and verification.
+
+Normative terms follow RFC-style strength: **MUST** is required, **SHOULD** is the default and needs a documented concrete reason to deviate, and **MAY** is optional. Exceptions should be narrow, identify the affected boundary, and include verification.
+
 ## Registry
 
 `ai/registry.json` defines routed skills.

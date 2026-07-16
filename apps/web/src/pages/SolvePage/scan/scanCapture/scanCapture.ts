@@ -81,7 +81,14 @@ function captureScanFrame(
   jpegQuality: number,
   source: ScanCaptureSource,
 ): CapturedScanImage | undefined {
-  return captureSquareImage(video, video.videoWidth, video.videoHeight, maxImageSize, jpegQuality, source)
+  return captureSquareImage(
+    video,
+    video.videoWidth,
+    video.videoHeight,
+    maxImageSize,
+    jpegQuality,
+    source,
+  )
 }
 
 function captureSquareImage(
@@ -92,7 +99,6 @@ function captureSquareImage(
   jpegQuality: number,
   source: ScanCaptureSource,
 ): CapturedScanImage | undefined {
-
   if (width === 0 || height === 0) {
     return undefined
   }
@@ -134,7 +140,10 @@ function encodeCanvasJpeg(
     if (quality > 0.74) {
       quality = Math.max(0.72, quality - 0.08)
     } else if (workingCanvas.width > 640) {
-      workingCanvas = resizeCanvas(workingCanvas, Math.max(640, Math.floor(workingCanvas.width * 0.85)))
+      workingCanvas = resizeCanvas(
+        workingCanvas,
+        Math.max(640, Math.floor(workingCanvas.width * 0.85)),
+      )
       quality = 0.82
     } else {
       break
@@ -160,7 +169,17 @@ function resizeCanvas(sourceCanvas: HTMLCanvasElement, outputSize: number): HTML
     return sourceCanvas
   }
 
-  context.drawImage(sourceCanvas, 0, 0, sourceCanvas.width, sourceCanvas.height, 0, 0, outputSize, outputSize)
+  context.drawImage(
+    sourceCanvas,
+    0,
+    0,
+    sourceCanvas.width,
+    sourceCanvas.height,
+    0,
+    0,
+    outputSize,
+    outputSize,
+  )
 
   return canvas
 }

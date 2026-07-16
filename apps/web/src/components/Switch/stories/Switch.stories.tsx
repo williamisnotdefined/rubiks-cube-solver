@@ -16,8 +16,8 @@ function SwitchStory() {
   const [checked, setChecked] = useState(false)
 
   return (
-    <label className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.16em] text-app-text">
-      <Switch aria-label="Inspection" checked={checked} onCheckedChange={setChecked} />
+    <label className='flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.16em] text-app-text'>
+      <Switch aria-label='Inspection' checked={checked} onCheckedChange={setChecked} />
       Inspection
     </label>
   )

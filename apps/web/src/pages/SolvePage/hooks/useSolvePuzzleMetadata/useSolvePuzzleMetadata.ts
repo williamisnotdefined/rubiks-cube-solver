@@ -1,8 +1,4 @@
-import {
-  useGetHealth,
-  useGetPuzzleStrategies,
-  useGetPuzzles,
-} from '@api/solver'
+import { useGetHealth, useGetPuzzleStrategies, useGetPuzzles } from '@api/solver'
 import type { PuzzleDefinition } from '@api/solver/types'
 import type { CubeStageCubeType } from '../../visualization/CubeStage'
 import { preferredStrategyId } from '../../solve/strategy'
@@ -17,29 +13,80 @@ export function useSolvePuzzleMetadata(selectedPuzzleSlug: string) {
   const puzzlesQuery = useGetPuzzles()
   const selectedPuzzle = puzzleBySlug(puzzlesQuery.data, selectedPuzzleSlug)
   const strategiesQuery = useGetPuzzleStrategies({
-    enabled: selectedPuzzleSlug.length > 0,
+    enabled: selectedPuzzle !== undefined,
     puzzleSlug: selectedPuzzleSlug,
   })
   const strategyOptions = strategiesQuery.data ?? []
   const puzzleOptions = puzzlesQuery.data ?? []
   const strategyId = preferredStrategyId(strategyOptions, selectedPuzzle)
-  const apiReady =
-    healthQuery.data?.ok === true &&
-    puzzlesQuery.isSuccess &&
-    strategiesQuery.isSuccess &&
-    selectedPuzzle !== undefined
+  const status = metadataStatus({
+    healthQuery,
+    puzzlesQuery,
+    selectedPuzzle,
+    strategiesQuery,
+  })
+  const apiReady = status === 'ready'
   const visualizationCubeType = cubeTypeForPuzzle(selectedPuzzle)
+
+  function retry() {
+    const requests: Promise<unknown>[] = [healthQuery.refetch(), puzzlesQuery.refetch()]
+
+    if (selectedPuzzle !== undefined) {
+      requests.push(strategiesQuery.refetch())
+    }
+
+    return Promise.all(requests)
+  }
 
   return {
     apiReady,
     health: healthQuery.data,
     puzzleOptions,
     scanAvailable: selectedPuzzle?.scannerSupported === true,
+    status,
     strategyId,
     strategyOptions,
     visualizationCubeType,
     visualizationSupported: visualizationCubeType !== undefined,
+    retry,
   }
+}
+
+type MetadataQuery = {
+  isError: boolean
+  isPending: boolean
+}
+
+type MetadataStatusInput = {
+  healthQuery: MetadataQuery & { data?: { ok: boolean } }
+  puzzlesQuery: MetadataQuery
+  selectedPuzzle: PuzzleDefinition | undefined
+  strategiesQuery: MetadataQuery
+}
+
+function metadataStatus({
+  healthQuery,
+  puzzlesQuery,
+  selectedPuzzle,
+  strategiesQuery,
+}: MetadataStatusInput): 'loading' | 'error' | 'unavailable' | 'ready' {
+  if (healthQuery.isError || puzzlesQuery.isError || strategiesQuery.isError) {
+    return 'error'
+  }
+
+  if (
+    healthQuery.isPending ||
+    puzzlesQuery.isPending ||
+    (selectedPuzzle !== undefined && strategiesQuery.isPending)
+  ) {
+    return 'loading'
+  }
+
+  if (healthQuery.data?.ok !== true || selectedPuzzle === undefined) {
+    return 'unavailable'
+  }
+
+  return 'ready'
 }
 
 function puzzleBySlug<TPuzzle extends { slug: string }>(

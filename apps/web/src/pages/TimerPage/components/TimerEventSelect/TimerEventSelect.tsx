@@ -9,37 +9,35 @@ import {
   SelectValue,
 } from '@components/Select'
 import { scrambleEvents } from '@core/scramble/catalog'
-import { focusTimerDisplayElement } from '../../hooks/useTimerFocusMode'
 import { useTimerSettingsStore } from '../../timerSettingsStore'
 
-export function TimerEventSelect() {
+type TimerEventSelectProps = {
+  disabled?: boolean
+}
+
+export function TimerEventSelect({ disabled = false }: TimerEventSelectProps) {
   const { t } = useTranslation()
   const selectedEventId = useTimerSettingsStore((state) => state.selectedEventId)
   const setSelectedEventId = useTimerSettingsStore((state) => state.setSelectedEventId)
   const groups = Array.from(new Set(scrambleEvents.map((event) => event.group)))
 
   function handleEventChange(eventId: string) {
+    if (disabled) {
+      return
+    }
+
     setSelectedEventId(eventId)
-    window.setTimeout(focusTimerDisplayElement, 0)
   }
 
   return (
-    <Select
-      value={selectedEventId}
-      onValueChange={handleEventChange}
-    >
+    <Select value={selectedEventId} onValueChange={handleEventChange} disabled={disabled}>
       <SelectTrigger
         aria-label={t('timer.scramble.event')}
-        className="h-8 max-w-44 px-2 py-1 text-sm text-muted-foreground"
+        className='h-8 max-w-44 px-2 py-1 text-sm text-muted-foreground'
       >
         <SelectValue />
       </SelectTrigger>
-      <SelectContent
-        onCloseAutoFocus={(event) => {
-          event.preventDefault()
-          focusTimerDisplayElement()
-        }}
-      >
+      <SelectContent>
         {groups.map((group) => (
           <SelectGroup key={group}>
             <SelectLabel>{group}</SelectLabel>

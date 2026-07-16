@@ -6,8 +6,8 @@ describe('ScanCameraFrame', () => {
   it('renders sticker detection boxes without the old fixed guide grid', () => {
     const { container } = render(
       <ScanCameraFrame
-        cameraStatus="ready"
-        detectionMode="legacy_geometry"
+        cameraStatus='ready'
+        detectionMode='legacy_geometry'
         tileDetections={[
           {
             bbox: { height: 0.18, width: 0.18, x: 0.25, y: 0.25 },
@@ -43,8 +43,8 @@ describe('ScanCameraFrame', () => {
   it('hides low-confidence sticker detection boxes', () => {
     render(
       <ScanCameraFrame
-        cameraStatus="ready"
-        detectionMode="tile_detector"
+        cameraStatus='ready'
+        detectionMode='tile_detector'
         tileDetections={[
           {
             bbox: { height: 0.18, width: 0.18, x: 0.25, y: 0.25 },
@@ -61,27 +61,31 @@ describe('ScanCameraFrame', () => {
   })
 
   it('renders loading and camera error overlays', () => {
-    const { rerender } = render(<ScanCameraFrame cameraStatus="loading" videoRef={{ current: null }} />)
+    const { rerender } = render(
+      <ScanCameraFrame cameraStatus='loading' videoRef={{ current: null }} />,
+    )
 
     expect(screen.getByText('Opening camera')).toBeInTheDocument()
 
     rerender(
       <ScanCameraFrame
-        cameraMessage="Permission denied."
-        cameraStatus="error"
+        cameraMessage='Permission denied.'
+        cameraStatus='error'
         videoRef={{ current: null }}
       />,
     )
 
-    expect(screen.getByText('Permission denied. You can still fill the grid manually.')).toBeInTheDocument()
+    expect(
+      screen.getByText('Permission denied. You can still fill the grid manually.'),
+    ).toBeInTheDocument()
   })
 
   it('renders tracking, rejected, and non-ready temporal labels', () => {
     const { rerender } = render(
       <ScanCameraFrame
-        cameraStatus="ready"
+        cameraStatus='ready'
         stableFrameCount={2}
-        trackingStatus="tracking"
+        trackingStatus='tracking'
         videoRef={{ current: null }}
       />,
     )
@@ -90,8 +94,8 @@ describe('ScanCameraFrame', () => {
 
     rerender(
       <ScanCameraFrame
-        cameraStatus="ready"
-        detectionMode="rejected"
+        cameraStatus='ready'
+        detectionMode='rejected'
         temporalConsensus={{
           bboxStability: 0.3,
           faceConfidence: 0.8,
@@ -113,7 +117,7 @@ describe('ScanCameraFrame', () => {
 
     rerender(
       <ScanCameraFrame
-        cameraStatus="ready"
+        cameraStatus='ready'
         stableFrameCount={6}
         temporalConsensus={{
           bboxStability: 0.8,
@@ -127,7 +131,7 @@ describe('ScanCameraFrame', () => {
           temporalAgreement: 0.5,
           tileConfidence: 0.7,
         }}
-        trackingStatus="holding_steady"
+        trackingStatus='holding_steady'
         videoRef={{ current: null }}
       />,
     )
@@ -139,9 +143,14 @@ describe('ScanCameraFrame', () => {
   it('labels a complete sticker grid as ready', () => {
     render(
       <ScanCameraFrame
-        cameraStatus="ready"
+        cameraStatus='ready'
         tileDetections={Array.from({ length: 9 }, (_, index) => ({
-          bbox: { height: 0.18, width: 0.18, x: 0.25 + (index % 3) * 0.25, y: 0.25 + Math.floor(index / 3) * 0.25 },
+          bbox: {
+            height: 0.18,
+            width: 0.18,
+            x: 0.25 + (index % 3) * 0.25,
+            y: 0.25 + Math.floor(index / 3) * 0.25,
+          },
           confidence: 0.9,
           symbol: index === 4 ? 'U' : 'F',
         }))}

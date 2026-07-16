@@ -10,7 +10,11 @@ describe('CubingSitesPage', () => {
     expect(screen.getByRole('heading', { name: 'Sites' })).toBeInTheDocument()
     expect(cubingSites).toHaveLength(39)
     expect(screen.getAllByRole('link')).toHaveLength(cubingSites.length)
-    expect(screen.getByText(`A curated list of ${cubingSites.length} validated cubing websites for solutions, algorithms, tools, competitions, shops, brands, and community.`)).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        `A curated list of ${cubingSites.length} validated cubing websites for solutions, algorithms, tools, competitions, shops, brands, and community.`,
+      ),
+    ).toBeInTheDocument()
   })
 
   it('links site cards to external websites with local images', () => {
@@ -21,7 +25,10 @@ describe('CubingSitesPage', () => {
     expect(jPermLink).toHaveAttribute('href', 'https://jperm.net/')
     expect(jPermLink).toHaveAttribute('target', '_blank')
     expect(jPermLink).toHaveAttribute('rel', 'noreferrer')
-    expect(screen.getByRole('img', { name: 'J Perm site icon' })).toHaveAttribute('src', '/sites/j-perm.png')
+    expect(screen.getByRole('img', { name: 'J Perm site icon' })).toHaveAttribute(
+      'src',
+      '/sites/j-perm.png',
+    )
     expect(cubingSites.every((site) => site.imagePath.startsWith('/sites/'))).toBe(true)
   })
 

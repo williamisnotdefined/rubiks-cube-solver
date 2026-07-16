@@ -55,8 +55,13 @@ const meta = {
       },
     ],
     scanAction: (
-      <Button aria-label="Scan cube with camera" className="aspect-square h-9 w-9 px-0 py-0" type="button" variant="outline">
-        <Camera aria-hidden="true" />
+      <Button
+        aria-label='Scan cube with camera'
+        className='aspect-square h-9 w-9 px-0 py-0'
+        type='button'
+        variant='outline'
+      >
+        <Camera aria-hidden='true' />
       </Button>
     ),
     scramblePlaceholder,

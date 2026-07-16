@@ -36,7 +36,10 @@ describe('ScanFaceCarousel', () => {
     )
 
     expect(screen.getByRole('button', { name: /Go to Green face, confirmed/ })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Go to Red face, draft/ })).toHaveAttribute('aria-current', 'step')
+    expect(screen.getByRole('button', { name: /Go to Red face, draft/ })).toHaveAttribute(
+      'aria-current',
+      'step',
+    )
     expect(screen.getByRole('button', { name: /Go to Blue face, invalid/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Go to Orange face, review/ })).toBeInTheDocument()
     expect(screen.getByText('active face content')).toBeInTheDocument()

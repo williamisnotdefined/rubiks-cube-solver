@@ -1,14 +1,19 @@
 import { postJsonResponse } from '@api/client'
-import type { ApiSolveResponse, SolveNotationVariables } from '../../types'
+import type { SolveNotationVariables } from '../../types'
+import { parseApiSolveResponse } from '../../types/validation'
 import { normalizeSolveResponse } from '../normalizeSolveResponse'
 
 export async function solveNotation({ notation, limits }: SolveNotationVariables) {
-  const result = await postJsonResponse<ApiSolveResponse>('/solve-notation', {
+  const result = await postJsonResponse<unknown>('/solve-notation', {
     moves: notation,
     maxDepth: limits.maxDepth,
     maxNodes: limits.maxNodes,
     strategyId: limits.strategyId,
   })
 
-  return normalizeSolveResponse(result.payload, result.httpOk, result.requestElapsedMs)
+  return normalizeSolveResponse(
+    parseApiSolveResponse(result.payload),
+    result.httpOk,
+    result.requestElapsedMs,
+  )
 }

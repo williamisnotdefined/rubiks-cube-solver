@@ -8,7 +8,11 @@ type PageHeaderProps = ComponentPropsWithoutRef<'header'> & {
 export function PageHeader({ children, className, surface = false, ...props }: PageHeaderProps) {
   return (
     <header
-      className={cls('grid gap-3', { 'rounded-xl border bg-card p-6 text-card-foreground shadow-sm': surface }, className)}
+      className={cls(
+        'grid gap-3',
+        { 'rounded-xl border bg-card p-6 text-card-foreground shadow-sm': surface },
+        className,
+      )}
       {...props}
     >
       {children}

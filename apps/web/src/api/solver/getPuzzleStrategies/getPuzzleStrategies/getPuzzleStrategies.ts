@@ -1,8 +1,11 @@
 import { apiRequest } from '@api/client'
-import type { PuzzleSlug, PuzzleStrategyOption } from '../../types'
+import type { PuzzleSlug } from '../../types'
+import { parsePuzzleStrategies } from '../../types/validation'
 
-export function getPuzzleStrategies(puzzleSlug: PuzzleSlug) {
-  return apiRequest<PuzzleStrategyOption[]>(
-    `/puzzles/${encodeURIComponent(puzzleSlug)}/strategies`,
+export async function getPuzzleStrategies(puzzleSlug: PuzzleSlug, signal?: AbortSignal) {
+  return parsePuzzleStrategies(
+    await apiRequest<unknown>(`/puzzles/${encodeURIComponent(puzzleSlug)}/strategies`, {
+      signal,
+    }),
   )
 }

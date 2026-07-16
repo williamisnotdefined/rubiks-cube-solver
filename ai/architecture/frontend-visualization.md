@@ -8,7 +8,7 @@ The frontend renders solver interaction, scan workflows, notation pages, algorit
 - `apps/web/src/api` owns HTTP request details, response normalization, typed results, API base URL handling, and API error mapping.
 - React components own user interaction, form controls, loading indicators, result display, visualization playback, and local UI state.
 - `@rubiks-cube-solver/rubiks-cube` is a private visualization package and adapter surface, not the solver core.
-- Facelet, Kociemba, sticker-state, and visual-state strings are adapter details. UI copy should speak in puzzles, moves, limits, strategies, scanner review, and solver statuses.
+- Facelet, Kociemba, sticker-state, and visual-state strings are adapter details. Typed scan-session requests MAY carry reviewed stickers and manual overrides; notation solve forms MUST NOT expose raw state input.
 
 ## Data Flow
 
@@ -33,5 +33,7 @@ API load state, solve result state, form state, scan workflow state, and visuali
 
 ## Current Frontend Stack
 
-- Vite, React, TypeScript, React Router, React Query, React Hook Form, Zod, Zustand, Tailwind CSS v4, shadcn/Radix-backed shared primitives, `cn` class merging, `react-i18next`, Motion, Vitest, Storybook, and Playwright are the current frontend stack.
-- Additional global state, routing, form, animation, styling, or component dependencies should wait until the existing stack cannot satisfy a concrete current need.
+- Vite, React, TypeScript, React Router, React Query, Zustand, Tailwind CSS v4, shadcn/Radix-backed shared primitives, `cn`, established `classnames` usage, `react-i18next`, Motion, Vitest, Storybook, and Playwright are active.
+- React Hook Form and Zod are installed dependencies, not a mandatory project-wide form setup. Use them only where nearby code or schema complexity justifies them.
+- `@rubiks-cube-solver/rubiks-cube` is already active through puzzle-specific subpath imports and Vite aliases.
+- Additional dependencies require a specific current gap, an identified owner, and focused verification.

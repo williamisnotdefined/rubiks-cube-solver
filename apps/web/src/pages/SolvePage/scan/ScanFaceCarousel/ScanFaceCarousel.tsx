@@ -68,9 +68,9 @@ export function ScanFaceCarousel({
   }, [currentFaceIndex, emblaApi, onFaceIndexChange])
 
   return (
-    <div className="mt-5 grid gap-4">
-      <div className="grid gap-3 border border-app-border bg-app-surface-raised p-3">
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+    <div className='mt-5 grid gap-4'>
+      <div className='grid gap-3 border border-app-border bg-app-surface-raised p-3'>
+        <div className='grid grid-cols-3 gap-2 sm:grid-cols-6'>
           {scanFaceOrder.map(({ symbol }, index) => {
             const active = index === currentFaceIndex
             const status = faceStatuses[index] ?? 'pending'
@@ -88,39 +88,39 @@ export function ScanFaceCarousel({
                   active ? 'border-app-text text-app-text' : statusClassNames[status],
                 )}
                 key={symbol}
-                type="button"
+                type='button'
                 onClick={() => onFaceIndexChange(index)}
               >
-                <span className="flex items-center justify-center gap-2">
+                <span className='flex items-center justify-center gap-2'>
                   {usePositionalLabel ? null : (
                     <span
-                      className="size-3 border border-app-border"
+                      className='size-3 border border-app-border'
                       style={{ backgroundColor: details.background }}
                     />
                   )}
                   {usePositionalLabel ? label : scanColorCode(symbol)}
                 </span>
-                <span className="truncate text-[0.62rem] tracking-[0.12em]">{statusLabel}</span>
+                <span className='truncate text-[0.62rem] tracking-[0.12em]'>{statusLabel}</span>
               </button>
             )
           })}
         </div>
 
-        <div className="flex flex-wrap justify-between gap-2">
+        <div className='flex flex-wrap justify-between gap-2'>
           <Button
-            size="sm"
+            size='sm'
             disabled={!canGoPrevious}
-            type="button"
-            variant="ghost"
+            type='button'
+            variant='ghost'
             onClick={() => onFaceIndexChange(currentFaceIndex - 1)}
           >
             {t('scan.carousel.previous')}
           </Button>
           <Button
-            size="sm"
+            size='sm'
             disabled={!canGoNext}
-            type="button"
-            variant="ghost"
+            type='button'
+            variant='ghost'
             onClick={() => onFaceIndexChange(currentFaceIndex + 1)}
           >
             {t('scan.carousel.next')}
@@ -128,18 +128,18 @@ export function ScanFaceCarousel({
         </div>
       </div>
 
-      <div className="overflow-hidden" ref={emblaRef}>
-        <div className="flex touch-pan-y">
+      <div className='overflow-hidden' ref={emblaRef}>
+        <div className='flex touch-pan-y'>
           {scanFaceOrder.map(({ symbol }, index) => (
             <div
               aria-hidden={index === currentFaceIndex ? undefined : true}
-              className="min-w-0 flex-[0_0_100%]"
+              className='min-w-0 flex-[0_0_100%]'
               key={symbol}
             >
               {index === currentFaceIndex ? (
                 children
               ) : (
-                <div className="grid min-h-80 place-items-center border border-app-border bg-app-surface p-6 text-center text-sm font-semibold text-app-muted">
+                <div className='grid min-h-80 place-items-center border border-app-border bg-app-surface p-6 text-center text-sm font-semibold text-app-muted'>
                   {scanFaceLabel(t, symbol, stickersPerFace)}
                 </div>
               )}
@@ -151,7 +151,10 @@ export function ScanFaceCarousel({
   )
 }
 
-function scanFaceStatusLabel(t: ReturnType<typeof useTranslation>['t'], status: ScanFaceStatus): string {
+function scanFaceStatusLabel(
+  t: ReturnType<typeof useTranslation>['t'],
+  status: ScanFaceStatus,
+): string {
   switch (status) {
     case 'confirmed':
       return t('scan.carousel.faceConfirmed')

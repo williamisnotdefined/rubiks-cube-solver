@@ -114,6 +114,9 @@ export type SolveScanSessionVariables = {
   maxDepth: number
   maxNodes?: number
   puzzleSlug?: string
+  requestId?: number
+  revision?: number
+  signal?: AbortSignal
   strategyId?: string
 }
 

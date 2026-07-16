@@ -1,8 +1,15 @@
 import { wcaDataApiRequest } from '@api/client'
-import type { WcaDataListResponse, WcaWorldRecord, WcaWorldRecordsQuery } from '../../types'
+import { canonicalizeWcaWorldRecordsQuery } from '../../query'
+import type { WcaWorldRecordsQuery } from '../../types'
+import { parseWcaWorldRecordsResponse } from '../../validation'
 
-export function getWorldRecords(query: WcaWorldRecordsQuery) {
-  return wcaDataApiRequest<WcaDataListResponse<WcaWorldRecord>>(`/records/world?${worldRecordsSearchParams(query)}`)
+export async function getWorldRecords(query: WcaWorldRecordsQuery, signal?: AbortSignal) {
+  const canonicalQuery = canonicalizeWcaWorldRecordsQuery(query)
+  return parseWcaWorldRecordsResponse(
+    await wcaDataApiRequest<unknown>(`/records/world?${worldRecordsSearchParams(canonicalQuery)}`, {
+      signal,
+    }),
+  )
 }
 
 function worldRecordsSearchParams(query: WcaWorldRecordsQuery): URLSearchParams {

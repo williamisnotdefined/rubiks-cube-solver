@@ -1,10 +1,14 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import type { TFunction } from 'i18next'
 import type { AnalyzeScanFaceResponse } from '@api/scan'
 import type { ScanFaceSymbol } from '@api/solver/types'
 import type { CapturedScanImage } from '../../../scanCapture'
-import { canApplyLiveAutofill, scanAutoCaptureMetadata, scanCaptureMetadata } from '../../../scanCaptureWorkflowHelpers'
+import {
+  canApplyLiveAutofill,
+  scanAutoCaptureMetadata,
+  scanCaptureMetadata,
+} from '../../../scanCaptureWorkflowHelpers'
 import {
   lowConfidenceCount,
   mergeLiveDetectedScanStickers,
@@ -12,7 +16,10 @@ import {
   type ScanFaceDraft,
   type ScanFaceDrafts,
 } from '../../../scanState'
-import { isTemporalConsensusReady, type TemporalFaceConsensus } from '../../../scanTemporalConsensus'
+import {
+  isTemporalConsensusReady,
+  type TemporalFaceConsensus,
+} from '../../../scanTemporalConsensus'
 
 type UseScanLiveAutofillOptions = {
   acknowledgeAutoFill: () => void
@@ -47,6 +54,8 @@ export function useScanLiveAutofill({
   stickersPerFace,
   t,
 }: UseScanLiveAutofillOptions) {
+  const acknowledgedCaptureRef = useRef<string | undefined>(undefined)
+
   useEffect(() => {
     if (
       !shouldAutoFill ||
@@ -60,15 +69,12 @@ export function useScanLiveAutofill({
       return
     }
 
-    acknowledgeAutoFill()
     const nextStickers = scanStickersFromTemporalConsensus(
       liveTemporalConsensus,
       currentFaceSymbol,
       liveAnalysis,
       stickersPerFace,
     )
-    const uncertain = lowConfidenceCount(nextStickers)
-
     setDrafts((currentDrafts) => {
       const draft = currentDrafts[currentFaceSymbol]
       if (!canApplyLiveAutofill(draft)) {
@@ -76,6 +82,17 @@ export function useScanLiveAutofill({
       }
 
       const mergedStickers = mergeLiveDetectedScanStickers(draft.stickers, nextStickers)
+
+      if (acknowledgedCaptureRef.current !== liveCapture.photoDataUrl) {
+        acknowledgedCaptureRef.current = liveCapture.photoDataUrl
+        acknowledgeAutoFill()
+        onFaceCleared?.(currentFaceSymbol)
+        setMessage(
+          lowConfidenceCount(mergedStickers) > 0
+            ? t('scan.messages.detectedUncertain', { count: lowConfidenceCount(mergedStickers) })
+            : t('scan.messages.liveReviewReady', { count: stickersPerFace }),
+        )
+      }
 
       return {
         ...currentDrafts,
@@ -94,12 +111,6 @@ export function useScanLiveAutofill({
         },
       }
     })
-    onFaceCleared?.(currentFaceSymbol)
-    setMessage(
-      uncertain > 0
-        ? t('scan.messages.detectedUncertain', { count: uncertain })
-        : t('scan.messages.liveReviewReady', { count: stickersPerFace }),
-    )
   }, [
     acknowledgeAutoFill,
     currentDraft,

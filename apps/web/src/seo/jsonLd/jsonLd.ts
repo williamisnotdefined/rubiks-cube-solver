@@ -1,4 +1,11 @@
-import { alternateUrl, defaultOgImageUrl, seoLocales, siteName, siteOrigin, type SeoMetadata } from '../routes'
+import {
+  alternateUrl,
+  defaultOgImageUrl,
+  seoLocales,
+  siteName,
+  siteOrigin,
+  type SeoMetadata,
+} from '../routes'
 
 type JsonLd = Record<string, unknown>
 
@@ -75,5 +82,7 @@ export function buildJsonLd(metadata: SeoMetadata): JsonLd[] {
 }
 
 function itemUrl(path: string, locale: SeoMetadata['locale']): string {
-  return path.startsWith('http://') || path.startsWith('https://') ? path : alternateUrl(path, locale)
+  return path.startsWith('http://') || path.startsWith('https://')
+    ? path
+    : alternateUrl(path, locale)
 }

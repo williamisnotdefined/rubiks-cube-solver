@@ -1,6 +1,8 @@
 import { wcaDataApiRequest } from '@api/client'
-import type { WcaDataListResponse, WcaEvent } from '../../types'
+import { parseWcaEventsResponse } from '../../validation'
 
-export function getWcaEvents() {
-  return wcaDataApiRequest<WcaDataListResponse<WcaEvent>>('/events?pageSize=100')
+export async function getWcaEvents(signal?: AbortSignal) {
+  return parseWcaEventsResponse(
+    await wcaDataApiRequest<unknown>('/events?pageSize=100', { signal }),
+  )
 }

@@ -9,7 +9,7 @@ type UseGetPuzzlesOptions = {
 export function useGetPuzzles({ enabled = true }: UseGetPuzzlesOptions = {}) {
   return useQuery({
     enabled,
-    queryFn: getPuzzles,
+    queryFn: ({ signal }) => getPuzzles(signal),
     queryKey: solverQueryKeys.puzzles(),
     retry: false,
   })

@@ -22,8 +22,7 @@ export function useSolveResultFlow() {
   const activeSolveResult =
     activeSolveSource === 'scan' ? scanSessionSolveResult : solveMutation.data
   const activeSolveError = activeSolveSource === 'scan' ? null : solveMutation.error
-  const successResult =
-    activeSolveResult?.status === 'success' ? activeSolveResult : undefined
+  const successResult = activeSolveResult?.status === 'success' ? activeSolveResult : undefined
   const notationLimitFailureResult =
     activeSolveSource === 'notation' && isNoSolutionLimitFailure(activeSolveResult)
       ? activeSolveResult
@@ -54,6 +53,7 @@ export function useSolveResultFlow() {
           strategyId,
         },
       })
+      void solvePromise.catch(() => undefined)
       await waitForPaint()
       await solvePromise
     } catch {

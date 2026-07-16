@@ -21,6 +21,25 @@ export class ApiRequestError extends Error {
   }
 }
 
+export class ApiResponseParseError extends Error {
+  readonly status: number
+  readonly statusText: string
+
+  constructor(status: number, statusText: string, cause: unknown) {
+    super(`Could not parse API response as JSON (${status} ${statusText})`, { cause })
+    this.name = 'ApiResponseParseError'
+    this.status = status
+    this.statusText = statusText
+  }
+}
+
+export class ApiResponseValidationError extends Error {
+  constructor(resource: string) {
+    super(`API returned an invalid ${resource} response`)
+    this.name = 'ApiResponseValidationError'
+  }
+}
+
 export function apiBaseUrl(): string {
   const configuredApiUrl = import.meta.env.VITE_RUBIKS_API_URL
 
@@ -117,7 +136,11 @@ export function postJson<TResponse>(path: string, body: unknown, options: Reques
   })
 }
 
-export function postJsonResponse<TResponse>(path: string, body: unknown, options: RequestInit = {}) {
+export function postJsonResponse<TResponse>(
+  path: string,
+  body: unknown,
+  options: RequestInit = {},
+) {
   return apiJsonResponse<TResponse>(path, {
     ...options,
     body: JSON.stringify(body),
@@ -135,7 +158,11 @@ function jsonHeaders(headers: HeadersInit | undefined): Headers {
 }
 
 async function responseJson<TResponse>(response: Response): Promise<TResponse> {
-  return response.json().catch(() => undefined) as Promise<TResponse>
+  try {
+    return (await response.json()) as TResponse
+  } catch (cause) {
+    throw new ApiResponseParseError(response.status, response.statusText, cause)
+  }
 }
 
 function errorMessageFromPayload(payload: unknown, fallback: string): string {

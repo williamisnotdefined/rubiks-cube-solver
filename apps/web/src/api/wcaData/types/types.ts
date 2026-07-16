@@ -68,6 +68,11 @@ export type WcaWorldRecordsQuery = {
   type?: WcaWorldRecordType
 }
 
+export type CanonicalWcaWorldRecordsQuery = WcaWorldRecordsQuery & {
+  page?: number
+  pageSize?: 25 | 50 | 100
+}
+
 export type WcaWorldRecord = {
   athlete: {
     avatarUrl: string | null
@@ -108,10 +113,7 @@ export type WcaWorldRecord = {
     roundTypeId: string
     solves: WcaDataResultValue[]
   } | null
-  scramble: {
-    candidates: WcaWorldRecordScrambleCandidate[]
-    status: 'ambiguous' | 'exact' | 'unavailable'
-  }
+  scramble: WcaWorldRecordScramble
   type: WcaWorldRecordType
   value: WcaDataResultValue
 }
@@ -126,3 +128,8 @@ export type WcaWorldRecordScrambleCandidate = {
   scramble: string
   scrambleNumber: number
 }
+
+export type WcaWorldRecordScramble =
+  | { candidates: WcaWorldRecordScrambleCandidate[]; status: 'ambiguous' }
+  | { candidates: WcaWorldRecordScrambleCandidate[]; status: 'exact' }
+  | { candidates: WcaWorldRecordScrambleCandidate[]; status: 'unavailable' }

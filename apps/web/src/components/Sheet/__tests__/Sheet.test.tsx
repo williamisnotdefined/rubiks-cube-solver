@@ -9,7 +9,7 @@ describe('Sheet', () => {
   ] as const)('positions content on the %s edge', (side, expectedClass, title) => {
     render(
       <Sheet open>
-        <SheetContent side={side}>
+        <SheetContent closeLabel='Close' side={side}>
           <SheetTitle>{title}</SheetTitle>
           <SheetDescription>Choose record filters</SheetDescription>
         </SheetContent>

@@ -10,7 +10,7 @@ describe('ScanFaceColorEditor', () => {
     const onStickerColorChange = vi.fn()
     render(
       <ScanFaceColorEditor
-        centerSymbol="F"
+        centerSymbol='F'
         stickers={stickers()}
         onStickerColorChange={onStickerColorChange}
       />,

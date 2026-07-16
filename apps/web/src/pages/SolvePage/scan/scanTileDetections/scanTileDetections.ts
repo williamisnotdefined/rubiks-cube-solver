@@ -72,7 +72,9 @@ export function assignedTileDetectionsReady(
   gridSize = 3,
 ): boolean {
   const assignedTiles = assignTileDetectionsToReviewGrid(tileDetections, { gridSize })
-  return assignedTiles !== undefined && (gridSize === 2 || assignedTiles[4]?.symbol === expectedCenter)
+  return (
+    assignedTiles !== undefined && (gridSize === 2 || assignedTiles[4]?.symbol === expectedCenter)
+  )
 }
 
 function assignCombinationByPosition(
@@ -108,12 +110,26 @@ function tileAssignmentScore(assignment: readonly IndexedScanTileDetection[]): n
   const gridSize = Math.sqrt(assignment.length)
   const averageConfidence = average(assignment.map((tile) => tile.confidence))
   const indexes = Array.from({ length: gridSize }, (_, index) => index)
-  const rowSpread = average(indexes.map((row) => spread(assignment.filter((tile) => tile.row === row).map((tile) => tile.bbox.y))))
-  const columnSpread = average(indexes.map((column) => spread(assignment.filter((tile) => tile.column === column).map((tile) => tile.bbox.x))))
+  const rowSpread = average(
+    indexes.map((row) =>
+      spread(assignment.filter((tile) => tile.row === row).map((tile) => tile.bbox.y)),
+    ),
+  )
+  const columnSpread = average(
+    indexes.map((column) =>
+      spread(assignment.filter((tile) => tile.column === column).map((tile) => tile.bbox.x)),
+    ),
+  )
   const rowSpacing = spacingScore(rowCenters(assignment, gridSize))
   const columnSpacing = spacingScore(columnCenters(assignment, gridSize))
 
-  return averageConfidence + rowSpacing * 0.14 + columnSpacing * 0.14 - rowSpread * 0.65 - columnSpread * 0.65
+  return (
+    averageConfidence +
+    rowSpacing * 0.14 +
+    columnSpacing * 0.14 -
+    rowSpread * 0.65 -
+    columnSpread * 0.65
+  )
 }
 
 function* combinations<T>(items: readonly T[], targetCount: number): Generator<T[]> {
@@ -137,11 +153,18 @@ function* combinations<T>(items: readonly T[], targetCount: number): Generator<T
 }
 
 function rowCenters(assignment: readonly IndexedScanTileDetection[], gridSize: number): number[] {
-  return Array.from({ length: gridSize }, (_, row) => average(assignment.filter((tile) => tile.row === row).map((tile) => tile.bbox.y)))
+  return Array.from({ length: gridSize }, (_, row) =>
+    average(assignment.filter((tile) => tile.row === row).map((tile) => tile.bbox.y)),
+  )
 }
 
-function columnCenters(assignment: readonly IndexedScanTileDetection[], gridSize: number): number[] {
-  return Array.from({ length: gridSize }, (_, column) => average(assignment.filter((tile) => tile.column === column).map((tile) => tile.bbox.x)))
+function columnCenters(
+  assignment: readonly IndexedScanTileDetection[],
+  gridSize: number,
+): number[] {
+  return Array.from({ length: gridSize }, (_, column) =>
+    average(assignment.filter((tile) => tile.column === column).map((tile) => tile.bbox.x)),
+  )
 }
 
 function spacingScore(values: readonly number[]): number {
@@ -152,7 +175,8 @@ function spacingScore(values: readonly number[]): number {
   const firstGap = values[1] - values[0]
   const secondGap = values[2] - values[1]
   const minGap = Math.min(firstGap, secondGap)
-  const gapBalance = 1 - Math.min(1, Math.abs(firstGap - secondGap) / Math.max(firstGap, secondGap, 0.01))
+  const gapBalance =
+    1 - Math.min(1, Math.abs(firstGap - secondGap) / Math.max(firstGap, secondGap, 0.01))
 
   return minGap > 0.05 ? gapBalance : 0
 }

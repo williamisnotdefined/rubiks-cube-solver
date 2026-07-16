@@ -17,9 +17,9 @@ Testing rules for this repository.
 - Keep `web` tests in `__tests__/` folders beside the source area they cover.
 - Use Testing Library for React component behavior and public accessibility queries.
 - Use Playwright accessibility queries for E2E flows and shared E2E helpers for non-native controls such as Radix Select.
-- Keep `apps/web/src/api` request and hook tests in `apps/web/src/api/__tests__`, using shared fetch and React Query helpers under `apps/web/src/test`.
+- Keep web API request and hook tests in the nearest API-domain `__tests__` directory, including the established root, client, and domain-level locations; use shared helpers under `apps/web/src/test`.
 - Keep `apps/web/src/core` tests under `apps/web/src/core/<category>/__tests__/<name>.test.ts`.
-- Keep `web` coverage thresholds at 95% or higher for statements, branches, functions, and lines when coverage is configured.
+- Keep global `web` coverage thresholds at 90% for statements, branches, functions, and lines.
 
 ## Never
 

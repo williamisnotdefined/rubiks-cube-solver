@@ -18,7 +18,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, [clearToasts])
 
   return (
-    <ToastPrimitive.Provider swipeDirection="right">
+    <ToastPrimitive.Provider swipeDirection='right'>
       {children}
       {toasts.map((toast) => (
         <ToastPrimitive.Root
@@ -42,29 +42,29 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               },
             )}
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="grid gap-1">
-                <ToastPrimitive.Title className="text-xs font-extrabold uppercase tracking-[0.16em]">
+            <div className='flex items-start justify-between gap-3'>
+              <div className='grid gap-1'>
+                <ToastPrimitive.Title className='text-xs font-extrabold uppercase tracking-[0.16em]'>
                   {toast.title}
                 </ToastPrimitive.Title>
                 {toast.description === undefined ? null : (
-                  <ToastPrimitive.Description className="text-sm font-semibold leading-relaxed text-app-muted">
+                  <ToastPrimitive.Description className='text-sm font-semibold leading-relaxed text-app-muted'>
                     {toast.description}
                   </ToastPrimitive.Description>
                 )}
               </div>
               <ToastPrimitive.Close
                 aria-label={t('common.close')}
-                className="inline-flex min-h-7 min-w-7 items-center justify-center border border-app-border bg-app-surface text-app-text outline-none transition-colors hover:border-app-text hover:bg-app-control focus-visible:ring-2 focus-visible:ring-app-focus/50"
-                type="button"
+                className='inline-flex min-h-7 min-w-7 items-center justify-center border border-app-border bg-app-surface text-app-text outline-none transition-colors hover:border-app-text hover:bg-app-control focus-visible:ring-2 focus-visible:ring-app-focus/50'
+                type='button'
               >
-                <X aria-hidden="true" className="size-4" strokeWidth={2.4} />
+                <X aria-hidden='true' className='size-4' strokeWidth={2.4} />
               </ToastPrimitive.Close>
             </div>
           </li>
         </ToastPrimitive.Root>
       ))}
-      <ToastPrimitive.Viewport className="fixed bottom-3 right-3 z-[90] grid w-[min(calc(100vw-1.5rem),24rem)] gap-2 outline-none" />
+      <ToastPrimitive.Viewport className='fixed bottom-3 right-3 z-[90] grid w-[min(calc(100vw-1.5rem),24rem)] gap-2 outline-none' />
     </ToastPrimitive.Provider>
   )
 }

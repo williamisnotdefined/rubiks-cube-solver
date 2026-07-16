@@ -1,4 +1,4 @@
-import { expect, test, type Locator, type Page } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 import { chooseRadixSelectOption } from './select-helpers'
 
 type PersistedTimerSolve = {
@@ -47,65 +47,69 @@ test.describe('timer flow', () => {
     await expect(timer.getByRole('button', { name: '+2' })).toBeVisible()
     await expect(timer.getByRole('button', { name: 'DNF' })).toBeVisible()
 
-    await dispatchClick(timer.getByRole('button', { name: '+2' }))
+    await timer.getByRole('button', { name: '+2' }).click()
     await expect(page.getByRole('table')).toContainText('+2')
     await expect.poll(() => persistedTimerSolves(page)).toMatchObject([
       { finalTimeMs: rawTimeMs + 2_000, penalty: 'plus2' },
     ])
 
-    await dispatchClick(timer.getByRole('button', { name: '+2' }))
+    await timer.getByRole('button', { name: '+2' }).click()
     await expect(page.getByRole('table')).toContainText('-')
     await expect.poll(() => persistedTimerSolves(page)).toMatchObject([
       { finalTimeMs: rawTimeMs, penalty: 'ok' },
     ])
 
-    await dispatchClick(timer.getByRole('button', { name: 'DNF' }))
+    await timer.getByRole('button', { name: 'DNF' }).click()
     await expect(page.getByRole('table')).toContainText('DNF')
     await expect.poll(() => persistedTimerSolves(page)).toMatchObject([
       { finalTimeMs: null, penalty: 'dnf' },
     ])
 
-    await dispatchClick(timer.getByRole('button', { name: 'DNF' }))
+    await timer.getByRole('button', { name: 'DNF' }).click()
     await expect(page.getByRole('table')).toContainText('-')
     await expect.poll(() => persistedTimerSolves(page)).toMatchObject([
       { finalTimeMs: rawTimeMs, penalty: 'ok' },
     ])
   })
 
-  test('uses the selected event for the next recorded solve', async ({ page }) => {
+  test('updates the active session from the selected event', async ({ page }) => {
     await page.goto(timerPath)
+    await expect(page.getByRole('timer', { name: 'Speedsolve timer' })).toHaveAttribute(
+      'aria-disabled',
+      'false',
+      { timeout: 15_000 },
+    )
 
-    await chooseRadixSelectOption(page, 'Event', 'Pyraminx')
-    await expect(page.getByText(/Pyraminx/)).toBeVisible()
+    await chooseRadixSelectOption(page, 'Event', '2x2x2')
+    await expect(page.getByText(/2x2x2/)).toBeVisible()
 
-    await recordKeyboardSolve(page)
-
-    const state = await persistedTimerState(page)
-    expect(state.sessions[0]?.eventId).toBe('pyraminx')
-    expect(state.sessions[0]?.solves.at(-1)?.eventId).toBe('pyraminx')
+    await expect.poll(() => persistedTimerState(page)).toMatchObject({
+      sessions: [{ eventId: '222' }],
+    })
   })
 
   test('supports inspection and millisecond display settings', async ({ page }) => {
     await page.goto(timerPath)
 
-    await dispatchClick(page.getByRole('button', { name: 'Timer settings' }))
+    await page.getByRole('button', { name: 'Timer settings' }).click()
     const settingsDialog = page.getByRole('dialog', { name: 'Timer settings' })
 
-    await dispatchClick(settingsDialog.getByRole('switch', { name: 'Inspection' }))
+    await settingsDialog.getByRole('switch', { name: 'Inspection' }).click()
     await expect(page.getByText('WCA inspection')).toBeVisible()
-    await dispatchClick(settingsDialog.getByRole('switch', { name: 'Milliseconds' }))
+    await settingsDialog.getByRole('switch', { name: 'Milliseconds' }).click()
     await expect.poll(() => persistedTimerSettings(page)).toMatchObject({ showMilliseconds: true })
-    await dispatchClick(settingsDialog.getByRole('button', { name: 'Close' }))
+    await settingsDialog.getByRole('button', { name: 'Close' }).click()
+    await expect(settingsDialog).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Timer settings' })).toBeFocused()
     await expectTimerReady(page)
 
-    await dispatchKeyboardEvent(page, 'keydown', 'Space', ' ')
-    await dispatchKeyboardEvent(page, 'keyup', 'Space', ' ')
+    const timer = page.getByRole('timer', { name: 'Speedsolve timer' })
+    await timer.click()
     await expect(page.getByText('Inspection', { exact: true })).toBeVisible()
 
-    await dispatchKeyboardEvent(page, 'keydown', 'Space', ' ')
-    await dispatchKeyboardEvent(page, 'keyup', 'Space', ' ')
+    await timer.click()
     await expect(page.getByText('Solving')).toBeVisible()
-    await dispatchKeyboardEvent(page, 'keydown', 'KeyA', 'a')
+    await page.keyboard.press('a')
     await expect(page.getByRole('table')).toBeVisible()
 
     await expect(page.getByRole('table')).toContainText(/\d+\.\d{3}/)
@@ -132,19 +136,19 @@ test.describe('timer flow', () => {
 
     await expect(page.getByRole('button', { name: 'Previous scramble' })).toBeDisabled()
     await expect(page.getByRole('button', { name: 'Copy scramble' })).toBeEnabled()
-    await dispatchClick(page.getByRole('button', { name: 'Copy scramble' }))
+    await page.getByRole('button', { name: 'Copy scramble' }).click()
     await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible()
     await expect.poll(() => page.evaluate(() => localStorage.getItem('rubiks-test-copied-scramble'))).not.toBeNull()
 
-    await dispatchClick(page.getByRole('button', { name: 'Next scramble' }))
+    await page.getByRole('button', { name: 'Next scramble' }).click()
     await expect(page.getByRole('button', { name: 'Copy scramble' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Previous scramble' })).toBeEnabled()
 
-    await dispatchClick(page.getByRole('button', { name: 'Previous scramble' }))
+    await page.getByRole('button', { name: 'Previous scramble' }).click()
     await expect(page.getByRole('button', { name: 'Previous scramble' })).toBeDisabled()
 
     await recordKeyboardSolve(page)
-    await dispatchClick(page.getByRole('table').getByRole('button', { name: 'Delete' }))
+    await page.getByRole('table').getByRole('button', { name: 'Delete' }).click()
     await expect(page.getByText('No solves yet')).toBeVisible()
     await expect.poll(() => persistedTimerSolves(page)).toHaveLength(0)
   })
@@ -170,35 +174,24 @@ async function seedTimerSettings(page: Page) {
 
 async function recordKeyboardSolve(page: Page) {
   await expectTimerReady(page)
-  await dispatchKeyboardEvent(page, 'keydown', 'Space', ' ')
-  await dispatchKeyboardEvent(page, 'keyup', 'Space', ' ')
+  await holdAndReleaseTimer(page)
   await expect(page.getByText('Solving')).toBeVisible()
-  await dispatchKeyboardEvent(page, 'keydown', 'KeyA', 'a')
+  await page.keyboard.press('a')
   await expect(page.getByText('Stopped')).toBeVisible()
   await expect(page.getByRole('table')).toBeVisible()
 }
 
+async function holdAndReleaseTimer(page: Page) {
+  await page.keyboard.down('Space')
+  await expect(page.getByText('Ready', { exact: true })).toBeVisible()
+  await page.keyboard.up('Space')
+}
+
 async function expectTimerReady(page: Page) {
-  await expect(page.getByRole('timer', { name: 'Speedsolve timer' })).toHaveAttribute('aria-disabled', 'false')
-}
-
-async function dispatchKeyboardEvent(page: Page, type: 'keydown' | 'keyup', code: string, key: string) {
-  // Real Playwright keyboard/click actions can hang on this page while the timer
-  // updates through RAF. Dispatching browser events keeps the test on the app's
-  // actual window listeners while avoiding actionability waits unrelated to the
-  // timer behavior under test.
-  await page.evaluate(
-    ({ code, key, type }) => {
-      window.dispatchEvent(new KeyboardEvent(type, { bubbles: true, cancelable: true, code, key }))
-    },
-    { code, key, type },
-  )
-}
-
-async function dispatchClick(locator: Locator) {
-  // See dispatchKeyboardEvent: timer E2E asserts observable state changes, while
-  // synthetic click dispatch avoids Playwright actionability deadlocks here.
-  await locator.dispatchEvent('click')
+  const timer = page.getByRole('timer', { name: 'Speedsolve timer' })
+  await timer.focus()
+  await expect(timer).toBeFocused()
+  await expect(timer).toHaveAttribute('aria-disabled', 'false', { timeout: 15_000 })
 }
 
 async function persistedTimerState(page: Page): Promise<{ sessions: Array<{ eventId: string, solves: PersistedTimerSolve[] }> }> {

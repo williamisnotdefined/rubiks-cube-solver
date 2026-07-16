@@ -7,11 +7,19 @@ export type BackendReviewTargets = {
   rescanFaces: ScanFaceSymbol[]
 }
 
+type BackendTargetMapper = (
+  face: ScanFaceSymbol,
+  index: number,
+) => { face: ScanFaceSymbol; index: number }
+
 export function emptyBackendReviewTargets(): BackendReviewTargets {
   return { manualTargets: {}, rescanFaces: [] }
 }
 
-export function isBackendReviewFace(targets: BackendReviewTargets, symbol: ScanFaceSymbol): boolean {
+export function isBackendReviewFace(
+  targets: BackendReviewTargets,
+  symbol: ScanFaceSymbol,
+): boolean {
   return targets.rescanFaces.includes(symbol) || (targets.manualTargets[symbol]?.length ?? 0) > 0
 }
 
@@ -53,11 +61,19 @@ export function removeBackendManualTarget(
   return { ...targets, manualTargets }
 }
 
-export function backendReviewTargetsFromSessionResult(result: ScanSessionResult): BackendReviewTargets {
+export function backendReviewTargetsFromSessionResult(
+  result: ScanSessionResult,
+  mapTarget: BackendTargetMapper = (face, index) => ({ face, index }),
+): BackendReviewTargets {
   const manualTargets: BackendReviewTargets['manualTargets'] = {}
 
   for (const target of result.manualTargets) {
-    manualTargets[target.face] = [...new Set([...(manualTargets[target.face] ?? []), ...target.stickers])]
+    for (const index of target.stickers) {
+      const visualTarget = mapTarget(target.face, index)
+      manualTargets[visualTarget.face] = [
+        ...new Set([...(manualTargets[visualTarget.face] ?? []), visualTarget.index]),
+      ]
+    }
   }
 
   return {
@@ -67,5 +83,8 @@ export function backendReviewTargetsFromSessionResult(result: ScanSessionResult)
 }
 
 export function firstBackendReviewFace(targets: BackendReviewTargets): ScanFaceSymbol | undefined {
-  return targets.rescanFaces[0] ?? scanFaceOrder.find(({ symbol }) => isBackendReviewFace(targets, symbol))?.symbol
+  return (
+    targets.rescanFaces[0] ??
+    scanFaceOrder.find(({ symbol }) => isBackendReviewFace(targets, symbol))?.symbol
+  )
 }

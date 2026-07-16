@@ -10,6 +10,8 @@ Rules for maintaining the AI knowledge base itself.
 - Add every routed skill to `ai/registry.json`.
 - Use `references` in `ai/registry.json` for every rule, architecture, or glossary file a skill depends on.
 - Keep each skill's `## Read First` list identical to its `registry.json` `references` list.
+- Apply executable contracts, accepted ADRs, architecture, rules, and skills in that precedence order; skills MUST NOT redefine referenced guidance.
+- Use MUST/SHOULD/MAY intentionally and document narrow exceptions to SHOULD or conflicts with higher-precedence contracts.
 - Run `npm run ai:sync` after changing canonical skills, registry entries, or referenced knowledge files.
 - Run `npm run ai:check` before finishing AI knowledge changes.
 

@@ -21,9 +21,7 @@ export function useSolveFormState() {
   const maxMovesInput = useSolveSettingsStore((state) => state.maxMovesInput)
   const maxNodesMillionInput = useSolveSettingsStore((state) => state.maxNodesMillionInput)
   const setMaxMovesInput = useSolveSettingsStore((state) => state.setMaxMovesInput)
-  const setMaxNodesMillionInput = useSolveSettingsStore(
-    (state) => state.setMaxNodesMillionInput,
-  )
+  const setMaxNodesMillionInput = useSolveSettingsStore((state) => state.setMaxNodesMillionInput)
   const maxMoves = Number(maxMovesInput)
   const maxNodes = Number(maxNodesMillionInput) * nodesPerMillion
   const maxMovesLimit = maxMovesLimitForPuzzle(selectedPuzzleSlug)
@@ -36,10 +34,7 @@ export function useSolveFormState() {
     maxNodesMillionInput,
     t('solve.form.maxNodesMillion'),
   )
-  const localValidationMessage = validationErrorMessage(
-    t,
-    maxMovesValidation ?? maxNodesValidation,
-  )
+  const localValidationMessage = validationErrorMessage(t, maxMovesValidation ?? maxNodesValidation)
   const activeScramblePlaceholder =
     selectedPuzzleSlug === 'cube-2x2x2' ? 'R U F' : scramblePlaceholder
 

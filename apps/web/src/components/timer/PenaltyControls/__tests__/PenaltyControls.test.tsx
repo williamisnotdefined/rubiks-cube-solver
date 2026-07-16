@@ -8,7 +8,7 @@ describe('PenaltyControls', () => {
     const user = userEvent.setup()
     const onPenaltyChange = vi.fn()
 
-    render(<PenaltyControls penalty="plus2" onPenaltyChange={onPenaltyChange} />)
+    render(<PenaltyControls penalty='plus2' onPenaltyChange={onPenaltyChange} />)
 
     expect(screen.queryByRole('button', { name: '-' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: '+2' })).toHaveAttribute('aria-pressed', 'true')
@@ -24,7 +24,7 @@ describe('PenaltyControls', () => {
     const user = userEvent.setup()
     const onPenaltyChange = vi.fn()
 
-    render(<PenaltyControls disabled penalty="ok" onPenaltyChange={onPenaltyChange} />)
+    render(<PenaltyControls disabled penalty='ok' onPenaltyChange={onPenaltyChange} />)
 
     for (const button of screen.getAllByRole('button')) {
       expect(button).toBeDisabled()
@@ -37,12 +37,18 @@ describe('PenaltyControls', () => {
     const user = userEvent.setup()
     const onDeleteLatestSolve = vi.fn()
 
-    const { rerender } = render(<PenaltyControls penalty="ok" onDeleteLatestSolve={onDeleteLatestSolve} onPenaltyChange={vi.fn()} />)
+    const { rerender } = render(
+      <PenaltyControls
+        penalty='ok'
+        onDeleteLatestSolve={onDeleteLatestSolve}
+        onPenaltyChange={vi.fn()}
+      />,
+    )
 
     await user.click(screen.getByRole('button', { name: 'Delete' }))
     expect(onDeleteLatestSolve).toHaveBeenCalledTimes(1)
 
-    rerender(<PenaltyControls penalty="ok" onPenaltyChange={vi.fn()} />)
+    rerender(<PenaltyControls penalty='ok' onPenaltyChange={vi.fn()} />)
     expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument()
   })
 })

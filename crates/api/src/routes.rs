@@ -1,15 +1,15 @@
-use std::path::PathBuf;
+use std::path::{Component, Path as FsPath, PathBuf};
 use std::time::Duration;
 
 use axum::body::Body;
-use axum::extract::{DefaultBodyLimit, Path, State};
+use axum::extract::{DefaultBodyLimit, OriginalUri, Path, State};
 use axum::http::{
     header::CACHE_CONTROL, header::CONTENT_TYPE, HeaderName, HeaderValue, Method, Request,
     StatusCode,
 };
 use axum::middleware::{self, Next};
-use axum::response::{IntoResponse, Response};
-use axum::routing::{get, post};
+use axum::response::{IntoResponse, Redirect, Response};
+use axum::routing::{any, get, post};
 use axum::{Json, Router};
 use cube_engine::{PuzzleId, SolverStrategy};
 use tokio::task;
@@ -58,13 +58,128 @@ pub fn api_router(state: ApiState) -> Router {
 }
 
 pub fn api_router_with_web_dist(state: ApiState, web_dist_dir: PathBuf) -> Router {
-    let index_file = web_dist_dir.join("index.html");
     let assets_dir = web_dist_dir.join("assets");
-    let router = api_routes()
-        .nest_service("/assets", ServeDir::new(assets_dir))
-        .fallback_service(ServeDir::new(web_dist_dir).fallback(ServeFile::new(index_file)));
+    let not_found_service = ServeFile::new(web_dist_dir.join("404.html"));
+    let mut router = api_routes()
+        .route("/api/{*path}", any(|| async { StatusCode::NOT_FOUND }))
+        .nest_service("/assets", ServeDir::new(assets_dir));
+
+    for &(source, destination) in FIXED_WEB_REDIRECTS {
+        router = add_permanent_redirect(router, source, destination.to_owned());
+    }
+
+    for &locale in LOCALE_PREFIXES {
+        let root = format!("/{locale}");
+        let solve = format!("/{locale}/solve/");
+        router = add_permanent_redirect(router, &root, solve.clone());
+        router = add_permanent_redirect(router, &format!("{root}/"), solve);
+
+        let notations = format!("/{locale}/notations");
+        let notation_guide = if locale == "en" {
+            "/notations/3x3/".to_owned()
+        } else {
+            format!("/{locale}/notations/3x3/")
+        };
+        router = add_permanent_redirect(router, &notations, notation_guide.clone());
+        router = add_permanent_redirect(router, &format!("{notations}/"), notation_guide);
+    }
+
+    for destination in default_locale_static_paths(&web_dist_dir) {
+        let source = format!("/en{destination}");
+        router = add_permanent_redirect(router, &source, destination.clone());
+        if source.ends_with('/') {
+            router = add_permanent_redirect(router, source.trim_end_matches('/'), destination);
+        }
+    }
+
+    let router =
+        router.fallback_service(ServeDir::new(web_dist_dir).not_found_service(not_found_service));
 
     apply_http_layers(router).with_state(state)
+}
+
+const FIXED_WEB_REDIRECTS: &[(&str, &str)] = &[
+    ("/", "/solve/"),
+    ("/api/wca-data", "/api/wca-data/v1/docs"),
+    ("/api/wca-data/", "/api/wca-data/v1/docs"),
+    ("/notations", "/notations/3x3/"),
+    ("/notations/", "/notations/3x3/"),
+];
+const LOCALE_PREFIXES: &[&str] = &["en", "de", "es", "fr", "it", "ja", "pt-BR", "ru", "zh"];
+const PREFIXED_STATIC_LOCALES: &[&str] = &["de", "es", "fr", "it", "ja", "pt-BR", "ru", "zh"];
+
+fn add_permanent_redirect(
+    router: Router<ApiState>,
+    source: &str,
+    destination: String,
+) -> Router<ApiState> {
+    router.route(
+        source,
+        get(move |OriginalUri(uri): OriginalUri| {
+            let destination = destination.clone();
+            async move { permanent_redirect_with_query(&destination, &uri) }
+        }),
+    )
+}
+
+fn permanent_redirect_with_query(destination: &str, original_uri: &axum::http::Uri) -> Redirect {
+    match original_uri.query() {
+        Some(query) => Redirect::permanent(&format!("{destination}?{query}")),
+        None => Redirect::permanent(destination),
+    }
+}
+
+fn default_locale_static_paths(web_dist_dir: &FsPath) -> Vec<String> {
+    let mut paths = Vec::new();
+    collect_default_locale_static_paths(web_dist_dir, web_dist_dir, &mut paths);
+    paths
+}
+
+fn collect_default_locale_static_paths(root: &FsPath, directory: &FsPath, paths: &mut Vec<String>) {
+    let Ok(entries) = std::fs::read_dir(directory) else {
+        return;
+    };
+
+    for entry in entries.flatten() {
+        let Ok(file_type) = entry.file_type() else {
+            continue;
+        };
+        if file_type.is_dir() {
+            collect_default_locale_static_paths(root, &entry.path(), paths);
+            continue;
+        }
+        if entry.file_name() != "index.html" || directory == root {
+            continue;
+        }
+
+        let Ok(relative) = directory.strip_prefix(root) else {
+            continue;
+        };
+        if !relative
+            .components()
+            .all(|component| matches!(component, Component::Normal(_)))
+        {
+            continue;
+        }
+        let Some(relative) = relative.to_str() else {
+            continue;
+        };
+        let path = format!("/{}/", relative.replace(std::path::MAIN_SEPARATOR, "/"));
+        if is_safe_default_locale_path(&path) {
+            paths.push(path);
+        }
+    }
+}
+
+fn is_safe_default_locale_path(path: &str) -> bool {
+    path.starts_with('/')
+        && !path.starts_with("//")
+        && path.ends_with('/')
+        && !path.contains(['\\', '?', '#', '{', '}'])
+        && !PREFIXED_STATIC_LOCALES.iter().any(|locale| {
+            let prefix = format!("/{locale}/");
+            path.starts_with(&prefix)
+        })
 }
 
 fn api_routes() -> Router<ApiState> {

@@ -3,7 +3,17 @@ import { initReactI18next } from 'react-i18next'
 import enUs from './locales/en.json'
 import ptBr from './locales/pt-BR.json'
 
-export const supportedLanguages = ['en-US', 'es', 'pt-BR', 'it', 'de', 'fr', 'ru', 'zh', 'ja'] as const
+export const supportedLanguages = [
+  'en-US',
+  'es',
+  'pt-BR',
+  'it',
+  'de',
+  'fr',
+  'ru',
+  'zh',
+  'ja',
+] as const
 export type SupportedLanguage = (typeof supportedLanguages)[number]
 type StaticLanguage = 'en-US' | 'pt-BR'
 type DynamicLanguage = Exclude<SupportedLanguage, StaticLanguage>
@@ -33,7 +43,9 @@ const supportedBaseLanguages: Partial<Record<string, SupportedLanguage>> = {
   zh: 'zh',
 }
 
-export function languageFromBrowser(languages: readonly string[] = browserLanguages()): SupportedLanguage {
+export function languageFromBrowser(
+  languages: readonly string[] = browserLanguages(),
+): SupportedLanguage {
   for (const language of languages) {
     const supportedLanguage = supportedLanguageFromTag(language)
     if (supportedLanguage !== undefined) {

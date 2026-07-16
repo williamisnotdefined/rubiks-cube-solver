@@ -42,6 +42,7 @@
     },
     "table": {
       "algorithm": "Algoritmo",
+      "caption": "Casos de algoritmos de {{name}}",
       "case": "Caso",
       "name": "Nombre",
       "source": "Fuente"
@@ -50,19 +51,43 @@
       "cfop": {
         "algorithmCount": "4 pasos, 78 algoritmos completos de última capa",
         "cases": {
-          "sexyMove": { "name": "Trigger básico de F2L", "note": "Un trigger corto usado para emparejar e insertar muchos casos de F2L. Entiende su efecto antes de memorizar listas largas." },
-          "sune": { "name": "Sune de OLL", "note": "Una de las formas más importantes de OLL. Aparece en OLL de 2 miradas, OLL completo, Ortega en 2x2 y conjuntos tipo CLL." },
-          "tPerm": { "name": "Permutación T", "note": "Una PLL rápida que cambia un par de esquinas y un par de aristas. Es una buena referencia para ejecución de última capa." },
-          "uPerm": { "name": "Permutación U", "note": "Una PLL solo de aristas. Muchos solvers aprenden las permutaciones U temprano porque terminan muchos casos de PLL principiante." }
+          "sexyMove": {
+            "name": "Trigger básico de F2L",
+            "note": "Un trigger corto usado para emparejar e insertar muchos casos de F2L. Entiende su efecto antes de memorizar listas largas."
+          },
+          "sune": {
+            "name": "Sune de OLL",
+            "note": "Una de las formas más importantes de OLL. Aparece en OLL de 2 miradas, OLL completo, Ortega en 2x2 y conjuntos tipo CLL."
+          },
+          "tPerm": {
+            "name": "Permutación T",
+            "note": "Una PLL rápida que cambia un par de esquinas y un par de aristas. Es una buena referencia para ejecución de última capa."
+          },
+          "uPerm": {
+            "name": "Permutación U",
+            "note": "Una PLL solo de aristas. Muchos solvers aprenden las permutaciones U temprano porque terminan muchos casos de PLL principiante."
+          }
         },
         "images": { "hero": "Diagrama del método CFOP con información de F2L" },
         "level": "Principiante a avanzado",
         "recommendedFor": "Speedsolving de 3x3 y etapa 3x3 de cubos grandes",
         "steps": {
-          "cross": { "body": "Resuelve cuatro aristas en la base alrededor del color elegido, normalmente planeando toda la cruz durante la inspección. El objetivo no es solo resolverla, sino terminar con un agarre estable y un primer par de F2L predecible.", "title": "Cruz" },
-          "f2l": { "body": "Empareja cada esquina de la primera capa con su arista correspondiente de la capa media e inserta el par en un slot. Un F2L eficiente trata más de entender el movimiento de piezas que de memorizar todos los casos al inicio.", "title": "F2L" },
-          "oll": { "body": "Orienta la última capa hasta que la cara superior tenga un solo color. Los principiantes pueden dividirlo en OLL de 2 miradas; OLL completo tiene 57 casos.", "title": "OLL" },
-          "pll": { "body": "Permuta las piezas ya orientadas de la última capa. PLL de 2 miradas basta para empezar; PLL completo tiene 21 casos y es uno de los mejores primeros conjuntos avanzados para aprender.", "title": "PLL" }
+          "cross": {
+            "body": "Resuelve cuatro aristas en la base alrededor del color elegido, normalmente planeando toda la cruz durante la inspección. El objetivo no es solo resolverla, sino terminar con un agarre estable y un primer par de F2L predecible.",
+            "title": "Cruz"
+          },
+          "f2l": {
+            "body": "Empareja cada esquina de la primera capa con su arista correspondiente de la capa media e inserta el par en un slot. Un F2L eficiente trata más de entender el movimiento de piezas que de memorizar todos los casos al inicio.",
+            "title": "F2L"
+          },
+          "oll": {
+            "body": "Orienta la última capa hasta que la cara superior tenga un solo color. Los principiantes pueden dividirlo en OLL de 2 miradas; OLL completo tiene 57 casos.",
+            "title": "OLL"
+          },
+          "pll": {
+            "body": "Permuta las piezas ya orientadas de la última capa. PLL de 2 miradas basta para empezar; PLL completo tiene 21 casos y es uno de los mejores primeros conjuntos avanzados para aprender.",
+            "title": "PLL"
+          }
         },
         "summary": "CFOP resuelve el cubo por Cruz, F2L, OLL y PLL. Es el camino de speedsolving 3x3 más documentado y la mejora más directa desde capa por capa.",
         "title": "CFOP"
@@ -70,18 +95,39 @@
       "cll": {
         "algorithmCount": "42 casos después de una capa resuelta en 2x2",
         "cases": {
-          "antisune": { "name": "Grupo Antisune", "note": "El compañero visualmente inverso de Sune. Es común y conviene reconocerlo por stickers superiores y barras laterales." },
-          "hCase": { "name": "Grupo H", "note": "Un grupo compacto con patrones opuestos muy claros. Algunos casos tienen algoritmos muy cortos." },
-          "sune": { "name": "Grupo Sune", "note": "Uno de los primeros grupos de CLL que muchos solvers reconocen porque se conecta con formas familiares de OLL." },
-          "tCase": { "name": "Grupo T", "note": "Este grupo recompensa reconocimiento limpio de barras. Evita mezclarlo con casos parecidos de Pi y U." }
+          "antisune": {
+            "name": "Grupo Antisune",
+            "note": "El compañero visualmente inverso de Sune. Es común y conviene reconocerlo por stickers superiores y barras laterales."
+          },
+          "hCase": {
+            "name": "Grupo H",
+            "note": "Un grupo compacto con patrones opuestos muy claros. Algunos casos tienen algoritmos muy cortos."
+          },
+          "sune": {
+            "name": "Grupo Sune",
+            "note": "Uno de los primeros grupos de CLL que muchos solvers reconocen porque se conecta con formas familiares de OLL."
+          },
+          "tCase": {
+            "name": "Grupo T",
+            "note": "Este grupo recompensa reconocimiento limpio de barras. Evita mezclarlo con casos parecidos de Pi y U."
+          }
         },
         "images": { "hero": "Diagrama del método CLL" },
         "level": "2x2 avanzado",
         "recommendedFor": "Solvers de 2x2 que ya resuelven una capa rápido",
         "steps": {
-          "oneLookCorners": { "body": "Usa un algoritmo para resolver todas las esquinas restantes. Esto elimina la división OLL más PBL de Ortega y convierte la última capa en una mirada.", "title": "Resolver la última capa en una mirada" },
-          "recognition": { "body": "El reconocimiento se organiza por familias de orientación de esquinas, como Sune, Antisune, T, U, L, Pi y H. Aprende un grupo por vez y entrena casos similares juntos.", "title": "Reconocimiento por grupos" },
-          "solvedLayer": { "body": "CLL empieza desde una capa completamente resuelta, no solo una cara. La primera capa suele planearse durante la inspección en scrambles fáciles.", "title": "Primera capa resuelta" }
+          "oneLookCorners": {
+            "body": "Usa un algoritmo para resolver todas las esquinas restantes. Esto elimina la división OLL más PBL de Ortega y convierte la última capa en una mirada.",
+            "title": "Resolver la última capa en una mirada"
+          },
+          "recognition": {
+            "body": "El reconocimiento se organiza por familias de orientación de esquinas, como Sune, Antisune, T, U, L, Pi y H. Aprende un grupo por vez y entrena casos similares juntos.",
+            "title": "Reconocimiento por grupos"
+          },
+          "solvedLayer": {
+            "body": "CLL empieza desde una capa completamente resuelta, no solo una cara. La primera capa suele planearse durante la inspección en scrambles fáciles.",
+            "title": "Primera capa resuelta"
+          }
         },
         "summary": "CLL resuelve las cuatro esquinas restantes del 2x2 en un algoritmo después de una capa resuelta. Es el paso natural después de Ortega.",
         "title": "CLL de 2x2"
@@ -89,16 +135,34 @@
       "clockBeginner": {
         "algorithmCount": "Basado en procedimiento, no en muchos algoritmos",
         "cases": {
-          "pins": { "name": "Notación de pines", "note": "UR, DR, DL y UL indican qué pines están arriba. Una descripción de método solo tiene sentido cuando las posiciones de pines están claras." },
-          "twelve": { "name": "Objetivo resuelto de Clock", "note": "Todos los diales deben apuntar a 12:00 en ambos lados. El puzzle trata de offsets controlados de diales, no de permutación de piezas." }
+          "pins": {
+            "name": "Notación de pines",
+            "note": "UR, DR, DL y UL indican qué pines están arriba. Una descripción de método solo tiene sentido cuando las posiciones de pines están claras."
+          },
+          "twelve": {
+            "name": "Objetivo resuelto de Clock",
+            "note": "Todos los diales deben apuntar a 12:00 en ambos lados. El puzzle trata de offsets controlados de diales, no de permutación de piezas."
+          }
         },
         "level": "Principiante",
         "recommendedFor": "Aprender notación de Clock antes de métodos rápidos",
         "steps": {
-          "corners": { "body": "Después de las cruces, lleva cada dial restante de esquina a 12 sin alterar grupos resueltos. El orden exacto de las ruedas depende del método elegido.", "title": "Esquinas" },
-          "crosses": { "body": "La mayoría de métodos principiantes alinea primero un conjunto de diales centrales y de borde en un lado, luego repite en el otro lado tras girar el puzzle.", "title": "Crear grupos de diales" },
-          "flip": { "body": "Girar el Clock cambia qué diales conecta cada rueda. Una buena notación mantiene legibles las operaciones del frente y de atrás.", "title": "Girar y terminar" },
-          "notation": { "body": "Clock usa pines y giros de ruedas en vez de giros de caras de cubo. Aprende cómo las posiciones de pines conectan diales antes de memorizar un método.", "title": "Notación primero" }
+          "corners": {
+            "body": "Después de las cruces, lleva cada dial restante de esquina a 12 sin alterar grupos resueltos. El orden exacto de las ruedas depende del método elegido.",
+            "title": "Esquinas"
+          },
+          "crosses": {
+            "body": "La mayoría de métodos principiantes alinea primero un conjunto de diales centrales y de borde en un lado, luego repite en el otro lado tras girar el puzzle.",
+            "title": "Crear grupos de diales"
+          },
+          "flip": {
+            "body": "Girar el Clock cambia qué diales conecta cada rueda. Una buena notación mantiene legibles las operaciones del frente y de atrás.",
+            "title": "Girar y terminar"
+          },
+          "notation": {
+            "body": "Clock usa pines y giros de ruedas en vez de giros de caras de cubo. Aprende cómo las posiciones de pines conectan diales antes de memorizar un método.",
+            "title": "Notación primero"
+          }
         },
         "summary": "Los métodos de Clock resuelven grupos de diales usando pines y ruedas. Empieza por notación y un procedimiento principiante confiable antes de optimizar movimientos.",
         "title": "Método básico de Clock"
@@ -106,17 +170,40 @@
       "eg": {
         "algorithmCount": "128 casos incluyendo ideas de PBL",
         "cases": {
-          "eg0": { "name": "EG-0 / base de CLL", "note": "La capa inferior está totalmente resuelta. Son los casos de CLL que ya conoces si aprendiste CLL de 2x2 primero." },
-          "eg1": { "name": "EG-1", "note": "La primera cara tiene un patrón de intercambio adyacente. El reconocimiento también debe incluir dónde están las piezas pareadas de la base antes del algoritmo." },
-          "eg2": { "name": "EG-2", "note": "La primera cara tiene un patrón de intercambio diagonal. Es potente, pero solo conviene cuando la inspección puede cubrir todo el solve." }
+          "eg0": {
+            "name": "EG-0 / base de CLL",
+            "note": "La capa inferior está totalmente resuelta. Son los casos de CLL que ya conoces si aprendiste CLL de 2x2 primero."
+          },
+          "eg1": {
+            "name": "EG-1",
+            "note": "La primera cara tiene un patrón de intercambio adyacente. El reconocimiento también debe incluir dónde están las piezas pareadas de la base antes del algoritmo."
+          },
+          "eg2": {
+            "name": "EG-2",
+            "note": "La primera cara tiene un patrón de intercambio diagonal. Es potente, pero solo conviene cuando la inspección puede cubrir todo el solve."
+          }
         },
-        "images": { "eg0": "Caso de primera cara EG-0", "eg1": "Caso de primera cara EG-1", "eg2": "Caso de primera cara EG-2", "hero": "Representación del método EG" },
+        "images": {
+          "eg0": "Caso de primera cara EG-0",
+          "eg1": "Caso de primera cara EG-1",
+          "eg2": "Caso de primera cara EG-2",
+          "hero": "Representación del método EG"
+        },
         "level": "2x2 experto",
         "recommendedFor": "Solución de 2x2 en una mirada e inspección avanzada",
         "steps": {
-          "auf": { "body": "EG a menudo exige pre-AUF y post-AUF. Eso hace que el reconocimiento sea más difícil que en CLL aunque el algoritmo final sea rápido.", "title": "Controlar AUF" },
-          "caseGroup": { "body": "Clasifica la primera cara como EG-0, EG-1 o EG-2. Esto indica si la base está resuelta, intercambiada adyacente o intercambiada diagonal.", "title": "Identificar el grupo EG" },
-          "face": { "body": "Construye una cara, no necesariamente una capa completa. El valor de EG viene de elegir una cara que haga visible el resto durante la inspección.", "title": "Construir una cara" }
+          "auf": {
+            "body": "EG a menudo exige pre-AUF y post-AUF. Eso hace que el reconocimiento sea más difícil que en CLL aunque el algoritmo final sea rápido.",
+            "title": "Controlar AUF"
+          },
+          "caseGroup": {
+            "body": "Clasifica la primera cara como EG-0, EG-1 o EG-2. Esto indica si la base está resuelta, intercambiada adyacente o intercambiada diagonal.",
+            "title": "Identificar el grupo EG"
+          },
+          "face": {
+            "body": "Construye una cara, no necesariamente una capa completa. El valor de EG viene de elegir una cara que haga visible el resto durante la inspección.",
+            "title": "Construir una cara"
+          }
         },
         "summary": "EG es un método de 2x2 con mucha carga de algoritmos: resuelve una cara y luego resuelve todo el cubo en un algoritmo. Es más fuerte cuando todo el solve puede planearse en inspección.",
         "title": "EG de 2x2"
@@ -124,16 +211,34 @@
       "fourByFour": {
         "algorithmCount": "Flujo de reducción más algoritmos de paridad",
         "cases": {
-          "ollParity": { "name": "Paridad de OLL", "note": "Un 4x4 reducido puede mostrar una sola dedge volteada, estado imposible en un 3x3 real. Aprende esto separado del OLL normal." },
-          "pllParity": { "name": "Paridad de PLL", "note": "La paridad de PLL cambia dos dedges después de la etapa 3x3. El reconocimiento es simple, pero la ejecución debe ser controlada." }
+          "ollParity": {
+            "name": "Paridad de OLL",
+            "note": "Un 4x4 reducido puede mostrar una sola dedge volteada, estado imposible en un 3x3 real. Aprende esto separado del OLL normal."
+          },
+          "pllParity": {
+            "name": "Paridad de PLL",
+            "note": "La paridad de PLL cambia dos dedges después de la etapa 3x3. El reconocimiento es simple, pero la ejecución debe ser controlada."
+          }
         },
         "level": "Intermedio",
         "recommendedFor": "Primer método de 4x4 y transición hacia Yau",
         "steps": {
-          "centers": { "body": "Construye los seis centros 2x2. En reducción suele hacerse antes del emparejado de aristas; en Yau, algunas aristas de cruz se resuelven antes para mejorar el lookahead.", "title": "Centros" },
-          "edgePairing": { "body": "Empareja wings correspondientes en dedges. Cuando todas las dedges están emparejadas, el puzzle se comporta como un 3x3 con posibles casos de paridad.", "title": "Emparejar aristas" },
-          "parity": { "body": "Los casos de paridad no son errores. Ocurren porque la reducción oculta información interna del 4x4 que un 3x3 normal no tiene.", "title": "Resolver paridad" },
-          "threeByThreeStage": { "body": "Resuelve el cubo reducido con un método de 3x3, como CFOP. Mantén los algoritmos de paridad separados de los algoritmos normales de última capa del 3x3.", "title": "Etapa 3x3" }
+          "centers": {
+            "body": "Construye los seis centros 2x2. En reducción suele hacerse antes del emparejado de aristas; en Yau, algunas aristas de cruz se resuelven antes para mejorar el lookahead.",
+            "title": "Centros"
+          },
+          "edgePairing": {
+            "body": "Empareja wings correspondientes en dedges. Cuando todas las dedges están emparejadas, el puzzle se comporta como un 3x3 con posibles casos de paridad.",
+            "title": "Emparejar aristas"
+          },
+          "parity": {
+            "body": "Los casos de paridad no son errores. Ocurren porque la reducción oculta información interna del 4x4 que un 3x3 normal no tiene.",
+            "title": "Resolver paridad"
+          },
+          "threeByThreeStage": {
+            "body": "Resuelve el cubo reducido con un método de 3x3, como CFOP. Mantén los algoritmos de paridad separados de los algoritmos normales de última capa del 3x3.",
+            "title": "Etapa 3x3"
+          }
         },
         "summary": "La reducción de 4x4 transforma el puzzle en un 3x3 resolviendo centros y emparejando aristas, luego trata paridades que no existen en 3x3.",
         "title": "Reducción y Yau en 4x4"
@@ -141,17 +246,35 @@
       "megaminxBeginner": {
         "algorithmCount": "Resolución mayormente intuitiva estilo F2L",
         "cases": {
-          "lastLayerSune": { "name": "Idea de Sune en última capa", "note": "Muchas ideas de última capa de Megaminx recuerdan triggers de 3x3, pero el reconocimiento ocurre en una última capa de cinco lados." },
-          "s2lInsert": { "name": "Idea de inserción de par", "note": "Las inserciones de segunda capa y capas posteriores son más fáciles si piensas en pares, no en piezas aisladas." }
+          "lastLayerSune": {
+            "name": "Idea de Sune en última capa",
+            "note": "Muchas ideas de última capa de Megaminx recuerdan triggers de 3x3, pero el reconocimiento ocurre en una última capa de cinco lados."
+          },
+          "s2lInsert": {
+            "name": "Idea de inserción de par",
+            "note": "Las inserciones de segunda capa y capas posteriores son más fáciles si piensas en pares, no en piezas aisladas."
+          }
         },
         "images": { "hero": "Foto de un puzzle Megaminx" },
         "level": "Principiante a intermedio",
         "recommendedFor": "Solvers de 3x3 aprendiendo Megaminx",
         "steps": {
-          "lastLayerCorners": { "body": "Termina orientando y permutando las últimas esquinas. Separa en el reconocimiento el color superior y los colores laterales.", "title": "Esquinas de última capa" },
-          "lastLayerEdges": { "body": "Orienta y permuta las últimas aristas. Algunas ideas de última capa de 3x3 se transfieren, pero el diseño de cinco aristas cambia los casos.", "title": "Aristas de última capa" },
-          "s2l": { "body": "Continúa alrededor del puzzle con pares esquina-arista. El método se siente como un F2L extendido con más slots y más seguimiento de colores.", "title": "Segundas capas" },
-          "star": { "body": "Empieza con una estrella de cinco aristas alrededor de un centro. Es el equivalente en Megaminx a planear una base estable antes de resolver pares.", "title": "Estrella" }
+          "lastLayerCorners": {
+            "body": "Termina orientando y permutando las últimas esquinas. Separa en el reconocimiento el color superior y los colores laterales.",
+            "title": "Esquinas de última capa"
+          },
+          "lastLayerEdges": {
+            "body": "Orienta y permuta las últimas aristas. Algunas ideas de última capa de 3x3 se transfieren, pero el diseño de cinco aristas cambia los casos.",
+            "title": "Aristas de última capa"
+          },
+          "s2l": {
+            "body": "Continúa alrededor del puzzle con pares esquina-arista. El método se siente como un F2L extendido con más slots y más seguimiento de colores.",
+            "title": "Segundas capas"
+          },
+          "star": {
+            "body": "Empieza con una estrella de cinco aristas alrededor de un centro. Es el equivalente en Megaminx a planear una base estable antes de resolver pares.",
+            "title": "Estrella"
+          }
         },
         "summary": "Megaminx suele resolverse con un método por capas inspirado en 3x3: estrella, pares alrededor del puzzle y una última capa adaptada a cinco lados.",
         "title": "Método principiante de Megaminx"
@@ -159,18 +282,39 @@
       "ortega": {
         "algorithmCount": "3 pasos, cerca de 12 algoritmos",
         "cases": {
-          "adjacentPbl": { "name": "PBL adyacente", "note": "Ambas capas necesitan permutación, con barras que pueden alinearse antes del algoritmo." },
-          "antisune": { "name": "Antisune de OLL", "note": "El compañero inverso de Sune. Entrénalo junto con Sune para evitar dudas de reconocimiento." },
-          "diagonalPbl": { "name": "PBL diagonal", "note": "Un caso compacto de PBL que cambia esquinas diagonales entre capas." },
-          "sune": { "name": "Sune de OLL", "note": "Un caso central de orientación de la cara opuesta." }
+          "adjacentPbl": {
+            "name": "PBL adyacente",
+            "note": "Ambas capas necesitan permutación, con barras que pueden alinearse antes del algoritmo."
+          },
+          "antisune": {
+            "name": "Antisune de OLL",
+            "note": "El compañero inverso de Sune. Entrénalo junto con Sune para evitar dudas de reconocimiento."
+          },
+          "diagonalPbl": {
+            "name": "PBL diagonal",
+            "note": "Un caso compacto de PBL que cambia esquinas diagonales entre capas."
+          },
+          "sune": {
+            "name": "Sune de OLL",
+            "note": "Un caso central de orientación de la cara opuesta."
+          }
         },
         "images": { "hero": "Animación del método Ortega" },
         "level": "2x2 intermedio",
         "recommendedFor": "Salir del 2x2 principiante sin aprender CLL completo",
         "steps": {
-          "firstFace": { "body": "Construye una cara intuitivamente. Los colores laterales no necesitan coincidir, lo que hace que el primer paso sea más rápido que una capa completa.", "title": "Primera cara" },
-          "oppositeFace": { "body": "Orienta la cara opuesta con un pequeño conjunto de OLL. El resultado son dos caras de color resuelto, aunque las piezas no estén necesariamente permutadas.", "title": "Cara opuesta" },
-          "pbl": { "body": "Permuta ambas capas a la vez. Reconocer PBL es la habilidad principal de Ortega después de que la primera cara sea fácil.", "title": "PBL" }
+          "firstFace": {
+            "body": "Construye una cara intuitivamente. Los colores laterales no necesitan coincidir, lo que hace que el primer paso sea más rápido que una capa completa.",
+            "title": "Primera cara"
+          },
+          "oppositeFace": {
+            "body": "Orienta la cara opuesta con un pequeño conjunto de OLL. El resultado son dos caras de color resuelto, aunque las piezas no estén necesariamente permutadas.",
+            "title": "Cara opuesta"
+          },
+          "pbl": {
+            "body": "Permuta ambas capas a la vez. Reconocer PBL es la habilidad principal de Ortega después de que la primera cara sea fácil.",
+            "title": "PBL"
+          }
         },
         "summary": "Ortega resuelve un 2x2 construyendo una cara, orientando la cara opuesta y permutando ambas capas con PBL.",
         "title": "Ortega de 2x2"
@@ -178,18 +322,39 @@
       "petrus": {
         "algorithmCount": "5 pasos, casi todo intuitivo antes de la última capa",
         "cases": {
-          "blockExpansion": { "name": "Expansión de bloque", "note": "Petrus recompensa ver cómo un bloque 2x2x2 se convierte en 2x2x3 sin romper piezas resueltas." },
-          "edgeOrientation": { "name": "Trigger de orientación de aristas", "note": "Después del bloque 2x2x3, orientar aristas permite resolver el resto de F2L con un conjunto reducido de movimientos." }
+          "blockExpansion": {
+            "name": "Expansión de bloque",
+            "note": "Petrus recompensa ver cómo un bloque 2x2x2 se convierte en 2x2x3 sin romper piezas resueltas."
+          },
+          "edgeOrientation": {
+            "name": "Trigger de orientación de aristas",
+            "note": "Después del bloque 2x2x3, orientar aristas permite resolver el resto de F2L con un conjunto reducido de movimientos."
+          }
         },
         "images": { "hero": "Animación del método Petrus" },
         "level": "Blockbuilding intermedio",
         "recommendedFor": "Razonamiento de pocos movimientos y práctica de blockbuilding",
         "steps": {
-          "edgeOrientation": { "body": "Orienta las aristas restantes no resueltas. Esta es la identidad de Petrus: hacer EO temprano para simplificar lo demás.", "title": "Orientar aristas" },
-          "finishF2l": { "body": "Termina las dos primeras capas con la restricción de aristas orientadas. Puede ser muy eficiente en movimientos, pero exige lookahead flexible.", "title": "Terminar F2L" },
-          "lastLayer": { "body": "Usa cualquier sistema de última capa. Como las aristas ya están orientadas, OCLL más PLL, COLL más EPLL o enfoques estilo ZBLL son posibles.", "title": "Última capa" },
-          "twoByThreeBlock": { "body": "Expande el bloque a 2x2x3. La elección de expansión afecta la orientación de aristas y la ergonomía del resto del solve.", "title": "Bloque 2x2x3" },
-          "twoByTwoBlock": { "body": "Construye un bloque 2x2x2 en cualquier lugar. No es una capa: es un bloque compacto resuelto que deja muchos giros disponibles.", "title": "Bloque 2x2x2" }
+          "edgeOrientation": {
+            "body": "Orienta las aristas restantes no resueltas. Esta es la identidad de Petrus: hacer EO temprano para simplificar lo demás.",
+            "title": "Orientar aristas"
+          },
+          "finishF2l": {
+            "body": "Termina las dos primeras capas con la restricción de aristas orientadas. Puede ser muy eficiente en movimientos, pero exige lookahead flexible.",
+            "title": "Terminar F2L"
+          },
+          "lastLayer": {
+            "body": "Usa cualquier sistema de última capa. Como las aristas ya están orientadas, OCLL más PLL, COLL más EPLL o enfoques estilo ZBLL son posibles.",
+            "title": "Última capa"
+          },
+          "twoByThreeBlock": {
+            "body": "Expande el bloque a 2x2x3. La elección de expansión afecta la orientación de aristas y la ergonomía del resto del solve.",
+            "title": "Bloque 2x2x3"
+          },
+          "twoByTwoBlock": {
+            "body": "Construye un bloque 2x2x2 en cualquier lugar. No es una capa: es un bloque compacto resuelto que deja muchos giros disponibles.",
+            "title": "Bloque 2x2x2"
+          }
         },
         "summary": "Petrus construye bloques primero, orienta aristas temprano y termina F2L con menos restricciones que los métodos capa por capa.",
         "title": "Petrus"
@@ -197,17 +362,38 @@
       "pyraminxVFirst": {
         "algorithmCount": "Conjunto principiante más casos estilo L4E",
         "cases": {
-          "beginnerCycleA": { "name": "Ciclo de tres aristas A", "note": "Un ciclo básico de Pyraminx usado en métodos principiantes para mover aristas sin muchos algoritmos." },
-          "beginnerCycleB": { "name": "Ciclo de tres aristas B", "note": "El ciclo espejo. Apréndelo como pareja del primer ciclo." },
-          "twoEdgeFlip": { "name": "Flip de dos aristas", "note": "Un caso común de últimas aristas. Solvers más rápidos suelen reescribir la notación para mejores fingertricks." }
+          "beginnerCycleA": {
+            "name": "Ciclo de tres aristas A",
+            "note": "Un ciclo básico de Pyraminx usado en métodos principiantes para mover aristas sin muchos algoritmos."
+          },
+          "beginnerCycleB": {
+            "name": "Ciclo de tres aristas B",
+            "note": "El ciclo espejo. Apréndelo como pareja del primer ciclo."
+          },
+          "twoEdgeFlip": {
+            "name": "Flip de dos aristas",
+            "note": "Un caso común de últimas aristas. Solvers más rápidos suelen reescribir la notación para mejores fingertricks."
+          }
         },
         "level": "Principiante a intermedio",
         "recommendedFor": "Solvers de Pyraminx aprendiendo option select",
         "steps": {
-          "lastEdges": { "body": "Termina las últimas aristas con un conjunto pequeño de algoritmos. Los enfoques avanzados de V First se enfocan mucho en reconocer estos casos sin pausas.", "title": "Últimas aristas" },
-          "optionSelect": { "body": "Los solvers fuertes de Pyraminx comparan inicios V First y Top First durante la inspección. Elige la opción con el final más limpio, no solo la primera que veas.", "title": "Option select" },
-          "tips": { "body": "Las puntas son independientes y deben resolverse sin pensar. Hazlas durante el solve solo cuando no interrumpan el lookahead.", "title": "Puntas y centros" },
-          "v": { "body": "Construye una V: dos aristas resueltas alrededor de una zona de esquina. Esto crea una base estable para el conjunto de últimas aristas.", "title": "V First" }
+          "lastEdges": {
+            "body": "Termina las últimas aristas con un conjunto pequeño de algoritmos. Los enfoques avanzados de V First se enfocan mucho en reconocer estos casos sin pausas.",
+            "title": "Últimas aristas"
+          },
+          "optionSelect": {
+            "body": "Los solvers fuertes de Pyraminx comparan inicios V First y Top First durante la inspección. Elige la opción con el final más limpio, no solo la primera que veas.",
+            "title": "Option select"
+          },
+          "tips": {
+            "body": "Las puntas son independientes y deben resolverse sin pensar. Hazlas durante el solve solo cuando no interrumpan el lookahead.",
+            "title": "Puntas y centros"
+          },
+          "v": {
+            "body": "Construye una V: dos aristas resueltas alrededor de una zona de esquina. Esto crea una base estable para el conjunto de últimas aristas.",
+            "title": "V First"
+          }
         },
         "summary": "Los métodos rápidos de Pyraminx suelen girar alrededor de elecciones V First y Top First. V First es común porque es intuitivo y fácil de inspeccionar.",
         "title": "V First de Pyraminx"
@@ -215,18 +401,39 @@
       "roux": {
         "algorithmCount": "4 pasos, 9 a 42 algoritmos de CMLL",
         "cases": {
-          "cmllSune": { "name": "Caso CMLL estilo Sune", "note": "CMLL resuelve las cuatro esquinas de la última capa ignorando la mayoría de posiciones de aristas. Algunos casos recuerdan ideas de COLL u OLLCP." },
-          "lseo": { "name": "Patrón de orientación en LSE", "note": "Roux termina con giros MU. Reconocer orientación de aristas importa más que el conteo bruto de algoritmos." },
-          "mSliceEdgeFlip": { "name": "Control de aristas en la capa M", "note": "Giros M y U limpios son esenciales. Roux solo es rápido cuando los giros de slice son confiables." }
+          "cmllSune": {
+            "name": "Caso CMLL estilo Sune",
+            "note": "CMLL resuelve las cuatro esquinas de la última capa ignorando la mayoría de posiciones de aristas. Algunos casos recuerdan ideas de COLL u OLLCP."
+          },
+          "lseo": {
+            "name": "Patrón de orientación en LSE",
+            "note": "Roux termina con giros MU. Reconocer orientación de aristas importa más que el conteo bruto de algoritmos."
+          },
+          "mSliceEdgeFlip": {
+            "name": "Control de aristas en la capa M",
+            "note": "Giros M y U limpios son esenciales. Roux solo es rápido cuando los giros de slice son confiables."
+          }
         },
         "images": { "hero": "Representación del método Roux" },
         "level": "Intermedio a avanzado",
         "recommendedFor": "3x3 de baja cantidad de movimientos y práctica de una mano",
         "steps": {
-          "cmll": { "body": "Resuelve las cuatro esquinas de la última capa en un paso mientras dejas las aristas casi libres. CMLL completo tiene 42 casos, pero una versión de dos miradas basta para empezar.", "title": "CMLL" },
-          "firstBlock": { "body": "Construye un bloque 1x2x3 en un lado. Es la parte más difícil para nuevos solvers de Roux porque es blockbuilding real, no inserción en slots.", "title": "Primer bloque" },
-          "lse": { "body": "Resuelve las últimas seis aristas con movimientos M y U: orienta aristas, resuelve UL y UR, luego termina la slice M. Aquí Roux se vuelve muy eficiente en movimientos.", "title": "Últimas seis aristas" },
-          "secondBlock": { "body": "Construye el bloque 1x2x3 opuesto sin destruir el primero. Después, la capa U y la slice M quedan disponibles para el final.", "title": "Segundo bloque" }
+          "cmll": {
+            "body": "Resuelve las cuatro esquinas de la última capa en un paso mientras dejas las aristas casi libres. CMLL completo tiene 42 casos, pero una versión de dos miradas basta para empezar.",
+            "title": "CMLL"
+          },
+          "firstBlock": {
+            "body": "Construye un bloque 1x2x3 en un lado. Es la parte más difícil para nuevos solvers de Roux porque es blockbuilding real, no inserción en slots.",
+            "title": "Primer bloque"
+          },
+          "lse": {
+            "body": "Resuelve las últimas seis aristas con movimientos M y U: orienta aristas, resuelve UL y UR, luego termina la slice M. Aquí Roux se vuelve muy eficiente en movimientos.",
+            "title": "Últimas seis aristas"
+          },
+          "secondBlock": {
+            "body": "Construye el bloque 1x2x3 opuesto sin destruir el primero. Después, la capa U y la slice M quedan disponibles para el final.",
+            "title": "Segundo bloque"
+          }
         },
         "summary": "Roux resuelve dos bloques laterales, luego esquinas y finalmente las últimas seis aristas. Usa menos movimientos que CFOP y depende de blockbuilding con control de la slice M.",
         "title": "Roux"
@@ -234,18 +441,43 @@
       "sarahSkewb": {
         "algorithmCount": "Principiante: dos triggers centrales de 4 movimientos",
         "cases": {
-          "hedgeslammer": { "name": "Hedgeslammer", "note": "La notación de Sarah usa este trigger como contraparte del sledgehammer. Elige agarres que encajen con tu Skewb." },
-          "lastCenters": { "name": "Últimos centros", "note": "El último paso repite las mismas ideas de trigger después de rotaciones. Sigue los centros, no solo las esquinas." },
-          "sledgehammer": { "name": "Sledgehammer", "note": "Uno de los dos triggers centrales de 4 movimientos en el método de Sarah. Muchos casos de Skewb se reducen a sledgehammer o hedgeslammer repetidos." }
+          "hedgeslammer": {
+            "name": "Hedgeslammer",
+            "note": "La notación de Sarah usa este trigger como contraparte del sledgehammer. Elige agarres que encajen con tu Skewb."
+          },
+          "lastCenters": {
+            "name": "Últimos centros",
+            "note": "El último paso repite las mismas ideas de trigger después de rotaciones. Sigue los centros, no solo las esquinas."
+          },
+          "sledgehammer": {
+            "name": "Sledgehammer",
+            "note": "Uno de los dos triggers centrales de 4 movimientos en el método de Sarah. Muchos casos de Skewb se reducen a sledgehammer o hedgeslammer repetidos."
+          }
         },
-        "images": { "hero": "Paso de esquinas del método de Skewb de Sarah", "step1": "Diagrama de la primera cara en el Skewb de Sarah", "step4": "Diagrama de últimos centros en el Skewb de Sarah" },
+        "images": {
+          "hero": "Paso de esquinas del método de Skewb de Sarah",
+          "step1": "Diagrama de la primera cara en el Skewb de Sarah",
+          "step4": "Diagrama de últimos centros en el Skewb de Sarah"
+        },
         "level": "Principiante a avanzado",
         "recommendedFor": "Solvers de Skewb que quieren un camino claro de principiante a L2L",
         "steps": {
-          "corners": { "body": "Usa los dos triggers de 4 movimientos para resolver las esquinas restantes. El reconocimiento es simple al inicio y se vuelve más algorítmico en la versión intermedia.", "title": "Esquinas restantes" },
-          "firstSide": { "body": "Resuelve una cara intuitivamente. La última esquina puede requerir mover temporalmente una esquina resuelta, lo cual es normal en Skewb.", "title": "Primera cara" },
-          "lastCenters": { "body": "Resuelve los centros restantes encajando uno de los casos conocidos, rotando el puzzle si hace falta y aplicando la misma estructura de triggers.", "title": "Centros restantes" },
-          "topCenter": { "body": "Resuelve el centro opuesto después de las esquinas. La versión principiante separa esto de los últimos centros para mantener fácil el reconocimiento.", "title": "Centro opuesto" }
+          "corners": {
+            "body": "Usa los dos triggers de 4 movimientos para resolver las esquinas restantes. El reconocimiento es simple al inicio y se vuelve más algorítmico en la versión intermedia.",
+            "title": "Esquinas restantes"
+          },
+          "firstSide": {
+            "body": "Resuelve una cara intuitivamente. La última esquina puede requerir mover temporalmente una esquina resuelta, lo cual es normal en Skewb.",
+            "title": "Primera cara"
+          },
+          "lastCenters": {
+            "body": "Resuelve los centros restantes encajando uno de los casos conocidos, rotando el puzzle si hace falta y aplicando la misma estructura de triggers.",
+            "title": "Centros restantes"
+          },
+          "topCenter": {
+            "body": "Resuelve el centro opuesto después de las esquinas. La versión principiante separa esto de los últimos centros para mantener fácil el reconocimiento.",
+            "title": "Centro opuesto"
+          }
         },
         "summary": "El método de Skewb de Sarah se construye alrededor de dos triggers cortos. La versión principiante tiene cuatro pasos y combina pasos a medida que mejora el reconocimiento.",
         "title": "Método de Skewb de Sarah"
@@ -253,17 +485,35 @@
       "squareOneShape": {
         "algorithmCount": "Método que empieza por forma, con casos de notación",
         "cases": {
-          "kiteScallop": { "name": "Ejemplo de forma", "note": "Los casos de cubeshape se aprenden mejor por familias de formas. No trates cada secuencia como un algoritmo aislado." },
-          "notation": { "name": "Notación de Square-1", "note": "(x,y) gira las capas superior e inferior en unidades de 30 grados, y / cambia la mitad derecha en la notación clásica." }
+          "kiteScallop": {
+            "name": "Ejemplo de forma",
+            "note": "Los casos de cubeshape se aprenden mejor por familias de formas. No trates cada secuencia como un algoritmo aislado."
+          },
+          "notation": {
+            "name": "Notación de Square-1",
+            "note": "(x,y) gira las capas superior e inferior en unidades de 30 grados, y / cambia la mitad derecha en la notación clásica."
+          }
         },
         "images": { "hero": "Square-1 en forma resuelta" },
         "level": "Intermedio",
         "recommendedFor": "Aprender notación de Square-1 y cubeshape",
         "steps": {
-          "parity": { "body": "Los casos tipo paridad en Square-1 forman parte del flujo del método. Mantén la corrección de paridad separada del cubeshape para que el reconocimiento sea limpio.", "title": "Manejar paridad" },
-          "permutation": { "body": "Permuta esquinas y aristas después de la separación. Muchos métodos rápidos reducen esto a conjuntos compactos de algoritmos.", "title": "Permutar piezas" },
-          "separation": { "body": "Separa esquinas y aristas en sus capas correctas después de restaurar la forma de cubo. Algunos métodos lo llaman orientación, aunque las piezas de Square-1 no se orientan como las de un cubo.", "title": "Separar capas" },
-          "shape": { "body": "Devuelve primero el puzzle a forma de cubo. Esto hace posible el reconocimiento posterior y es la mayor barrera inicial para nuevos solvers de Square-1.", "title": "Cubeshape" }
+          "parity": {
+            "body": "Los casos tipo paridad en Square-1 forman parte del flujo del método. Mantén la corrección de paridad separada del cubeshape para que el reconocimiento sea limpio.",
+            "title": "Manejar paridad"
+          },
+          "permutation": {
+            "body": "Permuta esquinas y aristas después de la separación. Muchos métodos rápidos reducen esto a conjuntos compactos de algoritmos.",
+            "title": "Permutar piezas"
+          },
+          "separation": {
+            "body": "Separa esquinas y aristas en sus capas correctas después de restaurar la forma de cubo. Algunos métodos lo llaman orientación, aunque las piezas de Square-1 no se orientan como las de un cubo.",
+            "title": "Separar capas"
+          },
+          "shape": {
+            "body": "Devuelve primero el puzzle a forma de cubo. Esto hace posible el reconocimiento posterior y es la mayor barrera inicial para nuevos solvers de Square-1.",
+            "title": "Cubeshape"
+          }
         },
         "summary": "Resolver Square-1 empieza restaurando la forma de cubo, luego separando y permutando piezas con una notación propia del puzzle.",
         "title": "Cubeshape de Square-1"
@@ -271,16 +521,31 @@
       "zz": {
         "algorithmCount": "3 o 4 pasos según la última capa",
         "cases": {
-          "edgeOrientation": { "name": "Trigger de orientación de aristas", "note": "Este trigger muestra qué cambia un algoritmo de orientación de aristas, pero EO en ZZ normalmente se planea intuitivamente en inspección." },
-          "twoGenLastLayer": { "name": "Idea de final two-generator", "note": "Cuando las aristas están orientadas, muchos finales usan giros rápidos de R, U y L con menos casos incómodos." }
+          "edgeOrientation": {
+            "name": "Trigger de orientación de aristas",
+            "note": "Este trigger muestra qué cambia un algoritmo de orientación de aristas, pero EO en ZZ normalmente se planea intuitivamente en inspección."
+          },
+          "twoGenLastLayer": {
+            "name": "Idea de final two-generator",
+            "note": "Cuando las aristas están orientadas, muchos finales usan giros rápidos de R, U y L con menos casos incómodos."
+          }
         },
         "images": { "hero": "Animación de EOLine para ZZ" },
         "level": "Intermedio a avanzado",
         "recommendedFor": "3x3 sin rotaciones y ergonomía de una mano",
         "steps": {
-          "eoLineOrCross": { "body": "Orienta todas las aristas mientras colocas una línea o una cruz en la base. El ZZ moderno suele preferir EOCross porque mejora el lookahead después de la inspección.", "title": "EOLine o EOCross" },
-          "lastLayer": { "body": "Termina con un sistema de última capa que aprovecha las aristas orientadas: OCLL más PLL, COLL más EPLL o, eventualmente, ZBLL.", "title": "Última capa" },
-          "zzF2l": { "body": "Completa F2L principalmente con movimientos R, U y L. La orientación de aristas reduce casos y mantiene estable el agarre del cubo.", "title": "ZZ F2L" }
+          "eoLineOrCross": {
+            "body": "Orienta todas las aristas mientras colocas una línea o una cruz en la base. El ZZ moderno suele preferir EOCross porque mejora el lookahead después de la inspección.",
+            "title": "EOLine o EOCross"
+          },
+          "lastLayer": {
+            "body": "Termina con un sistema de última capa que aprovecha las aristas orientadas: OCLL más PLL, COLL más EPLL o, eventualmente, ZBLL.",
+            "title": "Última capa"
+          },
+          "zzF2l": {
+            "body": "Completa F2L principalmente con movimientos R, U y L. La orientación de aristas reduce casos y mantiene estable el agarre del cubo.",
+            "title": "ZZ F2L"
+          }
         },
         "summary": "ZZ orienta aristas al inicio y luego resuelve F2L con un conjunto reducido de movimientos. Cambia una inspección más difícil por giros más fluidos después.",
         "title": "ZZ"
@@ -299,14 +564,38 @@
       "steps": "Pasos del método"
     },
     "puzzles": {
-      "2x2": { "description": "Métodos de Pocket Cube centrados en primera cara, esquinas de última capa y finales de una mirada.", "title": "2x2" },
-      "3x3": { "description": "Métodos centrales de speedsolving 3x3: enfoques por capas, blockbuilding, orientación de aristas y baja cantidad de movimientos.", "title": "3x3" },
-      "4x4": { "description": "Reducción de cubos grandes, flujo estilo Yau y casos de paridad antes de volver a una etapa 3x3.", "title": "4x4" },
-      "clock": { "description": "Notación de Clock, lógica de pines y estructura principiante para el evento WCA de Clock.", "title": "Clock" },
-      "megaminx": { "description": "Métodos para el dodecaedro inspirados en pares de 3x3, adaptados a una última capa de cinco lados.", "title": "Megaminx" },
-      "pyraminx": { "description": "Métodos de Pyraminx basados en puntas, V First, Top First y reconocimiento rápido de últimas aristas.", "title": "Pyraminx" },
-      "skewb": { "description": "Métodos de Skewb que combinan triggers cortos, control de esquinas y ciclos de centros.", "title": "Skewb" },
-      "square1": { "description": "Square-1 shape-shifting: cubeshape, separación, permutación y notación propia.", "title": "Square-1" }
+      "2x2": {
+        "description": "Métodos de Pocket Cube centrados en primera cara, esquinas de última capa y finales de una mirada.",
+        "title": "2x2"
+      },
+      "3x3": {
+        "description": "Métodos centrales de speedsolving 3x3: enfoques por capas, blockbuilding, orientación de aristas y baja cantidad de movimientos.",
+        "title": "3x3"
+      },
+      "4x4": {
+        "description": "Reducción de cubos grandes, flujo estilo Yau y casos de paridad antes de volver a una etapa 3x3.",
+        "title": "4x4"
+      },
+      "clock": {
+        "description": "Notación de Clock, lógica de pines y estructura principiante para el evento WCA de Clock.",
+        "title": "Clock"
+      },
+      "megaminx": {
+        "description": "Métodos para el dodecaedro inspirados en pares de 3x3, adaptados a una última capa de cinco lados.",
+        "title": "Megaminx"
+      },
+      "pyraminx": {
+        "description": "Métodos de Pyraminx basados en puntas, V First, Top First y reconocimiento rápido de últimas aristas.",
+        "title": "Pyraminx"
+      },
+      "skewb": {
+        "description": "Métodos de Skewb que combinan triggers cortos, control de esquinas y ciclos de centros.",
+        "title": "Skewb"
+      },
+      "square1": {
+        "description": "Square-1 shape-shifting: cubeshape, separación, permutación y notación propia.",
+        "title": "Square-1"
+      }
     },
     "sources": {
       "jaapClock": "Jaap's Puzzle Page: Clock",
@@ -351,6 +640,68 @@
     "retry": "Intentar de nuevo",
     "title": "Algo salió mal"
   },
+  "worldRecords": {
+    "kicker": "Récords y datos",
+    "description": "Récords de la clasificación mundial de la WCA con datos de atletas, competiciones, intentos y candidatos a mezclas oficiales.",
+    "dataset": "Conjunto de datos: {{date}}",
+    "loadError": "No se pudieron cargar los récords mundiales desde la API de datos de la WCA.",
+    "moves": "{{count}} movimientos",
+    "unknown": "Desconocido",
+    "filters": {
+      "search": "Buscar",
+      "searchPlaceholder": "Atleta, ID WCA, país",
+      "event": "Evento",
+      "type": "Tipo",
+      "reset": "Restablecer"
+    },
+    "types": { "all": "Todos los tipos", "single": "Individual", "average": "Promedio" },
+    "table": {
+      "caption": "Récords mundiales de la WCA que coinciden con los filtros",
+      "rank": "Posición",
+      "athlete": "Atleta",
+      "result": "Resultado",
+      "type": "Tipo",
+      "competition": "Competición",
+      "scramble": "Mezcla",
+      "empty": "Ningún récord mundial coincide con estos filtros."
+    },
+    "pagination": {
+      "label": "Paginación de récords mundiales",
+      "rowsOption": "{{count}} filas",
+      "rowsPerPage": "Filas por página",
+      "pageOf": "Página {{current}} de {{total}}",
+      "first": "Primera página",
+      "previous": "Página anterior",
+      "next": "Página siguiente",
+      "last": "Última página",
+      "page": "Página {{page}}"
+    },
+    "scramble": {
+      "unavailable": "No disponible",
+      "candidates": "{{count}} candidatos",
+      "candidateLabel": "Grupo {{group}} · Mezcla {{number}}",
+      "exactDescription": "Este resultado corresponde a una mezcla oficial en la exportación de la WCA.",
+      "ambiguousDescription": "La exportación de la WCA no incluye el grupo del atleta; estas son las mezclas candidatas del resultado.",
+      "unavailableDescription": "No se pudo vincular una mezcla oficial de la exportación."
+    },
+    "athlete": {
+      "unknownCountry": "País desconocido",
+      "competitions": "Competiciones",
+      "solves": "Resoluciones",
+      "records": "Récords",
+      "medals": "Medallas",
+      "selectedResult": "Resultado seleccionado",
+      "worldRank": "Mundo n.º {{rank}}",
+      "continentRank": "Continente n.º {{rank}}",
+      "countryRank": "País n.º {{rank}}",
+      "competitionUnavailable": "Los detalles de la competición no están disponibles.",
+      "attemptsUnavailable": "Los detalles de los intentos no están disponibles.",
+      "unknownRound": "Ronda desconocida",
+      "unknownFormat": "Formato desconocido",
+      "scrambleEvidence": "Evidencia de la mezcla",
+      "openProfile": "Abrir perfil de la WCA"
+    }
+  },
   "navigation": {
     "allAlgorithms": "Todos los algoritmos",
     "algorithms": "Algoritmos",
@@ -379,7 +730,7 @@
     "themeLight": "Claro",
     "themeSystem": "Sistema",
     "timer": "Timer",
-    "worldRecords": "World Records"
+    "worldRecords": "Récords mundiales"
   },
   "notations": {
     "groups": {
@@ -402,6 +753,7 @@
       "preparingVisualization": "Preparando visualización",
       "reset": "Reset",
       "underConstruction": "En construcción",
+      "title": "Notación de {{puzzle}}",
       "visualizationLabel": "Visualización de notación {{puzzle}}"
     }
   },
@@ -771,6 +1123,7 @@
       }
     },
     "form": {
+      "formLabel": "Resolver rompecabezas",
       "maxMoves": "Máx. movimientos",
       "maxNodesMillion": "Máx. nodos (M)",
       "puzzle": "Puzzle",
@@ -789,6 +1142,8 @@
       "solved": " resuelto"
     },
     "result": {
+      "movesLabel": "Movimientos de la solución",
+      "regionLabel": "Resultado de la resolución",
       "foundIn": "respuesta en {{elapsed}}",
       "seeMore": "ver más",
       "solved": "Resuelto",

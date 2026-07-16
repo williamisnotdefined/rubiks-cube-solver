@@ -22,7 +22,7 @@ describe('CubeStage', () => {
 
     render(
       <CubeStage
-        cubeType="Three"
+        cubeType='Three'
         cubeRef={createRef()}
         loadRequested
         onReady={onReady}
@@ -44,7 +44,7 @@ describe('CubeStage', () => {
 
     render(
       <CubeStage
-        cubeType="Two"
+        cubeType='Two'
         cubeRef={createRef()}
         loadRequested
         onReady={onReady}
@@ -66,7 +66,7 @@ describe('CubeStage', () => {
 
     render(
       <CubeStage
-        cubeType="Three"
+        cubeType='Three'
         cubeRef={createRef()}
         loadRequested
         onReady={onReady}
@@ -87,7 +87,7 @@ describe('CubeStage', () => {
 
     render(
       <CubeStage
-        cubeType="Three"
+        cubeType='Three'
         cubeRef={createRef()}
         loadRequested={false}
         onReady={vi.fn()}
@@ -100,5 +100,4 @@ describe('CubeStage', () => {
     expect(register).not.toHaveBeenCalled()
     expect(onLoadRequest).toHaveBeenCalled()
   })
-
 })

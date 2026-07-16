@@ -16,9 +16,9 @@ function CheckboxStory() {
   const [checked, setChecked] = useState(false)
 
   return (
-    <label className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.16em] text-app-text">
+    <label className='flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.16em] text-app-text'>
       <Checkbox
-        aria-label="Use inspection"
+        aria-label='Use inspection'
         checked={checked}
         onCheckedChange={(nextChecked) => setChecked(nextChecked === true)}
       />

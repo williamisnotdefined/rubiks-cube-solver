@@ -1,480 +1,66 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const webRoot = resolve(repoRoot, 'apps', 'web')
 const distDir = resolve(webRoot, 'dist')
+const ssrDir = resolve(webRoot, 'dist-ssr')
 const siteOrigin = 'https://speedcube.com.br'
+const defaultLocale = 'en-US'
 const siteName = 'Speedcube'
 const defaultOgImageUrl = `${siteOrigin}/og-default.svg`
-const defaultLocale = 'en-US'
 const jsonLdScriptNonce = 'speedcube-jsonld'
-const seoLocales = ['en-US', 'es', 'pt-BR', 'it', 'de', 'fr', 'ru', 'zh', 'ja']
-const localePrefixes = {
-  de: 'de',
-  'en-US': '',
-  es: 'es',
-  fr: 'fr',
-  it: 'it',
-  ja: 'ja',
-  'pt-BR': 'pt-BR',
-  ru: 'ru',
-  zh: 'zh',
-}
-const copy = {
-  de: { algorithms: 'Algorithmen', channels: 'Kanaele', notations: 'Notationen', sites: 'Sites', solver: 'Solver', timer: 'Timer' },
-  'en-US': { algorithms: 'Algorithms', channels: 'Channels', notations: 'Notations', sites: 'Sites', solver: 'Solver', timer: 'Timer' },
-  es: { algorithms: 'Algoritmos', channels: 'Canales', notations: 'Notaciones', sites: 'Sitios', solver: 'Solver', timer: 'Cronometro' },
-  fr: { algorithms: 'Algorithmes', channels: 'Chaines', notations: 'Notations', sites: 'Sites', solver: 'Solver', timer: 'Timer' },
-  it: { algorithms: 'Algoritmi', channels: 'Canali', notations: 'Notazioni', sites: 'Siti', solver: 'Solver', timer: 'Timer' },
-  ja: { algorithms: 'アルゴリズム', channels: 'チャンネル', notations: '記法', sites: 'サイト', solver: 'ソルバー', timer: 'タイマー' },
-  'pt-BR': { algorithms: 'Algoritmos', channels: 'Canais', notations: 'Notacoes', sites: 'Sites', solver: 'Solver', timer: 'Cronometro' },
-  ru: { algorithms: 'Алгоритмы', channels: 'Каналы', notations: 'Нотации', sites: 'Сайты', solver: 'Решатель', timer: 'Таймер' },
-  zh: { algorithms: '算法', channels: '频道', notations: '记号', sites: '网站', solver: '求解器', timer: '计时器' },
-}
-
-const sourceFiles = [
-  resolve(webRoot, 'src/pages/AlgorithmsPage/sets/algorithmSetMetadata/algorithmSetMetadata.ts'),
-  resolve(webRoot, 'src/pages/AlgorithmsPage/sets/speedCubeDbSetSummaries/speedCubeDbSetSummaries.ts'),
-  resolve(webRoot, 'src/pages/NotationsPage/notationGuides/notationGuides.ts'),
-]
-const cubingSitesSourceFile = resolve(webRoot, 'src/pages/CubingSitesPage/sites/sites.ts')
-
-const [sourceText, cubingSitesSourceText] = await Promise.all([
-  Promise.all(sourceFiles.map((file) => readFile(file, 'utf8'))).then((files) => files.join('\n')),
-  readFile(cubingSitesSourceFile, 'utf8'),
-])
-const titleByPath = extractTitleByPath(sourceText)
-const puzzleByPath = extractPuzzleByPath(sourceText)
-const cubingSiteItems = extractCubingSiteItems(cubingSitesSourceText)
-const indexableBasePaths = indexablePaths(sourceText)
 const baseHtml = await readFile(resolve(distDir, 'index.html'), 'utf8')
+const { render, staticPaths, staticRouteGroups } = await import(pathToFileURL(resolve(ssrDir, 'ssg.js')).href)
 
-await writeFile(resolve(distDir, 'sitemap.xml'), sitemap(indexableBasePaths))
-
-for (const path of indexableBasePaths) {
-  for (const locale of seoLocales) {
-    await writePrerenderedHtml(localizedPath(path, locale), locale)
-  }
-}
-
-async function writePrerenderedHtml(routePath, locale) {
-  const basePath = stripLocalePrefix(routePath)
-  const metadata = metadataForPath(basePath, locale)
-  const html = prerenderHtml(baseHtml, metadata)
+for (const routePath of staticPaths) {
+  const rendered = await render(routePath)
   const outputDir = resolve(distDir, routePath.slice(1))
 
   await mkdir(outputDir, { recursive: true })
-  await writeFile(resolve(outputDir, 'index.html'), html)
+  await writeFile(resolve(outputDir, 'index.html'), prerenderHtml(baseHtml, rendered))
 }
 
-function indexablePaths(text) {
-  const paths = new Set(['/solve', '/timer', '/channels', '/sites', '/algoritmos'])
-  const pathRegex = /path:\s*["']([^"']+)["']/g
-  let match = pathRegex.exec(text)
+const notFoundHtml = neutralNotFoundHtml(baseHtml)
+await Promise.all([
+  writeFile(resolve(distDir, '404.html'), notFoundHtml),
+  writeFile(resolve(distDir, 'sitemap.xml'), sitemap(staticRouteGroups)),
+  writeFile(resolve(distDir, 'routing-manifest.json'), `${JSON.stringify({ redirects: { '/': '/solve/', '/api/wca-data': '/api/wca-data/v1/docs', '/api/wca-data/': '/api/wca-data/v1/docs', '/notations': '/notations/3x3/', '/notations/': '/notations/3x3/' }, routableStaticPaths: staticPaths }, null, 2)}\n`),
+])
+await rm(ssrDir, { force: true, recursive: true })
 
-  while (match !== null) {
-    paths.add(match[1])
-    match = pathRegex.exec(text)
-  }
-
-  return [...paths].sort(pathSort)
+function neutralNotFoundHtml(html) {
+  return html
+    .replace(/<title>[^<]*<\/title>/, `<title>Page not found | ${siteName}</title>`)
+    .replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/>/, '<meta name="description" content="This Speedcube page could not be found." />')
+    .replace('</head>', '    <meta name="robots" content="noindex,nofollow" />\n  </head>')
 }
 
-function extractTitleByPath(text) {
-  const titles = new Map()
-  const objectRegex = /\{[\s\S]*?path:\s*["']([^"']+)["'][\s\S]*?title:\s*["']([^"']+)["'][\s\S]*?\}/g
-  let match = objectRegex.exec(text)
-
-  while (match !== null) {
-    titles.set(match[1], match[2])
-    match = objectRegex.exec(text)
-  }
-
-  return titles
-}
-
-function extractPuzzleByPath(text) {
-  const puzzles = new Map()
-  const objectRegex = /\{[\s\S]*?path:\s*["']([^"']+)["'][\s\S]*?puzzle:\s*["']([^"']+)["'][\s\S]*?\}/g
-  let match = objectRegex.exec(text)
-
-  while (match !== null) {
-    puzzles.set(match[1], match[2])
-    match = objectRegex.exec(text)
-  }
-
-  return puzzles
-}
-
-function extractCubingSiteItems(text) {
-  const items = []
-  const objectRegex = /\{[\s\S]*?name:\s*["']([^"']+)["'][\s\S]*?url:\s*["']([^"']+)["'][\s\S]*?\}/g
-  let match = objectRegex.exec(text)
-
-  while (match !== null) {
-    items.push({ name: match[1], path: match[2] })
-    match = objectRegex.exec(text)
-  }
-
-  return items
-}
-
-function pathSort(a, b) {
-  const depth = a.split('/').length - b.split('/').length
-
-  return depth === 0 ? a.localeCompare(b) : depth
-}
-
-function metadataForPath(path, locale) {
-  const title = titleForPath(path, locale)
-  const description = descriptionForPath(path, locale)
-  const breadcrumbs = breadcrumbsForPath(path, locale)
-  const itemList = itemListForPath(path)
-
-  return {
-    breadcrumbs,
-    canonicalUrl: `${siteOrigin}${localizedPath(path, locale)}`,
-    description,
-    htmlLang: locale,
-    itemList,
-    jsonLd: jsonLdForPath(path, locale, title, description, breadcrumbs, itemList),
-    locale,
-    path,
-    title: `${title} | ${siteName}`,
-  }
-}
-
-function titleForPath(path, locale) {
-  if (path === '/solve') {
-    const titles = {
-      de: 'Online Rubik Cube Solver',
-      'en-US': 'Online Rubik\'s Cube Solver',
-      es: 'Solver de Cubo Rubik Online',
-      fr: 'Solver Rubik Cube en Ligne',
-      it: 'Solver Cubo di Rubik Online',
-      ja: 'オンライン ルービックキューブ ソルバー',
-      'pt-BR': 'Solver de Cubo Magico Online',
-      ru: 'Онлайн-решатель кубика Рубика',
-      zh: '在线魔方求解器',
-    }
-
-    return titles[locale]
-  }
-
-  if (path === '/timer') {
-    return locale === 'pt-BR' || locale === 'es' ? 'Cronometro de Speedcubing' : 'Speedcubing Timer'
-  }
-
-  if (path === '/channels') {
-    return `${copy[locale].channels} YouTube Cubing`
-  }
-
-  if (path === '/sites') {
-    const titles = {
-      de: 'Cubing Websites',
-      'en-US': 'Cubing Websites',
-      es: 'Sitios de Cubing',
-      fr: 'Sites de Cubing',
-      it: 'Siti Cubing',
-      ja: 'キューブ系サイト',
-      'pt-BR': 'Sites de Cubo Magico',
-      ru: 'Сайты о кубинге',
-      zh: '魔方网站',
-    }
-
-    return titles[locale]
-  }
-
-  if (path === '/algoritmos') {
-    return locale === 'en-US' ? 'Rubik\'s Cube Algorithms' : copy[locale].algorithms
-  }
-
-  if (path.startsWith('/algoritmos/')) {
-    const title = titleByPath.get(path) ?? path.split('/').at(-1)
-    return locale === 'en-US' ? `${title} Algorithms` : `${copy[locale].algorithms} ${title}`
-  }
-
-  if (path.startsWith('/notations/')) {
-    const puzzle = puzzleByPath.get(path) ?? path.split('/').at(-1)
-    return locale === 'en-US' ? `${puzzle} Notation Guide` : `${copy[locale].notations} ${puzzle}`
-  }
-
-  return siteName
-}
-
-function descriptionForPath(path, locale) {
-  if (path === '/solve') {
-    const descriptions = {
-      de: 'Loese unterstuetzte Rubik-Cube-Scrambles online mit Rust-Solver, Zugwiedergabe und Cube-Visualisierung.',
-      'en-US': 'Solve supported Rubik\'s Cube scrambles online with a Rust-powered solver, move playback, and cube visualization.',
-      es: 'Resuelve scrambles de cubo Rubik online con solver en Rust, reproduccion de movimientos y visualizacion del cubo.',
-      fr: 'Resoudre des scrambles de Rubik Cube en ligne avec un solver Rust, lecture des mouvements et visualisation du cube.',
-      it: 'Risolvi scramble del Cubo di Rubik online con solver Rust, playback mosse e visualizzazione del cubo.',
-      ja: 'Rust 製ソルバー、手順再生、キューブ表示で対応パズルのスクランブルをオンラインで解けます。',
-      'pt-BR': 'Resolva scrambles de cubo magico online com solver em Rust, reproducao de movimentos e visualizacao do cubo.',
-      ru: 'Решайте поддерживаемые скрамблы онлайн с Rust-решателем, воспроизведением ходов и визуализацией куба.',
-      zh: '使用 Rust 驱动的求解器、步骤回放和魔方可视化在线求解支持的打乱。',
-    }
-
-    return descriptions[locale]
-  }
-
-  if (path === '/timer') {
-    return timerDescription(locale)
-  }
-
-  if (path === '/channels') {
-    return channelsDescription(locale)
-  }
-
-  if (path === '/sites') {
-    return sitesDescription(locale)
-  }
-
-  if (path === '/algoritmos') {
-    return algorithmsDescription(locale)
-  }
-
-  if (path.startsWith('/algoritmos/')) {
-    const title = titleByPath.get(path) ?? path.split('/').at(-1)
-    return algorithmDescription(title, locale)
-  }
-
-  if (path.startsWith('/notations/')) {
-    const puzzle = puzzleByPath.get(path) ?? path.split('/').at(-1)
-    return notationDescription(puzzle, locale)
-  }
-
-  return 'Speedcube.'
-}
-
-function timerDescription(locale) {
-  return {
-    de: 'Trainiere Speedcubing mit Timer, Scrambles, Inspektion, Session-Durchschnitten und Solve-Historie.',
-    'en-US': 'Practice speedcubing with a focused timer, generated scrambles, inspection, session averages, and solve history.',
-    es: 'Practica speedcubing con cronometro, scrambles generados, inspeccion, medias de sesion e historial de solves.',
-    fr: 'Entrainez-vous au speedcubing avec timer, scrambles, inspection, moyennes de session et historique.',
-    it: 'Pratica speedcubing con timer, scramble generati, ispezione, medie sessione e storico solve.',
-    ja: 'スクランブル、インスペクション、セッション平均、履歴つきのスピードキューブ用タイマーです。',
-    'pt-BR': 'Treine speedcubing com cronometro, scrambles gerados, inspecao, medias de sessao e historico de solves.',
-    ru: 'Тренируйте спидкубинг с таймером, скрамблами, инспекцией, средними и историей сборок.',
-    zh: '使用打乱、观察、分组平均和还原历史来练习速拧。',
-  }[locale]
-}
-
-function channelsDescription(locale) {
-  return {
-    de: 'Entdecke Cubing-YouTube-Kanaele fuer Tutorials, Speedcubing, Reviews und Puzzle-Lernen.',
-    'en-US': 'Discover cubing YouTube channels for tutorials, speedcubing walkthroughs, reviews, and puzzle learning.',
-    es: 'Descubre canales de YouTube de cubing con tutoriales, speedcubing, reseñas y aprendizaje de puzzles.',
-    fr: 'Decouvrez des chaines YouTube de cubing pour tutoriels, speedcubing, avis et apprentissage des puzzles.',
-    it: 'Scopri canali YouTube di cubing per tutorial, speedcubing, recensioni e apprendimento puzzle.',
-    ja: 'チュートリアル、スピードキューブ、レビュー、学習に役立つキューブ系 YouTube チャンネルを見つけましょう。',
-    'pt-BR': 'Conheca canais de cubo magico no YouTube com tutoriais, speedcubing, reviews e aprendizado de puzzles.',
-    ru: 'YouTube-каналы о кубинге: обучение, спидкубинг, обзоры и изучение головоломок.',
-    zh: '发现用于教程、速拧、评测和学习的魔方 YouTube 频道。',
-  }[locale]
-}
-
-function sitesDescription(locale) {
-  return {
-    de: 'Entdecke validierte Cubing-Websites fuer Loesungen, Tools, Wettbewerbe, Shops, Marken und Community.',
-    'en-US': 'Discover validated cubing websites for solutions, tools, competitions, shops, brands, and community.',
-    es: 'Descubre sitios de cubing validados para soluciones, herramientas, competiciones, tiendas, marcas y comunidad.',
-    fr: 'Decouvrez des sites de cubing valides pour solutions, outils, competitions, boutiques, marques et communaute.',
-    it: 'Scopri siti cubing verificati per soluzioni, strumenti, competizioni, negozi, marchi e community.',
-    ja: '解法、ツール、大会、ショップ、ブランド、コミュニティ向けの検証済みキューブ系サイトを探せます。',
-    'pt-BR': 'Conheca sites validados de cubo magico para solucoes, ferramentas, competicoes, lojas, marcas e comunidade.',
-    ru: 'Проверенные сайты о кубинге: решения, инструменты, соревнования, магазины, бренды и сообщества.',
-    zh: '发现经过验证的魔方网站，涵盖解法、工具、比赛、商店、品牌和社区。',
-  }[locale]
-}
-
-function algorithmsDescription(locale) {
-  return {
-    de: 'Durchsuche Speedcubing-Algorithmen fuer 2x2, 3x3, Big Cubes, Pyraminx, Megaminx, Square-1 und mehr.',
-    'en-US': 'Browse speedcubing algorithm sets for 2x2, 3x3, big cubes, Pyraminx, Megaminx, Square-1, and more.',
-    es: 'Explora algoritmos de speedcubing para 2x2, 3x3, cubos grandes, Pyraminx, Megaminx, Square-1 y mas.',
-    fr: 'Parcourez des algorithmes de speedcubing pour 2x2, 3x3, grands cubes, Pyraminx, Megaminx, Square-1 et plus.',
-    it: 'Sfoglia set di algoritmi speedcubing per 2x2, 3x3, big cube, Pyraminx, Megaminx, Square-1 e altro.',
-    ja: '2x2、3x3、多分割キューブ、Pyraminx、Megaminx、Square-1 などのスピードキューブ用アルゴリズムを閲覧できます。',
-    'pt-BR': 'Explore algoritmos de speedcubing para 2x2, 3x3, cubos grandes, Pyraminx, Megaminx, Square-1 e mais.',
-    ru: 'Алгоритмы для 2x2, 3x3, больших кубов, Pyraminx, Megaminx, Square-1 и других головоломок.',
-    zh: '浏览 2x2、3x3、高阶魔方、Pyraminx、Megaminx、Square-1 等速拧算法。',
-  }[locale]
-}
-
-function algorithmDescription(title, locale) {
-  return {
-    de: `${title}-Algorithmen fuer Speedcubing-Training, Erkennung und Loesungsablaeufe.`,
-    'en-US': `${title} algorithms for speedcubing practice, recognition, and solving workflows.`,
-    es: `Algoritmos ${title} para practica de speedcubing, reconocimiento y flujos de solucion.`,
-    fr: `Algorithmes ${title} pour l'entrainement speedcubing, la reconnaissance et les flux de resolution.`,
-    it: `Algoritmi ${title} per pratica speedcubing, riconoscimento e flussi di soluzione.`,
-    ja: `${title} のスピードキューブ練習、認識、解法フロー向けアルゴリズム。`,
-    'pt-BR': `Algoritmos ${title} para treino de speedcubing, reconhecimento e fluxos de solucao.`,
-    ru: `Алгоритмы ${title} для тренировки спидкубинга, распознавания и решения.`,
-    zh: `${title} 算法，用于速拧练习、识别和还原流程。`,
-  }[locale]
-}
-
-function notationDescription(puzzle, locale) {
-  return {
-    de: `Lerne ${puzzle}-Notation mit Symbolen, Beispielen und praktischen Speedcubing-Referenzen.`,
-    'en-US': `Learn ${puzzle} notation with move symbols, examples, and practical speedcubing references.`,
-    es: `Aprende notacion ${puzzle} con simbolos de movimientos, ejemplos y referencias practicas de speedcubing.`,
-    fr: `Apprenez la notation ${puzzle} avec symboles, exemples et references pratiques de speedcubing.`,
-    it: `Impara la notazione ${puzzle} con simboli, esempi e riferimenti pratici di speedcubing.`,
-    ja: `${puzzle} の記法を、記号、例、実用的なスピードキューブ参照で学べます。`,
-    'pt-BR': `Aprenda notacao ${puzzle} com simbolos de movimentos, exemplos e referencias praticas de speedcubing.`,
-    ru: `Изучайте нотацию ${puzzle}: символы ходов, примеры и практические материалы для спидкубинга.`,
-    zh: `学习 ${puzzle} 记号，包括转动符号、示例和实用速拧参考。`,
-  }[locale]
-}
-
-function breadcrumbsForPath(path, locale) {
-  if (path.startsWith('/algoritmos/')) {
-    const segments = path.split('/').filter(Boolean)
-    const puzzlePath = `/${segments.slice(0, 2).join('/')}`
-    const breadcrumbs = [
-      { name: copy[locale].algorithms, path: '/algoritmos' },
-      { name: titleByPath.get(puzzlePath) ?? segments[1], path: puzzlePath },
-    ]
-
-    if (segments.length > 2) {
-      breadcrumbs.push({ name: titleByPath.get(path) ?? segments[2], path })
-    }
-
-    return breadcrumbs
-  }
-
-  if (path.startsWith('/notations/')) {
-    return [
-      { name: copy[locale].notations, path: '/notations/3x3' },
-      { name: puzzleByPath.get(path) ?? path.split('/').at(-1), path },
-    ]
-  }
-
-  const labels = {
-    '/algoritmos': copy[locale].algorithms,
-    '/channels': copy[locale].channels,
-    '/sites': copy[locale].sites,
-    '/solve': copy[locale].solver,
-    '/timer': copy[locale].timer,
-  }
-
-  return [{ name: labels[path] ?? siteName, path }]
-}
-
-function itemListForPath(path) {
-  if (path === '/sites') {
-    return cubingSiteItems
-  }
-
-  if (path === '/algoritmos') {
-    return [...titleByPath]
-      .filter(([itemPath]) => itemPath.split('/').length === 3 && itemPath.startsWith('/algoritmos/'))
-      .map(([itemPath, name]) => ({ name, path: itemPath }))
-  }
-
-  const algorithmPuzzleMatch = path.match(/^\/algoritmos\/([^/]+)$/)
-  if (algorithmPuzzleMatch !== null) {
-    const prefix = `${path}/`
-    return [...titleByPath]
-      .filter(([itemPath]) => itemPath.startsWith(prefix))
-      .map(([itemPath, name]) => ({ name, path: itemPath }))
-  }
-
-  return undefined
-}
-
-function jsonLdForPath(path, locale, title, description, breadcrumbs, itemList) {
-  const graph = [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'WebSite',
-      inLanguage: locale,
-      name: siteName,
-      url: siteOrigin,
-    },
-  ]
-
-  if (breadcrumbs.length > 1) {
-    graph.push({
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: breadcrumbs.map((item, index) => ({
-        '@type': 'ListItem',
-        item: `${siteOrigin}${localizedPath(item.path, locale)}`,
-        name: item.name,
-        position: index + 1,
-      })),
-    })
-  }
-
-  if (path === '/solve') {
-    graph.push({
-      '@context': 'https://schema.org',
-      '@type': 'WebApplication',
-      applicationCategory: 'GameApplication',
-      description,
-      image: defaultOgImageUrl,
-      inLanguage: seoLocales,
-      name: title,
-      offers: { '@type': 'Offer', price: '0', priceCurrency: 'BRL' },
-      operatingSystem: 'Web',
-      url: `${siteOrigin}${localizedPath(path, locale)}`,
-    })
-  }
-
-  if (itemList !== undefined) {
-    graph.push({
-      '@context': 'https://schema.org',
-      '@type': 'ItemList',
-      itemListElement: itemList.map((item, index) => ({
-        '@type': 'ListItem',
-        item: itemUrl(item.path, locale),
-        name: item.name,
-        position: index + 1,
-      })),
-      name: title,
-    })
-  }
-
-  if (path.startsWith('/notations/')) {
-    graph.push({
-      '@context': 'https://schema.org',
-      '@type': 'TechArticle',
-      description,
-      headline: title,
-      image: defaultOgImageUrl,
-      inLanguage: locale,
-      url: `${siteOrigin}${localizedPath(path, locale)}`,
-    })
-  }
-
-  return graph
-}
-
-function prerenderHtml(html, metadata) {
+function prerenderHtml(html, { appHtml, jsonLd, metadata }) {
+  const alternates = metadata.noindex
+    ? {}
+    : staticRouteGroups
+      .find((route) => route.path === metadata.path)
+      ?.alternates ?? {}
+  const alternateTags = Object.entries(alternates)
+    .map(([locale, path]) => `<link rel="alternate" hreflang="${locale}" href="${siteOrigin}${path}" />`)
   const headTags = [
     `<link rel="canonical" href="${escapeHtml(metadata.canonicalUrl)}" />`,
-    ...seoLocales.map((locale) => `<link rel="alternate" hreflang="${locale}" href="${escapeHtml(`${siteOrigin}${localizedPath(metadata.path, locale)}`)}" />`),
-    `<link rel="alternate" hreflang="x-default" href="${escapeHtml(`${siteOrigin}${localizedPath(metadata.path, defaultLocale)}`)}" />`,
-    `<meta name="robots" content="index,follow" />`,
+    ...alternateTags,
+    ...(metadata.noindex ? [] : [`<link rel="alternate" hreflang="x-default" href="${siteOrigin}${alternates[defaultLocale]}" />`]),
+    `<meta name="robots" content="${metadata.noindex ? 'noindex,nofollow' : 'index,follow'}" />`,
     `<meta property="og:site_name" content="${siteName}" />`,
     '<meta property="og:type" content="website" />',
     `<meta property="og:title" content="${escapeHtml(metadata.title)}" />`,
     `<meta property="og:description" content="${escapeHtml(metadata.description)}" />`,
     `<meta property="og:url" content="${escapeHtml(metadata.canonicalUrl)}" />`,
-    `<meta property="og:image" content="${escapeHtml(defaultOgImageUrl)}" />`,
+    `<meta property="og:image" content="${defaultOgImageUrl}" />`,
     '<meta name="twitter:card" content="summary_large_image" />',
     `<meta name="twitter:title" content="${escapeHtml(metadata.title)}" />`,
     `<meta name="twitter:description" content="${escapeHtml(metadata.description)}" />`,
-    `<meta name="twitter:image" content="${escapeHtml(defaultOgImageUrl)}" />`,
-    ...metadata.jsonLd.map((jsonLd) => `<script type="application/ld+json" nonce="${jsonLdScriptNonce}">${escapeScript(JSON.stringify(jsonLd))}</script>`),
+    `<meta name="twitter:image" content="${defaultOgImageUrl}" />`,
+    ...jsonLd.map((value) => `<script type="application/ld+json" nonce="${jsonLdScriptNonce}">${escapeScript(JSON.stringify(value))}</script>`),
   ].join('\n    ')
 
   return html
@@ -482,107 +68,19 @@ function prerenderHtml(html, metadata) {
     .replace(/<title>[^<]*<\/title>/, `<title>${escapeHtml(metadata.title)}</title>`)
     .replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/>/, `<meta name="description" content="${escapeHtml(metadata.description)}" />`)
     .replace('</head>', `    ${headTags}\n  </head>`)
-    .replace('<div id="root"></div>', `<div id="root">${staticBody(metadata)}</div>`)
+    .replace('<div id="root"></div>', `<div id="root" data-ssg="true">${appHtml}</div>`)
 }
 
-function staticBody(metadata) {
-  if (metadata.path === '/timer') {
-    return staticTimerBody(metadata)
-  }
+function sitemap(routeGroups) {
+  const entries = routeGroups.flatMap((route) => Object.entries(route.alternates).map(([locale, path]) => {
+    const links = Object.entries(route.alternates)
+      .map(([alternateLocale, alternatePath]) => `    <xhtml:link rel="alternate" hreflang="${alternateLocale}" href="${siteOrigin}${alternatePath}" />`)
+    links.push(`    <xhtml:link rel="alternate" hreflang="x-default" href="${siteOrigin}${route.alternates[defaultLocale]}" />`)
 
-  const breadcrumbHtml = metadata.breadcrumbs.length > 1
-    ? `<nav aria-label="Breadcrumb" style="font-size:0.75rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--app-muted)"><ol style="display:flex;flex-wrap:wrap;gap:0.5rem;list-style:none;margin:0;padding:0">${metadata.breadcrumbs.map((item) => `<li><a href="${localizedPath(item.path, metadata.locale)}" style="color:inherit;text-decoration:none">${escapeHtml(item.name)}</a></li>`).join('')}</ol></nav>`
-    : ''
-  const listHtml = metadata.itemList === undefined
-    ? ''
-    : `<ul style="display:grid;gap:0.5rem;margin:0;padding-left:1rem;color:var(--app-muted)">${metadata.itemList.slice(0, 30).map((item) => `<li><a href="${itemHref(item.path, metadata.locale)}" style="color:inherit">${escapeHtml(item.name)}</a></li>`).join('')}</ul>`
+    return `  <url>\n    <loc>${siteOrigin}${path}</loc>\n${links.join('\n')}\n  </url>`
+  }))
 
-  return `<main style="min-height:100vh;display:grid;place-items:center;background:var(--app-bg);color:var(--app-text);padding:1rem;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"><section style="box-sizing:border-box;display:grid;gap:0.75rem;width:min(100%,72rem);border:1px solid var(--app-border);background:var(--app-surface);padding:1rem"><p style="margin:0;color:var(--app-muted);font-size:0.75rem;font-weight:900;letter-spacing:0.18em;text-transform:uppercase">${siteName}</p><h1 style="margin:0;font-size:clamp(2rem,8vw,4.5rem);font-weight:900;letter-spacing:-0.06em;line-height:0.9;text-transform:uppercase">${escapeHtml(metadata.title.replace(` | ${siteName}`, ''))}</h1><p style="max-width:42rem;margin:0;color:var(--app-muted);font-size:0.95rem;line-height:1.6">${escapeHtml(metadata.description)}</p>${breadcrumbHtml}${listHtml}</section></main>`
-}
-
-function staticTimerBody(metadata) {
-  return `<main style="box-sizing:border-box;min-height:100vh;display:grid;grid-template-rows:auto minmax(0,1fr);background:var(--app-bg);color:var(--app-text);font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"><header style="box-sizing:border-box;min-height:3.5rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--app-border);background:var(--app-nav);padding:0 0.75rem"><span style="font-size:0.875rem;font-weight:900;letter-spacing:0.2em;text-transform:uppercase">${escapeHtml(copy[metadata.locale].timer)}</span><span style="width:2.5rem;height:2.5rem;border:1px solid var(--app-border);background:var(--app-surface)"></span></header><section style="box-sizing:border-box;display:grid;min-height:0;grid-template-rows:auto minmax(0,1fr);gap:0.5rem;padding:0.5rem 0.75rem"><div style="box-sizing:border-box;display:grid;gap:0.35rem;border:1px solid var(--app-border);background:var(--app-surface);padding:0.75rem"><p style="margin:0;color:var(--app-muted);font-size:0.7rem;font-weight:900;letter-spacing:0.18em;text-transform:uppercase">${siteName}</p><h1 style="margin:0;font-size:clamp(1.15rem,5vw,2rem);font-weight:900;letter-spacing:-0.04em;line-height:1;text-transform:uppercase">${escapeHtml(metadata.title.replace(` | ${siteName}`, ''))}</h1><p style="margin:0;color:var(--app-muted);font-size:0.875rem;line-height:1.45">${escapeHtml(metadata.description)}</p></div><div style="display:grid;min-height:0;grid-template-rows:minmax(12rem,2fr) minmax(7rem,1fr);gap:0.5rem;overflow:hidden"><section style="box-sizing:border-box;display:grid;place-items:center;border:1px solid var(--app-border);background:var(--app-surface);padding:1rem;text-align:center"><div><p style="margin:0 0 0.75rem;color:var(--app-muted);font-size:0.75rem;font-weight:900;letter-spacing:0.18em;text-transform:uppercase">Speedcube Timer</p><div style="font-variant-numeric:tabular-nums;font-size:clamp(4rem,24vw,8rem);font-weight:900;letter-spacing:-0.08em;line-height:0.85">0.000</div></div></section><aside style="box-sizing:border-box;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.5rem;min-height:0"><div style="border:1px solid var(--app-border);background:var(--app-surface);padding:0.75rem;color:var(--app-muted);font-size:0.75rem;font-weight:900;letter-spacing:0.14em;text-transform:uppercase">Best</div><div style="border:1px solid var(--app-border);background:var(--app-surface);padding:0.75rem;color:var(--app-muted);font-size:0.75rem;font-weight:900;letter-spacing:0.14em;text-transform:uppercase">Mean</div></aside></div></section></main>`
-}
-
-function sitemap(paths) {
-  const entries = []
-
-  for (const path of paths) {
-    for (const locale of seoLocales) {
-      entries.push(sitemapEntry(path, locale))
-    }
-  }
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
-${entries.join('\n')}
-</urlset>
-`
-}
-
-function sitemapEntry(path, locale) {
-  const loc = `${siteOrigin}${localizedPath(path, locale)}`
-  const defaultUrl = `${siteOrigin}${localizedPath(path, defaultLocale)}`
-  const alternates = seoLocales
-    .map((alternateLocale) => `    <xhtml:link rel="alternate" hreflang="${alternateLocale}" href="${escapeXml(`${siteOrigin}${localizedPath(path, alternateLocale)}`)}" />`)
-    .join('\n')
-
-  return `  <url>
-    <loc>${escapeXml(loc)}</loc>
-${alternates}
-    <xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(defaultUrl)}" />
-  </url>`
-}
-
-function localizedPath(path, locale) {
-  const prefix = localePrefixes[locale]
-  const normalizedPath = withTrailingSlash(normalizePath(path))
-
-  if (prefix !== '') {
-    return normalizedPath === '/' ? `/${prefix}/` : `/${prefix}${normalizedPath}`
-  }
-
-  return normalizedPath
-}
-
-function itemUrl(path, locale) {
-  return isExternalUrl(path) ? path : `${siteOrigin}${localizedPath(path, locale)}`
-}
-
-function itemHref(path, locale) {
-  return isExternalUrl(path) ? path : localizedPath(path, locale)
-}
-
-function isExternalUrl(path) {
-  return path.startsWith('http://') || path.startsWith('https://')
-}
-
-function stripLocalePrefix(path) {
-  const normalizedPath = normalizePath(path)
-
-  for (const locale of seoLocales) {
-    const prefix = localePrefixes[locale]
-
-    if (prefix !== '' && normalizedPath === `/${prefix}`) {
-      return '/'
-    }
-
-    if (prefix !== '' && normalizedPath.startsWith(`/${prefix}/`)) {
-      return normalizePath(normalizedPath.slice(prefix.length + 1))
-    }
-  }
-
-  return normalizedPath
-}
-
-function normalizePath(path) {
-  const pathWithLeadingSlash = path === '' || path === '/' ? '/' : path.startsWith('/') ? path : `/${path}`
-
-  return pathWithLeadingSlash === '/' ? '/' : pathWithLeadingSlash.replace(/\/+$/, '')
-}
-
-function withTrailingSlash(path) {
-  return path === '/' ? '/' : `${path}/`
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${entries.join('\n')}\n</urlset>\n`
 }
 
 function escapeHtml(value) {
@@ -591,10 +89,6 @@ function escapeHtml(value) {
     .replaceAll('"', '&quot;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
-}
-
-function escapeXml(value) {
-  return escapeHtml(value).replaceAll("'", '&apos;')
 }
 
 function escapeScript(value) {

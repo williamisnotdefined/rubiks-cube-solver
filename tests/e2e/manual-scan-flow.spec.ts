@@ -273,10 +273,10 @@ async function fillCurrentScanFace(page: Page, stickers: string, stickersPerFace
     }
 
     const symbol = stickers[index] as ScanFaceSymbol
-    await page.getByTestId(`scan-sticker-${index}`).dispatchEvent('click')
+    await page.getByTestId(`scan-sticker-${index}`).click()
     await page
       .getByRole('button', { exact: true, name: scanColorLabels[symbol] })
-      .dispatchEvent('click')
+      .click()
   }
 }
 

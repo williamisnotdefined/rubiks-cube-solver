@@ -1428,12 +1428,21 @@ async fn router_with_web_dist_applies_security_headers_to_static_and_spa_fallbac
         "<!doctype html><div id=\"root\"></div>",
     )
     .expect("index should be written");
+    std::fs::write(
+        web_dist_dir.join("404.html"),
+        "<!doctype html><div id=\"root\">not found</div>",
+    )
+    .expect("404 page should be written");
     std::fs::write(assets_dir.join("app.js"), "console.log('asset');")
         .expect("asset should be written");
 
     let app = api_router_with_web_dist(ApiState::without_generated_solver(), web_dist_dir.clone());
 
-    for path in ["/", "/index.html", "/solve/real-scramble"] {
+    for (path, expected_status) in [
+        ("/", StatusCode::PERMANENT_REDIRECT),
+        ("/index.html", StatusCode::OK),
+        ("/solve/real-scramble", StatusCode::NOT_FOUND),
+    ] {
         let response = app
             .clone()
             .oneshot(
@@ -1446,13 +1455,15 @@ async fn router_with_web_dist_applies_security_headers_to_static_and_spa_fallbac
             .await
             .expect("request should complete");
 
-        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(response.status(), expected_status);
         assert_security_headers(response.headers());
         assert_eq!(response.headers().get("cache-control"), None);
         let body = to_bytes(response.into_body(), usize::MAX)
             .await
             .expect("body should be readable");
-        assert!(String::from_utf8_lossy(&body).contains("id=\"root\""));
+        if expected_status != StatusCode::PERMANENT_REDIRECT {
+            assert!(String::from_utf8_lossy(&body).contains("id=\"root\""));
+        }
     }
 
     let response = app
@@ -2052,9 +2063,23 @@ async fn router_with_web_dist_serves_spa_fallback() {
         "<!doctype html><div id=\"root\"></div>",
     )
     .expect("index should be written");
+    std::fs::write(
+        web_dist_dir.join("404.html"),
+        "<!doctype html><div id=\"root\">not found</div>",
+    )
+    .expect("404 page should be written");
+    let sites_dir = web_dist_dir.join("sites");
+    let localized_sites_dir = web_dist_dir.join("es/sites");
+    std::fs::create_dir_all(&sites_dir).expect("sites directory should be created");
+    std::fs::create_dir_all(&localized_sites_dir)
+        .expect("localized sites directory should be created");
+    std::fs::write(sites_dir.join("index.html"), "sites").expect("sites page should be written");
+    std::fs::write(localized_sites_dir.join("index.html"), "sitios")
+        .expect("localized sites page should be written");
 
     let app = api_router_with_web_dist(ApiState::without_generated_solver(), web_dist_dir.clone());
     let response = app
+        .clone()
         .oneshot(
             Request::builder()
                 .method(Method::GET)
@@ -2065,13 +2090,244 @@ async fn router_with_web_dist_serves_spa_fallback() {
         .await
         .expect("request should complete");
 
-    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
     let body = to_bytes(response.into_body(), usize::MAX)
         .await
         .expect("body should be readable");
-    assert!(String::from_utf8_lossy(&body).contains("id=\"root\""));
+    assert!(String::from_utf8_lossy(&body).contains("not found"));
+
+    for (path, location) in [
+        ("/", "/solve/"),
+        ("/api/wca-data", "/api/wca-data/v1/docs"),
+        ("/api/wca-data/", "/api/wca-data/v1/docs"),
+        ("/notations", "/notations/3x3/"),
+        ("/notations/", "/notations/3x3/"),
+        ("/en/sites", "/sites/"),
+        ("/en/sites/", "/sites/"),
+        ("/pt-BR", "/pt-BR/solve/"),
+        ("/pt-BR/", "/pt-BR/solve/"),
+    ] {
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method(Method::GET)
+                    .uri(path)
+                    .body(Body::empty())
+                    .expect("request should build"),
+            )
+            .await
+            .expect("request should complete");
+
+        assert_eq!(response.status(), StatusCode::PERMANENT_REDIRECT);
+        assert_eq!(response.headers().get("location").unwrap(), location);
+    }
+
+    for locale in ["en", "de", "es", "fr", "it", "ja", "pt-BR", "ru", "zh"] {
+        for suffix in ["", "/"] {
+            let path = format!("/{locale}{suffix}");
+            let response = app
+                .clone()
+                .oneshot(
+                    Request::builder()
+                        .method(Method::GET)
+                        .uri(path)
+                        .body(Body::empty())
+                        .expect("request should build"),
+                )
+                .await
+                .expect("locale root redirect should complete");
+
+            assert_eq!(response.status(), StatusCode::PERMANENT_REDIRECT);
+            assert_eq!(
+                response.headers().get("location").unwrap(),
+                &format!("/{locale}/solve/")
+            );
+        }
+
+        for suffix in ["", "/"] {
+            let path = format!("/{locale}/notations{suffix}");
+            let location = if locale == "en" {
+                "/notations/3x3/".to_owned()
+            } else {
+                format!("/{locale}/notations/3x3/")
+            };
+            let response = app
+                .clone()
+                .oneshot(
+                    Request::builder()
+                        .method(Method::GET)
+                        .uri(path)
+                        .body(Body::empty())
+                        .expect("request should build"),
+                )
+                .await
+                .expect("localized notations redirect should complete");
+
+            assert_eq!(response.status(), StatusCode::PERMANENT_REDIRECT);
+            assert_eq!(response.headers().get("location").unwrap(), &location);
+        }
+    }
+
+    for (path, location) in [
+        ("/?source=home", "/solve/?source=home"),
+        ("/en/sites/?from=legacy", "/sites/?from=legacy"),
+        (
+            "/pt-BR/notations?tab=moves",
+            "/pt-BR/notations/3x3/?tab=moves",
+        ),
+        (
+            "/api/wca-data?version=current",
+            "/api/wca-data/v1/docs?version=current",
+        ),
+    ] {
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method(Method::GET)
+                    .uri(path)
+                    .body(Body::empty())
+                    .expect("request should build"),
+            )
+            .await
+            .expect("redirect with query should complete");
+
+        assert_eq!(response.status(), StatusCode::PERMANENT_REDIRECT);
+        assert_eq!(response.headers().get("location").unwrap(), location);
+    }
+
+    for path in [
+        "/en/not-a-known-route",
+        "/en/%2F%2Fevil.example",
+        "/en/%5C%5Cevil.example",
+        "/en/sites%2F",
+        "/en/sites%5C",
+    ] {
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method(Method::GET)
+                    .uri(path)
+                    .body(Body::empty())
+                    .expect("request should build"),
+            )
+            .await
+            .expect("unsafe legacy path request should complete");
+
+        assert_eq!(response.status(), StatusCode::NOT_FOUND, "{path}");
+        assert_eq!(response.headers().get("location"), None, "{path}");
+    }
+
+    let response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/api/unknown")
+                .body(Body::empty())
+                .expect("request should build"),
+        )
+        .await
+        .expect("request should complete");
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
 
     std::fs::remove_dir_all(web_dist_dir).expect("web dist should be removed");
+}
+
+#[tokio::test]
+async fn router_with_real_web_dist_serves_every_routable_static_path() {
+    let web_dist_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../apps/web/dist");
+    let require_web_dist = std::env::var_os("RUBIKS_REQUIRE_WEB_DIST").is_some();
+    if !web_dist_dir.is_dir() {
+        assert!(
+            !require_web_dist,
+            "apps/web/dist is required when RUBIKS_REQUIRE_WEB_DIST is set"
+        );
+        eprintln!("skipping real web dist test: apps/web/dist is not present");
+        return;
+    }
+    let web_dist_dir = web_dist_dir
+        .canonicalize()
+        .expect("real web dist should be canonicalizable");
+    let manifest_path = web_dist_dir.join("routing-manifest.json");
+    if !manifest_path.is_file() {
+        assert!(
+            !require_web_dist,
+            "routing-manifest.json is required when RUBIKS_REQUIRE_WEB_DIST is set"
+        );
+        eprintln!("skipping real web dist test: routing-manifest.json is not present");
+        return;
+    }
+
+    let manifest: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(manifest_path).expect("real routing manifest should be readable"),
+    )
+    .expect("real routing manifest should be valid JSON");
+    let paths = manifest["routableStaticPaths"]
+        .as_array()
+        .expect("routing manifest should list routable static paths");
+    let sitemap = std::fs::read_to_string(web_dist_dir.join("sitemap.xml"))
+        .expect("real sitemap should be readable");
+    assert!(sitemap.contains("https://speedcube.com.br/solve/"));
+    assert!(!sitemap.contains("/records/world/"));
+    assert!(!sitemap.contains("/notations/skewb/"));
+    assert!(!sitemap.contains("/notations/clock/"));
+    let app = api_router_with_web_dist(ApiState::without_generated_solver(), web_dist_dir);
+
+    for path in paths {
+        let path = path.as_str().expect("routable path should be a string");
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method(Method::GET)
+                    .uri(path)
+                    .body(Body::empty())
+                    .expect("request should build"),
+            )
+            .await
+            .expect("real static route request should complete");
+
+        assert_eq!(response.status(), StatusCode::OK, "expected 200 for {path}");
+        let body = to_bytes(response.into_body(), usize::MAX)
+            .await
+            .expect("real static route body should be readable");
+        let body = String::from_utf8_lossy(&body);
+        if path.contains("/records/world/")
+            || path.contains("/notations/skewb/")
+            || path.contains("/notations/clock/")
+        {
+            assert!(
+                body.contains("noindex,nofollow"),
+                "expected noindex for {path}"
+            );
+            assert!(
+                !body.contains("hreflang="),
+                "unexpected hreflang for {path}"
+            );
+        }
+    }
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri("/__definitely-unknown__/")
+                .body(Body::empty())
+                .expect("request should build"),
+        )
+        .await
+        .expect("unknown real static route request should complete");
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+    let body = to_bytes(response.into_body(), usize::MAX)
+        .await
+        .expect("real 404 body should be readable");
+    let body = String::from_utf8_lossy(&body);
+    assert!(body.contains("noindex,nofollow"));
+    assert!(!body.contains("data-ssg=\"true\""));
+    assert!(!body.contains("/__not-found__"));
 }
 
 #[tokio::test]

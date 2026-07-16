@@ -8,10 +8,7 @@ export function useSolutionPlayback(successResult?: SolveSuccessResult) {
     setSolutionStep(0)
   }, [successResult])
 
-  const visibleSolutionStep = clampSolutionStep(
-    solutionStep,
-    successResult?.moves.length ?? 0,
-  )
+  const visibleSolutionStep = clampSolutionStep(solutionStep, successResult?.moves.length ?? 0)
   const visibleSolutionMoves = successResult?.moves.slice(0, visibleSolutionStep) ?? []
 
   function handleSolutionStepChange(nextStep: number) {

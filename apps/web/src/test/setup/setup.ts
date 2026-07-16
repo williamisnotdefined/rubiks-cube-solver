@@ -1,11 +1,9 @@
 import * as matchers from '@testing-library/jest-dom/matchers'
 import { cleanup } from '@testing-library/react'
-import { afterEach, expect, vi } from 'vitest'
+import { afterEach, beforeEach, expect, vi } from 'vitest'
 import i18n from '@src/i18n/i18n'
 
-void i18n.changeLanguage('en-US');
-
-expect.extend(matchers);
+expect.extend(matchers)
 
 const testLocalStorage = createMemoryStorage()
 
@@ -17,10 +15,11 @@ Object.defineProperty(window, 'localStorage', {
 Object.defineProperty(globalThis, 'localStorage', {
   configurable: true,
   value: testLocalStorage,
-});
+})
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT =
-  true
+;(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true
 
 function createMemoryStorage(): Storage {
   const storage = new Map<string, string>()
@@ -72,12 +71,44 @@ if (!window.matchMedia) {
   })
 }
 
-if (!window.ResizeObserver) {
-  window.ResizeObserver = class MockResizeObserver implements ResizeObserver {
-    disconnect() {}
-    observe() {}
-    unobserve() {}
+export class TestResizeObserver implements ResizeObserver {
+  static instances: TestResizeObserver[] = []
+  readonly callback: ResizeObserverCallback
+  readonly observedElements = new Set<Element>()
+
+  constructor(callback: ResizeObserverCallback) {
+    this.callback = callback
+    TestResizeObserver.instances.push(this)
   }
+
+  disconnect() {
+    this.observedElements.clear()
+  }
+
+  observe(element: Element) {
+    this.observedElements.add(element)
+  }
+
+  trigger(entries?: ResizeObserverEntry[]) {
+    const observedEntries =
+      entries ??
+      [...this.observedElements].map(
+        (target) =>
+          ({
+            contentRect: target.getBoundingClientRect(),
+            target,
+          }) as ResizeObserverEntry,
+      )
+    this.callback(observedEntries, this)
+  }
+
+  unobserve(element: Element) {
+    this.observedElements.delete(element)
+  }
+}
+
+if (!window.ResizeObserver) {
+  window.ResizeObserver = TestResizeObserver
 }
 
 if (!HTMLElement.prototype.hasPointerCapture) {
@@ -108,24 +139,64 @@ if (!HTMLElement.prototype.scrollIntoView) {
   })
 }
 
-if (!window.IntersectionObserver) {
-  window.IntersectionObserver = class MockIntersectionObserver implements IntersectionObserver {
-    readonly root = null
-    readonly rootMargin = ''
-    readonly scrollMargin = ''
-    readonly thresholds = []
+export class TestIntersectionObserver implements IntersectionObserver {
+  static instances: TestIntersectionObserver[] = []
+  readonly callback: IntersectionObserverCallback
+  readonly observedElements = new Set<Element>()
+  readonly root = null
+  readonly rootMargin = ''
+  readonly scrollMargin = ''
+  readonly thresholds = []
 
-    disconnect() {}
-    observe() {}
-    takeRecords() {
-      return []
-    }
-    unobserve() {}
+  constructor(callback: IntersectionObserverCallback) {
+    this.callback = callback
+    TestIntersectionObserver.instances.push(this)
+  }
+
+  disconnect() {
+    this.observedElements.clear()
+  }
+
+  observe(element: Element) {
+    this.observedElements.add(element)
+  }
+
+  takeRecords() {
+    return []
+  }
+
+  trigger(isIntersecting = true) {
+    const entries = [...this.observedElements].map(
+      (target) =>
+        ({
+          isIntersecting,
+          target,
+        }) as IntersectionObserverEntry,
+    )
+    this.callback(entries, this)
+  }
+
+  unobserve(element: Element) {
+    this.observedElements.delete(element)
   }
 }
 
-afterEach(() => {
+if (!window.IntersectionObserver) {
+  window.IntersectionObserver = TestIntersectionObserver
+}
+
+beforeEach(async () => {
+  testLocalStorage.clear()
+  TestResizeObserver.instances = []
+  TestIntersectionObserver.instances = []
+  await i18n.changeLanguage('en-US')
+  document.documentElement.lang = 'en-US'
+})
+
+afterEach(async () => {
   cleanup()
+  testLocalStorage.clear()
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
+  await i18n.changeLanguage('en-US')
 })

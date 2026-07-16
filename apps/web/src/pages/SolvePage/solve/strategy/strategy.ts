@@ -1,4 +1,8 @@
-import type { PuzzleDefinition, PuzzleStrategyOption, SolverStrategyOption } from '@api/solver/types'
+import type {
+  PuzzleDefinition,
+  PuzzleStrategyOption,
+  SolverStrategyOption,
+} from '@api/solver/types'
 import { fallbackStrategyId } from '../constants'
 
 export function preferredStrategyId(

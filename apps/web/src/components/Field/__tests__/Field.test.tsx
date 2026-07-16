@@ -3,14 +3,16 @@ import { describe, expect, it } from 'vitest'
 import { Field } from '../Field'
 
 describe('Field', () => {
-  it('renders a visible label with children', () => {
+  it('associates its label, description, and error with the control', () => {
     render(
-      <Field label="Scramble">
-        <input />
+      <Field controlId='scramble' description='Use move notation' error='Required' label='Scramble'>
+        <input aria-describedby='scramble-description scramble-error' aria-invalid id='scramble' />
       </Field>,
     )
 
-    expect(screen.getByText('Scramble')).toBeInTheDocument()
-    expect(screen.getByRole('textbox')).toBeInTheDocument()
+    const input = screen.getByRole('textbox', { name: 'Scramble' })
+    expect(input).toHaveAccessibleDescription('Use move notation Required')
+    expect(input).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByRole('alert')).toHaveTextContent('Required')
   })
 })

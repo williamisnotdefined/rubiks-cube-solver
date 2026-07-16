@@ -1,6 +1,6 @@
 ---
-description: "Use when changing Tailwind CSS v4 utilities, theme/color variables, responsive layout, visual treatment, classnames usage, or cube visualization sizing in web."
-globs: "apps/web/**/*.{ts,tsx,css},docs/project-plan.md"
+description: "Use when changing Tailwind utilities, theme tokens, responsive layout, class composition, or visual treatment."
+globs: "apps/web/src/index.css,apps/web/src/components/**/*.tsx,apps/web/src/pages/**/*.tsx,apps/web/.storybook/**/*.tsx"
 alwaysApply: false
 ---
 
@@ -10,8 +10,7 @@ Canonical skill: `../../ai/skills/frontend-styling.md`.
 
 Referenced context:
 - `../../ai/rules/frontend-styling-rules.md`
-- `../../ai/rules/frontend-component-rules.md`
-- `../../ai/architecture/frontend-visualization.md`
+- `../../ai/rules/frontend-quality-rules.md`
 
 This file is compiled from canonical AI knowledge files. Edit canonical files under `ai`, then run `npm run ai:sync`.
 
@@ -21,52 +20,19 @@ This file is compiled from canonical AI knowledge files. Edit canonical files un
 
 # Frontend Styling
 
-Use this skill when changing Tailwind CSS v4 utilities, theme/color variables, responsive layout, visual treatment, classnames usage, or cube visualization sizing in `apps/web`.
-
-## Goal
-
-Preserve the existing visual language and mobile usability while using Tailwind CSS v4, semantic theme tokens, and `classnames` consistently.
+Use for Tailwind utilities, theme tokens, responsive layout, and visual treatment.
 
 ## Read First
 
 - `ai/rules/frontend-styling-rules.md`
-- `ai/rules/frontend-component-rules.md`
-- `ai/architecture/frontend-visualization.md`
+- `ai/rules/frontend-quality-rules.md`
 
 ## Workflow
 
-- Inspect nearby components before adding new utility combinations or visual patterns.
-- Do not create or import `.css` files; `apps/web/src/index.css` is the only allowed CSS file and owns Tailwind import, project resets, semantic theme/color variables, and minimal root theme selectors.
-- Put all reusable color values in semantic variables in `apps/web/src/index.css` before using them from Tailwind utilities.
-- Use Tailwind classes backed by semantic tokens such as `bg-app-bg`, `bg-app-nav`, `bg-app-stage`, `bg-app-surface`, `bg-app-surface-raised`, `bg-app-control`, `text-app-text`, `text-app-muted`, `text-app-inverse`, `border-app-border`, `border-app-border-strong`, and `ring-app-focus`; do not add hardcoded arbitrary color classes.
-- Keep raw hex color values confined to semantic variable definitions in `apps/web/src/index.css`; use theme-backed classes or CSS variables in components, stories, tests, SVG attributes, inline styles, and `apps/web/index.html`.
-- Keep theme behavior system-default by default, with explicit `dark` and `light` overrides only through root theme selectors when implemented.
-- Treat the current visual palette as `dark`; make `light` a gray, not-so-dark theme rather than a white theme.
-- Put all layout, visual treatment, animations, and state styles in component `className` utilities.
-- Use `classnames` as `cls` only when conditional classes or caller-provided `className` need composition.
-- Preserve the 350px by 350px cube cap on desktop and mobile.
-- Preserve the current square UI by avoiding `border-radius` and Tailwind `rounded-*` utilities.
-- Check mobile layouts for changed forms, grids, and visualization containers.
-- Avoid adding a Tailwind config or design-system abstraction unless there is a concrete current need.
-
-## Expected Output
-
-- Styling remains semantic HTML plus Tailwind utilities, with no component or page CSS files.
-- `apps/web/src/index.css` remains the only CSS file and contains only Tailwind import, resets, semantic theme/color variables, Tailwind token mappings, and minimal root theme selectors.
-- Components use semantic color utilities instead of hardcoded arbitrary hex colors.
-- Theme behavior defaults to system preference, with the current dark theme preserved and the light theme kept gray/not-so-dark.
-- Responsive behavior is preserved.
-- The cube visualization stays within the product size cap.
-- Conditional classes use `classnames` imported as `cls`.
-
-## Verification
-
-- Run `npm run build` after Tailwind or component style changes.
-- Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
-- Run `npm run theme-colors:check` when changing theme tokens, Tailwind color classes, docs that mention color rules, or generated AI route content.
-- Search changed files for `rounded-`, `border-radius`, local `cn`, local `classNames` helpers, new `.css` files, hardcoded arbitrary hex color utilities, and raw hex colors outside `apps/web/src/index.css`.
-- Check system-default, `dark`, and `light` theme behavior when theme code changes.
-- Check mobile breakpoints when feasible.
+- Follow nearby shadcn-compatible UI patterns and semantic tokens in the single CSS entrypoint.
+- Use static class strings when possible, the existing `cn` helper for shared primitives/class merging, and established `classnames` usage in feature code when merge semantics are unnecessary.
+- Check focus, reduced motion, themes, mobile layout, and visualization sizing.
+- Run `npm run theme-colors:check`, web build, and lint.
 
 # Referenced Context
 
@@ -74,148 +40,44 @@ Preserve the existing visual language and mobile usability while using Tailwind 
 
 # Frontend Styling Rules
 
-Rules for styling `apps/web` with Tailwind CSS v4 utilities, theme tokens, and class composition.
+- Use Tailwind CSS v4 through `@tailwindcss/vite`; `apps/web/src/index.css` is the only CSS entry and owns resets, semantic variables, theme mappings, and minimal global animation definitions.
+- Use semantic theme-backed classes. Raw hex values belong only in semantic variable definitions in `index.css`.
+- Preserve the established shadcn-compatible visual language, including semantic tokens, subtle borders, rounded corners, and restrained shadows. Design changes still require a concrete product reason.
+- Use plain class strings when static. Shared shadcn-style primitives and components that merge caller classes MUST use the existing `cn` helper; established feature code MAY continue to use `classnames` as `cls` when Tailwind conflict resolution is not needed.
+- Preserve the established dark/gray visual tone, system theme behavior, mobile usability, visible focus, reduced motion, and the 350px cube cap.
+- New CSS files, CSS-in-JS, Sass, hardcoded arbitrary colors, and broad selectors are prohibited.
+- Run `npm run theme-colors:check`, web build, and lint after relevant changes; inspect mobile and theme variants when affected.
 
-## Always
+## Reference: `ai/rules/frontend-quality-rules.md`
 
-- Use Tailwind CSS v4 through `@tailwindcss/vite` and the single required `apps/web/src/index.css` entrypoint.
-- Keep `apps/web/src/index.css` as the only allowed CSS file; it may contain Tailwind/shadcn imports, project-level CSS resets, semantic theme/color variables, Tailwind v4 `@theme` token mappings, shadcn CSS variables, minimal root theme selectors, and small shadcn utility animations.
-- Keep raw hex color values confined to semantic variable definitions in `apps/web/src/index.css`; application markup, components, stories, tests, and `apps/web/index.html` should use theme-backed classes or CSS variables instead.
-- Define every reusable color as a semantic CSS variable in `apps/web/src/index.css` before using it in Tailwind classes.
-- Expose reusable colors through shadcn-compatible semantic Tailwind tokens such as `bg-background`, `bg-card`, `bg-popover`, `bg-primary`, `bg-muted`, `bg-accent`, `text-foreground`, `text-muted-foreground`, `border-border`, `border-input`, `ring-ring`, `bg-sidebar`, and `text-sidebar-foreground` instead of hardcoded color utilities.
-- Name color tokens by UI role, not raw color names; prefer `--background`, `--card`, `--border`, and `--muted-foreground` over names such as `--gray-900`.
-- Use system theme preference by default. Explicit theme overrides may use either shadcn's `.dark` root class or existing `[data-theme="dark"]` / `[data-theme="light"]` selectors, but all variants must route through the same semantic variables.
-- Treat `shadcn-admin` as the target visual language when the task is a UI reformulation or migration.
-- Put all styling in Tailwind utility classes on elements and components.
-- Preserve the existing product visual language unless the task explicitly changes design direction.
-- Consider desktop and mobile layouts for every UI change.
-- Keep the rendered 3x3 cube no larger than 350px by 350px.
-- Use shadcn-compatible rounded corners, shadows, subtle borders, and density when migrating interface components to the admin UI.
-- Use the shared `cn` helper based on `clsx` and `tailwind-merge` for shadcn UI primitives and components that need class merging.
-- Existing non-shadcn code may continue to use the `classnames` package imported as `cls`, but new shadcn-style UI should prefer `cn`.
-- Keep static Tailwind class sets as plain strings when there are no conditions.
-- Style `lucide-react` icons with Tailwind sizing/color classes such as `size-5` and inherited `text-app-*` color; do not style custom SVG path data.
+# Frontend Quality Rules
 
-## Never
+Focused requirements for accessibility, performance, security, resilience, and dependencies in `apps/web`.
 
-- Do not add, import, or keep component, page, feature, or extra global `.css` files.
-- Do not put custom selectors, theme tokens, document defaults, base styles, animations, or keyframes in any CSS file other than `apps/web/src/index.css`.
-- Do not hardcode colors through Tailwind arbitrary hex color utilities.
-- Do not add raw hex colors in React props, inline styles, SVG `fill`/`stroke`, tests, Storybook stories, or `apps/web/index.html`; add a semantic variable in `apps/web/src/index.css` and consume it through `var(...)` or a theme-backed Tailwind class.
-- Do not duplicate raw color values in components after a semantic token exists.
-- Do not make the light theme pure white, near-white, or visually disconnected from the current dark product tone.
-- Do not add a Tailwind config file unless Tailwind utility classes cannot express a concrete current need.
-- Do not add CSS-in-JS or Sass. Shadcn-style utility dependencies such as `class-variance-authority`, `clsx`, and `tailwind-merge` are allowed for the admin UI migration.
-- Do not use inline `<svg>` markup for UI icons or hardcoded SVG path styling in React components; use `lucide-react` icons and semantic Tailwind classes.
-- Do not add local `classNames` or duplicate class helpers; use the shared `cn` helper for shadcn-style class composition.
-- Do not use template literals only to append conditional classes.
-- Do not add broad selectors or global CSS rules when component utility classes can express the behavior.
-- Do not turn repeated class sets into broad design-system abstractions before reuse is real.
-- Do not create generic interchangeable layouts that ignore the existing cube visualization tone.
-- Do not let visual experiments break mobile usability or the 350px cube cap.
+## Accessibility
 
-## Verification
+- Interactive controls MUST have an accessible name, keyboard operation, visible focus, and correct native element or shared primitive semantics.
+- Dialogs and sheets MUST preserve focus trapping, Escape handling, focus return, and labelled title/description behavior through existing primitives.
+- Dynamic errors and completion states SHOULD use an appropriate live/status region without repeatedly announcing scanner frame updates.
+- Motion MUST respect reduced-motion preferences; color MUST NOT be the only signal for scan, validation, timer, or solver status.
 
-- Search changed files for local class-name helpers, new `.css` files, inline `<svg>` UI icons, hardcoded arbitrary hex color utilities, and raw hex colors outside `apps/web/src/index.css` before finishing.
-- Run `npm run theme-colors:check` after changing theme tokens, Tailwind color classes, docs that mention color rules, or generated AI route content.
-- Run `npm run build` after Tailwind or component style changes.
-- Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
-- Check both system-default theme behavior and explicit `dark`/`light` theme behavior when theme code changes.
-- Check mobile breakpoints for changed grids, forms, and visualization containers when feasible.
+## Performance
 
-## Reference: `ai/rules/frontend-component-rules.md`
+- Indexable routes MUST retain SSG output and hydration; do not replace server-rendered content with client-only placeholders.
+- Heavy visualization, algorithm, and page code SHOULD remain route- or feature-split. Avoid importing broad package barrels when a supported subpath exists.
+- Camera analysis MUST cancel stale work and avoid overlapping unbounded requests. Versioned assets remain immutable; mutable HTML and metadata MUST NOT receive immutable caching.
+- Performance changes MUST use a concrete signal such as bundle output, request count, render behavior, or measured interaction, not speculative memoization.
 
-# Frontend Component Rules
+## Security And Resilience
 
-Rules for React component boundaries in `apps/web`.
+- Camera permission MUST follow a clear disclosure of purpose and processing. Once permission succeeds, scanner analysis starts automatically by default; users retain pause/exit and manual-review controls.
+- Images and reviewed scan data MUST stay within typed scan contracts and configured request limits. Do not persist or transmit camera data beyond the disclosed solve workflow.
+- Browser code MUST not weaken CSP, permissions policy, origin restrictions, request size limits, runtime response validation, or typed error handling.
+- Async work MUST handle cancellation and stale responses. User-visible flows MUST expose recoverable API/camera failures and avoid silently fabricating successful data.
+- Analytics, RUM, and error-tracking services are out of scope unless a separate product/privacy decision explicitly introduces them.
 
-## Always
+## Dependencies
 
-- Keep route or screen files readable as composition.
-- Keep frontend route paths and URL segments in English stable slugs; translate menu labels, headings, and copy through `react-i18next` locale files under `apps/web/src/i18n/locales` instead of localizing URLs.
-- When adding or changing translation keys, update every supported locale file: `en`, `es`, `pt-BR`, `it`, `de`, `fr`, `ru`, `zh` for Simplified Chinese, and `ja`, preserving interpolation placeholders.
-- Extract components when UI repeats or a named component clarifies ownership, state boundaries, or screen structure.
-- Keep one-off UI inline when extraction only adds indirection.
-- Keep page-level screens under `apps/web/src/pages`.
-- Keep page-specific components, hooks, and helpers under the owning page folder until reused elsewhere.
-- Keep shared reusable components under `apps/web/src/components` only after there is a real shared consumer.
-- Keep visualization-specific components and hooks near the owning visualization feature unless reused.
-- Keep context-independent helpers in focused `apps/web/src/core/<category>/<name>.ts` files, not inside React components.
-- Import core helpers from direct file paths; do not add `src/core` barrels.
-- Keep React component props explicit and small.
-- Prefer `children` for layout wrappers such as panels, shells, and result regions.
-- Use `lucide-react` for UI icons; import icon components directly from `lucide-react` instead of authoring local SVG icons.
-- Use shared shadcn/Radix-backed primitives directly under `apps/web/src/components` for new admin-style UI, including `Dialog`, `AlertDialog`, `Sheet`, `Select`, `Switch`, `Checkbox`, `DropdownMenu`, `Toast`/`Toaster`, `Popover`, `Tooltip`, `Tabs`, `Table`, and `Sidebar`, so portal, focus, escape, and outside-click behavior stay consistent.
-- Extract focused hooks for repeated or stateful UI behavior, but do not hide an oversized component in a single oversized hook.
-- Keep new or substantially changed React component files at or below 400 lines where practical.
-- Keep Storybook stories in a `stories/` child folder beside the source area they cover.
-- Use one primary story export per component and expose prop variation through controls instead of one story per prop.
-
-## Never
-
-- Do not turn every extraction into a broad component library.
-- Do not move page, cube, solver, API, or visualization-specific helpers into shared utilities before reuse exists.
-- Do not let `App.tsx`, page files, or hooks become god modules.
-- Do not add localized route paths; user-visible navigation text belongs in locale files.
-- Do not use nested ternary expressions in React or frontend helpers; use explicit `if`/`return`, a named helper, or a small lookup table instead.
-- Do not fix a god component by moving all state and effects into a god provider or god hook.
-- Do not create React Context for mutable UI state.
-- Do not render short fixed control groups through artificial arrays when direct JSX is clearer.
-- Do not mix cube validation, search, or solver behavior into React components.
-- Do not write inline `<svg>` icons, local `*Icon` components, or custom icon path data in React components; choose the closest `lucide-react` icon instead.
-- Do not hand-roll dialog, select, switch, checkbox, toast, popover/dropdown state, document outside-click listeners, focus handling, or portal positioning when a shared primitive can represent the behavior.
-- Do not import Radix packages directly outside the corresponding wrapper under `apps/web/src/components` unless a new shared primitive is being created.
-- Do not place component stories in a shared fixtures folder; reserve shared story data for `src/stories` if it exists.
-
-## Data-Driven Rendering
-
-- Use arrays and `.map()` for API data, dynamic collections, long repeated groups, or lists whose members are not all known at author time.
-- Render items directly when the UI is a short fixed set of product controls.
-
-## Verification
-
-- Ensure extracted components do not change user-visible behavior.
-- Run `npm run build` after TypeScript or React component moves.
-- Run `npm run lint -w @rubiks-cube-solver/web` after frontend code changes.
-- Search changed frontend files for inline `<svg>`, local `*Icon` components, custom icon path data, and direct Radix package imports outside `apps/web/src/components` wrappers before finishing.
-- Run `npm run storybook:build -w @rubiks-cube-solver/web` after adding or changing stories.
-
-## Reference: `ai/architecture/frontend-visualization.md`
-
-# Frontend Visualization Architecture
-
-The frontend renders solver interaction, scan workflows, notation pages, algorithms pages, timer flows, and visualization playback. It must not become the source of truth for puzzle logic.
-
-## Boundary
-
-- The Rust HTTP API and `cube-engine` own solver behavior, puzzle validation, search, heuristics, and replay verification.
-- `apps/web/src/api` owns HTTP request details, response normalization, typed results, API base URL handling, and API error mapping.
-- React components own user interaction, form controls, loading indicators, result display, visualization playback, and local UI state.
-- `@rubiks-cube-solver/rubiks-cube` is a private visualization package and adapter surface, not the solver core.
-- Facelet, Kociemba, sticker-state, and visual-state strings are adapter details. UI copy should speak in puzzles, moves, limits, strategies, scanner review, and solver statuses.
-
-## Data Flow
-
-```txt
-React page/component
-        -> apps/web/src/api request or React Query hook
-        -> Rust HTTP API
-        -> cube-engine solve or scan contract
-        -> normalized API result
-        -> visualization adapter / playback UI
-```
-
-API load state, solve result state, form state, scan workflow state, and visualization playback state should remain separately owned unless a focused page-level owner explicitly coordinates them.
-
-## Visualization State
-
-- Supported visual-state kinds come from API and puzzle contracts, such as `cube3-facelets-v1`, `cube2-facelets-v1`, or `none`.
-- Visualization hooks may parse supported move tokens to animate or set renderer state, but Rust remains authoritative for notation semantics and puzzle validity.
-- Imperative custom-element synchronization belongs in focused visualization hooks and refs, not broad page effects.
-- Selection and playback state should be represented by IDs, move indexes, notation strings, or small status values instead of duplicated puzzle objects when possible.
-- The visible cube should remain within the established 350px by 350px UI constraint unless the design is intentionally changed.
-
-## Current Frontend Stack
-
-- Vite, React, TypeScript, React Router, React Query, React Hook Form, Zod, Zustand, Tailwind CSS v4, shadcn/Radix-backed shared primitives, `cn` class merging, `react-i18next`, Motion, Vitest, Storybook, and Playwright are the current frontend stack.
-- Additional global state, routing, form, animation, styling, or component dependencies should wait until the existing stack cannot satisfy a concrete current need.
+- A new runtime dependency MUST solve a named current gap that existing React, browser APIs, shared primitives, or installed packages cannot reasonably solve.
+- The change MUST identify bundle/runtime impact, maintenance owner, licensing/security fit, SSR/hydration compatibility when relevant, and focused tests.
+- Do not add a package solely for a small helper, styling convention, or abstraction without a current reused consumer.

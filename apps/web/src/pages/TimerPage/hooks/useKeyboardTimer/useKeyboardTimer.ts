@@ -38,11 +38,7 @@ export function useKeyboardTimer(timer: TimerMachine, disabled = false) {
     }
 
     function handleKeyUp(event: KeyboardEvent) {
-      if (isEditableTarget(event.target)) {
-        return
-      }
-
-      if (event.code !== 'Space') {
+      if (event.code !== 'Space' || !spaceDown) {
         return
       }
 
@@ -67,10 +63,8 @@ function isEditableTarget(target: EventTarget | null): boolean {
   }
 
   return (
-    target.isContentEditable ||
-    target.tagName === 'BUTTON' ||
-    target.tagName === 'INPUT' ||
-    target.tagName === 'SELECT' ||
-    target.tagName === 'TEXTAREA'
+    target.closest(
+      'a[href], button, input, select, textarea, [contenteditable="true"], [role="button"], [role="combobox"], [role="link"], [role="menuitem"], [role="option"], [role="switch"], [role="tab"]',
+    ) !== null
   )
 }

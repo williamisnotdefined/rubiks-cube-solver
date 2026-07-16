@@ -4,15 +4,15 @@
 
 ## Main Pages
 
-- [Solver](https://speedcube.com.br/solve): Solve supported puzzle scrambles and play solution animations.
-- [Timer](https://speedcube.com.br/timer): Practice speedcubing sessions with scrambles, inspection, and averages.
-- [Algorithms](https://speedcube.com.br/algoritmos): Browse algorithm sets by puzzle and method.
-- [Notation Guides](https://speedcube.com.br/notations/3x3): Learn move notation for supported puzzles.
+- [Solver](https://speedcube.com.br/solve/): Solve supported puzzle scrambles and play solution animations.
+- [Timer](https://speedcube.com.br/timer/): Practice speedcubing sessions with scrambles, inspection, and averages.
+- [Algorithms](https://speedcube.com.br/algoritmos/): Browse algorithm sets by puzzle and method.
+- [Notation Guides](https://speedcube.com.br/notations/3x3/): Learn move notation for supported puzzles.
 
 ## Language Routes
 
-- Portuguese (Brazil): unprefixed routes, for example [Solver](https://speedcube.com.br/solve).
-- English: `/en`, for example [Solver](https://speedcube.com.br/en/solve).
+- English (United States): unprefixed routes, for example [Solver](https://speedcube.com.br/solve/).
+- Portuguese (Brazil): `/pt-BR`, for example [Solver](https://speedcube.com.br/pt-BR/solve/).
 - Spanish: `/es`, for example [Solver](https://speedcube.com.br/es/solve).
 - Italian: `/it`, for example [Solver](https://speedcube.com.br/it/solve).
 - German: `/de`, for example [Solver](https://speedcube.com.br/de/solve).
@@ -24,6 +24,7 @@
 ## Notes For Agents
 
 - Prefer canonical URLs on `https://speedcube.com.br`.
-- Portuguese content is served on unprefixed routes.
-- Other supported languages use prefixed routes with the same URL slugs.
+- English (`en-US`) is canonical on unprefixed routes; `/en/` is legacy and redirects to the unprefixed URL.
+- Every other supported language uses an explicit prefix with the same URL slugs.
+- Explicit URL prefixes determine language. `/` permanently redirects to the unprefixed English solver.
 - Solver correctness belongs to the Rust API and cube engine.

@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  useSolveScanSession,
+  canonicalStickerIndexToVisual,
   type AnalyzeScanFaceResponse,
   type ScanSessionResult,
 } from '@api/scan'
@@ -15,7 +15,10 @@ import {
   AlertDialogTitle,
 } from '@components/AlertDialog'
 import { Button } from '@components/Button'
-import { NoSolutionLimitsModal, type NoSolutionRetryLimits } from '../../solve/NoSolutionLimitsModal'
+import {
+  NoSolutionLimitsModal,
+  type NoSolutionRetryLimits,
+} from '../../solve/NoSolutionLimitsModal'
 import {
   isNoSolutionLimitFailure,
   type NoSolutionLimitFailureResult,
@@ -27,8 +30,13 @@ import {
   scan3StickersPerFace,
   scanCenterIndex,
   scanSessionFacesFromDrafts,
+  canonicalRotationForVisualFace,
 } from '../scanState'
-import { scanColorLabel, scanFaceDraftValidationMessage } from '../scanTranslations'
+import {
+  scanColorLabel,
+  scanConfirmAllFacesMessage,
+  scanFaceDraftValidationMessage,
+} from '../scanTranslations'
 import { scanColorCode } from '../scanColorSymbols'
 import { scanDraftsHaveProgress, scanQualityMessage } from '../scanCaptureWorkflowHelpers'
 import {
@@ -40,11 +48,9 @@ import {
   removeBackendReviewFace,
   type BackendReviewTargets,
 } from '../scanSessionReview'
-import {
-  scanSessionMessage,
-  scanSessionReadinessMessage,
-} from '../scanSessionMessages'
+import { scanSessionMessage, scanSessionReadinessMessage } from '../scanSessionMessages'
 import { useScanCaptureWorkflow } from '../hooks/useScanCaptureWorkflow'
+import { useAbortableScanSession } from '../hooks/useAbortableScanSession'
 
 export type ScanCubeModalProps = {
   apiReady: boolean
@@ -83,16 +89,20 @@ export function OddCubeScanModal({
 }: ScanCubeModalProps) {
   const { t } = useTranslation()
   const puzzleSlug: string = 'cube-3x3x3'
-  const solveScanSession = useSolveScanSession()
+  const scanSession = useAbortableScanSession()
+  const closingRef = useRef(false)
   const stickersPerFace = scan3StickersPerFace
   const gridSize = 3
   const centerIndex = scanCenterIndex(stickersPerFace)
   const [backendReviewTargets, setBackendReviewTargets] = useState<BackendReviewTargets>(() =>
     emptyBackendReviewTargets(),
   )
-  const [centerMismatchConfirmation, setCenterMismatchConfirmation] =
-    useState<CenterMismatchConfirmation | undefined>()
-  const [limitFailureResult, setLimitFailureResult] = useState<NoSolutionLimitFailureResult | undefined>()
+  const [centerMismatchConfirmation, setCenterMismatchConfirmation] = useState<
+    CenterMismatchConfirmation | undefined
+  >()
+  const [limitFailureResult, setLimitFailureResult] = useState<
+    NoSolutionLimitFailureResult | undefined
+  >()
   const {
     autoScanEnabled,
     camera,
@@ -116,6 +126,7 @@ export function OddCubeScanModal({
     liveStableFrameCount,
     liveStatus,
     message,
+    invalidateCapture,
     previewCounts,
     scannerMessage,
     setCurrentFaceIndex,
@@ -127,9 +138,16 @@ export function OddCubeScanModal({
     stickersPerFace,
     getAnalysisMessage: (analysis) => scanAnalysisMessage(t, analysis),
     isReviewFace: (symbol) => isBackendReviewFace(backendReviewTargets, symbol),
-    onDraftEdited: (symbol, index) => clearBackendManualTarget(symbol, index),
-    onFaceChanged: () => setCenterMismatchConfirmation(undefined),
+    onDraftEdited: (symbol, index) => {
+      scanSession.invalidate()
+      clearBackendManualTarget(symbol, index)
+    },
+    onFaceChanged: () => {
+      scanSession.invalidate()
+      setCenterMismatchConfirmation(undefined)
+    },
     onFaceCleared: (symbol) => {
+      scanSession.invalidate()
       clearBackendReviewForFace(symbol)
       setCenterMismatchConfirmation(undefined)
     },
@@ -142,12 +160,12 @@ export function OddCubeScanModal({
     solveDisabledReason,
     { requirePhotos: false },
   )
-  const draftValidationMessage = scanFaceDraftValidationMessage(t, draftValidation)
+  const draftValidationMessage = scanFaceDraftValidationMessage(t, draftValidation, stickersPerFace)
   const centerValidation = currentDraft.analysis?.centerMismatch
     ? centerMismatchMessage(t, currentDraft.analysis)
     : undefined
   const faceValidation = draftValidationMessage
-  const sessionSolving = solveScanSession.isPending
+  const sessionSolving = scanSession.pending
   const solveScanDisabledReason = scanSessionReadiness
   const solveScanDisabled = solving || sessionSolving || solveScanDisabledReason !== undefined
   const reviewTargetIndexes = backendReviewTargets.manualTargets[currentFace.symbol] ?? []
@@ -158,6 +176,10 @@ export function OddCubeScanModal({
 
     return () => onSessionSolvingChange?.(false)
   }, [onSessionSolvingChange, sessionSolving])
+
+  useEffect(() => {
+    closingRef.current = false
+  })
 
   function clearBackendReviewForFace(symbol: ScanFaceSymbol) {
     setBackendReviewTargets((targets) => removeBackendReviewFace(targets, symbol))
@@ -197,15 +219,16 @@ export function OddCubeScanModal({
 
   async function submitScanSession(limits?: NoSolutionRetryLimits) {
     if (sessionFaces === undefined) {
-      setMessage(t('scan.messages.confirmAllFaces'))
+      setMessage(scanConfirmAllFacesMessage(t, stickersPerFace))
       return
     }
 
     const faces = sessionFaces!
 
     try {
+      invalidateCapture()
       setMessage(t('scan.messages.submittingSession'))
-      const result = await solveScanSession.mutateAsync({
+      const result = await scanSession.submit({
         faces,
         maxDepth: limits?.maxDepth ?? maxDepth,
         maxNodes: limits?.maxNodes ?? maxNodes,
@@ -213,7 +236,9 @@ export function OddCubeScanModal({
         strategyId,
       })
 
-      handleScanSessionResult(result)
+      if (result !== undefined) {
+        handleScanSessionResult(result)
+      }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : t('scan.messages.solveFailed'))
     }
@@ -223,22 +248,25 @@ export function OddCubeScanModal({
     if (result.solve?.ok === true) {
       setLimitFailureResult(undefined)
       onSessionSolveResult?.(result.solve)
-      onClose()
+      handleClose()
       return
     }
 
     if (isNoSolutionLimitFailure(result.solve)) {
       setLimitFailureResult(result.solve)
-      setMessage(result.solve.message ?? scanSessionMessage(t, result))
+      setMessage(scanSessionMessage(t, result))
       return
     }
 
     if (result.solve !== undefined) {
-      setMessage(result.solve.message ?? scanSessionMessage(t, result))
+      setMessage(scanSessionMessage(t, result))
       return
     }
 
-    const nextTargets = backendReviewTargetsFromSessionResult(result)
+    const nextTargets = backendReviewTargetsFromSessionResult(result, (face, index) => ({
+      face,
+      index: canonicalStickerIndexToVisual(index, gridSize, canonicalRotationForVisualFace(face)),
+    }))
     setBackendReviewTargets(nextTargets)
     const targetFace = firstBackendReviewFace(nextTargets)
     if (targetFace !== undefined) {
@@ -254,67 +282,76 @@ export function OddCubeScanModal({
     await submitScanSession(limits)
   }
 
+  function handleClose() {
+    if (closingRef.current) {
+      return
+    }
+    closingRef.current = true
+    scanSession.invalidate()
+    onClose()
+  }
+
   return (
     <ScanModalShell
       visionOk={visionOk}
       visionTileDetectorAvailable={visionTileDetectorAvailable}
       visionTileDetectorReason={visionTileDetectorReason}
       hasProgress={hasScanProgress}
-      onClose={onClose}
+      onClose={handleClose}
     >
-
-        <ScanFaceCaptureStep
-          autoScanEnabled={autoScanEnabled}
-          cameraAnalysis={cameraAnalysis}
-          cameraMessage={camera.status === 'error' ? camera.message : undefined}
-          cameraStatus={camera.status}
-          cameraTemporalConsensus={cameraTemporalConsensus}
-          canClearPhoto={canClearPhoto}
-          capturing={capturing}
-          currentDraft={currentDraft}
-          currentFace={currentFace}
-          currentFaceIndex={currentFaceIndex}
-          drafts={drafts}
-          faceValidation={faceValidation}
-          faceStatuses={faceStatuses}
-          finalActionDisabled={solveScanDisabled}
-          finalActionDisabledReason={solveScanDisabledReason}
-          finalActionLabel={t('scan.actions.solveScannedCube')}
-          finalActionLoading={solving || sessionSolving}
-          liveStableFrameCount={liveStableFrameCount}
-          liveStatus={liveStatus}
-          message={message ?? (hasReviewContent ? faceValidation : undefined)}
-          messageFallback={solveDisabledReason}
-          previewCounts={previewCounts}
-          reviewTargetIndexes={reviewTargetIndexes}
-          scannerMessage={scannerMessage}
-          showExpectedCenter={centerIndex !== undefined}
-          stickersPerFace={stickersPerFace}
-          videoRef={videoRef}
-          onAutoScanToggle={handleAutoScanToggle}
-          onCapture={() => void handleTakePhoto()}
-          onClear={handleClearPhoto}
-          onConfirmFace={handleConfirmFace}
-          onFaceIndexChange={handleFaceIndexChange}
-          onFinalAction={() => void handleSolveScan()}
-          onStickerColorChange={handleStickerColorChange}
+      <ScanFaceCaptureStep
+        autoScanEnabled={autoScanEnabled}
+        cameraAnalysis={cameraAnalysis}
+        cameraMessage={camera.status === 'error' ? camera.message : undefined}
+        cameraStatus={camera.status}
+        cameraTemporalConsensus={cameraTemporalConsensus}
+        canClearPhoto={canClearPhoto}
+        capturing={capturing}
+        currentDraft={currentDraft}
+        currentFace={currentFace}
+        currentFaceIndex={currentFaceIndex}
+        drafts={drafts}
+        faceValidation={faceValidation}
+        faceStatuses={faceStatuses}
+        finalActionDisabled={solveScanDisabled}
+        finalActionDisabledReason={solveScanDisabledReason}
+        finalActionLabel={t('scan.actions.solveScannedCube')}
+        finalActionLoading={solving || sessionSolving}
+        interactionDisabled={sessionSolving}
+        liveStableFrameCount={liveStableFrameCount}
+        liveStatus={liveStatus}
+        message={message ?? (hasReviewContent ? faceValidation : undefined)}
+        messageFallback={solveDisabledReason}
+        previewCounts={previewCounts}
+        reviewTargetIndexes={reviewTargetIndexes}
+        scannerMessage={scannerMessage}
+        showExpectedCenter={centerIndex !== undefined}
+        stickersPerFace={stickersPerFace}
+        videoRef={videoRef}
+        onAutoScanToggle={handleAutoScanToggle}
+        onCapture={() => void handleTakePhoto()}
+        onClear={handleClearPhoto}
+        onConfirmFace={handleConfirmFace}
+        onFaceIndexChange={handleFaceIndexChange}
+        onFinalAction={() => void handleSolveScan()}
+        onStickerColorChange={handleStickerColorChange}
+      />
+      {centerMismatchConfirmation === undefined ? null : (
+        <CenterMismatchConfirmationModal
+          message={centerMismatchConfirmation.message}
+          onCancel={() => setCenterMismatchConfirmation(undefined)}
+          onConfirm={handleConfirmCenterMismatch}
         />
-        {centerMismatchConfirmation === undefined ? null : (
-          <CenterMismatchConfirmationModal
-            message={centerMismatchConfirmation.message}
-            onCancel={() => setCenterMismatchConfirmation(undefined)}
-            onConfirm={handleConfirmCenterMismatch}
-          />
-        )}
-        {limitFailureResult === undefined ? null : (
-          <NoSolutionLimitsModal
-            puzzleSlug={puzzleSlug}
-            result={limitFailureResult}
-            solving={solving || sessionSolving}
-            onClose={() => setLimitFailureResult(undefined)}
-            onRetry={handleLimitFailureRetry}
-          />
-        )}
+      )}
+      {limitFailureResult === undefined ? null : (
+        <NoSolutionLimitsModal
+          puzzleSlug={puzzleSlug}
+          result={limitFailureResult}
+          solving={solving || sessionSolving}
+          onClose={() => setLimitFailureResult(undefined)}
+          onRetry={handleLimitFailureRetry}
+        />
+      )}
     </ScanModalShell>
   )
 }
@@ -333,50 +370,60 @@ function CenterMismatchConfirmationModal({
   const { t } = useTranslation()
 
   return (
-    <AlertDialog open onOpenChange={(open) => {
-      if (!open) {
-        onCancel()
-      }
-    }}>
+    <AlertDialog
+      open
+      onOpenChange={(open) => {
+        if (!open) {
+          onCancel()
+        }
+      }}
+    >
       <AlertDialogContent
-        className="left-1/2 top-1/2 z-[70] grid w-[calc(100vw-1.5rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-5 border border-app-border-strong bg-app-surface p-4 text-left text-app-text shadow-2xl sm:w-[calc(100vw-3rem)] sm:p-6"
-        overlayClassName="z-[70] bg-app-bg/85"
+        className='left-1/2 top-1/2 z-[70] grid w-[calc(100vw-1.5rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-5 border border-app-border-strong bg-app-surface p-4 text-left text-app-text shadow-2xl sm:w-[calc(100vw-3rem)] sm:p-6'
+        overlayClassName='z-[70] bg-app-bg/85'
         overlayLabel={t('scan.centerMismatch.dismiss')}
         onOverlayClick={onCancel}
       >
-        <div className="grid gap-2">
-          <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
+        <div className='grid gap-2'>
+          <p className='text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted'>
             {t('scan.centerMismatch.kicker')}
           </p>
           <AlertDialogTitle asChild>
-            <h2 className="text-lg font-extrabold uppercase tracking-[0.16em]">
+            <h2 className='text-lg font-extrabold uppercase tracking-[0.16em]'>
               {t('scan.centerMismatch.title')}
             </h2>
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
-            <p className="text-sm font-semibold leading-relaxed text-app-muted">
-              {message}
-            </p>
+            <p className='text-sm font-semibold leading-relaxed text-app-muted'>{message}</p>
           </AlertDialogDescription>
-          <p className="text-sm font-extrabold leading-relaxed text-app-text">
+          <p className='text-sm font-extrabold leading-relaxed text-app-text'>
             {t('scan.messages.centerMismatchConfirmQuestion')}
           </p>
         </div>
 
-        <div className="flex flex-wrap justify-end gap-2">
+        <div className='flex flex-wrap justify-end gap-2'>
           <AlertDialogCancel asChild>
-            <Button size="sm" type="button" variant="secondary" onClick={(event) => {
-              event.preventDefault()
-              onCancel()
-            }}>
+            <Button
+              size='sm'
+              type='button'
+              variant='secondary'
+              onClick={(event) => {
+                event.preventDefault()
+                onCancel()
+              }}
+            >
               {t('common.cancel')}
             </Button>
           </AlertDialogCancel>
           <AlertDialogAction asChild>
-            <Button size="sm" type="button" onClick={(event) => {
-              event.preventDefault()
-              onConfirm()
-            }}>
+            <Button
+              size='sm'
+              type='button'
+              onClick={(event) => {
+                event.preventDefault()
+                onConfirm()
+              }}
+            >
               {t('scan.actions.confirmAnyway')}
             </Button>
           </AlertDialogAction>

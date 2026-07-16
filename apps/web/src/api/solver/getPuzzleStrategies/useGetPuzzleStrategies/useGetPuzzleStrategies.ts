@@ -14,7 +14,7 @@ export function useGetPuzzleStrategies({
 }: UseGetPuzzleStrategiesOptions) {
   return useQuery({
     enabled: enabled && puzzleSlug !== undefined,
-    queryFn: () => getPuzzleStrategies(puzzleSlug ?? ''),
+    queryFn: ({ signal }) => getPuzzleStrategies(puzzleSlug ?? '', signal),
     queryKey: solverQueryKeys.puzzleStrategies(puzzleSlug ?? ''),
     retry: false,
   })

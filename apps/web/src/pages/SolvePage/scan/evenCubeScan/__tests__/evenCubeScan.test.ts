@@ -60,12 +60,14 @@ describe('evenCubeScan', () => {
     drafts.U.confirmed = false
 
     expect(allEvenCubeFacesConfirmed(drafts)).toBe(false)
-    expect(evenCubeScanSessionFacesFromDrafts(
-      drafts,
-      createDefaultEvenCubeFaceRotations(),
-      createDefaultEvenCubeNetAssignments(),
-      scan2StickersPerFace,
-    )).toBeUndefined()
+    expect(
+      evenCubeScanSessionFacesFromDrafts(
+        drafts,
+        createDefaultEvenCubeFaceRotations(),
+        createDefaultEvenCubeNetAssignments(),
+        scan2StickersPerFace,
+      ),
+    ).toBeUndefined()
   })
 
   it('rejects incomplete drafts and drafts without exact color counts', () => {
@@ -114,10 +116,30 @@ describe('evenCubeScan', () => {
   it('rotates square stickers and leaves non-square inputs unchanged', () => {
     const stickers = scanStickers(['U', 'R', 'F', 'D'])
 
-    expect(rotateEvenCubeStickers(stickers, 0).map((sticker) => sticker.symbol)).toEqual(['U', 'R', 'F', 'D'])
-    expect(rotateEvenCubeStickers(stickers, 90).map((sticker) => sticker.symbol)).toEqual(['F', 'U', 'D', 'R'])
-    expect(rotateEvenCubeStickers(stickers, 180).map((sticker) => sticker.symbol)).toEqual(['D', 'F', 'R', 'U'])
-    expect(rotateEvenCubeStickers(stickers, 270).map((sticker) => sticker.symbol)).toEqual(['R', 'D', 'U', 'F'])
+    expect(rotateEvenCubeStickers(stickers, 0).map((sticker) => sticker.symbol)).toEqual([
+      'U',
+      'R',
+      'F',
+      'D',
+    ])
+    expect(rotateEvenCubeStickers(stickers, 90).map((sticker) => sticker.symbol)).toEqual([
+      'F',
+      'U',
+      'D',
+      'R',
+    ])
+    expect(rotateEvenCubeStickers(stickers, 180).map((sticker) => sticker.symbol)).toEqual([
+      'D',
+      'F',
+      'R',
+      'U',
+    ])
+    expect(rotateEvenCubeStickers(stickers, 270).map((sticker) => sticker.symbol)).toEqual([
+      'R',
+      'D',
+      'U',
+      'F',
+    ])
     expect(rotateEvenCubeStickers(stickers.slice(0, 3), 90)).toEqual(stickers.slice(0, 3))
   })
 
@@ -135,13 +157,10 @@ describe('evenCubeScan', () => {
   })
 
   it('distinguishes none, unique, suggested, and ambiguous automatic fits', () => {
-    const ambiguousDrafts = capturedDraftsFromNet(
-      draftsFromVisualState('BRLFLFFUBUULRDDRDULFDRBB'),
-    )
-    expect(findEvenCubeRotationFit(
-      ambiguousDrafts,
-      createDefaultEvenCubeNetAssignments(),
-    )).toMatchObject({
+    const ambiguousDrafts = capturedDraftsFromNet(draftsFromVisualState('BRLFLFFUBUULRDDRDULFDRBB'))
+    expect(
+      findEvenCubeRotationFit(ambiguousDrafts, createDefaultEvenCubeNetAssignments()),
+    ).toMatchObject({
       alternatives: expect.any(Number),
       status: 'ambiguous',
     })
@@ -155,10 +174,9 @@ describe('evenCubeScan', () => {
       'F',
       'U',
     )
-    expect(findEvenCubeRotationFit(
-      uniqueDrafts,
-      createDefaultEvenCubeNetAssignments(),
-    )).toMatchObject({
+    expect(
+      findEvenCubeRotationFit(uniqueDrafts, createDefaultEvenCubeNetAssignments()),
+    ).toMatchObject({
       solution: { score: expect.any(Number) },
       status: 'unique',
     })
@@ -166,10 +184,9 @@ describe('evenCubeScan', () => {
     const rotationSuggestedDrafts = capturedDraftsFromNet(
       draftsFromVisualState('FFLRURBBUBRRDDDLDFLFULUB'),
     )
-    expect(findEvenCubeRotationFit(
-      rotationSuggestedDrafts,
-      createDefaultEvenCubeNetAssignments(),
-    )).toMatchObject({
+    expect(
+      findEvenCubeRotationFit(rotationSuggestedDrafts, createDefaultEvenCubeNetAssignments()),
+    ).toMatchObject({
       solution: { score: expect.any(Number) },
       status: 'suggested',
     })
@@ -179,10 +196,9 @@ describe('evenCubeScan', () => {
       'F',
       'D',
     )
-    expect(findEvenCubeRotationFit(
-      fullSuggestedDrafts,
-      createDefaultEvenCubeNetAssignments(),
-    )).toEqual({ status: 'none' })
+    expect(
+      findEvenCubeRotationFit(fullSuggestedDrafts, createDefaultEvenCubeNetAssignments()),
+    ).toEqual({ status: 'none' })
     expect(findEvenCubeFullFit(fullSuggestedDrafts)).toMatchObject({
       solution: { score: expect.any(Number) },
       status: 'suggested',

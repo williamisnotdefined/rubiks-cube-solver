@@ -106,9 +106,7 @@ export type SolveFailureResult = SolveMetadata & {
 
 export type SolveResult = SolveSuccessResult | SolveFailureResult
 
-export type ApiSolveResponse = {
-  ok: boolean
-  status: string
+type ApiSolveResponseFields = {
   strategyId: string
   strategyLabel: string
   solverMode: string
@@ -117,16 +115,28 @@ export type ApiSolveResponse = {
   puzzleSlug?: PuzzleSlug
   metric?: 'htm'
   maxDepth: number
-  maxNodes?: number
+  maxNodes?: number | null
   moves: string[]
-  length?: number
-  exploredNodes?: number
-  elapsedMs?: number
-  replayVerified?: boolean
+  length?: number | null
+  exploredNodes?: number | null
+  elapsedMs?: number | null
+  replayVerified?: boolean | null
   visualState?: string | ApiVisualStateResponse | null
-  errorKind?: string
-  message?: string
+  errorKind?: string | null
+  message?: string | null
 }
+
+export type ApiSolveSuccessResponse = ApiSolveResponseFields & {
+  ok: true
+  status: 'success'
+}
+
+export type ApiSolveFailureResponse = ApiSolveResponseFields & {
+  ok: false
+  status: string
+}
+
+export type ApiSolveResponse = ApiSolveSuccessResponse | ApiSolveFailureResponse
 
 export type ApiVisualStateResponse = {
   kind: PuzzleVisualizationKind

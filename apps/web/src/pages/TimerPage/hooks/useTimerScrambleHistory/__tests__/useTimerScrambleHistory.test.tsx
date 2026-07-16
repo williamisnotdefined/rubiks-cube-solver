@@ -269,9 +269,14 @@ describe('useTimerScrambleHistory', () => {
     const { result } = renderHook(() => useTimerScrambleHistory())
     await waitFor(() => expect(result.current.isScramblePending).toBe(false))
     vi.spyOn(Date, 'now').mockReturnValue(10_000)
-    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue(
+      '00000000-0000-4000-8000-000000000020',
+    )
 
-    act(() => result.current.handleSolveComplete(1_500, 'plus2'))
+    act(() => {
+      result.current.handleAttemptStart()
+      result.current.handleSolveComplete(1_500, 'plus2')
+    })
 
     const recordedSolve = activeSession()?.solves[0]
     expect(recordedSolve).toMatchObject({
@@ -283,12 +288,60 @@ describe('useTimerScrambleHistory', () => {
       scramble: "R U R'",
       startedAt: 8_500,
     })
-    expect(recordedSolve?.id).toMatch(/^solve-10000-/)
+    expect(recordedSolve?.id).toBe('solve-00000000-0000-4000-8000-000000000020')
     expect(result.current.lastCompletedSolveId).toBe(recordedSolve?.id)
     expect(result.current.isScramblePending).toBe(true)
 
     await resolveRequest(nextRequest, scramble('333', 'next scramble'))
     await waitFor(() => expect(result.current.generatedScramble.scramble).toBe('next scramble'))
+  })
+
+  it('records against the immutable session, event, and scramble captured at attempt start', async () => {
+    hookMocks.generateHighQualityScrambleForEvent
+      .mockResolvedValueOnce(scramble('333', 'captured scramble'))
+      .mockResolvedValue(scramble('333', 'next scramble'))
+    const { result, rerender } = renderHook(({ locked }) => useTimerScrambleHistory(locked), {
+      initialProps: { locked: false },
+    })
+    await waitFor(() => expect(result.current.isScramblePending).toBe(false))
+
+    act(() => result.current.handleAttemptStart())
+    rerender({ locked: true })
+
+    act(() => {
+      useTimerStore.getState().createSession('Concurrent session', '222')
+      useTimerSettingsStore.getState().setSelectedEventId('222')
+      result.current.handleNextScramble()
+      result.current.handleSolveComplete(1_000, 'ok')
+    })
+
+    const defaultSession = useTimerStore
+      .getState()
+      .sessions.find((session) => session.id === 'timer-session-default')
+    const concurrentSession = useTimerStore
+      .getState()
+      .sessions.find((session) => session.name === 'Concurrent session')
+
+    expect(defaultSession?.solves).toEqual([
+      expect.objectContaining({ eventId: '333', scramble: 'captured scramble' }),
+    ])
+    expect(concurrentSession?.solves).toEqual([])
+    expect(hookMocks.generateHighQualityScrambleForEvent).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not regenerate the selected event only because interaction unlocks', async () => {
+    hookMocks.generateHighQualityScrambleForEvent.mockResolvedValue(scramble('333', 'scramble'))
+    const { rerender } = renderHook(({ locked }) => useTimerScrambleHistory(locked), {
+      initialProps: { locked: false },
+    })
+    await waitFor(() => {
+      expect(hookMocks.generateHighQualityScrambleForEvent).toHaveBeenCalledTimes(1)
+    })
+
+    rerender({ locked: true })
+    rerender({ locked: false })
+
+    expect(hookMocks.generateHighQualityScrambleForEvent).toHaveBeenCalledTimes(1)
   })
 
   it('surfaces successful and failed clipboard writes through state and toasts', async () => {
