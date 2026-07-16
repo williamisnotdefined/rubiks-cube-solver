@@ -1,10 +1,12 @@
-import { useCallback, useReducer, useRef, useState } from 'react'
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import type { RubiksCubeElement } from '@rubiks-cube-solver/rubiks-cube/view'
 import type { SolveSuccessResult } from '@api/solver/types'
 import { isVisualizationRegistered } from '@components/VisualizationRegistration'
 import type { CubeStageCubeType } from '../../visualization/CubeStage'
 import { useCubeVisualization } from '../../visualization/hooks/useCubeVisualization'
 import type { SolveSource } from '../useSolveResultFlow/useSolveResultFlow'
+
+const visualizationAutoLoadDelayMs = 3000
 
 type UseSolveVisualizationControllerInput = {
   activeSolveSource: SolveSource
@@ -45,6 +47,8 @@ export function useSolveVisualizationController({
   const visualizationStateKindForCube = useInverseSolutionVisualization
     ? undefined
     : visualizationStateKind
+  const shouldLoadForInteraction =
+    visualizationSupported && (notation.trim().length > 0 || successResult !== undefined)
   useCubeVisualization(
     cubeRef,
     visualizationNotation,
@@ -58,6 +62,22 @@ export function useSolveVisualizationController({
   const requestVisualization = useCallback(() => {
     setVisualizationRequested(true)
   }, [])
+
+  useEffect(() => {
+    if (shouldLoadForInteraction) {
+      requestVisualization()
+    }
+  }, [requestVisualization, shouldLoadForInteraction])
+
+  useEffect(() => {
+    if (!visualizationSupported || visualizationRequested) {
+      return undefined
+    }
+
+    const timeout = window.setTimeout(requestVisualization, visualizationAutoLoadDelayMs)
+
+    return () => window.clearTimeout(timeout)
+  }, [requestVisualization, visualizationRequested, visualizationSupported])
 
   return {
     cubeRef,

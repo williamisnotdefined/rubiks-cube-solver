@@ -28,6 +28,8 @@ API load state, solve result state, form state, scan workflow state, and visuali
 - Supported visual-state kinds come from API and puzzle contracts, such as `cube3-facelets-v1`, `cube2-facelets-v1`, or `none`.
 - Visualization hooks may parse supported move tokens to animate or set renderer state, but Rust remains authoritative for notation semantics and puzzle validity.
 - Imperative custom-element synchronization belongs in focused visualization hooks and refs, not broad page effects.
+- A supported Solver visualization requests its renderer automatically no later than three seconds after the page mounts. Solver input or a solve result may request it sooner; clicking the preparing state is an optional acceleration or retry path, never a prerequisite for seeing the cube.
+- Notation visualizations request their renderer automatically when their stage approaches the viewport, subject to reduced-data preferences.
 - Selection and playback state should be represented by IDs, move indexes, notation strings, or small status values instead of duplicated puzzle objects when possible.
 - The visible cube should remain within the established 350px by 350px UI constraint unless the design is intentionally changed.
 

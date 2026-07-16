@@ -51,12 +51,23 @@ describe('useSolveVisualizationController', () => {
     )
   })
 
-  it('waits for explicit visualization activation', () => {
-    const { result } = renderController({ notation: 'R U' })
+  it('automatically requests an idle visualization after three seconds', () => {
+    vi.useFakeTimers()
+    const { result } = renderController()
 
     expect(result.current.loadRequested).toBe(false)
 
-    act(() => result.current.onLoadRequest())
+    act(() => vi.advanceTimersByTime(2999))
+
+    expect(result.current.loadRequested).toBe(false)
+
+    act(() => vi.advanceTimersByTime(1))
+
+    expect(result.current.loadRequested).toBe(true)
+  })
+
+  it('requests the visualization immediately after solver interaction', () => {
+    const { result } = renderController({ notation: 'R U' })
 
     expect(result.current.loadRequested).toBe(true)
   })
@@ -75,7 +86,7 @@ describe('useSolveVisualizationController', () => {
       undefined,
       undefined,
       'Two',
-      false,
+      true,
     )
   })
 })

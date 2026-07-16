@@ -85,6 +85,7 @@ Focused requirements for accessibility, performance, security, resilience, and d
 
 - Indexable routes MUST retain SSG output and hydration; do not replace server-rendered content with client-only placeholders.
 - Heavy visualization, algorithm, and page code SHOULD remain route- or feature-split. Avoid importing broad package barrels when a supported subpath exists.
+- The Solver cube MUST auto-load after at most three seconds when visualization is supported. Tests MUST prove the cube appears without clicking the preparing state; manual activation remains only an early-load and retry affordance.
 - Camera analysis MUST cancel stale work and avoid overlapping unbounded requests. Versioned assets remain immutable; mutable HTML and metadata MUST NOT receive immutable caching.
 - Performance changes MUST use a concrete signal such as bundle output, request count, render behavior, or measured interaction, not speculative memoization.
 
