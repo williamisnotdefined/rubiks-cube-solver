@@ -33,9 +33,9 @@ import {
   Trophy,
   Video,
 } from 'lucide-react'
-import { type ReactNode, useState } from 'react'
+import { type MouseEvent, type ReactNode, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { NavLink as RouterNavLink, useLocation } from 'react-router'
+import { NavLink as RouterNavLink, useLocation, useNavigate } from 'react-router'
 import { LanguageSelector } from './LanguageSelector'
 import { algorithmNavigationItems, notationNavigationItems } from './navigationManifest'
 
@@ -72,13 +72,28 @@ type NavGroup = {
   subItems: NavItem[]
 }
 
+type DeferredNavigation = () => void
+type MobileNavigationHandler = (navigation: DeferredNavigation) => void
+
 export function PageNav({ activeRoute }: PageNavProps) {
   const { t } = useTranslation()
   const location = useLocation()
   const locale = localeFromPathname(location.pathname)
   const pagePath = stripLocalePrefix(location.pathname)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const pendingNavigation = useRef<DeferredNavigation | null>(null)
   const title = t(activeRouteLabelKey(activeRoute))
+
+  function closeThenNavigate(navigation: DeferredNavigation) {
+    pendingNavigation.current = navigation
+    setMobileOpen(false)
+  }
+
+  function completePendingNavigation() {
+    const navigation = pendingNavigation.current
+    pendingNavigation.current = null
+    navigation?.()
+  }
 
   return (
     <>
@@ -102,6 +117,7 @@ export function PageNav({ activeRoute }: PageNavProps) {
         <SheetContent
           className='w-[18rem] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden'
           closeLabel={t('navigation.closeMenu')}
+          onCloseAutoFocus={completePendingNavigation}
           side='left'
         >
           <SheetHeader className='sr-only'>
@@ -112,7 +128,7 @@ export function PageNav({ activeRoute }: PageNavProps) {
             activeRoute={activeRoute}
             locale={locale}
             pagePath={pagePath}
-            onNavigate={() => setMobileOpen(false)}
+            onNavigate={closeThenNavigate}
           />
         </SheetContent>
       </Sheet>
@@ -132,7 +148,7 @@ function NavContent({
   activeRoute: PageNavRoute
   locale: SeoLocale
   pagePath: string
-  onNavigate?: () => void
+  onNavigate?: MobileNavigationHandler
 }) {
   const { t } = useTranslation()
   const theme = useThemeStore((state) => state.theme)
@@ -273,7 +289,8 @@ function SidebarLink({
   onNavigate,
   reloadDocument,
   to,
-}: NavItem & { onNavigate?: () => void }) {
+}: NavItem & { onNavigate?: MobileNavigationHandler }) {
+  const navigate = useNavigate()
   const className = cn(
     'flex min-h-8 items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-sidebar-ring/50',
     {
@@ -289,13 +306,29 @@ function SidebarLink({
     </>
   )
 
+  function navigateAfterClose(event: MouseEvent<HTMLAnchorElement>) {
+    if (onNavigate === undefined || isModifiedClick(event)) {
+      return
+    }
+
+    event.preventDefault()
+    onNavigate(() => navigate(to))
+  }
+
   if (reloadDocument === true) {
     return (
       <a
         aria-current={active ? 'page' : undefined}
         className={className}
         href={to}
-        onClick={onNavigate}
+        onClick={(event) => {
+          if (onNavigate === undefined || isModifiedClick(event)) {
+            return
+          }
+
+          event.preventDefault()
+          onNavigate(() => window.location.assign(to))
+        }}
       >
         {content}
       </a>
@@ -308,7 +341,7 @@ function SidebarLink({
       className={className}
       end={end}
       to={to}
-      onClick={onNavigate}
+      onClick={navigateAfterClose}
     >
       {content}
     </RouterNavLink>
@@ -320,7 +353,7 @@ function SidebarCollapsibleGroup({
   onNavigate,
 }: {
   group: NavGroup
-  onNavigate?: () => void
+  onNavigate?: MobileNavigationHandler
 }) {
   const Icon = group.icon
 
@@ -351,6 +384,10 @@ function SidebarCollapsibleGroup({
       </CollapsibleContent>
     </Collapsible>
   )
+}
+
+function isModifiedClick(event: MouseEvent<HTMLAnchorElement>) {
+  return event.button !== 0 || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey
 }
 
 function navGroups(

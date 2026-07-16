@@ -221,7 +221,10 @@ describe('PageNav', () => {
 
     await user.click(within(drawer).getByRole('link', { name: '3x3' }))
 
-    expect(screen.queryByRole('dialog', { name: 'Menu' })).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Menu' })).not.toBeInTheDocument()
+      expect(screen.getByTestId('location')).toHaveTextContent('/algoritmos/3x3/')
+    })
   })
 
   it('closes the mobile drawer after selecting a language', async () => {

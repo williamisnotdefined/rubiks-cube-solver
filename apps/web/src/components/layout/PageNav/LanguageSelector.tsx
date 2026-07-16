@@ -24,7 +24,7 @@ import { localizedPath, type SeoLocale } from '@src/seo/routes'
 type LanguageSelectorProps = {
   locale: SeoLocale
   pagePath: string
-  onNavigate?: () => void
+  onNavigate?: (navigation: () => void) => void
 }
 
 type LanguageOption = {
@@ -71,7 +71,16 @@ export function LanguageSelector({ locale, pagePath, onNavigate }: LanguageSelec
   })
   const selectedPreference = storedLanguagePreference() ?? automaticLanguageValue
 
-  async function selectLanguage(value: string) {
+  function selectLanguage(value: string) {
+    if (onNavigate === undefined) {
+      void applyLanguage(value)
+      return
+    }
+
+    onNavigate(() => void applyLanguage(value))
+  }
+
+  async function applyLanguage(value: string) {
     let language: SupportedLanguage
 
     if (value === automaticLanguageValue) {
@@ -93,7 +102,6 @@ export function LanguageSelector({ locale, pagePath, onNavigate }: LanguageSelec
         },
         { replace: true },
       )
-      onNavigate?.()
     })
   }
 
@@ -114,7 +122,7 @@ export function LanguageSelector({ locale, pagePath, onNavigate }: LanguageSelec
       <DropdownMenuContent align='start' className='w-64' side='top'>
         <DropdownMenuRadioGroup
           value={selectedPreference}
-          onValueChange={(value) => void selectLanguage(value)}
+          onValueChange={selectLanguage}
         >
           <DropdownMenuRadioItem value={automaticLanguageValue}>
             <Languages aria-hidden='true' className='size-4 shrink-0' />
