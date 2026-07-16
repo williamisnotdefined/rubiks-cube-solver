@@ -18,11 +18,12 @@
     "tools": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["opencode", "cursor", "github"],
+      "required": ["opencode", "cursor", "github", "codex"],
       "properties": {
         "opencode": { "$ref": "#/$defs/tool" },
         "cursor": { "$ref": "#/$defs/tool" },
-        "github": { "$ref": "#/$defs/tool" }
+        "github": { "$ref": "#/$defs/tool" },
+        "codex": { "$ref": "#/$defs/tool" }
       }
     },
     "skills": {
@@ -75,11 +76,12 @@
         "routes": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["opencode", "cursor", "github"],
+          "required": ["opencode", "cursor", "github", "codex"],
           "properties": {
             "opencode": { "type": "string", "minLength": 1 },
             "cursor": { "type": "string", "minLength": 1 },
-            "github": { "type": "string", "minLength": 1 }
+            "github": { "type": "string", "minLength": 1 },
+            "codex": { "type": "string", "minLength": 1 }
           }
         },
         "toolConfig": {

@@ -13,7 +13,7 @@ const generatedNotice = "Generated from `ai/registry.json`. Do not edit manually
 const supportedRegistryVersion = 2;
 const compiledRouteWarningBytes = 35 * 1024;
 const approvedReferenceRoots = ["ai/rules", "ai/architecture", "ai/glossary", "ai/examples"];
-const toolNames = ["opencode", "cursor", "github"];
+const toolNames = ["opencode", "cursor", "github", "codex"];
 
 function yamlString(value) {
   return JSON.stringify(value);
@@ -175,6 +175,10 @@ function opencodeRoute(skill, routePath, context) {
   return `---\nname: ${yamlString(skill.name)}\ndescription: ${yamlString(skill.description)}\n---\n\n${routeBody(routePath, skill, context)}`;
 }
 
+function codexRoute(skill, routePath, context) {
+  return `---\nname: ${yamlString(skill.name)}\ndescription: ${yamlString(skill.description)}\n---\n\n${routeBody(routePath, skill, context)}`;
+}
+
 function cursorRoute(skill, routePath, context) {
   const cursorConfig = skill.toolConfig?.cursor ?? {};
   const alwaysApply = cursorConfig.alwaysApply === true;
@@ -209,6 +213,10 @@ function buildRoute(registry, skill, toolName, context) {
 
   if (toolName === "github") {
     return { content: githubRoute(skill, routePath, context), routePath };
+  }
+
+  if (toolName === "codex") {
+    return { content: codexRoute(skill, routePath, context), routePath };
   }
 
   throw new Error(`Unsupported tool: ${toolName}`);

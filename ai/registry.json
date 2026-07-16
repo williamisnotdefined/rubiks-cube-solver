@@ -3,9 +3,18 @@
   "version": 2,
   "canonicalRoot": "ai/skills",
   "tools": {
-    "opencode": { "routePattern": ".opencode/skills/{skill}/SKILL.md" },
-    "cursor": { "routePattern": ".cursor/rules/{skill}.mdc" },
-    "github": { "routePattern": ".github/instructions/{skill}.instructions.md" }
+    "opencode": {
+      "routePattern": ".opencode/skills/{skill}/SKILL.md"
+    },
+    "codex": {
+      "routePattern": ".agents/skills/{skill}/SKILL.md"
+    },
+    "cursor": {
+      "routePattern": ".cursor/rules/{skill}.mdc"
+    },
+    "github": {
+      "routePattern": ".github/instructions/{skill}.instructions.md"
+    }
   },
   "skills": [
     {
@@ -23,6 +32,7 @@
       ],
       "routes": {
         "opencode": ".opencode/skills/project-core/SKILL.md",
+        "codex": ".agents/skills/project-core/SKILL.md",
         "cursor": ".cursor/rules/project-core.mdc",
         "github": ".github/instructions/project-core.instructions.md"
       },
@@ -44,6 +54,7 @@
       ],
       "routes": {
         "opencode": ".opencode/skills/rust-module-refactor/SKILL.md",
+        "codex": ".agents/skills/rust-module-refactor/SKILL.md",
         "cursor": ".cursor/rules/rust-module-refactor.mdc",
         "github": ".github/instructions/rust-module-refactor.instructions.md"
       },
@@ -65,6 +76,7 @@
       ],
       "routes": {
         "opencode": ".opencode/skills/cube-engine/SKILL.md",
+        "codex": ".agents/skills/cube-engine/SKILL.md",
         "cursor": ".cursor/rules/cube-engine.mdc",
         "github": ".github/instructions/cube-engine.instructions.md"
       },
@@ -87,6 +99,7 @@
       ],
       "routes": {
         "opencode": ".opencode/skills/solver-search/SKILL.md",
+        "codex": ".agents/skills/solver-search/SKILL.md",
         "cursor": ".cursor/rules/solver-search.mdc",
         "github": ".github/instructions/solver-search.instructions.md"
       },
@@ -106,6 +119,7 @@
       ],
       "routes": {
         "opencode": ".opencode/skills/api-boundary/SKILL.md",
+        "codex": ".agents/skills/api-boundary/SKILL.md",
         "cursor": ".cursor/rules/api-boundary.mdc",
         "github": ".github/instructions/api-boundary.instructions.md"
       },
@@ -126,6 +140,7 @@
       ],
       "routes": {
         "opencode": ".opencode/skills/frontend-visualization/SKILL.md",
+        "codex": ".agents/skills/frontend-visualization/SKILL.md",
         "cursor": ".cursor/rules/frontend-visualization.mdc",
         "github": ".github/instructions/frontend-visualization.instructions.md"
       },
@@ -146,6 +161,7 @@
       ],
       "routes": {
         "opencode": ".opencode/skills/frontend-componentization/SKILL.md",
+        "codex": ".agents/skills/frontend-componentization/SKILL.md",
         "cursor": ".cursor/rules/frontend-componentization.mdc",
         "github": ".github/instructions/frontend-componentization.instructions.md"
       },
@@ -165,6 +181,7 @@
       ],
       "routes": {
         "opencode": ".opencode/skills/frontend-state-management/SKILL.md",
+        "codex": ".agents/skills/frontend-state-management/SKILL.md",
         "cursor": ".cursor/rules/frontend-state-management.mdc",
         "github": ".github/instructions/frontend-state-management.instructions.md"
       },
@@ -184,6 +201,7 @@
       ],
       "routes": {
         "opencode": ".opencode/skills/frontend-form-validation/SKILL.md",
+        "codex": ".agents/skills/frontend-form-validation/SKILL.md",
         "cursor": ".cursor/rules/frontend-form-validation.mdc",
         "github": ".github/instructions/frontend-form-validation.instructions.md"
       },
@@ -202,6 +220,7 @@
       ],
       "routes": {
         "opencode": ".opencode/skills/frontend-styling/SKILL.md",
+        "codex": ".agents/skills/frontend-styling/SKILL.md",
         "cursor": ".cursor/rules/frontend-styling.mdc",
         "github": ".github/instructions/frontend-styling.instructions.md"
       },
@@ -221,6 +240,7 @@
       ],
       "routes": {
         "opencode": ".opencode/skills/react-query-request-hooks/SKILL.md",
+        "codex": ".agents/skills/react-query-request-hooks/SKILL.md",
         "cursor": ".cursor/rules/react-query-request-hooks.mdc",
         "github": ".github/instructions/react-query-request-hooks.instructions.md"
       },
@@ -240,6 +260,7 @@
       ],
       "routes": {
         "opencode": ".opencode/skills/frontend-testing/SKILL.md",
+        "codex": ".agents/skills/frontend-testing/SKILL.md",
         "cursor": ".cursor/rules/frontend-testing.mdc",
         "github": ".github/instructions/frontend-testing.instructions.md"
       },
@@ -259,6 +280,7 @@
       ],
       "routes": {
         "opencode": ".opencode/skills/frontend-seo-ssg/SKILL.md",
+        "codex": ".agents/skills/frontend-seo-ssg/SKILL.md",
         "cursor": ".cursor/rules/frontend-seo-ssg.mdc",
         "github": ".github/instructions/frontend-seo-ssg.instructions.md"
       },
@@ -278,6 +300,7 @@
       ],
       "routes": {
         "opencode": ".opencode/skills/wca-data-boundary/SKILL.md",
+        "codex": ".agents/skills/wca-data-boundary/SKILL.md",
         "cursor": ".cursor/rules/wca-data-boundary.mdc",
         "github": ".github/instructions/wca-data-boundary.instructions.md"
       },

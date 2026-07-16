@@ -1,0 +1,116 @@
+---
+name: "frontend-form-validation"
+description: "Use when changing solve inputs, limits, validation, scanner review controls, or form submission behavior."
+---
+
+Generated from `ai/registry.json`. Do not edit manually.
+
+Canonical skill: `../../../ai/skills/frontend-form-validation.md`.
+
+Referenced context:
+- `../../../ai/rules/frontend-form-rules.md`
+- `../../../ai/rules/frontend-quality-rules.md`
+- `../../../ai/architecture/api-boundary.md`
+
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai`, then run `npm run ai:sync`.
+
+# Compiled AI Skill: frontend-form-validation
+
+## Canonical Skill: `ai/skills/frontend-form-validation.md`
+
+# Frontend Form Validation
+
+Use for solve controls, inputs, local limits, scanner review controls, and form submission behavior.
+
+## Read First
+
+- `ai/rules/frontend-form-rules.md`
+- `ai/rules/frontend-quality-rules.md`
+- `ai/architecture/api-boundary.md`
+
+## Workflow
+
+- Separate lightweight UX validation from API/engine semantics.
+- Choose local state or existing RHF/Zod usage based on the actual form, not a mandatory setup.
+- Keep notation forms raw-state-free and scan corrections inside typed scan sessions.
+- Verify accessible errors, blocked invalid requests, API outcomes, and relevant E2E behavior.
+
+# Referenced Context
+
+## Reference: `ai/rules/frontend-form-rules.md`
+
+# Frontend Form Rules
+
+- Keep notation solve input as move notation and trim it before submission. Rust/API owns notation semantics, cube validity, and safety enforcement.
+- Use local controlled state for simple controls. React Hook Form and Zod MAY be used for a form whose coordination or schema complexity benefits from them; do not treat them as required setup.
+- Keep field labels visible and associated, errors near their owner, `aria-invalid` on invalid fields, and API caps discoverable.
+- Prevent requests for invalid local limits, but do not duplicate solver validation in React.
+- Keep the default scramble empty; examples belong in placeholders or help content.
+- Raw facelet/Kociemba input modes remain prohibited for notation forms. Reviewed stickers and manual corrections are allowed only inside typed scan-session workflows.
+
+## Reference: `ai/rules/frontend-quality-rules.md`
+
+# Frontend Quality Rules
+
+Focused requirements for accessibility, performance, security, resilience, and dependencies in `apps/web`.
+
+## Accessibility
+
+- Interactive controls MUST have an accessible name, keyboard operation, visible focus, and correct native element or shared primitive semantics.
+- Dialogs and sheets MUST preserve focus trapping, Escape handling, focus return, and labelled title/description behavior through existing primitives.
+- Dynamic errors and completion states SHOULD use an appropriate live/status region without repeatedly announcing scanner frame updates.
+- Motion MUST respect reduced-motion preferences; color MUST NOT be the only signal for scan, validation, timer, or solver status.
+
+## Performance
+
+- Indexable routes MUST retain SSG output and hydration; do not replace server-rendered content with client-only placeholders.
+- Heavy visualization, algorithm, and page code SHOULD remain route- or feature-split. Avoid importing broad package barrels when a supported subpath exists.
+- Camera analysis MUST cancel stale work and avoid overlapping unbounded requests. Versioned assets remain immutable; mutable HTML and metadata MUST NOT receive immutable caching.
+- Performance changes MUST use a concrete signal such as bundle output, request count, render behavior, or measured interaction, not speculative memoization.
+
+## Security And Resilience
+
+- Camera permission MUST follow a clear disclosure of purpose and processing. Once permission succeeds, scanner analysis starts automatically by default; users retain pause/exit and manual-review controls.
+- Images and reviewed scan data MUST stay within typed scan contracts and configured request limits. Do not persist or transmit camera data beyond the disclosed solve workflow.
+- Browser code MUST not weaken CSP, permissions policy, origin restrictions, request size limits, runtime response validation, or typed error handling.
+- Async work MUST handle cancellation and stale responses. User-visible flows MUST expose recoverable API/camera failures and avoid silently fabricating successful data.
+- Analytics, RUM, and error-tracking services are out of scope unless a separate product/privacy decision explicitly introduces them.
+
+## Dependencies
+
+- A new runtime dependency MUST solve a named current gap that existing React, browser APIs, shared primitives, or installed packages cannot reasonably solve.
+- The change MUST identify bundle/runtime impact, maintenance owner, licensing/security fit, SSR/hydration compatibility when relevant, and focused tests.
+- Do not add a package solely for a small helper, styling convention, or abstraction without a current reused consumer.
+
+## Reference: `ai/architecture/api-boundary.md`
+
+# API Boundary Architecture
+
+`crates/api` is a native Axum HTTP and static-serving boundary around the Rust solver engine.
+
+## Current Routes And Layout
+
+- `crates/api/src/routes.rs` owns route composition, HTTP layers, static file serving, and handlers. Focused modules own configuration, request/response types, puzzle dispatch, scan analysis, solve preparation, and state.
+- Health routes are `/health`, `/livez`, and `/readyz`.
+- Solver routes include `/puzzles`, `/puzzles/{puzzle_slug}`, `/puzzles/{puzzle_slug}/strategies`, `/puzzles/{puzzle_slug}/solve`, legacy `/strategies`, `/solve-notation`, and `/solve-scan`.
+- Scan routes include `/scan/analyze-face`, `/scan/solve-session`, and `/puzzles/{puzzle_slug}/scan/solve-session`.
+- When serving web output, `/api/wca-data` is a server-side permanent redirect (HTTP 308) to `/api/wca-data/v1/docs`; unknown `/api/*` paths return 404 instead of static HTML.
+
+## Contract And Safety
+
+- Request and response structs, stable status strings, limits, and runtime response validation form the frontend contract.
+- The API validates request size and cost before expensive work, uses bounded solver concurrency, and verifies solutions by replay.
+- Generated pruning-table availability, corrupt artifacts, overload, worker failure, invalid notation/state, and exhausted limits remain explicit typed outcomes.
+- Typed scan-session requests MAY include reviewed stickers and manual overrides. Browser notation endpoints MUST remain move-notation based and MUST NOT accept raw facelet/Kociemba input modes.
+
+## Frontend Boundary
+
+- `apps/web/src/api` owns request construction, runtime validation, response normalization, and React Query hooks. Shared transport code lives under `apps/web/src/api/client`.
+- Components consume typed API-domain hooks or adapters rather than raw HTTP responses, query keys, or duplicated status parsing.
+- WCA Data requests target the independent `/api/wca-data/v1` service contract; Axum does not implement those data endpoints.
+
+## Test Shape
+
+- Rust API behavior and router contracts are tested in `crates/api/src/tests.rs` and focused crate test modules.
+- Web request and hook tests live beside their API domain in `__tests__` directories, including `apps/web/src/api/__tests__`, `apps/web/src/api/client/__tests__`, and domain-level `__tests__`.
+- Contract changes require success, error, limit, and frontend normalization coverage for affected behavior.
