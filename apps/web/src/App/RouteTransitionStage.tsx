@@ -1,4 +1,11 @@
-import { AnimatePresence, motion, usePresence, useReducedMotion, type Variants } from 'motion/react'
+import {
+  AnimatePresence,
+  motion,
+  useAnimationControls,
+  usePresence,
+  useReducedMotion,
+  type Variants,
+} from 'motion/react'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { type Location, useLocation } from 'react-router'
 
@@ -7,7 +14,6 @@ type RouteTransitionStageProps = {
 }
 
 const routeEase = [0.22, 1, 0.36, 1] as const
-const sliceDelays = [0, 0.035, 0.07] as const
 
 const pageVariants: Variants = {
   enter: { opacity: 0.35, scale: 0.992, y: 14 },
@@ -92,12 +98,6 @@ function RouteFrame({ children, ready, revealOnMount }: RouteFrameProps) {
   const [isPresent, safeToRemove] = usePresence()
   let pageAnimation = 'exit'
 
-  useEffect(() => {
-    if (!isPresent && !ready) {
-      safeToRemove?.()
-    }
-  }, [isPresent, ready, safeToRemove])
-
   if (isPresent) {
     pageAnimation = 'enter'
   }
@@ -134,27 +134,43 @@ type RouteCurtainProps = {
 }
 
 function RouteCurtain({ isPresent, onCovered, ready, revealOnMount }: RouteCurtainProps) {
+  const controls = useAnimationControls()
+
+  useEffect(() => {
+    if (!isPresent && !ready) {
+      onCovered?.()
+      return
+    }
+
+    if (!isPresent) {
+      controls.set({ y: '105%' })
+      void controls
+        .start({ y: '0%', transition: { duration: 0.48, ease: routeEase } })
+        .then(() => onCovered?.())
+      return
+    }
+
+    if (!ready) {
+      controls.set({ y: '0%' })
+      return
+    }
+
+    if (revealOnMount) {
+      void controls.start({ y: '-105%', transition: { duration: 0.56, ease: routeEase } })
+      return
+    }
+
+    controls.set({ y: '105%' })
+  }, [controls, isPresent, onCovered, ready, revealOnMount])
+
   return (
-    <div
+    <motion.div
+      animate={controls}
       aria-hidden='true'
-      className='pointer-events-none absolute inset-0 z-50 grid grid-rows-3 overflow-hidden'
+      className='pointer-events-none absolute inset-0 z-50 bg-background'
       data-ready={ready}
       data-testid='route-transition-curtain'
-    >
-      {sliceDelays.map((delay, index) => (
-        <motion.div
-          animate={{ x: isPresent && ready ? '105%' : '0%' }}
-          className='bg-primary'
-          initial={revealOnMount ? { x: '0%' } : false}
-          key={delay}
-          onAnimationComplete={() => {
-            if (!isPresent && index === sliceDelays.length - 1) {
-              onCovered?.()
-            }
-          }}
-          transition={{ delay, duration: isPresent ? 0.34 : 0.3, ease: routeEase }}
-        />
-      ))}
-    </div>
+      initial={{ y: revealOnMount ? '0%' : '105%' }}
+    />
   )
 }
