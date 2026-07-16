@@ -20,7 +20,46 @@ const radixChunkPackages: Record<string, string> = {
 }
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    {
+      generateBundle: {
+        handler(_options, bundle) {
+          for (const output of Object.values(bundle)) {
+            if (
+              output.type !== 'chunk' ||
+              (!output.fileName.includes('search-worker-entry-') &&
+                !output.fileName.includes('/inside-'))
+            ) {
+              continue
+            }
+
+            const helperImport = output.code.match(
+              /import\{a as ([A-Za-z_$][\w$]*)\}from"\.\/vendor-react-router-[^"]+\.js";/,
+            )
+            if (helperImport === null) {
+              continue
+            }
+
+            const helperName = helperImport[1]
+            const preloadCall = new RegExp(
+              `${helperName}\\(\\(\\)=>import\\(([^)]+)\\),__vite__mapDeps\\(\\[[^\\]]*\\]\\)\\)`,
+              'g',
+            )
+            output.code = output.code
+              .replace(helperImport[0], '')
+              .replace(preloadCall, 'import($1)')
+            if (!output.code.includes('__vite__mapDeps(')) {
+              output.code = output.code.replace(/const __vite__mapDeps=.*?;\n?/, '')
+            }
+          }
+        },
+        order: 'post',
+      },
+      name: 'cubing-worker-safe-imports',
+    },
+    react(),
+    tailwindcss(),
+  ],
   server: {
     proxy: {
       '/api/wca-data/v1': {
@@ -31,9 +70,7 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 800,
-    sourcemap: true,
-    // cubing's scramble worker must not import Vite's document-based preload helper.
-    modulePreload: false,
+    sourcemap: false,
     rollupOptions: {
       output: {
         manualChunks(id) {
@@ -41,9 +78,7 @@ export default defineConfig({
             const localeFile = id.slice(id.indexOf(i18nLocaleMarker) + i18nLocaleMarker.length)
             const locale = localeFile.split('.')[0]
 
-            return locale === 'en' || locale === 'pt-BR'
-              ? 'i18n-default-locales'
-              : `i18n-${locale}`
+            return locale === 'en' || locale === 'pt-BR' ? 'i18n-default-locales' : `i18n-${locale}`
           }
 
           if (id.includes('/node_modules/three/examples/')) {
@@ -54,11 +89,7 @@ export default defineConfig({
             const sourcePath = id.slice(id.indexOf(threeSourceMarker) + threeSourceMarker.length)
             const [folder] = sourcePath.split('/')
 
-            if (
-              folder === 'lights' ||
-              folder === 'loaders' ||
-              folder === 'scenes'
-            ) {
+            if (folder === 'lights' || folder === 'loaders' || folder === 'scenes') {
               return `vendor-three-${folder}`
             }
 
@@ -74,8 +105,14 @@ export default defineConfig({
           }
 
           if (id.includes(rubiksCubeSourceMarker)) {
-            const sourcePath = id.slice(id.indexOf(rubiksCubeSourceMarker) + rubiksCubeSourceMarker.length)
+            const sourcePath = id.slice(
+              id.indexOf(rubiksCubeSourceMarker) + rubiksCubeSourceMarker.length,
+            )
             const [, puzzle] = sourcePath.match(/^puzzles\/([^/]+)\//) ?? []
+
+            if (sourcePath.startsWith('puzzles/cube/core/')) {
+              return 'vendor-rubiks-core'
+            }
 
             if (puzzle !== undefined) {
               return `vendor-rubiks-${puzzle}`
@@ -115,7 +152,10 @@ export default defineConfig({
             return 'vendor-radix-core'
           }
 
-          if (id.includes('/node_modules/i18next/') || id.includes('/node_modules/react-i18next/')) {
+          if (
+            id.includes('/node_modules/i18next/') ||
+            id.includes('/node_modules/react-i18next/')
+          ) {
             return 'vendor-i18n'
           }
 
@@ -150,20 +190,19 @@ export default defineConfig({
     alias: [
       {
         find: /^three$/,
-        replacement: fileURLToPath(
-          new URL('./src/vendor/three.js', import.meta.url),
-        ),
+        replacement: fileURLToPath(new URL('./src/vendor/three.js', import.meta.url)),
       },
       {
         find: /^three\/examples\/jsm\/Addons\.js$/,
-        replacement: fileURLToPath(
-          new URL('./src/vendor/three-addons.js', import.meta.url),
-        ),
+        replacement: fileURLToPath(new URL('./src/vendor/three-addons.js', import.meta.url)),
       },
       {
         find: /^@rubiks-cube-solver\/rubiks-cube\/controller$/,
         replacement: fileURLToPath(
-          new URL('../../packages/rubiks-cube/src/puzzles/cube/controller/index.ts', import.meta.url),
+          new URL(
+            '../../packages/rubiks-cube/src/puzzles/cube/controller/index.ts',
+            import.meta.url,
+          ),
         ),
       },
       {
@@ -232,17 +271,23 @@ export default defineConfig({
         'src/**/index.ts',
         'src/**/types.ts',
         'src/**/*.d.ts',
-        'src/App/**',
-        'src/main/**',
+        'src/App/App.tsx',
+        'src/main/index.ts',
+        'src/main/main.tsx',
         'src/stories/**',
         'src/test/**',
         'src/vendor/**',
       ],
       include: [
+        'src/App/**/*.{ts,tsx}',
         'src/api/**/*.{ts,tsx}',
         'src/components/**/*.{ts,tsx}',
         'src/core/**/*.{ts,tsx}',
+        'src/i18n/**/*.{ts,tsx}',
+        'src/lib/**/*.{ts,tsx}',
+        'src/main/{mountApp,ssg}.{ts,tsx}',
         'src/pages/**/*.{ts,tsx}',
+        'src/seo/**/*.{ts,tsx}',
       ],
       provider: 'v8',
       thresholds: {
@@ -253,6 +298,7 @@ export default defineConfig({
       },
     },
     environment: 'jsdom',
+    maxWorkers: 4,
     setupFiles: './src/test/setup',
   },
 })

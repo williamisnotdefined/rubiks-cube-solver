@@ -71,7 +71,7 @@ describe('Loader3x3', () => {
   })
 
   it('keeps explicit size overrides unambiguous', () => {
-    const { container } = render(<Loader3x3 className="size-8" />)
+    const { container } = render(<Loader3x3 className='size-8' />)
 
     expect(container.firstElementChild).toHaveClass('size-8')
     expect(container.firstElementChild).not.toHaveClass('size-10')

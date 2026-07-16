@@ -28,8 +28,10 @@ describe('timer statistics', () => {
         .timeMs,
     ).toBe(11_000)
     expect(
-      averageOf([solve(10_000), solve(12_000), solve(9_000), solve(11_000, 'dnf'), solve(8_000, 'dnf')], 5)
-        .timeMs,
+      averageOf(
+        [solve(10_000), solve(12_000), solve(9_000), solve(11_000, 'dnf'), solve(8_000, 'dnf')],
+        5,
+      ).timeMs,
     ).toBeNull()
   })
 })

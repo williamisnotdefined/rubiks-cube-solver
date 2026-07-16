@@ -1,5 +1,5 @@
 import { waitFor } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { mockApiError, mockApiSuccess, mockFetchResponse } from '@src/test/api'
 import { renderHookWithProviders } from '@src/test/render'
 import { apiRequest } from '../../client'
@@ -32,20 +32,23 @@ const successPayload: ApiSolveResponse = {
   length: 2,
 }
 
-const scanSessionSymbols = [
-  'U',
-  'R',
-  'F',
-  'D',
-  'L',
-  'B',
-] as const
+const scanSessionSymbols = ['U', 'R', 'F', 'D', 'L', 'B'] as const
 
 const scanSessionFaces: ScanSessionFaceRequest[] = scanSessionSymbols.map((symbol) => ({
   reviewedStickers: Array.from({ length: 9 }, (_, index) => ({
     confidence: 1,
     index,
-    source: index === 4 ? 'center' as const : 'detected' as const,
+    source: index === 4 ? ('center' as const) : ('detected' as const),
+    symbol,
+  })),
+  symbol,
+}))
+
+const cube2ScanSessionFaces: ScanSessionFaceRequest[] = scanSessionSymbols.map((symbol) => ({
+  reviewedStickers: Array.from({ length: 4 }, (_, index) => ({
+    confidence: 1,
+    index,
+    source: 'detected' as const,
     symbol,
   })),
   symbol,
@@ -91,6 +94,26 @@ describe('solver API operations', () => {
       'http://127.0.0.1:8787/health',
       expect.objectContaining({ headers: expect.any(Headers) }),
     )
+  })
+
+  it('passes abort signals to solver GET requests', async () => {
+    const controller = new AbortController()
+    const fetchMock = mockApiSuccess({ generatedTwoPhaseReady: true, ok: true })
+
+    await getHealth(controller.signal)
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:8787/health',
+      expect.objectContaining({ signal: controller.signal }),
+    )
+  })
+
+  it('rejects malformed successful health payloads', async () => {
+    mockApiSuccess({ ok: true })
+
+    await expect(getHealth()).rejects.toMatchObject({
+      name: 'ApiResponseValidationError',
+    })
   })
 
   it('gets solver strategies through the request client', async () => {
@@ -298,11 +321,15 @@ describe('solver API operations', () => {
     const payload = {
       ok: true,
       status: 'detected',
+      message: null,
       centerMismatch: false,
       confidence: 1,
+      detectedCenter: null,
       detectedCenterConfidence: 1,
       detectionMode: 'tile_detector',
+      expectedCenter: null,
       faceConfidence: 1,
+      imageSize: null,
       qualityWarnings: [],
       stickers: [],
       warnings: [],
@@ -316,7 +343,13 @@ describe('solver API operations', () => {
         image: 'data:image/jpeg;base64,scan',
         signal: controller.signal,
       }),
-    ).resolves.toMatchObject(payload)
+    ).resolves.toMatchObject({
+      ...payload,
+      detectedCenter: undefined,
+      expectedCenter: undefined,
+      imageSize: undefined,
+      message: undefined,
+    })
     expect(fetchMock).toHaveBeenCalledWith(
       'http://127.0.0.1:8787/scan/analyze-face',
       expect.objectContaining({
@@ -329,7 +362,7 @@ describe('solver API operations', () => {
     )
   })
 
-  it('falls back when scan analysis returns no JSON payload', async () => {
+  it('rejects scan analysis responses without JSON payloads', async () => {
     mockApiSuccess(undefined)
 
     await expect(
@@ -337,11 +370,7 @@ describe('solver API operations', () => {
         expectedCenter: 'U',
         image: 'data:image/jpeg;base64,scan',
       }),
-    ).resolves.toMatchObject({
-      message: 'The scan analysis request failed.',
-      ok: false,
-      status: 'vision_error',
-    })
+    ).rejects.toMatchObject({ name: 'ApiResponseParseError' })
 
     mockFetchResponse(undefined, { status: 503 })
 
@@ -350,7 +379,24 @@ describe('solver API operations', () => {
         expectedCenter: 'U',
         image: 'data:image/jpeg;base64,scan',
       }),
-    ).resolves.toMatchObject({ ok: false, status: 'vision_unavailable' })
+    ).rejects.toMatchObject({ name: 'ApiResponseParseError' })
+  })
+
+  it('rejects incomplete scan analysis payloads', async () => {
+    mockApiSuccess({
+      centerMismatch: false,
+      confidence: 1,
+      detectedCenterConfidence: 1,
+      faceConfidence: 1,
+      ok: true,
+      status: 'detected',
+      stickers: [],
+      warnings: [],
+    })
+
+    await expect(
+      analyzeScanFace({ expectedCenter: 'U', image: 'data:image/jpeg;base64,scan' }),
+    ).rejects.toMatchObject({ name: 'ApiResponseValidationError' })
   })
 
   it('posts scan sessions through the request client', async () => {
@@ -369,7 +415,7 @@ describe('solver API operations', () => {
 
     await expect(
       solveScanSession({
-        faces: [...scanSessionFaces],
+        faces: [...cube2ScanSessionFaces],
         maxDepth: 0,
         maxNodes: 1_000,
         strategyId: 'bounded-ida-star',
@@ -391,7 +437,7 @@ describe('solver API operations', () => {
       'http://127.0.0.1:8787/scan/solve-session',
       expect.objectContaining({
         body: JSON.stringify({
-          faces: [...scanSessionFaces],
+          faces: [...cube2ScanSessionFaces],
           maxDepth: 0,
           maxNodes: 1_000,
           strategyId: 'bounded-ida-star',
@@ -412,7 +458,7 @@ describe('solver API operations', () => {
 
     await expect(
       solveScanSession({
-        faces: [...scanSessionFaces],
+        faces: [...cube2ScanSessionFaces],
         maxDepth: 0,
         puzzleSlug: 'cube-2x2x2',
         strategyId: 'cube2-pdb-ida-star',
@@ -432,7 +478,7 @@ describe('solver API operations', () => {
       'http://127.0.0.1:8787/puzzles/cube-2x2x2/scan/solve-session',
       expect.objectContaining({
         body: JSON.stringify({
-          faces: [...scanSessionFaces],
+          faces: [...cube2ScanSessionFaces],
           maxDepth: 0,
           strategyId: 'cube2-pdb-ida-star',
         }),
@@ -461,7 +507,7 @@ describe('solver API operations', () => {
 
     await expect(
       solveScanSession({
-        faces: [...scanSessionFaces],
+        faces: [...cube2ScanSessionFaces],
         maxDepth: 0,
         puzzleSlug: 'cube-2x2x2',
         strategyId: 'cube2-pdb-ida-star',
@@ -474,7 +520,7 @@ describe('solver API operations', () => {
     })
   })
 
-  it('falls back when scan sessions return no JSON payload', async () => {
+  it('rejects scan session responses without JSON payloads', async () => {
     mockApiSuccess(undefined)
 
     await expect(
@@ -482,11 +528,7 @@ describe('solver API operations', () => {
         faces: [...scanSessionFaces],
         maxDepth: 0,
       }),
-    ).resolves.toMatchObject({
-      message: 'The scan session request failed.',
-      ok: false,
-      status: 'api_error',
-    })
+    ).rejects.toMatchObject({ name: 'ApiResponseParseError' })
 
     mockFetchResponse(undefined, { status: 503 })
 
@@ -495,7 +537,76 @@ describe('solver API operations', () => {
         faces: [...scanSessionFaces],
         maxDepth: 0,
       }),
-    ).resolves.toMatchObject({ ok: false, status: 'vision_unavailable' })
+    ).rejects.toMatchObject({ name: 'ApiResponseParseError' })
+  })
+
+  it.each([
+    ['missing review arrays', { ok: false, status: 'invalid_session' }],
+    [
+      'an invalid manual target',
+      {
+        manualTargets: [{ face: 'F', stickers: ['0'] }],
+        ok: false,
+        rescanFaces: [],
+        status: 'needs_manual_confirmation',
+      },
+    ],
+    [
+      'an invalid nested solve',
+      {
+        manualTargets: [],
+        ok: true,
+        rescanFaces: [],
+        solve: { ...successPayload, moves: [42] },
+        status: 'accepted',
+      },
+    ],
+    [
+      'an incomplete inference',
+      {
+        inference: { stateConfidence: 0.9, status: 'state_ambiguous' },
+        manualTargets: [],
+        ok: false,
+        rescanFaces: [],
+        status: 'state_ambiguous',
+      },
+    ],
+  ])('rejects scan session payloads with %s', async (_label, payload) => {
+    mockApiSuccess(payload)
+
+    await expect(
+      solveScanSession({ faces: [...scanSessionFaces], maxDepth: 0 }),
+    ).rejects.toMatchObject({ name: 'ApiResponseValidationError' })
+  })
+
+  it.each([
+    400, 503,
+  ])('maps generic scan session HTTP %s failures to ApiRequestError', async (status) => {
+    mockApiError({ message: 'Scan service unavailable' }, status)
+
+    await expect(
+      solveScanSession({ faces: [...scanSessionFaces], maxDepth: 0 }),
+    ).rejects.toMatchObject({
+      message: 'Scan service unavailable',
+      name: 'ApiRequestError',
+      status,
+    })
+  })
+
+  it('rejects successful scan payloads returned with a failing HTTP status', async () => {
+    mockApiError(
+      {
+        manualTargets: [],
+        ok: true,
+        rescanFaces: [],
+        status: 'accepted',
+      },
+      500,
+    )
+
+    await expect(
+      solveScanSession({ faces: [...scanSessionFaces], maxDepth: 0 }),
+    ).rejects.toMatchObject({ name: 'ApiRequestError', status: 500 })
   })
 
   it('returns scan session API failures without throwing', async () => {
@@ -614,6 +725,14 @@ describe('solver React Query hooks', () => {
       visionTileDetectorAvailable: true,
       visionOk: true,
     })
+  })
+
+  it('surfaces invalid JSON through solver query error state', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{invalid json', { status: 200 }))
+    const { result } = renderHookWithProviders(() => useGetHealth())
+
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(result.current.error).toMatchObject({ name: 'ApiResponseParseError' })
   })
 
   it('respects disabled strategy queries', () => {

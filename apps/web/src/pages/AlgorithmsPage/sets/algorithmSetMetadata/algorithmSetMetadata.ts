@@ -138,8 +138,13 @@ export function getAlgorithmPuzzle(puzzleId: string | undefined) {
   return algorithmPuzzles.find((puzzle) => puzzle.id === puzzleId)
 }
 
-export function getAlgorithmSetSummary(puzzleId: string | undefined, routeSlug: string | undefined) {
-  return algorithmSetSummaries.find((set) => set.puzzleId === puzzleId && set.routeSlug === routeSlug)
+export function getAlgorithmSetSummary(
+  puzzleId: string | undefined,
+  routeSlug: string | undefined,
+) {
+  return algorithmSetSummaries.find(
+    (set) => set.puzzleId === puzzleId && set.routeSlug === routeSlug,
+  )
 }
 
 export function setsForPuzzle(puzzleId: AlgorithmPuzzleId) {

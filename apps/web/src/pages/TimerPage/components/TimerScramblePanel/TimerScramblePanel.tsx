@@ -15,10 +15,10 @@ export function TimerScramblePanel({ scramble }: TimerScramblePanelProps) {
   return (
     <ScrambleViewer
       actionSlot={<TimerSettingsPanel />}
-      className="min-h-0"
+      className='min-h-0'
       canGoPrevious={scramble.canGoPrevious}
       copied={scramble.copied}
-      eventControl={<TimerEventSelect />}
+      eventControl={<TimerEventSelect disabled={scramble.interactionLocked} />}
       eventLabel={generatedScramble.event.label}
       scramble={scrambleText({
         failed: scramble.scrambleLoadFailed,
@@ -26,9 +26,21 @@ export function TimerScramblePanel({ scramble }: TimerScramblePanelProps) {
         scramble: generatedScramble.scramble,
         t,
       })}
-      onCopy={scramble.isScramblePending || scramble.scrambleLoadFailed ? undefined : scramble.handleCopyScramble}
-      onNext={scramble.isScramblePending ? undefined : scramble.handleNextScramble}
-      onPrevious={scramble.isScramblePending || scramble.scrambleLoadFailed ? undefined : scramble.handlePreviousScramble}
+      onCopy={
+        scramble.isScramblePending || scramble.scrambleLoadFailed
+          ? undefined
+          : scramble.handleCopyScramble
+      }
+      onNext={
+        scramble.isScramblePending || scramble.interactionLocked
+          ? undefined
+          : scramble.handleNextScramble
+      }
+      onPrevious={
+        scramble.isScramblePending || scramble.scrambleLoadFailed || scramble.interactionLocked
+          ? undefined
+          : scramble.handlePreviousScramble
+      }
     />
   )
 }

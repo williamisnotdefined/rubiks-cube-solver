@@ -12,7 +12,9 @@ type UseTimerMachineOptions = {
   displayTickMs?: number
   holdToStartMs: number
   inspectionEnabled: boolean
+  onAttemptStart?: () => void
   onSolveComplete: SolveCompleteHandler
+  onStatusChange?: (status: TimerStatus) => void
 }
 
 export type TimerMachine = {
@@ -31,7 +33,9 @@ export function useTimerMachine({
   displayTickMs = defaultDisplayTickMs,
   holdToStartMs,
   inspectionEnabled,
+  onAttemptStart,
   onSolveComplete,
+  onStatusChange,
 }: UseTimerMachineOptions): TimerMachine {
   const [status, setStatus] = useState<TimerStatus>('idle')
   const [elapsedMs, setElapsedMs] = useState(0)
@@ -46,11 +50,15 @@ export function useTimerMachine({
   const runningStartedAtRef = useRef(0)
   const inspectionStartedAtRef = useRef(0)
   const pendingPenaltyRef = useRef<TimerPenalty>('ok')
+  const onAttemptStartRef = useRef(onAttemptStart)
   const onSolveCompleteRef = useRef(onSolveComplete)
+  const onStatusChangeRef = useRef(onStatusChange)
 
   useEffect(() => {
+    onAttemptStartRef.current = onAttemptStart
     onSolveCompleteRef.current = onSolveComplete
-  }, [onSolveComplete])
+    onStatusChangeRef.current = onStatusChange
+  }, [onAttemptStart, onSolveComplete, onStatusChange])
 
   useEffect(
     () => () => {
@@ -75,6 +83,7 @@ export function useTimerMachine({
   function updateStatus(nextStatus: TimerStatus) {
     statusRef.current = nextStatus
     setStatus(nextStatus)
+    onStatusChangeRef.current?.(nextStatus)
   }
 
   function clearHoldTimeout() {
@@ -112,6 +121,10 @@ export function useTimerMachine({
 
     if (currentStatus === 'stopped') {
       setElapsedMs(0)
+    }
+
+    if (currentStatus === 'idle' || currentStatus === 'stopped') {
+      onAttemptStartRef.current?.()
     }
 
     previousStatusRef.current = currentStatus === 'stopped' ? 'idle' : currentStatus

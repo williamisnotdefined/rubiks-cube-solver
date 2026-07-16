@@ -6,13 +6,13 @@ const meta = {
   decorators: [
     (Story) => (
       <MemoryRouter initialEntries={['/solve/']}>
-        <div className="w-64 bg-sidebar p-2 text-sidebar-foreground">
+        <div className='w-64 bg-sidebar p-2 text-sidebar-foreground'>
           <Story />
         </div>
       </MemoryRouter>
     ),
   ],
-  render: () => <LanguageSelector locale="en-US" pagePath="/solve" />,
+  render: () => <LanguageSelector locale='en-US' pagePath='/solve' />,
   title: 'Layout/LanguageSelector',
 } satisfies Meta
 

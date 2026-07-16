@@ -1,6 +1,9 @@
 import type { WcaEvent, WcaWorldRecord, WcaWorldRecordType } from '@api/wcaData'
 
-export function formatRecordValue(record: Pick<WcaWorldRecord, 'event' | 'type' | 'value'>): string {
+export function formatRecordValue(
+  record: Pick<WcaWorldRecord, 'event' | 'type' | 'value'>,
+  formatMoves = (count: number) => `${count} moves`,
+): string {
   const raw = record.value.raw
 
   if (raw === -1) {
@@ -16,18 +19,23 @@ export function formatRecordValue(record: Pick<WcaWorldRecord, 'event' | 'type' 
   }
 
   if (record.event.format === 'number' && record.type === 'average') {
-    return `${(raw / 100).toFixed(2)} moves`
+    return formatMoves(Number((raw / 100).toFixed(2)))
   }
 
   if (record.event.format === 'number') {
-    return `${raw} moves`
+    return formatMoves(raw)
   }
 
   return String(raw)
 }
 
-export function formatSolveValue(raw: number, event: WcaEvent, type: WcaWorldRecordType): string {
-  return formatRecordValue({ event, type, value: { raw } })
+export function formatSolveValue(
+  raw: number,
+  event: WcaEvent,
+  type: WcaWorldRecordType,
+  formatMoves?: (count: number) => string,
+): string {
+  return formatRecordValue({ event, type, value: { raw } }, formatMoves)
 }
 
 export function formatRecordType(type: WcaWorldRecordType): string {

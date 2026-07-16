@@ -5,7 +5,7 @@ import { getWcaPersonProfile } from '../getPersonProfile'
 export function useGetWcaPersonProfile(personId: string | null) {
   return useQuery({
     enabled: personId !== null,
-    queryFn: () => getWcaPersonProfile(personId ?? ''),
+    queryFn: ({ signal }) => getWcaPersonProfile(personId ?? '', signal),
     queryKey: wcaDataQueryKeys.personProfile(personId ?? 'none'),
     retry: false,
     staleTime: 6 * 60 * 60 * 1000,

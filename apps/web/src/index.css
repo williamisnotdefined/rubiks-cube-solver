@@ -56,10 +56,10 @@
   --color-app-muted: var(--muted-foreground);
   --color-app-inverse: var(--primary-foreground);
   --color-app-focus: var(--ring);
-  --color-app-success: var(--chart-2);
-  --color-app-danger: var(--destructive);
-  --color-app-warning: var(--chart-4);
-  --color-app-info: var(--chart-1);
+  --color-app-success: var(--status-success);
+  --color-app-danger: var(--status-danger);
+  --color-app-warning: var(--status-warning);
+  --color-app-info: var(--status-info);
 }
 
 :root {
@@ -83,6 +83,10 @@
   --border: oklch(0.929 0.013 255.508);
   --input: oklch(0.929 0.013 255.508);
   --ring: oklch(0.704 0.04 256.788);
+  --status-success: oklch(0.55 0.15 155);
+  --status-danger: var(--destructive);
+  --status-warning: oklch(0.65 0.16 75);
+  --status-info: oklch(0.55 0.16 250);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -131,6 +135,10 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.56 0 0);
+  --status-success: oklch(0.72 0.16 155);
+  --status-danger: var(--destructive);
+  --status-warning: oklch(0.8 0.16 80);
+  --status-info: oklch(0.72 0.14 250);
   --chart-1: oklch(0.76 0 0);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -240,5 +248,19 @@
 
   to {
     height: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  [class],
+  [class]::before,
+  [class]::after {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.01ms;
   }
 }

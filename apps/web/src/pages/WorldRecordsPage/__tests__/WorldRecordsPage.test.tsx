@@ -135,6 +135,18 @@ describe('WorldRecordsPage', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   })
 
+  it('clears the selected record when the records query changes', async () => {
+    const user = userEvent.setup()
+    renderPage('/world-records?eventId=333')
+
+    await user.click(screen.getByRole('button', { name: /Feliks Zemdegs/ }))
+    expect(screen.getByRole('dialog', { name: 'Feliks Zemdegs' })).toBeVisible()
+
+    fireEvent.click(screen.getByText('Load saved world-record search'))
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  })
+
   it('falls back from invalid URL filters before requesting records', () => {
     renderPage('/world-records?eventId=&page=0&pageSize=invalid&type=regional&search=')
 
@@ -144,6 +156,16 @@ describe('WorldRecordsPage', () => {
       pageSize: 25,
     })
     expect(screen.getByRole('textbox', { name: 'Search' })).toHaveValue('')
+  })
+
+  it('clamps URL page sizes to supported options', () => {
+    renderPage('/world-records?eventId=333&pageSize=500')
+
+    expect(apiMocks.useGetWorldRecords).toHaveBeenLastCalledWith({
+      eventId: '333',
+      page: 1,
+      pageSize: 100,
+    })
   })
 
   it('synchronizes event, type, and page-size filters into the URL and resets them', async () => {
@@ -227,32 +249,32 @@ describe('WorldRecordsPage', () => {
     { ellipses: 1, page: 2, pages: [1, 2, 3, 4, 10], totalPages: 10 },
     { ellipses: 2, page: 5, pages: [1, 4, 5, 6, 10], totalPages: 10 },
     { ellipses: 1, page: 9, pages: [1, 7, 8, 9, 10], totalPages: 10 },
-  ])(
-    'renders the compact pagination layout for page $page of $totalPages',
-    ({ ellipses, page, pages, totalPages }) => {
-      apiMocks.useGetWorldRecords.mockImplementation((query: WcaWorldRecordsQuery) =>
-        loadedRecordsQuery({
-          page: query.page,
-          total: totalPages * 25,
-        }),
-      )
+  ])('renders the compact pagination layout for page $page of $totalPages', ({
+    ellipses,
+    page,
+    pages,
+    totalPages,
+  }) => {
+    apiMocks.useGetWorldRecords.mockImplementation((query: WcaWorldRecordsQuery) =>
+      loadedRecordsQuery({
+        page: query.page,
+        total: totalPages * 25,
+      }),
+    )
 
-      renderPage(`/world-records?eventId=333&page=${page}`)
+    renderPage(`/world-records?eventId=333&page=${page}`)
 
-      const pagination = screen.getByLabelText('World records pagination')
-      const numberedButtons = within(pagination)
-        .getAllByRole('button')
-        .filter((button) => /^Page \d+$/.test(button.getAttribute('aria-label') ?? ''))
+    const pagination = screen.getByLabelText('World records pagination')
+    const numberedButtons = within(pagination)
+      .getAllByRole('button')
+      .filter((button) => /^Page \d+$/.test(button.getAttribute('aria-label') ?? ''))
 
-      expect(numberedButtons.map((button) => button.textContent)).toEqual(
-        pages.map(String),
-      )
-      expect(within(pagination).queryAllByText('...')).toHaveLength(ellipses)
-      expect(within(pagination).getByRole('button', { current: 'page' })).toHaveTextContent(
-        String(page),
-      )
-    },
-  )
+    expect(numberedButtons.map((button) => button.textContent)).toEqual(pages.map(String))
+    expect(within(pagination).queryAllByText('...')).toHaveLength(ellipses)
+    expect(within(pagination).getByRole('button', { current: 'page' })).toHaveTextContent(
+      String(page),
+    )
+  })
 
   it('navigates with numbered, adjacent, first, and last-page actions', async () => {
     const user = userEvent.setup()
@@ -339,10 +361,12 @@ function LocationControls() {
   const navigate = useNavigate()
 
   return (
-    <aside aria-label="Test navigation controls">
-      <div aria-label="Current URL" role="status">{location.search}</div>
+    <aside aria-label='Test navigation controls'>
+      <div aria-label='Current URL' role='status'>
+        {location.search}
+      </div>
       <button
-        type="button"
+        type='button'
         onClick={() => navigate('/world-records?eventId=333fm&search=New+Athlete&page=6')}
       >
         Load saved world-record search

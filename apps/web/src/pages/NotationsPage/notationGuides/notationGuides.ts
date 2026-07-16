@@ -26,19 +26,21 @@ export type NotationGuide = {
 
 export type NotationVisualization =
   | {
-    actions: readonly NotationVisualizationAction[]
-    cubeType: 'Two' | 'Three' | 'Four' | 'Five' | 'Six' | 'Seven'
-    kind: 'cube'
-  }
+      actions: readonly NotationVisualizationAction[]
+      cubeType: 'Two' | 'Three' | 'Four' | 'Five' | 'Six' | 'Seven'
+      kind: 'cube'
+    }
   | {
-    actions: readonly NotationVisualizationAction[]
-    kind: 'megaminx' | 'pyraminx' | 'square1'
-  }
+      actions: readonly NotationVisualizationAction[]
+      kind: 'megaminx' | 'pyraminx' | 'square1'
+    }
 
-export type NotationVisualizationAction = string | {
-  label: string
-  move: string
-}
+export type NotationVisualizationAction =
+  | string
+  | {
+      label: string
+      move: string
+    }
 
 const cubeFaces = ['R', 'L', 'U', 'D', 'F', 'B'] as const
 const cubeWideFaces = ['Rw', 'Lw', 'Uw', 'Dw', 'Fw', 'Bw'] as const
@@ -57,10 +59,7 @@ const cubeActionsBySize = {
 } as const
 
 function buildCubeActions(size: 2 | 3 | 4 | 5 | 6 | 7): readonly string[] {
-  const actions = [
-    ...withCubeTurnSuffixes(cubeFaces),
-    ...withCubeTurnSuffixes(cubeRotations),
-  ]
+  const actions = [...withCubeTurnSuffixes(cubeFaces), ...withCubeTurnSuffixes(cubeRotations)]
 
   if (size >= 3) {
     actions.push(...withCubeTurnSuffixes(cubeWideFaces))
@@ -85,7 +84,10 @@ function withCubeTurnSuffixes(bases: readonly string[]): string[] {
   return bases.flatMap((base) => cubeTurnSuffixes.map((suffix) => `${base}${suffix}`))
 }
 
-function withPrefixedCubeTurnSuffixes(prefixes: readonly number[], bases: readonly string[]): string[] {
+function withPrefixedCubeTurnSuffixes(
+  prefixes: readonly number[],
+  bases: readonly string[],
+): string[] {
   return prefixes.flatMap((prefix) => withCubeTurnSuffixes(bases.map((base) => `${prefix}${base}`)))
 }
 
@@ -93,7 +95,24 @@ function layerRange(first: number, last: number): number[] {
   return Array.from({ length: last - first + 1 }, (_, index) => first + index)
 }
 
-const pyraminxActions = ['U', "U'", 'L', "L'", 'R', "R'", 'B', "B'", 'u', "u'", 'l', "l'", 'r', "r'", 'b', "b'"] as const
+const pyraminxActions = [
+  'U',
+  "U'",
+  'L',
+  "L'",
+  'R',
+  "R'",
+  'B',
+  "B'",
+  'u',
+  "u'",
+  'l',
+  "l'",
+  'r',
+  "r'",
+  'b',
+  "b'",
+] as const
 const squareOneActions = [
   '(1,0)',
   '(-1,0)',

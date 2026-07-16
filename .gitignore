@@ -5,6 +5,7 @@ crates/wasm/pkg/
 # Node / frontend
 node_modules/
 dist/
+dist-ssr/
 coverage/
 .coverage
 storybook-static/

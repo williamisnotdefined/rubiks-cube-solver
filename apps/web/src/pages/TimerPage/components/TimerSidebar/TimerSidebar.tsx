@@ -16,16 +16,20 @@ export function TimerSidebar() {
     [activeSession.solves, selectedEventId],
   )
   const solveRows = useMemo(
-    () => solves.slice().reverse().map((solve, index) => ({
-      ...solve,
-      index: solves.length - index,
-    })),
+    () =>
+      solves
+        .slice()
+        .reverse()
+        .map((solve, index) => ({
+          ...solve,
+          index: solves.length - index,
+        })),
     [solves],
   )
   const stats = timerStats(solves)
 
   return (
-    <aside className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-2 overflow-hidden">
+    <aside className='grid min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-2 overflow-hidden'>
       <AverageCards
         cards={[
           { label: 'best', timeMs: stats.bestMs },
@@ -33,11 +37,11 @@ export function TimerSidebar() {
           { label: 'ao5', timeMs: stats.ao5.timeMs },
           { label: 'ao12', timeMs: stats.ao12.timeMs },
         ]}
-        className="lg:max-h-40"
+        className='lg:max-h-40'
         showMilliseconds={showMilliseconds}
       />
       <SolveTable
-        className="h-full min-h-0"
+        className='h-full min-h-0'
         rows={solveRows}
         showMilliseconds={showMilliseconds}
         onDeleteSolve={deleteSolve}

@@ -73,7 +73,7 @@ describe('scan state helpers', () => {
 
   it('requires all stickers before confirming a face', () => {
     expect(validateScanFaceDraft({}, 'U', createEmptyScanStickers('U'))).toEqual({
-      key: 'confirmAllNineColors',
+      key: 'confirmAllColors',
     })
   })
 
@@ -105,7 +105,7 @@ describe('scan state helpers', () => {
     nextFace[4] = { symbol: 'R', confidence: 1, source: 'center' }
 
     expect(validateScanFaceDraft(confirmedFaces, 'R', nextFace)).toEqual({
-      key: 'colorAppearsMoreThanNine',
+      key: 'colorAppearsMoreThanCount',
       values: { symbol: 'U' },
     })
   })
@@ -138,7 +138,9 @@ describe('scan state helpers', () => {
   })
 
   it('ignores undefined faces while counting scan colors', () => {
-    expect(countScanSymbols({ U: undefined, R: { symbol: 'R', stickers: filledStickers('R') } })).toMatchObject({
+    expect(
+      countScanSymbols({ U: undefined, R: { symbol: 'R', stickers: filledStickers('R') } }),
+    ).toMatchObject({
       R: 9,
       U: 0,
     })
@@ -198,8 +200,12 @@ describe('scan state helpers', () => {
       },
     }
 
-    const manualFace = scanSessionFacesFromDrafts(confirmedDrafts)?.find((face) => face.symbol === 'F')
-    const detectedFace = scanSessionFacesFromDrafts(mixedDrafts)?.find((face) => face.symbol === 'F')
+    const manualFace = scanSessionFacesFromDrafts(confirmedDrafts)?.find(
+      (face) => face.symbol === 'F',
+    )
+    const detectedFace = scanSessionFacesFromDrafts(mixedDrafts)?.find(
+      (face) => face.symbol === 'F',
+    )
 
     expect(manualFace).toMatchObject({
       clientRotation: 0,
@@ -397,9 +403,33 @@ describe('scan state helpers', () => {
         rejectReasons: [],
         status: 'ready',
         stickers: [
-          { agreement: 1, alternatives: [], confidence: 0.9, framesUsed: 6, index: -1, margin: 1, symbol: 'R' },
-          { agreement: 1, alternatives: [], confidence: 0.9, framesUsed: 6, index: 9, margin: 1, symbol: 'R' },
-          { agreement: 1, alternatives: [], confidence: 0.9, framesUsed: 6, index: 0, margin: 1, symbol: undefined },
+          {
+            agreement: 1,
+            alternatives: [],
+            confidence: 0.9,
+            framesUsed: 6,
+            index: -1,
+            margin: 1,
+            symbol: 'R',
+          },
+          {
+            agreement: 1,
+            alternatives: [],
+            confidence: 0.9,
+            framesUsed: 6,
+            index: 9,
+            margin: 1,
+            symbol: 'R',
+          },
+          {
+            agreement: 1,
+            alternatives: [],
+            confidence: 0.9,
+            framesUsed: 6,
+            index: 0,
+            margin: 1,
+            symbol: undefined,
+          },
           {
             agreement: 1,
             alternatives: [
@@ -573,15 +603,19 @@ describe('scan state helpers', () => {
       D: { ...baseDrafts.D, stickers: stickersFromSymbols('DLLU') },
     }
 
-    expect(validateEvenCubeScan(drafts, {}, identityEvenCubeNetAssignments())).toMatchObject({ ok: true })
-    expect(evenCubeScanSessionFacesFromDrafts(drafts, {}, identityEvenCubeNetAssignments())
-      ?.find((face) => face.symbol === 'U')?.reviewedStickers)
-      .toEqual([
-        expect.objectContaining({ index: 0, symbol: 'U' }),
-        expect.objectContaining({ index: 1, symbol: 'U' }),
-        expect.objectContaining({ index: 2, symbol: 'D' }),
-        expect.objectContaining({ index: 3, symbol: 'B' }),
-      ])
+    expect(validateEvenCubeScan(drafts, {}, identityEvenCubeNetAssignments())).toMatchObject({
+      ok: true,
+    })
+    expect(
+      evenCubeScanSessionFacesFromDrafts(drafts, {}, identityEvenCubeNetAssignments())?.find(
+        (face) => face.symbol === 'U',
+      )?.reviewedStickers,
+    ).toEqual([
+      expect.objectContaining({ index: 0, symbol: 'U' }),
+      expect.objectContaining({ index: 1, symbol: 'U' }),
+      expect.objectContaining({ index: 2, symbol: 'D' }),
+      expect.objectContaining({ index: 3, symbol: 'B' }),
+    ])
   })
 
   it('does not auto-fit ambiguous solid 2x2 faces silently', () => {
@@ -603,7 +637,11 @@ describe('scan state helpers', () => {
 
   it('scores even-cube auto-fit changes by swaps and rotations', () => {
     const assignments = swapEvenCubeNetAssignments(createDefaultEvenCubeNetAssignments(), 'F', 'R')
-    const solution = evenCubeFitSolution(assignments, { ...createDefaultEvenCubeFaceRotations(), F: 90, U: 180 })
+    const solution = evenCubeFitSolution(assignments, {
+      ...createDefaultEvenCubeFaceRotations(),
+      F: 90,
+      U: 180,
+    })
 
     expect(solution.changes).toEqual({
       rotatedFaces: 2,
@@ -705,9 +743,7 @@ function analyzedSticker(
   }
 }
 
-function scanAnalysis(
-  overrides: Partial<AnalyzeScanFaceResponse> = {},
-): AnalyzeScanFaceResponse {
+function scanAnalysis(overrides: Partial<AnalyzeScanFaceResponse> = {}): AnalyzeScanFaceResponse {
   return {
     centerMismatch: false,
     confidence: 1,
@@ -727,7 +763,9 @@ function scanAnalysis(
   }
 }
 
-function tileDetections(symbol: (typeof scanSymbols)[number]): AnalyzeScanFaceResponse['tileDetections'] {
+function tileDetections(
+  symbol: (typeof scanSymbols)[number],
+): AnalyzeScanFaceResponse['tileDetections'] {
   return Array.from({ length: 9 }, (_, index) => ({
     bbox: {
       height: 0.18,

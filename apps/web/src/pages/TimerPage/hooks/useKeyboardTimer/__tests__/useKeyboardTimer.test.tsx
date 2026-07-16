@@ -48,6 +48,22 @@ describe('useKeyboardTimer', () => {
     expect(timer.beginHold).not.toHaveBeenCalled()
   })
 
+  it('leaves Space available to links and keyboard-operated controls', () => {
+    const timer = timerMachine({ status: 'idle' })
+    renderHook(() => useKeyboardTimer(timer))
+    const link = document.createElement('a')
+    link.href = '/algorithms'
+    const button = document.createElement('button')
+
+    link.dispatchEvent(keyboardEvent('keydown', { code: 'Space', key: ' ' }))
+    link.dispatchEvent(keyboardEvent('keyup', { code: 'Space', key: ' ' }))
+    button.dispatchEvent(keyboardEvent('keydown', { code: 'Space', key: ' ' }))
+    button.dispatchEvent(keyboardEvent('keyup', { code: 'Space', key: ' ' }))
+
+    expect(timer.beginHold).not.toHaveBeenCalled()
+    expect(timer.releaseHold).not.toHaveBeenCalled()
+  })
+
   it('keeps one listener pair across rerenders and uses the latest timer', () => {
     const idleTimer = timerMachine({ status: 'idle' })
     const runningTimer = timerMachine({ status: 'running' })

@@ -4,7 +4,7 @@ import { getHealth } from '../getHealth'
 
 export function useGetHealth() {
   return useQuery({
-    queryFn: getHealth,
+    queryFn: ({ signal }) => getHealth(signal),
     queryKey: solverQueryKeys.health(),
     retry: false,
   })

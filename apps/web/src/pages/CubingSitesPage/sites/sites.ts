@@ -1,4 +1,11 @@
-export type CubingSiteCategory = 'algorithms' | 'brands' | 'community' | 'competitions' | 'shops' | 'solutions' | 'tools'
+export type CubingSiteCategory =
+  | 'algorithms'
+  | 'brands'
+  | 'community'
+  | 'competitions'
+  | 'shops'
+  | 'solutions'
+  | 'tools'
 
 export type CubingSite = {
   category: CubingSiteCategory

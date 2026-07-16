@@ -21,15 +21,16 @@ export function AlgorithmsPuzzlePage() {
   const sets = setsForPuzzle(puzzle.id)
 
   return (
-    <PageScaffold contentClassName="max-w-5xl gap-5">
+    <PageScaffold contentClassName='max-w-5xl gap-5'>
       <PageHeader>
-        <Link className="text-sm font-medium text-muted-foreground hover:text-foreground" to={localizedPath('/algoritmos', locale)}>
+        <Link
+          className='text-sm font-medium text-muted-foreground hover:text-foreground'
+          to={localizedPath('/algoritmos', locale)}
+        >
           {t('algorithms.page.backToIndex')}
         </Link>
-        <PageTitle>
-          {puzzle.title}
-        </PageTitle>
-        <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+        <PageTitle>{puzzle.title}</PageTitle>
+        <p className='max-w-3xl text-sm leading-6 text-muted-foreground'>
           {t('algorithms.index.description')}
         </p>
       </PageHeader>

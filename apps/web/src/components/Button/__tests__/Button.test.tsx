@@ -9,7 +9,7 @@ describe('Button', () => {
     const handleClick = vi.fn()
 
     render(
-      <Button className="custom-class" type="button" variant="secondary" onClick={handleClick}>
+      <Button className='custom-class' type='button' variant='secondary' onClick={handleClick}>
         Solve
       </Button>,
     )

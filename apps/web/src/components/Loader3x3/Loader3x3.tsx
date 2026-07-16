@@ -1,5 +1,6 @@
 import cls from 'classnames'
 import { useEffect, useRef, useState } from 'react'
+import { useVisualizationRegistration } from '@components/VisualizationRegistration'
 import type { Movement } from '@rubiks-cube-solver/rubiks-cube/core'
 import type { RubiksCubeElement } from '@rubiks-cube-solver/rubiks-cube/view'
 
@@ -10,8 +11,18 @@ type Loader3x3Props = {
   registerDelayMs?: number
 }
 
-const cubeElementName = 'rubiks-cube'
-const loaderMoves = ['R', 'U', "R'", "U'", 'F', 'R', 'U', "R'", "U'", "F'"] as const satisfies readonly Movement[]
+const loaderMoves = [
+  'R',
+  'U',
+  "R'",
+  "U'",
+  'F',
+  'R',
+  'U',
+  "R'",
+  "U'",
+  "F'",
+] as const satisfies readonly Movement[]
 const pauseBetweenMovesMs = 40
 
 export function Loader3x3({
@@ -21,36 +32,28 @@ export function Loader3x3({
   registerDelayMs = 0,
 }: Loader3x3Props) {
   const cubeRef = useRef<RubiksCubeElement | null>(null)
-  const [registered, setRegistered] = useState(
-    () => customElements.get(cubeElementName) !== undefined,
-  )
+  const retryAttemptedRef = useRef(false)
+  const [registrationRequested, setRegistrationRequested] = useState(false)
+  const { retry, status } = useVisualizationRegistration('cube', registrationRequested)
+  const registered = status === 'ready'
   const explicitSize = hasExplicitSizeClass(className)
 
   useEffect(() => {
-    let active = true
-
-    async function registerCubeElement() {
-      if (!customElements.get(cubeElementName)) {
-        const { RubiksCubeElement } = await import('@rubiks-cube-solver/rubiks-cube/view')
-        if (!customElements.get(cubeElementName)) {
-          RubiksCubeElement.register()
-        }
-      }
-
-      if (active) {
-        setRegistered(true)
-      }
-    }
-
     const timeout = window.setTimeout(() => {
-      void registerCubeElement()
+      setRegistrationRequested(true)
     }, registerDelayMs)
 
     return () => {
-      active = false
       window.clearTimeout(timeout)
     }
   }, [registerDelayMs])
+
+  useEffect(() => {
+    if (status === 'error' && !retryAttemptedRef.current) {
+      retryAttemptedRef.current = true
+      retry()
+    }
+  }, [retry, status])
 
   useEffect(() => {
     if (!registered) {
@@ -104,17 +107,17 @@ export function Loader3x3({
     >
       {registered ? (
         <rubiks-cube
-          aria-hidden="true"
-          className="block size-full pointer-events-none brightness-[0.92] saturate-[1.08] contrast-[1.04]"
-          data-loader-cube="true"
+          aria-hidden='true'
+          className='block size-full pointer-events-none brightness-[0.92] saturate-[1.08] contrast-[1.04]'
+          data-loader-cube='true'
           ref={cubeRef}
-          animation-speed-ms="120"
-          animation-style="exponential"
-          camera-peek-angle-horizontal="0.62"
-          camera-peek-angle-vertical="0.55"
-          camera-radius="5.8"
-          cube-type="Three"
-          piece-gap="1.045"
+          animation-speed-ms='120'
+          animation-style='exponential'
+          camera-peek-angle-horizontal='0.62'
+          camera-peek-angle-vertical='0.55'
+          camera-radius='5.8'
+          cube-type='Three'
+          piece-gap='1.045'
         />
       ) : null}
     </span>

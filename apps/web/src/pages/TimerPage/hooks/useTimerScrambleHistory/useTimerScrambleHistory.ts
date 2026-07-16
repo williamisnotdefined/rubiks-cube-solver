@@ -8,7 +8,7 @@ import { finalTimeMs } from '@core/timer/penalties'
 import type { GeneratedScramble } from '@core/scramble/types'
 import type { TimerPenalty } from '@core/timer/penalties'
 import { useTimerSettingsStore } from '../../timerSettingsStore'
-import { useTimerStore } from '../../timerStore'
+import { createTimerId, useTimerStore } from '../../timerStore'
 import type { TimerSolve } from '../../types'
 
 type ScrambleHistory = {
@@ -20,9 +20,15 @@ type QueueNextScrambleOptions = {
   replaceHistory?: boolean
 }
 
+type AttemptSnapshot = Readonly<{
+  eventId: string
+  scramble: string
+  sessionId: string
+}>
+
 export type TimerScrambleHistory = ReturnType<typeof useTimerScrambleHistory>
 
-export function useTimerScrambleHistory() {
+export function useTimerScrambleHistory(interactionLocked = false) {
   const { t } = useTranslation()
   const [, copyToClipboard] = useCopyToClipboard()
   const showToast = useToast()
@@ -43,13 +49,23 @@ export function useTimerScrambleHistory() {
   const [lastCompletedSolveId, setLastCompletedSolveId] = useState<string | null>(null)
   const [timerResetSignal, setTimerResetSignal] = useState(0)
   const scrambleRequestIdRef = useRef(0)
+  const requestedEventIdRef = useRef<string | null>(null)
+  const attemptSnapshotRef = useRef<AttemptSnapshot | null>(null)
   const generatedScramble = scrambleHistory.items[scrambleHistory.index]!
 
-  useEffect(() => () => {
-    scrambleRequestIdRef.current += 1
-  }, [])
+  useEffect(
+    () => () => {
+      scrambleRequestIdRef.current += 1
+    },
+    [],
+  )
 
   useEffect(() => {
+    if (interactionLocked || requestedEventIdRef.current === selectedEventId) {
+      return
+    }
+
+    requestedEventIdRef.current = selectedEventId
     const requestId = ++scrambleRequestIdRef.current
 
     setActiveSessionEvent(selectedEventId)
@@ -78,10 +94,37 @@ export function useTimerScrambleHistory() {
           setIsScramblePending(false)
         }
       })
-  }, [selectedEventId, setActiveSessionEvent])
+  }, [interactionLocked, selectedEventId, setActiveSessionEvent])
+
+  function handleAttemptStart() {
+    const { activeSessionId, sessions, setActiveSessionId } = useTimerStore.getState()
+    const activeSession = sessions.find((session) => session.id === activeSessionId) ?? sessions[0]
+
+    if (
+      activeSession === undefined ||
+      scrambleLoadFailed ||
+      generatedScramble.scramble.trim() === ''
+    ) {
+      attemptSnapshotRef.current = null
+      return
+    }
+
+    if (activeSession.id !== activeSessionId) {
+      setActiveSessionId(activeSession.id)
+    }
+
+    attemptSnapshotRef.current = Object.freeze({
+      eventId: generatedScramble.event.id,
+      scramble: generatedScramble.scramble,
+      sessionId: activeSession.id,
+    })
+  }
 
   function handleSolveComplete(rawTimeMs: number, penalty: TimerPenalty) {
-    if (scrambleLoadFailed || generatedScramble.scramble.trim() === '') {
+    const attempt = attemptSnapshotRef.current
+    attemptSnapshotRef.current = null
+
+    if (attempt === null) {
       return
     }
 
@@ -89,23 +132,23 @@ export function useTimerScrambleHistory() {
     const solve: TimerSolve = {
       comment: '',
       endedAt,
-      eventId: selectedEventId,
+      eventId: attempt.eventId,
       finalTimeMs: finalTimeMs(rawTimeMs, penalty),
-      id: `solve-${endedAt}-${Math.random().toString(36).slice(2)}`,
+      id: createTimerId('solve'),
       penalty,
       rawTimeMs,
-      scramble: generatedScramble.scramble,
+      scramble: attempt.scramble,
       startedAt: endedAt - rawTimeMs,
     }
 
-    addSolve(solve)
+    addSolve(solve, attempt.sessionId)
     setLastCompletedSolveId(solve.id)
-    queueNextScramble(selectedEventId)
+    queueNextScramble(attempt.eventId)
     setCopied(false)
   }
 
   function handleNextScramble() {
-    if (isScramblePending) {
+    if (interactionLocked || isScramblePending) {
       return
     }
 
@@ -131,7 +174,7 @@ export function useTimerScrambleHistory() {
   }
 
   function handlePreviousScramble() {
-    if (isScramblePending) {
+    if (interactionLocked || isScramblePending) {
       return
     }
 
@@ -152,9 +195,7 @@ export function useTimerScrambleHistory() {
 
     setCopied(copySucceeded)
     showToast({
-      title: copySucceeded
-        ? t('timer.scramble.copied')
-        : t('timer.scramble.copyFailed'),
+      title: copySucceeded ? t('timer.scramble.copied') : t('timer.scramble.copyFailed'),
       tone: copySucceeded ? 'success' : 'error',
     })
   }
@@ -206,11 +247,13 @@ export function useTimerScrambleHistory() {
     canGoPrevious: !isScramblePending && !scrambleLoadFailed && scrambleHistory.index > 0,
     copied,
     generatedScramble,
+    interactionLocked,
     isScramblePending,
     lastCompletedSolveId,
     scrambleLoadFailed,
     timerDisabled: isScramblePending || scrambleLoadFailed,
     timerResetSignal,
+    handleAttemptStart,
     handleCopyScramble,
     handleNextScramble,
     handlePreviousScramble,

@@ -26,7 +26,7 @@ export function Tooltip({ children, content, disabled = false }: TooltipProps) {
             sideOffset={8}
           >
             {content}
-            <RadixTooltip.Arrow className="fill-primary" />
+            <RadixTooltip.Arrow className='fill-primary' />
           </RadixTooltip.Content>
         </RadixTooltip.Portal>
       </RadixTooltip.Root>

@@ -14,7 +14,7 @@ export function normalizeSolveResponse(
   const visualState = normalizedVisualState(payload.visualState)
   const metadata = {
     maxDepth: payload.maxDepth,
-    maxNodes: payload.maxNodes,
+    maxNodes: payload.maxNodes ?? undefined,
     strategyId: payload.strategyId,
     strategyLabel: payload.strategyLabel,
     solverMode: payload.solverMode,
@@ -46,7 +46,7 @@ export function normalizeSolveResponse(
       ok: false,
       errorKind: payload.errorKind ?? 'unverified_solution',
       message: payload.message ?? 'API solve result was not replay verified.',
-      exploredNodes: payload.exploredNodes,
+      exploredNodes: payload.exploredNodes ?? undefined,
     }
   }
 
@@ -54,9 +54,9 @@ export function normalizeSolveResponse(
     ...metadata,
     status: solveFailureStatus(payload.status),
     ok: false,
-    errorKind: payload.errorKind,
+    errorKind: payload.errorKind ?? undefined,
     message: payload.message ?? `API solve failed with status ${payload.status}`,
-    exploredNodes: payload.exploredNodes,
+    exploredNodes: payload.exploredNodes ?? undefined,
   }
 }
 
@@ -84,9 +84,10 @@ function solveFailureStatus(status: string): SolveFailureResult['status'] {
   return 'api_error'
 }
 
-function normalizedVisualState(
-  visualState: ApiSolveResponse['visualState'],
-): { kind?: PuzzleVisualizationKind; value?: string } {
+function normalizedVisualState(visualState: ApiSolveResponse['visualState']): {
+  kind?: PuzzleVisualizationKind
+  value?: string
+} {
   if (typeof visualState === 'string') {
     return { kind: 'cube3-facelets-v1', value: visualState }
   }

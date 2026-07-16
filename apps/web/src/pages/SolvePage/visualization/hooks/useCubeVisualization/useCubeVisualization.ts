@@ -55,7 +55,11 @@ export function useCubeVisualization(
     if (parsed.status !== 'valid') {
       return
     }
-    const compatibleVisualState = compatibleVisualizationState(visualState, visualStateKind, cubeType)
+    const compatibleVisualState = compatibleVisualizationState(
+      visualState,
+      visualStateKind,
+      cubeType,
+    )
     if (compatibleVisualState.status === 'invalid') {
       return
     }
@@ -177,9 +181,7 @@ async function syncCubeVisualization({
     nextState === previousState &&
     startsWithMoves(nextMoves, previousMoves) &&
     nextMoves.length > previousMoves.length
-  const movesToApply = animateNewMoves
-    ? nextMoves.slice(previousMoves.length)
-    : nextMoves
+  const movesToApply = animateNewMoves ? nextMoves.slice(previousMoves.length) : nextMoves
 
   try {
     if (!animateNewMoves) {

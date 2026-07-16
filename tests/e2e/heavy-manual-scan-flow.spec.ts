@@ -286,7 +286,17 @@ function loadFixtureFile(fixturePath: string): HeavyFixtureFile {
     throw new Error(`HEAVY_SCAN_FIXTURES does not exist: ${fixturePath}`)
   }
 
-  return JSON.parse(readFileSync(fixturePath, 'utf8')) as HeavyFixtureFile
+  const fixtureFile = JSON.parse(readFileSync(fixturePath, 'utf8')) as HeavyFixtureFile
+  const expectedFixtureCount = fixtureFile.cube2Count + fixtureFile.cube3Count
+
+  if (expectedFixtureCount === 0 || fixtureFile.fixtures.length === 0) {
+    throw new Error(`Heavy scan fixture file is empty: ${fixturePath}`)
+  }
+  if (fixtureFile.fixtures.length !== expectedFixtureCount) {
+    throw new Error(`Heavy scan fixture count mismatch: expected ${expectedFixtureCount}, received ${fixtureFile.fixtures.length}`)
+  }
+
+  return fixtureFile
 }
 
 function fixtureFilePath(): string {

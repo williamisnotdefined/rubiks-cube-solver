@@ -42,6 +42,7 @@
     },
     "table": {
       "algorithm": "公式",
+      "caption": "{{name}} 公式案例",
       "case": "案例",
       "name": "名称",
       "source": "来源"
@@ -655,6 +656,68 @@
     "retry": "重试",
     "title": "出现问题"
   },
+  "worldRecords": {
+    "kicker": "纪录与数据",
+    "description": "WCA 世界排行榜纪录，包含选手、比赛、还原尝试和官方打乱候选数据。",
+    "dataset": "数据集：{{date}}",
+    "loadError": "无法从 WCA 数据 API 加载世界纪录。",
+    "moves": "{{count}} 步",
+    "unknown": "未知",
+    "filters": {
+      "search": "搜索",
+      "searchPlaceholder": "选手、WCA ID、国家或地区",
+      "event": "项目",
+      "type": "类型",
+      "reset": "重置"
+    },
+    "types": { "all": "所有类型", "single": "单次", "average": "平均" },
+    "table": {
+      "caption": "符合所选筛选条件的 WCA 世界纪录",
+      "rank": "排名",
+      "athlete": "选手",
+      "result": "成绩",
+      "type": "类型",
+      "competition": "比赛",
+      "scramble": "打乱",
+      "empty": "没有符合这些筛选条件的世界纪录。"
+    },
+    "pagination": {
+      "label": "世界纪录分页",
+      "rowsOption": "{{count}} 行",
+      "rowsPerPage": "每页行数",
+      "pageOf": "第 {{current}} 页，共 {{total}} 页",
+      "first": "第一页",
+      "previous": "上一页",
+      "next": "下一页",
+      "last": "最后一页",
+      "page": "第 {{page}} 页"
+    },
+    "scramble": {
+      "unavailable": "不可用",
+      "candidates": "{{count}} 个候选",
+      "candidateLabel": "组 {{group}} · 打乱 {{number}}",
+      "exactDescription": "该成绩对应 WCA 导出数据中的一个官方打乱。",
+      "ambiguousDescription": "WCA 导出数据不含选手分组；以下是该成绩的候选打乱。",
+      "unavailableDescription": "无法从导出数据关联官方打乱。"
+    },
+    "athlete": {
+      "unknownCountry": "未知国家或地区",
+      "competitions": "比赛",
+      "solves": "还原",
+      "records": "纪录",
+      "medals": "奖牌",
+      "selectedResult": "所选排行榜成绩",
+      "worldRank": "世界第 {{rank}}",
+      "continentRank": "洲际第 {{rank}}",
+      "countryRank": "国家第 {{rank}}",
+      "competitionUnavailable": "比赛详情不可用。",
+      "attemptsUnavailable": "尝试详情不可用。",
+      "unknownRound": "未知轮次",
+      "unknownFormat": "未知赛制",
+      "scrambleEvidence": "打乱证据",
+      "openProfile": "打开 WCA 个人资料"
+    }
+  },
   "navigation": {
     "allAlgorithms": "全部算法",
     "algorithms": "公式",
@@ -683,7 +746,7 @@
     "themeLight": "浅色",
     "themeSystem": "系统",
     "timer": "计时器",
-    "worldRecords": "World Records"
+    "worldRecords": "世界纪录"
   },
   "notations": {
     "groups": {
@@ -706,6 +769,7 @@
       "preparingVisualization": "正在准备可视化",
       "reset": "重置",
       "underConstruction": "建设中",
+      "title": "{{puzzle}} 记号",
       "visualizationLabel": "{{puzzle}} 记号可视化"
     }
   },
@@ -1075,6 +1139,7 @@
       }
     },
     "form": {
+      "formLabel": "还原魔方",
       "maxMoves": "最大步数",
       "maxNodesMillion": "最大节点数（M）",
       "puzzle": "项目",
@@ -1093,6 +1158,8 @@
       "solved": " 已还原"
     },
     "result": {
+      "movesLabel": "解法步骤",
+      "regionLabel": "还原结果",
       "foundIn": "响应用时 {{elapsed}}",
       "seeMore": "查看更多",
       "solved": "已还原",

@@ -1,5 +1,4 @@
 import { expect, test } from '@playwright/test'
-import { chooseRadixSelectOption } from './select-helpers'
 
 test.use({ locale: 'pt-BR' })
 
@@ -13,9 +12,7 @@ test('keeps scan progress when exit confirmation is canceled', async ({ page }) 
     })
   })
 
-  await page.goto('/solve/')
-  await expect(page.getByRole('combobox', { name: 'Puzzle' })).toBeEnabled({ timeout: 15_000 })
-  await chooseRadixSelectOption(page, 'Puzzle', '3x3x3 Cube')
+  await page.goto('/pt-BR/solve/')
   const scanButton = page.getByRole('button', { name: 'Escanear cubo com a câmera' })
   await expect(scanButton).toBeEnabled({ timeout: 15_000 })
   await scanButton.click()
@@ -30,4 +27,5 @@ test('keeps scan progress when exit confirmation is canceled', async ({ page }) 
 
   await expect(confirmation).toBeHidden()
   await expect(page.getByRole('dialog', { name: 'Escanear cubo' })).toBeVisible()
+  await expect(page.getByTestId('scan-sticker-0')).toHaveAccessibleName(/Vermelho/)
 })

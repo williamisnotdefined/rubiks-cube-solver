@@ -3,18 +3,18 @@ import { expect, test } from '@playwright/test'
 test.describe('browser language routing', () => {
   test.use({ locale: 'pt-BR' })
 
-  test('uses the browser language and persists a manual selection', async ({ page }) => {
+  test('keeps explicit English URLs canonical and persists a manual selection', async ({ page }) => {
     await page.goto('/timer/')
+
+    await expect(page).toHaveURL(/\/timer\/$/)
+    await page.getByRole('button', { name: 'Language' }).click()
+    await page.getByRole('menuitemradio', { name: 'Português (Brasil)', exact: true }).click()
 
     await expect(page).toHaveURL(/\/pt-BR\/timer\/$/)
-    await page.getByRole('button', { name: 'Idioma' }).click()
-    await page.getByRole('menuitemradio', { name: 'English (United States)' }).click()
+    await expect.poll(() => page.evaluate(() => window.localStorage.getItem('rubiks-cube-solver-language'))).toBe('pt-BR')
 
-    await expect(page).toHaveURL(/\/timer\/$/)
-    await expect.poll(() => page.evaluate(() => window.localStorage.getItem('rubiks-cube-solver-language'))).toBe('en-US')
-
-    await page.goto('/timer/')
-    await expect(page).toHaveURL(/\/timer\/$/)
+    await page.reload()
+    await expect(page).toHaveURL(/\/pt-BR\/timer\/$/)
   })
 })
 

@@ -42,6 +42,7 @@
     },
     "table": {
       "algorithm": "Алгоритм",
+      "caption": "Случаи алгоритмов {{name}}",
       "case": "Случай",
       "name": "Название",
       "source": "Источник"
@@ -655,6 +656,68 @@
     "retry": "Попробовать снова",
     "title": "Что-то пошло не так"
   },
+  "worldRecords": {
+    "kicker": "Рекорды и данные",
+    "description": "Мировые рекорды WCA с данными об участниках, соревнованиях, попытках и возможных официальных скрамблах.",
+    "dataset": "Набор данных: {{date}}",
+    "loadError": "Не удалось загрузить мировые рекорды из API данных WCA.",
+    "moves": "{{count}} ходов",
+    "unknown": "Неизвестно",
+    "filters": {
+      "search": "Поиск",
+      "searchPlaceholder": "Участник, WCA ID, страна",
+      "event": "Дисциплина",
+      "type": "Тип",
+      "reset": "Сбросить"
+    },
+    "types": { "all": "Все типы", "single": "Одиночный", "average": "Среднее" },
+    "table": {
+      "caption": "Мировые рекорды WCA по выбранным фильтрам",
+      "rank": "Место",
+      "athlete": "Участник",
+      "result": "Результат",
+      "type": "Тип",
+      "competition": "Соревнование",
+      "scramble": "Скрамбл",
+      "empty": "По этим фильтрам мировых рекордов нет."
+    },
+    "pagination": {
+      "label": "Страницы мировых рекордов",
+      "rowsOption": "{{count}} строк",
+      "rowsPerPage": "Строк на странице",
+      "pageOf": "Страница {{current}} из {{total}}",
+      "first": "Первая страница",
+      "previous": "Предыдущая страница",
+      "next": "Следующая страница",
+      "last": "Последняя страница",
+      "page": "Страница {{page}}"
+    },
+    "scramble": {
+      "unavailable": "Недоступно",
+      "candidates": "Кандидатов: {{count}}",
+      "candidateLabel": "Группа {{group}} · Скрамбл {{number}}",
+      "exactDescription": "Результат соответствует одному официальному скрамблу в экспорте WCA.",
+      "ambiguousDescription": "Экспорт WCA не содержит группу участника; это возможные скрамблы результата.",
+      "unavailableDescription": "Не удалось связать результат с официальным скрамблом."
+    },
+    "athlete": {
+      "unknownCountry": "Неизвестная страна",
+      "competitions": "Соревнования",
+      "solves": "Сборки",
+      "records": "Рекорды",
+      "medals": "Медали",
+      "selectedResult": "Выбранный результат",
+      "worldRank": "Мир № {{rank}}",
+      "continentRank": "Континент № {{rank}}",
+      "countryRank": "Страна № {{rank}}",
+      "competitionUnavailable": "Данные о соревновании недоступны.",
+      "attemptsUnavailable": "Данные о попытках недоступны.",
+      "unknownRound": "Неизвестный раунд",
+      "unknownFormat": "Неизвестный формат",
+      "scrambleEvidence": "Данные скрамбла",
+      "openProfile": "Открыть профиль WCA"
+    }
+  },
   "navigation": {
     "allAlgorithms": "Все алгоритмы",
     "algorithms": "Алгоритмы",
@@ -683,7 +746,7 @@
     "themeLight": "Светлая",
     "themeSystem": "Системная",
     "timer": "Таймер",
-    "worldRecords": "World Records"
+    "worldRecords": "Мировые рекорды"
   },
   "notations": {
     "groups": {
@@ -706,6 +769,7 @@
       "preparingVisualization": "Подготавливаем визуализацию",
       "reset": "Reset",
       "underConstruction": "В разработке",
+      "title": "Нотация {{puzzle}}",
       "visualizationLabel": "Визуализация нотации {{puzzle}}"
     }
   },
@@ -1075,6 +1139,7 @@
       }
     },
     "form": {
+      "formLabel": "Решить головоломку",
       "maxMoves": "Максимум ходов",
       "maxNodesMillion": "Максимум узлов (M)",
       "puzzle": "Головоломка",
@@ -1093,6 +1158,8 @@
       "solved": " собран"
     },
     "result": {
+      "movesLabel": "Ходы решения",
+      "regionLabel": "Результат решения",
       "foundIn": "ответ за {{elapsed}}",
       "seeMore": "подробнее",
       "solved": "Собрано",

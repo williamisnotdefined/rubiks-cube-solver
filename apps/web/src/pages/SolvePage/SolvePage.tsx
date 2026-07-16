@@ -1,4 +1,5 @@
 import { lazy, Suspense, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { SolveResult as ApiSolveResult } from '@api/solver/types'
 import { SolveFormWithScanModal } from './components/SolveFormWithScanModal'
 import { SolvePlaybackStage } from './components/SolvePlaybackStage'
@@ -10,9 +11,14 @@ import type { NoSolutionRetryLimits } from './solve/NoSolutionLimitsModal'
 import { SolveResult } from './solve/SolveResult'
 import type { SolveFormSubmit } from './solve/validation'
 
-const NoSolutionLimitsModal = lazy(() => import('./solve/NoSolutionLimitsModal').then((module) => ({ default: module.NoSolutionLimitsModal })))
+const NoSolutionLimitsModal = lazy(() =>
+  import('./solve/NoSolutionLimitsModal').then((module) => ({
+    default: module.NoSolutionLimitsModal,
+  })),
+)
 
 export function SolvePage() {
+  const { t } = useTranslation()
   const formState = useSolveFormState()
   const metadata = useSolvePuzzleMetadata(formState.selectedPuzzleSlug)
   const solveFlow = useSolveResultFlow()
@@ -88,8 +94,7 @@ export function SolvePage() {
   }
 
   const limitFailureModal =
-    solveFlow.notationLimitFailureResult !== undefined &&
-    !solveFlow.limitFailureModalDismissed
+    solveFlow.notationLimitFailureResult !== undefined && !solveFlow.limitFailureModalDismissed
       ? {
           onClose: () => solveFlow.setLimitFailureModalDismissed(true),
           onRetry: handleNoSolutionRetry,
@@ -114,8 +119,9 @@ export function SolvePage() {
   }
 
   return (
-    <main className="app-shell min-h-0 flex-1 overflow-auto bg-background px-4 py-6 text-foreground">
-      <section className="mx-auto grid w-full max-w-4xl content-start justify-items-center gap-4">
+    <main className='app-shell min-h-0 flex-1 overflow-auto bg-background px-4 py-6 text-foreground'>
+      <section className='mx-auto grid w-full max-w-4xl content-start justify-items-center gap-4'>
+        <h1 className='sr-only'>{t('navigation.solve')}</h1>
         <SolvePlaybackStage
           activeSolveSource={solveFlow.activeSolveSource}
           notation={formState.notation}

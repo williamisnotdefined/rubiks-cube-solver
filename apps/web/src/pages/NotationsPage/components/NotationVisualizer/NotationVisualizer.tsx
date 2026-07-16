@@ -2,18 +2,44 @@ import { useEffect, useRef, useState, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@components/Button'
 import { VisualizationLoadLayer } from '@components/VisualizationLoadLayer'
-import { IsRotation, isMovement, type Movement, type Rotation } from '@rubiks-cube-solver/rubiks-cube/core'
+import {
+  isVisualizationRegistered,
+  useVisualizationRegistration,
+} from '@components/VisualizationRegistration'
+import {
+  IsRotation,
+  isMovement,
+  type Movement,
+  type Rotation,
+} from '@rubiks-cube-solver/rubiks-cube/core'
 import type { RubiksCubeElement } from '@rubiks-cube-solver/rubiks-cube/view'
-import type { MegaminxMove, MegaminxPuzzleElement } from '@rubiks-cube-solver/rubiks-cube/puzzles/megaminx'
-import type { PyraminxMove, PyraminxPuzzleElement } from '@rubiks-cube-solver/rubiks-cube/puzzles/pyraminx'
-import type { Square1MoveInput, Square1PuzzleElement } from '@rubiks-cube-solver/rubiks-cube/puzzles/square1'
-import type { NotationGuide, NotationVisualization, NotationVisualizationAction } from '../../notationGuides'
+import type {
+  MegaminxMove,
+  MegaminxPuzzleElement,
+} from '@rubiks-cube-solver/rubiks-cube/puzzles/megaminx'
+import type {
+  PyraminxMove,
+  PyraminxPuzzleElement,
+} from '@rubiks-cube-solver/rubiks-cube/puzzles/pyraminx'
+import type {
+  Square1MoveInput,
+  Square1PuzzleElement,
+} from '@rubiks-cube-solver/rubiks-cube/puzzles/square1'
+import type {
+  NotationGuide,
+  NotationVisualization,
+  NotationVisualizationAction,
+} from '../../notationGuides'
 
 type NotationVisualizerProps = {
   guide: NotationGuide
 }
 
-type NotationPuzzleElement = RubiksCubeElement | MegaminxPuzzleElement | PyraminxPuzzleElement | Square1PuzzleElement
+type NotationPuzzleElement =
+  | RubiksCubeElement
+  | MegaminxPuzzleElement
+  | PyraminxPuzzleElement
+  | Square1PuzzleElement
 
 type DemoStatus =
   | { key: 'applied'; move: string }
@@ -21,14 +47,6 @@ type DemoStatus =
   | { key: 'ready' }
   | { key: 'reset' }
   | { key: 'running'; move: string }
-
-const puzzleElementNames = {
-  cube: 'rubiks-cube',
-  megaminx: 'megaminx-puzzle',
-  pyraminx: 'pyraminx-puzzle',
-  square1: 'square1-puzzle',
-} as const satisfies Record<NotationVisualization['kind'], string>
-const idleVisualizationAutoLoadDelayMs = 3000
 
 const cubeCameraRadius = {
   Two: '7.2',
@@ -42,12 +60,18 @@ const cubeCameraRadius = {
 export function NotationVisualizer({ guide }: NotationVisualizerProps) {
   const { t } = useTranslation()
   const visualization = guide.visualization
+  const visualizationKind = visualization?.kind ?? 'cube'
   const puzzleRef = useRef<NotationPuzzleElement | null>(null)
+  const stageRef = useRef<HTMLDivElement | null>(null)
   const runIdRef = useRef(0)
-  const [registered, setRegistered] = useState(() =>
-    visualization === undefined ? false : customElements.get(puzzleElementNames[visualization.kind]) !== undefined,
+  const [loadRequested, setLoadRequested] = useState(() =>
+    visualization === undefined ? false : isVisualizationRegistered(visualization.kind),
   )
-  const [loadRequested, setLoadRequested] = useState(() => registered)
+  const { retry, status: registrationStatus } = useVisualizationRegistration(
+    visualizationKind,
+    loadRequested,
+  )
+  const registered = registrationStatus === 'ready'
   const [runningAction, setRunningAction] = useState<string | undefined>(undefined)
   const [status, setStatus] = useState<DemoStatus>({ key: 'ready' })
   const [viewResetIndex, setViewResetIndex] = useState(0)
@@ -57,78 +81,49 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
       return undefined
     }
 
-    let fallbackTimeout: number | undefined
-    let idleCallbackId: number | undefined
-    const elementName = puzzleElementNames[visualization.kind]
-    const elementRegistered = customElements.get(elementName) !== undefined
-    setRegistered(elementRegistered)
+    const elementRegistered = isVisualizationRegistered(visualization.kind)
     setLoadRequested(elementRegistered)
     setRunningAction(undefined)
     setStatus({ key: 'ready' })
     setViewResetIndex(0)
     runIdRef.current += 1
 
-    if (!elementRegistered) {
-      fallbackTimeout = window.setTimeout(() => {
-        fallbackTimeout = undefined
-
-        if (window.requestIdleCallback !== undefined) {
-          idleCallbackId = window.requestIdleCallback(() => {
-            idleCallbackId = undefined
-            setLoadRequested(true)
-          }, { timeout: 1500 })
-          return
-        }
-
-        setLoadRequested(true)
-      }, idleVisualizationAutoLoadDelayMs)
-    }
-
     return () => {
-      if (fallbackTimeout !== undefined) {
-        window.clearTimeout(fallbackTimeout)
-      }
-      if (idleCallbackId !== undefined) {
-        window.cancelIdleCallback(idleCallbackId)
-      }
       runIdRef.current += 1
     }
   }, [visualization])
 
   useEffect(() => {
-    if (visualization === undefined || !loadRequested || registered) {
+    const stage = stageRef.current
+    if (visualization === undefined || loadRequested || stage === null || prefersReducedData()) {
       return undefined
     }
 
-    let mounted = true
-    const currentVisualization = visualization
-    const elementName = puzzleElementNames[currentVisualization.kind]
-
-    async function registerPuzzleElement() {
-      if (!customElements.get(elementName)) {
-        await registerVisualizationElement(currentVisualization.kind)
-      }
-
-      if (mounted) {
-        setRegistered(true)
-      }
-    }
-
-    void registerPuzzleElement()
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setLoadRequested(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: '200px' },
+    )
+    observer.observe(stage)
 
     return () => {
-      mounted = false
+      observer.disconnect()
     }
-  }, [loadRequested, registered, visualization])
+  }, [loadRequested, visualization])
 
   if (visualization === undefined) {
     return null
   }
   const activeVisualization = visualization
 
-  const statusLabel = 'move' in status
-    ? t(`notations.page.demoStatus.${status.key}`, { move: status.move })
-    : t(`notations.page.demoStatus.${status.key}`)
+  const statusLabel =
+    'move' in status
+      ? t(`notations.page.demoStatus.${status.key}`, { move: status.move })
+      : t(`notations.page.demoStatus.${status.key}`)
   const visualizationLoadLabel = loadRequested
     ? t('notations.page.loadingVisualization')
     : t('notations.page.preparingVisualization')
@@ -185,41 +180,49 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
   }
 
   return (
-    <section className="grid gap-6 py-6">
-      <header className="grid gap-1.5 px-6">
-        <h2 className="text-2xl font-semibold tracking-tight">
-          {t('notations.page.demoTitle')}
-        </h2>
-        <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+    <section className='grid gap-6 py-6'>
+      <header className='grid gap-1.5 px-6'>
+        <h2 className='text-2xl font-semibold tracking-tight'>{t('notations.page.demoTitle')}</h2>
+        <p className='max-w-3xl text-sm leading-6 text-muted-foreground'>
           {t('notations.page.demoDescription')}
         </p>
       </header>
-      <div className="grid items-start gap-4 px-6 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
-        <div className="flex self-start justify-center lg:justify-start">
+      <div className='grid items-start gap-4 px-6 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]'>
+        <div className='flex self-start justify-center lg:justify-start'>
           <div
             aria-label={t('notations.page.visualizationLabel', { puzzle: guide.puzzle })}
-            className="cube-stage h-[min(280px,calc(100vw-48px))] w-[min(280px,calc(100vw-48px))] shrink-0 overflow-hidden border bg-card shadow-sm"
+            className='cube-stage h-[min(280px,calc(100vw-48px))] w-[min(280px,calc(100vw-48px))] shrink-0 overflow-hidden border bg-card shadow-sm'
+            ref={stageRef}
           >
-            {registered ? renderVisualizationElement(activeVisualization, puzzleRef, viewResetIndex) : (
+            {registered ? (
+              renderVisualizationElement(activeVisualization, puzzleRef, viewResetIndex)
+            ) : (
               <VisualizationLoadLayer
+                error={registrationStatus === 'error'}
+                errorLabel={t('errorBoundary.title')}
                 label={t('notations.page.preparingVisualization')}
                 loadingLabel={t('notations.page.loadingVisualization')}
                 loadRequested={loadRequested}
-                onLoadRequest={handleLoadRequest}
+                retryLabel={t('errorBoundary.retry')}
+                onLoadRequest={registrationStatus === 'error' ? retry : handleLoadRequest}
               />
             )}
           </div>
         </div>
-        <div className="grid content-start gap-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h3 className="text-sm font-semibold">
-              {t('notations.page.actionsTitle')}
-            </h3>
-            <Button size="sm" type="button" variant="secondary" disabled={!registered} onClick={handleReset}>
+        <div className='grid content-start gap-3'>
+          <div className='flex flex-wrap items-center justify-between gap-3'>
+            <h3 className='text-sm font-semibold'>{t('notations.page.actionsTitle')}</h3>
+            <Button
+              size='sm'
+              type='button'
+              variant='secondary'
+              disabled={!registered}
+              onClick={handleReset}
+            >
               {t('notations.page.reset')}
             </Button>
           </div>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(4rem,1fr))] gap-2">
+          <div className='grid grid-cols-[repeat(auto-fit,minmax(4rem,1fr))] gap-2'>
             {activeVisualization.actions.map((action) => {
               const actionLabel = notationActionLabel(action)
               const move = notationActionMove(action)
@@ -227,20 +230,20 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
               return (
                 <Button
                   key={`${actionLabel}-${move}`}
-                  size="sm"
-                  type="button"
+                  size='sm'
+                  type='button'
                   variant={runningAction === actionLabel ? 'primary' : 'secondary'}
                   disabled={!registered || runningAction !== undefined}
                   onClick={() => {
                     void handleAction(action)
                   }}
                 >
-                  <span className="font-mono normal-case tracking-normal">{actionLabel}</span>
+                  <span className='font-mono normal-case tracking-normal'>{actionLabel}</span>
                 </Button>
               )
             })}
           </div>
-          <p className="text-sm text-muted-foreground" role="status" aria-live="polite">
+          <p className='text-sm text-muted-foreground' role='status' aria-live='polite'>
             {registered ? statusLabel : visualizationLoadLabel}
           </p>
         </div>
@@ -255,31 +258,6 @@ function notationActionLabel(action: NotationVisualizationAction): string {
 
 function notationActionMove(action: NotationVisualizationAction): string {
   return typeof action === 'string' ? action : action.move
-}
-
-async function registerVisualizationElement(kind: NotationVisualization['kind']) {
-  switch (kind) {
-    case 'cube': {
-      const { RubiksCubeElement } = await import('@rubiks-cube-solver/rubiks-cube/view')
-      RubiksCubeElement.register()
-      return
-    }
-    case 'megaminx': {
-      const { MegaminxPuzzleElement } = await import('@rubiks-cube-solver/rubiks-cube/puzzles/megaminx')
-      MegaminxPuzzleElement.register()
-      return
-    }
-    case 'pyraminx': {
-      const { PyraminxPuzzleElement } = await import('@rubiks-cube-solver/rubiks-cube/puzzles/pyraminx')
-      PyraminxPuzzleElement.register()
-      return
-    }
-    case 'square1': {
-      const { Square1PuzzleElement } = await import('@rubiks-cube-solver/rubiks-cube/puzzles/square1')
-      Square1PuzzleElement.register()
-      return
-    }
-  }
 }
 
 async function runVisualizationAction(
@@ -321,57 +299,67 @@ function renderVisualizationElement(
       return (
         <rubiks-cube
           key={`cube-${visualization.cubeType}-${viewResetIndex}`}
-          className="block size-full brightness-[0.78] saturate-[0.9] contrast-[0.96]"
+          className='block size-full brightness-[0.78] saturate-[0.9] contrast-[0.96]'
           ref={puzzleRef as RefObject<RubiksCubeElement | null>}
-          animation-speed-ms="180"
-          animation-style="exponential"
-          camera-peek-angle-horizontal="0.62"
-          camera-peek-angle-vertical="0.55"
+          animation-speed-ms='180'
+          animation-style='exponential'
+          camera-peek-angle-horizontal='0.62'
+          camera-peek-angle-vertical='0.55'
           camera-radius={cubeCameraRadius[visualization.cubeType]}
           cube-type={visualization.cubeType}
-          piece-gap="1.045"
+          piece-gap='1.045'
         />
       )
     case 'megaminx':
       return (
         <megaminx-puzzle
           key={`megaminx-${viewResetIndex}`}
-          className="block size-full brightness-[0.86] saturate-[0.95] contrast-[0.98]"
+          className='block size-full brightness-[0.86] saturate-[0.95] contrast-[0.98]'
           ref={puzzleRef as RefObject<MegaminxPuzzleElement | null>}
-          animation-speed-ms="180"
-          animation-style="exponential"
-          camera-peek-angle-horizontal="0.55"
-          camera-peek-angle-vertical="0.55"
-          camera-radius="5.4"
-          visual-style="stickerless"
+          animation-speed-ms='180'
+          animation-style='exponential'
+          camera-peek-angle-horizontal='0.55'
+          camera-peek-angle-vertical='0.55'
+          camera-radius='5.4'
+          visual-style='stickerless'
         />
       )
     case 'pyraminx':
       return (
         <pyraminx-puzzle
           key={`pyraminx-${viewResetIndex}`}
-          className="block size-full brightness-[0.86] saturate-[0.98] contrast-[0.98]"
+          className='block size-full brightness-[0.86] saturate-[0.98] contrast-[0.98]'
           ref={puzzleRef as RefObject<PyraminxPuzzleElement | null>}
-          animation-speed-ms="180"
-          animation-style="exponential"
-          camera-field-of-view="56"
-          camera-peek-angle-horizontal="0.58"
-          camera-peek-angle-vertical="0.58"
-          camera-radius="4"
+          animation-speed-ms='180'
+          animation-style='exponential'
+          camera-field-of-view='56'
+          camera-peek-angle-horizontal='0.58'
+          camera-peek-angle-vertical='0.58'
+          camera-radius='4'
         />
       )
     case 'square1':
       return (
         <square1-puzzle
           key={`square1-${viewResetIndex}`}
-          className="block size-full brightness-[0.86] saturate-[0.98] contrast-[0.98]"
+          className='block size-full brightness-[0.86] saturate-[0.98] contrast-[0.98]'
           ref={puzzleRef as RefObject<Square1PuzzleElement | null>}
-          animation-speed-ms="180"
-          animation-style="exponential"
-          camera-peek-angle-horizontal="0.55"
-          camera-peek-angle-vertical="0.45"
-          camera-radius="4.4"
+          animation-speed-ms='180'
+          animation-style='exponential'
+          camera-peek-angle-horizontal='0.55'
+          camera-peek-angle-vertical='0.45'
+          camera-radius='4.4'
         />
       )
   }
+}
+
+function prefersReducedData(): boolean {
+  const connection = (
+    navigator as Navigator & {
+      connection?: { saveData?: boolean }
+    }
+  ).connection
+
+  return connection?.saveData === true
 }

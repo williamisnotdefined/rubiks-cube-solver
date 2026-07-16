@@ -21,5 +21,5 @@ describe('Switch', () => {
 function SwitchHarness() {
   const [checked, setChecked] = useState(false)
 
-  return <Switch aria-label="Inspection" checked={checked} onCheckedChange={setChecked} />
+  return <Switch aria-label='Inspection' checked={checked} onCheckedChange={setChecked} />
 }

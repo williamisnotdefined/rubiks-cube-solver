@@ -3,13 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@components/Button'
 import { Field } from '@components/Field'
 import { TextInput } from '@components/FormControls'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@components/Select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/Select'
 import type { PuzzleDefinition } from '@api/solver/types'
 import { maxNodesMillionOptions } from '../constants'
 import type { SolveFormSubmit } from '../validation'
@@ -70,17 +64,21 @@ export function SolveForm({
   }
 
   return (
-    <section className="solve-form w-full max-w-4xl px-6 py-6" data-testid="solve-form">
-      <form aria-label="Solve cube" className="grid gap-4" onSubmit={handleSubmit}>
-        <div className="grid gap-3 sm:grid-cols-[minmax(0,14rem)]" data-testid="puzzle-row">
-          <Field className="field-puzzle" label={t('solve.form.puzzle')}>
+    <section className='solve-form w-full max-w-4xl px-6 py-6' data-testid='solve-form'>
+      <form aria-label={t('solve.form.formLabel')} className='grid gap-4' onSubmit={handleSubmit}>
+        <div className='grid gap-3 sm:grid-cols-[minmax(0,14rem)]' data-testid='puzzle-row'>
+          <Field className='field-puzzle' controlId='solve-puzzle' label={t('solve.form.puzzle')}>
             <Select value={selectedPuzzleSlug} onValueChange={onPuzzleChange}>
-              <SelectTrigger aria-label={t('solve.form.puzzle')} className="puzzle-input">
+              <SelectTrigger className='puzzle-input' id='solve-puzzle'>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {puzzleOptions.map((puzzle) => (
-                  <SelectItem disabled={isPuzzleOptionDisabled(puzzle)} key={puzzle.slug} value={puzzle.slug}>
+                  <SelectItem
+                    disabled={isPuzzleOptionDisabled(puzzle)}
+                    key={puzzle.slug}
+                    value={puzzle.slug}
+                  >
                     {puzzle.label}
                   </SelectItem>
                 ))}
@@ -88,12 +86,17 @@ export function SolveForm({
             </Select>
           </Field>
         </div>
-        <div data-testid="scramble-row">
-          <Field className="field-primary" label={t('solve.form.scramble')}>
-            <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+        <div data-testid='scramble-row'>
+          <Field
+            className='field-primary'
+            controlId='solve-scramble'
+            label={t('solve.form.scramble')}
+          >
+            <div className='grid grid-cols-[minmax(0,1fr)_auto] gap-2'>
               <TextInput
-                autoComplete="off"
-                className="primary-input font-mono tracking-[0.04em]"
+                autoComplete='off'
+                className='primary-input font-mono tracking-[0.04em]'
+                id='solve-scramble'
                 placeholder={scramblePlaceholder}
                 spellCheck={false}
                 value={notation}
@@ -105,25 +108,41 @@ export function SolveForm({
             </div>
           </Field>
         </div>
-        <div className="grid gap-3 sm:grid-cols-[minmax(0,10rem)_minmax(0,12rem)_auto] sm:items-end" data-testid="limits-row">
-          <Field className="field-depth" label={t('solve.form.maxMoves')}>
+        <div
+          className='grid gap-3 sm:grid-cols-[minmax(0,10rem)_minmax(0,12rem)_auto] sm:items-end'
+          data-testid='limits-row'
+        >
+          <Field
+            className='field-depth'
+            controlId='solve-max-moves'
+            label={t('solve.form.maxMoves')}
+          >
             <TextInput
               aria-invalid={maxMovesInvalid || undefined}
-              className="depth-input text-center"
-              inputMode="numeric"
+              className='depth-input text-center'
+              inputMode='numeric'
+              id='solve-max-moves'
               max={maxMovesLimit}
-              min="0"
-              step="1"
-              type="number"
+              min='0'
+              step='1'
+              type='number'
               value={maxMovesInput}
               onChange={(event: ChangeEvent<HTMLInputElement>) => {
                 onMaxMovesChange(event.target.value)
               }}
             />
           </Field>
-          <Field className="field-nodes" label={t('solve.form.maxNodesMillion')}>
+          <Field
+            className='field-nodes'
+            controlId='solve-max-nodes'
+            label={t('solve.form.maxNodesMillion')}
+          >
             <Select value={maxNodesMillionInput} onValueChange={onMaxNodesMillionChange}>
-              <SelectTrigger aria-invalid={maxNodesMillionInvalid || undefined} aria-label={t('solve.form.maxNodesMillion')} className="nodes-input text-center">
+              <SelectTrigger
+                aria-invalid={maxNodesMillionInvalid || undefined}
+                className='nodes-input text-center'
+                id='solve-max-nodes'
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -135,7 +154,12 @@ export function SolveForm({
               </SelectContent>
             </Select>
           </Field>
-          <Button aria-label={buttonLoading ? t('common.loading') : undefined} className="w-full sm:w-auto" disabled={disabled} type="submit">
+          <Button
+            aria-label={buttonLoading ? t('common.loading') : undefined}
+            className='w-full sm:w-auto'
+            disabled={disabled}
+            type='submit'
+          >
             {buttonLoading ? t('common.loading') : t('solve.form.solve')}
           </Button>
         </div>
@@ -146,8 +170,6 @@ export function SolveForm({
 
 function isPuzzleOptionDisabled(puzzle: PuzzleDefinition): boolean {
   return (
-    puzzle.status === 'planned' ||
-    puzzle.status === 'disabled' ||
-    puzzle.strategyIds.length === 0
+    puzzle.status === 'planned' || puzzle.status === 'disabled' || puzzle.strategyIds.length === 0
   )
 }

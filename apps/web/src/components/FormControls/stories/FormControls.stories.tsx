@@ -8,7 +8,7 @@ const meta = {
     value: '',
   },
   component: TextInput,
-    title: 'Components/FormControls',
+  title: 'Components/FormControls',
 } satisfies Meta<typeof TextInput>
 
 export default meta

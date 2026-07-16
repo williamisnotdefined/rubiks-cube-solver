@@ -21,7 +21,9 @@ describe('ScanFaceReviewGrid', () => {
       /Sticker 1 Green, needs confirmation, uncertain color, maybe Red/,
     )
     expect(screen.getByTestId('scan-sticker-0')).toHaveTextContent('or R')
-    expect(screen.getByTestId('scan-sticker-1')).toHaveAccessibleName(/Sticker 2 Blue, uncertain color/)
+    expect(screen.getByTestId('scan-sticker-1')).toHaveAccessibleName(
+      /Sticker 2 Blue, uncertain color/,
+    )
     expect(screen.getByTestId('scan-sticker-1')).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByTestId('scan-sticker-2')).toHaveAccessibleName('Sticker 3')
 

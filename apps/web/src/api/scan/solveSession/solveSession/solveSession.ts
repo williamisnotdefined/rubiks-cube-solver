@@ -1,40 +1,71 @@
-import { postJsonResponse } from '@api/client'
+import { ApiRequestError, postJsonResponse } from '@api/client'
 import { normalizeSolveResponse } from '@api/solver/solveNotation/normalizeSolveResponse'
-import type { ApiSolveResponse } from '@api/solver/types'
 import type { ScanSessionResult, SolveScanSessionVariables } from '../../types'
-
-type RawScanSessionResult = Omit<ScanSessionResult, 'solve'> & {
-  solve?: ApiSolveResponse
-}
+import {
+  assertSolveScanSessionVariables,
+  genericApiErrorMessage,
+  parseScanSessionResult,
+  type RawScanSessionResult,
+} from '../../validation'
 
 export async function solveScanSession({
   faces,
   maxDepth,
   maxNodes,
   puzzleSlug,
+  signal,
   strategyId,
 }: SolveScanSessionVariables): Promise<ScanSessionResult> {
-  const path = puzzleSlug === undefined
-    ? '/scan/solve-session'
-    : `/puzzles/${encodeURIComponent(puzzleSlug)}/scan/solve-session`
-  const result = await postJsonResponse<RawScanSessionResult>(path, {
+  assertSolveScanSessionVariables({
     faces,
     maxDepth,
     maxNodes,
+    puzzleSlug,
+    signal,
     strategyId,
   })
 
-  if (result.payload !== undefined) {
-    return normalizeScanSessionResult(result.payload, result.requestElapsedMs)
+  const path =
+    puzzleSlug === undefined
+      ? '/scan/solve-session'
+      : `/puzzles/${encodeURIComponent(puzzleSlug)}/scan/solve-session`
+  const result = await postJsonResponse<unknown>(
+    path,
+    {
+      faces,
+      maxDepth,
+      maxNodes,
+      strategyId,
+    },
+    { signal },
+  )
+
+  const errorMessage = genericApiErrorMessage(result.payload)
+  if (!result.httpOk && errorMessage !== undefined) {
+    throw new ApiRequestError(errorMessage, result.status, result.payload)
   }
 
-  return {
-    ok: false,
-    status: result.httpOk ? 'api_error' : 'vision_unavailable',
-    message: result.statusText || 'The scan session request failed.',
-    manualTargets: [],
-    rescanFaces: [],
+  if (!result.httpOk && payloadClaimsSuccess(result.payload)) {
+    throw new ApiRequestError(
+      result.statusText || 'The scan session request failed.',
+      result.status,
+      result.payload,
+    )
   }
+
+  const payload = parseScanSessionResult(result.payload, puzzleSlug)
+
+  return normalizeScanSessionResult(payload, result.requestElapsedMs)
+}
+
+function payloadClaimsSuccess(payload: unknown): boolean {
+  return (
+    typeof payload === 'object' &&
+    payload !== null &&
+    !Array.isArray(payload) &&
+    'ok' in payload &&
+    payload.ok === true
+  )
 }
 
 function normalizeScanSessionResult(

@@ -35,14 +35,17 @@ export function ScanModalShell({
   }
 
   return (
-    <Dialog open onOpenChange={(open) => {
-      if (!open) {
-        requestClose()
-      }
-    }}>
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) {
+          requestClose()
+        }
+      }}
+    >
       <DialogContent
-        className="left-1/2 top-1/2 max-h-[calc(100vh-3rem)] w-[calc(100vw-1.5rem)] max-w-4xl -translate-x-1/2 -translate-y-1/2 overflow-auto border border-app-border bg-app-surface p-4 text-left text-app-text shadow-2xl sm:w-[calc(100vw-3rem)] sm:p-6"
-        overlayClassName="bg-app-bg/90"
+        className='left-1/2 top-1/2 max-h-[calc(100vh-3rem)] w-[calc(100vw-1.5rem)] max-w-4xl -translate-x-1/2 -translate-y-1/2 overflow-auto border border-app-border bg-app-surface p-4 text-left text-app-text shadow-2xl sm:w-[calc(100vw-3rem)] sm:p-6'
+        overlayClassName='bg-app-bg/90'
         overlayLabel={t('scan.modal.dismiss')}
         onEscapeKeyDown={(event) => {
           if (exitConfirmationVisible) {
@@ -55,19 +58,17 @@ export function ScanModalShell({
           }
         }}
       >
-        <div className="flex items-start justify-between gap-4">
-          <div className="grid gap-1">
+        <div className='flex items-start justify-between gap-4'>
+          <div className='grid gap-1'>
             <DialogTitle asChild>
-              <h2 className="text-lg font-extrabold uppercase tracking-[0.16em]">
+              <h2 className='text-lg font-extrabold uppercase tracking-[0.16em]'>
                 {t('scan.modal.title')}
               </h2>
             </DialogTitle>
             <DialogDescription asChild>
-              <p className="text-sm font-semibold text-app-muted">
-                {t('scan.modal.description')}
-              </p>
+              <p className='text-sm font-semibold text-app-muted'>{t('scan.modal.description')}</p>
             </DialogDescription>
-            <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
+            <p className='text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted'>
               {scanTileDetectorStatusMessage(
                 t,
                 visionOk,
@@ -76,7 +77,7 @@ export function ScanModalShell({
               )}
             </p>
           </div>
-          <Button size="sm" type="button" variant="secondary" onClick={requestClose}>
+          <Button size='sm' type='button' variant='secondary' onClick={requestClose}>
             {t('common.close')}
           </Button>
         </div>

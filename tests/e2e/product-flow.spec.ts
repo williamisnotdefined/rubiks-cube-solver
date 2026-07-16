@@ -16,8 +16,9 @@ test.describe('product solve flow', () => {
     await expect(page.getByText(/facelets/i)).toHaveCount(0)
 
     const cubeBox = await page.locator('.cube-stage').boundingBox()
-    expect(cubeBox?.width ?? 0).toBeLessThanOrEqual(300)
-    expect(cubeBox?.height ?? 0).toBeLessThanOrEqual(300)
+    expect(cubeBox).not.toBeNull()
+    expect(cubeBox!.width).toBeLessThanOrEqual(300)
+    expect(cubeBox!.height).toBeLessThanOrEqual(300)
     await expect
       .poll(() => page.locator('.cube-stage').evaluate((element) => getComputedStyle(element).borderRadius))
       .toBe('0px')
@@ -77,6 +78,10 @@ test.describe('product solve flow', () => {
     const input = page.getByLabel('Scramble')
     await expect(input).toBeEnabled({ timeout: 15_000 })
     const maxMoves = page.getByLabel('Max moves')
+    const cube = page.locator('.cube-stage rubiks-cube')
+
+    await page.getByRole('button', { name: 'Preparing cube' }).click()
+    await expect(cube).toBeVisible({ timeout: cubeActivationTimeout })
 
     await input.fill('R U')
     await maxMoves.fill('2')
@@ -92,7 +97,6 @@ test.describe('product solve flow', () => {
     await expect(details).toContainText('replay verified')
     await page.getByRole('button', { name: 'Close' }).click()
 
-    const cube = page.locator('.cube-stage rubiks-cube')
     const step0State = await cubeState(cube)
     const range = page.getByLabel('Solution step')
     await expect(range).toHaveAttribute('type', 'range')

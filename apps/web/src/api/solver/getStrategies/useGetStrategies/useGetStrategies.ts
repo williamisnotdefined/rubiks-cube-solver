@@ -9,7 +9,7 @@ type UseGetStrategiesOptions = {
 export function useGetStrategies({ enabled = true }: UseGetStrategiesOptions = {}) {
   return useQuery({
     enabled,
-    queryFn: getStrategies,
+    queryFn: ({ signal }) => getStrategies(signal),
     queryKey: solverQueryKeys.strategies(),
     retry: false,
   })

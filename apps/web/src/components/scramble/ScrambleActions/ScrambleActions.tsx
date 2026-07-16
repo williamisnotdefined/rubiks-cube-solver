@@ -11,11 +11,11 @@ export function ScrambleActions({ copied, onCopy, onNext }: ScrambleActionsProps
   const { t } = useTranslation()
 
   return (
-    <div className="grid gap-2 sm:grid-cols-2">
-      <Button type="button" variant="secondary" onClick={onNext}>
+    <div className='grid gap-2 sm:grid-cols-2'>
+      <Button type='button' variant='secondary' onClick={onNext}>
         {t('timer.scramble.next')}
       </Button>
-      <Button type="button" variant="secondary" onClick={onCopy}>
+      <Button type='button' variant='secondary' onClick={onCopy}>
         {copied ? t('timer.scramble.copied') : t('timer.scramble.copy')}
       </Button>
     </div>

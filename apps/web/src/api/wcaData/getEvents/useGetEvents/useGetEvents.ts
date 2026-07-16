@@ -4,7 +4,7 @@ import { getWcaEvents } from '../getEvents'
 
 export function useGetWcaEvents() {
   return useQuery({
-    queryFn: getWcaEvents,
+    queryFn: ({ signal }) => getWcaEvents(signal),
     queryKey: wcaDataQueryKeys.events(),
     retry: false,
   })

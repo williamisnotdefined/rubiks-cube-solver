@@ -1,4 +1,4 @@
-import type { Dispatch, RefObject, SetStateAction } from 'react'
+import { useEffect, useRef, type Dispatch, type RefObject, type SetStateAction } from 'react'
 import type { TFunction } from 'i18next'
 import { useAnalyzeScanFace, type AnalyzeScanFaceResponse } from '@api/scan'
 import type { ScanFaceSymbol } from '@api/solver/types'
@@ -24,6 +24,7 @@ type UseManualScanCaptureOptions = {
   getAnalysisMessage?: (analysis: AnalyzeScanFaceResponse) => string | undefined
   gridSize: 2 | 3
   liveTemporalConsensus: TemporalFaceConsensus
+  revisionRef: RefObject<number>
   onFaceCleared?: (face: ScanFaceSymbol) => void
   resetLiveAutoFill: () => void
   setCapturing: Dispatch<SetStateAction<boolean>>
@@ -40,6 +41,7 @@ export function useManualScanCapture({
   getAnalysisMessage,
   gridSize,
   liveTemporalConsensus,
+  revisionRef,
   onFaceCleared,
   resetLiveAutoFill,
   setCapturing,
@@ -50,6 +52,18 @@ export function useManualScanCapture({
   videoElementRef,
 }: UseManualScanCaptureOptions) {
   const analyzeScanFace = useAnalyzeScanFace()
+  const controllerRef = useRef<AbortController | undefined>(undefined)
+  const requestIdRef = useRef(0)
+
+  function abortCapture() {
+    requestIdRef.current += 1
+    controllerRef.current?.abort()
+    controllerRef.current = undefined
+    analyzeScanFace.reset()
+    setCapturing(false)
+  }
+
+  useEffect(() => () => controllerRef.current?.abort(), [])
 
   async function handleTakePhoto() {
     if (videoElementRef.current === null || camera.status !== 'ready') {
@@ -57,7 +71,14 @@ export function useManualScanCapture({
       return
     }
 
-    const temporalConsensusSnapshot = liveTemporalConsensus.framesSeen > 0 ? liveTemporalConsensus : undefined
+    abortCapture()
+    const requestId = requestIdRef.current + 1
+    const revision = revisionRef.current
+    const controller = new AbortController()
+    requestIdRef.current = requestId
+    controllerRef.current = controller
+    const temporalConsensusSnapshot =
+      liveTemporalConsensus.framesSeen > 0 ? liveTemporalConsensus : undefined
     resetLiveAutoFill()
     setCapturing(true)
     onFaceCleared?.(currentFaceSymbol)
@@ -73,8 +94,10 @@ export function useManualScanCapture({
 
     try {
       const capture = await captureScanImage(videoElementRef.current, camera.stream)
-      if (capture === undefined) {
-        setMessage(t('scan.messages.cameraFrameFailed'))
+      if (capture === undefined || requestIsObsolete()) {
+        if (capture === undefined && !requestIsObsolete()) {
+          setMessage(t('scan.messages.cameraFrameFailed'))
+        }
         return
       }
 
@@ -86,7 +109,11 @@ export function useManualScanCapture({
         expectedCenter: currentFaceSymbol,
         gridSize,
         image: capture.photoDataUrl,
+        signal: controller.signal,
       })
+      if (requestIsObsolete()) {
+        return
+      }
       const nextStickers = scanStickersFromAnalysis(analysis, currentFaceSymbol, stickersPerFace)
 
       if (!isScanFaceComplete(nextStickers, stickersPerFace)) {
@@ -132,6 +159,9 @@ export function useManualScanCapture({
 
       setMessage([analysisMessage, detectionMessage].filter(Boolean).join(' '))
     } catch (error) {
+      if (requestIsObsolete()) {
+        return
+      }
       setCurrentDraft({
         analysis: undefined,
         autoCapture: undefined,
@@ -144,9 +174,20 @@ export function useManualScanCapture({
       })
       setMessage(error instanceof Error ? error.message : t('scan.messages.analysisFailed'))
     } finally {
-      setCapturing(false)
+      if (requestIdRef.current === requestId && revisionRef.current === revision) {
+        controllerRef.current = undefined
+        setCapturing(false)
+      }
+    }
+
+    function requestIsObsolete() {
+      return (
+        controller.signal.aborted ||
+        requestIdRef.current !== requestId ||
+        revisionRef.current !== revision
+      )
     }
   }
 
-  return { analyzeScanFace, handleTakePhoto }
+  return { abortCapture, analyzeScanFace, handleTakePhoto }
 }

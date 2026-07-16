@@ -42,6 +42,7 @@
     },
     "table": {
       "algorithm": "アルゴリズム",
+      "caption": "{{name}} のアルゴリズムケース",
       "case": "ケース",
       "name": "名前",
       "source": "ソース"
@@ -655,6 +656,68 @@
     "retry": "もう一度試してください",
     "title": "何か問題が発生しました"
   },
+  "worldRecords": {
+    "kicker": "記録とデータ",
+    "description": "選手、競技会、試技、公式スクランブル候補を含む WCA 世界ランキング記録です。",
+    "dataset": "データセット：{{date}}",
+    "loadError": "WCA データ API から世界記録を読み込めませんでした。",
+    "moves": "{{count}} 手",
+    "unknown": "不明",
+    "filters": {
+      "search": "検索",
+      "searchPlaceholder": "選手、WCA ID、国",
+      "event": "種目",
+      "type": "種類",
+      "reset": "リセット"
+    },
+    "types": { "all": "すべての種類", "single": "単発", "average": "平均" },
+    "table": {
+      "caption": "選択した条件に一致する WCA 世界記録",
+      "rank": "順位",
+      "athlete": "選手",
+      "result": "記録",
+      "type": "種類",
+      "competition": "競技会",
+      "scramble": "スクランブル",
+      "empty": "条件に一致する世界記録はありません。"
+    },
+    "pagination": {
+      "label": "世界記録のページ移動",
+      "rowsOption": "{{count}} 行",
+      "rowsPerPage": "1ページの行数",
+      "pageOf": "{{total}} ページ中 {{current}} ページ",
+      "first": "最初のページ",
+      "previous": "前のページ",
+      "next": "次のページ",
+      "last": "最後のページ",
+      "page": "{{page}} ページ"
+    },
+    "scramble": {
+      "unavailable": "利用不可",
+      "candidates": "候補 {{count}} 件",
+      "candidateLabel": "グループ {{group}} · スクランブル {{number}}",
+      "exactDescription": "この記録は WCA エクスポート内の1つの公式スクランブルに対応します。",
+      "ambiguousDescription": "WCA エクスポートには選手のグループ情報がないため、以下が候補です。",
+      "unavailableDescription": "公式スクランブル候補を関連付けられませんでした。"
+    },
+    "athlete": {
+      "unknownCountry": "国不明",
+      "competitions": "競技会",
+      "solves": "試技",
+      "records": "記録",
+      "medals": "メダル",
+      "selectedResult": "選択したランキング記録",
+      "worldRank": "世界 {{rank}} 位",
+      "continentRank": "大陸 {{rank}} 位",
+      "countryRank": "国内 {{rank}} 位",
+      "competitionUnavailable": "競技会の詳細は利用できません。",
+      "attemptsUnavailable": "試技の詳細は利用できません。",
+      "unknownRound": "ラウンド不明",
+      "unknownFormat": "形式不明",
+      "scrambleEvidence": "スクランブル情報",
+      "openProfile": "WCA プロフィールを開く"
+    }
+  },
   "navigation": {
     "allAlgorithms": "すべてのアルゴリズム",
     "algorithms": "アルゴリズム",
@@ -683,7 +746,7 @@
     "themeLight": "ライト",
     "themeSystem": "システム",
     "timer": "タイマー",
-    "worldRecords": "World Records"
+    "worldRecords": "世界記録"
   },
   "notations": {
     "groups": {
@@ -706,6 +769,7 @@
       "preparingVisualization": "ビジュアライゼーションを準備中",
       "reset": "Reset",
       "underConstruction": "準備中",
+      "title": "{{puzzle}} の記法",
       "visualizationLabel": "{{puzzle}} 記法ビジュアライゼーション"
     }
   },
@@ -1075,6 +1139,7 @@
       }
     },
     "form": {
+      "formLabel": "パズルを解く",
       "maxMoves": "最大移動数",
       "maxNodesMillion": "最大ノード数 (M)",
       "puzzle": "パズル",
@@ -1093,6 +1158,8 @@
       "solved": "解決しました"
     },
     "result": {
+      "movesLabel": "解法の手順",
+      "regionLabel": "解法結果",
       "foundIn": "{{elapsed}} での応答",
       "seeMore": "もっと見る",
       "solved": "解決済み",

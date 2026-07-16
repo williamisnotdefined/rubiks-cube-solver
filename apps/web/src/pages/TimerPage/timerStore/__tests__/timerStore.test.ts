@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { TimerSolve } from '../../types'
-import { useTimerStore } from '../timerStore'
+import { useTimerSettingsStore } from '../../timerSettingsStore/timerSettingsStore'
+import { createTimerId, useTimerStore } from '../timerStore'
 
 describe('timerStore', () => {
   beforeEach(() => {
+    vi.unstubAllGlobals()
     localStorage.clear()
     useTimerStore.getState().resetTimerStore()
     vi.restoreAllMocks()
@@ -30,14 +32,18 @@ describe('timerStore', () => {
   })
 
   it('creates, renames, activates, and changes session event', () => {
-    vi.spyOn(Date, 'now').mockReturnValue(123)
+    vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue(
+      '00000000-0000-4000-8000-000000000001',
+    )
 
     useTimerStore.getState().createSession('OH practice', '222')
 
-    expect(useTimerStore.getState().activeSessionId).toBe('timer-session-123')
+    expect(useTimerStore.getState().activeSessionId).toBe(
+      'timer-session-00000000-0000-4000-8000-000000000001',
+    )
     expect(useTimerStore.getState().sessions.at(-1)).toEqual({
       eventId: '222',
-      id: 'timer-session-123',
+      id: 'timer-session-00000000-0000-4000-8000-000000000001',
       name: 'OH practice',
       solves: [],
     })
@@ -132,6 +138,223 @@ describe('timerStore', () => {
     expect(
       useTimerStore.getState().sessions.find((session) => session.id === emptySessionId)?.solves,
     ).toEqual([])
+  })
+
+  it('migrates valid legacy data and repairs an invalid active session id', async () => {
+    const persistedSolve = solve('persisted-solve', 9_000)
+    localStorage.setItem(
+      'rubiks-timer-sessions',
+      JSON.stringify({
+        state: {
+          activeSessionId: 'missing-session',
+          sessions: [
+            {
+              eventId: '333',
+              id: 'persisted-session',
+              name: 'Persisted',
+              solves: [persistedSolve, { id: 'corrupt-solve' }],
+            },
+          ],
+        },
+        version: 0,
+      }),
+    )
+
+    await useTimerStore.persist.rehydrate()
+
+    expect(useTimerStore.getState().activeSessionId).toBe('persisted-session')
+    expect(useTimerStore.getState().sessions).toEqual([
+      {
+        eventId: '333',
+        id: 'persisted-session',
+        name: 'Persisted',
+        solves: [persistedSolve],
+      },
+    ])
+  })
+
+  it('preserves legacy event history while the operational event selection falls back', async () => {
+    const legacySolve = { ...solve('legacy-solve', 9_000), eventId: 'legacy-solve-event' }
+    const migrateTimer = useTimerStore.persist.getOptions().migrate
+    const migrateSettings = useTimerSettingsStore.persist.getOptions().migrate
+    const migratedTimer = (await migrateTimer?.(
+      {
+        activeSessionId: 'legacy-session',
+        sessions: [
+          {
+            eventId: 'legacy-session-event',
+            id: 'legacy-session',
+            name: 'Legacy history',
+            solves: [legacySolve],
+          },
+        ],
+      },
+      0,
+    )) as { activeSessionId: string; sessions: Array<{ eventId: string; solves: TimerSolve[] }> }
+    const migratedSettings = (await migrateSettings?.(
+      {
+        holdToStartMs: 450,
+        inspectionEnabled: false,
+        selectedEventId: 'legacy-session-event',
+        showMilliseconds: false,
+      },
+      0,
+    )) as { selectedEventId: string }
+
+    expect(migratedTimer.activeSessionId).toBe('legacy-session')
+    expect(migratedTimer.sessions).toEqual([
+      expect.objectContaining({
+        eventId: 'legacy-session-event',
+        solves: [legacySolve],
+      }),
+    ])
+    expect(migratedSettings.selectedEventId).toBe('333')
+  })
+
+  it('recovers from an empty persisted session list', async () => {
+    localStorage.setItem(
+      'rubiks-timer-sessions',
+      JSON.stringify({
+        state: { activeSessionId: '', sessions: [] },
+        version: 1,
+      }),
+    )
+
+    await useTimerStore.persist.rehydrate()
+
+    expect(useTimerStore.getState().activeSessionId).toBe('timer-session-default')
+    expect(useTimerStore.getState().sessions).toEqual([
+      expect.objectContaining({ id: 'timer-session-default', solves: [] }),
+    ])
+  })
+
+  it('repairs duplicate persisted session and solve ids without losing valid records', async () => {
+    vi.spyOn(globalThis.crypto, 'randomUUID')
+      .mockReturnValueOnce('00000000-0000-4000-8000-000000000010')
+      .mockReturnValueOnce('00000000-0000-4000-8000-000000000011')
+      .mockReturnValueOnce('00000000-0000-4000-8000-000000000012')
+    const firstSolve = solve('duplicate-solve', 1_000)
+    const secondSolve = solve('duplicate-solve', 2_000)
+    const thirdSolve = solve('duplicate-solve', 3_000)
+    localStorage.setItem(
+      'rubiks-timer-sessions',
+      JSON.stringify({
+        state: {
+          activeSessionId: 'duplicate-session',
+          sessions: [
+            {
+              eventId: '333',
+              id: 'duplicate-session',
+              name: 'First',
+              solves: [firstSolve, secondSolve],
+            },
+            {
+              eventId: '222',
+              id: 'duplicate-session',
+              name: 'Second',
+              solves: [thirdSolve],
+            },
+          ],
+        },
+        version: 0,
+      }),
+    )
+
+    await useTimerStore.persist.rehydrate()
+
+    const state = useTimerStore.getState()
+    expect(state.activeSessionId).toBe('duplicate-session')
+    expect(state.sessions).toHaveLength(2)
+    expect(new Set(state.sessions.map((session) => session.id)).size).toBe(2)
+    expect(state.sessions.flatMap((session) => session.solves)).toHaveLength(3)
+    expect(
+      new Set(state.sessions.flatMap((session) => session.solves.map((entry) => entry.id))).size,
+    ).toBe(3)
+  })
+
+  it('rejects persisted non-finite, negative, empty, and incorrectly typed solve data', async () => {
+    const validSolve = solve('valid-solve', 1_000)
+    const migrate = useTimerStore.persist.getOptions().migrate
+    const migrated = (await migrate?.(
+      {
+        activeSessionId: 'valid-session',
+        sessions: [
+          {
+            eventId: '333',
+            id: 'valid-session',
+            name: 'Valid',
+            solves: [
+              validSolve,
+              { ...validSolve, endedAt: Number.NaN, id: 'nan-ended-at' },
+              { ...validSolve, id: 'infinite-raw-time', rawTimeMs: Number.POSITIVE_INFINITY },
+              { ...validSolve, id: 'negative-time', rawTimeMs: -1 },
+              { ...validSolve, eventId: '', id: 'empty-event' },
+              { ...validSolve, eventId: 333, id: 'non-string-event' },
+              { ...validSolve, id: '', rawTimeMs: 1_000 },
+              { ...validSolve, id: 'unsupported-penalty', penalty: 'invalid' },
+              { ...validSolve, finalTimeMs: null, id: 'inconsistent-final-time' },
+            ],
+          },
+          { eventId: '', id: 'empty-event-session', name: 'Invalid', solves: [] },
+          { eventId: 333, id: 'non-string-event-session', name: 'Invalid', solves: [] },
+        ],
+      },
+      0,
+    )) as { activeSessionId: string; sessions: Array<{ solves: TimerSolve[] }> }
+
+    expect(migrated.sessions).toHaveLength(1)
+    expect(migrated.sessions[0]?.solves).toEqual([validSolve])
+  })
+
+  it('mutates only the first matching session and solve when runtime state has duplicate ids', () => {
+    const firstSolve = solve('duplicate-solve', 1_000)
+    const secondSolve = solve('duplicate-solve', 2_000)
+    useTimerStore.setState({
+      activeSessionId: 'duplicate-session',
+      sessions: [
+        { eventId: '333', id: 'duplicate-session', name: 'First', solves: [firstSolve] },
+        { eventId: '333', id: 'duplicate-session', name: 'Second', solves: [secondSolve] },
+      ],
+    })
+
+    useTimerStore.getState().addSolve(solve('added-solve', 3_000))
+    useTimerStore.getState().updateSolvePenalty('duplicate-solve', 'plus2')
+
+    expect(useTimerStore.getState().sessions[0]?.solves).toEqual([
+      { ...firstSolve, finalTimeMs: 3_000, penalty: 'plus2' },
+      solve('added-solve', 3_000),
+    ])
+    expect(useTimerStore.getState().sessions[1]?.solves).toEqual([secondSolve])
+
+    useTimerStore.getState().deleteSolve('duplicate-solve')
+
+    expect(useTimerStore.getState().sessions[0]?.solves.map((entry) => entry.id)).toEqual([
+      'added-solve',
+    ])
+    expect(useTimerStore.getState().sessions[1]?.solves).toEqual([secondSolve])
+  })
+
+  it('uses secure random values when randomUUID is unavailable', () => {
+    vi.stubGlobal('crypto', {
+      getRandomValues: (values: Uint32Array) => {
+        values.set([1, 2, 3, 4])
+        return values
+      },
+    })
+
+    expect(createTimerId('session')).toBe('timer-session-00000001000000020000000300000004')
+  })
+
+  it('uses a unique compatible fallback when Web Crypto is unavailable', () => {
+    vi.stubGlobal('crypto', {})
+    vi.spyOn(Date, 'now').mockReturnValue(123)
+
+    const firstId = createTimerId('session')
+    const secondId = createTimerId('session')
+
+    expect(firstId).toMatch(/^timer-session-123-\d+$/)
+    expect(secondId).toMatch(/^timer-session-123-\d+$/)
+    expect(secondId).not.toBe(firstId)
   })
 })
 

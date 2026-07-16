@@ -26,9 +26,7 @@ const config: StorybookConfig = {
           },
           {
             find: /^three\/examples\/jsm\/Addons\.js$/,
-            replacement: fileURLToPath(
-              new URL('../src/vendor/three-addons.js', import.meta.url),
-            ),
+            replacement: fileURLToPath(new URL('../src/vendor/three-addons.js', import.meta.url)),
           },
           { find: '@api', replacement: fileURLToPath(new URL('../src/api', import.meta.url)) },
           {

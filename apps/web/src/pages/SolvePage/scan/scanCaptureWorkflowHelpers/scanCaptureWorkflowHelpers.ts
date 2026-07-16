@@ -10,7 +10,10 @@ import {
 } from '../scanState'
 import type { TemporalFaceConsensus } from '../scanTemporalConsensus'
 
-export function currentDraftHasReviewContent(draft: ScanFaceDraft, centerIndex: number | undefined): boolean {
+export function currentDraftHasReviewContent(
+  draft: ScanFaceDraft,
+  centerIndex: number | undefined,
+): boolean {
   return (
     draft.photoDataUrl !== undefined ||
     draft.analysis !== undefined ||
@@ -18,7 +21,10 @@ export function currentDraftHasReviewContent(draft: ScanFaceDraft, centerIndex: 
   )
 }
 
-export function scanDraftsHaveProgress(drafts: ScanFaceDrafts, centerIndex: number | undefined): boolean {
+export function scanDraftsHaveProgress(
+  drafts: ScanFaceDrafts,
+  centerIndex: number | undefined,
+): boolean {
   return scanFaceOrder.some(({ symbol }) => {
     const draft = drafts[symbol]
 
@@ -70,12 +76,15 @@ export function scanAutoCaptureMetadata(
     stableFrameCount: consensus.framesUsed,
     temporalAgreement: consensus.temporalAgreement,
     tileConfidence: consensus.tileConfidence,
-    tileDetections: analysis.tileDetections!.filter((detection) => detection.symbol !== 'face').length,
+    tileDetections: analysis.tileDetections!.filter((detection) => detection.symbol !== 'face')
+      .length,
     triggeredAt: new Date().toISOString(),
   }
 }
 
-export function rejectedCaptureReason(analysis: AnalyzeScanFaceResponse): 'empty_stickers' | 'partial_tiles' {
+export function rejectedCaptureReason(
+  analysis: AnalyzeScanFaceResponse,
+): 'empty_stickers' | 'partial_tiles' {
   return (analysis.tileDetections?.length ?? 0) > 0 || analysis.stickers.length > 0
     ? 'partial_tiles'
     : 'empty_stickers'

@@ -1,5 +1,10 @@
-import { postJsonResponse } from '@api/client'
+import { ApiRequestError, postJsonResponse } from '@api/client'
 import type { AnalyzeScanFaceResponse, AnalyzeScanFaceVariables } from '../../types'
+import {
+  assertAnalyzeScanFaceVariables,
+  genericApiErrorMessage,
+  parseAnalyzeScanFaceResponse,
+} from '../../validation'
 
 export async function analyzeScanFace({
   expectedCenter,
@@ -7,30 +12,33 @@ export async function analyzeScanFace({
   image,
   signal,
 }: AnalyzeScanFaceVariables): Promise<AnalyzeScanFaceResponse> {
-  const result = await postJsonResponse<AnalyzeScanFaceResponse>('/scan/analyze-face', {
-    expectedCenter,
-    gridSize,
-    image,
-  }, {
-    signal,
-  })
+  assertAnalyzeScanFaceVariables({ expectedCenter, gridSize, image, signal })
 
-  if (result.payload !== undefined) {
-    return result.payload
+  const result = await postJsonResponse<unknown>(
+    '/scan/analyze-face',
+    {
+      expectedCenter,
+      gridSize,
+      image,
+    },
+    {
+      signal,
+    },
+  )
+
+  const errorMessage = genericApiErrorMessage(result.payload)
+  if (!result.httpOk && errorMessage !== undefined) {
+    throw new ApiRequestError(errorMessage, result.status, result.payload)
   }
 
-  return {
-    ok: false,
-    status: result.httpOk ? 'vision_error' : 'vision_unavailable',
-    message: result.statusText || 'The scan analysis request failed.',
-    centerMismatch: false,
-    confidence: 0,
-    detectedCenterConfidence: 0,
-    faceConfidence: 0,
-    detectionMode: 'rejected',
-    stickers: [],
-    tileDetections: [],
-    qualityWarnings: [],
-    warnings: [],
+  const payload = parseAnalyzeScanFaceResponse(result.payload, gridSize)
+  if (!result.httpOk && payload.ok) {
+    throw new ApiRequestError(
+      result.statusText || 'The scan analysis request failed.',
+      result.status,
+      result.payload,
+    )
   }
+
+  return payload
 }

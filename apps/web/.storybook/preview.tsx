@@ -1,9 +1,14 @@
 import type { Decorator, Preview } from '@storybook/react-vite'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import '../src/i18n/i18n'
+import i18n from '../src/i18n/i18n'
 import '../src/index.css'
 
-const withAppProviders: Decorator = (Story) => {
+const withAppProviders: Decorator = (Story, context) => {
+  const locale = String(context.globals.locale ?? 'en')
+  const theme = String(context.globals.theme ?? 'light')
+  void i18n.changeLanguage(locale)
+  document.documentElement.dataset.theme = theme
+  document.documentElement.lang = locale
   const queryClient = new QueryClient({
     defaultOptions: {
       mutations: {
@@ -35,6 +40,27 @@ const preview: Preview = {
       },
     },
     layout: 'centered',
+    viewport: {
+      defaultViewport: 'responsive',
+    },
+  },
+  globalTypes: {
+    locale: {
+      defaultValue: 'en',
+      name: 'Locale',
+      toolbar: {
+        icon: 'globe',
+        items: ['en', 'es', 'pt-BR', 'it', 'de', 'fr', 'ru', 'zh', 'ja'],
+      },
+    },
+    theme: {
+      defaultValue: 'light',
+      name: 'Theme',
+      toolbar: {
+        icon: 'paintbrush',
+        items: ['light', 'dark'],
+      },
+    },
   },
 }
 

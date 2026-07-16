@@ -24,14 +24,19 @@ describe('solve messages', () => {
   it('adds useful failure details', () => {
     expect(solveErrorDetail(failure('not_found_within_limits'), i18n.t)).toContain('12,345 nodes')
     expect(
-      solveErrorDetail({
-        ...failure('invalid_input'),
-        errorKind: 'unknown_corner_stickers',
-      }, i18n.t),
+      solveErrorDetail(
+        {
+          ...failure('invalid_input'),
+          errorKind: 'unknown_corner_stickers',
+        },
+        i18n.t,
+      ),
     ).toContain('capture green, red, blue, and orange with white on top')
     expect(solveErrorDetail(failure('invalid_limits'), i18n.t)).toBe('invalid_limits message')
     expect(solveErrorDetail(failure('request_too_large'), i18n.t)).toBe('request_too_large message')
-    expect(solveErrorDetail(failure('unverified_solution'), i18n.t)).toBe('unverified_solution message')
+    expect(solveErrorDetail(failure('unverified_solution'), i18n.t)).toBe(
+      'unverified_solution message',
+    )
     expect(solveErrorDetail(failure('generated_tables_unavailable'), i18n.t)).toContain(
       'Generate native pruning tables',
     )

@@ -47,6 +47,20 @@ describe('useTouchTimer', () => {
     expect(timer.beginHold).not.toHaveBeenCalled()
   })
 
+  it('does not handle pointer events from controls inside the timer display', () => {
+    const timer = timerMachine()
+    const preventDefault = vi.fn()
+    const button = document.createElement('button')
+    const { result } = renderHook(() => useTouchTimer(timer))
+
+    result.current.onPointerDown(pointerEvent({ pointerId: 7, preventDefault, target: button }))
+    result.current.onPointerUp(pointerEvent({ pointerId: 7, preventDefault, target: button }))
+
+    expect(preventDefault).not.toHaveBeenCalled()
+    expect(timer.beginHold).not.toHaveBeenCalled()
+    expect(timer.releaseHold).not.toHaveBeenCalled()
+  })
+
   it('keeps stable handlers while using the latest timer', () => {
     const firstTimer = timerMachine()
     const nextTimer = timerMachine()
@@ -88,11 +102,13 @@ function pointerEvent({
   preventDefault,
   releasePointerCapture,
   setPointerCapture,
+  target,
 }: {
   pointerId: number
   preventDefault: () => void
   releasePointerCapture?: (pointerId: number) => void
   setPointerCapture?: (pointerId: number) => void
+  target?: EventTarget
 }): PointerEvent<HTMLElement> {
   return {
     currentTarget: {
@@ -101,5 +117,6 @@ function pointerEvent({
     },
     pointerId,
     preventDefault,
+    target,
   } as PointerEvent<HTMLElement>
 }

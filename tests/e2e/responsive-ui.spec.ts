@@ -25,7 +25,8 @@ test.describe('responsive UI smoke', () => {
     await expect(cube).toBeVisible({ timeout: 15_000 })
 
     const box = await cube.boundingBox()
-    expect(box?.width ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(350)
-    expect(box?.height ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(350)
+    expect(box).not.toBeNull()
+    expect(box!.width).toBeLessThanOrEqual(350)
+    expect(box!.height).toBeLessThanOrEqual(350)
   })
 })

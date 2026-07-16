@@ -10,10 +10,13 @@ describe('useScanLiveAutofill', () => {
   it('preserves a draft that was confirmed before the queued autofill update runs', () => {
     const drafts = createInitialScanFaceDrafts(9)
     const setDrafts = vi.fn()
+    const acknowledgeAutoFill = vi.fn()
+    const onFaceCleared = vi.fn()
+    const setMessage = vi.fn()
 
     renderHook(() =>
       useScanLiveAutofill({
-        acknowledgeAutoFill: vi.fn(),
+        acknowledgeAutoFill,
         capturing: false,
         currentDraft: drafts.F,
         currentFaceSymbol: 'F',
@@ -26,9 +29,10 @@ describe('useScanLiveAutofill', () => {
           width: 480,
         },
         liveTemporalConsensus: readyConsensus,
+        onFaceCleared,
         photoDataUrl: undefined,
         setDrafts,
-        setMessage: vi.fn(),
+        setMessage,
         shouldAutoFill: true,
         stickersPerFace: 9,
         t: i18n.t,
@@ -50,6 +54,9 @@ describe('useScanLiveAutofill', () => {
     expect(queuedUpdate).toBeTypeOf('function')
     expect(queuedUpdate?.(confirmedDrafts)).toBe(confirmedDrafts)
     expect(confirmedDrafts.F.photoDataUrl).toBe('data:image/jpeg;base64,confirmed')
+    expect(acknowledgeAutoFill).not.toHaveBeenCalled()
+    expect(onFaceCleared).not.toHaveBeenCalled()
+    expect(setMessage).not.toHaveBeenCalled()
   })
 })
 

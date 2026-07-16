@@ -84,7 +84,9 @@ describe('SolveResult', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Solver details' })
     expect(within(dialog).getByText('2x2 PDB IDA*')).toBeInTheDocument()
     expect(within(dialog).getByText('replay not verified')).toBeInTheDocument()
-    expect(within(dialog).getByText(/The deterministic backend solver strategy/)).toBeInTheDocument()
+    expect(
+      within(dialog).getByText(/The deterministic backend solver strategy/),
+    ).toBeInTheDocument()
     expect(within(dialog).getByText(/no configured node cap/)).toBeInTheDocument()
 
     await user.keyboard('{Escape}')
@@ -94,7 +96,11 @@ describe('SolveResult', () => {
 
   it('renders solved states with no moves', () => {
     render(
-      <SolveResult error={null} result={{ ...successResult, length: 0, moves: [] }} solving={false} />,
+      <SolveResult
+        error={null}
+        result={{ ...successResult, length: 0, moves: [] }}
+        solving={false}
+      />,
     )
 
     expect(screen.getByText('Solved')).toBeInTheDocument()
@@ -102,17 +108,13 @@ describe('SolveResult', () => {
 
   it('renders loading and local validation states', () => {
     const { rerender } = render(
-      <SolveResult error={null} localValidationMessage="Max moves is required" solving />,
+      <SolveResult error={null} localValidationMessage='Max moves is required' solving />,
     )
 
     expect(screen.getByLabelText('Loading')).toBeInTheDocument()
 
     rerender(
-      <SolveResult
-        error={null}
-        localValidationMessage="Max moves is required"
-        solving={false}
-      />,
+      <SolveResult error={null} localValidationMessage='Max moves is required' solving={false} />,
     )
 
     expect(screen.getByText('Max moves is required')).toBeInTheDocument()

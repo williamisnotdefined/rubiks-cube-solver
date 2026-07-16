@@ -54,7 +54,7 @@ describe('useCubeVisualization', () => {
     vi.useFakeTimers()
     const cube = createFakeCube()
 
-    render(<HookHarness cube={cube} notation="" />)
+    render(<HookHarness cube={cube} notation='' />)
     await runVisualizationSync()
 
     expect(cube.reset).toHaveBeenCalledTimes(1)
@@ -65,7 +65,7 @@ describe('useCubeVisualization', () => {
     vi.useFakeTimers()
     const cube = createFakeCube()
 
-    render(<HookHarness cube={cube} notation="R U" />)
+    render(<HookHarness cube={cube} notation='R U' />)
     await runVisualizationSync()
 
     expect(cube.reset).toHaveBeenCalledTimes(1)
@@ -76,10 +76,10 @@ describe('useCubeVisualization', () => {
   it('animates appended moves after the first sync', async () => {
     vi.useFakeTimers()
     const cube = createFakeCube()
-    const { rerender } = render(<HookHarness cube={cube} notation="R" />)
+    const { rerender } = render(<HookHarness cube={cube} notation='R' />)
 
     await runVisualizationSync()
-    rerender(<HookHarness cube={cube} notation="R U" />)
+    rerender(<HookHarness cube={cube} notation='R U' />)
     await runVisualizationSync()
 
     expect(cube.reset).toHaveBeenCalledTimes(1)
@@ -91,7 +91,7 @@ describe('useCubeVisualization', () => {
     const cube = createFakeCube()
     const visualState = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB'
 
-    render(<HookHarness cube={cube} notation="R" visualState={visualState} />)
+    render(<HookHarness cube={cube} notation='R' visualState={visualState} />)
     await runVisualizationSync()
 
     expect(cube.reset).not.toHaveBeenCalled()
@@ -107,10 +107,10 @@ describe('useCubeVisualization', () => {
     render(
       <HookHarness
         cube={cube}
-        cubeType="Two"
-        notation="R"
+        cubeType='Two'
+        notation='R'
         visualState={visualState}
-        visualStateKind="cube2-facelets-v1"
+        visualStateKind='cube2-facelets-v1'
       />,
     )
     await runVisualizationSync()
@@ -130,10 +130,10 @@ describe('useCubeVisualization', () => {
     render(
       <HookHarness
         cube={cube}
-        cubeType="Two"
-        notation=""
+        cubeType='Two'
+        notation=''
         visualState={visualState}
-        visualStateKind="cube2-facelets-v1"
+        visualStateKind='cube2-facelets-v1'
       />,
     )
     await runVisualizationSync()
@@ -151,10 +151,10 @@ describe('useCubeVisualization', () => {
     render(
       <HookHarness
         cube={cube}
-        cubeType="Two"
-        notation=""
+        cubeType='Two'
+        notation=''
         visualState={visualState}
-        visualStateKind="cube2-facelets-v1"
+        visualStateKind='cube2-facelets-v1'
       />,
     )
     await runVisualizationSync()
@@ -171,10 +171,10 @@ describe('useCubeVisualization', () => {
     render(
       <HookHarness
         cube={cube}
-        cubeType="Two"
-        notation="R"
+        cubeType='Two'
+        notation='R'
         visualState={visualState}
-        visualStateKind="cube2-facelets-v1"
+        visualStateKind='cube2-facelets-v1'
       />,
     )
     await runVisualizationSync()
@@ -188,12 +188,7 @@ describe('useCubeVisualization', () => {
     const cube = createFakeCube()
 
     render(
-      <HookHarness
-        cube={cube}
-        notation="R"
-        visualState="unsupported"
-        visualStateKind="none"
-      />,
+      <HookHarness cube={cube} notation='R' visualState='unsupported' visualStateKind='none' />,
     )
     await runVisualizationSync()
 
@@ -209,10 +204,10 @@ describe('useCubeVisualization', () => {
     render(
       <HookHarness
         cube={cube}
-        cubeType="Two"
-        notation="R"
-        visualState="UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB"
-        visualStateKind="cube3-facelets-v1"
+        cubeType='Two'
+        notation='R'
+        visualState='UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB'
+        visualStateKind='cube3-facelets-v1'
       />,
     )
     await runVisualizationSync()
@@ -226,10 +221,10 @@ describe('useCubeVisualization', () => {
     vi.useFakeTimers()
     const cube = createFakeCube()
     const visualState = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB'
-    const { rerender } = render(<HookHarness cube={cube} notation="" visualState={visualState} />)
+    const { rerender } = render(<HookHarness cube={cube} notation='' visualState={visualState} />)
 
     await runVisualizationSync()
-    rerender(<HookHarness cube={cube} notation="R" visualState={visualState} />)
+    rerender(<HookHarness cube={cube} notation='R' visualState={visualState} />)
     await runVisualizationSync()
 
     expect(cube.setState).toHaveBeenCalledTimes(1)
@@ -240,7 +235,7 @@ describe('useCubeVisualization', () => {
     vi.useFakeTimers()
     const cube = createFakeCube()
 
-    render(<HookHarness cube={cube} notation="R Q" />)
+    render(<HookHarness cube={cube} notation='R Q' />)
     await runVisualizationSync()
 
     expect(cube.reset).not.toHaveBeenCalled()
@@ -251,7 +246,7 @@ describe('useCubeVisualization', () => {
     vi.useFakeTimers()
     const cube = createFakeCube()
 
-    render(<HookHarness cube={cube} enabled={false} notation="R" />)
+    render(<HookHarness cube={cube} enabled={false} notation='R' />)
     await runVisualizationSync()
 
     expect(cube.reset).not.toHaveBeenCalled()
@@ -261,7 +256,7 @@ describe('useCubeVisualization', () => {
   it('does nothing while the cube element is not attached', async () => {
     vi.useFakeTimers()
 
-    render(<HookHarness cube={null} notation="R" />)
+    render(<HookHarness cube={null} notation='R' />)
     await runVisualizationSync()
 
     expect(true).toBe(true)
@@ -277,10 +272,10 @@ describe('useCubeVisualization', () => {
           resolveFirstMove = resolve
         }),
     )
-    const { rerender } = render(<HookHarness cube={cube} notation="R U" />)
+    const { rerender } = render(<HookHarness cube={cube} notation='R U' />)
 
     await vi.advanceTimersByTimeAsync(0)
-    rerender(<HookHarness cube={cube} notation="R" revision={1} />)
+    rerender(<HookHarness cube={cube} notation='R' revision={1} />)
     resolveFirstMove()
     await Promise.resolve()
 

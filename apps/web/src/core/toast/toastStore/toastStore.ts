@@ -26,20 +26,22 @@ const toastLimit = 4
 
 export const useToastStore = create<ToastState>((set) => ({
   clearToasts: () => set({ toasts: [] }),
-  dismissToast: (id) => set((state) => ({
-    toasts: state.toasts.filter((toast) => toast.id !== id),
-  })),
-  showToast: (toast) => set((state) => ({
-    toasts: [
-      ...state.toasts,
-      {
-        id: createToastId(),
-        tone: toast.tone ?? 'neutral',
-        title: toast.title,
-        description: toast.description,
-      },
-    ].slice(-toastLimit),
-  })),
+  dismissToast: (id) =>
+    set((state) => ({
+      toasts: state.toasts.filter((toast) => toast.id !== id),
+    })),
+  showToast: (toast) =>
+    set((state) => ({
+      toasts: [
+        ...state.toasts,
+        {
+          id: createToastId(),
+          tone: toast.tone ?? 'neutral',
+          title: toast.title,
+          description: toast.description,
+        },
+      ].slice(-toastLimit),
+    })),
   toasts: [],
 }))
 

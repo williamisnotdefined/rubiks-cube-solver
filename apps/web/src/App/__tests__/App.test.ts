@@ -2,8 +2,20 @@ import { describe, expect, it } from 'vitest'
 import { activeRouteFromPath } from '../activeRouteFromPath'
 
 describe('activeRouteFromPath', () => {
-  it('marks WCA Data API pages as API navigation', () => {
-    expect(activeRouteFromPath('/api/wca-data')).toBe('api')
-    expect(activeRouteFromPath('/api/wca-data/')).toBe('api')
+  it.each([
+    ['/channels', 'channels'],
+    ['/sites', 'sites'],
+    ['/records', 'records'],
+    ['/records/333', 'records'],
+    ['/notations/3x3', 'notations'],
+    ['/algoritmos/3x3', 'algorithms'],
+    ['/timer', 'timer'],
+    ['/solve', 'solve'],
+  ] as const)('maps %s to the %s navigation item', (path, route) => {
+    expect(activeRouteFromPath(path)).toBe(route)
+  })
+
+  it('does not expose the removed WCA docs redirect as an app route', () => {
+    expect(activeRouteFromPath('/api/wca-data')).toBe('solve')
   })
 })

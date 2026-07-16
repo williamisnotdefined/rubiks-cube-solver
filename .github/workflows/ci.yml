@@ -4,6 +4,9 @@ on:
   push:
     branches: [main, autopilot/roadmap]
   pull_request:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -22,6 +25,7 @@ jobs:
     name: rust
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    if: github.event_name != 'schedule'
 
     steps:
       - name: Checkout
@@ -53,6 +57,7 @@ jobs:
     name: cargo-deny
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    if: github.event_name != 'schedule'
 
     steps:
       - name: Checkout
@@ -69,6 +74,7 @@ jobs:
     name: node
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    if: github.event_name != 'schedule'
 
     steps:
       - name: Checkout
@@ -98,8 +104,8 @@ jobs:
       - name: Test rubiks cube package coverage
         run: npm run test:coverage -w @rubiks-cube-solver/rubiks-cube
 
-      - name: Test web
-        run: npm run test -w @rubiks-cube-solver/web
+      - name: Test web coverage
+        run: npm run test:coverage -w @rubiks-cube-solver/web
 
       - name: Lint web
         run: npm run lint -w @rubiks-cube-solver/web
@@ -114,6 +120,7 @@ jobs:
     name: scanner
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    if: github.event_name != 'schedule'
 
     steps:
       - name: Checkout
@@ -158,6 +165,7 @@ jobs:
     name: docker
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    if: github.event_name != 'schedule'
     env:
       WCA_DATA_POSTGRES_PASSWORD: placeholder
 
@@ -194,6 +202,7 @@ jobs:
     name: e2e-smoke
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    if: github.event_name != 'schedule'
 
     steps:
       - name: Checkout
@@ -230,6 +239,53 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: playwright-smoke-report
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  e2e-cross-browser:
+    name: e2e-cross-browser
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install Rust toolchain
+        run: rustup toolchain install "$RUST_VERSION" --profile minimal
+
+      - name: Install Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache generated pruning tables
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
+        with:
+          path: crates/cube-engine/pruning-tables
+          key: ${{ runner.os }}-pruning-tables-format-v2-phase1-8-phase2-10-${{ hashFiles('Cargo.lock', 'crates/cube-engine/src/bin/generate_pruning_tables.rs', 'crates/cube-engine/src/search/pruning/**/*.rs', 'crates/cube-engine/src/search/two_phase/**/*.rs') }}
+          restore-keys: |
+            ${{ runner.os }}-pruning-tables-format-v2-phase1-8-phase2-10-
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: Run cross-browser E2E smoke
+        run: npm run test:e2e:cross-browser
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-cross-browser-report
           path: |
             playwright-report/
             test-results/

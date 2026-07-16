@@ -96,9 +96,10 @@ describe('useLiveScanPreview', () => {
   it('ignores preview responses that resolve after unmount', async () => {
     let resolveAnalysis: ((analysis: AnalyzeScanFaceResponse) => void) | undefined
     apiMocks.analyzeMutateAsync.mockImplementation(
-      () => new Promise<AnalyzeScanFaceResponse>((resolve) => {
-        resolveAnalysis = resolve
-      }),
+      () =>
+        new Promise<AnalyzeScanFaceResponse>((resolve) => {
+          resolveAnalysis = resolve
+        }),
     )
     const videoRef = { current: document.createElement('video') }
     const { result, unmount } = renderHook(() =>
@@ -123,14 +124,12 @@ describe('useLiveScanPreview', () => {
   it('ignores an in-flight preview response after scanning is disabled', async () => {
     let previewSignal: AbortSignal | undefined
     let resolveAnalysis: ((analysis: AnalyzeScanFaceResponse) => void) | undefined
-    apiMocks.analyzeMutateAsync.mockImplementation(
-      ({ signal }: { signal?: AbortSignal }) => {
-        previewSignal = signal
-        return new Promise<AnalyzeScanFaceResponse>((resolve) => {
-          resolveAnalysis = resolve
-        })
-      },
-    )
+    apiMocks.analyzeMutateAsync.mockImplementation(({ signal }: { signal?: AbortSignal }) => {
+      previewSignal = signal
+      return new Promise<AnalyzeScanFaceResponse>((resolve) => {
+        resolveAnalysis = resolve
+      })
+    })
     const videoRef = { current: document.createElement('video') }
     const { result, rerender } = renderHook(
       ({ enabled }) =>
@@ -178,7 +177,9 @@ describe('useLiveScanPreview', () => {
     }
 
     expect(result.current.shouldAutoFill).toBe(false)
-    expect(result.current.message).toBe('Detected another center color. Rotate to the expected face.')
+    expect(result.current.message).toBe(
+      'Detected another center color. Rotate to the expected face.',
+    )
   })
 
   it('does not track or auto-fill unsupported analysis modes', async () => {
@@ -402,7 +403,9 @@ describe('useLiveScanPreview', () => {
   })
 
   it('ignores abort errors from preview analysis', async () => {
-    apiMocks.analyzeMutateAsync.mockRejectedValue(Object.assign(new Error('aborted'), { name: 'AbortError' }))
+    apiMocks.analyzeMutateAsync.mockRejectedValue(
+      Object.assign(new Error('aborted'), { name: 'AbortError' }),
+    )
     const videoRef = { current: document.createElement('video') }
     const { result } = renderHook(() =>
       useLiveScanPreview({
@@ -417,7 +420,6 @@ describe('useLiveScanPreview', () => {
     expect(apiMocks.analyzeMutateAsync).toHaveBeenCalled()
     expect(result.current.status).toBe('searching')
   })
-
 })
 
 async function advancePreviewFrames(count: number) {
@@ -446,7 +448,8 @@ function stableAnalysis({
   tileDetections?: NonNullable<AnalyzeScanFaceResponse['tileDetections']>
   warnings?: string[]
 } = {}): AnalyzeScanFaceResponse {
-  const effectiveTileDetections = tileDetections ?? (detectionMode === 'tile_detector' ? stableTileDetections() : [])
+  const effectiveTileDetections =
+    tileDetections ?? (detectionMode === 'tile_detector' ? stableTileDetections() : [])
 
   return {
     centerMismatch,

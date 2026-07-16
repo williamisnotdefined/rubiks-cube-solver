@@ -10,7 +10,9 @@ const events: ScrambleEvent[] = [
   scrambleEvent({ group: 'Training', id: '333-mbld', label: '3x3 MBLD' }),
 ]
 
-function scrambleEvent(event: Pick<ScrambleEvent, 'group' | 'id' | 'label'> & Partial<ScrambleEvent>): ScrambleEvent {
+function scrambleEvent(
+  event: Pick<ScrambleEvent, 'group' | 'id' | 'label'> & Partial<ScrambleEvent>,
+): ScrambleEvent {
   return {
     defaultLength: 20,
     generator: 'threeByThreeRandomMove',
@@ -26,13 +28,7 @@ describe('ScrambleSelector', () => {
     const user = userEvent.setup()
     const onEventChange = vi.fn()
 
-    render(
-      <ScrambleSelector
-        events={events}
-        selectedEventId="333"
-        onEventChange={onEventChange}
-      />,
-    )
+    render(<ScrambleSelector events={events} selectedEventId='333' onEventChange={onEventChange} />)
 
     await user.click(screen.getByRole('combobox', { name: 'Event' }))
 

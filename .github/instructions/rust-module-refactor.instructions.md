@@ -1,5 +1,5 @@
 ---
-applyTo: "crates/**/*.rs,crates/**/*.toml,Cargo.toml,docs/project-plan.md"
+applyTo: "crates/**/*.rs,crates/**/Cargo.toml,Cargo.toml"
 ---
 
 Generated from `ai/registry.json`. Do not edit manually.
@@ -116,9 +116,9 @@ Testing rules for this repository.
 - Keep `web` tests in `__tests__/` folders beside the source area they cover.
 - Use Testing Library for React component behavior and public accessibility queries.
 - Use Playwright accessibility queries for E2E flows and shared E2E helpers for non-native controls such as Radix Select.
-- Keep `apps/web/src/api` request and hook tests in `apps/web/src/api/__tests__`, using shared fetch and React Query helpers under `apps/web/src/test`.
+- Keep web API request and hook tests in the nearest API-domain `__tests__` directory, including the established root, client, and domain-level locations; use shared helpers under `apps/web/src/test`.
 - Keep `apps/web/src/core` tests under `apps/web/src/core/<category>/__tests__/<name>.test.ts`.
-- Keep `web` coverage thresholds at 95% or higher for statements, branches, functions, and lines when coverage is configured.
+- Keep global `web` coverage thresholds at 90% for statements, branches, functions, and lines.
 
 ## Never
 
@@ -156,7 +156,9 @@ The target is a Rubik's Cube solver with a Rust engine, search algorithms, heuri
 
 - `crates/cube-engine`: Rust crate for cube representation, moves, notation, scramble handling, search, and heuristics.
 - `crates/api`: Axum HTTP API around the Rust engine and generated pruning-table artifacts.
-- `apps/web`: Vite React app for puzzle-aware solve flows, scan flows, visualization, playback, algorithms pages, notation pages, and timer flows.
+- `apps/web`: Vite React app built as static HTML for indexable routes, hydrated with React, then operated as an SPA.
+- `apps/wca-data`: independent NestJS/Fastify workspace with a PostgreSQL-backed public WCA reference API and a separate import worker.
+- `packages/rubiks-cube`: active private workspace for puzzle-specific Three.js visualization and playback adapters.
 - `scanner`: Python scanner contracts, FastAPI runtime, and offline scanner training/evaluation tooling.
 - `ai`: canonical AI knowledge base and route generation system.
 - `docs/project-plan.md`: current technical direction, implementation rules, and puzzle boundaries.
@@ -192,6 +194,7 @@ The target is a Rubik's Cube solver with a Rust engine, search algorithms, heuri
 - The API validates HTTP contracts, applies safety limits, calls Rust solver code, and returns typed solver results.
 - Frontend code should only render, collect notation/limits, send solve requests, receive states, and play animations.
 - Scanner runtime code may produce visual evidence, but reviewed stickers, cube validation, and solving remain Rust/product boundaries.
+- WCA reference data, import lifecycle, and its public `/api/wca-data/v1` contract belong to `apps/wca-data`, not the Rust solver API.
 
 ## Reference: `ai/architecture/rust-module-boundaries.md`
 

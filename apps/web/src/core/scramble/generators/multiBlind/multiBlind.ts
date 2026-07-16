@@ -6,7 +6,10 @@ type GenerateMultiBlindOptions = {
   seed?: number
 }
 
-export function generateMultiBlindScramble({ count = 5, seed }: GenerateMultiBlindOptions = {}): string {
+export function generateMultiBlindScramble({
+  count = 5,
+  seed,
+}: GenerateMultiBlindOptions = {}): string {
   const rng = seededRandom(seed ?? randomSeed())
   const scrambles: string[] = []
 

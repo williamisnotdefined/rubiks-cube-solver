@@ -106,7 +106,11 @@ describe('scanTemporalConsensus', () => {
     expect(consensus.status).toBe('collecting')
     expect(consensus.framesRejected).toBe(6)
     expect(consensus.rejectReasons).toEqual(
-      expect.arrayContaining(['critical_quality_warning', 'low_face_confidence', 'low_tile_confidence']),
+      expect.arrayContaining([
+        'critical_quality_warning',
+        'low_face_confidence',
+        'low_tile_confidence',
+      ]),
     )
   })
 
@@ -175,7 +179,9 @@ describe('scanTemporalConsensus', () => {
     }
 
     expect(buffer.length).toBeLessThanOrEqual(defaultTemporalConsensusOptions.maxFrames)
-    expect(buffer[0].capturedAt).toBeGreaterThanOrEqual(15 * 320 - defaultTemporalConsensusOptions.maxFrameAgeMs)
+    expect(buffer[0].capturedAt).toBeGreaterThanOrEqual(
+      15 * 320 - defaultTemporalConsensusOptions.maxFrameAgeMs,
+    )
   })
 })
 
@@ -265,7 +271,9 @@ function stableTileDetections(
   })
 }
 
-function stable2x2TileDetections(symbol: ScanFaceSymbol): NonNullable<AnalyzeScanFaceResponse['tileDetections']> {
+function stable2x2TileDetections(
+  symbol: ScanFaceSymbol,
+): NonNullable<AnalyzeScanFaceResponse['tileDetections']> {
   return Array.from({ length: 4 }, (_, index) => {
     const row = Math.floor(index / 2)
     const column = index % 2

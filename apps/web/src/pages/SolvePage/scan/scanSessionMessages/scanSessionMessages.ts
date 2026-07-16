@@ -10,8 +10,8 @@ export function scanSessionMessage(t: TFunction, result: ScanSessionResult): str
     return qualityMessage
   }
 
-  if (result.message !== undefined && result.message.length > 0) {
-    return result.message
+  if (result.solve !== undefined && !result.solve.ok) {
+    return t('scan.messages.solveFailed')
   }
 
   switch (result.status) {
@@ -32,7 +32,9 @@ export function scanSessionMessage(t: TFunction, result: ScanSessionResult): str
     case 'vision_error':
       return t('scan.messages.sessionVisionUnavailable')
     default:
-      return t('scan.messages.sessionRejected')
+      return result.message !== undefined && result.message.length > 0
+        ? result.message
+        : t('scan.messages.sessionRejected')
   }
 }
 
@@ -109,7 +111,10 @@ export function scanSessionQualityMessage(
   return undefined
 }
 
-export function qualityReasonFaces(reasons: readonly string[], reasonKind: string): ScanFaceSymbol[] {
+export function qualityReasonFaces(
+  reasons: readonly string[],
+  reasonKind: string,
+): ScanFaceSymbol[] {
   return scanFaceOrder
     .map(({ symbol }) => symbol)
     .filter((symbol) => reasons.includes(`${reasonKind}:${symbol}`))

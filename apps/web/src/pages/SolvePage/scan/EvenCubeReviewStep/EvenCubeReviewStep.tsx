@@ -78,12 +78,19 @@ export function EvenCubeReviewStep({
   const { t } = useTranslation()
   const instructionsId = useId()
   const [selectedSlot, setSelectedSlot] = useState<ScanFaceSymbol>('F')
-  const [autoFitStatus, setAutoFitStatus] = useState<'ambiguous' | 'none' | 'suggested' | 'unique' | undefined>()
+  const [autoFitStatus, setAutoFitStatus] = useState<
+    'ambiguous' | 'none' | 'suggested' | 'unique' | undefined
+  >()
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor))
   const hasInvalidCorners = invalidCorners.length > 0
   const selectedCapturedFace = assignments[selectedSlot]
   const invalidStickerTargets = useMemo(
-    () => new Set(invalidCorners.flatMap((corner) => corner.targets.map((target) => invalidTargetKey(target.slot, target.index)))),
+    () =>
+      new Set(
+        invalidCorners.flatMap((corner) =>
+          corner.targets.map((target) => invalidTargetKey(target.slot, target.index)),
+        ),
+      ),
     [invalidCorners],
   )
   const invalidSlots = useMemo(
@@ -107,126 +114,140 @@ export function EvenCubeReviewStep({
   }
 
   return (
-    <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.8fr)]">
-      <div className="grid gap-4">
-        <div>
-          <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
-            {t('scan.evenReview.kicker')}
-          </p>
-          <h3 className="mt-1 text-xl font-extrabold">{t('scan.evenReview.title')}</h3>
-          <p className="mt-1 text-sm font-semibold leading-relaxed text-app-muted">
-            {t('scan.evenReview.description')}
-          </p>
-          <p className="mt-1 text-xs font-extrabold uppercase tracking-[0.14em] text-app-muted" id={instructionsId}>
-            {t('scan.evenReview.dragInstructions')}
-          </p>
-        </div>
-
-        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-          <div
-            aria-describedby={instructionsId}
-            className="grid grid-cols-4 grid-rows-3 gap-2 overflow-auto border border-app-border bg-app-surface-raised p-3"
-          >
-            {netFaces.map(({ className, symbol }) => (
-              <KociembaNetSlot
-                assignment={assignments[symbol]}
-                className={className}
-                drafts={drafts}
-                gridSize={gridSize}
-                isSelected={selectedSlot === symbol}
-                isInvalid={invalidSlots.has(symbol)}
-                invalidStickerTargets={invalidStickerTargets}
-                key={symbol}
-                rotation={rotations[assignments[symbol]] ?? 0}
-                slot={symbol}
-                stickersPerFace={stickersPerFace}
-                onSelect={setSelectedSlot}
-              />
-            ))}
+    <fieldset className='contents' disabled={solving}>
+      <div className='mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.8fr)]'>
+        <div className='grid gap-4'>
+          <div>
+            <p className='text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted'>
+              {t('scan.evenReview.kicker')}
+            </p>
+            <h3 className='mt-1 text-xl font-extrabold'>{t('scan.evenReview.title')}</h3>
+            <p className='mt-1 text-sm font-semibold leading-relaxed text-app-muted'>
+              {t('scan.evenReview.description')}
+            </p>
+            <p
+              className='mt-1 text-xs font-extrabold uppercase tracking-[0.14em] text-app-muted'
+              id={instructionsId}
+            >
+              {t('scan.evenReview.dragInstructions')}
+            </p>
           </div>
-        </DndContext>
-      </div>
 
-      <div className="grid content-start gap-4">
-        <div className="grid gap-2 border border-app-border bg-app-surface-raised p-3">
-          <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted">
-            {t('scan.evenReview.selectedFace', {
-              face: scanFaceLabel(t, selectedSlot, 4),
-              capturedFace: scanFaceLabel(t, selectedCapturedFace, 4),
-            })}
-          </span>
-          <div className="grid grid-cols-3 gap-2">
-            {rotationButtons.map(({ labelKey, rotation }) => (
-              <Button
-                className="min-h-10 flex-col px-3 py-2 text-xs"
-                key={rotation}
-                type="button"
-                variant="secondary"
-                onClick={() => onRotateFace(selectedCapturedFace, rotation)}
-              >
-                <RotationGlyph rotation={rotation} />
-                <span>{t(labelKey)}</span>
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid gap-2 border border-app-border bg-app-surface-raised p-3 text-sm font-semibold text-app-muted">
-          <Button size="sm" type="button" variant="secondary" onClick={handleAutoFit}>
-            {t('scan.evenReview.autoFit')}
-          </Button>
-          {autoFitStatus === undefined ? null : (
-            <p aria-live="polite">{t(`scan.evenReview.autoFit${autoFitStatus}`)}</p>
-          )}
-          {autoFitSuggestion === undefined ? null : (
-            <Button size="sm" type="button" variant="secondary" onClick={onApplyAutoFitSuggestion}>
-              {t('scan.evenReview.applySuggestion')}
-            </Button>
-          )}
-        </div>
-
-        {hasInvalidCorners ? (
-          <div className="grid gap-2 border border-app-danger/80 bg-app-surface-raised p-3 text-sm font-semibold text-app-text">
-            <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-app-danger">
-              {t('scan.evenReview.invalidTitle')}
-            </span>
-            <p className="text-app-muted">{t('scan.evenReview.invalidDescription')}</p>
-            <ul className="grid gap-1 text-app-muted">
-              {invalidCorners.map((corner) => (
-                <li key={corner.position}>
-                  <button
-                    className="text-left underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus/50"
-                    type="button"
-                    onClick={() => setSelectedSlot(corner.targets[0].slot)}
-                  >
-                    {invalidCornerMessage(t, corner)}
-                  </button>
-                </li>
+          <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+            <div
+              aria-describedby={instructionsId}
+              className='grid grid-cols-4 grid-rows-3 gap-2 overflow-auto border border-app-border bg-app-surface-raised p-3'
+            >
+              {netFaces.map(({ className, symbol }) => (
+                <KociembaNetSlot
+                  assignment={assignments[symbol]}
+                  className={className}
+                  drafts={drafts}
+                  gridSize={gridSize}
+                  isSelected={selectedSlot === symbol}
+                  isInvalid={invalidSlots.has(symbol)}
+                  invalidStickerTargets={invalidStickerTargets}
+                  key={symbol}
+                  rotation={rotations[assignments[symbol]] ?? 0}
+                  slot={symbol}
+                  stickersPerFace={stickersPerFace}
+                  onSelect={setSelectedSlot}
+                />
               ))}
-            </ul>
-          </div>
-        ) : (
-          <div className="border border-app-success/80 bg-app-surface-raised p-3 text-sm font-semibold text-app-muted">
-            {t('scan.evenReview.validMessage')}
-          </div>
-        )}
+            </div>
+          </DndContext>
+        </div>
 
-        <div className="flex flex-wrap gap-2">
-          <Button size="sm" type="button" variant="secondary" onClick={onBack}>
-            {t('scan.evenReview.back')}
-          </Button>
-          <Button
-            size="sm"
-            disabled={hasInvalidCorners || solving}
-            aria-label={solving ? t('common.loading') : undefined}
-            type="button"
-            onClick={onSolve}
-          >
-            {solving ? <Loader3x3 decorative className="size-8" registerDelayMs={150} /> : t('scan.evenReview.solve')}
-          </Button>
+        <div className='grid content-start gap-4'>
+          <div className='grid gap-2 border border-app-border bg-app-surface-raised p-3'>
+            <span className='text-xs font-extrabold uppercase tracking-[0.16em] text-app-muted'>
+              {t('scan.evenReview.selectedFace', {
+                face: scanFaceLabel(t, selectedSlot, 4),
+                capturedFace: scanFaceLabel(t, selectedCapturedFace, 4),
+              })}
+            </span>
+            <div className='grid grid-cols-3 gap-2'>
+              {rotationButtons.map(({ labelKey, rotation }) => (
+                <Button
+                  className='min-h-10 flex-col px-3 py-2 text-xs'
+                  key={rotation}
+                  type='button'
+                  variant='secondary'
+                  onClick={() => onRotateFace(selectedCapturedFace, rotation)}
+                >
+                  <RotationGlyph rotation={rotation} />
+                  <span>{t(labelKey)}</span>
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <div className='grid gap-2 border border-app-border bg-app-surface-raised p-3 text-sm font-semibold text-app-muted'>
+            <Button size='sm' type='button' variant='secondary' onClick={handleAutoFit}>
+              {t('scan.evenReview.autoFit')}
+            </Button>
+            {autoFitStatus === undefined ? null : (
+              <p aria-live='polite'>{t(`scan.evenReview.autoFit${autoFitStatus}`)}</p>
+            )}
+            {autoFitSuggestion === undefined ? null : (
+              <Button
+                size='sm'
+                type='button'
+                variant='secondary'
+                onClick={onApplyAutoFitSuggestion}
+              >
+                {t('scan.evenReview.applySuggestion')}
+              </Button>
+            )}
+          </div>
+
+          {hasInvalidCorners ? (
+            <div className='grid gap-2 border border-app-danger/80 bg-app-surface-raised p-3 text-sm font-semibold text-app-text'>
+              <span className='text-xs font-extrabold uppercase tracking-[0.16em] text-app-danger'>
+                {t('scan.evenReview.invalidTitle')}
+              </span>
+              <p className='text-app-muted'>{t('scan.evenReview.invalidDescription')}</p>
+              <ul className='grid gap-1 text-app-muted'>
+                {invalidCorners.map((corner) => (
+                  <li key={corner.position}>
+                    <button
+                      className='text-left underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus/50'
+                      type='button'
+                      onClick={() => setSelectedSlot(corner.targets[0].slot)}
+                    >
+                      {invalidCornerMessage(t, corner)}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <div className='border border-app-success/80 bg-app-surface-raised p-3 text-sm font-semibold text-app-muted'>
+              {t('scan.evenReview.validMessage')}
+            </div>
+          )}
+
+          <div className='flex flex-wrap gap-2'>
+            <Button size='sm' type='button' variant='secondary' onClick={onBack}>
+              {t('scan.evenReview.back')}
+            </Button>
+            <Button
+              size='sm'
+              disabled={solving}
+              aria-label={solving ? t('common.loading') : undefined}
+              type='button'
+              onClick={onSolve}
+            >
+              {solving ? (
+                <Loader3x3 decorative className='size-8' registerDelayMs={150} />
+              ) : (
+                t('scan.evenReview.solve')
+              )}
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+    </fieldset>
   )
 }
 
@@ -265,9 +286,12 @@ function KociembaNetSlot({
     setNodeRef: setDraggableRef,
     transform,
   } = useDraggable({ id: slot })
-  const style = transform === null ? undefined : {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-  }
+  const style =
+    transform === null
+      ? undefined
+      : {
+          transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        }
 
   return (
     <div className={cls('min-w-24', className)} ref={setDroppableRef}>
@@ -281,12 +305,16 @@ function KociembaNetSlot({
         aria-pressed={isSelected}
         className={cls(
           'grid w-full border bg-app-surface p-2 text-xs font-extrabold uppercase tracking-[0.12em] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-app-focus/50',
-          isInvalid ? 'border-app-danger text-app-text' : isSelected ? 'border-app-text text-app-text' : 'border-app-border text-app-muted',
+          isInvalid
+            ? 'border-app-danger text-app-text'
+            : isSelected
+              ? 'border-app-text text-app-text'
+              : 'border-app-border text-app-muted',
           isOver ? 'ring-2 ring-app-focus/70' : undefined,
         )}
         ref={setDraggableRef}
         style={style}
-        type="button"
+        type='button'
         onClick={() => onSelect(slot)}
       >
         <StickerGrid
@@ -301,26 +329,30 @@ function KociembaNetSlot({
 
 function RotationGlyph({ rotation }: { rotation: EvenCubeFaceRotation }) {
   if (rotation === 180) {
-    return <RotateCcw aria-hidden="true" className="size-5" strokeWidth={2} />
+    return <RotateCcw aria-hidden='true' className='size-5' strokeWidth={2} />
   }
 
   if (rotation === 270) {
-    return <RotateCcw aria-hidden="true" className="size-5" strokeWidth={2} />
+    return <RotateCcw aria-hidden='true' className='size-5' strokeWidth={2} />
   }
 
-  return <RotateCw aria-hidden="true" className="size-5" strokeWidth={2} />
+  return <RotateCw aria-hidden='true' className='size-5' strokeWidth={2} />
 }
 
-function invalidCornerMessage(t: ReturnType<typeof useTranslation>['t'], corner: EvenCubeInvalidCorner): string {
+function invalidCornerMessage(
+  t: ReturnType<typeof useTranslation>['t'],
+  corner: EvenCubeInvalidCorner,
+): string {
   const faceLabels = corner.faces.map((face) => scanFaceLabel(t, face, 4)).join('/')
   const colorLabels = corner.stickers.map((symbol) => scanColorLabel(t, symbol)).join('/')
   const opposite = oppositeStickerPair(corner.stickers)
-  const oppositeMessage = opposite === undefined
-    ? ''
-    : ` ${t('scan.evenReview.oppositePair', {
-      first: scanColorLabel(t, opposite[0]),
-      second: scanColorLabel(t, opposite[1]),
-    })}`
+  const oppositeMessage =
+    opposite === undefined
+      ? ''
+      : ` ${t('scan.evenReview.oppositePair', {
+          first: scanColorLabel(t, opposite[0]),
+          second: scanColorLabel(t, opposite[1]),
+        })}`
 
   return `${corner.position} (${faceLabels}): ${colorLabels}.${oppositeMessage}`
 }
@@ -328,7 +360,11 @@ function invalidCornerMessage(t: ReturnType<typeof useTranslation>['t'], corner:
 function oppositeStickerPair(
   stickers: readonly ScanFaceSymbol[],
 ): readonly [ScanFaceSymbol, ScanFaceSymbol] | undefined {
-  const pairs: readonly (readonly [ScanFaceSymbol, ScanFaceSymbol])[] = [['U', 'D'], ['R', 'L'], ['F', 'B']]
+  const pairs: readonly (readonly [ScanFaceSymbol, ScanFaceSymbol])[] = [
+    ['U', 'D'],
+    ['R', 'L'],
+    ['F', 'B'],
+  ]
   return pairs.find(([first, second]) => stickers.includes(first) && stickers.includes(second))
 }
 
@@ -344,7 +380,10 @@ function StickerGrid({
   const { t } = useTranslation()
 
   return (
-    <span className="grid aspect-square gap-1" style={{ gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))` }}>
+    <span
+      className='grid aspect-square gap-1'
+      style={{ gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))` }}
+    >
       {stickers.map((sticker, index) => {
         const details = sticker.symbol === undefined ? undefined : scanSymbolDetails[sticker.symbol]
 
@@ -352,10 +391,16 @@ function StickerGrid({
           <span
             className={cls(
               'grid min-h-8 place-items-center border text-xs font-extrabold',
-              invalidIndexes.has(index) ? 'border-app-danger ring-2 ring-app-danger/80' : 'border-app-border',
+              invalidIndexes.has(index)
+                ? 'border-app-danger ring-2 ring-app-danger/80'
+                : 'border-app-border',
             )}
             key={index}
-            style={details === undefined ? undefined : { backgroundColor: details.background, color: details.foreground }}
+            style={
+              details === undefined
+                ? undefined
+                : { backgroundColor: details.background, color: details.foreground }
+            }
           >
             {sticker.symbol === undefined ? '?' : scanColorInitial(t, sticker.symbol)}
           </span>
@@ -372,7 +417,9 @@ function invalidDisplayIndexes(
 ): ReadonlySet<number> {
   const indexes = new Set<number>()
   for (let index = 0; index < stickersPerFace; index += 1) {
-    if (invalidStickerTargets.has(invalidTargetKey(slot, displayIndexToPayloadIndex(slot, index)))) {
+    if (
+      invalidStickerTargets.has(invalidTargetKey(slot, displayIndexToPayloadIndex(slot, index)))
+    ) {
       indexes.add(index)
     }
   }

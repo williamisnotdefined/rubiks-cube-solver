@@ -19,7 +19,7 @@
   "skills": [
     {
       "name": "project-core",
-      "description": "Always-on repository baseline for Rubik's Cube solver engineering, boundaries, verification, and AI knowledge maintenance.",
+      "description": "Always-on repository baseline for boundaries, precedence, verification, and AI knowledge maintenance.",
       "global": true,
       "canonicalPath": "ai/skills/project-core.md",
       "references": [
@@ -37,18 +37,13 @@
         "github": ".github/instructions/project-core.instructions.md"
       },
       "toolConfig": {
-        "cursor": {
-          "globs": "**/*",
-          "alwaysApply": true
-        },
-        "github": {
-          "applyTo": "**/*"
-        }
+        "cursor": { "globs": "**/*", "alwaysApply": true },
+        "github": { "applyTo": "**/*" }
       }
     },
     {
       "name": "rust-module-refactor",
-      "description": "Use when splitting large Rust files, changing mod.rs facades, moving tests, tightening visibility, or improving Rust module boundaries without changing behavior.",
+      "description": "Use when splitting Rust modules, moving tests, tightening visibility, or preserving facades during refactors.",
       "canonicalPath": "ai/skills/rust-module-refactor.md",
       "references": [
         "ai/rules/rust-module-refactor-rules.md",
@@ -64,18 +59,13 @@
         "github": ".github/instructions/rust-module-refactor.instructions.md"
       },
       "toolConfig": {
-        "cursor": {
-          "globs": "crates/**/*.rs,crates/**/*.toml,Cargo.toml,docs/project-plan.md",
-          "alwaysApply": false
-        },
-        "github": {
-          "applyTo": "crates/**/*.rs,crates/**/*.toml,Cargo.toml,docs/project-plan.md"
-        }
+        "cursor": { "globs": "crates/**/*.rs,crates/**/Cargo.toml,Cargo.toml", "alwaysApply": false },
+        "github": { "applyTo": "crates/**/*.rs,crates/**/Cargo.toml,Cargo.toml" }
       }
     },
     {
       "name": "cube-engine",
-      "description": "Use when adding or changing the Rust cube representation, moves, notation, scrambles, or cube validation.",
+      "description": "Use when changing Rust puzzle state, moves, notation, scrambles, or validation.",
       "canonicalPath": "ai/skills/cube-engine.md",
       "references": [
         "ai/rules/cube-engine-rules.md",
@@ -91,18 +81,13 @@
         "github": ".github/instructions/cube-engine.instructions.md"
       },
       "toolConfig": {
-        "cursor": {
-          "globs": "crates/cube-engine/**/*.{rs,toml},docs/project-plan.md",
-          "alwaysApply": false
-        },
-        "github": {
-          "applyTo": "crates/cube-engine/**/*.{rs,toml},docs/project-plan.md"
-        }
+        "cursor": { "globs": "crates/cube-engine/src/cube/**/*.rs,crates/cube-engine/src/notation/**/*.rs,crates/cube-engine/Cargo.toml", "alwaysApply": false },
+        "github": { "applyTo": "crates/cube-engine/src/cube/**/*.rs,crates/cube-engine/src/notation/**/*.rs,crates/cube-engine/Cargo.toml" }
       }
     },
     {
       "name": "solver-search",
-      "description": "Use when adding or changing IDA*, generated two-phase search, heuristics, pruning, or pattern database code.",
+      "description": "Use when changing search, heuristics, pruning tables, generated two-phase solving, or pattern databases.",
       "canonicalPath": "ai/skills/solver-search.md",
       "references": [
         "ai/rules/solver-search-rules.md",
@@ -119,27 +104,18 @@
         "github": ".github/instructions/solver-search.instructions.md"
       },
       "toolConfig": {
-        "cursor": {
-          "globs": "crates/cube-engine/src/search/**/*.rs,crates/cube-engine/src/cube/**/*.rs,docs/project-plan.md",
-          "alwaysApply": false
-        },
-        "github": {
-          "applyTo": "crates/cube-engine/src/search/**/*.rs,crates/cube-engine/src/cube/**/*.rs,docs/project-plan.md"
-        }
+        "cursor": { "globs": "crates/cube-engine/src/search/**/*.rs,crates/cube-engine/src/artifacts/**/*.rs,crates/cube-engine/src/bin/**/*report*.rs", "alwaysApply": false },
+        "github": { "applyTo": "crates/cube-engine/src/search/**/*.rs,crates/cube-engine/src/artifacts/**/*.rs,crates/cube-engine/src/bin/**/*report*.rs" }
       }
     },
     {
       "name": "api-boundary",
-      "description": "Use when adding or changing the Axum HTTP API, API validation, generated solver loading, solve-status contracts, or web API client.",
+      "description": "Use when changing Axum solver routes, HTTP contracts, limits, scan sessions, or the matching web solver client.",
       "canonicalPath": "ai/skills/api-boundary.md",
       "references": [
         "ai/rules/api-rules.md",
-        "ai/rules/frontend-rules.md",
-        "ai/rules/frontend-api-hook-rules.md",
         "ai/rules/testing-rules.md",
-        "ai/architecture/project-architecture.md",
-        "ai/architecture/api-boundary.md",
-        "ai/glossary/cube-terms.md"
+        "ai/architecture/api-boundary.md"
       ],
       "routes": {
         "opencode": ".opencode/skills/api-boundary/SKILL.md",
@@ -148,30 +124,19 @@
         "github": ".github/instructions/api-boundary.instructions.md"
       },
       "toolConfig": {
-        "cursor": {
-          "globs": "crates/api/**/*.{rs,toml},apps/web/src/api/**/*.{ts,tsx},docs/project-plan.md",
-          "alwaysApply": false
-        },
-        "github": {
-          "applyTo": "crates/api/**/*.{rs,toml},apps/web/src/api/**/*.{ts,tsx},docs/project-plan.md"
-        }
+        "cursor": { "globs": "crates/api/**/*.{rs,toml},apps/web/src/api/solver/**/*.{ts,tsx},apps/web/src/api/scan/**/*.{ts,tsx},docs/adr/0006-api-versioning.md", "alwaysApply": false },
+        "github": { "applyTo": "crates/api/**/*.{rs,toml},apps/web/src/api/solver/**/*.{ts,tsx},apps/web/src/api/scan/**/*.{ts,tsx},docs/adr/0006-api-versioning.md" }
       }
     },
     {
       "name": "frontend-visualization",
-      "description": "Use when adding the web UI, 3D cube visualization, playback, or frontend-to-API boundary.",
+      "description": "Use when changing cube rendering, playback, visualization adapters, or scan visualization.",
       "canonicalPath": "ai/skills/frontend-visualization.md",
       "references": [
         "ai/rules/frontend-rules.md",
-        "ai/rules/frontend-component-rules.md",
-        "ai/rules/frontend-state-rules.md",
-        "ai/rules/frontend-api-hook-rules.md",
-        "ai/rules/frontend-form-rules.md",
-        "ai/rules/frontend-styling-rules.md",
-        "ai/architecture/project-architecture.md",
+        "ai/rules/frontend-quality-rules.md",
         "ai/architecture/frontend-visualization.md",
-        "ai/architecture/rubiks-cube-visualization-package.md",
-        "ai/glossary/cube-terms.md"
+        "ai/architecture/rubiks-cube-visualization-package.md"
       ],
       "routes": {
         "opencode": ".opencode/skills/frontend-visualization/SKILL.md",
@@ -180,26 +145,19 @@
         "github": ".github/instructions/frontend-visualization.instructions.md"
       },
       "toolConfig": {
-        "cursor": {
-          "globs": "apps/web/**/*.{ts,tsx,css},crates/api/**/*,docs/project-plan.md",
-          "alwaysApply": false
-        },
-        "github": {
-          "applyTo": "apps/web/**/*.{ts,tsx,css},crates/api/**/*,docs/project-plan.md"
-        }
+        "cursor": { "globs": "packages/rubiks-cube/**/*.{ts,tsx},apps/web/src/components/scramble/**/*.{ts,tsx},apps/web/src/pages/SolvePage/scan/**/*.{ts,tsx}", "alwaysApply": false },
+        "github": { "applyTo": "packages/rubiks-cube/**/*.{ts,tsx},apps/web/src/components/scramble/**/*.{ts,tsx},apps/web/src/pages/SolvePage/scan/**/*.{ts,tsx}" }
       }
     },
     {
       "name": "frontend-componentization",
-      "description": "Use when adding, changing, extracting, or reusing React components, Storybook stories, page-level screens, large frontend files, or repeated UI in web.",
+      "description": "Use when extracting React components, changing shared primitives, composing pages, or adding Storybook surfaces.",
       "canonicalPath": "ai/skills/frontend-componentization.md",
       "references": [
         "ai/rules/frontend-component-rules.md",
-        "ai/rules/frontend-state-rules.md",
-        "ai/rules/frontend-form-rules.md",
         "ai/rules/frontend-styling-rules.md",
-        "ai/architecture/project-architecture.md",
-        "ai/architecture/frontend-visualization.md"
+        "ai/rules/frontend-quality-rules.md",
+        "ai/architecture/web-architecture.md"
       ],
       "routes": {
         "opencode": ".opencode/skills/frontend-componentization/SKILL.md",
@@ -208,26 +166,18 @@
         "github": ".github/instructions/frontend-componentization.instructions.md"
       },
       "toolConfig": {
-        "cursor": {
-          "globs": "apps/web/**/*.{ts,tsx,css},docs/project-plan.md",
-          "alwaysApply": false
-        },
-        "github": {
-          "applyTo": "apps/web/**/*.{ts,tsx,css},docs/project-plan.md"
-        }
+        "cursor": { "globs": "apps/web/src/components/**/*.tsx,apps/web/src/pages/**/*.tsx,apps/web/src/App/**/*.tsx", "alwaysApply": false },
+        "github": { "applyTo": "apps/web/src/components/**/*.tsx,apps/web/src/pages/**/*.tsx,apps/web/src/App/**/*.tsx" }
       }
     },
     {
       "name": "frontend-state-management",
-      "description": "Use when adding or changing client-side state, custom hooks, visualization synchronization, or API load/result flow in web.",
+      "description": "Use when changing React state, hooks, stores, async workflow ownership, or visualization synchronization.",
       "canonicalPath": "ai/skills/frontend-state-management.md",
       "references": [
         "ai/rules/frontend-state-rules.md",
-        "ai/rules/frontend-api-hook-rules.md",
-        "ai/rules/frontend-component-rules.md",
-        "ai/rules/frontend-form-rules.md",
-        "ai/architecture/frontend-visualization.md",
-        "ai/glossary/cube-terms.md"
+        "ai/rules/frontend-quality-rules.md",
+        "ai/architecture/frontend-visualization.md"
       ],
       "routes": {
         "opencode": ".opencode/skills/frontend-state-management/SKILL.md",
@@ -236,24 +186,17 @@
         "github": ".github/instructions/frontend-state-management.instructions.md"
       },
       "toolConfig": {
-        "cursor": {
-          "globs": "apps/web/**/*.{ts,tsx},docs/project-plan.md",
-          "alwaysApply": false
-        },
-        "github": {
-          "applyTo": "apps/web/**/*.{ts,tsx},docs/project-plan.md"
-        }
+        "cursor": { "globs": "apps/web/src/pages/**/hooks/**/*.{ts,tsx},apps/web/src/**/*Store*/**/*.ts,apps/web/src/**/*store*/**/*.ts", "alwaysApply": false },
+        "github": { "applyTo": "apps/web/src/pages/**/hooks/**/*.{ts,tsx},apps/web/src/**/*Store*/**/*.ts,apps/web/src/**/*store*/**/*.ts" }
       }
     },
     {
       "name": "frontend-form-validation",
-      "description": "Use when adding or changing solve controls, scramble inputs, frontend limit validation, or form behavior in web.",
+      "description": "Use when changing solve inputs, limits, validation, scanner review controls, or form submission behavior.",
       "canonicalPath": "ai/skills/frontend-form-validation.md",
       "references": [
         "ai/rules/frontend-form-rules.md",
-        "ai/rules/frontend-component-rules.md",
-        "ai/rules/frontend-state-rules.md",
-        "ai/rules/api-rules.md",
+        "ai/rules/frontend-quality-rules.md",
         "ai/architecture/api-boundary.md"
       ],
       "routes": {
@@ -263,23 +206,17 @@
         "github": ".github/instructions/frontend-form-validation.instructions.md"
       },
       "toolConfig": {
-        "cursor": {
-          "globs": "apps/web/**/*.{ts,tsx},crates/api/**/*.{rs,toml},docs/project-plan.md",
-          "alwaysApply": false
-        },
-        "github": {
-          "applyTo": "apps/web/**/*.{ts,tsx},crates/api/**/*.{rs,toml},docs/project-plan.md"
-        }
+        "cursor": { "globs": "apps/web/src/components/Field/**/*.{ts,tsx},apps/web/src/components/FormControls/**/*.{ts,tsx},apps/web/src/pages/SolvePage/solve/SolveForm/**/*.{ts,tsx},apps/web/src/pages/SolvePage/scan/ScanColorPalette/**/*.{ts,tsx}", "alwaysApply": false },
+        "github": { "applyTo": "apps/web/src/components/Field/**/*.{ts,tsx},apps/web/src/components/FormControls/**/*.{ts,tsx},apps/web/src/pages/SolvePage/solve/SolveForm/**/*.{ts,tsx},apps/web/src/pages/SolvePage/scan/ScanColorPalette/**/*.{ts,tsx}" }
       }
     },
     {
       "name": "frontend-styling",
-      "description": "Use when changing Tailwind CSS v4 utilities, theme/color variables, responsive layout, visual treatment, classnames usage, or cube visualization sizing in web.",
+      "description": "Use when changing Tailwind utilities, theme tokens, responsive layout, class composition, or visual treatment.",
       "canonicalPath": "ai/skills/frontend-styling.md",
       "references": [
         "ai/rules/frontend-styling-rules.md",
-        "ai/rules/frontend-component-rules.md",
-        "ai/architecture/frontend-visualization.md"
+        "ai/rules/frontend-quality-rules.md"
       ],
       "routes": {
         "opencode": ".opencode/skills/frontend-styling/SKILL.md",
@@ -288,25 +225,18 @@
         "github": ".github/instructions/frontend-styling.instructions.md"
       },
       "toolConfig": {
-        "cursor": {
-          "globs": "apps/web/**/*.{ts,tsx,css},docs/project-plan.md",
-          "alwaysApply": false
-        },
-        "github": {
-          "applyTo": "apps/web/**/*.{ts,tsx,css},docs/project-plan.md"
-        }
+        "cursor": { "globs": "apps/web/src/index.css,apps/web/src/components/**/*.tsx,apps/web/src/pages/**/*.tsx,apps/web/.storybook/**/*.tsx", "alwaysApply": false },
+        "github": { "applyTo": "apps/web/src/index.css,apps/web/src/components/**/*.tsx,apps/web/src/pages/**/*.tsx,apps/web/.storybook/**/*.tsx" }
       }
     },
     {
       "name": "react-query-request-hooks",
-      "description": "Use when adding or changing web API query hooks, mutation hooks, request functions, query keys, or response normalization.",
+      "description": "Use when changing web requests, response validation, React Query hooks, mutations, or query keys.",
       "canonicalPath": "ai/skills/react-query-request-hooks.md",
       "references": [
         "ai/rules/frontend-api-hook-rules.md",
-        "ai/rules/frontend-state-rules.md",
         "ai/rules/api-rules.md",
-        "ai/architecture/api-boundary.md",
-        "ai/architecture/frontend-visualization.md"
+        "ai/architecture/api-boundary.md"
       ],
       "routes": {
         "opencode": ".opencode/skills/react-query-request-hooks/SKILL.md",
@@ -315,24 +245,18 @@
         "github": ".github/instructions/react-query-request-hooks.instructions.md"
       },
       "toolConfig": {
-        "cursor": {
-          "globs": "apps/web/src/api/**/*.{ts,tsx},apps/web/src/pages/**/*.{ts,tsx},crates/api/**/*.{rs,toml},docs/project-plan.md",
-          "alwaysApply": false
-        },
-        "github": {
-          "applyTo": "apps/web/src/api/**/*.{ts,tsx},apps/web/src/pages/**/*.{ts,tsx},crates/api/**/*.{rs,toml},docs/project-plan.md"
-        }
+        "cursor": { "globs": "apps/web/src/api/**/*.{ts,tsx}", "alwaysApply": false },
+        "github": { "applyTo": "apps/web/src/api/**/*.{ts,tsx}" }
       }
     },
     {
       "name": "frontend-testing",
-      "description": "Use when adding or changing web Vitest tests, Testing Library tests, React Query hook tests, coverage configuration, or Storybook stories.",
+      "description": "Use when changing web unit/component/API tests, coverage, Storybook, or Playwright E2E.",
       "canonicalPath": "ai/skills/frontend-testing.md",
       "references": [
         "ai/rules/testing-rules.md",
-        "ai/rules/frontend-component-rules.md",
-        "ai/rules/frontend-api-hook-rules.md",
-        "ai/architecture/frontend-visualization.md"
+        "ai/rules/frontend-quality-rules.md",
+        "ai/architecture/web-architecture.md"
       ],
       "routes": {
         "opencode": ".opencode/skills/frontend-testing/SKILL.md",
@@ -341,13 +265,48 @@
         "github": ".github/instructions/frontend-testing.instructions.md"
       },
       "toolConfig": {
-        "cursor": {
-          "globs": "apps/web/**/*.{ts,tsx,css},apps/web/.storybook/**/*,docs/project-plan.md",
-          "alwaysApply": false
-        },
-        "github": {
-          "applyTo": "apps/web/**/*.{ts,tsx,css},apps/web/.storybook/**/*,docs/project-plan.md"
-        }
+        "cursor": { "globs": "apps/web/src/**/__tests__/**/*.{ts,tsx},apps/web/src/**/stories/**/*.{ts,tsx},apps/web/.storybook/**/*,tests/e2e/**/*.ts,playwright.config.ts,apps/web/vite.config.ts", "alwaysApply": false },
+        "github": { "applyTo": "apps/web/src/**/__tests__/**/*.{ts,tsx},apps/web/src/**/stories/**/*.{ts,tsx},apps/web/.storybook/**/*,tests/e2e/**/*.ts,playwright.config.ts,apps/web/vite.config.ts" }
+      }
+    },
+    {
+      "name": "frontend-seo-ssg",
+      "description": "Use when changing routes, locales, SEO metadata, static generation, hydration, public SEO assets, or language routing.",
+      "canonicalPath": "ai/skills/frontend-seo-ssg.md",
+      "references": [
+        "ai/rules/frontend-rules.md",
+        "ai/rules/frontend-quality-rules.md",
+        "ai/architecture/web-architecture.md"
+      ],
+      "routes": {
+        "opencode": ".opencode/skills/frontend-seo-ssg/SKILL.md",
+        "codex": ".agents/skills/frontend-seo-ssg/SKILL.md",
+        "cursor": ".cursor/rules/frontend-seo-ssg.mdc",
+        "github": ".github/instructions/frontend-seo-ssg.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": { "globs": "apps/web/src/seo/**/*.{ts,tsx},apps/web/src/main/**/*.{ts,tsx},apps/web/src/App/**/*.{ts,tsx},apps/web/src/i18n/locales/*.json,apps/web/public/{robots.txt,llms.txt,site.webmanifest,og-default.svg},apps/web/{index.html,vite.config.ts,package.json},scripts/seo/**/*.mjs,tests/e2e/language-routing.spec.ts,crates/api/src/{routes.rs,tests.rs},deploy/nginx/**/*", "alwaysApply": false },
+        "github": { "applyTo": "apps/web/src/seo/**/*.{ts,tsx},apps/web/src/main/**/*.{ts,tsx},apps/web/src/App/**/*.{ts,tsx},apps/web/src/i18n/locales/*.json,apps/web/public/{robots.txt,llms.txt,site.webmanifest,og-default.svg},apps/web/{index.html,vite.config.ts,package.json},scripts/seo/**/*.mjs,tests/e2e/language-routing.spec.ts,crates/api/src/{routes.rs,tests.rs},deploy/nginx/**/*" }
+      }
+    },
+    {
+      "name": "wca-data-boundary",
+      "description": "Use when changing the WCA Data API, OpenAPI contract, import worker, database lifecycle, or web WCA client.",
+      "canonicalPath": "ai/skills/wca-data-boundary.md",
+      "references": [
+        "ai/rules/wca-data-rules.md",
+        "ai/rules/testing-rules.md",
+        "ai/architecture/wca-data.md"
+      ],
+      "routes": {
+        "opencode": ".opencode/skills/wca-data-boundary/SKILL.md",
+        "codex": ".agents/skills/wca-data-boundary/SKILL.md",
+        "cursor": ".cursor/rules/wca-data-boundary.mdc",
+        "github": ".github/instructions/wca-data-boundary.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": { "globs": "apps/wca-data/**/*.{ts,json,yaml,sql,md},apps/web/src/api/wcaData/**/*.{ts,tsx},apps/web/src/pages/WorldRecordsPage/**/*.{ts,tsx},scripts/wca-data/**/*.mjs,Dockerfile.wca-data,docs/adr/0008-wca-data-api.md,crates/api/src/{routes.rs,tests.rs},deploy/nginx/**/*", "alwaysApply": false },
+        "github": { "applyTo": "apps/wca-data/**/*.{ts,json,yaml,sql,md},apps/web/src/api/wcaData/**/*.{ts,tsx},apps/web/src/pages/WorldRecordsPage/**/*.{ts,tsx},scripts/wca-data/**/*.mjs,Dockerfile.wca-data,docs/adr/0008-wca-data-api.md,crates/api/src/{routes.rs,tests.rs},deploy/nginx/**/*" }
       }
     }
   ]

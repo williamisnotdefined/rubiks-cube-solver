@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AnalyzeScanFaceResponse } from '@api/scan'
 import type { ScanFaceSymbol } from '@api/solver/types'
@@ -30,6 +30,7 @@ type UseScanCaptureWorkflowOptions = {
   gridSize: 2 | 3
   stickersPerFace: number
   getAnalysisMessage?: (analysis: AnalyzeScanFaceResponse) => string | undefined
+  cameraActive?: boolean
   isReviewFace?: (symbol: ScanFaceSymbol) => boolean
   onDraftCleared?: () => void
   onDraftEdited?: (face: ScanFaceSymbol, stickerIndex: number) => void
@@ -39,6 +40,7 @@ type UseScanCaptureWorkflowOptions = {
 
 export function useScanCaptureWorkflow({
   centerIndex,
+  cameraActive = true,
   gridSize,
   stickersPerFace,
   getAnalysisMessage,
@@ -49,7 +51,8 @@ export function useScanCaptureWorkflow({
   onFaceCleared,
 }: UseScanCaptureWorkflowOptions) {
   const { t } = useTranslation()
-  const camera = useCameraStream(true)
+  const camera = useCameraStream(cameraActive)
+  const revisionRef = useRef(0)
   const [drafts, setDrafts] = useState(() => createInitialScanFaceDrafts(stickersPerFace))
   const [currentFaceIndex, setCurrentFaceIndex] = useState(0)
   const currentFace = scanFaceOrder[currentFaceIndex]
@@ -63,7 +66,12 @@ export function useScanCaptureWorkflow({
   const cameraStream = camera.status === 'ready' ? camera.stream : undefined
   const { setVideoRef, videoElementRef } = useScanVideoBinding(cameraStream, currentFaceIndex)
   const confirmedFaces = useMemo(() => scanFacesFromDrafts(drafts), [drafts])
-  const draftValidation = validateScanFaceDraft(confirmedFaces, currentFace.symbol, stickers, stickersPerFace)
+  const draftValidation = validateScanFaceDraft(
+    confirmedFaces,
+    currentFace.symbol,
+    stickers,
+    stickersPerFace,
+  )
   const previewFaces: ScanFaces = {
     ...confirmedFaces,
     [currentFace.symbol]: { symbol: currentFace.symbol, stickers },
@@ -86,7 +94,8 @@ export function useScanCaptureWorkflow({
     [confirmedFaces, drafts, isReviewFace, stickersPerFace],
   )
   const hasReviewCaptureContent =
-    photoDataUrl !== undefined || stickers.some((sticker, index) => index !== centerIndex && sticker.symbol !== undefined)
+    photoDataUrl !== undefined ||
+    stickers.some((sticker, index) => index !== centerIndex && sticker.symbol !== undefined)
   const hasReviewContent = currentDraftHasReviewContent(currentDraft, centerIndex)
   const liveScan = useLiveScanPreview({
     enabled: autoScanEnabled && camera.status === 'ready' && !capturing && !hasReviewCaptureContent,
@@ -106,13 +115,13 @@ export function useScanCaptureWorkflow({
     temporalConsensus: liveTemporalConsensus,
   } = liveScan
   const cameraAnalysis = liveAnalysis
-  const cameraTemporalConsensus = liveTemporalConsensus.framesSeen > 0 ? liveTemporalConsensus : undefined
-  const scannerMessage =
-    hasReviewContent
-      ? t('scan.messages.liveReviewReady', { count: stickersPerFace })
-      : autoScanEnabled
-        ? liveMessage
-        : t('scan.messages.autoPaused')
+  const cameraTemporalConsensus =
+    liveTemporalConsensus.framesSeen > 0 ? liveTemporalConsensus : undefined
+  const scannerMessage = hasReviewContent
+    ? t('scan.messages.liveReviewReady', { count: stickersPerFace })
+    : autoScanEnabled
+      ? liveMessage
+      : t('scan.messages.autoPaused')
   const canClearPhoto =
     photoDataUrl !== undefined ||
     scanAnalysis !== undefined ||
@@ -134,12 +143,13 @@ export function useScanCaptureWorkflow({
     t,
   })
 
-  const { analyzeScanFace, handleTakePhoto } = useManualScanCapture({
+  const { abortCapture, analyzeScanFace, handleTakePhoto } = useManualScanCapture({
     camera,
     currentFaceSymbol: currentFace.symbol,
     getAnalysisMessage,
     gridSize,
     liveTemporalConsensus,
+    revisionRef,
     onFaceCleared,
     resetLiveAutoFill,
     setCapturing,
@@ -165,14 +175,15 @@ export function useScanCaptureWorkflow({
       return
     }
 
+    invalidateCapture()
     setCurrentFaceIndex(index)
     onFaceChanged?.()
     setMessage(undefined)
     resetLiveAutoFill()
-    analyzeScanFace.reset()
   }
 
   function handleStickerColorChange(index: number, symbol: ScanFaceSymbol) {
+    invalidateCapture()
     setDrafts((currentDrafts) =>
       replaceScanFaceDraftSticker(
         currentDrafts,
@@ -185,21 +196,25 @@ export function useScanCaptureWorkflow({
   }
 
   function handleClearPhoto() {
-    setDrafts((currentDrafts) => clearScanFaceDraft(currentDrafts, currentFace.symbol, stickersPerFace))
+    invalidateCapture()
+    setDrafts((currentDrafts) =>
+      clearScanFaceDraft(currentDrafts, currentFace.symbol, stickersPerFace),
+    )
     onFaceCleared?.(currentFace.symbol)
     onDraftCleared?.()
     setMessage(undefined)
     resetLiveAutoFill()
-    analyzeScanFace.reset()
   }
 
   function handleAutoScanToggle() {
+    invalidateCapture()
     setAutoScanEnabled((enabled) => !enabled)
     resetLiveAutoFill()
     setMessage(undefined)
   }
 
   function confirmCurrentFace(options?: { centerOverrideConfirmed?: boolean }) {
+    invalidateCapture()
     const nextDrafts = confirmScanFaceDraft(drafts, currentFace.symbol, options)
     const nextFaceIndex = nextUnconfirmedFaceIndex(nextDrafts, currentFaceIndex)
     setDrafts(nextDrafts)
@@ -211,8 +226,15 @@ export function useScanCaptureWorkflow({
     }
 
     setMessage(
-      currentDraft.confirmed ? t('scan.messages.faceUpdated') : t('scan.messages.allFacesConfirmed'),
+      currentDraft.confirmed
+        ? t('scan.messages.faceUpdated')
+        : t('scan.messages.allFacesConfirmed'),
     )
+  }
+
+  function invalidateCapture() {
+    revisionRef.current += 1
+    abortCapture()
   }
 
   return {
@@ -240,6 +262,7 @@ export function useScanCaptureWorkflow({
     liveStableFrameCount,
     liveStatus,
     message,
+    invalidateCapture,
     photoDataUrl,
     previewCounts,
     scannerMessage,

@@ -2,10 +2,19 @@ import { useEffect, useMemo } from 'react'
 import { useLocation } from 'react-router'
 import i18n, { changeLanguage } from '@src/i18n/i18n'
 import { buildJsonLd } from '../jsonLd'
-import { alternateUrl, defaultLocale, defaultOgImageUrl, getSeoMetadata, seoLocales, siteName } from '../routes'
+import {
+  alternateUrl,
+  defaultLocale,
+  defaultOgImageUrl,
+  getSeoMetadata,
+  seoLocales,
+  siteName,
+} from '../routes'
 
-const seoLinkSelector = 'link[data-speedcube-seo="true"], link[rel="canonical"], link[rel="alternate"][hreflang]'
-const seoJsonLdSelector = 'script[data-speedcube-seo-jsonld="true"], script[type="application/ld+json"]'
+const seoLinkSelector =
+  'link[data-speedcube-seo="true"], link[rel="canonical"], link[rel="alternate"][hreflang]'
+const seoJsonLdSelector =
+  'script[data-speedcube-seo-jsonld="true"], script[type="application/ld+json"]'
 const jsonLdScriptNonce = 'speedcube-jsonld'
 
 export function Seo() {
@@ -37,10 +46,12 @@ export function Seo() {
 
     clearManagedLinks()
     appendLink('canonical', metadata.canonicalUrl)
-    for (const locale of seoLocales) {
-      appendLink('alternate', alternateUrl(metadata.path, locale), locale)
+    if (!metadata.noindex) {
+      for (const locale of seoLocales) {
+        appendLink('alternate', alternateUrl(metadata.path, locale), locale)
+      }
+      appendLink('alternate', alternateUrl(metadata.path, defaultLocale), 'x-default')
     }
-    appendLink('alternate', alternateUrl(metadata.path, defaultLocale), 'x-default')
 
     clearManagedJsonLd()
     for (const jsonLd of buildJsonLd(metadata)) {

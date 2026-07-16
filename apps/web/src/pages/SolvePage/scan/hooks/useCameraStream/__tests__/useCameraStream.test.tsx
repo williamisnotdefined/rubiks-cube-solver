@@ -48,10 +48,9 @@ describe('useCameraStream', () => {
     })
     const getUserMedia = vi.fn().mockReturnValue(getUserMediaPromise)
     mockGetUserMedia(getUserMedia)
-    const { result, rerender } = renderHook(
-      ({ active }) => useCameraStream(active),
-      { initialProps: { active: true } },
-    )
+    const { result, rerender } = renderHook(({ active }) => useCameraStream(active), {
+      initialProps: { active: true },
+    })
 
     await waitFor(() => expect(getUserMedia).toHaveBeenCalledOnce())
     rerender({ active: false })

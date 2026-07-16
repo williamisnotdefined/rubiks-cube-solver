@@ -42,6 +42,7 @@
     },
     "table": {
       "algorithm": "Algoritmo",
+      "caption": "Casi degli algoritmi {{name}}",
       "case": "Caso",
       "name": "Nome",
       "source": "Fonte"
@@ -655,6 +656,68 @@
     "retry": "Riprova",
     "title": "Qualcosa è andato storto"
   },
+  "worldRecords": {
+    "kicker": "Record e dati",
+    "description": "Record della classifica mondiale WCA con dati su atleti, competizioni, tentativi e scramble ufficiali candidati.",
+    "dataset": "Set di dati: {{date}}",
+    "loadError": "Impossibile caricare i record mondiali dall’API dati WCA.",
+    "moves": "{{count}} mosse",
+    "unknown": "Sconosciuto",
+    "filters": {
+      "search": "Cerca",
+      "searchPlaceholder": "Atleta, ID WCA, paese",
+      "event": "Evento",
+      "type": "Tipo",
+      "reset": "Reimposta"
+    },
+    "types": { "all": "Tutti i tipi", "single": "Singolo", "average": "Media" },
+    "table": {
+      "caption": "Record mondiali WCA corrispondenti ai filtri",
+      "rank": "Posizione",
+      "athlete": "Atleta",
+      "result": "Risultato",
+      "type": "Tipo",
+      "competition": "Competizione",
+      "scramble": "Scramble",
+      "empty": "Nessun record mondiale corrisponde a questi filtri."
+    },
+    "pagination": {
+      "label": "Paginazione dei record mondiali",
+      "rowsOption": "{{count}} righe",
+      "rowsPerPage": "Righe per pagina",
+      "pageOf": "Pagina {{current}} di {{total}}",
+      "first": "Prima pagina",
+      "previous": "Pagina precedente",
+      "next": "Pagina successiva",
+      "last": "Ultima pagina",
+      "page": "Pagina {{page}}"
+    },
+    "scramble": {
+      "unavailable": "Non disponibile",
+      "candidates": "{{count}} candidati",
+      "candidateLabel": "Gruppo {{group}} · Scramble {{number}}",
+      "exactDescription": "Questo risultato corrisponde a uno scramble ufficiale nell’esportazione WCA.",
+      "ambiguousDescription": "L’esportazione WCA non include il gruppo dell’atleta; questi sono gli scramble candidati.",
+      "unavailableDescription": "Non è stato possibile associare uno scramble ufficiale."
+    },
+    "athlete": {
+      "unknownCountry": "Paese sconosciuto",
+      "competitions": "Competizioni",
+      "solves": "Risoluzioni",
+      "records": "Record",
+      "medals": "Medaglie",
+      "selectedResult": "Risultato selezionato",
+      "worldRank": "Mondo n. {{rank}}",
+      "continentRank": "Continente n. {{rank}}",
+      "countryRank": "Paese n. {{rank}}",
+      "competitionUnavailable": "I dettagli della competizione non sono disponibili.",
+      "attemptsUnavailable": "I dettagli dei tentativi non sono disponibili.",
+      "unknownRound": "Turno sconosciuto",
+      "unknownFormat": "Formato sconosciuto",
+      "scrambleEvidence": "Prova dello scramble",
+      "openProfile": "Apri profilo WCA"
+    }
+  },
   "navigation": {
     "allAlgorithms": "Tutti gli algoritmi",
     "algorithms": "Algoritmi",
@@ -683,7 +746,7 @@
     "themeLight": "Chiaro",
     "themeSystem": "Sistema",
     "timer": "Timer",
-    "worldRecords": "World Records"
+    "worldRecords": "Record mondiali"
   },
   "notations": {
     "groups": {
@@ -706,6 +769,7 @@
       "preparingVisualization": "Preparazione della visualizzazione",
       "reset": "Reset",
       "underConstruction": "In costruzione",
+      "title": "Notazione {{puzzle}}",
       "visualizationLabel": "Visualizzazione della notazione {{puzzle}}"
     }
   },
@@ -1075,6 +1139,7 @@
       }
     },
     "form": {
+      "formLabel": "Risolvi puzzle",
       "maxMoves": "Mosse max",
       "maxNodesMillion": "Nodi max (M)",
       "puzzle": "Puzzle",
@@ -1093,6 +1158,8 @@
       "solved": " risolto"
     },
     "result": {
+      "movesLabel": "Mosse della soluzione",
+      "regionLabel": "Risultato della risoluzione",
       "foundIn": "risposta in {{elapsed}}",
       "seeMore": "vedi altro",
       "solved": "Risolto",

@@ -17,16 +17,17 @@ type ScrambleSelectorProps = {
   onEventChange: (eventId: string) => void
 }
 
-export function ScrambleSelector({ events, selectedEventId, onEventChange }: ScrambleSelectorProps) {
+export function ScrambleSelector({
+  events,
+  selectedEventId,
+  onEventChange,
+}: ScrambleSelectorProps) {
   const { t } = useTranslation()
   const groups = Array.from(new Set(events.map((event) => event.group)))
 
   return (
     <Field label={t('timer.scramble.event')}>
-      <Select
-        value={selectedEventId}
-        onValueChange={onEventChange}
-      >
+      <Select value={selectedEventId} onValueChange={onEventChange}>
         <SelectTrigger aria-label={t('timer.scramble.event')}>
           <SelectValue />
         </SelectTrigger>

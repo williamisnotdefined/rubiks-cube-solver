@@ -45,3 +45,12 @@ npm run ai:check
 - Do not duplicate global rules or architecture explanations across skills.
 - Do not teach generic React, Rust, TypeScript, Python, or programming advice here unless it is tied to a project-specific boundary.
 - Run `npm run ai:check` before finishing AI knowledge changes.
+
+## Normative Language And Precedence
+
+- **MUST** and **MUST NOT** are required unless a higher-precedence contract makes them impossible.
+- **SHOULD** and **SHOULD NOT** are defaults; deviations require a concrete rationale in the change or review.
+- **MAY** marks an optional choice, not an established dependency or required pattern.
+- When guidance conflicts, use this order: executable contracts (types, schemas, tests, build/runtime behavior), accepted ADRs, architecture documents, rules, then skills.
+- Newer accepted ADRs supersede older ADRs on the same decision. A deliberate contract change must update the affected executable contract and higher-level documentation together rather than silently treating stale code as authoritative.
+- Skills orchestrate the relevant sources and commands. They do not override or restate architecture and rules.

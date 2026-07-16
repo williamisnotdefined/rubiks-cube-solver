@@ -1,10 +1,28 @@
 import { defineConfig, devices } from '@playwright/test'
 
+const crossBrowserProjects = process.env.PLAYWRIGHT_CROSS_BROWSER === '1'
+  ? [
+      {
+        name: 'firefox',
+        use: { ...devices['Desktop Firefox'] },
+      },
+      {
+        name: 'webkit',
+        use: { ...devices['Desktop Safari'] },
+      },
+      {
+        name: 'mobile-chromium',
+        use: { ...devices['Pixel 7'] },
+      },
+    ]
+  : []
+
 export default defineConfig({
   testDir: './tests/e2e',
   outputDir: './test-results',
   workers: 1,
   reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],
+  retries: process.env.CI ? 2 : 0,
   use: {
     baseURL: 'http://127.0.0.1:4173',
     trace: 'on-first-retry',
@@ -29,5 +47,6 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
+    ...crossBrowserProjects,
   ],
 })

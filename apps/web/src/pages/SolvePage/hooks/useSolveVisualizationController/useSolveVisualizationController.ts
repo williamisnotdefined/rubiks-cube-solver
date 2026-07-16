@@ -1,12 +1,10 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
+import { useCallback, useReducer, useRef, useState } from 'react'
 import type { RubiksCubeElement } from '@rubiks-cube-solver/rubiks-cube/view'
 import type { SolveSuccessResult } from '@api/solver/types'
+import { isVisualizationRegistered } from '@components/VisualizationRegistration'
 import type { CubeStageCubeType } from '../../visualization/CubeStage'
 import { useCubeVisualization } from '../../visualization/hooks/useCubeVisualization'
 import type { SolveSource } from '../useSolveResultFlow/useSolveResultFlow'
-
-const cubeElementName = 'rubiks-cube'
-const idleVisualizationAutoLoadDelayMs = 3000
 
 type UseSolveVisualizationControllerInput = {
   activeSolveSource: SolveSource
@@ -26,17 +24,14 @@ export function useSolveVisualizationController({
   visualizationSupported,
 }: UseSolveVisualizationControllerInput) {
   const cubeRef = useRef<RubiksCubeElement | null>(null)
-  const [cubeReadyRevision, markCubeReady] = useReducer(
-    (revision: number) => revision + 1,
-    0,
+  const [cubeReadyRevision, markCubeReady] = useReducer((revision: number) => revision + 1, 0)
+  const [visualizationRequested, setVisualizationRequested] = useState(() =>
+    isVisualizationRegistered('cube'),
   )
-  const [visualizationRequested, setVisualizationRequested] = useState(isCubeRendererRegistered)
   const visualizationState = successResult?.visualState
   const visualizationStateKind = successResult?.visualStateKind
   const useInverseSolutionVisualization =
-    activeSolveSource === 'scan' &&
-    visualizationCubeType === 'Two' &&
-    successResult !== undefined
+    activeSolveSource === 'scan' && visualizationCubeType === 'Two' && successResult !== undefined
   const visualizationNotation = buildVisualizationNotation({
     activeSolveSource,
     notation,
@@ -46,15 +41,10 @@ export function useSolveVisualizationController({
     visualizationState,
     visualizationSupported,
   })
-  const visualizationStateForCube = useInverseSolutionVisualization
-    ? undefined
-    : visualizationState
+  const visualizationStateForCube = useInverseSolutionVisualization ? undefined : visualizationState
   const visualizationStateKindForCube = useInverseSolutionVisualization
     ? undefined
     : visualizationStateKind
-  const shouldAutoLoadVisualization =
-    visualizationSupported && (notation.trim().length > 0 || successResult !== undefined)
-
   useCubeVisualization(
     cubeRef,
     visualizationNotation,
@@ -68,40 +58,6 @@ export function useSolveVisualizationController({
   const requestVisualization = useCallback(() => {
     setVisualizationRequested(true)
   }, [])
-
-  useEffect(() => {
-    if (shouldAutoLoadVisualization) {
-      requestVisualization()
-    }
-  }, [requestVisualization, shouldAutoLoadVisualization])
-
-  useEffect(() => {
-    let fallbackTimeout: number | undefined
-    let idleCallbackId: number | undefined
-
-    if (!visualizationSupported || visualizationRequested) {
-      return undefined
-    }
-
-    fallbackTimeout = window.setTimeout(() => {
-      fallbackTimeout = undefined
-
-      if (window.requestIdleCallback !== undefined) {
-        idleCallbackId = window.requestIdleCallback(requestVisualization, { timeout: 1500 })
-      } else {
-        requestVisualization()
-      }
-    }, idleVisualizationAutoLoadDelayMs)
-
-    return () => {
-      if (fallbackTimeout !== undefined) {
-        window.clearTimeout(fallbackTimeout)
-      }
-      if (idleCallbackId !== undefined) {
-        window.cancelIdleCallback(idleCallbackId)
-      }
-    }
-  }, [requestVisualization, visualizationRequested, visualizationSupported])
 
   return {
     cubeRef,
@@ -150,14 +106,7 @@ function buildVisualizationNotation({
   return visibleSolutionMoves.join(' ')
 }
 
-function isCubeRendererRegistered(): boolean {
-  return customElements.get(cubeElementName) !== undefined
-}
-
-function notationWithSolutionPrefix(
-  notation: string,
-  solutionMoves: readonly string[],
-): string {
+function notationWithSolutionPrefix(notation: string, solutionMoves: readonly string[]): string {
   return [notation.trim(), ...solutionMoves].filter(Boolean).join(' ')
 }
 

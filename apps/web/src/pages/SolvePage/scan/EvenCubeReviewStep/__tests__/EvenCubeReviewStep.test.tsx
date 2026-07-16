@@ -21,10 +21,10 @@ vi.mock('@dnd-kit/core', () => ({
     onDragEnd: (event: { active: { id: string }; over: { id: string } | null }) => void
   }) => (
     <>
-      <button type="button" onClick={() => onDragEnd({ active: { id: 'F' }, over: null })}>
+      <button type='button' onClick={() => onDragEnd({ active: { id: 'F' }, over: null })}>
         Drop without target
       </button>
-      <button type="button" onClick={() => onDragEnd({ active: { id: 'F' }, over: { id: 'U' } })}>
+      <button type='button' onClick={() => onDragEnd({ active: { id: 'F' }, over: { id: 'U' } })}>
         Drop Front on Up
       </button>
       {children}
@@ -136,7 +136,7 @@ describe('EvenCubeReviewStep', () => {
     expect(onSolve).toHaveBeenCalledOnce()
   })
 
-  it('focuses an invalid corner and prevents solving it', async () => {
+  it('focuses an advisory invalid corner without replacing backend validation', async () => {
     const user = userEvent.setup()
     const onSolve = vi.fn()
     renderReview({ invalidCorners: [invalidCorner], onSolve })
@@ -151,18 +151,15 @@ describe('EvenCubeReviewStep', () => {
         name: 'Selected slot: Up side · captured face: Up side',
       }),
     ).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('button', { name: 'Accept and solve' })).toBeDisabled()
-    expect(onSolve).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: 'Accept and solve' }))
+    expect(onSolve).toHaveBeenCalledOnce()
   })
 
   it('renders an incomplete sticker safely for review', () => {
     const drafts = solidDrafts()
     drafts.F = {
       ...drafts.F,
-      stickers: [
-        { confidence: 0, source: 'empty' },
-        ...drafts.F.stickers.slice(1),
-      ],
+      stickers: [{ confidence: 0, source: 'empty' }, ...drafts.F.stickers.slice(1)],
     }
 
     renderReview({ drafts })

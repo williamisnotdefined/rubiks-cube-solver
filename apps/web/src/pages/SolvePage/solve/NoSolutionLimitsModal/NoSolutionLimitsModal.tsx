@@ -4,19 +4,9 @@ import { Button } from '@components/Button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@components/Dialog'
 import { Field } from '@components/Field'
 import { TextInput } from '@components/FormControls'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@components/Select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/Select'
 import { formatNumber } from '@core/format/formatNumber'
-import {
-  maxMovesLimitForPuzzle,
-  maxNodesMillionOptions,
-  nodesPerMillion,
-} from '../constants'
+import { maxMovesLimitForPuzzle, maxNodesMillionOptions, nodesPerMillion } from '../constants'
 import type { NoSolutionLimitFailureResult } from '../noSolutionLimits'
 import { solveErrorDetail, solveStrategyLabel } from '../solveMessages'
 import { useSolveSettingsStore } from '../solveSettingsStore'
@@ -50,9 +40,7 @@ export function NoSolutionLimitsModal({
   const maxMovesInput = useSolveSettingsStore((state) => state.maxMovesInput)
   const maxNodesMillionInput = useSolveSettingsStore((state) => state.maxNodesMillionInput)
   const setMaxMovesInput = useSolveSettingsStore((state) => state.setMaxMovesInput)
-  const setMaxNodesMillionInput = useSolveSettingsStore(
-    (state) => state.setMaxNodesMillionInput,
-  )
+  const setMaxNodesMillionInput = useSolveSettingsStore((state) => state.setMaxNodesMillionInput)
   const maxMovesLimit = maxMovesLimitForPuzzle(puzzleSlug)
   const maxMovesValidation = validateWholeNumberLimit(
     maxMovesInput,
@@ -63,15 +51,13 @@ export function NoSolutionLimitsModal({
     maxNodesMillionInput,
     t('solve.form.maxNodesMillion'),
   )
-  const localValidationMessage = validationErrorMessage(
-    t,
-    maxMovesValidation ?? maxNodesValidation,
-  )
+  const localValidationMessage = validationErrorMessage(t, maxMovesValidation ?? maxNodesValidation)
   const retryDisabled = solving || localValidationMessage !== undefined
   const detail = solveErrorDetail(result, t)
-  const attemptedNodes = result.maxNodes === undefined
-    ? t('solve.details.maxNodesUnlimited')
-    : formatNumber(result.maxNodes)
+  const attemptedNodes =
+    result.maxNodes === undefined
+      ? t('solve.details.maxNodesUnlimited')
+      : formatNumber(result.maxNodes)
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -86,69 +72,67 @@ export function NoSolutionLimitsModal({
   }
 
   return (
-    <Dialog open onOpenChange={(open) => {
-      if (!open) {
-        onClose()
-      }
-    }}>
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) {
+          onClose()
+        }
+      }}
+    >
       <DialogContent
-        className="left-1/2 top-1/2 max-h-[calc(100vh-3rem)] w-[calc(100vw-1.5rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-auto border bg-card p-4 text-left text-card-foreground shadow-lg sm:w-[calc(100vw-3rem)] sm:p-6"
-        overlayClassName="backdrop-blur-sm"
+        className='left-1/2 top-1/2 max-h-[calc(100vh-3rem)] w-[calc(100vw-1.5rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-auto border bg-card p-4 text-left text-card-foreground shadow-lg sm:w-[calc(100vw-3rem)] sm:p-6'
+        overlayClassName='backdrop-blur-sm'
         overlayLabel={t('solve.noSolution.dismiss')}
       >
-        <form className="grid gap-5" onSubmit={handleSubmit}>
-          <div className="grid gap-2">
+        <form className='grid gap-5' onSubmit={handleSubmit}>
+          <div className='grid gap-2'>
             <DialogTitle asChild>
-              <h2 className="text-lg font-semibold tracking-tight">
+              <h2 className='text-lg font-semibold tracking-tight'>
                 {t('solve.noSolution.title')}
               </h2>
             </DialogTitle>
             <DialogDescription asChild>
-              <p className="text-sm leading-relaxed text-muted-foreground">
+              <p className='text-sm leading-relaxed text-muted-foreground'>
                 {t('solve.noSolution.description')}
               </p>
             </DialogDescription>
           </div>
 
-          <div className="grid gap-2 rounded-lg border bg-muted/40 p-3 text-sm">
-            <p className="font-medium text-muted-foreground">
+          <div className='grid gap-2 rounded-lg border bg-muted/40 p-3 text-sm'>
+            <p className='font-medium text-muted-foreground'>
               {t('solve.noSolution.previousAttempt')}
             </p>
-            <p className="font-medium text-foreground">
+            <p className='font-medium text-foreground'>
               {t('solve.noSolution.attempted', {
                 maxDepth: result.maxDepth,
                 maxNodes: attemptedNodes,
                 strategy: solveStrategyLabel(result.strategyId, result.strategyLabel, t),
               })}
             </p>
-            {detail === undefined ? null : (
-              <p className="text-muted-foreground">{detail}</p>
-            )}
+            {detail === undefined ? null : <p className='text-muted-foreground'>{detail}</p>}
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className='grid gap-3 sm:grid-cols-2'>
             <Field label={t('solve.form.maxMoves')}>
               <TextInput
                 aria-invalid={maxMovesValidation !== undefined || undefined}
-                className="text-center"
-                inputMode="numeric"
+                className='text-center'
+                inputMode='numeric'
                 max={maxMovesLimit}
-                min="0"
-                step="1"
-                type="number"
+                min='0'
+                step='1'
+                type='number'
                 value={maxMovesInput}
                 onChange={(event) => setMaxMovesInput(event.target.value)}
               />
             </Field>
             <Field label={t('solve.form.maxNodesMillion')}>
-              <Select
-                value={maxNodesMillionInput}
-                onValueChange={setMaxNodesMillionInput}
-              >
+              <Select value={maxNodesMillionInput} onValueChange={setMaxNodesMillionInput}>
                 <SelectTrigger
                   aria-invalid={maxNodesValidation !== undefined || undefined}
                   aria-label={t('solve.form.maxNodesMillion')}
-                  className="text-center"
+                  className='text-center'
                 >
                   <SelectValue />
                 </SelectTrigger>
@@ -164,16 +148,16 @@ export function NoSolutionLimitsModal({
           </div>
 
           {localValidationMessage === undefined ? null : (
-            <p className="text-sm font-medium text-destructive" role="alert">
+            <p className='text-sm font-medium text-destructive' role='alert'>
               {localValidationMessage}
             </p>
           )}
 
-          <div className="grid gap-2 sm:grid-cols-[auto_auto] sm:justify-end">
-            <Button type="button" variant="secondary" onClick={onClose}>
+          <div className='grid gap-2 sm:grid-cols-[auto_auto] sm:justify-end'>
+            <Button type='button' variant='secondary' onClick={onClose}>
               {t('common.close')}
             </Button>
-            <Button type="submit" disabled={retryDisabled}>
+            <Button type='submit' disabled={retryDisabled}>
               {solving ? t('common.loading') : t('solve.noSolution.retry')}
             </Button>
           </div>

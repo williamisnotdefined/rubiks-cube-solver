@@ -27,7 +27,11 @@ export function useThemePreferenceSync() {
   }, [theme])
 
   useEffect(() => {
-    if (theme !== 'system' || typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    if (
+      theme !== 'system' ||
+      typeof window === 'undefined' ||
+      typeof window.matchMedia !== 'function'
+    ) {
       return undefined
     }
 

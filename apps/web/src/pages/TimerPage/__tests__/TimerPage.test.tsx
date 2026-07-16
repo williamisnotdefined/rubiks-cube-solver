@@ -21,17 +21,23 @@ describe('TimerPage', () => {
     vi.restoreAllMocks()
     highQualityMocks.generateHighQualityScrambleForEvent.mockReset()
     let scrambleCount = 0
-    highQualityMocks.generateHighQualityScrambleForEvent.mockImplementation(async (eventId: string) => {
-      const event = scrambleEventById(eventId)
-      scrambleCount += 1
+    highQualityMocks.generateHighQualityScrambleForEvent.mockImplementation(
+      async (eventId: string) => {
+        const event = scrambleEventById(eventId)
+        scrambleCount += 1
 
-      return {
-        event,
-        scramble: event.id === '333mbld'
-          ? Array.from({ length: event.defaultLength }, (_, index) => `${index + 1}. MBLD scramble ${index + 1}`).join('\n')
-          : `${event.label} high-quality scramble ${scrambleCount}`,
-      }
-    })
+        return {
+          event,
+          scramble:
+            event.id === '333mbld'
+              ? Array.from(
+                  { length: event.defaultLength },
+                  (_, index) => `${index + 1}. MBLD scramble ${index + 1}`,
+                ).join('\n')
+              : `${event.label} high-quality scramble ${scrambleCount}`,
+        }
+      },
+    )
     useTimerStore.getState().resetTimerStore()
     useTimerSettingsStore.getState().resetTimerSettings()
     useTimerSettingsStore.getState().setHoldToStartMs(0)
@@ -58,14 +64,20 @@ describe('TimerPage', () => {
     expect(screen.getByText('No solves yet')).toBeInTheDocument()
   })
 
-  it('falls back to the first timer session when the active id is stale', async () => {
-    useTimerStore.getState().setActiveSessionId('missing-session')
+  it('repairs a stale active session and saves the completed solve in the fallback', async () => {
+    useTimerStore.setState({ activeSessionId: 'missing-session' })
 
     renderTimerPage()
     await waitForScrambleReady()
 
-    expect(screen.getByRole('timer', { name: 'Speedsolve timer' })).toBeInTheDocument()
-    expect(screen.getByText('No solves yet')).toBeInTheDocument()
+    fireEvent.keyDown(window, { code: 'Space', key: ' ' })
+    fireEvent.keyUp(window, { code: 'Space', key: ' ' })
+    await waitFor(() => expect(screen.getByText('Solving')).toBeInTheDocument())
+    fireEvent.keyDown(window, { code: 'KeyA', key: 'a' })
+
+    await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument())
+    expect(useTimerStore.getState().activeSessionId).toBe('timer-session-default')
+    expect(useTimerStore.getState().sessions[0]?.solves).toHaveLength(1)
   })
 
   it('records a solve with the keyboard timer', async () => {
@@ -128,16 +140,34 @@ describe('TimerPage', () => {
 
     expect(within(screen.getByRole('table')).getByText('2x2 scramble')).toBeInTheDocument()
     expect(within(screen.getByRole('table')).queryByText('3x3 scramble')).not.toBeInTheDocument()
-    expect(within(screen.getByRole('table')).getByRole('button', { name: 'Delete' })).toBeInTheDocument()
-    expect(within(screen.getByRole('timer', { name: 'Speedsolve timer' })).queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument()
+    expect(
+      within(screen.getByRole('table')).getByRole('button', { name: 'Delete' }),
+    ).toBeInTheDocument()
+    expect(
+      within(screen.getByRole('timer', { name: 'Speedsolve timer' })).queryByRole('button', {
+        name: 'Delete',
+      }),
+    ).not.toBeInTheDocument()
 
     await chooseSelectOption(user, 'Event', '3x3x3')
 
-    await waitFor(() => expect(within(screen.getByRole('table')).getByText('3x3 scramble')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(within(screen.getByRole('table')).getByText('3x3 scramble')).toBeInTheDocument(),
+    )
     expect(within(screen.getByRole('table')).queryByText('2x2 scramble')).not.toBeInTheDocument()
-    expect(within(screen.getByRole('table')).getByRole('button', { name: 'Delete' })).toBeInTheDocument()
-    expect(within(screen.getByRole('timer', { name: 'Speedsolve timer' })).queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument()
-    expect(within(screen.getByRole('timer', { name: 'Speedsolve timer' })).getByRole('button', { name: '+2' })).toBeDisabled()
+    expect(
+      within(screen.getByRole('table')).getByRole('button', { name: 'Delete' }),
+    ).toBeInTheDocument()
+    expect(
+      within(screen.getByRole('timer', { name: 'Speedsolve timer' })).queryByRole('button', {
+        name: 'Delete',
+      }),
+    ).not.toBeInTheDocument()
+    expect(
+      within(screen.getByRole('timer', { name: 'Speedsolve timer' })).getByRole('button', {
+        name: '+2',
+      }),
+    ).toBeDisabled()
   })
 
   it('toggles the latest solve penalty between +2, DNF, and no penalty', async () => {
@@ -159,7 +189,7 @@ describe('TimerPage', () => {
     await user.click(within(timer).getByRole('button', { name: '+2' }))
 
     expect(within(screen.getByRole('table')).getByText('+2')).toBeInTheDocument()
-    expect(document.activeElement).toBe(timer)
+    expect(document.activeElement).toBe(within(timer).getByRole('button', { name: '+2' }))
 
     await user.click(within(timer).getByRole('button', { name: '+2' }))
 
@@ -244,16 +274,24 @@ describe('TimerPage', () => {
     renderTimerPage()
 
     await waitFor(() => {
-      expect(screen.getByText('Could not generate a competition-quality scramble. Try again.')).toBeInTheDocument()
+      expect(
+        screen.getByText('Could not generate a competition-quality scramble. Try again.'),
+      ).toBeInTheDocument()
     })
-    expect(screen.getByRole('timer', { name: 'Speedsolve timer' })).toHaveAttribute('aria-disabled', 'true')
+    expect(screen.getByRole('timer', { name: 'Speedsolve timer' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    )
     expect(screen.getByRole('button', { name: 'Copy scramble' })).toBeDisabled()
 
     await user.click(screen.getByRole('button', { name: 'Next scramble' }))
     await waitForScrambleReady()
 
     expect(screen.getByText('retry high-quality scramble')).toBeInTheDocument()
-    expect(screen.getByRole('timer', { name: 'Speedsolve timer' })).toHaveAttribute('aria-disabled', 'false')
+    expect(screen.getByRole('timer', { name: 'Speedsolve timer' })).toHaveAttribute(
+      'aria-disabled',
+      'false',
+    )
     expect(screen.getByRole('button', { name: 'Previous scramble' })).toBeDisabled()
   })
 
@@ -327,14 +365,24 @@ describe('TimerPage', () => {
     fireEvent.keyUp(window, { code: 'Space', key: ' ' })
     await waitFor(() => expect(screen.getByText('Solving')).toBeInTheDocument())
     fireEvent.keyDown(window, { code: 'KeyA', key: 'a' })
-    await waitFor(() => expect(within(screen.getByRole('timer', { name: 'Speedsolve timer' })).getByRole('button', { name: 'Delete' })).toBeInTheDocument())
+    await waitFor(() =>
+      expect(
+        within(screen.getByRole('timer', { name: 'Speedsolve timer' })).getByRole('button', {
+          name: 'Delete',
+        }),
+      ).toBeInTheDocument(),
+    )
 
     const timer = screen.getByRole('timer', { name: 'Speedsolve timer' })
     await user.click(within(timer).getByRole('button', { name: 'Delete' }))
 
-    await waitFor(() => expect(within(timer).queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument())
+    await waitFor(() =>
+      expect(within(timer).queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument(),
+    )
     expect(within(screen.getByRole('table')).getByText('old scramble')).toBeInTheDocument()
-    expect(within(screen.getByRole('table')).getByRole('button', { name: 'Delete' })).toBeInTheDocument()
+    expect(
+      within(screen.getByRole('table')).getByRole('button', { name: 'Delete' }),
+    ).toBeInTheDocument()
   })
 
   it('lists every WCA event in a scrollable event selector', async () => {
@@ -351,6 +399,24 @@ describe('TimerPage', () => {
     }
     await user.keyboard('{Escape}')
     await waitFor(() => expect(screen.queryByRole('listbox')).not.toBeInTheDocument())
+  })
+
+  it('locks event and scramble navigation throughout hold and running', async () => {
+    renderTimerPage()
+    await waitForScrambleReady()
+
+    fireEvent.keyDown(window, { code: 'Space', key: ' ' })
+
+    expect(screen.getByRole('combobox', { name: 'Event' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Next scramble' })).toBeDisabled()
+
+    fireEvent.keyUp(window, { code: 'Space', key: ' ' })
+    await waitFor(() => expect(screen.getByText('Solving')).toBeInTheDocument())
+    expect(screen.getByRole('combobox', { name: 'Event' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Next scramble' })).toBeDisabled()
+
+    fireEvent.keyDown(window, { code: 'KeyA', key: 'a' })
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Event' })).toBeEnabled())
   })
 })
 

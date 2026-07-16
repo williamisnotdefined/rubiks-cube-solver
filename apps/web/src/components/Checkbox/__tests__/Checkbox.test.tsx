@@ -23,7 +23,7 @@ function CheckboxHarness() {
 
   return (
     <Checkbox
-      aria-label="Use inspection"
+      aria-label='Use inspection'
       checked={checked}
       onCheckedChange={(nextChecked) => setChecked(nextChecked === true)}
     />

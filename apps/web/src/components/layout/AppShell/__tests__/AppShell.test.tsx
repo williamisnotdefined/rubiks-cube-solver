@@ -7,7 +7,7 @@ import { AppShell } from '../AppShell'
 describe('AppShell', () => {
   it('renders primary navigation and page content', () => {
     renderWithRouter(
-      <AppShell activeRoute="solve">
+      <AppShell activeRoute='solve'>
         <main>Solver workspace</main>
       </AppShell>,
     )
@@ -19,9 +19,5 @@ describe('AppShell', () => {
 })
 
 function renderWithRouter(ui: ReactNode, path = '/solve/') {
-  return render(
-    <MemoryRouter initialEntries={[path]}>
-      {ui}
-    </MemoryRouter>,
-  )
+  return render(<MemoryRouter initialEntries={[path]}>{ui}</MemoryRouter>)
 }

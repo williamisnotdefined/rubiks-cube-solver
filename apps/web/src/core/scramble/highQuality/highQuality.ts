@@ -27,7 +27,9 @@ export const cubingEventIdsByTimerEvent = {
   square1: 'sq1',
 } as const satisfies Record<TimerScrambleEventId, string>
 
-export async function generateHighQualityScrambleForEvent(eventId: string): Promise<GeneratedScramble> {
+export async function generateHighQualityScrambleForEvent(
+  eventId: string,
+): Promise<GeneratedScramble> {
   const event = scrambleEventById(eventId)
   const cubingEventId = cubingEventIdFor(event.id)
 

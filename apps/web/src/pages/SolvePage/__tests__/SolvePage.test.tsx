@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PuzzleVisualizationKind, SolveResult } from '@api/solver/types'
@@ -6,8 +6,7 @@ import { SolvePage } from '../SolvePage'
 import { useSolveSettingsStore } from '../solve/solveSettingsStore'
 import { useCubeVisualization } from '../visualization/hooks/useCubeVisualization'
 
-const scramblePlaceholder =
-  "R2 D2 F2 D L2 F2 U' R2 D B2 L2 U' B' R' B' R2 B2 L B U'"
+const scramblePlaceholder = "R2 D2 F2 D L2 F2 U' R2 D B2 L2 U' B' R' B' R2 B2 L B U'"
 
 const apiMocks = vi.hoisted(() => ({
   isPending: false,
@@ -151,10 +150,10 @@ vi.mock('../scan/ScanCubeModal', () => ({
     onSessionSolveResult: (solve: SolveResult) => void
     solving: boolean
   }) => (
-    <section aria-label="Scan cube" role="dialog">
+    <section aria-label='Scan cube' role='dialog'>
       <p>Face 1 of 6</p>
       <button
-        type="button"
+        type='button'
         disabled={!apiReady || solving}
         onClick={() => {
           onSessionSolveResult(apiMocks.scanSessionSolveResult as SolveResult)
@@ -163,21 +162,22 @@ vi.mock('../scan/ScanCubeModal', () => ({
       >
         Solve scanned cube
       </button>
-      <button type="button" onClick={() => onSessionSolvingChange(true)}>
+      <button type='button' onClick={() => onSessionSolvingChange(true)}>
         Start scan solve
       </button>
-      <button type="button" onClick={onClose}>Close scan</button>
+      <button type='button' onClick={onClose}>
+        Close scan
+      </button>
     </section>
   ),
 }))
 
 vi.mock('../solve/NoSolutionLimitsModal', async () => {
-  const {
-    maxMovesLimitForPuzzle,
-    maxNodesMillionOptions,
-    nodesPerMillion,
-  } = await vi.importActual<typeof import('../solve/constants')>('../solve/constants')
-  const { useSolveSettingsStore } = await vi.importActual<typeof import('../solve/solveSettingsStore')>('../solve/solveSettingsStore')
+  const { maxMovesLimitForPuzzle, maxNodesMillionOptions, nodesPerMillion } =
+    await vi.importActual<typeof import('../solve/constants')>('../solve/constants')
+  const { useSolveSettingsStore } = await vi.importActual<
+    typeof import('../solve/solveSettingsStore')
+  >('../solve/solveSettingsStore')
 
   return {
     NoSolutionLimitsModal: ({
@@ -194,10 +194,12 @@ vi.mock('../solve/NoSolutionLimitsModal', async () => {
       const maxMovesInput = useSolveSettingsStore((state) => state.maxMovesInput)
       const maxNodesMillionInput = useSolveSettingsStore((state) => state.maxNodesMillionInput)
       const setMaxMovesInput = useSolveSettingsStore((state) => state.setMaxMovesInput)
-      const setMaxNodesMillionInput = useSolveSettingsStore((state) => state.setMaxNodesMillionInput)
+      const setMaxNodesMillionInput = useSolveSettingsStore(
+        (state) => state.setMaxNodesMillionInput,
+      )
 
       return (
-        <section aria-label="Try different limits" role="dialog">
+        <section aria-label='Try different limits' role='dialog'>
           <p>Previous attempt</p>
           <p>{(result.exploredNodes ?? 0).toLocaleString('en-US')} nodes explored</p>
           <form
@@ -220,7 +222,7 @@ vi.mock('../solve/NoSolutionLimitsModal', async () => {
             <label>
               Max nodes (M)
               <select
-                aria-label="Max nodes (M)"
+                aria-label='Max nodes (M)'
                 value={maxNodesMillionInput}
                 onChange={(event) => setMaxNodesMillionInput(event.target.value)}
               >
@@ -231,7 +233,7 @@ vi.mock('../solve/NoSolutionLimitsModal', async () => {
                 ))}
               </select>
             </label>
-            <button type="submit" disabled={solving}>
+            <button type='submit' disabled={solving}>
               Try with these limits
             </button>
           </form>
@@ -264,15 +266,17 @@ vi.mock('../visualization/CubeStage', async () => {
 
       return (
         <section
-          aria-label="Cube visualization"
+          aria-label='Cube visualization'
           data-cube-type={cubeType}
           data-load-requested={String(loadRequested)}
-          data-testid="cube-stage"
+          data-testid='cube-stage'
         >
           {loadRequested ? (
-            <div data-testid="cube-stage-enabled" />
+            <div data-testid='cube-stage-enabled' />
           ) : (
-            <button type="button" onClick={onLoadRequest}>Preparing cube</button>
+            <button type='button' onClick={onLoadRequest}>
+              Preparing cube
+            </button>
           )}
         </section>
       )
@@ -285,13 +289,8 @@ vi.mock('../visualization/hooks/useCubeVisualization', () => ({
 }))
 
 vi.mock('@components/Loader3x3', () => ({
-  Loader3x3: ({
-    decorative,
-    label = 'Loading',
-  }: {
-    decorative?: boolean
-    label?: string
-  }) => (decorative ? <span data-testid="loader-3x3" /> : <span aria-label={label} role="status" />),
+  Loader3x3: ({ decorative, label = 'Loading' }: { decorative?: boolean; label?: string }) =>
+    decorative ? <span data-testid='loader-3x3' /> : <span aria-label={label} role='status' />,
 }))
 
 const useCubeVisualizationMock = vi.mocked(useCubeVisualization)
@@ -333,28 +332,15 @@ describe('SolvePage', () => {
     )
   })
 
-  it('auto-loads the empty cube after a delayed idle period', () => {
-    vi.useFakeTimers()
+  it('loads the empty cube only after explicit activation', async () => {
+    const user = userEvent.setup()
+    render(<SolvePage />)
 
-    try {
-      render(<SolvePage />)
+    expect(screen.getByTestId('cube-stage')).toHaveAttribute('data-load-requested', 'false')
 
-      expect(screen.getByTestId('cube-stage')).toHaveAttribute('data-load-requested', 'false')
+    await user.click(screen.getByRole('button', { name: 'Preparing cube' }))
 
-      act(() => {
-        vi.advanceTimersByTime(2999)
-      })
-
-      expect(screen.getByTestId('cube-stage')).toHaveAttribute('data-load-requested', 'false')
-
-      act(() => {
-        vi.advanceTimersByTime(1)
-      })
-
-      expect(screen.getByTestId('cube-stage')).toHaveAttribute('data-load-requested', 'true')
-    } finally {
-      vi.useRealTimers()
-    }
+    expect(screen.getByTestId('cube-stage')).toHaveAttribute('data-load-requested', 'true')
   })
 
   it('keeps the scramble field on its own row and limits plus submit on the next row', () => {
@@ -364,7 +350,9 @@ describe('SolvePage', () => {
     const limitsRow = screen.getByTestId('limits-row')
 
     expect(within(scrambleRow).getByLabelText('Scramble')).toBeInTheDocument()
-    expect(within(scrambleRow).getByRole('button', { name: 'Scan cube with camera' })).toBeInTheDocument()
+    expect(
+      within(scrambleRow).getByRole('button', { name: 'Scan cube with camera' }),
+    ).toBeInTheDocument()
     expect(within(limitsRow).getByLabelText('Max moves')).toBeInTheDocument()
     expect(within(limitsRow).getByRole('combobox', { name: 'Max nodes (M)' })).toBeInTheDocument()
     expect(within(limitsRow).getByRole('button', { name: 'Solve' })).toBeInTheDocument()
@@ -380,7 +368,10 @@ describe('SolvePage', () => {
 
     expect(screen.getByRole('option', { name: '3x3x3 Cube' })).not.toHaveAttribute('aria-disabled')
     expect(screen.getByRole('option', { name: '2x2x2 Cube' })).not.toHaveAttribute('aria-disabled')
-    expect(screen.getByRole('option', { name: 'Pyraminx' })).toHaveAttribute('aria-disabled', 'true')
+    expect(screen.getByRole('option', { name: 'Pyraminx' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    )
   })
 
   it('opens the scan modal from the camera button', async () => {
@@ -520,7 +511,9 @@ describe('SolvePage', () => {
     expect(screen.getByLabelText('Max moves')).toHaveAttribute('max', '11')
     expect(screen.getByRole('button', { name: 'Scan cube with camera' })).toBeEnabled()
     expect(screen.getByTestId('cube-stage')).toHaveAttribute('data-cube-type', 'Two')
-    expect(screen.queryByText('Visualization is not available for this puzzle yet.')).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Visualization is not available for this puzzle yet.'),
+    ).not.toBeInTheDocument()
     expect(useCubeVisualizationMock).toHaveBeenLastCalledWith(
       expect.anything(),
       '',
@@ -629,6 +622,7 @@ describe('SolvePage', () => {
     apiMocks.scanSessionSolveResult = scanSuccessResult(visualState)
 
     render(<SolvePage />)
+    await user.click(screen.getByRole('button', { name: 'Preparing cube' }))
     await user.click(screen.getByRole('button', { name: 'Scan cube with camera' }))
     await user.click(screen.getByRole('button', { name: 'Solve scanned cube' }))
 
@@ -655,6 +649,7 @@ describe('SolvePage', () => {
 
     render(<SolvePage />)
     await chooseSelectOption(user, 'Puzzle', '2x2x2 Cube')
+    await user.click(screen.getByRole('button', { name: 'Preparing cube' }))
     await user.click(screen.getByRole('button', { name: 'Scan cube with camera' }))
     await user.click(screen.getByRole('button', { name: 'Solve scanned cube' }))
 

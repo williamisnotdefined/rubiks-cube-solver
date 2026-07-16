@@ -69,11 +69,14 @@ describe('scan capture helpers', () => {
   it('falls back to canvas capture when ImageCapture fails', async () => {
     const video = videoElementWithSize(640, 480)
     const stream = mediaStreamWithTrack()
-    vi.stubGlobal('ImageCapture', class MockImageCapture {
-      takePhoto() {
-        throw new Error('camera failed')
-      }
-    })
+    vi.stubGlobal(
+      'ImageCapture',
+      class MockImageCapture {
+        takePhoto() {
+          throw new Error('camera failed')
+        }
+      },
+    )
 
     await expect(captureScanImage(video, stream)).resolves.toMatchObject({
       source: 'canvas',
@@ -85,11 +88,14 @@ describe('scan capture helpers', () => {
     const originalCreateElement = document.createElement.bind(document)
     const stream = mediaStreamWithTrack()
     const objectUrl = 'blob:scan-photo'
-    vi.stubGlobal('ImageCapture', class MockImageCapture {
-      takePhoto() {
-        return Promise.resolve(new Blob(['photo']))
-      }
-    })
+    vi.stubGlobal(
+      'ImageCapture',
+      class MockImageCapture {
+        takePhoto() {
+          return Promise.resolve(new Blob(['photo']))
+        }
+      },
+    )
     vi.spyOn(URL, 'createObjectURL').mockReturnValue(objectUrl)
     vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
     vi.spyOn(document, 'createElement').mockImplementation((tagName) => {
@@ -119,17 +125,30 @@ describe('scan capture helpers', () => {
     })
     expect(URL.createObjectURL).toHaveBeenCalled()
     expect(URL.revokeObjectURL).toHaveBeenCalledWith(objectUrl)
-    expect(drawImage).toHaveBeenCalledWith(expect.any(HTMLImageElement), 350, 0, 900, 900, 0, 0, 900, 900)
+    expect(drawImage).toHaveBeenCalledWith(
+      expect.any(HTMLImageElement),
+      350,
+      0,
+      900,
+      900,
+      0,
+      0,
+      900,
+      900,
+    )
   })
 
   it('falls back to decoded image layout size when natural size is unavailable', async () => {
     const originalCreateElement = document.createElement.bind(document)
     const stream = mediaStreamWithTrack()
-    vi.stubGlobal('ImageCapture', class MockImageCapture {
-      takePhoto() {
-        return Promise.resolve(new Blob(['photo']))
-      }
-    })
+    vi.stubGlobal(
+      'ImageCapture',
+      class MockImageCapture {
+        takePhoto() {
+          return Promise.resolve(new Blob(['photo']))
+        }
+      },
+    )
     vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:scan-photo')
     vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
     vi.spyOn(document, 'createElement').mockImplementation((tagName) => {
@@ -164,11 +183,14 @@ describe('scan capture helpers', () => {
   it('returns undefined when ImageCapture photo decode fails', async () => {
     const originalCreateElement = document.createElement.bind(document)
     const stream = mediaStreamWithTrack()
-    vi.stubGlobal('ImageCapture', class MockImageCapture {
-      takePhoto() {
-        return Promise.resolve(new Blob(['photo']))
-      }
-    })
+    vi.stubGlobal(
+      'ImageCapture',
+      class MockImageCapture {
+        takePhoto() {
+          return Promise.resolve(new Blob(['photo']))
+        }
+      },
+    )
     vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:scan-photo')
     vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
     vi.spyOn(document, 'createElement').mockImplementation((tagName) => {
@@ -211,9 +233,7 @@ describe('scan capture helpers', () => {
 
   it('keeps the original canvas when resize context is unavailable', async () => {
     const longDataUrl = `data:image/jpeg;base64,${'a'.repeat(1_800_001)}`
-    spyOnCanvasGetContext()
-      .mockReturnValueOnce(canvasContext)
-      .mockReturnValue(null)
+    spyOnCanvasGetContext().mockReturnValueOnce(canvasContext).mockReturnValue(null)
     vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL')
       .mockReturnValueOnce(longDataUrl)
       .mockReturnValueOnce(longDataUrl)

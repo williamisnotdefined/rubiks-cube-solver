@@ -4,7 +4,7 @@ import { TextInput } from '../FormControls'
 
 describe('FormControls', () => {
   it('passes native props to text inputs', () => {
-    render(<TextInput aria-label="Scramble" aria-invalid placeholder="R U" />)
+    render(<TextInput aria-label='Scramble' aria-invalid placeholder='R U' />)
 
     const input = screen.getByLabelText('Scramble')
     expect(input).toHaveAttribute('placeholder', 'R U')

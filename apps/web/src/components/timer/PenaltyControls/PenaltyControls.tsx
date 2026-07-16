@@ -55,14 +55,14 @@ export function PenaltyControls({
             '!min-h-8 px-3 py-1 text-xs': compact,
           })}
           disabled={disabled}
-          type="button"
-          variant="secondary"
+          type='button'
+          variant='secondary'
           onClick={(event) => {
             event.currentTarget.blur()
             onDeleteLatestSolve()
           }}
         >
-          <Trash2 aria-hidden="true" className="size-4" strokeWidth={2.6} />
+          <Trash2 aria-hidden='true' className='size-4' strokeWidth={2.6} />
         </Button>
       ) : null}
     </div>
@@ -77,13 +77,7 @@ type PenaltyButtonProps = {
   onClick: () => void
 }
 
-function PenaltyButton({
-  active,
-  compact,
-  disabled,
-  label,
-  onClick,
-}: PenaltyButtonProps) {
+function PenaltyButton({ active, compact, disabled, label, onClick }: PenaltyButtonProps) {
   return (
     <Button
       className={cls('w-full', {
@@ -92,7 +86,7 @@ function PenaltyButton({
       })}
       aria-pressed={active}
       disabled={disabled}
-      type="button"
+      type='button'
       variant={active ? 'primary' : 'secondary'}
       onClick={onClick}
     >

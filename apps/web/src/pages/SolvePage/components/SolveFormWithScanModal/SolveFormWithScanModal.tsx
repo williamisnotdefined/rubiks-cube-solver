@@ -5,7 +5,9 @@ import { Button } from '@components/Button'
 import type { ScanCubeModalProps } from '../../scan/ScanCubeModal'
 import { SolveForm, type SolveFormProps } from '../../solve/SolveForm'
 
-const ScanCubeModal = lazy(() => import('../../scan/ScanCubeModal').then((module) => ({ default: module.ScanCubeModal })))
+const ScanCubeModal = lazy(() =>
+  import('../../scan/ScanCubeModal').then((module) => ({ default: module.ScanCubeModal })),
+)
 
 type SolveFormWithScanModalProps = Omit<SolveFormProps, 'onPuzzleChange' | 'scanAction'> & {
   onPuzzleChange: SolveFormProps['onPuzzleChange']
@@ -47,19 +49,19 @@ export function SolveFormWithScanModal({
     <>
       <SolveForm
         {...solveFormProps}
-        scanAction={(
+        scanAction={
           <Button
             aria-label={t('solve.form.scanCube')}
-            className="aspect-square h-9 w-9 px-0 py-0"
+            className='aspect-square h-9 w-9 px-0 py-0'
             disabled={!scanAvailable}
             title={scanAvailable ? undefined : t('solve.form.scanUnavailableForPuzzle')}
-            type="button"
-            variant="outline"
+            type='button'
+            variant='outline'
             onClick={handleScanClick}
           >
-            <Camera aria-hidden="true" />
+            <Camera aria-hidden='true' />
           </Button>
-        )}
+        }
         onPuzzleChange={handlePuzzleChange}
       />
       {scanModalOpen && scanAvailable ? (

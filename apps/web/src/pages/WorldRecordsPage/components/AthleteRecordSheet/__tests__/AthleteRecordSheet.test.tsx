@@ -66,7 +66,9 @@ describe('AthleteRecordSheet', () => {
     expect(within(dialog).getByText('1: 4.90')).toBeVisible()
     expect(within(dialog).getByText('3: DNF')).toBeVisible()
     expect(within(dialog).getByText('4: DNS')).toBeVisible()
-    expect(within(dialog).getByText('This result maps to one official scramble in the WCA export.')).toBeVisible()
+    expect(
+      within(dialog).getByText('This result maps to one official scramble in the WCA export.'),
+    ).toBeVisible()
     expect(within(dialog).getByText("R U R' U' 8")).toBeVisible()
     expect(within(dialog).queryByText("R U R' U' 9")).not.toBeInTheDocument()
     expect(within(dialog).getByRole('link', { name: 'Open WCA profile' })).toHaveAttribute(
@@ -94,7 +96,9 @@ describe('AthleteRecordSheet', () => {
     expect(stat('Medals')).toHaveTextContent('-')
     expect(within(dialog).getByText('Competition details are unavailable.')).toBeVisible()
     expect(within(dialog).getByText('Attempt details are unavailable.')).toBeVisible()
-    expect(within(dialog).getByText('No official scramble candidate could be linked from the export.')).toBeVisible()
+    expect(
+      within(dialog).getByText('No official scramble candidate could be linked from the export.'),
+    ).toBeVisible()
     expect(within(dialog).getByRole('link', { name: 'Open WCA profile' })).toHaveAttribute(
       'href',
       record.athlete.wcaUrl,

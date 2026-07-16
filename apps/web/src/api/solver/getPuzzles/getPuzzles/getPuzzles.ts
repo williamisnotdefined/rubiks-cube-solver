@@ -1,6 +1,6 @@
 import { apiRequest } from '@api/client'
-import type { PuzzleDefinition } from '../../types'
+import { parsePuzzleDefinitions } from '../../types/validation'
 
-export function getPuzzles() {
-  return apiRequest<PuzzleDefinition[]>('/puzzles')
+export async function getPuzzles(signal?: AbortSignal) {
+  return parsePuzzleDefinitions(await apiRequest<unknown>('/puzzles', { signal }))
 }

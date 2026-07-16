@@ -286,6 +286,12 @@ function validateRegistrySchemaShape(registry) {
 
     validateAllowedKeys(skill.toolConfig?.github, `${skillField}.toolConfig.github`, ["applyTo"]);
     requiredString(skill.toolConfig?.github?.applyTo, `${skillField}.toolConfig.github.applyTo`);
+
+    if (skill.toolConfig.cursor.globs !== skill.toolConfig.github.applyTo) {
+      throw new Error(
+        `${skillField}: Cursor globs and GitHub applyTo must match so routed scope stays consistent.`,
+      );
+    }
   }
 }
 

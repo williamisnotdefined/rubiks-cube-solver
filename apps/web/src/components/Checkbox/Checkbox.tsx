@@ -14,8 +14,8 @@ export function Checkbox({ className, ...props }: CheckboxProps) {
       )}
       {...props}
     >
-      <CheckboxPrimitive.Indicator className="grid place-items-center text-current transition-none">
-        <CheckIcon aria-hidden="true" className="size-3.5" strokeWidth={2.4} />
+      <CheckboxPrimitive.Indicator className='grid place-items-center text-current transition-none'>
+        <CheckIcon aria-hidden='true' className='size-3.5' strokeWidth={2.4} />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   )

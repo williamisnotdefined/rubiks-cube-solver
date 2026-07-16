@@ -5,14 +5,14 @@ import { ScrambleViewer } from '../ScrambleViewer'
 
 describe('ScrambleViewer', () => {
   it('renders the active event and scramble', () => {
-    render(<ScrambleViewer eventLabel="3x3x3" scramble="R U R' U'" />)
+    render(<ScrambleViewer eventLabel='3x3x3' scramble="R U R' U'" />)
 
     expect(screen.getByText(/3x3x3/)).toBeInTheDocument()
     expect(screen.getByText("R U R' U'")).toBeInTheDocument()
   })
 
   it('preserves multiline scrambles', () => {
-    render(<ScrambleViewer eventLabel="3x3 MBLD" scramble={'1. R U\n2. F B'} />)
+    render(<ScrambleViewer eventLabel='3x3 MBLD' scramble={'1. R U\n2. F B'} />)
 
     const scramble = screen.getByText(/1\. R U/)
 
@@ -31,7 +31,7 @@ describe('ScrambleViewer', () => {
     render(
       <ScrambleViewer
         canGoPrevious
-        eventLabel="3x3x3"
+        eventLabel='3x3x3'
         scramble="R U R' U'"
         onCopy={onCopy}
         onNext={onNext}
@@ -41,22 +41,19 @@ describe('ScrambleViewer', () => {
 
     await user.click(screen.getByRole('button', { name: 'Previous scramble' }))
     await user.click(screen.getByRole('button', { name: 'Next scramble' }))
-    await user.click(screen.getByRole('button', { name: 'Copy scramble' }))
+    const copyButton = screen.getByRole('button', { name: 'Copy scramble' })
+    await user.click(copyButton)
 
     expect(onPrevious).toHaveBeenCalledTimes(1)
     expect(onNext).toHaveBeenCalledTimes(1)
     expect(onCopy).toHaveBeenCalledTimes(1)
+    expect(document.activeElement).toBe(copyButton)
     expect(screen.queryByText('Copy scramble')).not.toBeInTheDocument()
   })
 
   it('marks the copied action through its accessible label', () => {
     render(
-      <ScrambleViewer
-        copied
-        eventLabel="3x3x3"
-        scramble="R U R' U'"
-        onCopy={() => undefined}
-      />,
+      <ScrambleViewer copied eventLabel='3x3x3' scramble="R U R' U'" onCopy={() => undefined} />,
     )
 
     expect(screen.getByRole('button', { name: 'Copied' })).toBeEnabled()

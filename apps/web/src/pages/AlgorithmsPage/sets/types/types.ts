@@ -4,7 +4,15 @@ export type AlgorithmCase = {
   name: string
 }
 
-export type AlgorithmPuzzleId = '2x2' | '3x3' | '4x4' | '5x5' | '6x6' | 'megaminx' | 'pyraminx' | 'sq1'
+export type AlgorithmPuzzleId =
+  | '2x2'
+  | '3x3'
+  | '4x4'
+  | '5x5'
+  | '6x6'
+  | 'megaminx'
+  | 'pyraminx'
+  | 'sq1'
 
 export type AlgorithmPuzzle = {
   id: AlgorithmPuzzleId

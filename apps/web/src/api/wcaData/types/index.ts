@@ -1,4 +1,5 @@
 export type {
+  CanonicalWcaWorldRecordsQuery,
   WcaDataItemResponse,
   WcaDataListResponse,
   WcaDataMeta,
@@ -7,6 +8,7 @@ export type {
   WcaEvent,
   WcaPersonProfile,
   WcaWorldRecord,
+  WcaWorldRecordScramble,
   WcaWorldRecordsQuery,
   WcaWorldRecordScrambleCandidate,
   WcaWorldRecordType,

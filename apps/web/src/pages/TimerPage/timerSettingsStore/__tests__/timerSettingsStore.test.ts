@@ -29,4 +29,39 @@ describe('timerSettingsStore', () => {
       showMilliseconds: false,
     })
   })
+
+  it('sanitizes non-finite, negative, and unsupported persisted settings', async () => {
+    const migrate = useTimerSettingsStore.persist.getOptions().migrate
+    const invalidInfinity = await migrate?.(
+      {
+        holdToStartMs: Number.POSITIVE_INFINITY,
+        inspectionEnabled: 'yes',
+        selectedEventId: 'unsupported',
+        showMilliseconds: null,
+      },
+      0,
+    )
+    const invalidNegative = await migrate?.(
+      {
+        holdToStartMs: -1,
+        inspectionEnabled: true,
+        selectedEventId: '222',
+        showMilliseconds: true,
+      },
+      0,
+    )
+
+    expect(invalidInfinity).toEqual({
+      holdToStartMs: 450,
+      inspectionEnabled: false,
+      selectedEventId: '333',
+      showMilliseconds: false,
+    })
+    expect(invalidNegative).toEqual({
+      holdToStartMs: 450,
+      inspectionEnabled: true,
+      selectedEventId: '222',
+      showMilliseconds: true,
+    })
+  })
 })
