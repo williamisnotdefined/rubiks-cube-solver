@@ -1,6 +1,6 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PuzzleVisualizationKind, SolveResult } from '@api/solver/types'
 import { SolvePage } from '../SolvePage'
 import { useSolveSettingsStore } from '../solve/solveSettingsStore'
@@ -296,6 +296,10 @@ vi.mock('@components/Loader3x3', () => ({
 const useCubeVisualizationMock = vi.mocked(useCubeVisualization)
 
 describe('SolvePage', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   beforeEach(() => {
     apiMocks.isPending = false
     apiMocks.mutateAsync.mockClear()
@@ -332,13 +336,16 @@ describe('SolvePage', () => {
     )
   })
 
-  it('loads the empty cube only after explicit activation', async () => {
-    const user = userEvent.setup()
+  it('loads the empty cube automatically after three seconds', () => {
+    vi.useFakeTimers()
     render(<SolvePage />)
 
     expect(screen.getByTestId('cube-stage')).toHaveAttribute('data-load-requested', 'false')
 
-    await user.click(screen.getByRole('button', { name: 'Preparing cube' }))
+    act(() => vi.advanceTimersByTime(2999))
+    expect(screen.getByTestId('cube-stage')).toHaveAttribute('data-load-requested', 'false')
+
+    act(() => vi.advanceTimersByTime(1))
 
     expect(screen.getByTestId('cube-stage')).toHaveAttribute('data-load-requested', 'true')
   })
@@ -622,7 +629,6 @@ describe('SolvePage', () => {
     apiMocks.scanSessionSolveResult = scanSuccessResult(visualState)
 
     render(<SolvePage />)
-    await user.click(screen.getByRole('button', { name: 'Preparing cube' }))
     await user.click(screen.getByRole('button', { name: 'Scan cube with camera' }))
     await user.click(screen.getByRole('button', { name: 'Solve scanned cube' }))
 
@@ -649,7 +655,6 @@ describe('SolvePage', () => {
 
     render(<SolvePage />)
     await chooseSelectOption(user, 'Puzzle', '2x2x2 Cube')
-    await user.click(screen.getByRole('button', { name: 'Preparing cube' }))
     await user.click(screen.getByRole('button', { name: 'Scan cube with camera' }))
     await user.click(screen.getByRole('button', { name: 'Solve scanned cube' }))
 

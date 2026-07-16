@@ -12,7 +12,8 @@ test.describe('product solve flow', () => {
     await page.goto(solvePath)
 
     await expect(page.getByRole('button', { name: 'Preparing cube' })).toBeVisible()
-    await expect(page.locator('.cube-stage rubiks-cube')).toHaveCount(0)
+    const cube = page.locator('.cube-stage rubiks-cube')
+    await expect(cube).toHaveCount(0)
     await expect(page.getByText(/facelets/i)).toHaveCount(0)
 
     const cubeBox = await page.locator('.cube-stage').boundingBox()
@@ -34,6 +35,7 @@ test.describe('product solve flow', () => {
     await expectRadixSelectOptions(page, 'Max nodes (M)', ['10', '15', '20', '25'])
     await expect(page.getByText('API connected')).toHaveCount(0)
     await expect(page.getByText(/Generated-table solver/i)).toHaveCount(0)
+    await expect(cube).toBeVisible({ timeout: cubeActivationTimeout })
   })
 
   test('keeps solve button loading while the API is not ready', async ({ page }) => {
@@ -61,7 +63,6 @@ test.describe('product solve flow', () => {
     const input = page.getByLabel('Scramble')
     const cube = page.locator('.cube-stage rubiks-cube')
     await expect(input).toBeEnabled({ timeout: 15_000 })
-    await page.getByRole('button', { name: 'Preparing cube' }).click()
     await expect(cube).toBeVisible({ timeout: cubeActivationTimeout })
     await expect.poll(() => cubeState(cube)).not.toBe('')
     const initialState = await cubeState(cube)
@@ -80,7 +81,6 @@ test.describe('product solve flow', () => {
     const maxMoves = page.getByLabel('Max moves')
     const cube = page.locator('.cube-stage rubiks-cube')
 
-    await page.getByRole('button', { name: 'Preparing cube' }).click()
     await expect(cube).toBeVisible({ timeout: cubeActivationTimeout })
 
     await input.fill('R U')

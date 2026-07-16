@@ -152,7 +152,6 @@ test.describe('manual scan solve flow', () => {
       await expect(page.getByRole('button', { name: 'Scan cube with camera' })).toBeEnabled({
         timeout: 15_000,
       })
-      await page.getByRole('button', { name: 'Preparing cube' }).click()
       const solvedState = await waitForCubeState(cube, 54)
       await page.getByLabel('Max moves').fill('20')
       await chooseRadixSelectOption(page, 'Max nodes (M)', maxNodesMillion)
@@ -201,7 +200,6 @@ test.describe('manual scan solve flow', () => {
       await expect(page.getByRole('button', { name: 'Scan cube with camera' })).toBeEnabled({
         timeout: 15_000,
       })
-      await page.getByRole('button', { name: 'Preparing cube' }).click()
       const solvedState = await waitForCubeState(cube, 24)
       await page.getByLabel('Max moves').fill('11')
       await chooseRadixSelectOption(page, 'Max nodes (M)', maxNodesMillion)
