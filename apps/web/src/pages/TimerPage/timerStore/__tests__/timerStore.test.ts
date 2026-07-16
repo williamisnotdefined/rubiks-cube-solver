@@ -5,6 +5,7 @@ import { createTimerId, useTimerStore } from '../timerStore'
 
 describe('timerStore', () => {
   beforeEach(() => {
+    vi.unstubAllGlobals()
     localStorage.clear()
     useTimerStore.getState().resetTimerStore()
     vi.restoreAllMocks()
@@ -333,16 +334,26 @@ describe('timerStore', () => {
     expect(useTimerStore.getState().sessions[1]?.solves).toEqual([secondSolve])
   })
 
-  it('uses a unique compatible fallback when randomUUID is unavailable', () => {
+  it('uses secure random values when randomUUID is unavailable', () => {
+    vi.stubGlobal('crypto', {
+      getRandomValues: (values: Uint32Array) => {
+        values.set([1, 2, 3, 4])
+        return values
+      },
+    })
+
+    expect(createTimerId('session')).toBe('timer-session-00000001000000020000000300000004')
+  })
+
+  it('uses a unique compatible fallback when Web Crypto is unavailable', () => {
     vi.stubGlobal('crypto', {})
     vi.spyOn(Date, 'now').mockReturnValue(123)
-    vi.spyOn(Math, 'random').mockReturnValue(0.5)
 
     const firstId = createTimerId('session')
     const secondId = createTimerId('session')
 
-    expect(firstId).toMatch(/^timer-session-123-\d+-i$/)
-    expect(secondId).toMatch(/^timer-session-123-\d+-i$/)
+    expect(firstId).toMatch(/^timer-session-123-\d+$/)
+    expect(secondId).toMatch(/^timer-session-123-\d+$/)
     expect(secondId).not.toBe(firstId)
   })
 })

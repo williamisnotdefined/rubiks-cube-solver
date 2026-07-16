@@ -26,13 +26,21 @@ let fallbackIdSequence = 0
 
 export function createTimerId(kind: 'session' | 'solve'): string {
   const prefix = kind === 'session' ? 'timer-session' : 'solve'
+  const crypto = globalThis.crypto
 
-  if (typeof globalThis.crypto?.randomUUID === 'function') {
-    return `${prefix}-${globalThis.crypto.randomUUID()}`
+  if (typeof crypto?.randomUUID === 'function') {
+    return `${prefix}-${crypto.randomUUID()}`
+  }
+
+  if (typeof crypto?.getRandomValues === 'function') {
+    const values = crypto.getRandomValues(new Uint32Array(4))
+    const suffix = Array.from(values, (value) => value.toString(16).padStart(8, '0')).join('')
+
+    return `${prefix}-${suffix}`
   }
 
   fallbackIdSequence += 1
-  return `${prefix}-${Date.now()}-${fallbackIdSequence}-${Math.random().toString(36).slice(2)}`
+  return `${prefix}-${Date.now()}-${fallbackIdSequence}`
 }
 
 function defaultTimerSession(): TimerSession {
