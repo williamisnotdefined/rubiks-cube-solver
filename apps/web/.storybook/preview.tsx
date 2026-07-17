@@ -1,12 +1,11 @@
 import type { Decorator, Preview } from '@storybook/react-vite'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import i18n from '../src/i18n/i18n'
+import { changeLanguage, type SupportedLanguage } from '../src/i18n/i18n'
 import '../src/index.css'
 
 const withAppProviders: Decorator = (Story, context) => {
-  const locale = String(context.globals.locale ?? 'en')
+  const locale = storyLocale(context.globals.locale)
   const theme = String(context.globals.theme ?? 'light')
-  void i18n.changeLanguage(locale)
   document.documentElement.dataset.theme = theme
   document.documentElement.lang = locale
   const queryClient = new QueryClient({
@@ -30,6 +29,7 @@ const withAppProviders: Decorator = (Story, context) => {
 
 const preview: Preview = {
   decorators: [withAppProviders],
+  loaders: [async ({ globals }) => changeLanguage(storyLocale(globals.locale))],
   parameters: {
     actions: { argTypesRegex: '^on[A-Z].*' },
     controls: {
@@ -65,3 +65,8 @@ const preview: Preview = {
 }
 
 export default preview
+
+function storyLocale(value: unknown): SupportedLanguage {
+  const locale = String(value ?? 'en')
+  return locale === 'en' ? 'en-US' : (locale as SupportedLanguage)
+}

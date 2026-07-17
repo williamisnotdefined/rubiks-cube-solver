@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState, type ReactElement } from 'react'
+import { lazy, startTransition, Suspense, useEffect, useState, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router'
 import { AppErrorBoundary } from '@components/AppErrorBoundary'
@@ -18,49 +18,50 @@ import {
 import { activeRouteFromPath } from './activeRouteFromPath'
 import { RouteTransitionStage } from './RouteTransitionStage'
 
-const SolvePage = lazy(() =>
+const loadSolvePage = () =>
   import('../pages/SolvePage/SolvePageRoute').then((module) => ({
     default: module.SolvePageRoute,
-  })),
-)
-const TimerPage = lazy(() =>
-  import('../pages/TimerPage/TimerPage').then((module) => ({ default: module.TimerPage })),
-)
-const WorldRecordsPage = lazy(() =>
+  }))
+const loadTimerPage = () =>
+  import('../pages/TimerPage/TimerPage').then((module) => ({ default: module.TimerPage }))
+const loadWorldRecordsPage = () =>
   import('../pages/WorldRecordsPage/WorldRecordsPageRoute').then((module) => ({
     default: module.WorldRecordsPageRoute,
-  })),
-)
-const AlgorithmsIndexPage = lazy(() =>
+  }))
+const loadAlgorithmsIndexPage = () =>
   import('../pages/AlgorithmsPage/AlgorithmsIndexPage').then((module) => ({
     default: module.AlgorithmsIndexPage,
-  })),
-)
-const AlgorithmsPuzzlePage = lazy(() =>
+  }))
+const loadAlgorithmsPuzzlePage = () =>
   import('../pages/AlgorithmsPage/AlgorithmsPuzzlePage').then((module) => ({
     default: module.AlgorithmsPuzzlePage,
-  })),
-)
-const AlgorithmSetPage = lazy(() =>
+  }))
+const loadAlgorithmSetPage = () =>
   import('../pages/AlgorithmsPage/AlgorithmSetPage').then((module) => ({
     default: module.AlgorithmSetPage,
-  })),
-)
-const CubingSitesPage = lazy(() =>
+  }))
+const loadCubingSitesPage = () =>
   import('../pages/CubingSitesPage/CubingSitesPage').then((module) => ({
     default: module.CubingSitesPage,
-  })),
-)
-const NotationGuidePage = lazy(() =>
+  }))
+const loadNotationGuidePage = () =>
   import('../pages/NotationsPage/NotationGuidePage').then((module) => ({
     default: module.NotationGuidePage,
-  })),
-)
-const YouTubeChannelsPage = lazy(() =>
+  }))
+const loadYouTubeChannelsPage = () =>
   import('../pages/YouTubeChannelsPage/YouTubeChannelsPage').then((module) => ({
     default: module.YouTubeChannelsPage,
-  })),
-)
+  }))
+
+const SolvePage = lazy(loadSolvePage)
+const TimerPage = lazy(loadTimerPage)
+const WorldRecordsPage = lazy(loadWorldRecordsPage)
+const AlgorithmsIndexPage = lazy(loadAlgorithmsIndexPage)
+const AlgorithmsPuzzlePage = lazy(loadAlgorithmsPuzzlePage)
+const AlgorithmSetPage = lazy(loadAlgorithmSetPage)
+const CubingSitesPage = lazy(loadCubingSitesPage)
+const NotationGuidePage = lazy(loadNotationGuidePage)
+const YouTubeChannelsPage = lazy(loadYouTubeChannelsPage)
 
 type AppProps = {
   initialStatic?: boolean
@@ -69,23 +70,53 @@ type AppProps = {
 function App({ initialStatic = false }: AppProps) {
   const location = useLocation()
   const [showStaticContent, setShowStaticContent] = useState(initialStatic)
+  const [initialRouteReady, setInitialRouteReady] = useState(initialStatic)
+  const [initialRouteLoadFailed, setInitialRouteLoadFailed] = useState(false)
   const pagePath = stripLocalePrefix(location.pathname)
   const route = activeRouteFromPath(pagePath)
 
   useEffect(() => {
-    if (showStaticContent) {
-      setShowStaticContent(false)
+    if (!showStaticContent) {
+      return
     }
-  }, [showStaticContent])
+
+    let active = true
+    setInitialRouteLoadFailed(false)
+    void loadRouteForPath(pagePath).then(
+      () => {
+        if (active) {
+          startTransition(() => setShowStaticContent(false))
+        }
+      },
+      () => {
+        if (active) {
+          setInitialRouteLoadFailed(true)
+        }
+      },
+    )
+
+    return () => {
+      active = false
+    }
+  }, [pagePath, showStaticContent])
 
   return (
-    <AppShell activeRoute={route}>
+    <AppShell activeRoute={route} initialRouteReady={initialRouteReady}>
       <Seo />
       <RouteTransitionStage>
         {(displayedLocation, markReady) => (
-          <AppErrorBoundary resetKeys={[displayedLocation.pathname]}>
+          <AppErrorBoundary
+            resetKeys={[displayedLocation.pathname]}
+            onError={() => {
+              markReady()
+              setInitialRouteReady(true)
+            }}
+          >
             {showStaticContent ? (
-              <StaticRouteContent />
+              <>
+                <StaticRouteContent />
+                {initialRouteLoadFailed ? <InitialRouteLoadError /> : null}
+              </>
             ) : (
               <Suspense fallback={<RouteFallback />}>
                 <Routes location={displayedLocation}>
@@ -124,7 +155,7 @@ function App({ initialStatic = false }: AppProps) {
                   })}
                   <Route path='*' element={<NotFoundPage />} />
                 </Routes>
-                <RouteReady onReady={markReady} />
+                <RouteReady onInitialReady={setInitialRouteReady} onReady={markReady} />
               </Suspense>
             )}
           </AppErrorBoundary>
@@ -134,10 +165,67 @@ function App({ initialStatic = false }: AppProps) {
   )
 }
 
-function RouteReady({ onReady }: { onReady: () => void }) {
+function InitialRouteLoadError() {
+  const { t } = useTranslation()
+
+  return (
+    <div
+      className='absolute inset-x-4 bottom-4 z-10 flex items-center justify-between gap-3 rounded-lg border bg-card p-3 text-sm text-card-foreground shadow-lg'
+      role='alert'
+    >
+      <span>{t('errorBoundary.description')}</span>
+      <button
+        className='shrink-0 rounded-md bg-primary px-3 py-2 font-medium text-primary-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/50'
+        type='button'
+        onClick={() => window.location.reload()}
+      >
+        {t('errorBoundary.retry')}
+      </button>
+    </div>
+  )
+}
+
+function loadRouteForPath(pagePath: string): Promise<unknown> {
+  if (pagePath === '/timer') {
+    return loadTimerPage()
+  }
+  if (pagePath.startsWith('/records')) {
+    return loadWorldRecordsPage()
+  }
+  if (pagePath === '/channels') {
+    return loadYouTubeChannelsPage()
+  }
+  if (pagePath === '/sites') {
+    return loadCubingSitesPage()
+  }
+  if (pagePath.startsWith('/notations')) {
+    return loadNotationGuidePage()
+  }
+  if (pagePath.startsWith('/algoritmos')) {
+    const segmentCount = pagePath.split('/').filter(Boolean).length
+    if (segmentCount >= 3) {
+      return loadAlgorithmSetPage()
+    }
+    if (segmentCount === 2) {
+      return loadAlgorithmsPuzzlePage()
+    }
+    return loadAlgorithmsIndexPage()
+  }
+
+  return loadSolvePage()
+}
+
+function RouteReady({
+  onInitialReady,
+  onReady,
+}: {
+  onInitialReady: (ready: boolean) => void
+  onReady: () => void
+}) {
   useEffect(() => {
     onReady()
-  }, [onReady])
+    onInitialReady(true)
+  }, [onInitialReady, onReady])
 
   return null
 }

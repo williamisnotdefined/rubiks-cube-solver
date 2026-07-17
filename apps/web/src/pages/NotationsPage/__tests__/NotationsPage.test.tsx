@@ -147,6 +147,7 @@ describe('Notation guides', () => {
   })
 
   it('registers the visualization when its stage enters the viewport', async () => {
+    vi.useFakeTimers()
     let intersectionCallback: IntersectionObserverCallback | undefined
     const disconnect = vi.fn()
     vi.stubGlobal(
@@ -174,7 +175,19 @@ describe('Notation guides', () => {
       )
     })
 
-    await waitFor(() => expect(container.querySelector('pyraminx-puzzle')).toBeInTheDocument())
+    expect(container.querySelector('pyraminx-puzzle')).not.toBeInTheDocument()
+    expect(visualizationMocks.pyraminxRegister).not.toHaveBeenCalled()
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2999)
+    })
+    expect(visualizationMocks.pyraminxRegister).not.toHaveBeenCalled()
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1)
+    })
+
+    expect(container.querySelector('pyraminx-puzzle')).toBeInTheDocument()
     expect(visualizationMocks.pyraminxRegister).toHaveBeenCalledOnce()
     expect(disconnect).toHaveBeenCalled()
   })

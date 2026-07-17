@@ -5,12 +5,13 @@ import { Button } from '@components/Button'
 
 type AppErrorBoundaryProps = {
   children: ReactNode
+  onError?: () => void
   resetKeys?: unknown[]
 }
 
-export function AppErrorBoundary({ children, resetKeys }: AppErrorBoundaryProps) {
+export function AppErrorBoundary({ children, onError, resetKeys }: AppErrorBoundaryProps) {
   return (
-    <ErrorBoundary FallbackComponent={AppErrorFallback} resetKeys={resetKeys}>
+    <ErrorBoundary FallbackComponent={AppErrorFallback} resetKeys={resetKeys} onError={onError}>
       {children}
     </ErrorBoundary>
   )

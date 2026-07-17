@@ -9,7 +9,21 @@
     />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/site.webmanifest" />
-    <script src="/theme-init.js"></script>
+    <script nonce="speedcube-jsonld">
+      try {
+        const themeRoot = document.documentElement
+        const storedTheme = window.localStorage.getItem('rubiks-cube-solver-theme')
+        themeRoot.classList.remove('dark', 'light')
+        if (storedTheme === 'dark' || storedTheme === 'light') {
+          themeRoot.dataset.theme = storedTheme
+          themeRoot.classList.add(storedTheme)
+        } else {
+          delete themeRoot.dataset.theme
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+          themeRoot.classList.add(prefersDark ? 'dark' : 'light')
+        }
+      } catch {}
+    </script>
     <title>Speedcube</title>
   </head>
   <body class="m-0 min-w-80 bg-app-bg text-app-text antialiased">

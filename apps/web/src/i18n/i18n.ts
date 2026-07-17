@@ -1,7 +1,5 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
-import enUs from './locales/en.json'
-import ptBr from './locales/pt-BR.json'
 
 export const supportedLanguages = [
   'en-US',
@@ -15,19 +13,19 @@ export const supportedLanguages = [
   'ja',
 ] as const
 export type SupportedLanguage = (typeof supportedLanguages)[number]
-type StaticLanguage = 'en-US' | 'pt-BR'
-type DynamicLanguage = Exclude<SupportedLanguage, StaticLanguage>
-type LocaleModule = { default: typeof enUs }
+type LocaleModule = { default: typeof import('./locales/en.json') }
 
 export const fallbackLanguage: SupportedLanguage = 'en-US'
 export const languageStorageKey = 'rubiks-cube-solver-language'
 
-const localeLoaders: Record<DynamicLanguage, () => Promise<LocaleModule>> = {
+const localeLoaders: Record<SupportedLanguage, () => Promise<LocaleModule>> = {
   de: () => import('./locales/de.json'),
+  'en-US': () => import('./locales/en.json'),
   es: () => import('./locales/es.json'),
   fr: () => import('./locales/fr.json'),
   it: () => import('./locales/it.json'),
   ja: () => import('./locales/ja.json'),
+  'pt-BR': () => import('./locales/pt-BR.json'),
   ru: () => import('./locales/ru.json'),
   zh: () => import('./locales/zh.json'),
 }
@@ -123,10 +121,7 @@ void i18n.use(initReactI18next).init({
   },
   load: 'currentOnly',
   lng: languageFromRoute(),
-  resources: {
-    'en-US': { translation: enUs },
-    'pt-BR': { translation: ptBr },
-  },
+  resources: {},
   supportedLngs: supportedLanguages,
 })
 
@@ -134,10 +129,6 @@ export default i18n
 
 export async function ensureLanguageResources(language: SupportedLanguage): Promise<void> {
   if (i18n.hasResourceBundle(language, 'translation')) {
-    return
-  }
-
-  if (language === 'en-US' || language === 'pt-BR') {
     return
   }
 
