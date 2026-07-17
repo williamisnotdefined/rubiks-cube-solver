@@ -28,7 +28,7 @@ async function startApp() {
     root,
     <StrictMode>
       <BrowserRouter>
-        <App initialStatic={root.dataset.ssg === 'true'} />
+        <App initialSsg={root.dataset.ssg === 'true'} />
       </BrowserRouter>
     </StrictMode>,
   )

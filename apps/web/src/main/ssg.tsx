@@ -1,6 +1,16 @@
 import { renderToString } from 'react-dom/server'
+import type { ComponentType } from 'react'
 import { StaticRouter } from 'react-router'
 import App from '../App'
+import { AlgorithmSetPage } from '../pages/AlgorithmsPage/AlgorithmSetPage'
+import { AlgorithmsIndexPage } from '../pages/AlgorithmsPage/AlgorithmsIndexPage'
+import { AlgorithmsPuzzlePage } from '../pages/AlgorithmsPage/AlgorithmsPuzzlePage'
+import { CubingSitesPage } from '../pages/CubingSitesPage/CubingSitesPage'
+import { NotationGuidePage } from '../pages/NotationsPage/NotationGuidePage'
+import { SolvePageRoute } from '../pages/SolvePage/SolvePageRoute'
+import { TimerPage } from '../pages/TimerPage/TimerPage'
+import { WorldRecordsPageRoute } from '../pages/WorldRecordsPage/WorldRecordsPageRoute'
+import { YouTubeChannelsPage } from '../pages/YouTubeChannelsPage/YouTubeChannelsPage'
 import { buildJsonLd } from '../seo/jsonLd'
 import {
   getSeoMetadata,
@@ -9,6 +19,7 @@ import {
   seoIndexablePaths,
   seoLocales,
   type SeoMetadata,
+  type AppRouteKind,
 } from '../seo/routes'
 import { changeLanguage } from '../i18n/i18n'
 
@@ -27,16 +38,29 @@ export const staticRouteGroups = seoIndexablePaths.map((path) => ({
   path,
 }))
 
+const routeComponents = {
+  'algorithms-index': AlgorithmsIndexPage,
+  'algorithms-puzzle': AlgorithmsPuzzlePage,
+  'algorithms-set': AlgorithmSetPage,
+  channels: YouTubeChannelsPage,
+  notation: NotationGuidePage,
+  records: WorldRecordsPageRoute,
+  sites: CubingSitesPage,
+  solve: SolvePageRoute,
+  timer: TimerPage,
+} satisfies Record<AppRouteKind, ComponentType>
+
 export async function render(pathname: string): Promise<StaticRenderResult> {
   const metadata = getSeoMetadata(pathname)
   await changeLanguage(metadata.locale)
+  const appHtml = renderToString(
+    <StaticRouter location={pathname}>
+      <App initialSsg routeComponents={routeComponents} />
+    </StaticRouter>,
+  )
 
   return {
-    appHtml: renderToString(
-      <StaticRouter location={pathname}>
-        <App initialStatic />
-      </StaticRouter>,
-    ),
+    appHtml,
     jsonLd: buildJsonLd(metadata),
     metadata,
   }
