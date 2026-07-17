@@ -3,15 +3,16 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import App from '../App'
 
-describe('App initial static render', () => {
-  it('keeps indexable SSG content visible while the interactive route loads', () => {
+describe('App initial SSG render', () => {
+  it('hydrates the product route instead of a temporary SEO snapshot', async () => {
     const { container } = render(
       <MemoryRouter initialEntries={['/solve/']}>
-        <App initialStatic />
+        <App initialSsg />
       </MemoryRouter>,
     )
 
-    expect(screen.getByRole('heading', { name: "Online Rubik's Cube Solver" })).toBeInTheDocument()
+    await screen.findByTestId('solve-form')
+    expect(screen.queryByRole('heading', { name: "Online Rubik's Cube Solver" })).not.toBeInTheDocument()
     expect(screen.queryByText('Loading route')).not.toBeInTheDocument()
     expect(container.querySelector('[data-app-shell="true"]')).toHaveAttribute(
       'data-initial-route-ready',
