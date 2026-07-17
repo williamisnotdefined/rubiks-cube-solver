@@ -76,11 +76,16 @@ type AppProps = {
 function App({ initialSsg = false, routeComponents }: AppProps) {
   const location = useLocation()
   const [initialRouteReady, setInitialRouteReady] = useState(initialSsg)
+  const [interactive, setInteractive] = useState(!initialSsg)
   const pagePath = stripLocalePrefix(location.pathname)
   const route = activeRouteFromPath(pagePath)
 
   return (
-    <AppShell activeRoute={route} initialRouteReady={initialRouteReady}>
+    <AppShell
+      activeRoute={route}
+      initialRouteReady={initialRouteReady}
+      interactive={interactive}
+    >
       <Seo />
       <RouteTransitionStage>
         {(displayedLocation, markReady) => (
@@ -89,6 +94,7 @@ function App({ initialSsg = false, routeComponents }: AppProps) {
             onError={() => {
               markReady()
               setInitialRouteReady(true)
+              setInteractive(true)
             }}
           >
             <Suspense fallback={<RouteFallback />}>
@@ -100,7 +106,11 @@ function App({ initialSsg = false, routeComponents }: AppProps) {
                   <Route
                     key={manifestRoute.path}
                     path={manifestRoute.path}
-                    element={elementForRoute(manifestRoute.kind, routeComponents)}
+                    element={elementForRoute(
+                      manifestRoute.kind,
+                      setInteractive,
+                      routeComponents,
+                    )}
                   />
                 ))}
                 {prefixedSeoLocales.flatMap((locale) => {
@@ -121,14 +131,21 @@ function App({ initialSsg = false, routeComponents }: AppProps) {
                       <Route
                         key={`${prefix}-${manifestRoute.path}`}
                         path={`/${prefix}${manifestRoute.path}`}
-                        element={elementForRoute(manifestRoute.kind, routeComponents)}
+                        element={elementForRoute(
+                          manifestRoute.kind,
+                          setInteractive,
+                          routeComponents,
+                        )}
                       />
                     )),
                   ]
                 })}
                 <Route path='*' element={<NotFoundPage />} />
               </Routes>
-              <RouteReady onInitialReady={setInitialRouteReady} onReady={markReady} />
+              <RouteReady
+                onInitialReady={setInitialRouteReady}
+                onReady={markReady}
+              />
             </Suspense>
           </AppErrorBoundary>
         )}
@@ -153,6 +170,18 @@ function RouteReady({
 }
 
 function elementForRoute(
+  kind: AppRouteKind,
+  onInteractive: (interactive: boolean) => void,
+  routeComponents?: Partial<Record<AppRouteKind, ComponentType>>,
+): ReactElement {
+  return (
+    <RouteHydrationReady onInteractive={onInteractive}>
+      {routeElement(kind, routeComponents)}
+    </RouteHydrationReady>
+  )
+}
+
+function routeElement(
   kind: AppRouteKind,
   routeComponents?: Partial<Record<AppRouteKind, ComponentType>>,
 ): ReactElement {
@@ -181,6 +210,20 @@ function elementForRoute(
     case 'timer':
       return <TimerPage />
   }
+}
+
+function RouteHydrationReady({
+  children,
+  onInteractive,
+}: {
+  children: ReactElement
+  onInteractive: (interactive: boolean) => void
+}) {
+  useEffect(() => {
+    onInteractive(true)
+  }, [onInteractive])
+
+  return children
 }
 
 function LegacyEnglishRedirect() {

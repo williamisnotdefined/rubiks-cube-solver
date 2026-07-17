@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
+import { gotoHydratedApp } from './app-helpers'
 import { chooseRadixSelectOption, expectRadixSelectOptionEnabled } from './select-helpers'
 
 type ScanFaceSymbol = 'U' | 'R' | 'F' | 'D' | 'L' | 'B'
@@ -146,7 +147,7 @@ test.describe('manual scan solve flow', () => {
 
   for (const [index, fixture] of cube3ManualScanFixtures.entries()) {
     test(`solves manually entered 3x3 scan #${index + 1}`, async ({ page }) => {
-      await page.goto(solvePath)
+      await gotoHydratedApp(page, solvePath)
 
       const cube = page.locator('.cube-stage rubiks-cube')
       await expect(page.getByRole('button', { name: 'Scan cube with camera' })).toBeEnabled({
@@ -189,7 +190,7 @@ test.describe('manual scan solve flow', () => {
 
   for (const [index, fixture] of cube2ManualScanFixtures.entries()) {
     test(`solves manually entered 2x2 scan #${index + 1}`, async ({ page }) => {
-      await page.goto(solvePath)
+      await gotoHydratedApp(page, solvePath)
 
       const puzzleSelect = page.getByRole('combobox', { name: 'Puzzle' })
       await expect(puzzleSelect).toBeEnabled({ timeout: 15_000 })

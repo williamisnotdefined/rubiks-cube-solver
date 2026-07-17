@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { gotoHydratedApp } from './app-helpers'
 import { chooseRadixSelectOption } from './select-helpers'
 
 type PersistedTimerSolve = {
@@ -19,7 +20,7 @@ test.describe('timer flow', () => {
   })
 
   test('records a solve with keyboard start and stop', async ({ page }) => {
-    await page.goto(timerPath)
+    await gotoHydratedApp(page, timerPath)
 
     await expect(page.getByRole('timer', { name: 'Speedsolve timer' })).toBeVisible()
     await expect(page.getByText('No solves yet')).toBeVisible()
@@ -37,7 +38,7 @@ test.describe('timer flow', () => {
   })
 
   test('toggles latest solve penalty between +2, DNF, and no penalty', async ({ page }) => {
-    await page.goto(timerPath)
+    await gotoHydratedApp(page, timerPath)
     await recordKeyboardSolve(page)
 
     const rawTimeMs = (await persistedTimerSolves(page))[0]!.rawTimeMs
@@ -73,7 +74,7 @@ test.describe('timer flow', () => {
   })
 
   test('updates the active session from the selected event', async ({ page }) => {
-    await page.goto(timerPath)
+    await gotoHydratedApp(page, timerPath)
     await expect(page.getByRole('timer', { name: 'Speedsolve timer' })).toHaveAttribute(
       'aria-disabled',
       'false',
@@ -89,7 +90,7 @@ test.describe('timer flow', () => {
   })
 
   test('supports inspection and millisecond display settings', async ({ page }) => {
-    await page.goto(timerPath)
+    await gotoHydratedApp(page, timerPath)
 
     await page.getByRole('button', { name: 'Timer settings' }).click()
     const settingsDialog = page.getByRole('dialog', { name: 'Timer settings' })
@@ -132,7 +133,7 @@ test.describe('timer flow', () => {
         },
       })
     })
-    await page.goto(timerPath)
+    await gotoHydratedApp(page, timerPath)
 
     await expect(page.getByRole('button', { name: 'Previous scramble' })).toBeDisabled()
     await expect(page.getByRole('button', { name: 'Copy scramble' })).toBeEnabled()

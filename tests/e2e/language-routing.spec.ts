@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test'
+import { gotoHydratedApp } from './app-helpers'
 
 async function openMobileNavigation(page: Page) {
   const openMenuButton = page.getByRole('button', { name: 'Open menu' })
@@ -11,7 +12,7 @@ test.describe('browser language routing', () => {
   test.use({ locale: 'pt-BR' })
 
   test('keeps explicit English URLs canonical and persists a manual selection', async ({ page }) => {
-    await page.goto('/timer/')
+    await gotoHydratedApp(page, '/timer/')
 
     await expect(page).toHaveURL(/\/timer\/$/)
     await openMobileNavigation(page)
@@ -30,7 +31,7 @@ test.describe('unsupported browser language routing', () => {
   test.use({ locale: 'nl-NL' })
 
   test('falls back to unprefixed en-US', async ({ page }) => {
-    await page.goto('/')
+    await gotoHydratedApp(page, '/')
 
     await expect(page).toHaveURL(/\/solve\/$/)
     await openMobileNavigation(page)

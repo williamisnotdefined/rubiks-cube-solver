@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { gotoHydratedApp } from './app-helpers'
 
 test.use({ locale: 'pt-BR' })
 
@@ -12,7 +13,7 @@ test('keeps scan progress when exit confirmation is canceled', async ({ page }) 
     })
   })
 
-  await page.goto('/pt-BR/solve/')
+  await gotoHydratedApp(page, '/pt-BR/solve/')
   const scanButton = page.getByRole('button', { name: 'Escanear cubo com a câmera' })
   await expect(scanButton).toBeEnabled({ timeout: 15_000 })
   await scanButton.click()
