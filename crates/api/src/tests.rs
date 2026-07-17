@@ -2106,10 +2106,7 @@ async fn router_with_web_dist_serves_spa_fallback() {
         ("/algoritmos/", "/algorithms/"),
         ("/algoritmos/3x3/oll", "/algorithms/3x3/oll"),
         ("/en/algoritmos/3x3/oll", "/algorithms/3x3/oll"),
-        (
-            "/pt-BR/algoritmos/3x3/oll",
-            "/pt-BR/algorithms/3x3/oll",
-        ),
+        ("/pt-BR/algoritmos/3x3/oll", "/pt-BR/algorithms/3x3/oll"),
         ("/en/sites", "/sites/"),
         ("/en/sites/", "/sites/"),
         ("/pt-BR", "/pt-BR/solve/"),
