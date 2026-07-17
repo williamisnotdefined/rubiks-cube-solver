@@ -19,7 +19,9 @@ describe('App initial SSG render', () => {
       timeout: 5_000,
     })
     expect(appShell).not.toHaveAttribute('inert')
-    expect(screen.queryByRole('heading', { name: "Online Rubik's Cube Solver" })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: "Online Rubik's Cube Solver" }),
+    ).not.toBeInTheDocument()
     expect(screen.queryByText('Loading route')).not.toBeInTheDocument()
     expect(appShell).toHaveAttribute('data-initial-route-ready', 'true')
   })

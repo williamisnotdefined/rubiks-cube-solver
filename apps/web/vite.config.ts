@@ -7,11 +7,7 @@ import { cubingWorkerSafeImports } from './build/cubingWorkerSafeImports'
 const wcaDataApiProxyTarget = process.env.WCA_DATA_API_PROXY_TARGET ?? 'https://speedcube.com.br'
 
 export default defineConfig({
-  plugins: [
-    cubingWorkerSafeImports(),
-    react(),
-    tailwindcss(),
-  ],
+  plugins: [cubingWorkerSafeImports(), react(), tailwindcss()],
   server: {
     proxy: {
       '/api/wca-data/v1': {
