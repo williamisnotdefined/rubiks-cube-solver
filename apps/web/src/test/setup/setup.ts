@@ -1,7 +1,7 @@
 import * as matchers from '@testing-library/jest-dom/matchers'
 import { cleanup } from '@testing-library/react'
 import { afterEach, beforeEach, expect, vi } from 'vitest'
-import i18n from '@src/i18n/i18n'
+import { changeLanguage } from '@src/i18n/i18n'
 
 expect.extend(matchers)
 
@@ -189,7 +189,7 @@ beforeEach(async () => {
   testLocalStorage.clear()
   TestResizeObserver.instances = []
   TestIntersectionObserver.instances = []
-  await i18n.changeLanguage('en-US')
+  await changeLanguage('en-US')
   document.documentElement.lang = 'en-US'
 })
 
@@ -198,5 +198,5 @@ afterEach(async () => {
   testLocalStorage.clear()
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
-  await i18n.changeLanguage('en-US')
+  await changeLanguage('en-US')
 })

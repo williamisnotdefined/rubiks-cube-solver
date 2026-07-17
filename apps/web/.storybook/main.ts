@@ -2,6 +2,7 @@ import { fileURLToPath } from 'node:url'
 import type { StorybookConfig } from '@storybook/react-vite'
 import tailwindcss from '@tailwindcss/vite'
 import { mergeConfig } from 'vite'
+import { cubingWorkerSafeImports } from '../build/cubingWorkerSafeImports.ts'
 
 const config: StorybookConfig = {
   framework: {
@@ -16,8 +17,9 @@ const config: StorybookConfig = {
     mergeConfig(viteConfig, {
       build: {
         chunkSizeWarningLimit: 1700,
+        modulePreload: false,
       },
-      plugins: [tailwindcss()],
+      plugins: [cubingWorkerSafeImports(), tailwindcss()],
       resolve: {
         alias: [
           {

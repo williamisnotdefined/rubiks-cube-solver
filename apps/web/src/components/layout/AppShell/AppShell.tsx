@@ -5,15 +5,25 @@ import { PageNav, type PageNavRoute } from '../PageNav'
 type AppShellProps = {
   activeRoute: PageNavRoute
   children: ReactNode
+  initialRouteReady?: boolean
 }
 
-export function AppShell({ activeRoute, children }: AppShellProps) {
+export function AppShell({ activeRoute, children, initialRouteReady = true }: AppShellProps) {
   useThemePreferenceSync()
 
   return (
-    <div className='flex h-dvh min-h-0 flex-col overflow-hidden bg-background text-foreground md:flex-row'>
+    <div
+      className='flex h-dvh min-h-0 flex-col overflow-hidden bg-background text-foreground md:flex-row'
+      data-app-shell='true'
+      data-initial-route-ready={initialRouteReady}
+    >
       <PageNav activeRoute={activeRoute} />
-      <div className='flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden'>{children}</div>
+      <div
+        className='relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden'
+        data-app-content='true'
+      >
+        {children}
+      </div>
     </div>
   )
 }

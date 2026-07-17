@@ -6,12 +6,7 @@ import {
   isVisualizationRegistered,
   useVisualizationRegistration,
 } from '@components/VisualizationRegistration'
-import {
-  IsRotation,
-  isMovement,
-  type Movement,
-  type Rotation,
-} from '@rubiks-cube-solver/rubiks-cube/core'
+import type { Movement, Rotation } from '@rubiks-cube-solver/rubiks-cube/core'
 import type { RubiksCubeElement } from '@rubiks-cube-solver/rubiks-cube/view'
 import type {
   MegaminxMove,
@@ -48,6 +43,8 @@ type DemoStatus =
   | { key: 'reset' }
   | { key: 'running'; move: string }
 
+const visualizationAutoLoadDelayMs = 3000
+
 const cubeCameraRadius = {
   Two: '7.2',
   Three: '6.2',
@@ -75,6 +72,8 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
   const [runningAction, setRunningAction] = useState<string | undefined>(undefined)
   const [status, setStatus] = useState<DemoStatus>({ key: 'ready' })
   const [viewResetIndex, setViewResetIndex] = useState(0)
+  const [autoLoadDelayElapsed, setAutoLoadDelayElapsed] = useState(false)
+  const [stageNearViewport, setStageNearViewport] = useState(false)
 
   useEffect(() => {
     if (visualization === undefined) {
@@ -86,6 +85,8 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
     setRunningAction(undefined)
     setStatus({ key: 'ready' })
     setViewResetIndex(0)
+    setAutoLoadDelayElapsed(false)
+    setStageNearViewport(false)
     runIdRef.current += 1
 
     return () => {
@@ -94,15 +95,32 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
   }, [visualization])
 
   useEffect(() => {
+    if (visualization === undefined || loadRequested || prefersReducedData()) {
+      return undefined
+    }
+
+    const timeout = window.setTimeout(
+      () => setAutoLoadDelayElapsed(true),
+      visualizationAutoLoadDelayMs,
+    )
+    return () => window.clearTimeout(timeout)
+  }, [loadRequested, visualization])
+
+  useEffect(() => {
     const stage = stageRef.current
     if (visualization === undefined || loadRequested || stage === null || prefersReducedData()) {
+      return undefined
+    }
+
+    if (!('IntersectionObserver' in window)) {
+      setStageNearViewport(true)
       return undefined
     }
 
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) {
-          setLoadRequested(true)
+          setStageNearViewport(true)
           observer.disconnect()
         }
       },
@@ -114,6 +132,26 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
       observer.disconnect()
     }
   }, [loadRequested, visualization])
+
+  useEffect(() => {
+    if (!autoLoadDelayElapsed || !stageNearViewport || loadRequested) {
+      return undefined
+    }
+
+    const loadWhenVisible = () => {
+      if (document.visibilityState !== 'hidden') {
+        setLoadRequested(true)
+      }
+    }
+
+    if (document.visibilityState !== 'hidden') {
+      setLoadRequested(true)
+      return undefined
+    }
+
+    document.addEventListener('visibilitychange', loadWhenVisible)
+    return () => document.removeEventListener('visibilitychange', loadWhenVisible)
+  }, [autoLoadDelayElapsed, loadRequested, stageNearViewport])
 
   if (visualization === undefined) {
     return null
@@ -268,6 +306,7 @@ async function runVisualizationAction(
   switch (visualization.kind) {
     case 'cube': {
       const cube = puzzle as RubiksCubeElement
+      const { IsRotation, isMovement } = await import('@rubiks-cube-solver/rubiks-cube/core')
       if (IsRotation(action)) {
         await cube.rotate(action as Rotation)
         return
