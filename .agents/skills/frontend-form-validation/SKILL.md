@@ -65,7 +65,7 @@ Focused requirements for accessibility, performance, security, resilience, and d
 
 - Indexable routes MUST retain SSG output and hydration; do not replace server-rendered content with client-only placeholders.
 - Heavy visualization, algorithm, and page code SHOULD remain route- or feature-split. Avoid importing broad package barrels when a supported subpath exists.
-- The Solver cube MUST auto-load after at most three seconds when visualization is supported. Tests MUST prove the cube appears without clicking the preparing state; manual activation remains only an early-load and retry affordance.
+- Supported Solver and Notation puzzle stages MUST automatically request their renderer. Solver visualizations MUST load no later than three seconds after mount; Notation visualizations MUST load automatically after their stage approaches the viewport. Clicking a preparing state MAY accelerate loading or retry an error, but MUST NEVER be required to see a visualization. Performance work MUST NOT defer any supported visualization behind an explicit click; tests MUST prove automatic loading for Solver and every supported Notation puzzle.
 - Camera analysis MUST cancel stale work and avoid overlapping unbounded requests. Versioned assets remain immutable; mutable HTML and metadata MUST NOT receive immutable caching.
 - Performance changes MUST use a concrete signal such as bundle output, request count, render behavior, or measured interaction, not speculative memoization.
 
@@ -96,6 +96,7 @@ Focused requirements for accessibility, performance, security, resilience, and d
 - Solver routes include `/puzzles`, `/puzzles/{puzzle_slug}`, `/puzzles/{puzzle_slug}/strategies`, `/puzzles/{puzzle_slug}/solve`, legacy `/strategies`, `/solve-notation`, and `/solve-scan`.
 - Scan routes include `/scan/analyze-face`, `/scan/solve-session`, and `/puzzles/{puzzle_slug}/scan/solve-session`.
 - When serving web output, `/api/wca-data` is a server-side permanent redirect (HTTP 308) to `/api/wca-data/v1/docs`; unknown `/api/*` paths return 404 instead of static HTML.
+- When serving web output, legacy `/algoritmos` prefixes redirect permanently to the corresponding `/algorithms` path while preserving locale prefixes, suffixes, and query strings.
 
 ## Contract And Safety
 

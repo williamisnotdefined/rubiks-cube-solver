@@ -38,3 +38,12 @@ test.describe('unsupported browser language routing', () => {
     await expect(page.getByRole('button', { name: 'Language' })).toBeVisible()
   })
 })
+
+test.describe('legacy algorithm routes', () => {
+  test('redirects the Portuguese slug to the canonical English path', async ({ page }) => {
+    await gotoHydratedApp(page, '/algoritmos/3x3/oll/?source=legacy')
+
+    await expect(page).toHaveURL(/\/algorithms\/3x3\/oll\/\?source=legacy$/)
+    await expect(page.getByRole('heading', { name: '3x3 OLL' })).toBeVisible()
+  })
+})

@@ -4,7 +4,7 @@ const speedCubeDbBase = 'https://speedcubedb.com'
 
 export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
   {
-    path: '/algoritmos/3x3/f2l',
+    path: '/algorithms/3x3/f2l',
     puzzleId: '3x3',
     routeSlug: 'f2l',
     sourceLabel: 'SpeedCubeDB F2L',
@@ -12,7 +12,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: '3x3 F2L',
   },
   {
-    path: '/algoritmos/3x3/advanced-f2l',
+    path: '/algorithms/3x3/advanced-f2l',
     puzzleId: '3x3',
     routeSlug: 'advanced-f2l',
     sourceLabel: 'SpeedCubeDB Advanced F2L',
@@ -20,7 +20,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: '3x3 Advanced F2L',
   },
   {
-    path: '/algoritmos/2x2/eg-2',
+    path: '/algorithms/2x2/eg-2',
     puzzleId: '2x2',
     routeSlug: 'eg-2',
     sourceLabel: 'SpeedCubeDB 2x2 EG-2',
@@ -28,7 +28,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: '2x2 EG-2',
   },
   {
-    path: '/algoritmos/3x3/zbll-t',
+    path: '/algorithms/3x3/zbll-t',
     puzzleId: '3x3',
     routeSlug: 'zbll-t',
     sourceLabel: 'SpeedCubeDB ZBLL T',
@@ -36,7 +36,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: '3x3 ZBLL T',
   },
   {
-    path: '/algoritmos/3x3/zbll-u',
+    path: '/algorithms/3x3/zbll-u',
     puzzleId: '3x3',
     routeSlug: 'zbll-u',
     sourceLabel: 'SpeedCubeDB ZBLL U',
@@ -44,7 +44,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: '3x3 ZBLL U',
   },
   {
-    path: '/algoritmos/3x3/zbll-l',
+    path: '/algorithms/3x3/zbll-l',
     puzzleId: '3x3',
     routeSlug: 'zbll-l',
     sourceLabel: 'SpeedCubeDB ZBLL L',
@@ -52,7 +52,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: '3x3 ZBLL L',
   },
   {
-    path: '/algoritmos/3x3/zbll-sune',
+    path: '/algorithms/3x3/zbll-sune',
     puzzleId: '3x3',
     routeSlug: 'zbll-sune',
     sourceLabel: 'SpeedCubeDB ZBLL Sune',
@@ -60,7 +60,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: '3x3 ZBLL Sune',
   },
   {
-    path: '/algoritmos/3x3/zbll-antisune',
+    path: '/algorithms/3x3/zbll-antisune',
     puzzleId: '3x3',
     routeSlug: 'zbll-antisune',
     sourceLabel: 'SpeedCubeDB ZBLL Antisune',
@@ -68,7 +68,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: '3x3 ZBLL Antisune',
   },
   {
-    path: '/algoritmos/3x3/zbll-pi',
+    path: '/algorithms/3x3/zbll-pi',
     puzzleId: '3x3',
     routeSlug: 'zbll-pi',
     sourceLabel: 'SpeedCubeDB ZBLL Pi',
@@ -76,7 +76,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: '3x3 ZBLL Pi',
   },
   {
-    path: '/algoritmos/3x3/zbll-h',
+    path: '/algorithms/3x3/zbll-h',
     puzzleId: '3x3',
     routeSlug: 'zbll-h',
     sourceLabel: 'SpeedCubeDB ZBLL H',
@@ -84,7 +84,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: '3x3 ZBLL H',
   },
   {
-    path: '/algoritmos/3x3/vls-ub',
+    path: '/algorithms/3x3/vls-ub',
     puzzleId: '3x3',
     routeSlug: 'vls-ub',
     sourceLabel: 'SpeedCubeDB VLS UB',
@@ -92,7 +92,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: '3x3 VLS UB',
   },
   {
-    path: '/algoritmos/3x3/vls-ub-ul',
+    path: '/algorithms/3x3/vls-ub-ul',
     puzzleId: '3x3',
     routeSlug: 'vls-ub-ul',
     sourceLabel: 'SpeedCubeDB VLS UB UL',
@@ -100,7 +100,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: '3x3 VLS UB UL',
   },
   {
-    path: '/algoritmos/3x3/vls-uf',
+    path: '/algorithms/3x3/vls-uf',
     puzzleId: '3x3',
     routeSlug: 'vls-uf',
     sourceLabel: 'SpeedCubeDB VLS UF',
@@ -108,7 +108,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: '3x3 VLS UF',
   },
   {
-    path: '/algoritmos/3x3/vls-uf-ub',
+    path: '/algorithms/3x3/vls-uf-ub',
     puzzleId: '3x3',
     routeSlug: 'vls-uf-ub',
     sourceLabel: 'SpeedCubeDB VLS UF UB',
@@ -116,7 +116,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: '3x3 VLS UF UB',
   },
   {
-    path: '/algoritmos/3x3/vls-uf-ul',
+    path: '/algorithms/3x3/vls-uf-ul',
     puzzleId: '3x3',
     routeSlug: 'vls-uf-ul',
     sourceLabel: 'SpeedCubeDB VLS UF UL',
@@ -124,7 +124,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: '3x3 VLS UF UL',
   },
   {
-    path: '/algoritmos/3x3/vls-ul',
+    path: '/algorithms/3x3/vls-ul',
     puzzleId: '3x3',
     routeSlug: 'vls-ul',
     sourceLabel: 'SpeedCubeDB VLS UL',
@@ -132,7 +132,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: '3x3 VLS UL',
   },
   {
-    path: '/algoritmos/3x3/vls-no-edges',
+    path: '/algorithms/3x3/vls-no-edges',
     puzzleId: '3x3',
     routeSlug: 'vls-no-edges',
     sourceLabel: 'SpeedCubeDB VLS No Edges',
@@ -140,7 +140,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: '3x3 VLS No Edges',
   },
   {
-    path: '/algoritmos/sq1/cubeshape',
+    path: '/algorithms/sq1/cubeshape',
     puzzleId: 'sq1',
     routeSlug: 'cubeshape',
     sourceLabel: 'SpeedCubeDB Square-1 Cubeshape',
@@ -148,7 +148,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: 'Square-1 Cubeshape',
   },
   {
-    path: '/algoritmos/sq1/cp',
+    path: '/algorithms/sq1/cp',
     puzzleId: 'sq1',
     routeSlug: 'cp',
     sourceLabel: 'SpeedCubeDB Square-1 CP',
@@ -156,7 +156,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: 'Square-1 CP',
   },
   {
-    path: '/algoritmos/sq1/ep',
+    path: '/algorithms/sq1/ep',
     puzzleId: 'sq1',
     routeSlug: 'ep',
     sourceLabel: 'SpeedCubeDB Square-1 EP',
@@ -164,7 +164,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: 'Square-1 EP',
   },
   {
-    path: '/algoritmos/sq1/parity',
+    path: '/algorithms/sq1/parity',
     puzzleId: 'sq1',
     routeSlug: 'parity',
     sourceLabel: 'SpeedCubeDB Square-1 Parity',
@@ -172,7 +172,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: 'Square-1 Parity',
   },
   {
-    path: '/algoritmos/pyraminx/l4e',
+    path: '/algorithms/pyraminx/l4e',
     puzzleId: 'pyraminx',
     routeSlug: 'l4e',
     sourceLabel: 'SpeedCubeDB Pyraminx L4E',
@@ -180,7 +180,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: 'Pyraminx L4E',
   },
   {
-    path: '/algoritmos/pyraminx/l3e',
+    path: '/algorithms/pyraminx/l3e',
     puzzleId: 'pyraminx',
     routeSlug: 'l3e',
     sourceLabel: 'SpeedCubeDB Pyraminx L3E',
@@ -188,7 +188,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: 'Pyraminx L3E',
   },
   {
-    path: '/algoritmos/megaminx/oll',
+    path: '/algorithms/megaminx/oll',
     puzzleId: 'megaminx',
     routeSlug: 'oll',
     sourceLabel: 'SpeedCubeDB Megaminx OLL',
@@ -196,7 +196,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: 'Megaminx OLL',
   },
   {
-    path: '/algoritmos/megaminx/pll',
+    path: '/algorithms/megaminx/pll',
     puzzleId: 'megaminx',
     routeSlug: 'pll',
     sourceLabel: 'SpeedCubeDB Megaminx PLL',
@@ -204,7 +204,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: 'Megaminx PLL',
   },
   {
-    path: '/algoritmos/megaminx/eo',
+    path: '/algorithms/megaminx/eo',
     puzzleId: 'megaminx',
     routeSlug: 'eo',
     sourceLabel: 'SpeedCubeDB Megaminx EO',
@@ -212,7 +212,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: 'Megaminx EO',
   },
   {
-    path: '/algoritmos/megaminx/co',
+    path: '/algorithms/megaminx/co',
     puzzleId: 'megaminx',
     routeSlug: 'co',
     sourceLabel: 'SpeedCubeDB Megaminx CO',
@@ -220,7 +220,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: 'Megaminx CO',
   },
   {
-    path: '/algoritmos/megaminx/ep',
+    path: '/algorithms/megaminx/ep',
     puzzleId: 'megaminx',
     routeSlug: 'ep',
     sourceLabel: 'SpeedCubeDB Megaminx EP',
@@ -228,7 +228,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: 'Megaminx EP',
   },
   {
-    path: '/algoritmos/megaminx/cp',
+    path: '/algorithms/megaminx/cp',
     puzzleId: 'megaminx',
     routeSlug: 'cp',
     sourceLabel: 'SpeedCubeDB Megaminx CP',
@@ -236,7 +236,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: 'Megaminx CP',
   },
   {
-    path: '/algoritmos/4x4/oll-parity',
+    path: '/algorithms/4x4/oll-parity',
     puzzleId: '4x4',
     routeSlug: 'oll-parity',
     sourceLabel: 'SpeedCubeDB 4x4 OLL Parity',
@@ -244,7 +244,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: '4x4 OLL Parity',
   },
   {
-    path: '/algoritmos/4x4/pll-parity',
+    path: '/algorithms/4x4/pll-parity',
     puzzleId: '4x4',
     routeSlug: 'pll-parity',
     sourceLabel: 'SpeedCubeDB 4x4 PLL Parity',
@@ -252,7 +252,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: '4x4 PLL Parity',
   },
   {
-    path: '/algoritmos/5x5/l2e',
+    path: '/algorithms/5x5/l2e',
     puzzleId: '5x5',
     routeSlug: 'l2e',
     sourceLabel: 'SpeedCubeDB 5x5 L2E',
@@ -260,7 +260,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: '5x5 L2E',
   },
   {
-    path: '/algoritmos/5x5/l2c',
+    path: '/algorithms/5x5/l2c',
     puzzleId: '5x5',
     routeSlug: 'l2c',
     sourceLabel: 'SpeedCubeDB 5x5 L2C',
@@ -268,7 +268,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: '5x5 L2C',
   },
   {
-    path: '/algoritmos/6x6/l2e',
+    path: '/algorithms/6x6/l2e',
     puzzleId: '6x6',
     routeSlug: 'l2e',
     sourceLabel: 'SpeedCubeDB 6x6 L2E',
@@ -276,7 +276,7 @@ export const speedCubeDbSetSummaries: AlgorithmSetSummary[] = [
     title: '6x6 L2E',
   },
   {
-    path: '/algoritmos/6x6/l2c',
+    path: '/algorithms/6x6/l2c',
     puzzleId: '6x6',
     routeSlug: 'l2c',
     sourceLabel: 'SpeedCubeDB 6x6 L2C',

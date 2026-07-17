@@ -109,9 +109,10 @@ describe('Notation guides', () => {
 
   afterEach(() => {
     vi.useRealTimers()
+    vi.unstubAllGlobals()
   })
 
-  it('does not download notation visualization without activation or visibility', async () => {
+  it('shows the notation loader before automatic registration', async () => {
     const { container } = renderWithRoute('/notations/3x3')
 
     expect(screen.getByRole('button', { name: 'Preparing visualization' })).toBeInTheDocument()
@@ -179,12 +180,7 @@ describe('Notation guides', () => {
     expect(visualizationMocks.pyraminxRegister).not.toHaveBeenCalled()
 
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(2999)
-    })
-    expect(visualizationMocks.pyraminxRegister).not.toHaveBeenCalled()
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(1)
+      await vi.advanceTimersByTimeAsync(3000)
     })
 
     expect(container.querySelector('pyraminx-puzzle')).toBeInTheDocument()
@@ -192,12 +188,17 @@ describe('Notation guides', () => {
     expect(disconnect).toHaveBeenCalled()
   })
 
-  it('does not observe or load automatically when save-data is enabled', () => {
+  it('loads automatically when save-data is enabled', async () => {
+    vi.useFakeTimers()
     const observe = vi.fn()
+    let intersectionCallback: IntersectionObserverCallback | undefined
     vi.stubGlobal('navigator', { ...navigator, connection: { saveData: true } })
     vi.stubGlobal(
       'IntersectionObserver',
       class {
+        constructor(callback: IntersectionObserverCallback) {
+          intersectionCallback = callback
+        }
         disconnect = vi.fn()
         observe = observe
         takeRecords = vi.fn(() => [])
@@ -210,9 +211,28 @@ describe('Notation guides', () => {
     )
     const { container } = renderWithRoute('/notations/square-1')
 
-    expect(observe).not.toHaveBeenCalled()
-    expect(container.querySelector('square1-puzzle')).not.toBeInTheDocument()
-    expect(visualizationMocks.square1Register).not.toHaveBeenCalled()
+    expect(observe).toHaveBeenCalled()
+    await act(async () => {
+      intersectionCallback?.(
+        [{ isIntersecting: true } as IntersectionObserverEntry],
+        {} as IntersectionObserver,
+      )
+      await vi.advanceTimersByTimeAsync(3000)
+    })
+
+    expect(container.querySelector('square1-puzzle')).toBeInTheDocument()
+    expect(visualizationMocks.square1Register).toHaveBeenCalledOnce()
+  })
+
+  it('loads the renderer and runs the first requested notation move', async () => {
+    const { container } = renderWithRoute('/notations/3x3')
+    const user = userEvent.setup()
+
+    await user.click(screen.getByRole('button', { name: 'R' }))
+
+    await waitFor(() => expect(container.querySelector('rubiks-cube')).toBeInTheDocument())
+    await waitFor(() => expect(visualizationMocks.cubeMove).toHaveBeenCalledWith('R'))
+    expect(screen.getByRole('status')).toHaveTextContent('R applied')
   })
 
   it('renders a complete 3x3 notation reference', () => {

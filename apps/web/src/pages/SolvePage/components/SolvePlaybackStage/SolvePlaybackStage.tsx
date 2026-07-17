@@ -43,6 +43,7 @@ export function SolvePlaybackStage({
           moves={successResult.moves}
           step={playback.visibleSolutionStep}
           onStepChange={playback.onSolutionStepChange}
+          onVisualizationRequest={visualization.onLoadRequest}
         />
       ) : null}
     </>

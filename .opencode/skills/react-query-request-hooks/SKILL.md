@@ -98,6 +98,7 @@ Rules for the Axum HTTP API and the frontend API contract.
 - Solver routes include `/puzzles`, `/puzzles/{puzzle_slug}`, `/puzzles/{puzzle_slug}/strategies`, `/puzzles/{puzzle_slug}/solve`, legacy `/strategies`, `/solve-notation`, and `/solve-scan`.
 - Scan routes include `/scan/analyze-face`, `/scan/solve-session`, and `/puzzles/{puzzle_slug}/scan/solve-session`.
 - When serving web output, `/api/wca-data` is a server-side permanent redirect (HTTP 308) to `/api/wca-data/v1/docs`; unknown `/api/*` paths return 404 instead of static HTML.
+- When serving web output, legacy `/algoritmos` prefixes redirect permanently to the corresponding `/algorithms` path while preserving locale prefixes, suffixes, and query strings.
 
 ## Contract And Safety
 

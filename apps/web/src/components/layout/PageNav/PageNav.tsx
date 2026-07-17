@@ -415,10 +415,10 @@ function navGroups(
       route: 'algorithms',
       subItems: [
         {
-          active: pagePath === '/algoritmos',
+          active: pagePath === '/algorithms',
           end: true,
           label: t('navigation.allAlgorithms'),
-          to: localizedPath('/algoritmos', locale),
+          to: localizedPath('/algorithms', locale),
         },
         ...algorithmNavigationItems.map((puzzle) => ({
           active: pagePath === puzzle.path || pagePath.startsWith(`${puzzle.path}/`),

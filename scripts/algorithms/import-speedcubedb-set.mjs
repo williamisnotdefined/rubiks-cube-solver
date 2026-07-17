@@ -286,11 +286,11 @@ function writeSummaryFile() {
 }
 
 function formatRegistryObject(set) {
-  return `{ cases: ${set.exportName}, path: ${JSON.stringify(`/algoritmos/${set.puzzleId}/${set.routeSlug}`)}, puzzleId: ${JSON.stringify(set.puzzleId)}, routeSlug: ${JSON.stringify(set.routeSlug)}, sourceLabel: ${JSON.stringify(set.sourceLabel)}, sourceUrl: \`${'${speedCubeDbBase}'}${set.sourcePath}\`, title: ${JSON.stringify(set.title)} }`
+  return `{ cases: ${set.exportName}, path: ${JSON.stringify(`/algorithms/${set.puzzleId}/${set.routeSlug}`)}, puzzleId: ${JSON.stringify(set.puzzleId)}, routeSlug: ${JSON.stringify(set.routeSlug)}, sourceLabel: ${JSON.stringify(set.sourceLabel)}, sourceUrl: \`${'${speedCubeDbBase}'}${set.sourcePath}\`, title: ${JSON.stringify(set.title)} }`
 }
 
 function formatSummaryObject(set) {
-  return `{ path: ${JSON.stringify(`/algoritmos/${set.puzzleId}/${set.routeSlug}`)}, puzzleId: ${JSON.stringify(set.puzzleId)}, routeSlug: ${JSON.stringify(set.routeSlug)}, sourceLabel: ${JSON.stringify(set.sourceLabel)}, sourceUrl: \`${'${speedCubeDbBase}'}${set.sourcePath}\`, title: ${JSON.stringify(set.title)} }`
+  return `{ path: ${JSON.stringify(`/algorithms/${set.puzzleId}/${set.routeSlug}`)}, puzzleId: ${JSON.stringify(set.puzzleId)}, routeSlug: ${JSON.stringify(set.routeSlug)}, sourceLabel: ${JSON.stringify(set.sourceLabel)}, sourceUrl: \`${'${speedCubeDbBase}'}${set.sourcePath}\`, title: ${JSON.stringify(set.title)} }`
 }
 
 function typeImportPath(tsPath) {

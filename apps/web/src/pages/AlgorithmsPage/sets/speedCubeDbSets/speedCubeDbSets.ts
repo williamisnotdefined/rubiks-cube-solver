@@ -40,7 +40,7 @@ const speedCubeDbBase = 'https://speedcubedb.com'
 export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   {
     cases: threeByThreeF2lCases,
-    path: '/algoritmos/3x3/f2l',
+    path: '/algorithms/3x3/f2l',
     puzzleId: '3x3',
     routeSlug: 'f2l',
     sourceLabel: 'SpeedCubeDB F2L',
@@ -49,7 +49,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: threeByThreeAdvancedF2lCases,
-    path: '/algoritmos/3x3/advanced-f2l',
+    path: '/algorithms/3x3/advanced-f2l',
     puzzleId: '3x3',
     routeSlug: 'advanced-f2l',
     sourceLabel: 'SpeedCubeDB Advanced F2L',
@@ -58,7 +58,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: twoByTwoEgTwoCases,
-    path: '/algoritmos/2x2/eg-2',
+    path: '/algorithms/2x2/eg-2',
     puzzleId: '2x2',
     routeSlug: 'eg-2',
     sourceLabel: 'SpeedCubeDB 2x2 EG-2',
@@ -67,7 +67,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: threeByThreeZbllTCases,
-    path: '/algoritmos/3x3/zbll-t',
+    path: '/algorithms/3x3/zbll-t',
     puzzleId: '3x3',
     routeSlug: 'zbll-t',
     sourceLabel: 'SpeedCubeDB ZBLL T',
@@ -76,7 +76,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: threeByThreeZbllUCases,
-    path: '/algoritmos/3x3/zbll-u',
+    path: '/algorithms/3x3/zbll-u',
     puzzleId: '3x3',
     routeSlug: 'zbll-u',
     sourceLabel: 'SpeedCubeDB ZBLL U',
@@ -85,7 +85,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: threeByThreeZbllLCases,
-    path: '/algoritmos/3x3/zbll-l',
+    path: '/algorithms/3x3/zbll-l',
     puzzleId: '3x3',
     routeSlug: 'zbll-l',
     sourceLabel: 'SpeedCubeDB ZBLL L',
@@ -94,7 +94,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: threeByThreeZbllSuneCases,
-    path: '/algoritmos/3x3/zbll-sune',
+    path: '/algorithms/3x3/zbll-sune',
     puzzleId: '3x3',
     routeSlug: 'zbll-sune',
     sourceLabel: 'SpeedCubeDB ZBLL Sune',
@@ -103,7 +103,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: threeByThreeZbllAntisuneCases,
-    path: '/algoritmos/3x3/zbll-antisune',
+    path: '/algorithms/3x3/zbll-antisune',
     puzzleId: '3x3',
     routeSlug: 'zbll-antisune',
     sourceLabel: 'SpeedCubeDB ZBLL Antisune',
@@ -112,7 +112,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: threeByThreeZbllPiCases,
-    path: '/algoritmos/3x3/zbll-pi',
+    path: '/algorithms/3x3/zbll-pi',
     puzzleId: '3x3',
     routeSlug: 'zbll-pi',
     sourceLabel: 'SpeedCubeDB ZBLL Pi',
@@ -121,7 +121,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: threeByThreeZbllHCases,
-    path: '/algoritmos/3x3/zbll-h',
+    path: '/algorithms/3x3/zbll-h',
     puzzleId: '3x3',
     routeSlug: 'zbll-h',
     sourceLabel: 'SpeedCubeDB ZBLL H',
@@ -130,7 +130,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: threeByThreeVlsUbCases,
-    path: '/algoritmos/3x3/vls-ub',
+    path: '/algorithms/3x3/vls-ub',
     puzzleId: '3x3',
     routeSlug: 'vls-ub',
     sourceLabel: 'SpeedCubeDB VLS UB',
@@ -139,7 +139,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: threeByThreeVlsUbUlCases,
-    path: '/algoritmos/3x3/vls-ub-ul',
+    path: '/algorithms/3x3/vls-ub-ul',
     puzzleId: '3x3',
     routeSlug: 'vls-ub-ul',
     sourceLabel: 'SpeedCubeDB VLS UB UL',
@@ -148,7 +148,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: threeByThreeVlsUfCases,
-    path: '/algoritmos/3x3/vls-uf',
+    path: '/algorithms/3x3/vls-uf',
     puzzleId: '3x3',
     routeSlug: 'vls-uf',
     sourceLabel: 'SpeedCubeDB VLS UF',
@@ -157,7 +157,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: threeByThreeVlsUfUbCases,
-    path: '/algoritmos/3x3/vls-uf-ub',
+    path: '/algorithms/3x3/vls-uf-ub',
     puzzleId: '3x3',
     routeSlug: 'vls-uf-ub',
     sourceLabel: 'SpeedCubeDB VLS UF UB',
@@ -166,7 +166,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: threeByThreeVlsUfUlCases,
-    path: '/algoritmos/3x3/vls-uf-ul',
+    path: '/algorithms/3x3/vls-uf-ul',
     puzzleId: '3x3',
     routeSlug: 'vls-uf-ul',
     sourceLabel: 'SpeedCubeDB VLS UF UL',
@@ -175,7 +175,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: threeByThreeVlsUlCases,
-    path: '/algoritmos/3x3/vls-ul',
+    path: '/algorithms/3x3/vls-ul',
     puzzleId: '3x3',
     routeSlug: 'vls-ul',
     sourceLabel: 'SpeedCubeDB VLS UL',
@@ -184,7 +184,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: threeByThreeVlsNoEdgesCases,
-    path: '/algoritmos/3x3/vls-no-edges',
+    path: '/algorithms/3x3/vls-no-edges',
     puzzleId: '3x3',
     routeSlug: 'vls-no-edges',
     sourceLabel: 'SpeedCubeDB VLS No Edges',
@@ -193,7 +193,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: squareOneCubeshapeCases,
-    path: '/algoritmos/sq1/cubeshape',
+    path: '/algorithms/sq1/cubeshape',
     puzzleId: 'sq1',
     routeSlug: 'cubeshape',
     sourceLabel: 'SpeedCubeDB Square-1 Cubeshape',
@@ -202,7 +202,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: squareOneCpCases,
-    path: '/algoritmos/sq1/cp',
+    path: '/algorithms/sq1/cp',
     puzzleId: 'sq1',
     routeSlug: 'cp',
     sourceLabel: 'SpeedCubeDB Square-1 CP',
@@ -211,7 +211,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: squareOneEpCases,
-    path: '/algoritmos/sq1/ep',
+    path: '/algorithms/sq1/ep',
     puzzleId: 'sq1',
     routeSlug: 'ep',
     sourceLabel: 'SpeedCubeDB Square-1 EP',
@@ -220,7 +220,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: squareOneParityCases,
-    path: '/algoritmos/sq1/parity',
+    path: '/algorithms/sq1/parity',
     puzzleId: 'sq1',
     routeSlug: 'parity',
     sourceLabel: 'SpeedCubeDB Square-1 Parity',
@@ -229,7 +229,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: pyraminxL4eCases,
-    path: '/algoritmos/pyraminx/l4e',
+    path: '/algorithms/pyraminx/l4e',
     puzzleId: 'pyraminx',
     routeSlug: 'l4e',
     sourceLabel: 'SpeedCubeDB Pyraminx L4E',
@@ -238,7 +238,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: pyraminxL3eCases,
-    path: '/algoritmos/pyraminx/l3e',
+    path: '/algorithms/pyraminx/l3e',
     puzzleId: 'pyraminx',
     routeSlug: 'l3e',
     sourceLabel: 'SpeedCubeDB Pyraminx L3E',
@@ -247,7 +247,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: megaminxOllCases,
-    path: '/algoritmos/megaminx/oll',
+    path: '/algorithms/megaminx/oll',
     puzzleId: 'megaminx',
     routeSlug: 'oll',
     sourceLabel: 'SpeedCubeDB Megaminx OLL',
@@ -256,7 +256,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: megaminxPllCases,
-    path: '/algoritmos/megaminx/pll',
+    path: '/algorithms/megaminx/pll',
     puzzleId: 'megaminx',
     routeSlug: 'pll',
     sourceLabel: 'SpeedCubeDB Megaminx PLL',
@@ -265,7 +265,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: megaminxEoCases,
-    path: '/algoritmos/megaminx/eo',
+    path: '/algorithms/megaminx/eo',
     puzzleId: 'megaminx',
     routeSlug: 'eo',
     sourceLabel: 'SpeedCubeDB Megaminx EO',
@@ -274,7 +274,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: megaminxCoCases,
-    path: '/algoritmos/megaminx/co',
+    path: '/algorithms/megaminx/co',
     puzzleId: 'megaminx',
     routeSlug: 'co',
     sourceLabel: 'SpeedCubeDB Megaminx CO',
@@ -283,7 +283,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: megaminxEpCases,
-    path: '/algoritmos/megaminx/ep',
+    path: '/algorithms/megaminx/ep',
     puzzleId: 'megaminx',
     routeSlug: 'ep',
     sourceLabel: 'SpeedCubeDB Megaminx EP',
@@ -292,7 +292,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: megaminxCpCases,
-    path: '/algoritmos/megaminx/cp',
+    path: '/algorithms/megaminx/cp',
     puzzleId: 'megaminx',
     routeSlug: 'cp',
     sourceLabel: 'SpeedCubeDB Megaminx CP',
@@ -301,7 +301,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: fourByFourOllParityCases,
-    path: '/algoritmos/4x4/oll-parity',
+    path: '/algorithms/4x4/oll-parity',
     puzzleId: '4x4',
     routeSlug: 'oll-parity',
     sourceLabel: 'SpeedCubeDB 4x4 OLL Parity',
@@ -310,7 +310,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: fourByFourPllParityCases,
-    path: '/algoritmos/4x4/pll-parity',
+    path: '/algorithms/4x4/pll-parity',
     puzzleId: '4x4',
     routeSlug: 'pll-parity',
     sourceLabel: 'SpeedCubeDB 4x4 PLL Parity',
@@ -319,7 +319,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: fiveByFiveL2eCases,
-    path: '/algoritmos/5x5/l2e',
+    path: '/algorithms/5x5/l2e',
     puzzleId: '5x5',
     routeSlug: 'l2e',
     sourceLabel: 'SpeedCubeDB 5x5 L2E',
@@ -328,7 +328,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: fiveByFiveL2cCases,
-    path: '/algoritmos/5x5/l2c',
+    path: '/algorithms/5x5/l2c',
     puzzleId: '5x5',
     routeSlug: 'l2c',
     sourceLabel: 'SpeedCubeDB 5x5 L2C',
@@ -337,7 +337,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: sixBySixL2eCases,
-    path: '/algoritmos/6x6/l2e',
+    path: '/algorithms/6x6/l2e',
     puzzleId: '6x6',
     routeSlug: 'l2e',
     sourceLabel: 'SpeedCubeDB 6x6 L2E',
@@ -346,7 +346,7 @@ export const speedCubeDbAlgorithmSets: AlgorithmSet[] = [
   },
   {
     cases: sixBySixL2cCases,
-    path: '/algoritmos/6x6/l2c',
+    path: '/algorithms/6x6/l2c',
     puzzleId: '6x6',
     routeSlug: 'l2c',
     sourceLabel: 'SpeedCubeDB 6x6 L2C',

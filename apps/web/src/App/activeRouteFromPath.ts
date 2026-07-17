@@ -17,7 +17,7 @@ export function activeRouteFromPath(pagePath: string): PageNavRoute {
     return 'notations'
   }
 
-  if (pagePath.startsWith('/algoritmos')) {
+  if (pagePath.startsWith('/algorithms')) {
     return 'algorithms'
   }
 

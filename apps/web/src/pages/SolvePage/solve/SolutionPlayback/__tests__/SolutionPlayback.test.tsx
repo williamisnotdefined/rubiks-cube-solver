@@ -13,7 +13,15 @@ describe('SolutionPlayback', () => {
   it('navigates solution steps', async () => {
     const user = userEvent.setup()
     const onStepChange = vi.fn()
-    render(<SolutionPlayback moves={["U'", "R'"]} step={1} onStepChange={onStepChange} />)
+    const onVisualizationRequest = vi.fn()
+    render(
+      <SolutionPlayback
+        moves={["U'", "R'"]}
+        step={1}
+        onStepChange={onStepChange}
+        onVisualizationRequest={onVisualizationRequest}
+      />,
+    )
 
     expect(screen.getByText("Move 1: U'")).toBeInTheDocument()
     expect(screen.getByText('1 / 2')).toBeInTheDocument()
@@ -25,6 +33,7 @@ describe('SolutionPlayback', () => {
     expect(onStepChange).toHaveBeenNthCalledWith(1, 0)
     expect(onStepChange).toHaveBeenNthCalledWith(2, 2)
     expect(onStepChange).toHaveBeenNthCalledWith(3, 2)
+    expect(onVisualizationRequest).toHaveBeenCalledTimes(3)
   })
 
   it('labels the zero step as the scramble', () => {

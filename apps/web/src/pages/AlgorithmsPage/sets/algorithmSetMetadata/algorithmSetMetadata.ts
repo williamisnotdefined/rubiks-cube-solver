@@ -4,19 +4,19 @@ import type { AlgorithmPuzzle, AlgorithmPuzzleId, AlgorithmSetSummary } from '..
 const jpermBase = 'https://jperm.net'
 
 export const algorithmPuzzles: AlgorithmPuzzle[] = [
-  { id: '3x3', path: '/algoritmos/3x3', title: '3x3' },
-  { id: '2x2', path: '/algoritmos/2x2', title: '2x2' },
-  { id: '4x4', path: '/algoritmos/4x4', title: '4x4' },
-  { id: '5x5', path: '/algoritmos/5x5', title: '5x5' },
-  { id: '6x6', path: '/algoritmos/6x6', title: '6x6' },
-  { id: 'sq1', path: '/algoritmos/sq1', title: 'Square-1' },
-  { id: 'pyraminx', path: '/algoritmos/pyraminx', title: 'Pyraminx' },
-  { id: 'megaminx', path: '/algoritmos/megaminx', title: 'Megaminx' },
+  { id: '3x3', path: '/algorithms/3x3', title: '3x3' },
+  { id: '2x2', path: '/algorithms/2x2', title: '2x2' },
+  { id: '4x4', path: '/algorithms/4x4', title: '4x4' },
+  { id: '5x5', path: '/algorithms/5x5', title: '5x5' },
+  { id: '6x6', path: '/algorithms/6x6', title: '6x6' },
+  { id: 'sq1', path: '/algorithms/sq1', title: 'Square-1' },
+  { id: 'pyraminx', path: '/algorithms/pyraminx', title: 'Pyraminx' },
+  { id: 'megaminx', path: '/algorithms/megaminx', title: 'Megaminx' },
 ]
 
 export const jpermSetSummaries: AlgorithmSetSummary[] = [
   {
-    path: '/algoritmos/3x3/oll',
+    path: '/algorithms/3x3/oll',
     puzzleId: '3x3',
     routeSlug: 'oll',
     sourceLabel: 'JPerm OLL',
@@ -24,7 +24,7 @@ export const jpermSetSummaries: AlgorithmSetSummary[] = [
     title: '3x3 OLL',
   },
   {
-    path: '/algoritmos/3x3/pll',
+    path: '/algorithms/3x3/pll',
     puzzleId: '3x3',
     routeSlug: 'pll',
     sourceLabel: 'JPerm PLL',
@@ -32,7 +32,7 @@ export const jpermSetSummaries: AlgorithmSetSummary[] = [
     title: '3x3 PLL',
   },
   {
-    path: '/algoritmos/3x3/2look-oll',
+    path: '/algorithms/3x3/2look-oll',
     puzzleId: '3x3',
     routeSlug: '2look-oll',
     sourceLabel: 'JPerm Beginner OLL',
@@ -40,7 +40,7 @@ export const jpermSetSummaries: AlgorithmSetSummary[] = [
     title: '3x3 2-Look OLL',
   },
   {
-    path: '/algoritmos/3x3/2look-pll',
+    path: '/algorithms/3x3/2look-pll',
     puzzleId: '3x3',
     routeSlug: '2look-pll',
     sourceLabel: 'JPerm Beginner PLL',
@@ -48,7 +48,7 @@ export const jpermSetSummaries: AlgorithmSetSummary[] = [
     title: '3x3 2-Look PLL',
   },
   {
-    path: '/algoritmos/3x3/coll',
+    path: '/algorithms/3x3/coll',
     puzzleId: '3x3',
     routeSlug: 'coll',
     sourceLabel: 'JPerm COLL',
@@ -56,7 +56,7 @@ export const jpermSetSummaries: AlgorithmSetSummary[] = [
     title: '3x3 COLL',
   },
   {
-    path: '/algoritmos/3x3/winter-variation',
+    path: '/algorithms/3x3/winter-variation',
     puzzleId: '3x3',
     routeSlug: 'winter-variation',
     sourceLabel: 'JPerm Winter Variation',
@@ -64,7 +64,7 @@ export const jpermSetSummaries: AlgorithmSetSummary[] = [
     title: '3x3 Winter Variation',
   },
   {
-    path: '/algoritmos/3x3/oh-oll',
+    path: '/algorithms/3x3/oh-oll',
     puzzleId: '3x3',
     routeSlug: 'oh-oll',
     sourceLabel: 'JPerm OH OLL',
@@ -72,7 +72,7 @@ export const jpermSetSummaries: AlgorithmSetSummary[] = [
     title: '3x3 OH OLL',
   },
   {
-    path: '/algoritmos/3x3/oh-pll',
+    path: '/algorithms/3x3/oh-pll',
     puzzleId: '3x3',
     routeSlug: 'oh-pll',
     sourceLabel: 'JPerm OH PLL',
@@ -80,7 +80,7 @@ export const jpermSetSummaries: AlgorithmSetSummary[] = [
     title: '3x3 OH PLL',
   },
   {
-    path: '/algoritmos/2x2/oll',
+    path: '/algorithms/2x2/oll',
     puzzleId: '2x2',
     routeSlug: 'oll',
     sourceLabel: 'JPerm 2x2 OLL',
@@ -88,7 +88,7 @@ export const jpermSetSummaries: AlgorithmSetSummary[] = [
     title: '2x2 OLL',
   },
   {
-    path: '/algoritmos/2x2/pbl',
+    path: '/algorithms/2x2/pbl',
     puzzleId: '2x2',
     routeSlug: 'pbl',
     sourceLabel: 'JPerm 2x2 PBL',
@@ -96,7 +96,7 @@ export const jpermSetSummaries: AlgorithmSetSummary[] = [
     title: '2x2 PBL',
   },
   {
-    path: '/algoritmos/2x2/cll',
+    path: '/algorithms/2x2/cll',
     puzzleId: '2x2',
     routeSlug: 'cll',
     sourceLabel: 'JPerm 2x2 CLL',
@@ -104,7 +104,7 @@ export const jpermSetSummaries: AlgorithmSetSummary[] = [
     title: '2x2 CLL',
   },
   {
-    path: '/algoritmos/2x2/eg-1',
+    path: '/algorithms/2x2/eg-1',
     puzzleId: '2x2',
     routeSlug: 'eg-1',
     sourceLabel: 'JPerm 2x2 EG-1',
@@ -112,7 +112,7 @@ export const jpermSetSummaries: AlgorithmSetSummary[] = [
     title: '2x2 EG-1',
   },
   {
-    path: '/algoritmos/4x4/oll',
+    path: '/algorithms/4x4/oll',
     puzzleId: '4x4',
     routeSlug: 'oll',
     sourceLabel: 'JPerm 4x4 OLL',
@@ -120,7 +120,7 @@ export const jpermSetSummaries: AlgorithmSetSummary[] = [
     title: '4x4 OLL',
   },
   {
-    path: '/algoritmos/4x4/pll',
+    path: '/algorithms/4x4/pll',
     puzzleId: '4x4',
     routeSlug: 'pll',
     sourceLabel: 'JPerm 4x4 PLL',

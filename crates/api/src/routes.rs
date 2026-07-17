@@ -68,6 +68,10 @@ pub fn api_router_with_web_dist(state: ApiState, web_dist_dir: PathBuf) -> Route
         router = add_permanent_redirect(router, source, destination.to_owned());
     }
 
+    for &(source, destination) in LEGACY_ALGORITHMS_PREFIX_REDIRECTS {
+        router = add_permanent_prefix_redirect(router, source, destination);
+    }
+
     for &locale in LOCALE_PREFIXES {
         let root = format!("/{locale}");
         let solve = format!("/{locale}/solve/");
@@ -105,6 +109,18 @@ const FIXED_WEB_REDIRECTS: &[(&str, &str)] = &[
     ("/notations", "/notations/3x3/"),
     ("/notations/", "/notations/3x3/"),
 ];
+const LEGACY_ALGORITHMS_PREFIX_REDIRECTS: &[(&str, &str)] = &[
+    ("/algoritmos", "/algorithms"),
+    ("/en/algoritmos", "/algorithms"),
+    ("/de/algoritmos", "/de/algorithms"),
+    ("/es/algoritmos", "/es/algorithms"),
+    ("/fr/algoritmos", "/fr/algorithms"),
+    ("/it/algoritmos", "/it/algorithms"),
+    ("/ja/algoritmos", "/ja/algorithms"),
+    ("/pt-BR/algoritmos", "/pt-BR/algorithms"),
+    ("/ru/algoritmos", "/ru/algorithms"),
+    ("/zh/algoritmos", "/zh/algorithms"),
+];
 const LOCALE_PREFIXES: &[&str] = &["en", "de", "es", "fr", "it", "ja", "pt-BR", "ru", "zh"];
 const PREFIXED_STATIC_LOCALES: &[&str] = &["de", "es", "fr", "it", "ja", "pt-BR", "ru", "zh"];
 
@@ -118,6 +134,30 @@ fn add_permanent_redirect(
         get(move |OriginalUri(uri): OriginalUri| {
             let destination = destination.clone();
             async move { permanent_redirect_with_query(&destination, &uri) }
+        }),
+    )
+}
+
+fn add_permanent_prefix_redirect(
+    router: Router<ApiState>,
+    source_prefix: &str,
+    destination_prefix: &str,
+) -> Router<ApiState> {
+    let destination_root = format!("{destination_prefix}/");
+    let router = add_permanent_redirect(router, source_prefix, destination_root.clone());
+    let router = add_permanent_redirect(router, &format!("{source_prefix}/"), destination_root);
+    let source_prefix = source_prefix.to_owned();
+    let destination_prefix = destination_prefix.to_owned();
+
+    router.route(
+        &format!("{source_prefix}/{{*path}}"),
+        get(move |OriginalUri(uri): OriginalUri| {
+            let source_prefix = source_prefix.clone();
+            let destination_prefix = destination_prefix.clone();
+            async move {
+                let suffix = uri.path().strip_prefix(&source_prefix).unwrap_or_default();
+                permanent_redirect_with_query(&format!("{destination_prefix}{suffix}"), &uri)
+            }
         }),
     )
 }

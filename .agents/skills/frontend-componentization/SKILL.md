@@ -81,7 +81,7 @@ Focused requirements for accessibility, performance, security, resilience, and d
 
 - Indexable routes MUST retain SSG output and hydration; do not replace server-rendered content with client-only placeholders.
 - Heavy visualization, algorithm, and page code SHOULD remain route- or feature-split. Avoid importing broad package barrels when a supported subpath exists.
-- The Solver cube MUST auto-load after at most three seconds when visualization is supported. Tests MUST prove the cube appears without clicking the preparing state; manual activation remains only an early-load and retry affordance.
+- Supported Solver and Notation puzzle stages MUST automatically request their renderer. Solver visualizations MUST load no later than three seconds after mount; Notation visualizations MUST load automatically after their stage approaches the viewport. Clicking a preparing state MAY accelerate loading or retry an error, but MUST NEVER be required to see a visualization. Performance work MUST NOT defer any supported visualization behind an explicit click; tests MUST prove automatic loading for Solver and every supported Notation puzzle.
 - Camera analysis MUST cancel stale work and avoid overlapping unbounded requests. Versioned assets remain immutable; mutable HTML and metadata MUST NOT receive immutable caching.
 - Performance changes MUST use a concrete signal such as bundle output, request count, render behavior, or measured interaction, not speculative memoization.
 
@@ -135,4 +135,5 @@ Dependencies point inward from pages to shared components, API, and SEO infrastr
 
 - Axum serves versioned assets with immutable caching, known static route files, and a neutral non-hydrated `404.html` only for unknown web paths.
 - `/` permanently redirects to the canonical solve route. `/api/wca-data` is an Axum 308 redirect to the WCA Data docs.
+- Legacy `/algoritmos` route prefixes permanently redirect to the matching canonical `/algorithms` path, including locale-prefixed paths and query strings.
 - Security headers are server-owned. Browser code MUST remain compatible with the configured CSP and permissions policy.

@@ -32,4 +32,5 @@ Dependencies point inward from pages to shared components, API, and SEO infrastr
 
 - Axum serves versioned assets with immutable caching, known static route files, and a neutral non-hydrated `404.html` only for unknown web paths.
 - `/` permanently redirects to the canonical solve route. `/api/wca-data` is an Axum 308 redirect to the WCA Data docs.
+- Legacy `/algoritmos` route prefixes permanently redirect to the matching canonical `/algorithms` path, including locale-prefixed paths and query strings.
 - Security headers are server-owned. Browser code MUST remain compatible with the configured CSP and permissions policy.

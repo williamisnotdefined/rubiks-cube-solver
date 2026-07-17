@@ -41,7 +41,7 @@ export function AlgorithmSetPage() {
   }, [methodId, puzzleId])
 
   if (summary === undefined) {
-    const fallbackPath = puzzleId === undefined ? '/algoritmos' : `/algoritmos/${puzzleId}`
+    const fallbackPath = puzzleId === undefined ? '/algorithms' : `/algorithms/${puzzleId}`
     return <Navigate replace to={localizedPath(fallbackPath, locale)} />
   }
 
@@ -60,7 +60,7 @@ export function AlgorithmSetPage() {
   return (
     <PageScaffold contentClassName='max-w-5xl gap-4'>
       <AlgorithmSetHeader
-        puzzlePath={localizedPath(`/algoritmos/${set.puzzleId}`, locale)}
+        puzzlePath={localizedPath(`/algorithms/${set.puzzleId}`, locale)}
         sourceLabel={set.sourceLabel}
         sourceUrl={set.sourceUrl}
         title={set.title}

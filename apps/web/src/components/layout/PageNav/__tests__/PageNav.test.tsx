@@ -84,7 +84,7 @@ describe('PageNav', () => {
   })
 
   it('marks algorithms as active and opens method links', () => {
-    renderWithRouter(<PageNav activeRoute='algorithms' />, '/algoritmos/')
+    renderWithRouter(<PageNav activeRoute='algorithms' />, '/algorithms/')
 
     const algorithmsButton = screen.getByRole('button', { name: 'Algorithms' })
     expect(algorithmsButton).toHaveAttribute('aria-current', 'page')
@@ -94,7 +94,7 @@ describe('PageNav', () => {
 
     expect(within(navigation).getByRole('link', { name: 'All algorithms' })).toHaveAttribute(
       'href',
-      '/algoritmos/',
+      '/algorithms/',
     )
 
     for (const puzzle of algorithmNavigationItems) {
@@ -106,7 +106,7 @@ describe('PageNav', () => {
   })
 
   it('marks the current algorithm puzzle as active on method pages', () => {
-    renderWithRouter(<PageNav activeRoute='algorithms' />, '/algoritmos/megaminx/pll/')
+    renderWithRouter(<PageNav activeRoute='algorithms' />, '/algorithms/megaminx/pll/')
 
     const navigation = screen.getByRole('navigation', { name: 'Primary navigation' })
 
@@ -213,7 +213,7 @@ describe('PageNav', () => {
 
   it('opens mobile drawer submenus in dialogs and closes after navigation', async () => {
     const user = userEvent.setup()
-    renderWithRouter(<PageNav activeRoute='algorithms' />, '/algoritmos/')
+    renderWithRouter(<PageNav activeRoute='algorithms' />, '/algorithms/')
 
     await user.click(screen.getByRole('button', { name: 'Open menu' }))
 
@@ -223,7 +223,7 @@ describe('PageNav', () => {
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog', { name: 'Menu' })).not.toBeInTheDocument()
-      expect(screen.getByTestId('location')).toHaveTextContent('/algoritmos/3x3/')
+      expect(screen.getByTestId('location')).toHaveTextContent('/algorithms/3x3/')
     })
   })
 

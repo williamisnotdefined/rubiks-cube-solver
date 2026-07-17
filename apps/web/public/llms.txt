@@ -6,7 +6,7 @@
 
 - [Solver](https://speedcube.com.br/solve/): Solve supported puzzle scrambles and play solution animations.
 - [Timer](https://speedcube.com.br/timer/): Practice speedcubing sessions with scrambles, inspection, and averages.
-- [Algorithms](https://speedcube.com.br/algoritmos/): Browse algorithm sets by puzzle and method.
+- [Algorithms](https://speedcube.com.br/algorithms/): Browse algorithm sets by puzzle and method.
 - [Notation Guides](https://speedcube.com.br/notations/3x3/): Learn move notation for supported puzzles.
 
 ## Language Routes
