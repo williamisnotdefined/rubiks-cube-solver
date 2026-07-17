@@ -1,4 +1,5 @@
 import { expect, test, type Locator } from '@playwright/test'
+import { gotoHydratedApp } from './app-helpers'
 import { chooseRadixSelectOption, expectRadixSelectOptions, expectRadixSelectValue } from './select-helpers'
 
 const scramblePlaceholder = "R2 D2 F2 D L2 F2 U' R2 D B2 L2 U' B' R' B' R2 B2 L B U'"
@@ -9,7 +10,7 @@ const cubeActivationTimeout = 15_000
 
 test.describe('product solve flow', () => {
   test('renders notation-only controls and caps the cube size', async ({ page }) => {
-    await page.goto(solvePath)
+    await gotoHydratedApp(page, solvePath)
 
     await expect(page.getByRole('button', { name: 'Preparing cube' })).toBeVisible()
     const cube = page.locator('.cube-stage rubiks-cube')
@@ -41,7 +42,7 @@ test.describe('product solve flow', () => {
   test('keeps solve button loading while the API is not ready', async ({ page }) => {
     await page.route('http://127.0.0.1:8787/health', (route) => route.abort())
 
-    await page.goto(solvePath)
+    await gotoHydratedApp(page, solvePath)
 
     await expect(page.getByRole('button', { name: 'Loading' })).toBeDisabled({
       timeout: 15_000,
@@ -58,7 +59,7 @@ test.describe('product solve flow', () => {
       }
     })
 
-    await page.goto(solvePath)
+    await gotoHydratedApp(page, solvePath)
 
     const input = page.getByLabel('Scramble')
     const cube = page.locator('.cube-stage rubiks-cube')
@@ -74,7 +75,7 @@ test.describe('product solve flow', () => {
   })
 
   test('solves shallow scramble', async ({ page }) => {
-    await page.goto(solvePath)
+    await gotoHydratedApp(page, solvePath)
 
     const input = page.getByLabel('Scramble')
     await expect(input).toBeEnabled({ timeout: 15_000 })
@@ -117,7 +118,7 @@ test.describe('product solve flow', () => {
   test('solves real scramble through the API', async ({ page }) => {
     test.setTimeout(90_000)
 
-    await page.goto(solvePath)
+    await gotoHydratedApp(page, solvePath)
 
     const input = page.getByLabel('Scramble')
     await expect(input).toBeEnabled({ timeout: 15_000 })
@@ -135,7 +136,7 @@ test.describe('product solve flow', () => {
   })
 
   test('shows a short invalid scramble error', async ({ page }) => {
-    await page.goto(solvePath)
+    await gotoHydratedApp(page, solvePath)
 
     const input = page.getByLabel('Scramble')
     await expect(input).toBeEnabled({ timeout: 15_000 })
@@ -154,7 +155,7 @@ test.describe('product solve flow', () => {
       }
     })
 
-    await page.goto(solvePath)
+    await gotoHydratedApp(page, solvePath)
 
     await expect(page.getByLabel('Scramble')).toBeEnabled({ timeout: 15_000 })
     await page.getByLabel('Scramble').fill('R')
@@ -206,7 +207,7 @@ test.describe('timer layout', () => {
       )
     })
 
-    await page.goto(timerPath)
+    await gotoHydratedApp(page, timerPath)
 
     await expect(page.getByRole('timer', { name: 'Speedsolve timer' })).toBeVisible()
 

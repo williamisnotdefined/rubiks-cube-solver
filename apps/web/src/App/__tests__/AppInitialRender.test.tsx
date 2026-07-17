@@ -10,14 +10,18 @@ describe('App initial SSG render', () => {
         <App initialSsg />
       </MemoryRouter>,
     )
+    const appShell = container.querySelector('[data-app-shell="true"]')
 
-    await screen.findByTestId('solve-form')
+    expect(appShell).toHaveAttribute('data-app-interactive', 'false')
+    expect(appShell).toHaveAttribute('inert')
+    await screen.findByTestId('solve-form', {}, { timeout: 5_000 })
+    await waitFor(() => expect(appShell).toHaveAttribute('data-app-interactive', 'true'), {
+      timeout: 5_000,
+    })
+    expect(appShell).not.toHaveAttribute('inert')
     expect(screen.queryByRole('heading', { name: "Online Rubik's Cube Solver" })).not.toBeInTheDocument()
     expect(screen.queryByText('Loading route')).not.toBeInTheDocument()
-    expect(container.querySelector('[data-app-shell="true"]')).toHaveAttribute(
-      'data-initial-route-ready',
-      'true',
-    )
+    expect(appShell).toHaveAttribute('data-initial-route-ready', 'true')
   })
 
   it('keeps a client-only initial route covered until its lazy module is ready', async () => {

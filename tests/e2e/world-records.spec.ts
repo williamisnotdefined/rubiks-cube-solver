@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { gotoHydratedApp } from './app-helpers'
 import { chooseRadixSelectOption } from './select-helpers'
 
 const worldRecordsPath = '/records/world/'
@@ -9,7 +10,7 @@ test.describe('world records flow', () => {
   })
 
   test('paginates world records with numbered controls', async ({ page }) => {
-    await page.goto(worldRecordsPath)
+    await gotoHydratedApp(page, worldRecordsPath)
 
     await expect(page.getByRole('table')).toContainText('Yiheng Wang')
     await expect(page.getByRole('button', { name: 'Page 10' })).toBeVisible()
@@ -27,7 +28,7 @@ test.describe('world records flow', () => {
   })
 
   test('filters by search, event, and result type', async ({ page }) => {
-    await page.goto(worldRecordsPath)
+    await gotoHydratedApp(page, worldRecordsPath)
 
     await page.getByLabel('Search').fill('Max')
 
@@ -51,7 +52,7 @@ test.describe('world records flow', () => {
   })
 
   test('opens athlete details from a world record row', async ({ page }) => {
-    await page.goto(worldRecordsPath)
+    await gotoHydratedApp(page, worldRecordsPath)
 
     await page.getByRole('button', { name: /Yiheng Wang/ }).click()
 
