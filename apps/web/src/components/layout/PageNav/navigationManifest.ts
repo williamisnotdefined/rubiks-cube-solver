@@ -13,12 +13,12 @@ export const notationNavigationItems = [
 ] as const
 
 export const algorithmNavigationItems = [
-  { label: '3x3', path: '/algoritmos/3x3' },
-  { label: '2x2', path: '/algoritmos/2x2' },
-  { label: '4x4', path: '/algoritmos/4x4' },
-  { label: '5x5', path: '/algoritmos/5x5' },
-  { label: '6x6', path: '/algoritmos/6x6' },
-  { label: 'Square-1', path: '/algoritmos/sq1' },
-  { label: 'Pyraminx', path: '/algoritmos/pyraminx' },
-  { label: 'Megaminx', path: '/algoritmos/megaminx' },
+  { label: '3x3', path: '/algorithms/3x3' },
+  { label: '2x2', path: '/algorithms/2x2' },
+  { label: '4x4', path: '/algorithms/4x4' },
+  { label: '5x5', path: '/algorithms/5x5' },
+  { label: '6x6', path: '/algorithms/6x6' },
+  { label: 'Square-1', path: '/algorithms/sq1' },
+  { label: 'Pyraminx', path: '/algorithms/pyraminx' },
+  { label: 'Megaminx', path: '/algorithms/megaminx' },
 ] as const

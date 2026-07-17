@@ -19,25 +19,25 @@ describe('SEO route metadata', () => {
 
     for (const locale of prefixedSeoLocales) {
       expect(localeFromPathname(localizedPath('/solve', locale))).toBe(locale)
-      expect(stripLocalePrefix(localizedPath('/algoritmos/3x3/oll', locale))).toBe(
-        '/algoritmos/3x3/oll',
+      expect(stripLocalePrefix(localizedPath('/algorithms/3x3/oll', locale))).toBe(
+        '/algorithms/3x3/oll',
       )
     }
   })
 
   it('builds canonical metadata for English algorithm pages without translating slugs', () => {
-    const metadata = getSeoMetadata('/algoritmos/3x3/oll')
+    const metadata = getSeoMetadata('/algorithms/3x3/oll')
 
     expect(metadata.locale).toBe('en-US')
-    expect(metadata.path).toBe('/algoritmos/3x3/oll')
-    expect(metadata.canonicalUrl).toBe('https://speedcube.com.br/algoritmos/3x3/oll/')
+    expect(metadata.path).toBe('/algorithms/3x3/oll')
+    expect(metadata.canonicalUrl).toBe('https://speedcube.com.br/algorithms/3x3/oll/')
     expect(metadata.title).toContain('3x3 OLL Algorithms')
     expect(metadata.noindex).toBe(false)
   })
 
   it('keeps lightweight algorithm metadata aligned with algorithm page labels', () => {
-    const puzzleMetadata = getSeoMetadata('/algoritmos/3x3')
-    const setMetadata = getSeoMetadata('/algoritmos/2x2/eg-1')
+    const puzzleMetadata = getSeoMetadata('/algorithms/3x3')
+    const setMetadata = getSeoMetadata('/algorithms/2x2/eg-1')
     const expected3x3Items = algorithmSetSummaries
       .filter((set) => set.puzzleId === '3x3')
       .map((set) => ({ name: set.title, path: set.path }))
@@ -80,7 +80,7 @@ describe('SEO route metadata', () => {
       expect(metadata.canonicalUrl.endsWith('/')).toBe(true)
     }
 
-    expect(stripLocalePrefix('/en/algoritmos/3x3/oll/')).toBe('/algoritmos/3x3/oll')
+    expect(stripLocalePrefix('/en/algorithms/3x3/oll/')).toBe('/algorithms/3x3/oll')
   })
 
   it('maps legacy English prefixes to canonical unprefixed URLs', () => {

@@ -343,6 +343,7 @@ describe('SolvePage', () => {
     expect(screen.getByTestId('cube-stage')).toHaveAttribute('data-load-requested', 'false')
 
     act(() => vi.advanceTimersByTime(2999))
+
     expect(screen.getByTestId('cube-stage')).toHaveAttribute('data-load-requested', 'false')
 
     act(() => vi.advanceTimersByTime(1))

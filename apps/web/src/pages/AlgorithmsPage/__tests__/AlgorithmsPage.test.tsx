@@ -15,67 +15,67 @@ describe('Algorithms pages', () => {
     )
 
     expect(screen.getByRole('heading', { name: 'Algorithms' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: '3x3' })).toHaveAttribute('href', '/algoritmos/3x3/')
-    expect(screen.getByRole('link', { name: '2x2' })).toHaveAttribute('href', '/algoritmos/2x2/')
-    expect(screen.getByRole('link', { name: '4x4' })).toHaveAttribute('href', '/algoritmos/4x4/')
-    expect(screen.getByRole('link', { name: '5x5' })).toHaveAttribute('href', '/algoritmos/5x5/')
-    expect(screen.getByRole('link', { name: '6x6' })).toHaveAttribute('href', '/algoritmos/6x6/')
+    expect(screen.getByRole('link', { name: '3x3' })).toHaveAttribute('href', '/algorithms/3x3/')
+    expect(screen.getByRole('link', { name: '2x2' })).toHaveAttribute('href', '/algorithms/2x2/')
+    expect(screen.getByRole('link', { name: '4x4' })).toHaveAttribute('href', '/algorithms/4x4/')
+    expect(screen.getByRole('link', { name: '5x5' })).toHaveAttribute('href', '/algorithms/5x5/')
+    expect(screen.getByRole('link', { name: '6x6' })).toHaveAttribute('href', '/algorithms/6x6/')
     expect(screen.getByRole('link', { name: 'Square-1' })).toHaveAttribute(
       'href',
-      '/algoritmos/sq1/',
+      '/algorithms/sq1/',
     )
     expect(screen.getByRole('link', { name: 'Pyraminx' })).toHaveAttribute(
       'href',
-      '/algoritmos/pyraminx/',
+      '/algorithms/pyraminx/',
     )
     expect(screen.getByRole('link', { name: 'Megaminx' })).toHaveAttribute(
       'href',
-      '/algoritmos/megaminx/',
+      '/algorithms/megaminx/',
     )
   })
 
   it('preserves locale prefixes in algorithm links', () => {
     render(
-      <MemoryRouter initialEntries={['/pt-BR/algoritmos/']}>
+      <MemoryRouter initialEntries={['/pt-BR/algorithms/']}>
         <AlgorithmsIndexPage />
       </MemoryRouter>,
     )
 
     expect(screen.getByRole('link', { name: '3x3' })).toHaveAttribute(
       'href',
-      '/pt-BR/algoritmos/3x3/',
+      '/pt-BR/algorithms/3x3/',
     )
   })
 
   it('renders algorithm sets for a puzzle route', () => {
     renderWithRoute(
-      '/algoritmos/2x2',
-      <Route path='/algoritmos/:puzzleId' element={<AlgorithmsPuzzlePage />} />,
+      '/algorithms/2x2',
+      <Route path='/algorithms/:puzzleId' element={<AlgorithmsPuzzlePage />} />,
     )
 
     expect(screen.getByRole('heading', { name: '2x2' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '2x2 OLL' })).toHaveAttribute(
       'href',
-      '/algoritmos/2x2/oll/',
+      '/algorithms/2x2/oll/',
     )
     expect(screen.getByRole('link', { name: '2x2 CLL' })).toHaveAttribute(
       'href',
-      '/algoritmos/2x2/cll/',
+      '/algorithms/2x2/cll/',
     )
     expect(screen.getByRole('link', { name: '2x2 EG-1' })).toHaveAttribute(
       'href',
-      '/algoritmos/2x2/eg-1/',
+      '/algorithms/2x2/eg-1/',
     )
     expect(screen.getByRole('link', { name: '2x2 EG-2' })).toHaveAttribute(
       'href',
-      '/algoritmos/2x2/eg-2/',
+      '/algorithms/2x2/eg-2/',
     )
   })
 
   it('renders an OLL algorithm sheet with local case images', async () => {
     renderWithRoute(
-      '/algoritmos/3x3/oll',
-      <Route path='/algoritmos/:puzzleId/:methodId' element={<AlgorithmSetPage />} />,
+      '/algorithms/3x3/oll',
+      <Route path='/algorithms/:puzzleId/:methodId' element={<AlgorithmSetPage />} />,
     )
 
     expect(await screen.findByRole('heading', { name: '3x3 OLL' })).toBeInTheDocument()
@@ -89,8 +89,8 @@ describe('Algorithms pages', () => {
 
   it('renders another imported algorithm sheet', async () => {
     renderWithRoute(
-      '/algoritmos/4x4/pll',
-      <Route path='/algoritmos/:puzzleId/:methodId' element={<AlgorithmSetPage />} />,
+      '/algorithms/4x4/pll',
+      <Route path='/algorithms/:puzzleId/:methodId' element={<AlgorithmSetPage />} />,
     )
 
     expect(await screen.findByRole('heading', { name: '4x4 PLL' })).toBeInTheDocument()
@@ -102,8 +102,8 @@ describe('Algorithms pages', () => {
 
   it('renders a SpeedCubeDB algorithm sheet with local case images', async () => {
     renderWithRoute(
-      '/algoritmos/3x3/f2l',
-      <Route path='/algoritmos/:puzzleId/:methodId' element={<AlgorithmSetPage />} />,
+      '/algorithms/3x3/f2l',
+      <Route path='/algorithms/:puzzleId/:methodId' element={<AlgorithmSetPage />} />,
     )
 
     expect(await screen.findByRole('heading', { name: '3x3 F2L' })).toBeInTheDocument()
@@ -120,10 +120,10 @@ describe('Algorithms pages', () => {
 
   it('redirects a missing algorithm set to its localized puzzle page', async () => {
     render(
-      <MemoryRouter initialEntries={['/fr/algoritmos/3x3/missing']}>
+      <MemoryRouter initialEntries={['/fr/algorithms/3x3/missing']}>
         <Routes>
-          <Route path='/fr/algoritmos/:puzzleId/:methodId' element={<AlgorithmSetPage />} />
-          <Route path='/fr/algoritmos/:puzzleId' element={<p>Localized puzzle fallback</p>} />
+          <Route path='/fr/algorithms/:puzzleId/:methodId' element={<AlgorithmSetPage />} />
+          <Route path='/fr/algorithms/:puzzleId' element={<p>Localized puzzle fallback</p>} />
         </Routes>
       </MemoryRouter>,
     )
@@ -133,10 +133,10 @@ describe('Algorithms pages', () => {
 
   it('redirects an algorithm set route without a puzzle to the index', async () => {
     render(
-      <MemoryRouter initialEntries={['/algoritmos/set']}>
+      <MemoryRouter initialEntries={['/algorithms/set']}>
         <Routes>
-          <Route path='/algoritmos/set' element={<AlgorithmSetPage />} />
-          <Route path='/algoritmos' element={<p>Algorithm index fallback</p>} />
+          <Route path='/algorithms/set' element={<AlgorithmSetPage />} />
+          <Route path='/algorithms' element={<p>Algorithm index fallback</p>} />
         </Routes>
       </MemoryRouter>,
     )

@@ -8,9 +8,15 @@ type SolutionPlaybackProps = {
   moves: readonly string[]
   step: number
   onStepChange: (step: number) => void
+  onVisualizationRequest?: () => void
 }
 
-export function SolutionPlayback({ moves, step, onStepChange }: SolutionPlaybackProps) {
+export function SolutionPlayback({
+  moves,
+  step,
+  onStepChange,
+  onVisualizationRequest,
+}: SolutionPlaybackProps) {
   const { t } = useTranslation()
 
   if (moves.length === 0) {
@@ -24,7 +30,13 @@ export function SolutionPlayback({ moves, step, onStepChange }: SolutionPlayback
   const isFinalStep = step === moves.length
 
   function handleRangeChange(event: ChangeEvent<HTMLInputElement>) {
+    onVisualizationRequest?.()
     onStepChange(Number(event.currentTarget.value))
+  }
+
+  function changeStep(nextStep: number) {
+    onVisualizationRequest?.()
+    onStepChange(nextStep)
   }
 
   return (
@@ -44,7 +56,7 @@ export function SolutionPlayback({ moves, step, onStepChange }: SolutionPlayback
             disabled={step === 0}
             type='button'
             variant='outline'
-            onClick={() => onStepChange(step - 1)}
+            onClick={() => changeStep(step - 1)}
           >
             <ChevronLeft aria-hidden='true' size={22} strokeWidth={2.6} />
           </Button>
@@ -64,7 +76,7 @@ export function SolutionPlayback({ moves, step, onStepChange }: SolutionPlayback
             disabled={isFinalStep}
             type='button'
             variant='outline'
-            onClick={() => onStepChange(step + 1)}
+            onClick={() => changeStep(step + 1)}
           >
             <ChevronRight aria-hidden='true' size={22} strokeWidth={2.6} />
           </Button>

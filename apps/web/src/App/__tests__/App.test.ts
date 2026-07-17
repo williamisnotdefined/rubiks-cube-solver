@@ -8,7 +8,7 @@ describe('activeRouteFromPath', () => {
     ['/records', 'records'],
     ['/records/333', 'records'],
     ['/notations/3x3', 'notations'],
-    ['/algoritmos/3x3', 'algorithms'],
+    ['/algorithms/3x3', 'algorithms'],
     ['/timer', 'timer'],
     ['/solve', 'solve'],
   ] as const)('maps %s to the %s navigation item', (path, route) => {

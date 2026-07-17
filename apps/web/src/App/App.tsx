@@ -1,11 +1,4 @@
-import {
-  lazy,
-  Suspense,
-  useEffect,
-  useState,
-  type ComponentType,
-  type ReactElement,
-} from 'react'
+import { lazy, Suspense, useEffect, useState, type ComponentType, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router'
 import { AppErrorBoundary } from '@components/AppErrorBoundary'
@@ -81,11 +74,7 @@ function App({ initialSsg = false, routeComponents }: AppProps) {
   const route = activeRouteFromPath(pagePath)
 
   return (
-    <AppShell
-      activeRoute={route}
-      initialRouteReady={initialRouteReady}
-      interactive={interactive}
-    >
+    <AppShell activeRoute={route} initialRouteReady={initialRouteReady} interactive={interactive}>
       <Seo />
       <RouteTransitionStage>
         {(displayedLocation, markReady) => (
@@ -101,16 +90,13 @@ function App({ initialSsg = false, routeComponents }: AppProps) {
               <Routes location={displayedLocation}>
                 <Route path='/' element={<Navigate replace to='/solve/' />} />
                 <Route path='/notations' element={<Navigate replace to='/notations/3x3/' />} />
+                <Route path='/algoritmos/*' element={<LegacyAlgorithmsRedirect />} />
                 <Route path='/en/*' element={<LegacyEnglishRedirect />} />
                 {appRouteManifest.map((manifestRoute) => (
                   <Route
                     key={manifestRoute.path}
                     path={manifestRoute.path}
-                    element={elementForRoute(
-                      manifestRoute.kind,
-                      setInteractive,
-                      routeComponents,
-                    )}
+                    element={elementForRoute(manifestRoute.kind, setInteractive, routeComponents)}
                   />
                 ))}
                 {prefixedSeoLocales.flatMap((locale) => {
@@ -127,6 +113,11 @@ function App({ initialSsg = false, routeComponents }: AppProps) {
                       path={`/${prefix}/notations`}
                       element={<Navigate replace to={`/${prefix}/notations/3x3/`} />}
                     />,
+                    <Route
+                      key={`${prefix}-legacy-algorithms`}
+                      path={`/${prefix}/algoritmos/*`}
+                      element={<LegacyAlgorithmsRedirect />}
+                    />,
                     ...appRouteManifest.map((manifestRoute) => (
                       <Route
                         key={`${prefix}-${manifestRoute.path}`}
@@ -142,10 +133,7 @@ function App({ initialSsg = false, routeComponents }: AppProps) {
                 })}
                 <Route path='*' element={<NotFoundPage />} />
               </Routes>
-              <RouteReady
-                onInitialReady={setInitialRouteReady}
-                onReady={markReady}
-              />
+              <RouteReady onInitialReady={setInitialRouteReady} onReady={markReady} />
             </Suspense>
           </AppErrorBoundary>
         )}
@@ -228,7 +216,23 @@ function RouteHydrationReady({
 
 function LegacyEnglishRedirect() {
   const location = useLocation()
-  const destination = localizedPath(stripLocalePrefix(location.pathname), 'en-US')
+  const pagePath = stripLocalePrefix(location.pathname).replace(
+    /^\/algoritmos(?=\/|$)/,
+    '/algorithms',
+  )
+  const destination = localizedPath(pagePath, 'en-US')
+
+  return (
+    <Navigate
+      replace
+      to={{ pathname: destination, search: location.search, hash: location.hash }}
+    />
+  )
+}
+
+function LegacyAlgorithmsRedirect() {
+  const location = useLocation()
+  const destination = location.pathname.replace(/\/algoritmos(?=\/|$)/, '/algorithms')
 
   return (
     <Navigate

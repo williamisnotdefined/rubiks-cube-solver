@@ -43,7 +43,7 @@ describe('i18n language support', () => {
     expect(languageFromRoute('/ru/solve')).toBe('ru')
     expect(languageFromRoute('/zh/solve')).toBe('zh')
     expect(languageFromRoute('/ja/solve')).toBe('ja')
-    expect(languageFromRoute('/en/algoritmos/3x3/oll')).toBe('en-US')
+    expect(languageFromRoute('/en/algorithms/3x3/oll')).toBe('en-US')
   })
 
   it('uses saved preference, browser preference, then en-US for unprefixed routes', () => {

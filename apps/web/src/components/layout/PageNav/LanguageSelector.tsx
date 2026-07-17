@@ -120,10 +120,7 @@ export function LanguageSelector({ locale, pagePath, onNavigate }: LanguageSelec
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align='start' className='w-64' side='top'>
-        <DropdownMenuRadioGroup
-          value={selectedPreference}
-          onValueChange={selectLanguage}
-        >
+        <DropdownMenuRadioGroup value={selectedPreference} onValueChange={selectLanguage}>
           <DropdownMenuRadioItem value={automaticLanguageValue}>
             <Languages aria-hidden='true' className='size-4 shrink-0' />
             <span>{automaticLabel}</span>

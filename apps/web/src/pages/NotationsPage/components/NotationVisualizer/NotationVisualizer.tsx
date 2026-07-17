@@ -70,6 +70,9 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
   )
   const registered = registrationStatus === 'ready'
   const [runningAction, setRunningAction] = useState<string | undefined>(undefined)
+  const [pendingAction, setPendingAction] = useState<NotationVisualizationAction | undefined>(
+    undefined,
+  )
   const [status, setStatus] = useState<DemoStatus>({ key: 'ready' })
   const [viewResetIndex, setViewResetIndex] = useState(0)
   const [autoLoadDelayElapsed, setAutoLoadDelayElapsed] = useState(false)
@@ -83,6 +86,7 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
     const elementRegistered = isVisualizationRegistered(visualization.kind)
     setLoadRequested(elementRegistered)
     setRunningAction(undefined)
+    setPendingAction(undefined)
     setStatus({ key: 'ready' })
     setViewResetIndex(0)
     setAutoLoadDelayElapsed(false)
@@ -95,7 +99,7 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
   }, [visualization])
 
   useEffect(() => {
-    if (visualization === undefined || loadRequested || prefersReducedData()) {
+    if (visualization === undefined || loadRequested) {
       return undefined
     }
 
@@ -108,7 +112,7 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
 
   useEffect(() => {
     const stage = stageRef.current
-    if (visualization === undefined || loadRequested || stage === null || prefersReducedData()) {
+    if (visualization === undefined || loadRequested || stage === null) {
       return undefined
     }
 
@@ -153,6 +157,46 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
     return () => document.removeEventListener('visibilitychange', loadWhenVisible)
   }, [autoLoadDelayElapsed, loadRequested, stageNearViewport])
 
+  useEffect(() => {
+    if (!registered || pendingAction === undefined || visualization === undefined) {
+      return undefined
+    }
+
+    const puzzle = puzzleRef.current
+    if (puzzle === null) {
+      return undefined
+    }
+
+    const action = pendingAction
+    const actionLabel = notationActionLabel(action)
+    const move = notationActionMove(action)
+    const runId = runIdRef.current + 1
+    let active = true
+    runIdRef.current = runId
+
+    void runVisualizationAction(puzzle, visualization, move)
+      .then(() => {
+        if (active && runIdRef.current === runId) {
+          setStatus({ key: 'applied', move: actionLabel })
+        }
+      })
+      .catch(() => {
+        if (active && runIdRef.current === runId) {
+          setStatus({ key: 'failed', move: actionLabel })
+        }
+      })
+      .finally(() => {
+        if (active && runIdRef.current === runId) {
+          setPendingAction(undefined)
+          setRunningAction(undefined)
+        }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [pendingAction, registered, visualization])
+
   if (visualization === undefined) {
     return null
   }
@@ -170,32 +214,18 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
     setLoadRequested(true)
   }
 
-  async function handleAction(action: NotationVisualizationAction) {
-    const puzzle = puzzleRef.current
-    if (puzzle === null || runningAction !== undefined) {
+  function handleAction(action: NotationVisualizationAction) {
+    if (runningAction !== undefined) {
       return
     }
 
     const actionLabel = notationActionLabel(action)
-    const move = notationActionMove(action)
-    const runId = runIdRef.current + 1
-    runIdRef.current = runId
     setRunningAction(actionLabel)
     setStatus({ key: 'running', move: actionLabel })
+    setPendingAction(action)
 
-    try {
-      await runVisualizationAction(puzzle, activeVisualization, move)
-      if (runIdRef.current === runId) {
-        setStatus({ key: 'applied', move: actionLabel })
-      }
-    } catch {
-      if (runIdRef.current === runId) {
-        setStatus({ key: 'failed', move: actionLabel })
-      }
-    } finally {
-      if (runIdRef.current === runId) {
-        setRunningAction(undefined)
-      }
+    if (!registered) {
+      setLoadRequested(true)
     }
   }
 
@@ -271,10 +301,8 @@ export function NotationVisualizer({ guide }: NotationVisualizerProps) {
                   size='sm'
                   type='button'
                   variant={runningAction === actionLabel ? 'primary' : 'secondary'}
-                  disabled={!registered || runningAction !== undefined}
-                  onClick={() => {
-                    void handleAction(action)
-                  }}
+                  disabled={runningAction !== undefined}
+                  onClick={() => handleAction(action)}
                 >
                   <span className='font-mono normal-case tracking-normal'>{actionLabel}</span>
                 </Button>
@@ -391,14 +419,4 @@ function renderVisualizationElement(
         />
       )
   }
-}
-
-function prefersReducedData(): boolean {
-  const connection = (
-    navigator as Navigator & {
-      connection?: { saveData?: boolean }
-    }
-  ).connection
-
-  return connection?.saveData === true
 }

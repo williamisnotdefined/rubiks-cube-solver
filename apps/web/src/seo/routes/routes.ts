@@ -105,9 +105,9 @@ export const appRouteManifest: readonly AppRoute[] = [
   { indexable: false, kind: 'records', path: '/records/world' },
   { indexable: true, kind: 'channels', path: '/channels' },
   { indexable: true, kind: 'sites', path: '/sites' },
-  { indexable: true, kind: 'algorithms-index', path: '/algoritmos' },
-  { indexable: true, kind: 'algorithms-puzzle', path: '/algoritmos/:puzzleId' },
-  { indexable: true, kind: 'algorithms-set', path: '/algoritmos/:puzzleId/:methodId' },
+  { indexable: true, kind: 'algorithms-index', path: '/algorithms' },
+  { indexable: true, kind: 'algorithms-puzzle', path: '/algorithms/:puzzleId' },
+  { indexable: true, kind: 'algorithms-set', path: '/algorithms/:puzzleId/:methodId' },
   { indexable: true, kind: 'notation', path: '/notations/:puzzleId' },
 ] as const
 
@@ -130,156 +130,156 @@ const legacyLocalePrefixes: Partial<Record<string, SeoLocale>> = {
 export const prefixedSeoLocales = seoLocales.filter((locale) => locale !== defaultLocale)
 
 const algorithmPuzzles: AlgorithmPuzzleSummary[] = [
-  { id: '3x3', path: '/algoritmos/3x3', title: '3x3' },
-  { id: '2x2', path: '/algoritmos/2x2', title: '2x2' },
-  { id: '4x4', path: '/algoritmos/4x4', title: '4x4' },
-  { id: '5x5', path: '/algoritmos/5x5', title: '5x5' },
-  { id: '6x6', path: '/algoritmos/6x6', title: '6x6' },
-  { id: 'sq1', path: '/algoritmos/sq1', title: 'Square-1' },
-  { id: 'pyraminx', path: '/algoritmos/pyraminx', title: 'Pyraminx' },
-  { id: 'megaminx', path: '/algoritmos/megaminx', title: 'Megaminx' },
+  { id: '3x3', path: '/algorithms/3x3', title: '3x3' },
+  { id: '2x2', path: '/algorithms/2x2', title: '2x2' },
+  { id: '4x4', path: '/algorithms/4x4', title: '4x4' },
+  { id: '5x5', path: '/algorithms/5x5', title: '5x5' },
+  { id: '6x6', path: '/algorithms/6x6', title: '6x6' },
+  { id: 'sq1', path: '/algorithms/sq1', title: 'Square-1' },
+  { id: 'pyraminx', path: '/algorithms/pyraminx', title: 'Pyraminx' },
+  { id: 'megaminx', path: '/algorithms/megaminx', title: 'Megaminx' },
 ]
 
 const algorithmSetSummaries: AlgorithmSetSummary[] = [
-  { path: '/algoritmos/3x3/oll', puzzleId: '3x3', routeSlug: 'oll', title: '3x3 OLL' },
-  { path: '/algoritmos/3x3/pll', puzzleId: '3x3', routeSlug: 'pll', title: '3x3 PLL' },
+  { path: '/algorithms/3x3/oll', puzzleId: '3x3', routeSlug: 'oll', title: '3x3 OLL' },
+  { path: '/algorithms/3x3/pll', puzzleId: '3x3', routeSlug: 'pll', title: '3x3 PLL' },
   {
-    path: '/algoritmos/3x3/2look-oll',
+    path: '/algorithms/3x3/2look-oll',
     puzzleId: '3x3',
     routeSlug: '2look-oll',
     title: '3x3 2-Look OLL',
   },
   {
-    path: '/algoritmos/3x3/2look-pll',
+    path: '/algorithms/3x3/2look-pll',
     puzzleId: '3x3',
     routeSlug: '2look-pll',
     title: '3x3 2-Look PLL',
   },
-  { path: '/algoritmos/3x3/coll', puzzleId: '3x3', routeSlug: 'coll', title: '3x3 COLL' },
+  { path: '/algorithms/3x3/coll', puzzleId: '3x3', routeSlug: 'coll', title: '3x3 COLL' },
   {
-    path: '/algoritmos/3x3/winter-variation',
+    path: '/algorithms/3x3/winter-variation',
     puzzleId: '3x3',
     routeSlug: 'winter-variation',
     title: '3x3 Winter Variation',
   },
-  { path: '/algoritmos/3x3/oh-oll', puzzleId: '3x3', routeSlug: 'oh-oll', title: '3x3 OH OLL' },
-  { path: '/algoritmos/3x3/oh-pll', puzzleId: '3x3', routeSlug: 'oh-pll', title: '3x3 OH PLL' },
-  { path: '/algoritmos/2x2/oll', puzzleId: '2x2', routeSlug: 'oll', title: '2x2 OLL' },
-  { path: '/algoritmos/2x2/pbl', puzzleId: '2x2', routeSlug: 'pbl', title: '2x2 PBL' },
-  { path: '/algoritmos/2x2/cll', puzzleId: '2x2', routeSlug: 'cll', title: '2x2 CLL' },
-  { path: '/algoritmos/2x2/eg-1', puzzleId: '2x2', routeSlug: 'eg-1', title: '2x2 EG-1' },
-  { path: '/algoritmos/4x4/oll', puzzleId: '4x4', routeSlug: 'oll', title: '4x4 OLL' },
-  { path: '/algoritmos/4x4/pll', puzzleId: '4x4', routeSlug: 'pll', title: '4x4 PLL' },
-  { path: '/algoritmos/3x3/f2l', puzzleId: '3x3', routeSlug: 'f2l', title: '3x3 F2L' },
+  { path: '/algorithms/3x3/oh-oll', puzzleId: '3x3', routeSlug: 'oh-oll', title: '3x3 OH OLL' },
+  { path: '/algorithms/3x3/oh-pll', puzzleId: '3x3', routeSlug: 'oh-pll', title: '3x3 OH PLL' },
+  { path: '/algorithms/2x2/oll', puzzleId: '2x2', routeSlug: 'oll', title: '2x2 OLL' },
+  { path: '/algorithms/2x2/pbl', puzzleId: '2x2', routeSlug: 'pbl', title: '2x2 PBL' },
+  { path: '/algorithms/2x2/cll', puzzleId: '2x2', routeSlug: 'cll', title: '2x2 CLL' },
+  { path: '/algorithms/2x2/eg-1', puzzleId: '2x2', routeSlug: 'eg-1', title: '2x2 EG-1' },
+  { path: '/algorithms/4x4/oll', puzzleId: '4x4', routeSlug: 'oll', title: '4x4 OLL' },
+  { path: '/algorithms/4x4/pll', puzzleId: '4x4', routeSlug: 'pll', title: '4x4 PLL' },
+  { path: '/algorithms/3x3/f2l', puzzleId: '3x3', routeSlug: 'f2l', title: '3x3 F2L' },
   {
-    path: '/algoritmos/3x3/advanced-f2l',
+    path: '/algorithms/3x3/advanced-f2l',
     puzzleId: '3x3',
     routeSlug: 'advanced-f2l',
     title: '3x3 Advanced F2L',
   },
-  { path: '/algoritmos/2x2/eg-2', puzzleId: '2x2', routeSlug: 'eg-2', title: '2x2 EG-2' },
-  { path: '/algoritmos/3x3/zbll-t', puzzleId: '3x3', routeSlug: 'zbll-t', title: '3x3 ZBLL T' },
-  { path: '/algoritmos/3x3/zbll-u', puzzleId: '3x3', routeSlug: 'zbll-u', title: '3x3 ZBLL U' },
-  { path: '/algoritmos/3x3/zbll-l', puzzleId: '3x3', routeSlug: 'zbll-l', title: '3x3 ZBLL L' },
+  { path: '/algorithms/2x2/eg-2', puzzleId: '2x2', routeSlug: 'eg-2', title: '2x2 EG-2' },
+  { path: '/algorithms/3x3/zbll-t', puzzleId: '3x3', routeSlug: 'zbll-t', title: '3x3 ZBLL T' },
+  { path: '/algorithms/3x3/zbll-u', puzzleId: '3x3', routeSlug: 'zbll-u', title: '3x3 ZBLL U' },
+  { path: '/algorithms/3x3/zbll-l', puzzleId: '3x3', routeSlug: 'zbll-l', title: '3x3 ZBLL L' },
   {
-    path: '/algoritmos/3x3/zbll-sune',
+    path: '/algorithms/3x3/zbll-sune',
     puzzleId: '3x3',
     routeSlug: 'zbll-sune',
     title: '3x3 ZBLL Sune',
   },
   {
-    path: '/algoritmos/3x3/zbll-antisune',
+    path: '/algorithms/3x3/zbll-antisune',
     puzzleId: '3x3',
     routeSlug: 'zbll-antisune',
     title: '3x3 ZBLL Antisune',
   },
-  { path: '/algoritmos/3x3/zbll-pi', puzzleId: '3x3', routeSlug: 'zbll-pi', title: '3x3 ZBLL Pi' },
-  { path: '/algoritmos/3x3/zbll-h', puzzleId: '3x3', routeSlug: 'zbll-h', title: '3x3 ZBLL H' },
-  { path: '/algoritmos/3x3/vls-ub', puzzleId: '3x3', routeSlug: 'vls-ub', title: '3x3 VLS UB' },
+  { path: '/algorithms/3x3/zbll-pi', puzzleId: '3x3', routeSlug: 'zbll-pi', title: '3x3 ZBLL Pi' },
+  { path: '/algorithms/3x3/zbll-h', puzzleId: '3x3', routeSlug: 'zbll-h', title: '3x3 ZBLL H' },
+  { path: '/algorithms/3x3/vls-ub', puzzleId: '3x3', routeSlug: 'vls-ub', title: '3x3 VLS UB' },
   {
-    path: '/algoritmos/3x3/vls-ub-ul',
+    path: '/algorithms/3x3/vls-ub-ul',
     puzzleId: '3x3',
     routeSlug: 'vls-ub-ul',
     title: '3x3 VLS UB UL',
   },
-  { path: '/algoritmos/3x3/vls-uf', puzzleId: '3x3', routeSlug: 'vls-uf', title: '3x3 VLS UF' },
+  { path: '/algorithms/3x3/vls-uf', puzzleId: '3x3', routeSlug: 'vls-uf', title: '3x3 VLS UF' },
   {
-    path: '/algoritmos/3x3/vls-uf-ub',
+    path: '/algorithms/3x3/vls-uf-ub',
     puzzleId: '3x3',
     routeSlug: 'vls-uf-ub',
     title: '3x3 VLS UF UB',
   },
   {
-    path: '/algoritmos/3x3/vls-uf-ul',
+    path: '/algorithms/3x3/vls-uf-ul',
     puzzleId: '3x3',
     routeSlug: 'vls-uf-ul',
     title: '3x3 VLS UF UL',
   },
-  { path: '/algoritmos/3x3/vls-ul', puzzleId: '3x3', routeSlug: 'vls-ul', title: '3x3 VLS UL' },
+  { path: '/algorithms/3x3/vls-ul', puzzleId: '3x3', routeSlug: 'vls-ul', title: '3x3 VLS UL' },
   {
-    path: '/algoritmos/3x3/vls-no-edges',
+    path: '/algorithms/3x3/vls-no-edges',
     puzzleId: '3x3',
     routeSlug: 'vls-no-edges',
     title: '3x3 VLS No Edges',
   },
   {
-    path: '/algoritmos/sq1/cubeshape',
+    path: '/algorithms/sq1/cubeshape',
     puzzleId: 'sq1',
     routeSlug: 'cubeshape',
     title: 'Square-1 Cubeshape',
   },
-  { path: '/algoritmos/sq1/cp', puzzleId: 'sq1', routeSlug: 'cp', title: 'Square-1 CP' },
-  { path: '/algoritmos/sq1/ep', puzzleId: 'sq1', routeSlug: 'ep', title: 'Square-1 EP' },
+  { path: '/algorithms/sq1/cp', puzzleId: 'sq1', routeSlug: 'cp', title: 'Square-1 CP' },
+  { path: '/algorithms/sq1/ep', puzzleId: 'sq1', routeSlug: 'ep', title: 'Square-1 EP' },
   {
-    path: '/algoritmos/sq1/parity',
+    path: '/algorithms/sq1/parity',
     puzzleId: 'sq1',
     routeSlug: 'parity',
     title: 'Square-1 Parity',
   },
   {
-    path: '/algoritmos/pyraminx/l4e',
+    path: '/algorithms/pyraminx/l4e',
     puzzleId: 'pyraminx',
     routeSlug: 'l4e',
     title: 'Pyraminx L4E',
   },
   {
-    path: '/algoritmos/pyraminx/l3e',
+    path: '/algorithms/pyraminx/l3e',
     puzzleId: 'pyraminx',
     routeSlug: 'l3e',
     title: 'Pyraminx L3E',
   },
   {
-    path: '/algoritmos/megaminx/oll',
+    path: '/algorithms/megaminx/oll',
     puzzleId: 'megaminx',
     routeSlug: 'oll',
     title: 'Megaminx OLL',
   },
   {
-    path: '/algoritmos/megaminx/pll',
+    path: '/algorithms/megaminx/pll',
     puzzleId: 'megaminx',
     routeSlug: 'pll',
     title: 'Megaminx PLL',
   },
-  { path: '/algoritmos/megaminx/eo', puzzleId: 'megaminx', routeSlug: 'eo', title: 'Megaminx EO' },
-  { path: '/algoritmos/megaminx/co', puzzleId: 'megaminx', routeSlug: 'co', title: 'Megaminx CO' },
-  { path: '/algoritmos/megaminx/ep', puzzleId: 'megaminx', routeSlug: 'ep', title: 'Megaminx EP' },
-  { path: '/algoritmos/megaminx/cp', puzzleId: 'megaminx', routeSlug: 'cp', title: 'Megaminx CP' },
+  { path: '/algorithms/megaminx/eo', puzzleId: 'megaminx', routeSlug: 'eo', title: 'Megaminx EO' },
+  { path: '/algorithms/megaminx/co', puzzleId: 'megaminx', routeSlug: 'co', title: 'Megaminx CO' },
+  { path: '/algorithms/megaminx/ep', puzzleId: 'megaminx', routeSlug: 'ep', title: 'Megaminx EP' },
+  { path: '/algorithms/megaminx/cp', puzzleId: 'megaminx', routeSlug: 'cp', title: 'Megaminx CP' },
   {
-    path: '/algoritmos/4x4/oll-parity',
+    path: '/algorithms/4x4/oll-parity',
     puzzleId: '4x4',
     routeSlug: 'oll-parity',
     title: '4x4 OLL Parity',
   },
   {
-    path: '/algoritmos/4x4/pll-parity',
+    path: '/algorithms/4x4/pll-parity',
     puzzleId: '4x4',
     routeSlug: 'pll-parity',
     title: '4x4 PLL Parity',
   },
-  { path: '/algoritmos/5x5/l2e', puzzleId: '5x5', routeSlug: 'l2e', title: '5x5 L2E' },
-  { path: '/algoritmos/5x5/l2c', puzzleId: '5x5', routeSlug: 'l2c', title: '5x5 L2C' },
-  { path: '/algoritmos/6x6/l2e', puzzleId: '6x6', routeSlug: 'l2e', title: '6x6 L2E' },
-  { path: '/algoritmos/6x6/l2c', puzzleId: '6x6', routeSlug: 'l2c', title: '6x6 L2C' },
+  { path: '/algorithms/5x5/l2e', puzzleId: '5x5', routeSlug: 'l2e', title: '5x5 L2E' },
+  { path: '/algorithms/5x5/l2c', puzzleId: '5x5', routeSlug: 'l2c', title: '5x5 L2C' },
+  { path: '/algorithms/6x6/l2e', puzzleId: '6x6', routeSlug: 'l2e', title: '6x6 L2E' },
+  { path: '/algorithms/6x6/l2c', puzzleId: '6x6', routeSlug: 'l2c', title: '6x6 L2C' },
 ]
 
 const notationGuides: NotationGuideSummary[] = [
@@ -827,9 +827,9 @@ function metadataForPath(
     }
   }
 
-  if (path === '/algoritmos') {
+  if (path === '/algorithms') {
     return {
-      breadcrumbs: [breadcrumb(locale, 'algorithms', '/algoritmos')],
+      breadcrumbs: [breadcrumb(locale, 'algorithms', '/algorithms')],
       description: localeCopy.algorithmsDescription,
       itemList: algorithmPuzzles.map((puzzle) => ({ name: puzzle.title, path: puzzle.path })),
       jsonLdKind: 'item-list',
@@ -837,7 +837,7 @@ function metadataForPath(
     }
   }
 
-  const algorithmPuzzleMatch = path.match(/^\/algoritmos\/([^/]+)$/)
+  const algorithmPuzzleMatch = path.match(/^\/algorithms\/([^/]+)$/)
   if (algorithmPuzzleMatch !== null) {
     const puzzle = getAlgorithmPuzzle(algorithmPuzzleMatch[1])
 
@@ -849,7 +849,7 @@ function metadataForPath(
 
     return {
       breadcrumbs: [
-        breadcrumb(locale, 'algorithms', '/algoritmos'),
+        breadcrumb(locale, 'algorithms', '/algorithms'),
         { name: puzzle.title, path: puzzle.path },
       ],
       description: localeCopy.algorithmPuzzleDescription(puzzle.title),
@@ -859,7 +859,7 @@ function metadataForPath(
     }
   }
 
-  const algorithmSetMatch = path.match(/^\/algoritmos\/([^/]+)\/([^/]+)$/)
+  const algorithmSetMatch = path.match(/^\/algorithms\/([^/]+)\/([^/]+)$/)
   if (algorithmSetMatch !== null) {
     const puzzle = getAlgorithmPuzzle(algorithmSetMatch[1])
     const set = algorithmSetSummaries.find(
@@ -873,7 +873,7 @@ function metadataForPath(
 
     return {
       breadcrumbs: [
-        breadcrumb(locale, 'algorithms', '/algoritmos'),
+        breadcrumb(locale, 'algorithms', '/algorithms'),
         { name: puzzle.title, path: puzzle.path },
         { name: set.title, path: set.path },
       ],

@@ -15,7 +15,7 @@ export function AlgorithmsPuzzlePage() {
   const locale = localeFromPathname(location.pathname)
 
   if (puzzle === undefined) {
-    return <Navigate replace to={localizedPath('/algoritmos', locale)} />
+    return <Navigate replace to={localizedPath('/algorithms', locale)} />
   }
 
   const sets = setsForPuzzle(puzzle.id)
@@ -25,7 +25,7 @@ export function AlgorithmsPuzzlePage() {
       <PageHeader>
         <Link
           className='text-sm font-medium text-muted-foreground hover:text-foreground'
-          to={localizedPath('/algoritmos', locale)}
+          to={localizedPath('/algorithms', locale)}
         >
           {t('algorithms.page.backToIndex')}
         </Link>
