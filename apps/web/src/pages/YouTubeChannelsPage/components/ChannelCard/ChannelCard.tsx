@@ -24,7 +24,17 @@ export function ChannelCard({ channel }: ChannelCardProps) {
         >
           {channel.name}
         </div>
-        {channel.bannerUrl !== undefined && (
+        {channel.logoPath !== undefined ? (
+          <img
+            alt={t('channels.bannerAlt', { channel: channel.name })}
+            className='relative h-full w-full object-contain transition-transform duration-200 group-hover:scale-[1.02]'
+            height='720'
+            loading='lazy'
+            src={channel.logoPath}
+            width='1280'
+            onError={handleBannerError}
+          />
+        ) : channel.bannerUrl !== undefined ? (
           <img
             alt={t('channels.bannerAlt', { channel: channel.name })}
             className='relative h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]'
@@ -36,7 +46,7 @@ export function ChannelCard({ channel }: ChannelCardProps) {
             width='1280'
             onError={handleBannerError}
           />
-        )}
+        ) : null}
       </div>
       <div className='grid gap-1 p-4'>
         <h2 className='text-base font-semibold'>{channel.name}</h2>

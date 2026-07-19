@@ -57,13 +57,25 @@ describe('PageNav', () => {
     expect(sitesLink).toHaveAttribute('aria-current', 'page')
   })
 
-  it('links directly to the non-localized WCA Data docs', () => {
+  it('marks Stores as active and keeps the English route', () => {
+    renderWithRouter(<PageNav activeRoute='stores' />, '/stores/')
+
+    const storesLink = screen.getByRole('link', { name: 'Stores' })
+
+    expect(storesLink).toHaveAttribute('href', '/stores/')
+    expect(storesLink).toHaveAttribute('aria-current', 'page')
+  })
+
+  it('opens the non-localized WCA Data docs in a new tab', () => {
     renderWithRouter(<PageNav activeRoute='api' />, '/api/wca-data/')
 
-    const apiLink = screen.getByRole('link', { name: 'API' })
+    const apiLink = screen.getByRole('link', { name: /API opens in new tab/ })
 
     expect(apiLink).toHaveAttribute('href', '/api/wca-data/v1/docs')
     expect(apiLink).toHaveAttribute('aria-current', 'page')
+    expect(apiLink).toHaveAttribute('target', '_blank')
+    expect(apiLink).toHaveAttribute('rel', 'noreferrer')
+    expect(apiLink.querySelector('svg.ms-auto')).toBeInTheDocument()
   })
 
   it('marks world records as active', () => {
@@ -148,6 +160,23 @@ describe('PageNav', () => {
       'href',
       'https://github.com/williamisnotdefined/rubiks-cube-solver',
     )
+  })
+
+  it('shows the Cuber Brasil logo link in Brazilian Portuguese navigation', async () => {
+    const user = userEvent.setup()
+    renderWithRouter(<PageNav activeRoute='solve' />, '/pt-BR/solve/')
+
+    const desktopLink = screen.getByRole('link', { name: 'Open Cuber Brasil' })
+
+    expect(desktopLink).toHaveAttribute('href', 'https://www.cuberbrasil.com/')
+    expect(desktopLink).toHaveAttribute('target', '_blank')
+    expect(desktopLink).toHaveAttribute('rel', 'noreferrer')
+    expect(desktopLink.querySelector('img[src="/sites/cuber-brasil.png"]')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Open menu' }))
+
+    const drawer = await screen.findByRole('dialog', { name: 'Menu' })
+    expect(within(drawer).getByRole('link', { name: 'Open Cuber Brasil' })).toBeInTheDocument()
   })
 
   it('lists native language names and persists navigation to the same localized page', async () => {

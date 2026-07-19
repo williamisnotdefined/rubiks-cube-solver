@@ -21,16 +21,36 @@
       "brands": "Marchi",
       "community": "Community",
       "competitions": "Competizioni",
-      "shops": "Negozi",
       "solutions": "Soluzioni",
       "tools": "Strumenti"
     },
-    "description": "Una lista curata di {{count}} siti cubing verificati per soluzioni, algoritmi, strumenti, competizioni, negozi, marchi e community.",
+    "description": "Una lista curata di {{count}} siti cubing verificati per soluzioni, algoritmi, strumenti, competizioni, marchi e community.",
     "imageAlt": "Icona del sito {{site}}",
     "kicker": "Directory cubing web",
     "openSite": "Apri il sito {{site}}",
     "openWebsite": "Apri sito",
     "title": "Siti"
+  },
+  "stores": {
+    "countries": {
+      "AU": "Australia",
+      "BR": "Brasile",
+      "CN": "Cina",
+      "ES": "Spagna",
+      "GB": "Regno Unito",
+      "IN": "India",
+      "JP": "Giappone",
+      "US": "Stati Uniti"
+    },
+    "allCountries": "Tutti",
+    "description": "Una lista curata di {{count}} negozi online indipendenti di speedcube, puzzle e accessori per cubing.",
+    "filterCountries": "Filtra i negozi per paese",
+    "imageAlt": "Logo di {{store}}",
+    "openStore": "Apri il negozio {{store}}",
+    "openWebsite": "Visita il negozio",
+    "showAllCountries": "Mostra negozi di tutti i paesi",
+    "showCountry": "Mostra negozi di {{country}}",
+    "title": "Negozi"
   },
   "algorithms": {
     "index": {
@@ -725,6 +745,7 @@
     "algorithmsMenu": "Metodi puzzle",
     "channels": "Canali YT",
     "sites": "Siti",
+    "stores": "Negozi",
     "closeMenu": "Chiudi menu",
     "groups": {
       "explore": "Esplora",
@@ -738,7 +759,9 @@
     "menu": "Menu",
     "notations": "Notazioni",
     "notationsMenu": "Notazioni per puzzle",
+    "openCuberBrasil": "Apri Cuber Brasil",
     "openMenu": "Apri menu",
+    "opensInNewTab": "si apre in una nuova scheda",
     "primary": "Navigazione principale",
     "solve": "Solver",
     "theme": "Tema",

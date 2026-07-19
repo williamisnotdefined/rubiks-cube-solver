@@ -9,6 +9,10 @@ export function activeRouteFromPath(pagePath: string): PageNavRoute {
     return 'sites'
   }
 
+  if (pagePath === '/stores') {
+    return 'stores'
+  }
+
   if (pagePath.startsWith('/records')) {
     return 'records'
   }

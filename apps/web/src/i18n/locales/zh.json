@@ -21,16 +21,36 @@
       "brands": "品牌",
       "community": "社区",
       "competitions": "比赛",
-      "shops": "商店",
       "solutions": "解法",
       "tools": "工具"
     },
-    "description": "精选 {{count}} 个经过验证的魔方网站，涵盖解法、算法、工具、比赛、商店、品牌和社区。",
+    "description": "精选 {{count}} 个经过验证的魔方网站，涵盖解法、算法、工具、比赛、品牌和社区。",
     "imageAlt": "{{site}} 网站图标",
     "kicker": "魔方网站目录",
     "openSite": "打开 {{site}} 网站",
     "openWebsite": "打开网站",
     "title": "Sites"
+  },
+  "stores": {
+    "countries": {
+      "AU": "澳大利亚",
+      "BR": "巴西",
+      "CN": "中国",
+      "ES": "西班牙",
+      "GB": "英国",
+      "IN": "印度",
+      "JP": "日本",
+      "US": "美国"
+    },
+    "allCountries": "全部",
+    "description": "精选 {{count}} 家独立在线商店，提供速拧魔方、益智玩具和魔方配件。",
+    "filterCountries": "按国家筛选商店",
+    "imageAlt": "{{store}} 徽标",
+    "openStore": "打开 {{store}} 商店",
+    "openWebsite": "访问商店",
+    "showAllCountries": "显示所有国家的商店",
+    "showCountry": "显示 {{country}} 的商店",
+    "title": "商店"
   },
   "algorithms": {
     "index": {
@@ -725,6 +745,7 @@
     "algorithmsMenu": "项目方法",
     "channels": "YT Channels",
     "sites": "Sites",
+    "stores": "商店",
     "closeMenu": "关闭菜单",
     "groups": {
       "explore": "探索",
@@ -738,7 +759,9 @@
     "menu": "菜单",
     "notations": "记号",
     "notationsMenu": "项目记号",
+    "openCuberBrasil": "打开 Cuber Brasil",
     "openMenu": "打开菜单",
+    "opensInNewTab": "在新标签页中打开",
     "primary": "主导航",
     "solve": "求解器",
     "theme": "主题",

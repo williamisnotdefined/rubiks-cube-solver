@@ -21,16 +21,36 @@
       "brands": "Marques",
       "community": "Communauté",
       "competitions": "Compétitions",
-      "shops": "Boutiques",
       "solutions": "Solutions",
       "tools": "Outils"
     },
-    "description": "Une liste sélectionnée de {{count}} sites de cubing validés pour solutions, algorithmes, outils, compétitions, boutiques, marques et communauté.",
+    "description": "Une liste sélectionnée de {{count}} sites de cubing validés pour solutions, algorithmes, outils, compétitions, marques et communauté.",
     "imageAlt": "Icône du site {{site}}",
     "kicker": "Annuaire cubing web",
     "openSite": "Ouvrir le site {{site}}",
     "openWebsite": "Ouvrir le site",
     "title": "Sites"
+  },
+  "stores": {
+    "countries": {
+      "AU": "Australie",
+      "BR": "Brésil",
+      "CN": "Chine",
+      "ES": "Espagne",
+      "GB": "Royaume-Uni",
+      "IN": "Inde",
+      "JP": "Japon",
+      "US": "États-Unis"
+    },
+    "allCountries": "Tous",
+    "description": "Une liste sélectionnée de {{count}} boutiques en ligne indépendantes de speedcubes, puzzles et accessoires de cubing.",
+    "filterCountries": "Filtrer les boutiques par pays",
+    "imageAlt": "Logo de {{store}}",
+    "openStore": "Ouvrir la boutique {{store}}",
+    "openWebsite": "Visiter la boutique",
+    "showAllCountries": "Afficher les boutiques de tous les pays",
+    "showCountry": "Afficher les boutiques de {{country}}",
+    "title": "Boutiques"
   },
   "algorithms": {
     "index": {
@@ -725,6 +745,7 @@
     "algorithmsMenu": "Méthodes de puzzle",
     "channels": "Chaînes YT",
     "sites": "Sites",
+    "stores": "Boutiques",
     "closeMenu": "Fermer le menu",
     "groups": {
       "explore": "Explorer",
@@ -738,7 +759,9 @@
     "menu": "Menu",
     "notations": "Notations",
     "notationsMenu": "Notations par puzzle",
+    "openCuberBrasil": "Ouvrir Cuber Brasil",
     "openMenu": "Ouvrir le menu",
+    "opensInNewTab": "s'ouvre dans un nouvel onglet",
     "primary": "Navigation principale",
     "solve": "Solveur",
     "theme": "Thème",

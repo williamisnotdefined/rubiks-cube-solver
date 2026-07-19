@@ -8,11 +8,11 @@ describe('CubingSitesPage', () => {
     render(<CubingSitesPage />)
 
     expect(screen.getByRole('heading', { name: 'Sites' })).toBeInTheDocument()
-    expect(cubingSites).toHaveLength(39)
+    expect(cubingSites).toHaveLength(33)
     expect(screen.getAllByRole('link')).toHaveLength(cubingSites.length)
     expect(
       screen.getByText(
-        `A curated list of ${cubingSites.length} validated cubing websites for solutions, algorithms, tools, competitions, shops, brands, and community.`,
+        `A curated list of ${cubingSites.length} validated cubing websites for solutions, algorithms, tools, competitions, brands, and community.`,
       ),
     ).toBeInTheDocument()
   })
