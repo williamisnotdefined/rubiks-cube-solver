@@ -22,6 +22,7 @@ import {
   ChevronsUpDown,
   Clock3,
   Database,
+  ExternalLink,
   GitFork,
   Globe2,
   LayoutDashboard,
@@ -29,6 +30,7 @@ import {
   Moon,
   Palette,
   PanelLeft,
+  Store,
   Sun,
   Trophy,
   Video,
@@ -47,9 +49,11 @@ export type PageNavRoute =
   | 'records'
   | 'sites'
   | 'solve'
+  | 'stores'
   | 'timer'
 
 const githubUrl = 'https://github.com/williamisnotdefined/rubiks-cube-solver'
+const cuberBrasilUrl = 'https://www.cuberbrasil.com/'
 
 type PageNavProps = {
   activeRoute: PageNavRoute
@@ -60,6 +64,7 @@ type NavItem = {
   end?: boolean
   icon?: React.ComponentType<{ className?: string }>
   label: string
+  opensInNewTab?: boolean
   reloadDocument?: boolean
   to: string
 }
@@ -127,6 +132,7 @@ export function PageNav({ activeRoute }: PageNavProps) {
           <NavContent
             activeRoute={activeRoute}
             locale={locale}
+            mobile
             pagePath={pagePath}
             onNavigate={closeThenNavigate}
           />
@@ -142,11 +148,13 @@ export function PageNav({ activeRoute }: PageNavProps) {
 function NavContent({
   activeRoute,
   locale,
+  mobile = false,
   pagePath,
   onNavigate,
 }: {
   activeRoute: PageNavRoute
   locale: SeoLocale
+  mobile?: boolean
   pagePath: string
   onNavigate?: MobileNavigationHandler
 }) {
@@ -161,7 +169,7 @@ function NavContent({
   }
 
   return (
-    <div className='flex min-h-0 w-full flex-col gap-2 p-2'>
+    <div className={cn('flex min-h-0 w-full flex-col gap-2 p-2', mobile && 'h-full')}>
       <div className='flex h-14 items-center gap-2 rounded-lg px-2'>
         <div className='flex aspect-square size-9 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground'>
           <img alt='' aria-hidden='true' className='size-7' src='/favicon.svg' />
@@ -205,9 +213,17 @@ function NavContent({
               onNavigate={onNavigate}
             />
             <SidebarLink
+              active={activeRoute === 'stores'}
+              icon={Store}
+              label={t('navigation.stores')}
+              to={localizedPath('/stores', locale)}
+              onNavigate={onNavigate}
+            />
+            <SidebarLink
               active={activeRoute === 'api'}
               icon={Database}
               label={t('navigation.api')}
+              opensInNewTab
               reloadDocument
               to='/api/wca-data/v1/docs'
               onNavigate={onNavigate}
@@ -231,6 +247,23 @@ function NavContent({
       </nav>
       <Separator />
       <div className='grid gap-1'>
+        {locale === 'pt-BR' ? (
+          <Button asChild className='w-full justify-start h-auto' variant='ghost'>
+            <a
+              href={cuberBrasilUrl}
+              rel='noreferrer'
+              target='_blank'
+            >
+              <img
+                alt='Cuber Brasil'
+                aria-hidden='true'
+                className='max-w-full w-auto object-contain dark:invert'
+                src='/sites/cuber-brasil.png'
+              />
+              <span className='sr-only'>{t('navigation.openCuberBrasil')}</span>
+            </a>
+          </Button>
+        ) : null}
         <LanguageSelector locale={locale} pagePath={pagePath} onNavigate={onNavigate} />
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
@@ -287,9 +320,11 @@ function SidebarLink({
   icon: Icon,
   label,
   onNavigate,
+  opensInNewTab,
   reloadDocument,
   to,
 }: NavItem & { onNavigate?: MobileNavigationHandler }) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const className = cn(
     'flex min-h-8 items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-sidebar-ring/50',
@@ -302,7 +337,10 @@ function SidebarLink({
   const content = (
     <>
       {Icon === undefined ? null : <Icon aria-hidden='true' className='size-4 shrink-0' />}
-      <span className='truncate'>{label}</span>
+      <span className='flex-1 truncate'>{label}</span>
+      {opensInNewTab ? (
+        <ExternalLink aria-hidden='true' className='ms-auto size-3.5 shrink-0' />
+      ) : null}
     </>
   )
 
@@ -318,17 +356,24 @@ function SidebarLink({
   if (reloadDocument === true) {
     return (
       <a
+        aria-label={opensInNewTab ? `${label} ${t('navigation.opensInNewTab')}` : undefined}
         aria-current={active ? 'page' : undefined}
         className={className}
         href={to}
-        onClick={(event) => {
-          if (onNavigate === undefined || isModifiedClick(event)) {
-            return
-          }
+        rel={opensInNewTab ? 'noreferrer' : undefined}
+        target={opensInNewTab ? '_blank' : undefined}
+        onClick={
+          opensInNewTab
+            ? undefined
+            : (event) => {
+                if (onNavigate === undefined || isModifiedClick(event)) {
+                  return
+                }
 
-          event.preventDefault()
-          onNavigate(() => window.location.assign(to))
-        }}
+                event.preventDefault()
+                onNavigate(() => window.location.assign(to))
+              }
+        }
       >
         {content}
       </a>
@@ -449,6 +494,10 @@ function activeRouteLabelKey(activeRoute: PageNavRoute) {
 
   if (activeRoute === 'sites') {
     return 'navigation.sites'
+  }
+
+  if (activeRoute === 'stores') {
+    return 'navigation.stores'
   }
 
   if (activeRoute === 'records') {

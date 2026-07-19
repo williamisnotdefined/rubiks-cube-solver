@@ -54,6 +54,7 @@ export type AppRouteKind =
   | 'records'
   | 'sites'
   | 'solve'
+  | 'stores'
   | 'timer'
 
 export type AppRoute = {
@@ -82,6 +83,9 @@ type SeoCopy = {
   sites: string
   sitesDescription: string
   sitesTitle: string
+  stores: string
+  storesDescription: string
+  storesTitle: string
   solver: string
   solverDescription: string
   solverTitle: string
@@ -105,6 +109,7 @@ export const appRouteManifest: readonly AppRoute[] = [
   { indexable: false, kind: 'records', path: '/records/world' },
   { indexable: true, kind: 'channels', path: '/channels' },
   { indexable: true, kind: 'sites', path: '/sites' },
+  { indexable: true, kind: 'stores', path: '/stores' },
   { indexable: true, kind: 'algorithms-index', path: '/algorithms' },
   { indexable: true, kind: 'algorithms-puzzle', path: '/algorithms/:puzzleId' },
   { indexable: true, kind: 'algorithms-set', path: '/algorithms/:puzzleId/:methodId' },
@@ -305,8 +310,6 @@ const cubingSiteItems: SeoItem[] = [
   { name: 'alg.cubing.net', path: 'https://alg.cubing.net/' },
   { name: 'CubeSkills', path: 'https://www.cubeskills.com/' },
   { name: 'CubeDesk', path: 'https://www.cubedesk.io/home' },
-  { name: 'The Cubicle', path: 'https://www.thecubicle.com/' },
-  { name: 'SpeedCubeShop', path: 'https://speedcubeshop.com/' },
   { name: 'Cubo Velocidade', path: 'https://cubovelocidade.com.br/' },
   { name: 'SpeedCubeDB', path: 'https://speedcubedb.com/' },
   { name: 'CubingApp', path: 'https://cubingapp.com/' },
@@ -320,10 +323,6 @@ const cubingSiteItems: SeoItem[] = [
   { name: 'MoYu', path: 'https://www.moyustore.com/' },
   { name: 'QiYi', path: 'https://www.qiyitoys.net/' },
   { name: 'YJ Cube', path: 'https://www.yjcube.com/' },
-  { name: 'Ziicube', path: 'https://www.ziicube.com/' },
-  { name: 'Cubezz', path: 'https://www.cubezz.com/' },
-  { name: 'KewbzUK', path: 'https://kewbz.co.uk/' },
-  { name: 'DailyPuzzles', path: 'https://dailypuzzles.com.au/' },
   { name: 'SpeedCubeReview', path: 'https://www.speedcubereview.com/' },
   { name: "Sarah's Cubing Site", path: 'https://sarah.cubing.net/' },
   { name: "Jaap's Puzzle Page", path: 'https://www.jaapsch.net/puzzles/' },
@@ -336,6 +335,19 @@ const cubingSiteItems: SeoItem[] = [
   { name: 'CubeSolve', path: 'https://cubesolve.com/' },
   { name: 'AlgDb', path: 'https://algdb.net/' },
   { name: 'Cubefreak', path: 'http://www.cubefreak.net/' },
+]
+
+const cubingStoreItems: SeoItem[] = [
+  { name: 'Cuber Brasil', path: 'https://www.cuberbrasil.com/' },
+  { name: 'DailyPuzzles', path: 'https://dailypuzzles.com.au/' },
+  { name: 'Cubezz', path: 'https://www.cubezz.com/' },
+  { name: 'ZiiCube', path: 'https://www.ziicube.com/' },
+  { name: 'Kubekings', path: 'https://kubekings.com/' },
+  { name: 'KewbzUK', path: 'https://kewbz.co.uk/' },
+  { name: 'Cubelelo', path: 'https://www.cubelelo.com/' },
+  { name: 'tribox', path: 'https://store.tribox.com/' },
+  { name: 'SpeedCubeShop', path: 'https://speedcubeshop.com/' },
+  { name: 'The Cubicle', path: 'https://www.thecubicle.com/' },
 ]
 
 const copy: Record<SeoLocale, SeoCopy> = {
@@ -363,8 +375,12 @@ const copy: Record<SeoLocale, SeoCopy> = {
     puzzleAlgorithmsTitle: (puzzle) => `${puzzle} Algorithmen`,
     sites: 'Sites',
     sitesDescription:
-      'Entdecke validierte Cubing-Websites fuer Loesungen, Tools, Wettbewerbe, Shops, Marken und Community.',
+      'Entdecke validierte Cubing-Websites fuer Loesungen, Tools, Wettbewerbe, Marken und Community.',
     sitesTitle: 'Cubing Websites',
+    stores: 'Shops',
+    storesDescription:
+      'Entdecke unabhaengige Online-Shops fuer Speedcubes, Puzzles und Cubing-Zubehoer.',
+    storesTitle: 'Speedcube Shops',
     solver: 'Solver',
     solverDescription:
       'Loese unterstuetzte Rubik-Cube-Scrambles online mit Rust-Solver, Zugwiedergabe und Cube-Visualisierung.',
@@ -402,8 +418,12 @@ const copy: Record<SeoLocale, SeoCopy> = {
     puzzleAlgorithmsTitle: (puzzle) => `${puzzle} Algorithms`,
     sites: 'Sites',
     sitesDescription:
-      'Discover validated cubing websites for solutions, tools, competitions, shops, brands, and community.',
+      'Discover validated cubing websites for solutions, tools, competitions, brands, and community.',
     sitesTitle: 'Cubing Websites',
+    stores: 'Stores',
+    storesDescription:
+      'Discover independent online stores for speed cubes, puzzles, and cubing accessories.',
+    storesTitle: 'Speed Cube Stores',
     solver: 'Solver',
     solverDescription:
       "Solve supported Rubik's Cube scrambles online with a Rust-powered solver, move playback, and cube visualization.",
@@ -441,8 +461,12 @@ const copy: Record<SeoLocale, SeoCopy> = {
     puzzleAlgorithmsTitle: (puzzle) => `Algoritmos ${puzzle}`,
     sites: 'Sitios',
     sitesDescription:
-      'Descubre sitios de cubing validados para soluciones, herramientas, competiciones, tiendas, marcas y comunidad.',
+      'Descubre sitios de cubing validados para soluciones, herramientas, competiciones, marcas y comunidad.',
     sitesTitle: 'Sitios de Cubing',
+    stores: 'Tiendas',
+    storesDescription:
+      'Descubre tiendas online independientes de speedcubes, rompecabezas y accesorios de cubing.',
+    storesTitle: 'Tiendas de Speedcubing',
     solver: 'Solver',
     solverDescription:
       'Resuelve scrambles de cubo Rubik online con solver en Rust, reproduccion de movimientos y visualizacion del cubo.',
@@ -480,8 +504,12 @@ const copy: Record<SeoLocale, SeoCopy> = {
     puzzleAlgorithmsTitle: (puzzle) => `Algorithmes ${puzzle}`,
     sites: 'Sites',
     sitesDescription:
-      'Decouvrez des sites de cubing valides pour solutions, outils, competitions, boutiques, marques et communaute.',
+      'Decouvrez des sites de cubing valides pour solutions, outils, competitions, marques et communaute.',
     sitesTitle: 'Sites de Cubing',
+    stores: 'Boutiques',
+    storesDescription:
+      'Decouvrez des boutiques en ligne independantes de speedcubes, puzzles et accessoires de cubing.',
+    storesTitle: 'Boutiques de Speedcubing',
     solver: 'Solver',
     solverDescription:
       'Resoudre des scrambles de Rubik Cube en ligne avec un solver Rust, lecture des mouvements et visualisation du cube.',
@@ -519,8 +547,12 @@ const copy: Record<SeoLocale, SeoCopy> = {
     puzzleAlgorithmsTitle: (puzzle) => `Algoritmi ${puzzle}`,
     sites: 'Siti',
     sitesDescription:
-      'Scopri siti cubing verificati per soluzioni, strumenti, competizioni, negozi, marchi e community.',
+      'Scopri siti cubing verificati per soluzioni, strumenti, competizioni, marchi e community.',
     sitesTitle: 'Siti Cubing',
+    stores: 'Negozi',
+    storesDescription:
+      'Scopri negozi online indipendenti di speedcube, puzzle e accessori per cubing.',
+    storesTitle: 'Negozi di Speedcubing',
     solver: 'Solver',
     solverDescription:
       'Risolvi scramble del Cubo di Rubik online con solver Rust, playback mosse e visualizzazione del cubo.',
@@ -558,8 +590,12 @@ const copy: Record<SeoLocale, SeoCopy> = {
     puzzleAlgorithmsTitle: (puzzle) => `${puzzle} アルゴリズム`,
     sites: 'サイト',
     sitesDescription:
-      '解法、ツール、大会、ショップ、ブランド、コミュニティ向けの検証済みキューブ系サイトを探せます。',
+      '解法、ツール、大会、ブランド、コミュニティ向けの検証済みキューブ系サイトを探せます。',
     sitesTitle: 'キューブ系サイト',
+    stores: 'ショップ',
+    storesDescription:
+      'スピードキューブ、パズル、キューブアクセサリーを扱う独立系オンラインショップを探せます。',
+    storesTitle: 'スピードキューブショップ',
     solver: 'ソルバー',
     solverDescription:
       'Rust 製ソルバー、手順再生、キューブ表示で対応パズルのスクランブルをオンラインで解けます。',
@@ -597,8 +633,12 @@ const copy: Record<SeoLocale, SeoCopy> = {
     puzzleAlgorithmsTitle: (puzzle) => `Algoritmos ${puzzle}`,
     sites: 'Sites',
     sitesDescription:
-      'Conheca sites validados de cubo magico para solucoes, ferramentas, competicoes, lojas, marcas e comunidade.',
+      'Conheca sites validados de cubo magico para solucoes, ferramentas, competicoes, marcas e comunidade.',
     sitesTitle: 'Sites de Cubo Magico',
+    stores: 'Lojas',
+    storesDescription:
+      'Conheca lojas online independentes de speedcubes, puzzles e acessorios para cubo magico.',
+    storesTitle: 'Lojas de Cubo Magico',
     solver: 'Solver',
     solverDescription:
       'Resolva scrambles de cubo magico online com solver em Rust, reproducao de movimentos e visualizacao do cubo.',
@@ -636,8 +676,12 @@ const copy: Record<SeoLocale, SeoCopy> = {
     puzzleAlgorithmsTitle: (puzzle) => `${puzzle} алгоритмы`,
     sites: 'Сайты',
     sitesDescription:
-      'Проверенные сайты о кубинге: решения, инструменты, соревнования, магазины, бренды и сообщества.',
+      'Проверенные сайты о кубинге: решения, инструменты, соревнования, бренды и сообщества.',
     sitesTitle: 'Сайты о кубинге',
+    stores: 'Магазины',
+    storesDescription:
+      'Независимые онлайн-магазины скоростных кубов, головоломок и куберских аксессуаров.',
+    storesTitle: 'Магазины для спидкубинга',
     solver: 'Решатель',
     solverDescription:
       'Решайте поддерживаемые скрамблы онлайн с Rust-решателем, воспроизведением ходов и визуализацией куба.',
@@ -669,8 +713,11 @@ const copy: Record<SeoLocale, SeoCopy> = {
     notFoundTitle: '页面未找到',
     puzzleAlgorithmsTitle: (puzzle) => `${puzzle} 算法`,
     sites: '网站',
-    sitesDescription: '发现经过验证的魔方网站，涵盖解法、工具、比赛、商店、品牌和社区。',
+    sitesDescription: '发现经过验证的魔方网站，涵盖解法、工具、比赛、品牌和社区。',
     sitesTitle: '魔方网站',
+    stores: '商店',
+    storesDescription: '发现提供速拧魔方、益智玩具和魔方配件的独立在线商店。',
+    storesTitle: '速拧魔方商店',
     solver: '求解器',
     solverDescription: '使用 Rust 驱动的求解器、步骤回放和魔方可视化在线求解支持的打乱。',
     solverTitle: '在线魔方求解器',
@@ -819,6 +866,16 @@ function metadataForPath(
     }
   }
 
+  if (path === '/stores') {
+    return {
+      breadcrumbs: [breadcrumb(locale, 'stores', '/stores')],
+      description: localeCopy.storesDescription,
+      itemList: cubingStoreItems,
+      jsonLdKind: 'item-list',
+      title: localeCopy.storesTitle,
+    }
+  }
+
   if (path === '/records/world') {
     return {
       breadcrumbs: [breadcrumb(locale, 'worldRecords', '/records/world')],
@@ -913,6 +970,7 @@ function breadcrumb(
     | 'notations'
     | 'sites'
     | 'solver'
+    | 'stores'
     | 'timer'
     | 'worldRecords',
   path: string,

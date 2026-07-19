@@ -5,6 +5,7 @@ describe('activeRouteFromPath', () => {
   it.each([
     ['/channels', 'channels'],
     ['/sites', 'sites'],
+    ['/stores', 'stores'],
     ['/records', 'records'],
     ['/records/333', 'records'],
     ['/notations/3x3', 'notations'],

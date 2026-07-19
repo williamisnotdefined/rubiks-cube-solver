@@ -21,16 +21,36 @@
       "brands": "Marcas",
       "community": "Comunidade",
       "competitions": "Competições",
-      "shops": "Lojas",
       "solutions": "Soluções",
       "tools": "Ferramentas"
     },
-    "description": "Uma lista curada com {{count}} sites validados de cubo mágico para soluções, algoritmos, ferramentas, competições, lojas, marcas e comunidade.",
+    "description": "Uma lista curada com {{count}} sites validados de cubo mágico para soluções, algoritmos, ferramentas, competições, marcas e comunidade.",
     "imageAlt": "Ícone do site {{site}}",
     "kicker": "Diretório cuber na web",
     "openSite": "Abrir site {{site}}",
     "openWebsite": "Abrir site",
     "title": "Sites"
+  },
+  "stores": {
+    "countries": {
+      "AU": "Austrália",
+      "BR": "Brasil",
+      "CN": "China",
+      "ES": "Espanha",
+      "GB": "Reino Unido",
+      "IN": "Índia",
+      "JP": "Japão",
+      "US": "Estados Unidos"
+    },
+    "allCountries": "Todos",
+    "description": "Uma lista curada com {{count}} lojas online independentes de speedcubes, puzzles e acessórios para cubo mágico.",
+    "filterCountries": "Filtrar lojas por país",
+    "imageAlt": "Logo da loja {{store}}",
+    "openStore": "Abrir loja {{store}}",
+    "openWebsite": "Visitar loja",
+    "showAllCountries": "Mostrar lojas de todos os países",
+    "showCountry": "Mostrar lojas do {{country}}",
+    "title": "Lojas"
   },
   "algorithms": {
     "index": {
@@ -706,6 +726,7 @@
     "algorithmsMenu": "Métodos por puzzle",
     "channels": "Canais YT",
     "sites": "Sites",
+    "stores": "Lojas",
     "closeMenu": "Fechar menu",
     "groups": {
       "explore": "Explorar",
@@ -719,7 +740,9 @@
     "menu": "Menu",
     "notations": "Notações",
     "notationsMenu": "Notações por puzzle",
+    "openCuberBrasil": "Abrir Cuber Brasil",
     "openMenu": "Abrir menu",
+    "opensInNewTab": "abre em nova aba",
     "primary": "Navegação principal",
     "solve": "Solver",
     "theme": "Tema",

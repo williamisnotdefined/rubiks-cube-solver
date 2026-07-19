@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { algorithmSetSummaries } from '@pages/AlgorithmsPage/sets/algorithmSetMetadata'
 import { cubingSites } from '@pages/CubingSitesPage/sites'
+import { cubingStores } from '@pages/StoresPage/stores'
 import {
   appRouteManifest,
   getSeoMetadata,
@@ -64,15 +65,31 @@ describe('SEO route metadata', () => {
     expect(metadata.noindex).toBe(false)
   })
 
+  it('builds canonical metadata for the English stores page', () => {
+    const metadata = getSeoMetadata('/stores')
+
+    expect(metadata.locale).toBe('en-US')
+    expect(metadata.path).toBe('/stores')
+    expect(metadata.canonicalUrl).toBe('https://speedcube.com.br/stores/')
+    expect(metadata.title).toContain('Speed Cube Stores')
+    expect(metadata.itemList).toHaveLength(cubingStores.length)
+    expect(metadata.itemList).toEqual(
+      cubingStores.map((store) => ({ name: store.name, path: store.url })),
+    )
+    expect(metadata.noindex).toBe(false)
+  })
+
   it('keeps indexable routes indexable when the server adds trailing slashes', () => {
     for (const pathname of [
       '/solve/',
       '/timer/',
       '/channels/',
       '/sites/',
+      '/stores/',
       '/pt-BR/solve/',
       '/pt-BR/timer/',
       '/pt-BR/sites/',
+      '/pt-BR/stores/',
     ]) {
       const metadata = getSeoMetadata(pathname)
 

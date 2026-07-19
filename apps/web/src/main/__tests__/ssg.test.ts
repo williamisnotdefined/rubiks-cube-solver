@@ -10,6 +10,7 @@ describe('React static generation', () => {
     expect(staticPaths).toContain('/records/world/')
     expect(staticPaths).toContain('/notations/skewb/')
     expect(staticPaths).toContain('/notations/clock/')
+    expect(staticPaths).toContain('/stores/')
   })
 
   it('renders the localized product route without a temporary SEO snapshot', async () => {
@@ -30,5 +31,14 @@ describe('React static generation', () => {
       expect(result.appHtml).toContain('<h1')
       expect(result.metadata.noindex).toBe(true)
     }
+  })
+
+  it('renders the localized stores directory with its item list', async () => {
+    const result = await render('/pt-BR/stores/')
+
+    expect(result.appHtml).toContain('<h1')
+    expect(result.appHtml).toContain('Lojas')
+    expect(result.metadata.canonicalUrl).toBe('https://speedcube.com.br/pt-BR/stores/')
+    expect(result.jsonLd.some((value) => value['@type'] === 'ItemList')).toBe(true)
   })
 })

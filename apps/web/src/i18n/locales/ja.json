@@ -21,16 +21,36 @@
       "brands": "ブランド",
       "community": "コミュニティ",
       "competitions": "大会",
-      "shops": "ショップ",
       "solutions": "解法",
       "tools": "ツール"
     },
-    "description": "解法、アルゴリズム、ツール、大会、ショップ、ブランド、コミュニティ向けの検証済みキューブ系サイト {{count}} 件の厳選リスト。",
+    "description": "解法、アルゴリズム、ツール、大会、ブランド、コミュニティ向けの検証済みキューブ系サイト {{count}} 件の厳選リスト。",
     "imageAlt": "{{site}} サイトアイコン",
     "kicker": "キューブ系サイトディレクトリ",
     "openSite": "{{site}} のサイトを開く",
     "openWebsite": "サイトを開く",
     "title": "サイト"
+  },
+  "stores": {
+    "countries": {
+      "AU": "オーストラリア",
+      "BR": "ブラジル",
+      "CN": "中国",
+      "ES": "スペイン",
+      "GB": "イギリス",
+      "IN": "インド",
+      "JP": "日本",
+      "US": "アメリカ"
+    },
+    "allCountries": "すべて",
+    "description": "スピードキューブ、パズル、キューブアクセサリーを扱う {{count}} 件の厳選オンラインショップ。",
+    "filterCountries": "国でショップを絞り込む",
+    "imageAlt": "{{store}} のロゴ",
+    "openStore": "{{store}} のショップを開く",
+    "openWebsite": "ショップを開く",
+    "showAllCountries": "すべての国のショップを表示",
+    "showCountry": "{{country}} のショップを表示",
+    "title": "ショップ"
   },
   "algorithms": {
     "index": {
@@ -725,6 +745,7 @@
     "algorithmsMenu": "パズルの方法",
     "channels": "YT チャンネル",
     "sites": "サイト",
+    "stores": "ショップ",
     "closeMenu": "メニューを閉じる",
     "groups": {
       "explore": "探索",
@@ -738,7 +759,9 @@
     "menu": "メニュー",
     "notations": "記法",
     "notationsMenu": "パズル別記法",
+    "openCuberBrasil": "Cuber Brasil を開く",
     "openMenu": "メニューを開く",
+    "opensInNewTab": "新しいタブで開く",
     "primary": "プライマリナビゲーション",
     "solve": "ソルバー",
     "theme": "テーマ",

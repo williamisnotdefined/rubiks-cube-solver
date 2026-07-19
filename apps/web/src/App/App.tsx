@@ -42,6 +42,8 @@ const loadCubingSitesPage = () =>
   import('../pages/CubingSitesPage/CubingSitesPage').then((module) => ({
     default: module.CubingSitesPage,
   }))
+const loadStoresPage = () =>
+  import('../pages/StoresPage/StoresPage').then((module) => ({ default: module.StoresPage }))
 const loadNotationGuidePage = () =>
   import('../pages/NotationsPage/NotationGuidePage').then((module) => ({
     default: module.NotationGuidePage,
@@ -58,6 +60,7 @@ const AlgorithmsIndexPage = lazy(loadAlgorithmsIndexPage)
 const AlgorithmsPuzzlePage = lazy(loadAlgorithmsPuzzlePage)
 const AlgorithmSetPage = lazy(loadAlgorithmSetPage)
 const CubingSitesPage = lazy(loadCubingSitesPage)
+const StoresPage = lazy(loadStoresPage)
 const NotationGuidePage = lazy(loadNotationGuidePage)
 const YouTubeChannelsPage = lazy(loadYouTubeChannelsPage)
 
@@ -193,6 +196,8 @@ function routeElement(
       return <WorldRecordsPage />
     case 'sites':
       return <CubingSitesPage />
+    case 'stores':
+      return <StoresPage />
     case 'solve':
       return <SolvePage />
     case 'timer':

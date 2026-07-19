@@ -17,4 +17,19 @@ describe('JSON-LD metadata', () => {
       ]),
     )
   })
+
+  it('publishes the curated stores as external item-list URLs', () => {
+    const graph = buildJsonLd(getSeoMetadata('/stores'))
+    const itemList = graph.find((item) => item['@type'] === 'ItemList')
+
+    expect(itemList).toBeDefined()
+    expect(itemList?.itemListElement).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          item: 'https://www.cuberbrasil.com/',
+          name: 'Cuber Brasil',
+        }),
+      ]),
+    )
+  })
 })

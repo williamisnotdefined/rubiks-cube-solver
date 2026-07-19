@@ -1,11 +1,18 @@
 export type YouTubeChannel = {
   bannerUrl?: string
   id: string
+  logoPath?: string
   name: string
   url: string
 }
 
 export const youtubeChannels: readonly YouTubeChannel[] = [
+  {
+    id: 'renan-cerpe',
+    logoPath: '/channels/renan-cerpe.jpeg',
+    name: 'Renan Cerpe',
+    url: 'https://www.youtube.com/channel/UCmpgWhblqM_lZJNRBSeqT7g',
+  },
   {
     bannerUrl:
       'https://yt3.googleusercontent.com/CUmSm_SVb5HeyLHIwFff4umff-lYFbHURRjl9WawtqgYntbo8pbi4pmQmyC7F_5k2N3rScZLXA=w2560-fcrop64=1,00005a57ffffa5a8-k-c0xffffffff-no-nd-rj',

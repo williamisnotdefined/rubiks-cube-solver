@@ -21,16 +21,36 @@
       "brands": "Marcas",
       "community": "Comunidad",
       "competitions": "Competiciones",
-      "shops": "Tiendas",
       "solutions": "Soluciones",
       "tools": "Herramientas"
     },
-    "description": "Una lista curada con {{count}} sitios de cubing validados para soluciones, algoritmos, herramientas, competiciones, tiendas, marcas y comunidad.",
+    "description": "Una lista curada con {{count}} sitios de cubing validados para soluciones, algoritmos, herramientas, competiciones, marcas y comunidad.",
     "imageAlt": "Icono del sitio {{site}}",
     "kicker": "Directorio cuber web",
     "openSite": "Abrir sitio {{site}}",
     "openWebsite": "Abrir sitio",
     "title": "Sitios"
+  },
+  "stores": {
+    "countries": {
+      "AU": "Australia",
+      "BR": "Brasil",
+      "CN": "China",
+      "ES": "España",
+      "GB": "Reino Unido",
+      "IN": "India",
+      "JP": "Japón",
+      "US": "Estados Unidos"
+    },
+    "allCountries": "Todos",
+    "description": "Una lista seleccionada de {{count}} tiendas online independientes de speedcubes, rompecabezas y accesorios de cubing.",
+    "filterCountries": "Filtrar tiendas por país",
+    "imageAlt": "Logotipo de {{store}}",
+    "openStore": "Abrir tienda {{store}}",
+    "openWebsite": "Visitar tienda",
+    "showAllCountries": "Mostrar tiendas de todos los países",
+    "showCountry": "Mostrar tiendas de {{country}}",
+    "title": "Tiendas"
   },
   "algorithms": {
     "index": {
@@ -709,6 +729,7 @@
     "algorithmsMenu": "Métodos por puzzle",
     "channels": "Canales YT",
     "sites": "Sitios",
+    "stores": "Tiendas",
     "closeMenu": "Cerrar menú",
     "groups": {
       "explore": "Explorar",
@@ -722,7 +743,9 @@
     "menu": "Menú",
     "notations": "Notaciones",
     "notationsMenu": "Notaciones por puzzle",
+    "openCuberBrasil": "Abrir Cuber Brasil",
     "openMenu": "Abrir menú",
+    "opensInNewTab": "se abre en una pestaña nueva",
     "primary": "Navegación principal",
     "solve": "Solver",
     "theme": "Tema",

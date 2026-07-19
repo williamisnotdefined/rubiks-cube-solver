@@ -8,7 +8,7 @@ describe('YouTubeChannelsPage', () => {
     render(<YouTubeChannelsPage />)
 
     expect(screen.getByRole('heading', { name: 'YT Channels' })).toBeInTheDocument()
-    expect(youtubeChannels).toHaveLength(30)
+    expect(youtubeChannels).toHaveLength(31)
     expect(screen.getAllByRole('link')).toHaveLength(youtubeChannels.length)
     expect(
       screen.getByText(
@@ -47,6 +47,20 @@ describe('YouTubeChannelsPage', () => {
     expect(screen.getByRole('img', { name: 'J Perm channel banner' })).toHaveAttribute(
       'sizes',
       '(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw',
+    )
+  })
+
+  it('includes Renan Cerpe in the curated channel directory', () => {
+    render(<YouTubeChannelsPage />)
+
+    expect(youtubeChannels[0]?.id).toBe('renan-cerpe')
+    expect(screen.getByRole('link', { name: 'Open Renan Cerpe on YouTube' })).toHaveAttribute(
+      'href',
+      'https://www.youtube.com/channel/UCmpgWhblqM_lZJNRBSeqT7g',
+    )
+    expect(screen.getByRole('img', { name: 'Renan Cerpe channel banner' })).toHaveAttribute(
+      'src',
+      '/channels/renan-cerpe.jpeg',
     )
   })
 

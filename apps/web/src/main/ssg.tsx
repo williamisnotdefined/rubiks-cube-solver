@@ -8,6 +8,7 @@ import { AlgorithmsPuzzlePage } from '../pages/AlgorithmsPage/AlgorithmsPuzzlePa
 import { CubingSitesPage } from '../pages/CubingSitesPage/CubingSitesPage'
 import { NotationGuidePage } from '../pages/NotationsPage/NotationGuidePage'
 import { SolvePageRoute } from '../pages/SolvePage/SolvePageRoute'
+import { StoresPage } from '../pages/StoresPage/StoresPage'
 import { TimerPage } from '../pages/TimerPage/TimerPage'
 import { WorldRecordsPageRoute } from '../pages/WorldRecordsPage/WorldRecordsPageRoute'
 import { YouTubeChannelsPage } from '../pages/YouTubeChannelsPage/YouTubeChannelsPage'
@@ -47,6 +48,7 @@ const routeComponents = {
   records: WorldRecordsPageRoute,
   sites: CubingSitesPage,
   solve: SolvePageRoute,
+  stores: StoresPage,
   timer: TimerPage,
 } satisfies Record<AppRouteKind, ComponentType>
 

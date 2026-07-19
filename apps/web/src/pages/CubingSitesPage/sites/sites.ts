@@ -3,7 +3,6 @@ export type CubingSiteCategory =
   | 'brands'
   | 'community'
   | 'competitions'
-  | 'shops'
   | 'solutions'
   | 'tools'
 
@@ -82,23 +81,7 @@ export const cubingSites: readonly CubingSite[] = [
     url: 'https://www.cubedesk.io/home',
   },
   {
-    category: 'shops',
-    host: 'thecubicle.com',
-    id: 'the-cubicle',
-    imagePath: '/sites/the-cubicle.png',
-    name: 'The Cubicle',
-    url: 'https://www.thecubicle.com/',
-  },
-  {
-    category: 'shops',
-    host: 'speedcubeshop.com',
-    id: 'speedcubeshop',
-    imagePath: '/sites/speedcubeshop.png',
-    name: 'SpeedCubeShop',
-    url: 'https://speedcubeshop.com/',
-  },
-  {
-    category: 'shops',
+    category: 'solutions',
     host: 'cubovelocidade.com.br',
     id: 'cubo-velocidade',
     imagePath: '/sites/cubo-velocidade.png',
@@ -200,38 +183,6 @@ export const cubingSites: readonly CubingSite[] = [
     imagePath: '/sites/yj-cube.png',
     name: 'YJ Cube',
     url: 'https://www.yjcube.com/',
-  },
-  {
-    category: 'shops',
-    host: 'ziicube.com',
-    id: 'ziicube',
-    imagePath: '/sites/ziicube.png',
-    name: 'Ziicube',
-    url: 'https://www.ziicube.com/',
-  },
-  {
-    category: 'shops',
-    host: 'cubezz.com',
-    id: 'cubezz',
-    imagePath: '/sites/cubezz.png',
-    name: 'Cubezz',
-    url: 'https://www.cubezz.com/',
-  },
-  {
-    category: 'shops',
-    host: 'kewbz.co.uk',
-    id: 'kewbzuk',
-    imagePath: '/sites/kewbzuk.png',
-    name: 'KewbzUK',
-    url: 'https://kewbz.co.uk/',
-  },
-  {
-    category: 'shops',
-    host: 'dailypuzzles.com.au',
-    id: 'dailypuzzles',
-    imagePath: '/sites/dailypuzzles.png',
-    name: 'DailyPuzzles',
-    url: 'https://dailypuzzles.com.au/',
   },
   {
     category: 'community',
