@@ -127,57 +127,55 @@ const solves = bigCubes.flatMap((cubeType) =>
     return { ...solve, bigCubeType: cubeType };
   }),
 );
-test.each(solves)('3x3 solve on $bigCubeType with scramble = $scramble', ({
-  bigCubeType,
-  cubeType,
-  scramble,
-  solution,
-}) => {
-  // Arrange
-  const cube = createTestCube(bigCubeType);
-  const scrambleActions = scramble.split(' ') as (Movement | Rotation)[];
-  const solutionActions = solution.split(' ') as (Movement | Rotation)[];
-  const initialState = cube.getStickerState();
+test.each(solves)(
+  '3x3 solve on $bigCubeType with scramble = $scramble',
+  ({ bigCubeType, cubeType, scramble, solution }) => {
+    // Arrange
+    const cube = createTestCube(bigCubeType);
+    const scrambleActions = scramble.split(' ') as (Movement | Rotation)[];
+    const solutionActions = solution.split(' ') as (Movement | Rotation)[];
+    const initialState = cube.getStickerState();
 
-  for (const action of scrambleActions) {
-    if (IsRotation(action)) {
-      const slice = GetRotationSlice(action, cube._cubeConfig.layers.length);
-      if (slice) {
-        cube.slice(slice);
+    for (const action of scrambleActions) {
+      if (IsRotation(action)) {
+        const slice = GetRotationSlice(action, cube._cubeConfig.layers.length);
+        if (slice) {
+          cube.slice(slice);
+        } else {
+          console.error('Invalid action', action);
+        }
       } else {
-        console.error('Invalid action', action);
-      }
-    } else {
-      const slice = GetMovementSlice(translate(action as Movement, bigCubeType), cube._cubeConfig.layers.length);
-      if (slice) {
-        cube.slice(slice);
-      } else {
-        console.error('Invalid action', action);
+        const slice = GetMovementSlice(translate(action as Movement, bigCubeType), cube._cubeConfig.layers.length);
+        if (slice) {
+          cube.slice(slice);
+        } else {
+          console.error('Invalid action', action);
+        }
       }
     }
-  }
-  const scrambleState = cube.getStickerState();
+    const scrambleState = cube.getStickerState();
 
-  for (const action of solutionActions) {
-    if (IsRotation(action)) {
-      const slice = GetRotationSlice(action, cube._cubeConfig.layers.length);
-      if (slice) {
-        cube.slice(slice);
+    for (const action of solutionActions) {
+      if (IsRotation(action)) {
+        const slice = GetRotationSlice(action, cube._cubeConfig.layers.length);
+        if (slice) {
+          cube.slice(slice);
+        } else {
+          console.error('Invalid action', action);
+        }
       } else {
-        console.error('Invalid action', action);
-      }
-    } else {
-      const slice = GetMovementSlice(translate(action as Movement, bigCubeType), cube._cubeConfig.layers.length);
-      if (slice) {
-        cube.slice(slice);
-      } else {
-        console.error('Invalid action', action);
+        const slice = GetMovementSlice(translate(action as Movement, bigCubeType), cube._cubeConfig.layers.length);
+        if (slice) {
+          cube.slice(slice);
+        } else {
+          console.error('Invalid action', action);
+        }
       }
     }
-  }
-  const solutionState = cube.getStickerState();
+    const solutionState = cube.getStickerState();
 
-  // Assert
-  expect(/** @type {string?} **/ (toKociemba(scrambleState))).not.toBe(toKociemba(initialState));
-  expect(/** @type {string?} **/ (toKociemba(solutionState))).toBe(toKociemba(initialState));
-});
+    // Assert
+    expect(/** @type {string?} **/ (toKociemba(scrambleState))).not.toBe(toKociemba(initialState));
+    expect(/** @type {string?} **/ (toKociemba(solutionState))).toBe(toKociemba(initialState));
+  },
+);
