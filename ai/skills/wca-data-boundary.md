@@ -5,6 +5,7 @@ Use for the WCA Data workspace, OpenAPI contract, import worker, PostgreSQL life
 ## Read First
 
 - `ai/rules/wca-data-rules.md`
+- `ai/rules/frontend-rules.md`
 - `ai/rules/testing-rules.md`
 - `ai/architecture/wca-data.md`
 

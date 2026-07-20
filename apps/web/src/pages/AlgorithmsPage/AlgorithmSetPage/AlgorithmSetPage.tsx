@@ -1,8 +1,8 @@
+import { PageScaffold } from '@components/layout/PageScaffold'
+import { localeFromPathname, localizedPath } from '@src/seo/routes'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, useLocation, useParams } from 'react-router'
-import { PageScaffold } from '@components/layout/PageScaffold'
-import { localeFromPathname, localizedPath } from '@src/seo/routes'
 import { AlgorithmSetHeader } from '../components/AlgorithmSetHeader'
 import { AlgorithmTable } from '../components/AlgorithmTable'
 import { getAlgorithmSetSummary } from '../sets/algorithmSetMetadata'
@@ -10,9 +10,25 @@ import { getAlgorithmSet } from '../sets/algorithmSets'
 import type { AlgorithmSet } from '../sets/types'
 
 export function AlgorithmSetPage() {
+  const { methodId, puzzleId } = useParams()
+
+  return (
+    <AlgorithmSetPageContent
+      key={`${puzzleId ?? ''}/${methodId ?? ''}`}
+      methodId={methodId}
+      puzzleId={puzzleId}
+    />
+  )
+}
+
+type AlgorithmSetPageContentProps = {
+  methodId?: string
+  puzzleId?: string
+}
+
+function AlgorithmSetPageContent({ methodId, puzzleId }: AlgorithmSetPageContentProps) {
   const location = useLocation()
   const { t } = useTranslation()
-  const { methodId, puzzleId } = useParams()
   const summary = getAlgorithmSetSummary(puzzleId, methodId)
   const [set, setSet] = useState<AlgorithmSet>()
   const [loadError, setLoadError] = useState<unknown>()
@@ -20,8 +36,6 @@ export function AlgorithmSetPage() {
 
   useEffect(() => {
     let active = true
-    setSet(undefined)
-    setLoadError(undefined)
 
     void getAlgorithmSet(puzzleId, methodId)
       .then((loadedSet) => {

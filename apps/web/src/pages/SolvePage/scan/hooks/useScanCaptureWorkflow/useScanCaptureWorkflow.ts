@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AnalyzeScanFaceResponse } from '@api/scan'
 import type { ScanFaceSymbol } from '@api/solver/types'
@@ -65,7 +65,7 @@ export function useScanCaptureWorkflow({
   const [message, setMessage] = useState<string | undefined>()
   const cameraStream = camera.status === 'ready' ? camera.stream : undefined
   const { setVideoRef, videoElementRef } = useScanVideoBinding(cameraStream, currentFaceIndex)
-  const confirmedFaces = useMemo(() => scanFacesFromDrafts(drafts), [drafts])
+  const confirmedFaces = scanFacesFromDrafts(drafts)
   const draftValidation = validateScanFaceDraft(
     confirmedFaces,
     currentFace.symbol,
@@ -77,22 +77,18 @@ export function useScanCaptureWorkflow({
     [currentFace.symbol]: { symbol: currentFace.symbol, stickers },
   }
   const previewCounts = countScanSymbols(previewFaces)
-  const faceStatuses = useMemo(
-    () =>
-      scanFaceOrder.map(({ symbol }) => {
-        const status = scanFaceStatusFromDraft(
-          drafts[symbol],
-          validateScanFaceDraft(confirmedFaces, symbol, drafts[symbol].stickers, stickersPerFace),
-        )
+  const faceStatuses = scanFaceOrder.map(({ symbol }) => {
+    const status = scanFaceStatusFromDraft(
+      drafts[symbol],
+      validateScanFaceDraft(confirmedFaces, symbol, drafts[symbol].stickers, stickersPerFace),
+    )
 
-        if (status === 'invalid' || status === 'pending') {
-          return status
-        }
+    if (status === 'invalid' || status === 'pending') {
+      return status
+    }
 
-        return isReviewFace?.(symbol) ? 'needsReview' : status
-      }),
-    [confirmedFaces, drafts, isReviewFace, stickersPerFace],
-  )
+    return isReviewFace?.(symbol) ? 'needsReview' : status
+  })
   const hasReviewCaptureContent =
     photoDataUrl !== undefined ||
     stickers.some((sticker, index) => index !== centerIndex && sticker.symbol !== undefined)

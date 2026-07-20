@@ -1,6 +1,6 @@
 import cls from 'classnames'
 import { RotateCcw, RotateCw } from 'lucide-react'
-import { useId, useMemo, useState } from 'react'
+import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   DndContext,
@@ -84,18 +84,13 @@ export function EvenCubeReviewStep({
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor))
   const hasInvalidCorners = invalidCorners.length > 0
   const selectedCapturedFace = assignments[selectedSlot]
-  const invalidStickerTargets = useMemo(
-    () =>
-      new Set(
-        invalidCorners.flatMap((corner) =>
-          corner.targets.map((target) => invalidTargetKey(target.slot, target.index)),
-        ),
-      ),
-    [invalidCorners],
+  const invalidStickerTargets = new Set(
+    invalidCorners.flatMap((corner) =>
+      corner.targets.map((target) => invalidTargetKey(target.slot, target.index)),
+    ),
   )
-  const invalidSlots = useMemo(
-    () => new Set(invalidCorners.flatMap((corner) => corner.targets.map((target) => target.slot))),
-    [invalidCorners],
+  const invalidSlots = new Set(
+    invalidCorners.flatMap((corner) => corner.targets.map((target) => target.slot)),
   )
 
   function handleDragEnd(event: DragEndEvent) {

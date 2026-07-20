@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   canonicalStickerIndexToVisual,
@@ -160,9 +160,11 @@ export function EvenCubeScanModal({
     evenNetAssignments,
     stickersPerFace,
   )
-  const evenValidation = useMemo(
-    () => validateEvenCubeScan(drafts, evenFaceRotations, evenNetAssignments, stickersPerFace),
-    [drafts, evenFaceRotations, evenNetAssignments, stickersPerFace],
+  const evenValidation = validateEvenCubeScan(
+    drafts,
+    evenFaceRotations,
+    evenNetAssignments,
+    stickersPerFace,
   )
   const evenInvalidCorners =
     backendEvenInvalidCorners.length > 0 ? backendEvenInvalidCorners : evenValidation.invalidCorners

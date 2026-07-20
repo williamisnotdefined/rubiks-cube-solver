@@ -3,7 +3,7 @@ import { PenaltyControls } from '@components/timer/PenaltyControls'
 import { TimerDisplay } from '@components/timer/TimerDisplay'
 import { TimerStatusBar } from '@components/timer/TimerStatusBar'
 import type { TimerPenalty } from '@core/timer/penalties'
-import { useEffect, useRef } from 'react'
+import { useEffect, useEffectEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useActiveTimerSession } from '../../hooks/useActiveTimerSession'
 import { useKeyboardTimer } from '../../hooks/useKeyboardTimer'
@@ -18,7 +18,7 @@ type TimerRuntimeProps = {
   lastCompletedSolveId: string | null
   resetSignal: number
   onAttemptStart: () => void
-  onSolveComplete: (rawTimeMs: number, penalty: TimerPenalty) => void
+  onSolveComplete: (rawTimeMs: number, penalty: TimerPenalty, endedAt: number) => void
   onStatusChange: (status: TimerStatus) => void
 }
 
@@ -51,15 +51,14 @@ export function TimerRuntime({
     onSolveComplete,
     onStatusChange,
   })
-  const timerRef = useRef(timer)
-  timerRef.current = timer
   const touchHandlers = useTouchTimer(timer, disabled)
+  const resetStoppedTimer = useEffectEvent(() => timer.resetStopped())
 
   useKeyboardTimer(timer, disabled)
 
   useEffect(() => {
     if (resetSignal > 0) {
-      timerRef.current.resetStopped()
+      resetStoppedTimer()
     }
   }, [resetSignal])
 

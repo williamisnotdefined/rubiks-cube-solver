@@ -360,6 +360,38 @@ describe('useLiveScanPreview', () => {
     expect(result.current.shouldAutoFill).toBe(false)
   })
 
+  it('resets tracking when the tile grid changes', async () => {
+    apiMocks.analyzeMutateAsync.mockResolvedValue(stableAnalysis())
+    const videoRef = { current: document.createElement('video') }
+    const { result, rerender } = renderHook(
+      ({ gridSize }: { gridSize: 2 | 3 }) =>
+        useLiveScanPreview({
+          enabled: true,
+          expectedCenter: 'U',
+          gridSize,
+          videoRef,
+        }),
+      { initialProps: { gridSize: 3 as 2 | 3 } },
+    )
+
+    await advancePreviewFrames(6)
+    expect(result.current.shouldAutoFill).toBe(true)
+
+    rerender({ gridSize: 2 })
+
+    expect(result.current.latestAnalysis).toBeUndefined()
+    expect(result.current.latestCapture).toBeUndefined()
+    expect(result.current.shouldAutoFill).toBe(false)
+    expect(result.current.stableFrameCount).toBe(0)
+
+    rerender({ gridSize: 3 })
+
+    expect(result.current.latestAnalysis).toBeUndefined()
+    expect(result.current.latestCapture).toBeUndefined()
+    expect(result.current.shouldAutoFill).toBe(false)
+    expect(result.current.stableFrameCount).toBe(0)
+  })
+
   it('handles preview analysis errors without auto-fill', async () => {
     apiMocks.analyzeMutateAsync.mockImplementation(() => {
       throw new Error('preview failed')

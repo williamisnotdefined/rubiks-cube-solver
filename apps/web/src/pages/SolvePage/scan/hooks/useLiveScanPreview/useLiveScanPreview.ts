@@ -1,6 +1,6 @@
 import { useAnalyzeScanFace, type AnalyzeScanFaceResponse, type ScanDetectionBox } from '@api/scan'
 import type { ScanFaceSymbol } from '@api/solver/types'
-import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react'
+import { useEffect, useEffectEvent, useRef, useState, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { captureScanPreviewImage, type CapturedScanImage } from '../../scanCapture'
 import {
@@ -40,6 +40,17 @@ type UseLiveScanPreviewResult = {
   temporalConsensus: TemporalFaceConsensus
 }
 
+type TrackingState = {
+  configurationKey: string
+  latestAnalysis?: AnalyzeScanFaceResponse
+  latestCapture?: CapturedScanImage
+  message: string
+  shouldAutoFill: boolean
+  stableFrameCount: number
+  status: LiveScanPreviewStatus
+  version: number
+}
+
 const previewIntervalMs = 750
 const minFaceConfidence = 0.5
 const goodFaceConfidence = 0.72
@@ -60,58 +71,115 @@ export function useLiveScanPreview({
   gridSize = 3,
   videoRef,
 }: UseLiveScanPreviewOptions): UseLiveScanPreviewResult {
-  const { t } = useTranslation()
+  const { i18n, t } = useTranslation()
   const { mutateAsync } = useAnalyzeScanFace()
-  const consensusOptions = useMemo(() => temporalOptions(gridSize), [gridSize])
+  const consensusOptions = temporalOptions(gridSize)
   const {
     recordAnalysis: recordTemporalAnalysis,
-    resetTemporalConsensus,
     temporalConsensus,
   } = useTemporalScanConsensus({
     enabled,
     expectedCenter,
     options: consensusOptions,
   })
-  const previousAnalysisRef = useRef<AnalyzeScanFaceResponse | undefined>(undefined)
-  const stableFrameCountRef = useRef(0)
-  const [latestAnalysis, setLatestAnalysis] = useState<AnalyzeScanFaceResponse | undefined>()
-  const [latestCapture, setLatestCapture] = useState<CapturedScanImage | undefined>()
-  const [message, setMessage] = useState(() => t('scan.live.looking'))
-  const [shouldAutoFill, setShouldAutoFill] = useState(false)
-  const [stableFrameCount, setStableFrameCount] = useState(0)
-  const [status, setStatus] = useState<LiveScanPreviewStatus>('idle')
+  const configurationKey = `${enabled}:${expectedCenter}:${gridSize}:${i18n.language}`
+  const [trackingState, setTrackingState] = useState(() =>
+    createTrackingState(configurationKey, enabled, t, 0),
+  )
+  const emptyTrackingState = createTrackingState(
+    configurationKey,
+    enabled,
+    t,
+    trackingState.version + 1,
+  )
 
-  const acknowledgeAutoFill = useCallback(() => {
-    setShouldAutoFill(false)
-  }, [])
+  if (trackingState.configurationKey !== configurationKey) {
+    setTrackingState(emptyTrackingState)
+  }
 
-  const resetAutoFill = useCallback(() => {
-    setShouldAutoFill(false)
-  }, [])
+  const trackingRef = useRef<{
+    configurationKey: string
+    previousAnalysis?: AnalyzeScanFaceResponse
+    stableFrameCount: number
+    version: number
+  }>({ configurationKey, stableFrameCount: 0, version: 0 })
+  const tracking =
+    trackingState.configurationKey === configurationKey ? trackingState : emptyTrackingState
 
-  const resetTracking = useCallback(() => {
-    previousAnalysisRef.current = undefined
-    stableFrameCountRef.current = 0
-    setLatestAnalysis(undefined)
-    setLatestCapture(undefined)
-    setMessage(t('scan.live.looking'))
-    setShouldAutoFill(false)
-    setStableFrameCount(0)
-    setStatus(enabled ? 'searching' : 'idle')
-    resetTemporalConsensus()
-  }, [enabled, resetTemporalConsensus, t])
+  function acknowledgeAutoFill() {
+    setTrackingState((current) =>
+      current.configurationKey === configurationKey && current.version === tracking.version
+        ? { ...current, shouldAutoFill: false }
+        : current,
+    )
+  }
 
-  useEffect(() => {
-    resetTracking()
-  }, [expectedCenter, resetTracking])
+  function resetAutoFill() {
+    setTrackingState((current) =>
+      current.configurationKey === configurationKey && current.version === tracking.version
+        ? { ...current, shouldAutoFill: false }
+        : current,
+    )
+  }
+
+  const updateTracking = useEffectEvent(
+    (analysis: AnalyzeScanFaceResponse, capture: CapturedScanImage) => {
+      const previousTracking =
+        trackingRef.current.configurationKey === configurationKey &&
+        trackingRef.current.version === tracking.version
+          ? trackingRef.current
+          : { configurationKey, stableFrameCount: 0, version: tracking.version }
+      const previousAnalysis = previousTracking.previousAnalysis
+      const consensus = recordTemporalAnalysis(analysis, capture.capturedAt)
+      const canAutoFillCurrent = isAutoFillReadyAnalysis(analysis, expectedCenter, gridSize)
+      const previousCanAutoFill =
+        previousAnalysis !== undefined &&
+        isAutoFillReadyAnalysis(previousAnalysis, expectedCenter, gridSize)
+      const movement =
+        previousAnalysis === undefined
+          ? Number.POSITIVE_INFINITY
+          : averageAnalysisMovement(previousAnalysis, analysis, gridSize)
+      const nextStableFrameCount = canAutoFillCurrent
+        ? previousCanAutoFill && movement <= maxTileMovement
+          ? previousTracking.stableFrameCount + 1
+          : 1
+        : 0
+      const nextStatus = liveStatusFromAnalysis(
+        analysis,
+        nextStableFrameCount,
+        expectedCenter,
+        gridSize,
+      )
+
+      trackingRef.current = {
+        configurationKey,
+        previousAnalysis: analysis,
+        stableFrameCount: nextStableFrameCount,
+        version: tracking.version,
+      }
+      const nextTrackingState: TrackingState = {
+        configurationKey,
+        latestAnalysis: analysis,
+        latestCapture: capture,
+        message: liveScanMessage(analysis, nextStatus, t, gridSize),
+        shouldAutoFill: false,
+        stableFrameCount: nextStableFrameCount,
+        status: nextStatus,
+        version: tracking.version,
+      }
+
+      if (nextStableFrameCount >= stableFrameTarget && isTemporalConsensusReady(consensus)) {
+        nextTrackingState.shouldAutoFill = true
+        nextTrackingState.status = 'holding_steady'
+        nextTrackingState.message = t('scan.live.stableCapturing')
+      }
+
+      setTrackingState(nextTrackingState)
+    },
+  )
 
   useEffect(() => {
     if (!enabled) {
-      previousAnalysisRef.current = undefined
-      stableFrameCountRef.current = 0
-      setShouldAutoFill(false)
-      setStableFrameCount(0)
-      setStatus('idle')
       return undefined
     }
 
@@ -137,16 +205,22 @@ export function useLiveScanPreview({
 
       const video = videoRef.current
       if (video === null) {
-        setStatus('searching')
-        setMessage(t('scan.live.looking'))
+        setTrackingState((current) =>
+          current.configurationKey === configurationKey && current.version === tracking.version
+            ? { ...current, message: t('scan.live.looking'), status: 'searching' }
+            : current,
+        )
         scheduleNextPreview()
         return
       }
 
       const capture = captureScanPreviewImage(video)
       if (capture === undefined) {
-        setStatus('searching')
-        setMessage(t('scan.live.looking'))
+        setTrackingState((current) =>
+          current.configurationKey === configurationKey && current.version === tracking.version
+            ? { ...current, message: t('scan.live.looking'), status: 'searching' }
+            : current,
+        )
         scheduleNextPreview()
         return
       }
@@ -168,8 +242,15 @@ export function useLiveScanPreview({
         updateTracking(analysis, capture)
       } catch (error) {
         if (!cancelled && !isAbortError(error)) {
-          setStatus('error')
-          setMessage(error instanceof Error ? error.message : t('scan.live.scanFailed'))
+          setTrackingState((current) =>
+            current.configurationKey === configurationKey && current.version === tracking.version
+              ? {
+                  ...current,
+                  message: error instanceof Error ? error.message : t('scan.live.scanFailed'),
+                  status: 'error',
+                }
+              : current,
+          )
         }
       } finally {
         abortController = undefined
@@ -179,48 +260,6 @@ export function useLiveScanPreview({
       }
     }
 
-    function updateTracking(analysis: AnalyzeScanFaceResponse, capture: CapturedScanImage) {
-      const previousAnalysis = previousAnalysisRef.current
-      const consensus = recordTemporalAnalysis(analysis, capture.capturedAt)
-      const canAutoFillCurrent = isAutoFillReadyAnalysis(analysis, expectedCenter, gridSize)
-      const previousCanAutoFill =
-        previousAnalysis !== undefined &&
-        isAutoFillReadyAnalysis(previousAnalysis, expectedCenter, gridSize)
-      const movement =
-        previousAnalysis === undefined
-          ? Number.POSITIVE_INFINITY
-          : averageAnalysisMovement(previousAnalysis, analysis, gridSize)
-      const nextStableFrameCount = canAutoFillCurrent
-        ? previousCanAutoFill && movement <= maxTileMovement
-          ? stableFrameCountRef.current + 1
-          : 1
-        : 0
-      const nextStatus = liveStatusFromAnalysis(
-        analysis,
-        nextStableFrameCount,
-        expectedCenter,
-        gridSize,
-      )
-
-      previousAnalysisRef.current = analysis
-      stableFrameCountRef.current = nextStableFrameCount
-      setLatestAnalysis(analysis)
-      setLatestCapture(capture)
-      setStableFrameCount(nextStableFrameCount)
-      setStatus(nextStatus)
-      setMessage(liveScanMessage(analysis, nextStatus, t, gridSize))
-
-      if (nextStableFrameCount >= stableFrameTarget && isTemporalConsensusReady(consensus)) {
-        setShouldAutoFill(true)
-        setStatus('holding_steady')
-        setMessage(t('scan.live.stableCapturing'))
-      } else {
-        setShouldAutoFill(false)
-      }
-    }
-
-    setStatus('searching')
-    setMessage(t('scan.live.looking'))
     scheduleNextPreview()
 
     return () => {
@@ -228,18 +267,34 @@ export function useLiveScanPreview({
       window.clearTimeout(timeoutId)
       abortController?.abort()
     }
-  }, [enabled, expectedCenter, gridSize, mutateAsync, recordTemporalAnalysis, t, videoRef])
+  }, [configurationKey, enabled, expectedCenter, gridSize, mutateAsync, t, tracking.version, videoRef])
 
   return {
     acknowledgeAutoFill,
-    latestAnalysis,
-    latestCapture,
-    message,
+    latestAnalysis: tracking.latestAnalysis,
+    latestCapture: tracking.latestCapture,
+    message: tracking.message,
     resetAutoFill,
-    shouldAutoFill,
-    stableFrameCount,
-    status,
+    shouldAutoFill: tracking.shouldAutoFill,
+    stableFrameCount: tracking.stableFrameCount,
+    status: tracking.status,
     temporalConsensus,
+  }
+}
+
+function createTrackingState(
+  configurationKey: string,
+  enabled: boolean,
+  t: ReturnType<typeof useTranslation>['t'],
+  version: number,
+): TrackingState {
+  return {
+    configurationKey,
+    message: t('scan.live.looking'),
+    shouldAutoFill: false,
+    stableFrameCount: 0,
+    status: enabled ? 'searching' : 'idle',
+    version,
   }
 }
 

@@ -1,20 +1,17 @@
-import { startTransition, useEffect, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { useSearchParams } from 'react-router'
 import {
   canonicalizeWcaWorldRecordsQuery,
   useGetWcaEvents,
   useGetWorldRecords,
-  wcaWorldRecordsPageSizes,
   type WcaWorldRecord,
   type WcaWorldRecordsQuery,
   type WcaWorldRecordType,
+  wcaWorldRecordsPageSizes,
 } from '@api/wcaData'
 import { Button } from '@components/Button'
-import { Input } from '@components/Input'
 import { Field } from '@components/Field'
-import { PageHeader } from '@components/layout/PageHeader'
+import { Input } from '@components/Input'
 import { PageDescription } from '@components/layout/PageDescription'
+import { PageHeader } from '@components/layout/PageHeader'
 import { PageScaffold } from '@components/layout/PageScaffold'
 import { PageTitle } from '@components/layout/PageTitle'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/Select'
@@ -27,6 +24,9 @@ import {
   RotateCcw,
   Search,
 } from 'lucide-react'
+import { startTransition, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'react-router'
 import { AthleteRecordSheet } from './components/AthleteRecordSheet'
 import { WorldRecordsTable } from './components/WorldRecordsTable'
 
@@ -37,6 +37,14 @@ export function WorldRecordsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [selectedRecord, setSelectedRecord] = useState<WcaWorldRecord | null>(null)
   const query = worldRecordsQueryFromSearch(searchParams)
+  const recordsQueryKey = JSON.stringify([
+    query.eventId,
+    query.page,
+    query.pageSize,
+    query.search,
+    query.type,
+  ])
+  const [selectedRecordQueryKey, setSelectedRecordQueryKey] = useState(recordsQueryKey)
   const searchValueFromUrl = query.search ?? ''
   const [searchInput, setSearchInput] = useState(searchValueFromUrl)
   const searchInputRef = useRef(searchValueFromUrl)
@@ -48,6 +56,11 @@ export function WorldRecordsPage() {
   const totalPages =
     pagination === undefined ? 1 : Math.max(1, Math.ceil(pagination.total / pagination.pageSize))
   const pageNumbers = worldRecordsPageNumbers(currentPage, totalPages)
+
+  if (selectedRecordQueryKey !== recordsQueryKey) {
+    setSelectedRecordQueryKey(recordsQueryKey)
+    setSelectedRecord(null)
+  }
 
   useEffect(() => {
     if (searchInputRef.current === searchValueFromUrl) {
@@ -86,10 +99,6 @@ export function WorldRecordsPage() {
 
     return () => window.clearTimeout(timeoutId)
   }, [searchInput, searchParams, searchValueFromUrl, setSearchParams])
-
-  useEffect(() => {
-    setSelectedRecord(null)
-  }, [query.eventId, query.page, query.pageSize, query.search, query.type])
 
   function updateFilter(key: string, value: string | null) {
     const nextParams = new URLSearchParams(searchParams)

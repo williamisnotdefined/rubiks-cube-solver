@@ -1,6 +1,6 @@
 import cls from 'classnames'
 import { Trash2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from '@tanstack/react-table'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useTranslation } from 'react-i18next'
@@ -127,51 +127,50 @@ function VirtualizedSolveTable({
   showMilliseconds = false,
   onDeleteSolve,
 }: SolveTableProps) {
+  // TanStack Table's instance functions are not safe for React Compiler memoization.
+  'use no memo'
   const { t } = useTranslation()
   const [scrollParentElement, setScrollParentElement] = useState<HTMLElement | null>(null)
-  const data = useMemo(() => [...rows], [rows])
-  const columns = useMemo<ColumnDef<SolveTableRow>[]>(
-    () => [
-      {
-        cell: ({ row }) => (
-          <DeleteSolveButton
-            disabled={onDeleteSolve === undefined}
-            solveId={row.original.id}
-            onDeleteSolve={onDeleteSolve}
-          />
-        ),
-        header: () => <span className='sr-only'>{t('timer.solves.actions')}</span>,
-        id: 'actions',
-      },
-      {
-        accessorKey: 'index',
-        cell: ({ row }) => (
-          <span className='font-mono text-muted-foreground'>{row.original.index}</span>
-        ),
-        header: '#',
-      },
-      {
-        accessorKey: 'finalTimeMs',
-        cell: ({ row }) => (
-          <span className='font-mono text-lg font-bold text-foreground'>
-            {formatTimerTime(row.original.finalTimeMs, { showMilliseconds })}
-          </span>
-        ),
-        header: t('timer.solves.time'),
-      },
-      {
-        accessorKey: 'penalty',
-        cell: ({ row }) => t(`timer.penalty.${row.original.penalty}`),
-        header: t('timer.solves.penalty'),
-      },
-      {
-        accessorKey: 'scramble',
-        cell: ({ row }) => row.original.scramble,
-        header: t('timer.solves.scramble'),
-      },
-    ],
-    [onDeleteSolve, showMilliseconds, t],
-  )
+  const data = [...rows]
+  const columns: ColumnDef<SolveTableRow>[] = [
+    {
+      cell: ({ row }) => (
+        <DeleteSolveButton
+          disabled={onDeleteSolve === undefined}
+          solveId={row.original.id}
+          onDeleteSolve={onDeleteSolve}
+        />
+      ),
+      header: () => <span className='sr-only'>{t('timer.solves.actions')}</span>,
+      id: 'actions',
+    },
+    {
+      accessorKey: 'index',
+      cell: ({ row }) => (
+        <span className='font-mono text-muted-foreground'>{row.original.index}</span>
+      ),
+      header: '#',
+    },
+    {
+      accessorKey: 'finalTimeMs',
+      cell: ({ row }) => (
+        <span className='font-mono text-lg font-bold text-foreground'>
+          {formatTimerTime(row.original.finalTimeMs, { showMilliseconds })}
+        </span>
+      ),
+      header: t('timer.solves.time'),
+    },
+    {
+      accessorKey: 'penalty',
+      cell: ({ row }) => t(`timer.penalty.${row.original.penalty}`),
+      header: t('timer.solves.penalty'),
+    },
+    {
+      accessorKey: 'scramble',
+      cell: ({ row }) => row.original.scramble,
+      header: t('timer.solves.scramble'),
+    },
+  ]
   const table = useReactTable({
     autoResetPageIndex: false,
     columns,

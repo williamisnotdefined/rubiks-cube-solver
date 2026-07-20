@@ -4,6 +4,7 @@ Use for React state, custom hooks, stores, async workflow state, and visualizati
 
 ## Read First
 
+- `ai/rules/frontend-rules.md`
 - `ai/rules/frontend-state-rules.md`
 - `ai/rules/frontend-quality-rules.md`
 - `ai/architecture/frontend-visualization.md`

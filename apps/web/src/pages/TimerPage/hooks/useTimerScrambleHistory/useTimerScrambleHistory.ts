@@ -120,7 +120,7 @@ export function useTimerScrambleHistory(interactionLocked = false) {
     })
   }
 
-  function handleSolveComplete(rawTimeMs: number, penalty: TimerPenalty) {
+  function handleSolveComplete(rawTimeMs: number, penalty: TimerPenalty, endedAt: number) {
     const attempt = attemptSnapshotRef.current
     attemptSnapshotRef.current = null
 
@@ -128,7 +128,6 @@ export function useTimerScrambleHistory(interactionLocked = false) {
       return
     }
 
-    const endedAt = Date.now()
     const solve: TimerSolve = {
       comment: '',
       endedAt,

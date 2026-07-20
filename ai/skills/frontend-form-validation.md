@@ -4,6 +4,7 @@ Use for solve controls, inputs, local limits, scanner review controls, and form 
 
 ## Read First
 
+- `ai/rules/frontend-rules.md`
 - `ai/rules/frontend-form-rules.md`
 - `ai/rules/frontend-quality-rules.md`
 - `ai/architecture/api-boundary.md`

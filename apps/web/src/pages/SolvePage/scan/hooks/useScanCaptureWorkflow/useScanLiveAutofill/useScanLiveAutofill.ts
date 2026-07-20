@@ -55,6 +55,7 @@ export function useScanLiveAutofill({
   t,
 }: UseScanLiveAutofillOptions) {
   const acknowledgedCaptureRef = useRef<string | undefined>(undefined)
+  const pendingAutoFillRef = useRef<string | undefined>(undefined)
 
   useEffect(() => {
     if (
@@ -75,6 +76,7 @@ export function useScanLiveAutofill({
       liveAnalysis,
       stickersPerFace,
     )
+    pendingAutoFillRef.current = liveCapture.photoDataUrl
     setDrafts((currentDrafts) => {
       const draft = currentDrafts[currentFaceSymbol]
       if (!canApplyLiveAutofill(draft)) {
@@ -82,17 +84,6 @@ export function useScanLiveAutofill({
       }
 
       const mergedStickers = mergeLiveDetectedScanStickers(draft.stickers, nextStickers)
-
-      if (acknowledgedCaptureRef.current !== liveCapture.photoDataUrl) {
-        acknowledgedCaptureRef.current = liveCapture.photoDataUrl
-        acknowledgeAutoFill()
-        onFaceCleared?.(currentFaceSymbol)
-        setMessage(
-          lowConfidenceCount(mergedStickers) > 0
-            ? t('scan.messages.detectedUncertain', { count: lowConfidenceCount(mergedStickers) })
-            : t('scan.messages.liveReviewReady', { count: stickersPerFace }),
-        )
-      }
 
       return {
         ...currentDrafts,
@@ -112,18 +103,48 @@ export function useScanLiveAutofill({
       }
     })
   }, [
-    acknowledgeAutoFill,
     currentDraft,
     currentFaceSymbol,
     capturing,
     liveAnalysis,
     liveCapture,
     liveTemporalConsensus,
-    onFaceCleared,
     photoDataUrl,
     setDrafts,
-    setMessage,
     shouldAutoFill,
+    stickersPerFace,
+    t,
+  ])
+
+  useEffect(() => {
+    const pendingAutoFillPhotoDataUrl = pendingAutoFillRef.current
+
+    if (
+      currentDraft.captureMode !== 'auto' ||
+      pendingAutoFillPhotoDataUrl === undefined ||
+      currentDraft.photoDataUrl !== pendingAutoFillPhotoDataUrl ||
+      acknowledgedCaptureRef.current === pendingAutoFillPhotoDataUrl
+    ) {
+      return
+    }
+
+    acknowledgedCaptureRef.current = pendingAutoFillPhotoDataUrl
+    pendingAutoFillRef.current = undefined
+    acknowledgeAutoFill()
+    onFaceCleared?.(currentFaceSymbol)
+    setMessage(
+      lowConfidenceCount(currentDraft.stickers) > 0
+        ? t('scan.messages.detectedUncertain', {
+            count: lowConfidenceCount(currentDraft.stickers),
+          })
+        : t('scan.messages.liveReviewReady', { count: stickersPerFace }),
+    )
+  }, [
+    acknowledgeAutoFill,
+    currentDraft,
+    currentFaceSymbol,
+    onFaceCleared,
+    setMessage,
     stickersPerFace,
     t,
   ])

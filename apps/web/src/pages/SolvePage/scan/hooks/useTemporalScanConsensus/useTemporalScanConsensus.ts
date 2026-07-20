@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import type { AnalyzeScanFaceResponse } from '@api/scan'
 import type { ScanFaceSymbol } from '@api/solver/types'
 import {
@@ -27,48 +27,88 @@ export function useTemporalScanConsensus({
   expectedCenter,
   options = defaultTemporalConsensusOptions,
 }: UseTemporalScanConsensusOptions): UseTemporalScanConsensusResult {
-  const bufferRef = useRef<TemporalScanFrame[]>([])
-  const initialConsensus = buildTemporalFaceConsensus([], options)
-  const consensusRef = useRef<TemporalFaceConsensus>(initialConsensus)
-  const [temporalConsensus, setTemporalConsensus] = useState(initialConsensus)
+  const optionsKey = temporalConsensusOptionsKey(options)
+  const configurationKey = `${enabled}:${expectedCenter}:${optionsKey}`
+  const emptyConsensus = buildTemporalFaceConsensus([], options)
+  const bufferRef = useRef<{ configurationKey: string; frames: TemporalScanFrame[]; version: number }>({
+    configurationKey,
+    frames: [],
+    version: 0,
+  })
+  const [consensusState, setConsensusState] = useState(() => ({
+    configurationKey,
+    consensus: emptyConsensus,
+    version: 0,
+  }))
 
-  const resetTemporalConsensus = useCallback(() => {
-    bufferRef.current = []
-    const nextConsensus = buildTemporalFaceConsensus([], options)
-    consensusRef.current = nextConsensus
-    setTemporalConsensus(nextConsensus)
-  }, [options])
+  if (consensusState.configurationKey !== configurationKey) {
+    setConsensusState({
+      configurationKey,
+      consensus: emptyConsensus,
+      version: consensusState.version + 1,
+    })
+  }
 
-  useEffect(() => {
-    resetTemporalConsensus()
-  }, [enabled, expectedCenter, resetTemporalConsensus])
+  const temporalConsensus =
+    consensusState.configurationKey === configurationKey ? consensusState.consensus : emptyConsensus
 
-  const recordAnalysis = useCallback(
-    (analysis: AnalyzeScanFaceResponse, capturedAt = Date.now()) => {
-      if (!enabled) {
-        return consensusRef.current
-      }
+  function resetTemporalConsensus() {
+    const version = consensusState.version + 1
+    bufferRef.current = { configurationKey, frames: [], version }
+    setConsensusState({ configurationKey, consensus: emptyConsensus, version })
+  }
 
-      bufferRef.current = addTemporalScanFrame(
-        bufferRef.current,
-        {
-          analysis,
-          capturedAt,
-          expectedCenter,
-        },
-        options,
-      )
-      const nextConsensus = buildTemporalFaceConsensus(bufferRef.current, options)
-      consensusRef.current = nextConsensus
-      setTemporalConsensus(nextConsensus)
-      return nextConsensus
-    },
-    [enabled, expectedCenter, options],
-  )
+  function recordAnalysis(analysis: AnalyzeScanFaceResponse, capturedAt = Date.now()) {
+    if (!enabled) {
+      return temporalConsensus
+    }
+
+    const frames =
+      bufferRef.current.configurationKey === configurationKey &&
+      bufferRef.current.version === consensusState.version
+        ? bufferRef.current.frames
+        : []
+    const nextFrames = addTemporalScanFrame(
+      frames,
+      {
+        analysis,
+        capturedAt,
+        expectedCenter,
+      },
+      options,
+    )
+    const nextConsensus = buildTemporalFaceConsensus(nextFrames, options)
+    bufferRef.current = { configurationKey, frames: nextFrames, version: consensusState.version }
+    setConsensusState({
+      configurationKey,
+      consensus: nextConsensus,
+      version: consensusState.version,
+    })
+    return nextConsensus
+  }
 
   return {
     recordAnalysis,
     resetTemporalConsensus,
     temporalConsensus,
   }
+}
+
+function temporalConsensusOptionsKey(options: TemporalConsensusOptions): string {
+  return [
+    options.gridSize,
+    options.maxFrameAgeMs,
+    options.maxFrames,
+    options.maxMeanBboxMovement,
+    options.maxStickerBboxMovement,
+    options.minBboxStability,
+    options.minFaceAgreement,
+    options.minFaceConfidence,
+    options.minFrames,
+    options.minStickerAgreement,
+    options.minStickerConfidence,
+    options.minStickerMargin,
+    options.minTileConfidence,
+    options.minTileDetections,
+  ].join(':')
 }

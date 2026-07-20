@@ -1,17 +1,17 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export function useScanVideoBinding(cameraStream: MediaStream | undefined, resetKey: unknown) {
   const videoElementRef = useRef<HTMLVideoElement | null>(null)
   const [videoElementRevision, setVideoElementRevision] = useState(0)
 
-  const setVideoRef = useCallback((video: HTMLVideoElement | null) => {
+  function setVideoRef(video: HTMLVideoElement | null) {
     if (videoElementRef.current === video) {
       return
     }
 
     videoElementRef.current = video
     setVideoElementRevision((revision) => revision + 1)
-  }, [])
+  }
 
   useEffect(() => {
     const video = videoElementRef.current

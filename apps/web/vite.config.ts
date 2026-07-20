@@ -1,13 +1,19 @@
 import { fileURLToPath } from 'node:url'
+import babel from '@rolldown/plugin-babel'
 import tailwindcss from '@tailwindcss/vite'
-import react from '@vitejs/plugin-react'
+import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import { defineConfig } from 'vitest/config'
 import { cubingWorkerSafeImports } from './build/cubingWorkerSafeImports'
 
 const wcaDataApiProxyTarget = process.env.WCA_DATA_API_PROXY_TARGET ?? 'https://speedcube.com.br'
 
 export default defineConfig({
-  plugins: [cubingWorkerSafeImports(), react(), tailwindcss()],
+  plugins: [
+    cubingWorkerSafeImports(),
+    react(),
+    babel({ presets: [reactCompilerPreset({ panicThreshold: 'none' })] }),
+    tailwindcss(),
+  ],
   server: {
     proxy: {
       '/api/wca-data/v1': {
