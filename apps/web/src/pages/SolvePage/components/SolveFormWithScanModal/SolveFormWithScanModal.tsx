@@ -1,7 +1,7 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { Camera } from 'lucide-react'
 import { Button } from '@components/Button'
+import { Camera } from 'lucide-react'
+import { lazy, Suspense, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { ScanCubeModalProps } from '../../scan/ScanCubeModal'
 import { SolveForm, type SolveFormProps } from '../../solve/SolveForm'
 
@@ -23,12 +23,13 @@ export function SolveFormWithScanModal({
 }: SolveFormWithScanModalProps) {
   const { t } = useTranslation()
   const [scanModalOpen, setScanModalOpen] = useState(false)
+  const scanModalStateKey = `${solveFormProps.selectedPuzzleSlug}:${scanAvailable}`
+  const [previousScanModalStateKey, setPreviousScanModalStateKey] = useState(scanModalStateKey)
 
-  useEffect(() => {
-    if (!scanAvailable) {
-      setScanModalOpen(false)
-    }
-  }, [scanAvailable])
+  if (scanModalStateKey !== previousScanModalStateKey) {
+    setPreviousScanModalStateKey(scanModalStateKey)
+    setScanModalOpen(false)
+  }
 
   function closeScanModal() {
     setScanModalOpen(false)
@@ -37,12 +38,6 @@ export function SolveFormWithScanModal({
   function handlePuzzleChange(nextPuzzleSlug: string) {
     closeScanModal()
     onPuzzleChange(nextPuzzleSlug)
-  }
-
-  function handleScanClick() {
-    if (scanAvailable) {
-      setScanModalOpen(true)
-    }
   }
 
   return (
@@ -57,7 +52,7 @@ export function SolveFormWithScanModal({
             title={scanAvailable ? undefined : t('solve.form.scanUnavailableForPuzzle')}
             type='button'
             variant='outline'
-            onClick={handleScanClick}
+            onClick={() => setScanModalOpen(true)}
           >
             <Camera aria-hidden='true' />
           </Button>

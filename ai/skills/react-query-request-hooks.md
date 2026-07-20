@@ -4,6 +4,7 @@ Use for web request functions, runtime response validation, query/mutation hooks
 
 ## Read First
 
+- `ai/rules/frontend-rules.md`
 - `ai/rules/frontend-api-hook-rules.md`
 - `ai/rules/api-rules.md`
 - `ai/architecture/api-boundary.md`

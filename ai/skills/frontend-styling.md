@@ -4,6 +4,7 @@ Use for Tailwind utilities, theme tokens, responsive layout, and visual treatmen
 
 ## Read First
 
+- `ai/rules/frontend-rules.md`
 - `ai/rules/frontend-styling-rules.md`
 - `ai/rules/frontend-quality-rules.md`
 

@@ -1,4 +1,4 @@
-import { memo, type Ref } from 'react'
+import type { Ref } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ScanDetectionBox, ScanTileDetection } from '@api/scan'
 import type { ScanFaceSymbol } from '@api/solver/types'
@@ -29,7 +29,7 @@ type ScanCameraFrameProps = {
   videoRef: Ref<HTMLVideoElement>
 }
 
-export const ScanCameraFrame = memo(function ScanCameraFrame({
+export function ScanCameraFrame({
   cameraMessage,
   cameraStatus,
   detectionMode,
@@ -106,7 +106,7 @@ export const ScanCameraFrame = memo(function ScanCameraFrame({
       ) : null}
     </div>
   )
-})
+}
 
 function temporalConsensusLabel(
   consensus: TemporalFaceConsensus | undefined,

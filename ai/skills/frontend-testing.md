@@ -4,6 +4,7 @@ Use for Vitest, Testing Library, API-domain tests, coverage, Storybook, and Play
 
 ## Read First
 
+- `ai/rules/frontend-rules.md`
 - `ai/rules/testing-rules.md`
 - `ai/rules/frontend-quality-rules.md`
 - `ai/architecture/web-architecture.md`

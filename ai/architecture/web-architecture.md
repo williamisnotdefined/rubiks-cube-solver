@@ -22,6 +22,11 @@ Dependencies point inward from pages to shared components, API, and SEO infrastr
 - Rendered HTML, canonical URL, `html lang`, title, description, hreflang alternates, and JSON-LD MUST agree for a route and locale.
 - Unknown routes and valid non-indexable routes MUST remain `noindex`; valid non-indexable routes still return their application HTML with status 200. Unknown `/api/*` paths MUST never fall through to HTML.
 
+## React Runtime
+
+- The web app uses React 19 with React Compiler configured by Vite's React compiler preset. The compiler handles client render memoization; source code stays declarative without manual memoization wrappers.
+- The Vite client build and Vitest's jsdom suite run through the compiler. The coverage command measures source without compiler-generated caches so its thresholds remain meaningful. SSG remains server-rendered through Vite's SSR pipeline.
+
 ## Locale Contract
 
 - `en-US` is canonical and has no URL prefix. The other supported locales are `es`, `pt-BR`, `it`, `de`, `fr`, `ru`, `zh`, and `ja`.

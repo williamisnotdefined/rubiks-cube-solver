@@ -42,6 +42,11 @@ describe('useTemporalScanConsensus', () => {
 
     expect(result.current.temporalConsensus.status).toBe('empty')
     expect(result.current.temporalConsensus.framesSeen).toBe(0)
+
+    rerender({ expectedCenter: 'U' })
+
+    expect(result.current.temporalConsensus.status).toBe('empty')
+    expect(result.current.temporalConsensus.framesSeen).toBe(0)
   })
 
   it('does not record frames while disabled', () => {

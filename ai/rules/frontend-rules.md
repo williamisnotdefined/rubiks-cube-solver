@@ -22,7 +22,18 @@
 - React Hook Form and Zod MAY be used when nearby code or form/schema complexity warrants them; they are not mandatory setup.
 - New dependencies require the concrete checks in `frontend-quality-rules.md`.
 
+## React Compiler
+
+- `apps/web` uses React 19 with React Compiler enabled through the Vite React compiler preset. Write ordinary components and hooks and let the compiler provide memoization.
+- Do not add `useMemo`, `useCallback`, `React.memo`, or other manual render memoization. Do not make referential identity a correctness requirement for effects, subscriptions, or child props.
+- Do not use `forwardRef`. React 19 components accept `ref` as a prop; type DOM-forwarding components with `ComponentPropsWithRef` and pass that prop to the owning element. A deliberate non-DOM imperative handle MAY use that prop with `useImperativeHandle`.
+- Use `useEffectEvent` when a callback registered by an effect must read the latest props or state without re-subscribing. Keep effect dependencies focused on the values that define the subscription lifecycle.
+- Keep derived values and event callbacks as ordinary render-time code. Preserve no legacy memoization solely because it existed before the compiler.
+- Do not read from or write to mutable refs during render, except for one-time initialization that React explicitly permits. Put imperative ref synchronization in effects or event handlers.
+- Compiler skips unsafe functions rather than changing behavior. Fix Rules of React violations instead of adding blanket opt-outs; use `"use no memo"` only as a short-lived, documented containment for a verified compiler issue.
+
 ## Verification
 
-- Run web build, lint, and targeted tests for changed behavior.
+- Run web build, lint, and targeted tests for changed behavior. Web lint runs Biome plus the official React Hooks/Compiler diagnostics and rejects manual memoization imports.
+- Treat `npm run build` as the compiler integration check because it exercises both the client bundle and the SSG build.
 - Run SSG/SEO and E2E checks when routing, locales, metadata, hydration, scanner, timer, or solve flows change.

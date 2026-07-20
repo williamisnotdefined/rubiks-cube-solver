@@ -61,17 +61,13 @@ describe('useTouchTimer', () => {
     expect(timer.releaseHold).not.toHaveBeenCalled()
   })
 
-  it('keeps stable handlers while using the latest timer', () => {
+  it('uses the latest timer after a rerender', () => {
     const firstTimer = timerMachine()
     const nextTimer = timerMachine()
     const { result, rerender } = renderHook(({ timer }) => useTouchTimer(timer), {
       initialProps: { timer: firstTimer },
     })
-    const firstHandlers = result.current
-
     rerender({ timer: nextTimer })
-
-    expect(result.current).toBe(firstHandlers)
 
     result.current.onPointerDown(pointerEvent({ pointerId: 3, preventDefault: vi.fn() }))
     result.current.onPointerUp(pointerEvent({ pointerId: 3, preventDefault: vi.fn() }))

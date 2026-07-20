@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useSyncExternalStore } from 'react'
+import { useEffect, useSyncExternalStore } from 'react'
 import {
   getVisualizationRegistrationStatus,
   requestVisualizationRegistration,
@@ -8,12 +8,11 @@ import {
 } from './visualizationRegistration'
 
 export function useVisualizationRegistration(kind: VisualizationKind, requested: boolean) {
-  const subscribe = useCallback(
-    (listener: () => void) => subscribeToVisualizationRegistration(kind, listener),
-    [kind],
+  const status = useSyncExternalStore(
+    (listener) => subscribeToVisualizationRegistration(kind, listener),
+    () => getVisualizationRegistrationStatus(kind),
+    () => getVisualizationRegistrationStatus(kind),
   )
-  const getSnapshot = useCallback(() => getVisualizationRegistrationStatus(kind), [kind])
-  const status = useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
 
   useEffect(() => {
     if (requested && status === 'idle') {
@@ -21,10 +20,9 @@ export function useVisualizationRegistration(kind: VisualizationKind, requested:
     }
   }, [kind, requested, status])
 
-  const retry = useCallback(
-    () => void retryVisualizationRegistration(kind).catch(() => undefined),
-    [kind],
-  )
+  function retry() {
+    void retryVisualizationRegistration(kind).catch(() => undefined)
+  }
 
   return { retry, status }
 }

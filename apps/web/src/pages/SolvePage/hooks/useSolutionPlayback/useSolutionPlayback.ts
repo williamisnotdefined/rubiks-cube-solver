@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react'
 import type { SolveSuccessResult } from '@api/solver/types'
+import { useState } from 'react'
 
 export function useSolutionPlayback(successResult?: SolveSuccessResult) {
   const [solutionStep, setSolutionStep] = useState(0)
+  const [previousSuccessResult, setPreviousSuccessResult] = useState(successResult)
 
-  useEffect(() => {
+  if (successResult !== previousSuccessResult) {
+    setPreviousSuccessResult(successResult)
     setSolutionStep(0)
-  }, [successResult])
+  }
 
   const visibleSolutionStep = clampSolutionStep(solutionStep, successResult?.moves.length ?? 0)
   const visibleSolutionMoves = successResult?.moves.slice(0, visibleSolutionStep) ?? []

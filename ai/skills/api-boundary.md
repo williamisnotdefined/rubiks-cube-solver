@@ -5,6 +5,7 @@ Use for Axum routes, contracts, validation, solver loading, scan sessions, or th
 ## Read First
 
 - `ai/rules/api-rules.md`
+- `ai/rules/frontend-rules.md`
 - `ai/rules/testing-rules.md`
 - `ai/architecture/api-boundary.md`
 

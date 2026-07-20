@@ -5,6 +5,7 @@ Use for React component extraction, shared primitives, page composition, and Sto
 ## Read First
 
 - `ai/rules/frontend-component-rules.md`
+- `ai/rules/frontend-rules.md`
 - `ai/rules/frontend-styling-rules.md`
 - `ai/rules/frontend-quality-rules.md`
 - `ai/architecture/web-architecture.md`

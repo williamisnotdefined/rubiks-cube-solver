@@ -1,19 +1,24 @@
 import cls from 'classnames'
-import { forwardRef, type ComponentPropsWithoutRef } from 'react'
+import type { ComponentPropsWithRef } from 'react'
 import { formatTimerTime } from '@core/timer/formatTimerTime'
 
 export type TimerDisplayStatus = 'holding' | 'idle' | 'inspection' | 'ready' | 'running' | 'stopped'
 
-type TimerDisplayProps = ComponentPropsWithoutRef<'div'> & {
+type TimerDisplayProps = ComponentPropsWithRef<'div'> & {
   elapsedMs: number
   showMilliseconds?: boolean
   status: TimerDisplayStatus
 }
 
-export const TimerDisplay = forwardRef<HTMLDivElement, TimerDisplayProps>(function TimerDisplay(
-  { children, className, elapsedMs, showMilliseconds = false, status, ...props },
+export function TimerDisplay({
+  children,
+  className,
+  elapsedMs,
   ref,
-) {
+  showMilliseconds = false,
+  status,
+  ...props
+}: TimerDisplayProps) {
   return (
     <div
       ref={ref}
@@ -38,4 +43,4 @@ export const TimerDisplay = forwardRef<HTMLDivElement, TimerDisplayProps>(functi
       {children}
     </div>
   )
-})
+}

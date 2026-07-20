@@ -6,7 +6,11 @@ const inspectionLimitMs = 15_000
 const inspectionDnfMs = 17_000
 const defaultDisplayTickMs = 50
 
-type SolveCompleteHandler = (rawTimeMs: number, penalty: TimerPenalty) => void
+function currentEpochMs(): number {
+  return Date.now()
+}
+
+type SolveCompleteHandler = (rawTimeMs: number, penalty: TimerPenalty, endedAt: number) => void
 
 type UseTimerMachineOptions = {
   displayTickMs?: number
@@ -236,12 +240,14 @@ export function useTimerMachine({
       return
     }
 
-    const rawTimeMs = Math.max(0, performance.now() - runningStartedAtRef.current)
+    const stoppedAt = performance.now()
+    const rawTimeMs = Math.max(0, stoppedAt - runningStartedAtRef.current)
+    const endedAt = currentEpochMs()
 
     clearFrame()
     setElapsedMs(rawTimeMs)
     updateStatus('stopped')
-    onSolveCompleteRef.current(rawTimeMs, pendingPenaltyRef.current)
+    onSolveCompleteRef.current(rawTimeMs, pendingPenaltyRef.current, endedAt)
   }
 
   return {

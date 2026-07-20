@@ -80,6 +80,16 @@ describe('RouteTransitionStage', () => {
     expect(screen.getByTestId('route-transition-curtain')).toHaveAttribute('data-ready', 'true')
   })
 
+  it('uses the latest destination selected before the curtain closes', async () => {
+    renderStage(false)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open timer' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Open solver' }))
+    await advanceTimers(480)
+
+    expect(screen.getByTestId('current-location')).toHaveTextContent('/solve/')
+  })
+
   it('keeps a single page container after repeated route changes', async () => {
     vi.useRealTimers()
     renderStage()

@@ -17,7 +17,6 @@ export function useCameraStream(active: boolean): CameraStreamState {
 
   useEffect(() => {
     if (!active) {
-      setState({ status: 'idle' })
       return undefined
     }
 
@@ -74,7 +73,7 @@ export function useCameraStream(active: boolean): CameraStreamState {
     }
   }, [active, t])
 
-  return state
+  return active ? state : { status: 'idle' }
 }
 
 function stopMediaStream(stream: MediaStream | undefined) {

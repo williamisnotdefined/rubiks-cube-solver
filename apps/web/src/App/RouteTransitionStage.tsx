@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { type Location, useLocation } from 'react-router'
 
 type RouteTransitionStageProps = {
@@ -8,7 +8,7 @@ type RouteTransitionStageProps = {
 const coverDurationMs = 480
 const revealDurationMs = 560
 
-type TransitionPhase = 'covering' | 'idle' | 'revealing' | 'waiting'
+type TransitionPhase = 'covering' | 'idle' | 'waiting'
 
 export function RouteTransitionStage({ children }: RouteTransitionStageProps) {
   const location = useLocation()
@@ -16,38 +16,35 @@ export function RouteTransitionStage({ children }: RouteTransitionStageProps) {
   const [displayedLocation, setDisplayedLocation] = useState(location)
   const [readyLocationKey, setReadyLocationKey] = useState(location.key)
   const [phase, setPhase] = useState<TransitionPhase>('idle')
+  const [previousLocation, setPreviousLocation] = useState(location)
   const pendingLocation = useRef(location)
   const pathnameChanged = displayedLocation.pathname !== location.pathname
-  const markReady = useCallback(() => {
-    setReadyLocationKey(displayedLocation.key)
-  }, [displayedLocation.key])
+  const revealing = phase === 'waiting' && readyLocationKey === displayedLocation.key
+  const displayedPhase = revealing ? 'revealing' : phase
 
-  pendingLocation.current = location
-
-  useEffect(() => {
-    if (reduceMotion && displayedLocation.key !== location.key) {
-      setDisplayedLocation(location)
-      setPhase('idle')
-      return
-    }
+  if (reduceMotion && displayedLocation.key !== location.key) {
+    setPreviousLocation(location)
+    setDisplayedLocation(location)
+    setPhase('idle')
+  } else if (location !== previousLocation) {
+    setPreviousLocation(location)
 
     if (!pathnameChanged && displayedLocation.key !== location.key) {
       setDisplayedLocation(location)
-      return
-    }
-
-    if (pathnameChanged && (phase === 'waiting' || phase === 'revealing')) {
+    } else if (pathnameChanged && phase === 'waiting') {
       setDisplayedLocation(location)
-      setPhase('waiting')
-      return
+    } else if (pathnameChanged && phase === 'idle') {
+      setPhase('covering')
     }
+  }
 
-    if (!pathnameChanged || phase !== 'idle') {
-      return
-    }
+  function markReady() {
+    setReadyLocationKey(displayedLocation.key)
+  }
 
-    setPhase('covering')
-  }, [displayedLocation.key, location, pathnameChanged, phase, reduceMotion])
+  useEffect(() => {
+    pendingLocation.current = location
+  }, [location])
 
   useEffect(() => {
     if (phase !== 'covering') {
@@ -63,38 +60,30 @@ export function RouteTransitionStage({ children }: RouteTransitionStageProps) {
   }, [phase])
 
   useEffect(() => {
-    if (phase !== 'waiting' || readyLocationKey !== displayedLocation.key) {
-      return
-    }
-
-    setPhase('revealing')
-  }, [displayedLocation.key, phase, readyLocationKey])
-
-  useEffect(() => {
-    if (phase !== 'revealing') {
+    if (!revealing) {
       return
     }
 
     const timeout = window.setTimeout(() => setPhase('idle'), revealDurationMs)
 
     return () => window.clearTimeout(timeout)
-  }, [phase])
+  }, [revealing])
 
   return (
     <div className='relative flex min-h-0 flex-1 flex-col overflow-hidden'>
       <div
         className='route-transition-page flex min-h-0 flex-1 flex-col overflow-hidden'
-        data-phase={reduceMotion ? 'idle' : phase}
+        data-phase={reduceMotion ? 'idle' : displayedPhase}
         data-testid='route-transition-content'
         inert={!reduceMotion && phase !== 'idle'}
       >
         {children(reduceMotion ? location : displayedLocation, markReady)}
       </div>
-      {reduceMotion || phase === 'idle' ? null : (
+      {reduceMotion || displayedPhase === 'idle' ? null : (
         <div
           aria-hidden='true'
           className='route-transition-curtain pointer-events-none absolute inset-0 z-50 bg-background'
-          data-phase={phase}
+          data-phase={displayedPhase}
           data-ready={readyLocationKey === displayedLocation.key}
           data-testid='route-transition-curtain'
         />

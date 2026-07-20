@@ -33,7 +33,7 @@ describe('useTimerMachine', () => {
     })
 
     expect(result.current.status).toBe('stopped')
-    expect(onSolveComplete).toHaveBeenCalledWith(expect.any(Number), 'ok')
+    expect(onSolveComplete).toHaveBeenCalledWith(expect.any(Number), 'ok', 1_334)
   })
 
   it('cancels a hold before the timer is ready', () => {
@@ -144,7 +144,7 @@ describe('useTimerMachine', () => {
       result.current.stopTimer()
     })
 
-    expect(onSolveComplete).toHaveBeenCalledWith(expect.any(Number), 'plus2')
+    expect(onSolveComplete).toHaveBeenCalledWith(expect.any(Number), 'plus2', expect.any(Number))
   })
 
   it('marks inspection as DNF after seventeen seconds', () => {

@@ -104,6 +104,9 @@ jobs:
       - name: Test rubiks cube package coverage
         run: npm run test:coverage -w @rubiks-cube-solver/rubiks-cube
 
+      - name: Test web with React Compiler
+        run: npm run test -w @rubiks-cube-solver/web
+
       - name: Test web coverage
         run: npm run test:coverage -w @rubiks-cube-solver/web
 

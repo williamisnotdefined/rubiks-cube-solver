@@ -1,4 +1,4 @@
-import { useMemo, useRef, type PointerEvent } from 'react'
+import type { PointerEvent } from 'react'
 import type { TimerMachine } from '../useTimerMachine'
 
 type TouchTimerHandlers = {
@@ -9,45 +9,37 @@ type TouchTimerHandlers = {
 }
 
 export function useTouchTimer(timer: TimerMachine, disabled = false): TouchTimerHandlers {
-  const timerRef = useRef(timer)
-  const disabledRef = useRef(disabled)
-  timerRef.current = timer
-  disabledRef.current = disabled
+  return {
+    onPointerCancel() {
+      timer.cancelHold()
+    },
+    onPointerDown(event) {
+      if (isInteractiveEvent(event)) {
+        return
+      }
 
-  return useMemo(
-    () => ({
-      onPointerCancel() {
-        timerRef.current.cancelHold()
-      },
-      onPointerDown(event) {
-        if (isInteractiveEvent(event)) {
-          return
-        }
+      event.preventDefault()
 
-        event.preventDefault()
+      if (disabled) {
+        return
+      }
 
-        if (disabledRef.current) {
-          return
-        }
+      event.currentTarget.setPointerCapture?.(event.pointerId)
+      timer.beginHold()
+    },
+    onPointerLeave() {
+      timer.cancelHold()
+    },
+    onPointerUp(event) {
+      if (isInteractiveEvent(event)) {
+        return
+      }
 
-        event.currentTarget.setPointerCapture?.(event.pointerId)
-        timerRef.current.beginHold()
-      },
-      onPointerLeave() {
-        timerRef.current.cancelHold()
-      },
-      onPointerUp(event) {
-        if (isInteractiveEvent(event)) {
-          return
-        }
-
-        event.preventDefault()
-        event.currentTarget.releasePointerCapture?.(event.pointerId)
-        timerRef.current.releaseHold()
-      },
-    }),
-    [],
-  )
+      event.preventDefault()
+      event.currentTarget.releasePointerCapture?.(event.pointerId)
+      timer.releaseHold()
+    },
+  }
 }
 
 const interactiveSelector =

@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { useScanVideoBinding } from '../useScanVideoBinding'
 
@@ -6,31 +6,37 @@ describe('useScanVideoBinding', () => {
   it('cleans up the previous binding before attaching a replacement stream', () => {
     const firstStream = {} as MediaStream
     const replacementStream = {} as MediaStream
-    const video = document.createElement('video')
-    const play = vi.spyOn(video, 'play').mockResolvedValue(undefined)
-    const pause = vi.spyOn(video, 'pause').mockImplementation(() => undefined)
-    Object.defineProperty(video, 'srcObject', {
+    const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
+    const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
+    Object.defineProperty(HTMLMediaElement.prototype, 'srcObject', {
       configurable: true,
       value: null,
       writable: true,
     })
-    const { result, rerender, unmount } = renderHook(
-      ({ stream }) => useScanVideoBinding(stream, 'front'),
-      { initialProps: { stream: firstStream } },
-    )
+    const { rerender, unmount } = render(<VideoBindingHarness stream={firstStream} />)
+    const boundVideo = screen.getByTestId('camera-video') as HTMLVideoElement
 
-    act(() => result.current.setVideoRef(video))
-    expect(video.srcObject).toBe(firstStream)
+    expect(boundVideo.srcObject).toBe(firstStream)
 
-    rerender({ stream: replacementStream })
+    rerender(<VideoBindingHarness stream={replacementStream} />)
 
     expect(pause).toHaveBeenCalledOnce()
-    expect(video.srcObject).toBe(replacementStream)
+    expect(boundVideo.srcObject).toBe(replacementStream)
     expect(play).toHaveBeenCalledTimes(2)
 
     unmount()
 
     expect(pause).toHaveBeenCalledTimes(2)
-    expect(video.srcObject).toBeNull()
+    expect(boundVideo.srcObject).toBeNull()
   })
 })
+
+function VideoBindingHarness({ stream }: { stream: MediaStream }) {
+  const { videoRef } = useScanVideoBinding(stream, 'front')
+
+  return (
+    <video data-testid='camera-video' ref={videoRef}>
+      <track kind='captions' />
+    </video>
+  )
+}

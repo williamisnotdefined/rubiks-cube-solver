@@ -63,7 +63,7 @@ describe('useTimerScrambleHistory', () => {
     act(() => {
       result.current.handleNextScramble()
       result.current.handlePreviousScramble()
-      result.current.handleSolveComplete(1_000, 'ok')
+      result.current.handleSolveComplete(1_000, 'ok', 0)
     })
     await act(async () => result.current.handleCopyScramble())
 
@@ -118,7 +118,7 @@ describe('useTimerScrambleHistory', () => {
     expect(result.current.timerDisabled).toBe(true)
 
     await act(async () => result.current.handleCopyScramble())
-    act(() => result.current.handleSolveComplete(1_000, 'ok'))
+    act(() => result.current.handleSolveComplete(1_000, 'ok', 0))
 
     expect(hookMocks.copyToClipboard).not.toHaveBeenCalled()
     expect(activeSession()?.solves).toEqual([])
@@ -268,14 +268,13 @@ describe('useTimerScrambleHistory', () => {
       .mockReturnValueOnce(nextRequest.promise)
     const { result } = renderHook(() => useTimerScrambleHistory())
     await waitFor(() => expect(result.current.isScramblePending).toBe(false))
-    vi.spyOn(Date, 'now').mockReturnValue(10_000)
     vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue(
       '00000000-0000-4000-8000-000000000020',
     )
 
     act(() => {
       result.current.handleAttemptStart()
-      result.current.handleSolveComplete(1_500, 'plus2')
+      result.current.handleSolveComplete(1_500, 'plus2', 10_000)
     })
 
     const recordedSolve = activeSession()?.solves[0]
@@ -312,7 +311,7 @@ describe('useTimerScrambleHistory', () => {
       useTimerStore.getState().createSession('Concurrent session', '222')
       useTimerSettingsStore.getState().setSelectedEventId('222')
       result.current.handleNextScramble()
-      result.current.handleSolveComplete(1_000, 'ok')
+      result.current.handleSolveComplete(1_000, 'ok', 10_000)
     })
 
     const defaultSession = useTimerStore

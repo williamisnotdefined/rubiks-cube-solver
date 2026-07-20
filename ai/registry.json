@@ -114,6 +114,7 @@
       "canonicalPath": "ai/skills/api-boundary.md",
       "references": [
         "ai/rules/api-rules.md",
+        "ai/rules/frontend-rules.md",
         "ai/rules/testing-rules.md",
         "ai/architecture/api-boundary.md"
       ],
@@ -155,6 +156,7 @@
       "canonicalPath": "ai/skills/frontend-componentization.md",
       "references": [
         "ai/rules/frontend-component-rules.md",
+        "ai/rules/frontend-rules.md",
         "ai/rules/frontend-styling-rules.md",
         "ai/rules/frontend-quality-rules.md",
         "ai/architecture/web-architecture.md"
@@ -175,6 +177,7 @@
       "description": "Use when changing React state, hooks, stores, async workflow ownership, or visualization synchronization.",
       "canonicalPath": "ai/skills/frontend-state-management.md",
       "references": [
+        "ai/rules/frontend-rules.md",
         "ai/rules/frontend-state-rules.md",
         "ai/rules/frontend-quality-rules.md",
         "ai/architecture/frontend-visualization.md"
@@ -195,6 +198,7 @@
       "description": "Use when changing solve inputs, limits, validation, scanner review controls, or form submission behavior.",
       "canonicalPath": "ai/skills/frontend-form-validation.md",
       "references": [
+        "ai/rules/frontend-rules.md",
         "ai/rules/frontend-form-rules.md",
         "ai/rules/frontend-quality-rules.md",
         "ai/architecture/api-boundary.md"
@@ -215,6 +219,7 @@
       "description": "Use when changing Tailwind utilities, theme tokens, responsive layout, class composition, or visual treatment.",
       "canonicalPath": "ai/skills/frontend-styling.md",
       "references": [
+        "ai/rules/frontend-rules.md",
         "ai/rules/frontend-styling-rules.md",
         "ai/rules/frontend-quality-rules.md"
       ],
@@ -234,6 +239,7 @@
       "description": "Use when changing web requests, response validation, React Query hooks, mutations, or query keys.",
       "canonicalPath": "ai/skills/react-query-request-hooks.md",
       "references": [
+        "ai/rules/frontend-rules.md",
         "ai/rules/frontend-api-hook-rules.md",
         "ai/rules/api-rules.md",
         "ai/architecture/api-boundary.md"
@@ -254,6 +260,7 @@
       "description": "Use when changing web unit/component/API tests, coverage, Storybook, or Playwright E2E.",
       "canonicalPath": "ai/skills/frontend-testing.md",
       "references": [
+        "ai/rules/frontend-rules.md",
         "ai/rules/testing-rules.md",
         "ai/rules/frontend-quality-rules.md",
         "ai/architecture/web-architecture.md"
@@ -295,6 +302,7 @@
       "canonicalPath": "ai/skills/wca-data-boundary.md",
       "references": [
         "ai/rules/wca-data-rules.md",
+        "ai/rules/frontend-rules.md",
         "ai/rules/testing-rules.md",
         "ai/architecture/wca-data.md"
       ],

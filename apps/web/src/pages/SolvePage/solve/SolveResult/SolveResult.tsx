@@ -1,8 +1,8 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import type { SolveResult as ApiSolveResult } from '@api/solver/types'
 import { Loader3x3 } from '@components/Loader3x3'
 import { formatElapsedMs } from '@core/format/formatElapsedMs'
+import { lazy, Suspense, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { solveErrorDetail, solveErrorMessage } from '../solveMessages'
 
 const SolveDetailsModal = lazy(() =>
@@ -19,13 +19,15 @@ type SolveResultProps = {
 export function SolveResult({ result, error, solving, localValidationMessage }: SolveResultProps) {
   const { t } = useTranslation()
   const [detailsOpen, setDetailsOpen] = useState(false)
+  const [previousResult, setPreviousResult] = useState(result)
   const successResult = result?.status === 'success' ? result : undefined
   const failureResult = result !== undefined && !result.ok ? result : undefined
   const failureDetail = failureResult === undefined ? undefined : solveErrorDetail(failureResult, t)
 
-  useEffect(() => {
+  if (result !== previousResult) {
+    setPreviousResult(result)
     setDetailsOpen(false)
-  }, [result])
+  }
 
   return (
     <>

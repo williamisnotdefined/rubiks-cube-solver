@@ -1,52 +1,43 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useEffectEvent, useRef } from 'react'
 import type { TimerMachine } from '../useTimerMachine'
 
 export function useKeyboardTimer(timer: TimerMachine, disabled = false) {
-  const timerRef = useRef(timer)
-  const disabledRef = useRef(disabled)
-  timerRef.current = timer
-  disabledRef.current = disabled
+  const spaceDownRef = useRef(false)
+  const handleKeyDown = useEffectEvent((event: KeyboardEvent) => {
+    if (isEditableTarget(event.target) || event.repeat) {
+      return
+    }
+
+    if (timer.status === 'running') {
+      event.preventDefault()
+      timer.stopTimer()
+      return
+    }
+
+    if (disabled) {
+      return
+    }
+
+    if (event.code === 'Space') {
+      event.preventDefault()
+
+      if (!spaceDownRef.current) {
+        spaceDownRef.current = true
+        timer.beginHold()
+      }
+    }
+  })
+  const handleKeyUp = useEffectEvent((event: KeyboardEvent) => {
+    if (event.code !== 'Space' || !spaceDownRef.current) {
+      return
+    }
+
+    event.preventDefault()
+    spaceDownRef.current = false
+    timer.releaseHold()
+  })
 
   useEffect(() => {
-    let spaceDown = false
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (isEditableTarget(event.target) || event.repeat) {
-        return
-      }
-
-      const currentTimer = timerRef.current
-
-      if (currentTimer.status === 'running') {
-        event.preventDefault()
-        currentTimer.stopTimer()
-        return
-      }
-
-      if (disabledRef.current) {
-        return
-      }
-
-      if (event.code === 'Space') {
-        event.preventDefault()
-
-        if (!spaceDown) {
-          spaceDown = true
-          currentTimer.beginHold()
-        }
-      }
-    }
-
-    function handleKeyUp(event: KeyboardEvent) {
-      if (event.code !== 'Space' || !spaceDown) {
-        return
-      }
-
-      event.preventDefault()
-      spaceDown = false
-      timerRef.current.releaseHold()
-    }
-
     window.addEventListener('keydown', handleKeyDown)
     window.addEventListener('keyup', handleKeyUp)
 

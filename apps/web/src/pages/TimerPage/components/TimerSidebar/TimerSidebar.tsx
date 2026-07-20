@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import { AverageCards } from '@components/timer/AverageCards'
 import { SolveTable } from '@components/timer/SolveTable'
 import { timerStats } from '@core/timer/statistics'
@@ -11,21 +10,14 @@ export function TimerSidebar() {
   const deleteSolve = useTimerStore((state) => state.deleteSolve)
   const selectedEventId = useTimerSettingsStore((state) => state.selectedEventId)
   const showMilliseconds = useTimerSettingsStore((state) => state.showMilliseconds)
-  const solves = useMemo(
-    () => activeSession.solves.filter((solve) => solve.eventId === selectedEventId),
-    [activeSession.solves, selectedEventId],
-  )
-  const solveRows = useMemo(
-    () =>
-      solves
-        .slice()
-        .reverse()
-        .map((solve, index) => ({
-          ...solve,
-          index: solves.length - index,
-        })),
-    [solves],
-  )
+  const solves = activeSession.solves.filter((solve) => solve.eventId === selectedEventId)
+  const solveRows = solves
+    .slice()
+    .reverse()
+    .map((solve, index) => ({
+      ...solve,
+      index: solves.length - index,
+    }))
   const stats = timerStats(solves)
 
   return (
