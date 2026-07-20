@@ -191,18 +191,13 @@ describe('Square-1 notation', () => {
     expect(parseSquare1MoveToken(move)).toBeDefined();
   });
 
-  test.each([
-    'R',
-    '(7,0)',
-    '(-6,0)',
-    '(1.5,0)',
-    '(1)',
-    '(1,0,0)',
-    'invalid',
-  ])('rejects unsupported token %s', (token) => {
-    expect(isSquare1MoveToken(token)).toBe(false);
-    expect(() => parseSquare1Algorithm(token)).toThrow(Square1NotationError);
-  });
+  test.each(['R', '(7,0)', '(-6,0)', '(1.5,0)', '(1)', '(1,0,0)', 'invalid'])(
+    'rejects unsupported token %s',
+    (token) => {
+      expect(isSquare1MoveToken(token)).toBe(false);
+      expect(() => parseSquare1Algorithm(token)).toThrow(Square1NotationError);
+    },
+  );
 
   test('reports complete invalid coordinate tokens with internal whitespace', () => {
     try {
