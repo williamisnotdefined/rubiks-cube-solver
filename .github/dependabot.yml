@@ -17,6 +17,14 @@ updates:
         update-types:
           - minor
           - patch
+      babel-eslint-major:
+        patterns:
+          - "@babel/*"
+          - "eslint"
+          - "eslint-*"
+          - "@rolldown/plugin-babel"
+        update-types:
+          - major
 
   - package-ecosystem: cargo
     directory: /
