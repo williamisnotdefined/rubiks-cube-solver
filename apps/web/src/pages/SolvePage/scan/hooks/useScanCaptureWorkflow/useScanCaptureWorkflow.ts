@@ -64,7 +64,7 @@ export function useScanCaptureWorkflow({
   const [capturing, setCapturing] = useState(false)
   const [message, setMessage] = useState<string | undefined>()
   const cameraStream = camera.status === 'ready' ? camera.stream : undefined
-  const { setVideoRef, videoElementRef } = useScanVideoBinding(cameraStream, currentFaceIndex)
+  const { videoElementRef, videoRef } = useScanVideoBinding(cameraStream, currentFaceIndex)
   const confirmedFaces = scanFacesFromDrafts(drafts)
   const draftValidation = validateScanFaceDraft(
     confirmedFaces,
@@ -266,6 +266,6 @@ export function useScanCaptureWorkflow({
     setDrafts,
     setMessage,
     stickers,
-    videoRef: setVideoRef,
+    videoRef,
   }
 }

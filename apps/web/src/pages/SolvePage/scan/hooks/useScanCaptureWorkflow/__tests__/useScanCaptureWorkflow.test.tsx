@@ -146,7 +146,9 @@ describe('useScanCaptureWorkflow', () => {
         }),
     )
     const { result } = renderWorkflow()
-    act(() => result.current.videoRef(document.createElement('video')))
+    act(() => {
+      result.current.videoRef.current = document.createElement('video')
+    })
 
     let capturePromise: Promise<void>
     act(() => {

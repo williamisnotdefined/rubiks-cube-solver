@@ -6,12 +6,15 @@ import { defineConfig } from 'vitest/config'
 import { cubingWorkerSafeImports } from './build/cubingWorkerSafeImports'
 
 const wcaDataApiProxyTarget = process.env.WCA_DATA_API_PROXY_TARGET ?? 'https://speedcube.com.br'
+const compilerEnabled = process.env.VITEST_COVERAGE !== 'true'
 
 export default defineConfig({
   plugins: [
     cubingWorkerSafeImports(),
     react(),
-    babel({ presets: [reactCompilerPreset({ panicThreshold: 'none' })] }),
+    babel({
+      presets: compilerEnabled ? [reactCompilerPreset({ panicThreshold: 'none' })] : [],
+    }),
     tailwindcss(),
   ],
   server: {

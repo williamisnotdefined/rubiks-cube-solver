@@ -1,39 +1,52 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type MutableRefObject } from 'react'
 
 export function useScanVideoBinding(cameraStream: MediaStream | undefined, resetKey: unknown) {
   const videoElementRef = useRef<HTMLVideoElement | null>(null)
-  const [videoElementRevision, setVideoElementRevision] = useState(0)
-
-  function setVideoRef(video: HTMLVideoElement | null) {
-    if (videoElementRef.current === video) {
-      return
-    }
-
-    videoElementRef.current = video
-    setVideoElementRevision((revision) => revision + 1)
-  }
+  const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(null)
+  // The dialog portal can mount the video after this hook's first effect.
+  const [videoRef] = useState<MutableRefObject<HTMLVideoElement | null>>(
+    () => ({
+      get current() {
+        return videoElementRef.current
+      },
+      set current(video) {
+        if (videoElementRef.current !== video) {
+          videoElementRef.current = video
+          setVideoElement(video)
+        }
+      },
+    }),
+  )
 
   useEffect(() => {
-    const video = videoElementRef.current
-
-    if (cameraStream === undefined || video === null) {
+    if (cameraStream === undefined || videoElement === null) {
       return
     }
 
-    video.srcObject = cameraStream
-    void video.play().catch(() => undefined)
+    bindCameraStream(videoElement, cameraStream)
 
     return () => {
-      if (video.srcObject === cameraStream) {
-        try {
-          video.pause()
-        } catch {
-          // Some test environments do not implement media playback controls.
-        }
-        video.srcObject = null
-      }
+      clearCameraStream(videoElement, cameraStream)
     }
-  }, [cameraStream, resetKey, videoElementRevision])
+  }, [cameraStream, resetKey, videoElement])
 
-  return { setVideoRef, videoElementRef }
+  return { videoElementRef, videoRef }
+}
+
+function bindCameraStream(video: HTMLVideoElement, cameraStream: MediaStream) {
+  video.srcObject = cameraStream
+  void video.play().catch(() => undefined)
+}
+
+function clearCameraStream(video: HTMLVideoElement, cameraStream: MediaStream) {
+  if (video.srcObject !== cameraStream) {
+    return
+  }
+
+  try {
+    video.pause()
+  } catch {
+    // Some test environments do not implement media playback controls.
+  }
+  video.srcObject = null
 }

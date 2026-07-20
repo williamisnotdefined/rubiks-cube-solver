@@ -172,7 +172,7 @@ Dependencies point inward from pages to shared components, API, and SEO infrastr
 ## React Runtime
 
 - The web app uses React 19 with React Compiler configured by Vite's React compiler preset. The compiler handles client render memoization; source code stays declarative without manual memoization wrappers.
-- The Vite client build and Vitest's jsdom suite run through the compiler. SSG remains server-rendered through Vite's SSR pipeline.
+- The Vite client build and Vitest's jsdom suite run through the compiler. The coverage command measures source without compiler-generated caches so its thresholds remain meaningful. SSG remains server-rendered through Vite's SSR pipeline.
 
 ## Locale Contract
 
