@@ -16,10 +16,9 @@ export default [
         babelOptions: {
           babelrc: false,
           configFile: false,
-          plugins: [
-            ['@babel/plugin-syntax-typescript', { isTSX: true }],
-            '@babel/plugin-syntax-jsx',
-          ],
+          parserOpts: {
+            plugins: ['typescript', 'jsx'],
+          },
         },
         requireConfigFile: false,
       },
