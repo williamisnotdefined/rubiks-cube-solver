@@ -48,14 +48,19 @@ export function useTimerScrambleHistory(interactionLocked = false) {
   const [isScramblePending, setIsScramblePending] = useState(true)
   const [lastCompletedSolveId, setLastCompletedSolveId] = useState<string | null>(null)
   const [timerResetSignal, setTimerResetSignal] = useState(0)
+  const isMountedRef = useRef(false)
   const scrambleRequestIdRef = useRef(0)
   const requestedEventIdRef = useRef<string | null>(null)
   const attemptSnapshotRef = useRef<AttemptSnapshot | null>(null)
   const generatedScramble = scrambleHistory.items[scrambleHistory.index]!
 
   useEffect(
-    () => () => {
-      scrambleRequestIdRef.current += 1
+    () => {
+      isMountedRef.current = true
+
+      return () => {
+        isMountedRef.current = false
+      }
     },
     [],
   )
@@ -75,7 +80,7 @@ export function useTimerScrambleHistory(interactionLocked = false) {
 
     void generateHighQualityScrambleForEvent(selectedEventId)
       .then((scramble) => {
-        if (scrambleRequestIdRef.current !== requestId) {
+        if (!isMountedRef.current || scrambleRequestIdRef.current !== requestId) {
           return
         }
 
@@ -83,14 +88,14 @@ export function useTimerScrambleHistory(interactionLocked = false) {
         setScrambleLoadFailed(false)
       })
       .catch(() => {
-        if (scrambleRequestIdRef.current !== requestId) {
+        if (!isMountedRef.current || scrambleRequestIdRef.current !== requestId) {
           return
         }
 
         setScrambleLoadFailed(true)
       })
       .finally(() => {
-        if (scrambleRequestIdRef.current === requestId) {
+        if (isMountedRef.current && scrambleRequestIdRef.current === requestId) {
           setIsScramblePending(false)
         }
       })
@@ -210,7 +215,7 @@ export function useTimerScrambleHistory(interactionLocked = false) {
 
     void generateHighQualityScrambleForEvent(eventId)
       .then((scramble) => {
-        if (scrambleRequestIdRef.current !== requestId) {
+        if (!isMountedRef.current || scrambleRequestIdRef.current !== requestId) {
           return
         }
 
@@ -229,14 +234,14 @@ export function useTimerScrambleHistory(interactionLocked = false) {
         setScrambleLoadFailed(false)
       })
       .catch(() => {
-        if (scrambleRequestIdRef.current !== requestId) {
+        if (!isMountedRef.current || scrambleRequestIdRef.current !== requestId) {
           return
         }
 
         setScrambleLoadFailed(true)
       })
       .finally(() => {
-        if (scrambleRequestIdRef.current === requestId) {
+        if (isMountedRef.current && scrambleRequestIdRef.current === requestId) {
           setIsScramblePending(false)
         }
       })

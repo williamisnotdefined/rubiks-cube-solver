@@ -54,6 +54,19 @@ describe('TimerPage', () => {
     expect(screen.queryByText('Default Session')).not.toBeInTheDocument()
   })
 
+  it('clears menu focus when the timer page mounts', async () => {
+    const timerLink = document.createElement('a')
+    timerLink.href = '/timer/'
+    document.body.append(timerLink)
+    timerLink.focus()
+
+    renderTimerPage()
+
+    expect(document.activeElement).toBe(document.body)
+    await waitForScrambleReady()
+    timerLink.remove()
+  })
+
   it('ignores penalty changes before any solve exists', async () => {
     const user = userEvent.setup()
     renderTimerPage()
@@ -189,7 +202,7 @@ describe('TimerPage', () => {
     await user.click(within(timer).getByRole('button', { name: '+2' }))
 
     expect(within(screen.getByRole('table')).getByText('+2')).toBeInTheDocument()
-    expect(document.activeElement).toBe(within(timer).getByRole('button', { name: '+2' }))
+    expect(document.activeElement).toBe(document.body)
 
     await user.click(within(timer).getByRole('button', { name: '+2' }))
 
@@ -327,6 +340,7 @@ describe('TimerPage', () => {
     await user.click(within(updatedSettingsDialog).getByRole('switch', { name: 'Milliseconds' }))
     await waitFor(() => expect(useTimerSettingsStore.getState().showMilliseconds).toBe(true))
     await user.click(within(updatedSettingsDialog).getByRole('button', { name: 'Close' }))
+    expect(document.activeElement).toBe(document.body)
     fireEvent.keyDown(window, { code: 'Space', key: ' ' })
     fireEvent.keyUp(window, { code: 'Space', key: ' ' })
     await waitFor(() => expect(screen.getByText('Inspection')).toBeInTheDocument())
@@ -417,6 +431,22 @@ describe('TimerPage', () => {
 
     fireEvent.keyDown(window, { code: 'KeyA', key: 'a' })
     await waitFor(() => expect(screen.getByRole('combobox', { name: 'Event' })).toBeEnabled())
+  })
+
+  it('clears event selection focus so Space starts the timer', async () => {
+    const user = userEvent.setup()
+    renderTimerPage()
+    await waitForScrambleReady()
+
+    await chooseSelectOption(user, 'Event', '2x2x2')
+    await waitForScrambleReady()
+
+    expect(document.activeElement).toBe(document.body)
+
+    fireEvent.keyDown(window, { code: 'Space', key: ' ' })
+    fireEvent.keyUp(window, { code: 'Space', key: ' ' })
+
+    await waitFor(() => expect(screen.getByText('Solving')).toBeInTheDocument())
   })
 })
 

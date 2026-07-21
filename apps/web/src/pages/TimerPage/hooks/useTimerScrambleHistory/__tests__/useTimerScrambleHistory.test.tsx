@@ -1,6 +1,7 @@
 import { scrambleEventById } from '@core/scramble/catalog'
 import type { GeneratedScramble } from '@core/scramble/types'
 import { act, renderHook, waitFor } from '@testing-library/react'
+import { StrictMode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useTimerSettingsStore } from '../../../timerSettingsStore'
 import { useTimerStore } from '../../../timerStore'
@@ -53,6 +54,20 @@ describe('useTimerScrambleHistory', () => {
     expect(result.current.generatedScramble).toEqual(scramble('222', "R U R'"))
     expect(result.current.scrambleLoadFailed).toBe(false)
     expect(result.current.timerDisabled).toBe(false)
+  })
+
+  it('keeps the initial scramble request valid through Strict Mode effect replay', async () => {
+    const request = deferred<GeneratedScramble>()
+    hookMocks.generateHighQualityScrambleForEvent.mockReturnValue(request.promise)
+
+    const { result } = renderHook(() => useTimerScrambleHistory(), { wrapper: StrictMode })
+
+    expect(hookMocks.generateHighQualityScrambleForEvent).toHaveBeenCalledTimes(1)
+
+    await resolveRequest(request, scramble('333', 'R U'))
+
+    await waitFor(() => expect(result.current.isScramblePending).toBe(false))
+    expect(result.current.generatedScramble).toEqual(scramble('333', 'R U'))
   })
 
   it('guards navigation, copying, and solve completion while the initial scramble is pending', async () => {

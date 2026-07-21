@@ -90,6 +90,7 @@ Focused requirements for accessibility, performance, security, resilience, and d
 
 - Interactive controls MUST have an accessible name, keyboard operation, visible focus, and correct native element or shared primitive semantics.
 - Dialogs and sheets MUST preserve focus trapping, Escape handling, focus return, and labelled title/description behavior through existing primitives.
+- When the timer page becomes interactive or a timer-page action completes, focus MUST return to the document body so its global keyboard controls remain available. This includes route navigation, event selection, and settings-dialog closure; controls remain focusable while users actively operate them.
 - Dynamic errors and completion states SHOULD use an appropriate live/status region without repeatedly announcing scanner frame updates.
 - Motion MUST respect reduced-motion preferences; color MUST NOT be the only signal for scan, validation, timer, or solver status.
 
