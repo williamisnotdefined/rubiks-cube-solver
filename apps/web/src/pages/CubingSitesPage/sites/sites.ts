@@ -17,6 +17,14 @@ export type CubingSite = {
 
 export const cubingSites: readonly CubingSite[] = [
   {
+    category: 'solutions',
+    host: 'cubovelocidade.com.br',
+    id: 'cubo-velocidade',
+    imagePath: '/sites/cubo-velocidade.png',
+    name: 'Cubo Velocidade',
+    url: 'https://cubovelocidade.com.br/',
+  },
+  {
     category: 'competitions',
     host: 'worldcubeassociation.org',
     id: 'world-cube-association',
@@ -79,14 +87,6 @@ export const cubingSites: readonly CubingSite[] = [
     imagePath: '/sites/cubedesk.png',
     name: 'CubeDesk',
     url: 'https://www.cubedesk.io/home',
-  },
-  {
-    category: 'solutions',
-    host: 'cubovelocidade.com.br',
-    id: 'cubo-velocidade',
-    imagePath: '/sites/cubo-velocidade.png',
-    name: 'Cubo Velocidade',
-    url: 'https://cubovelocidade.com.br/',
   },
   {
     category: 'algorithms',
