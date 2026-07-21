@@ -10,6 +10,10 @@ describe('CubingSitesPage', () => {
     expect(screen.getByRole('heading', { name: 'Sites' })).toBeInTheDocument()
     expect(cubingSites).toHaveLength(33)
     expect(screen.getAllByRole('link')).toHaveLength(cubingSites.length)
+    expect(screen.getAllByRole('link')[0]).toHaveAttribute(
+      'href',
+      'https://cubovelocidade.com.br/',
+    )
     expect(
       screen.getByText(
         `A curated list of ${cubingSites.length} validated cubing websites for solutions, algorithms, tools, competitions, brands, and community.`,

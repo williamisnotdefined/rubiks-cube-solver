@@ -302,6 +302,7 @@ const notationGuides: NotationGuideSummary[] = [
 ]
 
 const cubingSiteItems: SeoItem[] = [
+  { name: 'Cubo Velocidade', path: 'https://cubovelocidade.com.br/' },
   { name: 'World Cube Association', path: 'https://www.worldcubeassociation.org/' },
   { name: 'csTimer', path: 'https://cstimer.net/' },
   { name: 'J Perm', path: 'https://jperm.net/' },
@@ -310,7 +311,6 @@ const cubingSiteItems: SeoItem[] = [
   { name: 'alg.cubing.net', path: 'https://alg.cubing.net/' },
   { name: 'CubeSkills', path: 'https://www.cubeskills.com/' },
   { name: 'CubeDesk', path: 'https://www.cubedesk.io/home' },
-  { name: 'Cubo Velocidade', path: 'https://cubovelocidade.com.br/' },
   { name: 'SpeedCubeDB', path: 'https://speedcubedb.com/' },
   { name: 'CubingApp', path: 'https://cubingapp.com/' },
   { name: 'Cubing.net', path: 'https://www.cubing.net/' },

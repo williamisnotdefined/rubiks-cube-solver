@@ -59,8 +59,8 @@ describe('SEO route metadata', () => {
       cubingSites.map((site) => ({ name: site.name, path: site.url })),
     )
     expect(metadata.itemList?.[0]).toEqual({
-      name: 'World Cube Association',
-      path: 'https://www.worldcubeassociation.org/',
+      name: 'Cubo Velocidade',
+      path: 'https://cubovelocidade.com.br/',
     })
     expect(metadata.noindex).toBe(false)
   })
