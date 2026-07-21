@@ -27,6 +27,12 @@ Dependencies point inward from pages to shared components, API, and SEO infrastr
 - The web app uses React 19 with React Compiler configured by Vite's React compiler preset. The compiler handles client render memoization; source code stays declarative without manual memoization wrappers.
 - The Vite client build and Vitest's jsdom suite run through the compiler. The coverage command measures source without compiler-generated caches so its thresholds remain meaningful. SSG remains server-rendered through Vite's SSR pipeline.
 
+## Timer Keyboard Interaction
+
+- The timer page owns its global keyboard workflow: Space begins an idle attempt and a non-editable key stops a running attempt.
+- After the timer route becomes interactive and after timer controls complete, focus returns to the document body. Navigation links, event selectors, and closed settings dialogs must not retain focus and intercept timing keys.
+- This reset does not replace native control semantics: a control remains focusable while a user is actively operating it, and modal focus trapping remains intact.
+
 ## Locale Contract
 
 - `en-US` is canonical and has no URL prefix. The other supported locales are `es`, `pt-BR`, `it`, `de`, `fr`, `ru`, `zh`, and `ja`.

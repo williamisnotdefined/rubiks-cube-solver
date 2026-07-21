@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from '@components/Select'
 import { scrambleEvents } from '@core/scramble/catalog'
+import { clearTimerPageFocus } from '../../clearTimerPageFocus'
 import { useTimerSettingsStore } from '../../timerSettingsStore'
 
 type TimerEventSelectProps = {
@@ -37,7 +38,12 @@ export function TimerEventSelect({ disabled = false }: TimerEventSelectProps) {
       >
         <SelectValue />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent
+        onCloseAutoFocus={(event) => {
+          event.preventDefault()
+          clearTimerPageFocus()
+        }}
+      >
         {groups.map((group) => (
           <SelectGroup key={group}>
             <SelectLabel>{group}</SelectLabel>

@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from '@components/Dialog'
 import { Switch } from '@components/Switch'
+import { clearTimerPageFocus } from '../../clearTimerPageFocus'
 import { useTimerSettingsStore } from '../../timerSettingsStore'
 
 export function TimerSettingsPanel() {
@@ -29,6 +30,10 @@ export function TimerSettingsPanel() {
         className='left-1/2 top-1/2 w-[calc(100vw-1.5rem)] max-w-md -translate-x-1/2 -translate-y-1/2 border bg-card p-4 text-left text-card-foreground shadow-lg sm:w-[calc(100vw-3rem)] sm:p-5'
         overlayClassName='backdrop-blur-sm'
         overlayLabel={t('common.close')}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault()
+          clearTimerPageFocus()
+        }}
         onInteractOutside={(event) => event.preventDefault()}
       >
         <div className='flex items-center justify-between gap-4'>

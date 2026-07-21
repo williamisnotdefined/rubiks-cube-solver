@@ -37,6 +37,18 @@ test.describe('timer flow', () => {
     await expect(page.getByRole('table')).toContainText('-')
   })
 
+  test('clears navigation and event selection focus before keyboard timing', async ({ page }) => {
+    await gotoHydratedApp(page, '/solve/')
+
+    await page.getByRole('link', { name: 'Timer' }).click()
+    await expectTimerReady(page)
+    await recordKeyboardSolve(page)
+
+    await chooseRadixSelectOption(page, 'Event', '2x2x2')
+    await expectTimerReady(page)
+    await recordKeyboardSolve(page)
+  })
+
   test('toggles latest solve penalty between +2, DNF, and no penalty', async ({ page }) => {
     await gotoHydratedApp(page, timerPath)
     await recordKeyboardSolve(page)
@@ -101,7 +113,7 @@ test.describe('timer flow', () => {
     await expect.poll(() => persistedTimerSettings(page)).toMatchObject({ showMilliseconds: true })
     await settingsDialog.getByRole('button', { name: 'Close' }).click()
     await expect(settingsDialog).toHaveCount(0)
-    await expect(page.getByRole('button', { name: 'Timer settings' })).toBeFocused()
+    await expect(page.locator('body')).toBeFocused()
     await expectTimerReady(page)
 
     const timer = page.getByRole('timer', { name: 'Speedsolve timer' })
@@ -190,8 +202,7 @@ async function holdAndReleaseTimer(page: Page) {
 
 async function expectTimerReady(page: Page) {
   const timer = page.getByRole('timer', { name: 'Speedsolve timer' })
-  await timer.focus()
-  await expect(timer).toBeFocused()
+  await expect(page.locator('body')).toBeFocused()
   await expect(timer).toHaveAttribute('aria-disabled', 'false', { timeout: 15_000 })
 }
 

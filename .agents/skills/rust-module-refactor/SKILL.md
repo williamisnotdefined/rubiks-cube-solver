@@ -117,6 +117,7 @@ Testing rules for this repository.
 - Keep `web` tests in `__tests__/` folders beside the source area they cover.
 - Use Testing Library for React component behavior and public accessibility queries.
 - Use Playwright accessibility queries for E2E flows and shared E2E helpers for non-native controls such as Radix Select.
+- Timer keyboard regressions MUST cover navigation into the timer and closing timer controls that normally restore focus, then prove keyboard timing works without manually focusing the timer display.
 - Keep web API request and hook tests in the nearest API-domain `__tests__` directory, including the established root, client, and domain-level locations; use shared helpers under `apps/web/src/test`.
 - Keep `apps/web/src/core` tests under `apps/web/src/core/<category>/__tests__/<name>.test.ts`.
 - Keep global `web` coverage thresholds at 90% for statements, branches, functions, and lines.
