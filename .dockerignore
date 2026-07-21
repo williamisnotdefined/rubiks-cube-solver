@@ -3,6 +3,7 @@
 .pytest_cache
 .venv
 node_modules
+**/node_modules
 target
 
 coverage
