@@ -125,6 +125,7 @@ export default defineConfig({
       include: [
         'src/App/**/*.{ts,tsx}',
         'src/api/**/*.{ts,tsx}',
+        'src/analytics/**/*.{ts,tsx}',
         'src/components/**/*.{ts,tsx}',
         'src/core/**/*.{ts,tsx}',
         'src/i18n/**/*.{ts,tsx}',

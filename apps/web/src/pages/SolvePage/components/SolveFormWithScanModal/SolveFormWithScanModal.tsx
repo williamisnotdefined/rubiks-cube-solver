@@ -1,4 +1,5 @@
 import { Button } from '@components/Button'
+import { trackScanOpened } from '@src/analytics/analytics'
 import { Camera } from 'lucide-react'
 import { lazy, Suspense, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -52,7 +53,10 @@ export function SolveFormWithScanModal({
             title={scanAvailable ? undefined : t('solve.form.scanUnavailableForPuzzle')}
             type='button'
             variant='outline'
-            onClick={() => setScanModalOpen(true)}
+            onClick={() => {
+              trackScanOpened(solveFormProps.selectedPuzzleSlug)
+              setScanModalOpen(true)
+            }}
           >
             <Camera aria-hidden='true' />
           </Button>

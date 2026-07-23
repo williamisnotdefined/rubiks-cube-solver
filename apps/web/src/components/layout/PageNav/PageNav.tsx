@@ -21,6 +21,7 @@ import {
   BookOpen,
   ChevronsUpDown,
   Clock3,
+  Cookie,
   Database,
   ExternalLink,
   GitFork,
@@ -57,6 +58,7 @@ const cuberBrasilUrl = 'https://www.cuberbrasil.com/'
 
 type PageNavProps = {
   activeRoute: PageNavRoute
+  onOpenCookiePreferences?: () => void
 }
 
 type NavItem = {
@@ -80,7 +82,7 @@ type NavGroup = {
 type DeferredNavigation = () => void
 type MobileNavigationHandler = (navigation: DeferredNavigation) => void
 
-export function PageNav({ activeRoute }: PageNavProps) {
+export function PageNav({ activeRoute, onOpenCookiePreferences }: PageNavProps) {
   const { t } = useTranslation()
   const location = useLocation()
   const locale = localeFromPathname(location.pathname)
@@ -133,13 +135,19 @@ export function PageNav({ activeRoute }: PageNavProps) {
             activeRoute={activeRoute}
             locale={locale}
             mobile
+            onOpenCookiePreferences={onOpenCookiePreferences}
             pagePath={pagePath}
             onNavigate={closeThenNavigate}
           />
         </SheetContent>
       </Sheet>
       <aside className='hidden h-dvh w-64 shrink-0 border-e bg-sidebar text-sidebar-foreground md:flex'>
-        <NavContent activeRoute={activeRoute} locale={locale} pagePath={pagePath} />
+        <NavContent
+          activeRoute={activeRoute}
+          locale={locale}
+          onOpenCookiePreferences={onOpenCookiePreferences}
+          pagePath={pagePath}
+        />
       </aside>
     </>
   )
@@ -149,12 +157,14 @@ function NavContent({
   activeRoute,
   locale,
   mobile = false,
+  onOpenCookiePreferences,
   pagePath,
   onNavigate,
 }: {
   activeRoute: PageNavRoute
   locale: SeoLocale
   mobile?: boolean
+  onOpenCookiePreferences?: () => void
   pagePath: string
   onNavigate?: MobileNavigationHandler
 }) {
@@ -166,6 +176,19 @@ function NavContent({
   function setTheme(themePreference: ThemePreference) {
     setThemePreference(themePreference)
     applyThemePreference(themePreference)
+  }
+
+  function openCookiePreferences() {
+    if (onOpenCookiePreferences === undefined) {
+      return
+    }
+
+    if (onNavigate === undefined) {
+      onOpenCookiePreferences()
+      return
+    }
+
+    onNavigate(onOpenCookiePreferences)
   }
 
   return (
@@ -299,6 +322,10 @@ function NavContent({
             <GitFork aria-hidden='true' className='size-4' />
             <span>{t('navigation.github')}</span>
           </a>
+        </Button>
+        <Button className='w-full justify-start gap-2' type='button' variant='ghost' onClick={openCookiePreferences}>
+          <Cookie aria-hidden='true' className='size-4' />
+          <span>{t('analytics.consent.manage')}</span>
         </Button>
       </div>
     </div>

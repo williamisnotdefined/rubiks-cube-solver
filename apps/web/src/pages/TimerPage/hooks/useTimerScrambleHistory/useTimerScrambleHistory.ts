@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCopyToClipboard } from 'usehooks-ts'
 import { useToast } from '@core/toast/toastStore'
+import { trackTimerSolveRecorded } from '@src/analytics/analytics'
 import { scrambleEventById } from '@core/scramble/catalog'
 import { generateHighQualityScrambleForEvent } from '@core/scramble/highQuality'
 import { finalTimeMs } from '@core/timer/penalties'
@@ -146,6 +147,7 @@ export function useTimerScrambleHistory(interactionLocked = false) {
     }
 
     addSolve(solve, attempt.sessionId)
+    trackTimerSolveRecorded({ eventId: attempt.eventId, penalty })
     setLastCompletedSolveId(solve.id)
     queueNextScramble(attempt.eventId)
     setCopied(false)

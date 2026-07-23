@@ -7,6 +7,17 @@
     "notFoundBody": "请求的页面不可用。返回求解器继续。",
     "notFoundTitle": "页面未找到"
   },
+  "analytics": {
+    "consent": {
+      "accept": "接受分析",
+      "body": "允许 Google Analytics 帮助我们了解哪些页面和工具有用。分析功能只会在您同意后加载。",
+      "manage": "Cookie 偏好设置",
+      "preferencesBody": "您可以随时允许或停止 Google Analytics。在您同意前，我们不会加载分析功能。",
+      "preferencesTitle": "分析偏好设置",
+      "reject": "拒绝",
+      "title": "分析偏好设置"
+    }
+  },
   "channels": {
     "bannerAlt": "{{channel}} 频道横幅",
     "description": "精选 {{count}} 个 YouTube 频道，涵盖教程、速拧、评测、纪录和魔方文化。",

@@ -7,6 +7,17 @@
     "notFoundBody": "Die angeforderte Seite ist nicht verfügbar. Kehre zum Solver zurück, um fortzufahren.",
     "notFoundTitle": "Seite nicht gefunden"
   },
+  "analytics": {
+    "consent": {
+      "accept": "Analyse akzeptieren",
+      "body": "Erlauben Sie Google Analytics, damit wir verstehen, welche Seiten und Werkzeuge nützlich sind. Die Analyse wird erst nach Ihrer Zustimmung geladen.",
+      "manage": "Cookie-Einstellungen",
+      "preferencesBody": "Sie können Google Analytics jederzeit erlauben oder stoppen. Vor Ihrer Zustimmung laden wir keine Analyse.",
+      "preferencesTitle": "Analyse-Einstellungen",
+      "reject": "Ablehnen",
+      "title": "Analyse-Einstellungen"
+    }
+  },
   "channels": {
     "bannerAlt": "Banner des Kanals {{channel}}",
     "description": "Ein kuratiertes Raster mit {{count}} YouTube-Kanälen für Tutorials, Speedcubing, Reviews, Rekorde und Puzzle-Kultur.",

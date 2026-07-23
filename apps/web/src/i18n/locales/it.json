@@ -7,6 +7,17 @@
     "notFoundBody": "La pagina richiesta non è disponibile. Torna al solver per continuare.",
     "notFoundTitle": "Pagina non trovata"
   },
+  "analytics": {
+    "consent": {
+      "accept": "Accetta analisi",
+      "body": "Consenti a Google Analytics di aiutarci a capire quali pagine e strumenti sono utili. Le analisi vengono caricate solo dopo il consenso.",
+      "manage": "Preferenze cookie",
+      "preferencesBody": "Puoi consentire o interrompere Google Analytics in qualsiasi momento. Non carichiamo analisi prima del consenso.",
+      "preferencesTitle": "Preferenze analisi",
+      "reject": "Rifiuta",
+      "title": "Preferenze analisi"
+    }
+  },
   "channels": {
     "bannerAlt": "Banner del canale {{channel}}",
     "description": "Una griglia curata di {{count}} canali YouTube per tutorial, speedcubing, recensioni, record e cultura cuber.",

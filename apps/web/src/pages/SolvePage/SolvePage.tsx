@@ -90,7 +90,7 @@ export function SolvePage() {
   }
 
   function handleScanSessionSolveResult(solve: ApiSolveResult) {
-    solveFlow.showScanSolveResult(solve)
+    solveFlow.showScanSolveResult(solve, formState.selectedPuzzleSlug)
   }
 
   const limitFailureModal =

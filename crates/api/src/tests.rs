@@ -2411,13 +2411,13 @@ fn assert_security_headers(headers: &HeaderMap) {
         .to_str()
         .expect("content-security-policy should be valid");
     assert!(content_security_policy.contains(
-        "script-src 'self' 'nonce-speedcube-jsonld' 'wasm-unsafe-eval' https://static.cloudflareinsights.com"
+        "script-src 'self' 'nonce-speedcube-jsonld' 'wasm-unsafe-eval' https://static.cloudflareinsights.com https://www.googletagmanager.com"
     ));
     assert!(content_security_policy.contains(
-        "img-src 'self' data: blob: https://yt3.googleusercontent.com https://avatars.worldcubeassociation.org"
+        "img-src 'self' data: blob: https://yt3.googleusercontent.com https://avatars.worldcubeassociation.org https://www.googletagmanager.com https://www.google-analytics.com"
     ));
     assert!(content_security_policy.contains(
-        "connect-src 'self' http://127.0.0.1:* http://localhost:* https://cloudflareinsights.com"
+        "connect-src 'self' http://127.0.0.1:* http://localhost:* https://cloudflareinsights.com https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com"
     ));
     assert!(headers.get("permissions-policy").is_some());
 }

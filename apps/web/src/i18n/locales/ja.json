@@ -7,6 +7,17 @@
     "notFoundBody": "リクエストされたページは利用できません。ソルバーに戻って続行してください。",
     "notFoundTitle": "ページが見つかりません"
   },
+  "analytics": {
+    "consent": {
+      "accept": "分析を許可",
+      "body": "どのページやツールが役立つかを理解するため、Google Analytics の利用を許可してください。分析は同意後にのみ読み込まれます。",
+      "manage": "Cookie 設定",
+      "preferencesBody": "Google Analytics はいつでも許可または停止できます。同意前に分析を読み込むことはありません。",
+      "preferencesTitle": "分析設定",
+      "reject": "拒否",
+      "title": "分析設定"
+    }
+  },
   "channels": {
     "bannerAlt": "{{channel}} チャンネル バナー",
     "description": "チュートリアル、スピードキューブ、レビュー、記録、パズル文化のための {{count}} YouTube チャンネルの厳選されたグリッド。",

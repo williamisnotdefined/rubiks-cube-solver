@@ -32,6 +32,21 @@ describe('PageNav', () => {
     expect(timerLink).not.toHaveAttribute('aria-current')
   })
 
+  it('opens cookie preferences from below the GitHub link', async () => {
+    const user = userEvent.setup()
+    const onOpenCookiePreferences = vi.fn()
+    renderWithRouter(
+      <PageNav activeRoute='solve' onOpenCookiePreferences={onOpenCookiePreferences} />,
+    )
+
+    const githubLink = screen.getByRole('link', { name: 'Open project on GitHub' })
+    const cookieButton = screen.getByRole('button', { name: 'Cookie preferences' })
+
+    expect(githubLink.compareDocumentPosition(cookieButton)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    await user.click(cookieButton)
+    expect(onOpenCookiePreferences).toHaveBeenCalledOnce()
+  })
+
   it('marks timer as active and solve as inactive', () => {
     renderWithRouter(<PageNav activeRoute='timer' />, '/timer/')
 

@@ -2,6 +2,7 @@ import { useEffect, useEffectEvent, useRef, useState, type ReactNode, type RefOb
 import { useTranslation } from 'react-i18next'
 import { Button } from '@components/Button'
 import { VisualizationLoadLayer } from '@components/VisualizationLoadLayer'
+import { trackNotationVisualizerUsed } from '@src/analytics/analytics'
 import {
   isVisualizationRegistered,
   useVisualizationRegistration,
@@ -201,6 +202,7 @@ function NotationVisualizerDemo({ guide, visualization }: NotationVisualizerDemo
     }
 
     const actionLabel = notationActionLabel(action)
+    trackNotationVisualizerUsed({ guideId: guide.id, puzzleSlug: guide.puzzle })
     setRunningAction(actionLabel)
     setStatus({ key: 'running', move: actionLabel })
     setPendingAction(action)
