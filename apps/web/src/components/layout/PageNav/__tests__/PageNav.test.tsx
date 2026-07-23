@@ -214,6 +214,23 @@ describe('PageNav', () => {
       expect(screen.getByTestId('location')).toHaveTextContent('/es/solve/?mode=guided#cube')
     })
     expect(window.localStorage.getItem(languageStorageKey)).toBe('es')
+
+    await user.click(screen.getByRole('button', { name: 'Idioma' }))
+    expect(screen.getByRole('menuitemradio', { name: 'Español (España)' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    )
+
+    await user.click(screen.getByRole('menuitemradio', { name: 'Italiano (Italia)' }))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('location')).toHaveTextContent('/it/solve/?mode=guided#cube')
+    })
+    await user.click(screen.getByRole('button', { name: 'Lingua' }))
+    expect(screen.getByRole('menuitemradio', { name: 'Italiano (Italia)' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    )
   })
 
   it('returns to automatic browser language detection', async () => {

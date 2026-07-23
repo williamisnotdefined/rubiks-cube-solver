@@ -69,7 +69,7 @@ export function LanguageSelector({ locale, pagePath, onNavigate }: LanguageSelec
   const automaticLabel = t('navigation.languageAutomatic', {
     language: languageOptions[automaticLanguage].label,
   })
-  const selectedPreference = storedLanguagePreference() ?? automaticLanguageValue
+  const selectedPreference = storedLanguagePreference() === undefined ? automaticLanguageValue : locale
 
   function selectLanguage(value: string) {
     if (onNavigate === undefined) {
