@@ -464,7 +464,7 @@ async function chooseSelectOption(user: TestUser, label: string, optionName: str
 }
 
 async function waitForScrambleReady() {
-  await waitFor(() => expect(screen.queryByText('Generating scramble...')).not.toBeInTheDocument())
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Copy scramble' })).toBeEnabled())
 }
 
 function solve(id: string, eventId: string, scramble: string, endedAt: number): TimerSolve {

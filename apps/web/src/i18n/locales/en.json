@@ -7,6 +7,17 @@
     "notFoundBody": "The page you requested is not available. Go back to the solver to continue.",
     "notFoundTitle": "Page not found"
   },
+  "analytics": {
+    "consent": {
+      "accept": "Accept analytics",
+      "body": "Allow Google Analytics to help us understand which pages and tools are useful. Analytics loads only after you accept.",
+      "manage": "Cookie preferences",
+      "preferencesBody": "You can allow or stop Google Analytics at any time. We do not load analytics before you accept.",
+      "preferencesTitle": "Analytics preferences",
+      "reject": "Reject",
+      "title": "Analytics preferences"
+    }
+  },
   "channels": {
     "bannerAlt": "{{channel}} channel banner",
     "description": "A curated grid of {{count}} YouTube channels for tutorials, speedcubing, reviews, records, and puzzle culture.",

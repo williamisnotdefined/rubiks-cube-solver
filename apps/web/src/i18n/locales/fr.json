@@ -7,6 +7,17 @@
     "notFoundBody": "La page demandée n'est pas disponible. Retournez au solveur pour continuer.",
     "notFoundTitle": "Page introuvable"
   },
+  "analytics": {
+    "consent": {
+      "accept": "Accepter les analyses",
+      "body": "Autorisez Google Analytics à nous aider à comprendre quelles pages et quels outils sont utiles. Les analyses ne sont chargées qu'après votre accord.",
+      "manage": "Préférences des cookies",
+      "preferencesBody": "Vous pouvez autoriser ou arrêter Google Analytics à tout moment. Nous ne chargeons pas les analyses avant votre accord.",
+      "preferencesTitle": "Préférences des analyses",
+      "reject": "Refuser",
+      "title": "Préférences des analyses"
+    }
+  },
   "channels": {
     "bannerAlt": "Bannière de la chaîne {{channel}}",
     "description": "Une grille sélectionnée de {{count}} chaînes YouTube pour les tutoriels, le speedcubing, les avis, les records et la culture des puzzles.",

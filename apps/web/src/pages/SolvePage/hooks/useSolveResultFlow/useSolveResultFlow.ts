@@ -1,5 +1,6 @@
 import { useSolvePuzzleNotation } from '@api/solver'
 import type { SolveResult as ApiSolveResult } from '@api/solver/types'
+import { trackSolverResult } from '@src/analytics/analytics'
 import { waitForPaint } from '@core/timing/waitForPaint'
 import { useState } from 'react'
 import { isNoSolutionLimitFailure } from '../../solve/noSolutionLimits'
@@ -55,9 +56,11 @@ export function useSolveResultFlow() {
       })
       void solvePromise.catch(() => undefined)
       await waitForPaint()
-      await solvePromise
+      const result = await solvePromise
+      trackSolverResult({ puzzleSlug, source: 'notation', status: result.status })
     } catch {
       // React Query owns the error state rendered by SolveResult.
+      trackSolverResult({ puzzleSlug, source: 'notation', status: 'transport_error' })
     }
   }
 
@@ -68,11 +71,12 @@ export function useSolveResultFlow() {
     setDismissedLimitFailureResult(undefined)
   }
 
-  function showScanSolveResult(solve: ApiSolveResult) {
+  function showScanSolveResult(solve: ApiSolveResult, puzzleSlug: string) {
     setActiveSolveSource('scan')
     solveMutation.reset()
     setDismissedLimitFailureResult(undefined)
     setScanSessionSolveResult(solve)
+    trackSolverResult({ puzzleSlug, source: 'scan', status: solve.status })
   }
 
   function setLimitFailureModalDismissed(dismissed: boolean) {

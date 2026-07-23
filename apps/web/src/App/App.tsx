@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router'
 import { AppErrorBoundary } from '@components/AppErrorBoundary'
 import { AppShell } from '@components/layout/AppShell'
+import { AnalyticsConsent } from '@src/analytics/AnalyticsConsent'
 import { Seo } from '@src/seo/Seo'
 import {
   appRouteManifest,
@@ -73,75 +74,87 @@ function App({ initialSsg = false, routeComponents }: AppProps) {
   const location = useLocation()
   const [initialRouteReady, setInitialRouteReady] = useState(initialSsg)
   const [interactive, setInteractive] = useState(!initialSsg)
+  const [cookiePreferencesOpen, setCookiePreferencesOpen] = useState(false)
   const pagePath = stripLocalePrefix(location.pathname)
   const route = activeRouteFromPath(pagePath)
 
   return (
-    <AppShell activeRoute={route} initialRouteReady={initialRouteReady} interactive={interactive}>
-      <Seo />
-      <RouteTransitionStage>
-        {(displayedLocation, markReady) => (
-          <AppErrorBoundary
-            resetKeys={[displayedLocation.pathname]}
-            onError={() => {
-              markReady()
-              setInitialRouteReady(true)
-              setInteractive(true)
-            }}
-          >
-            <Suspense fallback={<RouteFallback />}>
-              <Routes location={displayedLocation}>
-                <Route path='/' element={<Navigate replace to='/solve/' />} />
-                <Route path='/notations' element={<Navigate replace to='/notations/3x3/' />} />
-                <Route path='/algoritmos/*' element={<LegacyAlgorithmsRedirect />} />
-                <Route path='/en/*' element={<LegacyEnglishRedirect />} />
-                {appRouteManifest.map((manifestRoute) => (
-                  <Route
-                    key={manifestRoute.path}
-                    path={manifestRoute.path}
-                    element={elementForRoute(manifestRoute.kind, setInteractive, routeComponents)}
-                  />
-                ))}
-                {prefixedSeoLocales.flatMap((locale) => {
-                  const prefix = localePrefix(locale)
+    <>
+      <AppShell
+        activeRoute={route}
+        initialRouteReady={initialRouteReady}
+        interactive={interactive}
+        onOpenCookiePreferences={() => setCookiePreferencesOpen(true)}
+      >
+        <Seo />
+        <RouteTransitionStage>
+          {(displayedLocation, markReady) => (
+            <AppErrorBoundary
+              resetKeys={[displayedLocation.pathname]}
+              onError={() => {
+                markReady()
+                setInitialRouteReady(true)
+                setInteractive(true)
+              }}
+            >
+              <Suspense fallback={<RouteFallback />}>
+                <Routes location={displayedLocation}>
+                  <Route path='/' element={<Navigate replace to='/solve/' />} />
+                  <Route path='/notations' element={<Navigate replace to='/notations/3x3/' />} />
+                  <Route path='/algoritmos/*' element={<LegacyAlgorithmsRedirect />} />
+                  <Route path='/en/*' element={<LegacyEnglishRedirect />} />
+                  {appRouteManifest.map((manifestRoute) => (
+                    <Route
+                      key={manifestRoute.path}
+                      path={manifestRoute.path}
+                      element={elementForRoute(manifestRoute.kind, setInteractive, routeComponents)}
+                    />
+                  ))}
+                  {prefixedSeoLocales.flatMap((locale) => {
+                    const prefix = localePrefix(locale)
 
-                  return [
-                    <Route
-                      key={`${prefix}-root`}
-                      path={`/${prefix}`}
-                      element={<Navigate replace to={`/${prefix}/solve/`} />}
-                    />,
-                    <Route
-                      key={`${prefix}-notations`}
-                      path={`/${prefix}/notations`}
-                      element={<Navigate replace to={`/${prefix}/notations/3x3/`} />}
-                    />,
-                    <Route
-                      key={`${prefix}-legacy-algorithms`}
-                      path={`/${prefix}/algoritmos/*`}
-                      element={<LegacyAlgorithmsRedirect />}
-                    />,
-                    ...appRouteManifest.map((manifestRoute) => (
+                    return [
                       <Route
-                        key={`${prefix}-${manifestRoute.path}`}
-                        path={`/${prefix}${manifestRoute.path}`}
-                        element={elementForRoute(
-                          manifestRoute.kind,
-                          setInteractive,
-                          routeComponents,
-                        )}
-                      />
-                    )),
-                  ]
-                })}
-                <Route path='*' element={<NotFoundPage />} />
-              </Routes>
-              <RouteReady onInitialReady={setInitialRouteReady} onReady={markReady} />
-            </Suspense>
-          </AppErrorBoundary>
-        )}
-      </RouteTransitionStage>
-    </AppShell>
+                        key={`${prefix}-root`}
+                        path={`/${prefix}`}
+                        element={<Navigate replace to={`/${prefix}/solve/`} />}
+                      />,
+                      <Route
+                        key={`${prefix}-notations`}
+                        path={`/${prefix}/notations`}
+                        element={<Navigate replace to={`/${prefix}/notations/3x3/`} />}
+                      />,
+                      <Route
+                        key={`${prefix}-legacy-algorithms`}
+                        path={`/${prefix}/algoritmos/*`}
+                        element={<LegacyAlgorithmsRedirect />}
+                      />,
+                      ...appRouteManifest.map((manifestRoute) => (
+                        <Route
+                          key={`${prefix}-${manifestRoute.path}`}
+                          path={`/${prefix}${manifestRoute.path}`}
+                          element={elementForRoute(
+                            manifestRoute.kind,
+                            setInteractive,
+                            routeComponents,
+                          )}
+                        />
+                      )),
+                    ]
+                  })}
+                  <Route path='*' element={<NotFoundPage />} />
+                </Routes>
+                <RouteReady onInitialReady={setInitialRouteReady} onReady={markReady} />
+              </Suspense>
+            </AppErrorBoundary>
+          )}
+        </RouteTransitionStage>
+      </AppShell>
+      <AnalyticsConsent
+        preferencesOpen={cookiePreferencesOpen}
+        onPreferencesOpenChange={setCookiePreferencesOpen}
+      />
+    </>
   )
 }
 

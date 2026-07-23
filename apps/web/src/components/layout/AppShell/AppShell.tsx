@@ -7,6 +7,7 @@ type AppShellProps = {
   children: ReactNode
   initialRouteReady?: boolean
   interactive?: boolean
+  onOpenCookiePreferences?: () => void
 }
 
 export function AppShell({
@@ -14,6 +15,7 @@ export function AppShell({
   children,
   initialRouteReady = true,
   interactive = true,
+  onOpenCookiePreferences,
 }: AppShellProps) {
   useThemePreferenceSync()
 
@@ -25,7 +27,7 @@ export function AppShell({
       data-initial-route-ready={initialRouteReady}
       inert={interactive ? undefined : true}
     >
-      <PageNav activeRoute={activeRoute} />
+      <PageNav activeRoute={activeRoute} onOpenCookiePreferences={onOpenCookiePreferences} />
       <div
         className='relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden'
         data-app-content='true'
