@@ -10,7 +10,7 @@ describe('loadEnv', () => {
       WCA_DATA_PUBLIC_BASE_URL: 'http://speedcube.com.br/api',
       WCA_DATA_SYNC_CRON: '30 4 * * *',
       WCA_DATA_SYNC_ENABLED: true,
-      WCA_DATA_SYNC_JOB_EXPIRE_SECONDS: 86_400,
+      WCA_DATA_SYNC_JOB_EXPIRE_SECONDS: 82_800,
       WCA_DATA_SYNC_TIMEZONE: 'UTC',
       WCA_DATA_WCA_EXPORT_METADATA_URL: 'https://www.worldcubeassociation.org/api/v0/export/public',
     })
@@ -31,6 +31,7 @@ describe('loadEnv', () => {
   it('validates the sync job expiry', () => {
     expect(loadEnv({ WCA_DATA_SYNC_JOB_EXPIRE_SECONDS: '7200' }).WCA_DATA_SYNC_JOB_EXPIRE_SECONDS).toBe(7200)
     expect(() => loadEnv({ WCA_DATA_SYNC_JOB_EXPIRE_SECONDS: '59' })).toThrow()
+    expect(() => loadEnv({ WCA_DATA_SYNC_JOB_EXPIRE_SECONDS: '86400' })).toThrow()
   })
 
   it('requires database URL for database operations', () => {

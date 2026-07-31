@@ -65,7 +65,7 @@ export async function startWcaDataWorker({
   logger = defaultLogger,
   syncCron,
   syncEnabled,
-  syncJobExpireSeconds = 24 * 60 * 60,
+  syncJobExpireSeconds = 23 * 60 * 60,
   syncWcaExport,
   syncTimezone,
 }: StartWcaDataWorkerDeps): Promise<WcaDataWorker> {

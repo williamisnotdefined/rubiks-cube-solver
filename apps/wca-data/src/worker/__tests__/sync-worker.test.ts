@@ -22,7 +22,7 @@ describe('startWcaDataWorker', () => {
       'work:wca-data.sync-export',
       'schedule:wca-data.sync-export:30 4 * * *',
     ])
-    expect(boss.queueOptions).toMatchObject({ policy: 'singleton', retryBackoff: true, retryDelay: 300, retryLimit: 3 })
+    expect(boss.queueOptions).toMatchObject({ expireInSeconds: 82_800, policy: 'singleton', retryBackoff: true, retryDelay: 300, retryLimit: 3 })
     expect(boss.scheduleOptions).toMatchObject({ key: syncWcaExportScheduleKey, retryLimit: 3, tz: 'UTC' })
     expect(boss.scheduledData).toEqual({ reason: 'schedule' })
 
