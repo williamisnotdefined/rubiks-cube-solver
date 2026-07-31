@@ -9,6 +9,7 @@ import type { CopyQueryPool } from '../modules/wca-data/persistence/postgres/pos
 import type { Queryable } from '../modules/wca-data/persistence/postgres/queryable.js'
 import { createWcaDataPgBoss } from './pg-boss.js'
 import { startWcaDataWorker, type WcaDataBoss, type WcaDataWorker, type WorkerLogger } from './sync-worker.js'
+import { PostgresWcaImportExecutionLock } from '../modules/wca-data/persistence/postgres/postgres-import-execution-lock.js'
 
 export type WcaDataWorkerDatabase = Queryable & CopyQueryPool & {
   end: () => Promise<void>
@@ -38,7 +39,9 @@ export async function startWcaDataWorkerRuntime({
     copyPool: database,
     db: database,
     exportClient,
+    importLock: new PostgresWcaImportExecutionLock(database),
     storageRootDir: env.WCA_DATA_STORAGE_DIR,
+    transactionPool: database,
   })
 
   try {
@@ -47,6 +50,7 @@ export async function startWcaDataWorkerRuntime({
       ...(logger === undefined ? {} : { logger }),
       syncCron: env.WCA_DATA_SYNC_CRON,
       syncEnabled: env.WCA_DATA_SYNC_ENABLED,
+      syncJobExpireSeconds: env.WCA_DATA_SYNC_JOB_EXPIRE_SECONDS,
       syncTimezone: env.WCA_DATA_SYNC_TIMEZONE,
       syncWcaExport,
     })

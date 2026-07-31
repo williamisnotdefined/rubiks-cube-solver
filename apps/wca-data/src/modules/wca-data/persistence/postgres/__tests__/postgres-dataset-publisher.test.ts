@@ -5,6 +5,7 @@ import type { Queryable } from '../queryable.js'
 describe('PostgresDatasetPublisher', () => {
   it('marks the dataset active and retires the previous active dataset in one transaction', async () => {
     const calls: Array<{ params?: unknown[]; sql: string }> = []
+    let releases = 0
     const db: Queryable = {
       async query(sql, params) {
         calls.push({ params, sql })
@@ -12,7 +13,14 @@ describe('PostgresDatasetPublisher', () => {
       },
     }
 
-    await new PostgresDatasetPublisher(db).publishDataset({
+    await new PostgresDatasetPublisher(db, {
+      connect: async () => ({
+        ...db,
+        release: () => {
+          releases += 1
+        },
+      }),
+    }).publishDataset({
       datasetId: 'dataset-1',
       publishedAt: new Date('2026-06-30T12:00:00Z'),
     })
@@ -25,6 +33,7 @@ describe('PostgresDatasetPublisher', () => {
     expect(calls[2]?.sql).toContain("status = 'active'")
     expect(calls[2]?.params).toEqual(['dataset-1', '2026-06-30T12:00:00.000Z'])
     expect(calls.at(-1)?.sql).toBe('commit')
+    expect(releases).toBe(1)
   })
 
   it('rolls back when activation fails', async () => {

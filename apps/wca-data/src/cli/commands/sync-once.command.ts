@@ -13,6 +13,7 @@ import type { Clock } from '../../shared/time/clock.js'
 import { createFixtureSyncWcaExportService } from '../../modules/wca-data/fixtures/fixture-sync-service.js'
 import { createFixtureWcaExportClient, defaultFixtureWcaExportDir } from '../../modules/wca-data/fixtures/wca-export-fixture.js'
 import { createPostgresSyncWcaExportService } from '../../modules/wca-data/postgres-sync-service.js'
+import { PostgresWcaImportExecutionLock } from '../../modules/wca-data/persistence/postgres/postgres-import-execution-lock.js'
 import {
   type SyncWcaExportResult,
   type SyncWcaExportService,
@@ -164,12 +165,14 @@ async function executeSyncOnce(options: SyncOnceOptions, deps: SyncOnceCommandDe
       db: pool,
       exportClient: deps.exportClient ?? (options.sourceZipPath === null
         ? createWcaExportClient({ metadataUrl: databaseEnv.WCA_DATA_WCA_EXPORT_METADATA_URL })
-        : createLocalWcaExportZipClient({ sourceZipPath: options.sourceZipPath, zipReader: zipReader ?? new YauzlZipReader() })),
+       : createLocalWcaExportZipClient({ sourceZipPath: options.sourceZipPath, zipReader: zipReader ?? new YauzlZipReader() })),
+      importLock: new PostgresWcaImportExecutionLock(pool),
       ...(options.sourceZipPath === null ? {} : { sourceFiles: createLocalZipWcaSourceFilesService({
         extract: createExtractWcaExportService({ storageRootDir, zipReader: zipReader ?? new YauzlZipReader() }),
         sourceZipPath: options.sourceZipPath,
       }) }),
       storageRootDir,
+      transactionPool: pool,
     })
 
     return await service.execute({ force: options.force, reason: 'manual' })

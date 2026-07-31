@@ -31,6 +31,7 @@ export type WcaDataBoss = {
   schedule: (name: string, cron: string, data: SyncWcaExportJobData, options: Record<string, unknown>) => Promise<void>
   start: () => Promise<unknown>
   stop: (options?: { graceful?: boolean; timeout?: number }) => Promise<void>
+  updateQueue: (name: string, options: Record<string, unknown>) => Promise<void>
   work: <ReqData, ResData>(name: string, handler: (jobs: BossJob<ReqData>[]) => Promise<ResData>) => Promise<string>
 }
 
@@ -49,6 +50,7 @@ type StartWcaDataWorkerDeps = {
   logger?: WorkerLogger
   syncCron: string
   syncEnabled: boolean
+  syncJobExpireSeconds?: number
   syncWcaExport?: SyncWcaExportService
   syncTimezone: string
 }
@@ -63,17 +65,20 @@ export async function startWcaDataWorker({
   logger = defaultLogger,
   syncCron,
   syncEnabled,
+  syncJobExpireSeconds = 24 * 60 * 60,
   syncWcaExport,
   syncTimezone,
 }: StartWcaDataWorkerDeps): Promise<WcaDataWorker> {
   await boss.start()
-  await boss.createQueue(syncWcaExportJobName, {
-    expireInSeconds: 6 * 60 * 60,
+  const queueOptions = {
+    expireInSeconds: syncJobExpireSeconds,
     policy: 'singleton',
     retryBackoff: true,
     retryDelay: 5 * 60,
     retryLimit: 3,
-  })
+  }
+  await boss.createQueue(syncWcaExportJobName, queueOptions)
+  await boss.updateQueue(syncWcaExportJobName, queueOptions)
 
   const workId = await boss.work<SyncWcaExportJobData, SyncWcaExportJobResult>(syncWcaExportJobName, async (jobs) => {
     if (syncWcaExport === undefined) {

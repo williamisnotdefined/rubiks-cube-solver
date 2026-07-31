@@ -133,6 +133,7 @@ services:
       WCA_DATA_PUBLIC_BASE_URL: http://speedcube.com.br/api
       WCA_DATA_STORAGE_DIR: /var/lib/wca-data/storage
       WCA_DATA_SYNC_ENABLED: ${WCA_DATA_SYNC_ENABLED:-true}
+      WCA_DATA_SYNC_JOB_EXPIRE_SECONDS: ${WCA_DATA_SYNC_JOB_EXPIRE_SECONDS:-86400}
     volumes:
       - wca-data-storage:/var/lib/wca-data/storage
 

@@ -18,6 +18,7 @@ describe('startWcaDataWorker', () => {
     expect(boss.calls).toEqual([
       'start',
       'createQueue:wca-data.sync-export',
+      'updateQueue:wca-data.sync-export',
       'work:wca-data.sync-export',
       'schedule:wca-data.sync-export:30 4 * * *',
     ])
@@ -38,7 +39,7 @@ describe('startWcaDataWorker', () => {
 
     await startWcaDataWorker({ boss, logger, syncCron: '30 4 * * *', syncEnabled: false, syncTimezone: 'UTC' })
 
-    expect(boss.calls).toEqual(['start', 'createQueue:wca-data.sync-export', 'work:wca-data.sync-export'])
+    expect(boss.calls).toEqual(['start', 'createQueue:wca-data.sync-export', 'updateQueue:wca-data.sync-export', 'work:wca-data.sync-export'])
   })
 
   it('runs an injected sync service for received jobs', async () => {
@@ -109,6 +110,11 @@ class FakeBoss implements WcaDataBoss {
 
   async createQueue(name: string, options: unknown): Promise<void> {
     this.calls.push(`createQueue:${name}`)
+    this.queueOptions = options
+  }
+
+  async updateQueue(name: string, options: unknown): Promise<void> {
+    this.calls.push(`updateQueue:${name}`)
     this.queueOptions = options
   }
 

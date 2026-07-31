@@ -3,6 +3,7 @@ import { systemClock } from '../../shared/time/system-clock.js'
 import { YauzlZipReader } from '../../infra/archive/yauzl-zip-reader.js'
 import type { ZipReader } from '../../infra/archive/zip-reader.js'
 import type { WcaExportClient } from '../../infra/http/wca-export-client.js'
+import type { WcaImportExecutionLock } from './import/import-execution-lock.js'
 import { createCleanupImportArtifactsService } from './import/cleanup-import-artifacts.service.js'
 import { createDownloadWcaExportService } from './import/download-wca-export.service.js'
 import { createExtractWcaExportService } from './import/extract-wca-export.service.js'
@@ -16,6 +17,7 @@ import {
 import { createLocalWcaSyncCycleService } from './import/wca-sync-cycle.service.js'
 import { createPublishDatasetService } from './publish/publish-dataset.service.js'
 import { PostgresDatasetPublisher } from './persistence/postgres/postgres-dataset-publisher.js'
+import type { TransactionalQueryPool } from './persistence/postgres/postgres-dataset-publisher.js'
 import { PostgresDatasetRepository } from './persistence/postgres/postgres-dataset.repository.js'
 import { PostgresGeneralCanonicalTransformer } from './persistence/postgres/postgres-general-canonical-transformer.js'
 import { PostgresImportRunRepository } from './persistence/postgres/postgres-import-run.repository.js'
@@ -27,9 +29,11 @@ export type CreatePostgresSyncWcaExportServiceInput = {
   copyPool?: CopyQueryPool
   db: Queryable
   exportClient: WcaExportClient
+  importLock: WcaImportExecutionLock
   sourceFiles?: WcaSourceFilesService
   stagingLoader?: WcaStagingLoader
   storageRootDir: string
+  transactionPool?: TransactionalQueryPool
   zipReader?: ZipReader
 }
 
@@ -38,9 +42,11 @@ export function createPostgresSyncWcaExportService({
   copyPool,
   db,
   exportClient,
+  importLock,
   sourceFiles,
   stagingLoader,
   storageRootDir,
+  transactionPool,
   zipReader = new YauzlZipReader(),
 }: CreatePostgresSyncWcaExportServiceInput): SyncWcaExportService {
   const datasets = new PostgresDatasetRepository(db)
@@ -55,6 +61,7 @@ export function createPostgresSyncWcaExportService({
     clock,
     datasets,
     exportClient,
+    importLock,
     importRuns,
     syncCycle: createLocalWcaSyncCycleService({
       cleanupImportArtifacts: createCleanupImportArtifactsService({ storageRootDir }),
@@ -64,7 +71,7 @@ export function createPostgresSyncWcaExportService({
       loadStaging: createLoadWcaStagingService(resolvedStagingLoader),
       publishDataset: createPublishDatasetService({
         clock,
-        publisher: new PostgresDatasetPublisher(db),
+        publisher: new PostgresDatasetPublisher(db, transactionPool),
       }),
       runMode: 'postgres-import-publish',
       sourceFiles: resolvedSourceFiles,
