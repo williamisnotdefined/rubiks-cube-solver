@@ -38,6 +38,7 @@ describe('createPostgresSyncWcaExportService', () => {
       clock: { now: () => new Date('2026-06-30T12:00:00Z') },
       db,
       exportClient: { getPublicExportMetadata: async () => remoteMetadata() },
+      importLock: { executeExclusive: async (operation) => operation() },
       sourceFiles,
       stagingLoader,
       storageRootDir: tempDir,

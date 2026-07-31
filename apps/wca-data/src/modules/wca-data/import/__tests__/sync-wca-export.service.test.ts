@@ -57,6 +57,20 @@ describe('SyncWcaExportService', () => {
       status: 'new_export_detected',
     })
   })
+
+  it('does not create an import run when another import holds the execution lock', async () => {
+    const importRuns = new InMemoryImportRunRepository(() => 'run-1')
+    const service = createSyncWcaExportService({
+      clock: { now: () => new Date('2026-06-30T12:00:00Z') },
+      datasets: new InMemoryDatasetRepository(null),
+      exportClient: { getPublicExportMetadata: async () => remoteMetadata() },
+      importLock: { executeExclusive: async () => null },
+      importRuns,
+    })
+
+    await expect(service.execute({ force: false, reason: 'manual' })).resolves.toEqual({ status: 'already_running' })
+    expect(importRuns.records).toHaveLength(0)
+  })
 })
 
 function activeDataset(): DatasetMetadata {

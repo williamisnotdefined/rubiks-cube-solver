@@ -33,7 +33,9 @@ describe('startWcaDataWorkerRuntime', () => {
       copyPool: database,
       db: database,
       exportClient,
+      importLock: expect.any(Object),
       storageRootDir: '/tmp/wca-data-test-storage',
+      transactionPool: database,
     }))
     await expect(boss.runRegisteredHandler([{ data: { force: true, reason: 'manual' }, id: 'job-1' }])).resolves.toMatchObject({
       jobCount: 1,
@@ -86,6 +88,8 @@ class FakeBoss implements WcaDataBoss {
   async start(): Promise<void> {}
 
   async stop(): Promise<void> {}
+
+  async updateQueue(): Promise<void> {}
 
   async work<ReqData, ResData>(name: string, handler: (jobs: Array<{ data: ReqData; id: string }>) => Promise<ResData>): Promise<string> {
     expect(name).toBe(syncWcaExportJobName)

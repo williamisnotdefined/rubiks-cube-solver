@@ -110,6 +110,7 @@ npm run db:migrate -w @rubiks-cube-solver/wca-data
 | `WCA_DATA_DATABASE_SSL_MODE` | `disable` | Set to `require` when the database requires SSL. |
 | `WCA_DATA_PG_BOSS_SCHEMA` | `wca_jobs` | PostgreSQL schema used by `pg-boss`. |
 | `WCA_DATA_SYNC_ENABLED` | `true` | Enables scheduled worker jobs. Disable for first production rollout. |
+| `WCA_DATA_SYNC_JOB_EXPIRE_SECONDS` | `86400` | Maximum scheduled job duration before pg-boss retries it. |
 | `WCA_DATA_SYNC_CRON` | `30 4 * * *` | Worker schedule. |
 | `WCA_DATA_SYNC_TIMEZONE` | `UTC` | Worker schedule timezone. |
 | `WCA_DATA_WCA_EXPORT_METADATA_URL` | WCA public export endpoint | Metadata endpoint used by dry run and real sync. |
