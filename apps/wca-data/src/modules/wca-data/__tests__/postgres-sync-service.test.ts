@@ -34,6 +34,12 @@ describe('createPostgresSyncWcaExportService', () => {
         stagingTable: definition.stagingTable,
       })),
     }
+    const transactionPool = {
+      connect: async () => ({
+        ...db,
+        release: () => undefined,
+      }),
+    }
     const service = createPostgresSyncWcaExportService({
       clock: { now: () => new Date('2026-06-30T12:00:00Z') },
       db,
@@ -42,6 +48,7 @@ describe('createPostgresSyncWcaExportService', () => {
       sourceFiles,
       stagingLoader,
       storageRootDir: tempDir,
+      transactionPool,
     })
 
     const result = await service.execute({ force: true, reason: 'manual' })
@@ -86,6 +93,10 @@ function fakeDb(calls: Array<{ params?: unknown[]; sql: string }>): Queryable {
 
       if (query.includes('from wca_dataset_versions') && query.includes('where is_active = true')) {
         return { rows: [] }
+      }
+
+      if (query.includes('from wca_dataset_versions') && query.includes('for update')) {
+        return { rows: [{ id: state.datasetId }] }
       }
 
       if (query.includes('insert into wca_import_runs')) {

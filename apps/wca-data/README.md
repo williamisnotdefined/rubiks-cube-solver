@@ -20,7 +20,7 @@ This app is intentionally separate from the Rust solver API. The worker imports 
 - Do not run a real sync unless it is explicitly approved and the target database/storage are confirmed.
 - Use `--fixture` for local write tests.
 - Use `--dry-run` for export metadata checks.
-- Do not delete published real storage or dataset records automatically.
+- A successful production import keeps only the newly active dataset. Retired and failed datasets are removed after publication; rollback requires a backup or a fresh import.
 - Do not deploy, commit, push, or alter dependency directory permissions as part of routine local verification.
 - Do not run the production API without `WCA_DATA_DATABASE_URL`; production must never fall back to fixture data.
 
@@ -124,7 +124,7 @@ Temporary import artifacts live under:
 imports/<importRunId>/
 ```
 
-Cleanup is limited to `imports/<importRunId>`. Published dataset records are not deleted automatically.
+Cleanup removes `imports/<importRunId>`, inactive dataset versions, and staging rows after a successful publication. The active dataset is never removed by the import job.
 
 ## Worker
 
@@ -225,9 +225,7 @@ After a large manual import, public performance should be verified with the smok
 
 ## Rollback
 
-Rollback should prefer switching the active dataset record back to the previous known-good dataset.
-
-Do not remove published dataset records during rollback unless cleanup of a specific dataset is explicitly approved.
+Rollback requires restoring a database backup or publishing a fresh verified export. The scheduled retention policy removes retired datasets after each successful publication.
 
 ## Verification Gate
 

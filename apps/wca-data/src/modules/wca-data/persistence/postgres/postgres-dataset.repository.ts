@@ -87,13 +87,6 @@ export class PostgresDatasetRepository implements DatasetRepository, DatasetVers
   }
 
   async createBuilding(input: CreateBuildingDatasetInput): Promise<DatasetVersionRecord> {
-    await this.db.query(`
-      delete from wca_dataset_versions
-      where export_date = $1::timestamptz
-        and is_active = false
-        and status = 'failed'
-    `, [input.remote.exportDate])
-
     const result = await this.db.query<DatasetVersionRow>(`
       insert into wca_dataset_versions (
         id,
@@ -123,6 +116,17 @@ export class PostgresDatasetRepository implements DatasetRepository, DatasetVers
     ])
 
     return firstDatasetVersion(result.rows, 'Failed to create WCA dataset version')
+  }
+
+  async purgeInactiveDatasets(): Promise<string[]> {
+    const result = await this.db.query<{ id: string }>(`
+      delete from wca_dataset_versions
+      where is_active = false
+        and status in ('failed', 'retired')
+      returning id
+    `)
+
+    return result.rows.map((row) => row.id)
   }
 
   async updateStatus(input: UpdateDatasetStatusInput): Promise<DatasetVersionRecord> {

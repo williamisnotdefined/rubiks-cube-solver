@@ -51,6 +51,16 @@ export class InMemoryDatasetVersionRepository implements DatasetRepository, Data
     return record
   }
 
+  async purgeInactiveDatasets(): Promise<string[]> {
+    const deletedDatasetIds = this.records
+      .filter((record) => !record.isActive && (record.status === 'failed' || record.status === 'retired'))
+      .map((record) => record.id)
+    const retainedRecords = this.records.filter((record) => !deletedDatasetIds.includes(record.id))
+
+    this.records.splice(0, this.records.length, ...retainedRecords)
+    return deletedDatasetIds
+  }
+
   async updateStatus(input: UpdateDatasetStatusInput): Promise<DatasetVersionRecord> {
     const record = this.recordById(input.datasetId)
     record.status = input.status
@@ -62,6 +72,12 @@ export class InMemoryDatasetVersionRepository implements DatasetRepository, Data
     datasetId: string
     publishedAt: Date
   }): Promise<void> {
+    const record = this.recordById(input.datasetId)
+
+    if (record.status !== 'ready') {
+      throw new Error(`WCA dataset version is not ready: ${input.datasetId}`)
+    }
+
     for (const record of this.records) {
       if (record.isActive && record.id !== input.datasetId) {
         record.isActive = false
@@ -69,7 +85,6 @@ export class InMemoryDatasetVersionRepository implements DatasetRepository, Data
       }
     }
 
-    const record = this.recordById(input.datasetId)
     record.isActive = true
     record.publishedAt = input.publishedAt.toISOString()
     record.status = 'active'
