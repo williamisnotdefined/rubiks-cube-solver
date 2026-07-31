@@ -78,7 +78,12 @@ export async function startWcaDataWorker({
     retryLimit: 3,
   }
   await boss.createQueue(syncWcaExportJobName, queueOptions)
-  await boss.updateQueue(syncWcaExportJobName, queueOptions)
+  await boss.updateQueue(syncWcaExportJobName, {
+    expireInSeconds: syncJobExpireSeconds,
+    retryBackoff: true,
+    retryDelay: 5 * 60,
+    retryLimit: 3,
+  })
 
   const workId = await boss.work<SyncWcaExportJobData, SyncWcaExportJobResult>(syncWcaExportJobName, async (jobs) => {
     if (syncWcaExport === undefined) {
