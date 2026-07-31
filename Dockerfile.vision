@@ -13,7 +13,7 @@ WORKDIR /app
 COPY scanner/runtime/requirements.txt /tmp/scanner-runtime-requirements.txt
 RUN python -m pip install --no-cache-dir --upgrade pip \
   && python -m pip install --no-cache-dir -r /tmp/scanner-runtime-requirements.txt \
-  && python -m pip uninstall -y setuptools wheel
+  && python -m pip uninstall -y pip setuptools wheel
 
 COPY --chown=rubiks:rubiks scanner/__init__.py scanner/__init__.py
 COPY --chown=rubiks:rubiks scanner/contracts scanner/contracts
