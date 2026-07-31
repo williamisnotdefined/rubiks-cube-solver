@@ -22,7 +22,9 @@ describe('startWcaDataWorker', () => {
       'work:wca-data.sync-export',
       'schedule:wca-data.sync-export:30 4 * * *',
     ])
-    expect(boss.queueOptions).toMatchObject({ expireInSeconds: 82_800, policy: 'singleton', retryBackoff: true, retryDelay: 300, retryLimit: 3 })
+    expect(boss.createQueueOptions).toMatchObject({ expireInSeconds: 82_800, policy: 'singleton', retryBackoff: true, retryDelay: 300, retryLimit: 3 })
+    expect(boss.updateQueueOptions).toMatchObject({ expireInSeconds: 82_800, retryBackoff: true, retryDelay: 300, retryLimit: 3 })
+    expect(boss.updateQueueOptions).not.toHaveProperty('policy')
     expect(boss.scheduleOptions).toMatchObject({ key: syncWcaExportScheduleKey, retryLimit: 3, tz: 'UTC' })
     expect(boss.scheduledData).toEqual({ reason: 'schedule' })
 
@@ -102,20 +104,21 @@ describe('startWcaDataWorker', () => {
 
 class FakeBoss implements WcaDataBoss {
   calls: string[] = []
-  queueOptions: unknown
+  createQueueOptions: unknown
   scheduledData: unknown
   scheduleOptions: unknown
   stopOptions: unknown
+  updateQueueOptions: unknown
   private handler: ((jobs: Array<{ data: unknown; id: string }>) => Promise<unknown>) | undefined
 
   async createQueue(name: string, options: unknown): Promise<void> {
     this.calls.push(`createQueue:${name}`)
-    this.queueOptions = options
+    this.createQueueOptions = options
   }
 
   async updateQueue(name: string, options: unknown): Promise<void> {
     this.calls.push(`updateQueue:${name}`)
-    this.queueOptions = options
+    this.updateQueueOptions = options
   }
 
   async schedule(name: string, cron: string, data: unknown, options: unknown): Promise<void> {
