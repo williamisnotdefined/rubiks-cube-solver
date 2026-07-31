@@ -3,7 +3,7 @@ import { z } from 'zod'
 const logLevels = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] as const
 
 const portSchema = z.coerce.number().int().min(1).max(65535)
-const syncJobExpireSecondsSchema = z.coerce.number().int().min(60 * 60).max(7 * 24 * 60 * 60)
+const syncJobExpireSecondsSchema = z.coerce.number().int().min(60 * 60).max(23 * 60 * 60)
 const booleanEnvSchema = z.preprocess((value) => {
   if (typeof value !== 'string') {
     return value
@@ -37,7 +37,7 @@ export const wcaDataEnvSchema = z.object({
   WCA_DATA_STORAGE_DIR: z.string().min(1).default('storage/wca-data'),
   WCA_DATA_SYNC_CRON: z.string().min(1).default('30 4 * * *'),
   WCA_DATA_SYNC_ENABLED: booleanEnvSchema.default(true),
-  WCA_DATA_SYNC_JOB_EXPIRE_SECONDS: syncJobExpireSecondsSchema.default(24 * 60 * 60),
+  WCA_DATA_SYNC_JOB_EXPIRE_SECONDS: syncJobExpireSecondsSchema.default(23 * 60 * 60),
   WCA_DATA_SYNC_TIMEZONE: z.string().min(1).default('UTC'),
   WCA_DATA_WCA_EXPORT_METADATA_URL: z.string().url().default('https://www.worldcubeassociation.org/api/v0/export/public'),
 })
