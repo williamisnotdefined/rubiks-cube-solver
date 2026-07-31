@@ -5,6 +5,8 @@ import type { ZipReader } from '../../infra/archive/zip-reader.js'
 import type { WcaExportClient } from '../../infra/http/wca-export-client.js'
 import type { WcaImportExecutionLock } from './import/import-execution-lock.js'
 import { createCleanupImportArtifactsService } from './import/cleanup-import-artifacts.service.js'
+import { createCleanupInactiveDatasetsService } from './import/cleanup-inactive-datasets.service.js'
+import { createCleanupWcaStagingService } from './import/cleanup-wca-staging.service.js'
 import { createDownloadWcaExportService } from './import/download-wca-export.service.js'
 import { createExtractWcaExportService } from './import/extract-wca-export.service.js'
 import { createLoadWcaStagingService, type WcaStagingLoader } from './import/load-wca-staging.service.js'
@@ -22,6 +24,7 @@ import { PostgresDatasetRepository } from './persistence/postgres/postgres-datas
 import { PostgresGeneralCanonicalTransformer } from './persistence/postgres/postgres-general-canonical-transformer.js'
 import { PostgresImportRunRepository } from './persistence/postgres/postgres-import-run.repository.js'
 import { PostgresPoolCopyStagingLoader, type CopyQueryPool } from './persistence/postgres/postgres-copy-staging-loader.js'
+import { PostgresWcaStagingCleaner } from './persistence/postgres/postgres-wca-staging-cleaner.js'
 import type { Queryable } from './persistence/postgres/queryable.js'
 
 export type CreatePostgresSyncWcaExportServiceInput = {
@@ -33,7 +36,7 @@ export type CreatePostgresSyncWcaExportServiceInput = {
   sourceFiles?: WcaSourceFilesService
   stagingLoader?: WcaStagingLoader
   storageRootDir: string
-  transactionPool?: TransactionalQueryPool
+  transactionPool: TransactionalQueryPool
   zipReader?: ZipReader
 }
 
@@ -65,13 +68,15 @@ export function createPostgresSyncWcaExportService({
     importRuns,
     syncCycle: createLocalWcaSyncCycleService({
       cleanupImportArtifacts: createCleanupImportArtifactsService({ storageRootDir }),
+      cleanupInactiveDatasets: createCleanupInactiveDatasetsService({ datasetVersions: datasets }),
+      cleanupWcaStaging: createCleanupWcaStagingService({ cleaner: new PostgresWcaStagingCleaner(db) }),
       clock,
       datasetVersions: datasets,
       importRuns,
       loadStaging: createLoadWcaStagingService(resolvedStagingLoader),
       publishDataset: createPublishDatasetService({
         clock,
-        publisher: new PostgresDatasetPublisher(db, transactionPool),
+        publisher: new PostgresDatasetPublisher(transactionPool),
       }),
       runMode: 'postgres-import-publish',
       sourceFiles: resolvedSourceFiles,

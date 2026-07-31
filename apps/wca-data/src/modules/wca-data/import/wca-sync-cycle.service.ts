@@ -8,6 +8,8 @@ import type { GeneralCanonicalTransformCounts, TransformGeneralCanonicalService 
 import type { WcaSourceFilesService } from './wca-source-files.service.js'
 import type { PublishDatasetResult, PublishDatasetService } from '../publish/publish-dataset.service.js'
 import type { CleanupImportArtifactsResult, CleanupImportArtifactsService } from './cleanup-import-artifacts.service.js'
+import type { CleanupInactiveDatasetsResult, CleanupInactiveDatasetsService } from './cleanup-inactive-datasets.service.js'
+import type { CleanupWcaStagingResult, CleanupWcaStagingService } from './cleanup-wca-staging.service.js'
 
 export type WcaSyncCycleInput = {
   activeDataset: DatasetMetadata | null
@@ -30,6 +32,8 @@ export type WcaSyncCycleService = {
 
 type LocalWcaSyncCycleServiceDeps = {
   cleanupImportArtifacts?: CleanupImportArtifactsService
+  cleanupInactiveDatasets?: CleanupInactiveDatasetsService
+  cleanupWcaStaging?: CleanupWcaStagingService
   clock: Clock
   datasetVersions: DatasetVersionRepository
   importRuns: ImportRunRepository
@@ -42,6 +46,8 @@ type LocalWcaSyncCycleServiceDeps = {
 
 export function createLocalWcaSyncCycleService({
   cleanupImportArtifacts,
+  cleanupInactiveDatasets,
+  cleanupWcaStaging,
   clock,
   datasetVersions,
   importRuns,
@@ -59,6 +65,7 @@ export function createLocalWcaSyncCycleService({
         reason: input.reason,
       })
       let datasetId: string | null = null
+      let published = false
 
       try {
         const datasetVersion = await datasetVersions.createBuilding({
@@ -100,6 +107,7 @@ export function createLocalWcaSyncCycleService({
         })
 
         const publish = await publishDataset.execute({ datasetId })
+        published = true
         const cleanup = await cleanupImportArtifactsLog(cleanupImportArtifacts, importRun.id)
         const publishedRun = await importRuns.updateStatus({
           id: importRun.id,
@@ -107,16 +115,27 @@ export function createLocalWcaSyncCycleService({
           now: clock.now(),
           status: 'published',
         })
+        const postPublishCleanup = await postPublishCleanupLog({ cleanupInactiveDatasets, cleanupWcaStaging })
+        const completedRun = await recordPostPublishCleanup({
+          cleanup: postPublishCleanup,
+          clock,
+          importRuns,
+          publishedRun,
+        })
 
         return {
           dataset: { ...publishedDataset, publishedAt: publish.publishedAt },
-          importRun: publishedRun,
+          importRun: completedRun,
           publish,
           staging,
           status: 'published',
           transform,
         }
       } catch (error) {
+        if (published) {
+          throw error
+        }
+
         const cleanup = await cleanupImportArtifactsLog(cleanupImportArtifacts, importRun.id)
         await importRuns.markFailed({
           errorCode: errorCode(error),
@@ -137,6 +156,74 @@ export function createLocalWcaSyncCycleService({
         throw error
       }
     },
+  }
+}
+
+async function recordPostPublishCleanup({
+  cleanup,
+  clock,
+  importRuns,
+  publishedRun,
+}: {
+  cleanup: PostPublishCleanupLog
+  clock: Clock
+  importRuns: ImportRunRepository
+  publishedRun: ImportRunRecord
+}): Promise<ImportRunRecord> {
+  try {
+    return await importRuns.updateStatus({
+      id: publishedRun.id,
+      log: { postPublishCleanup: cleanup },
+      now: clock.now(),
+      status: 'published',
+    })
+  } catch {
+    return publishedRun
+  }
+}
+
+type PostPublishCleanupLog = {
+  inactiveDatasets?: CleanupInactiveDatasetsResult | CleanupFailure
+  staging?: CleanupWcaStagingResult | CleanupFailure
+}
+
+type CleanupFailure = {
+  error: string
+  status: 'failed'
+}
+
+async function postPublishCleanupLog({
+  cleanupInactiveDatasets,
+  cleanupWcaStaging,
+}: {
+  cleanupInactiveDatasets: CleanupInactiveDatasetsService | undefined
+  cleanupWcaStaging: CleanupWcaStagingService | undefined
+}): Promise<PostPublishCleanupLog> {
+  const [inactiveDatasets, staging] = await Promise.all([
+    cleanupLog(cleanupInactiveDatasets),
+    cleanupLog(cleanupWcaStaging),
+  ])
+
+  return {
+    ...(inactiveDatasets === undefined ? {} : { inactiveDatasets }),
+    ...(staging === undefined ? {} : { staging }),
+  }
+}
+
+async function cleanupLog<T extends object>(
+  cleanup: { execute: () => Promise<T> } | undefined,
+): Promise<T | CleanupFailure | undefined> {
+  if (cleanup === undefined) {
+    return undefined
+  }
+
+  try {
+    return await cleanup.execute()
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : 'Post-publication cleanup failed',
+      status: 'failed',
+    }
   }
 }
 

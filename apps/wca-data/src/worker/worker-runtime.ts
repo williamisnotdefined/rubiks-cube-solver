@@ -10,6 +10,7 @@ import type { Queryable } from '../modules/wca-data/persistence/postgres/queryab
 import { createWcaDataPgBoss } from './pg-boss.js'
 import { startWcaDataWorker, type WcaDataBoss, type WcaDataWorker, type WorkerLogger } from './sync-worker.js'
 import { PostgresWcaImportExecutionLock } from '../modules/wca-data/persistence/postgres/postgres-import-execution-lock.js'
+import type { TransactionalQueryPool } from '../modules/wca-data/persistence/postgres/postgres-dataset-publisher.js'
 
 export type WcaDataWorkerDatabase = Queryable & CopyQueryPool & {
   end: () => Promise<void>
@@ -41,7 +42,7 @@ export async function startWcaDataWorkerRuntime({
     exportClient,
     importLock: new PostgresWcaImportExecutionLock(database),
     storageRootDir: env.WCA_DATA_STORAGE_DIR,
-    transactionPool: database,
+    transactionPool: database as unknown as TransactionalQueryPool,
   })
 
   try {

@@ -75,10 +75,7 @@ describe('PostgresDatasetRepository', () => {
       },
     })
 
-    expect(calls[0]?.params).toEqual(['2026-06-30T00:00:16Z'])
-    expect(calls[0]?.sql).toContain('delete from wca_dataset_versions')
-    expect(calls[0]?.sql).toContain("status = 'failed'")
-    expect(calls[1]?.params).toEqual([
+    expect(calls[0]?.params).toEqual([
       '33333333-3333-4333-8333-333333333333',
       '2026-06-30T00:00:16Z',
       'v2.0.2',
@@ -107,6 +104,22 @@ describe('PostgresDatasetRepository', () => {
       status: 'building',
       totalBytes: 0,
     })
+  })
+
+  it('purges failed and retired datasets only after publication', async () => {
+    const calls: Array<{ params?: unknown[]; sql: string }> = []
+    const db: Queryable = {
+      async query(sql, params) {
+        calls.push({ params, sql })
+        return { rows: [{ id: 'failed-dataset' }, { id: 'retired-dataset' }] }
+      },
+    }
+
+    await expect(new PostgresDatasetRepository(db).purgeInactiveDatasets())
+      .resolves.toEqual(['failed-dataset', 'retired-dataset'])
+    expect(calls[0]?.sql).toContain('delete from wca_dataset_versions')
+    expect(calls[0]?.sql).toContain("status in ('failed', 'retired')")
+    expect(calls[0]?.sql).toContain('returning id')
   })
 
   it('reads dataset counts from transform metadata', async () => {

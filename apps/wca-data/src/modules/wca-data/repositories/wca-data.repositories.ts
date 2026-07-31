@@ -54,6 +54,7 @@ export type UpdateDatasetStatusInput = {
 
 export type DatasetVersionRepository = {
   createBuilding: (input: CreateBuildingDatasetInput) => Promise<DatasetVersionRecord>
+  purgeInactiveDatasets: () => Promise<string[]>
   updateStatus: (input: UpdateDatasetStatusInput) => Promise<DatasetVersionRecord>
 }
 

@@ -3,6 +3,7 @@ import type { WcaExportMetadata } from '../../domain/export-metadata.js'
 import { InMemoryDatasetVersionRepository } from '../../persistence/memory/in-memory-dataset-version.repository.js'
 import { InMemoryImportRunRepository } from '../../persistence/memory/in-memory-import-run.repository.js'
 import { createPublishDatasetService } from '../../publish/publish-dataset.service.js'
+import { createCleanupInactiveDatasetsService } from '../cleanup-inactive-datasets.service.js'
 import { createStaticWcaSourceFilesService } from '../wca-source-files.service.js'
 import { createLocalWcaSyncCycleService } from '../wca-sync-cycle.service.js'
 
@@ -14,6 +15,10 @@ describe('WcaSyncCycleService', () => {
     const service = createLocalWcaSyncCycleService({
       cleanupImportArtifacts: {
         execute: async ({ importRunId }) => ({ dryRun: false, existed: true, removed: true, storageKey: `imports/${importRunId}` }),
+      },
+      cleanupInactiveDatasets: createCleanupInactiveDatasetsService({ datasetVersions }),
+      cleanupWcaStaging: {
+        execute: async () => ({ truncatedTableCount: 14 }),
       },
       clock,
       datasetVersions,
@@ -80,6 +85,67 @@ describe('WcaSyncCycleService', () => {
       cleanup: { removed: true, storageKey: 'imports/run-1' },
       mode: 'local-fixture',
       stagingRows: 2,
+      postPublishCleanup: {
+        inactiveDatasets: { deletedDatasetIds: [] },
+        staging: { truncatedTableCount: 14 },
+      },
+    })
+  })
+
+  it('removes inactive datasets only after the new dataset is published', async () => {
+    const clock = { now: () => new Date('2026-06-30T12:00:00Z') }
+    let sequence = 0
+    const datasetVersions = new InMemoryDatasetVersionRepository(() => `dataset-${++sequence}`)
+    const importRuns = new InMemoryImportRunRepository(() => 'run-1')
+    const previousDataset = await datasetVersions.createBuilding({ remote: { ...remoteMetadata(), exportDate: '2026-06-29T00:00:00Z' } })
+    await datasetVersions.updateStatus({ datasetId: previousDataset.id, status: 'ready' })
+    await datasetVersions.publishDataset({ datasetId: previousDataset.id, publishedAt: clock.now() })
+    const service = createLocalWcaSyncCycleService({
+      cleanupInactiveDatasets: createCleanupInactiveDatasetsService({ datasetVersions }),
+      clock,
+      datasetVersions,
+      importRuns,
+      loadStaging: { execute: async () => ({ files: [], totalRows: 0 }) },
+      publishDataset: createPublishDatasetService({ clock, publisher: datasetVersions }),
+      sourceFiles: createStaticWcaSourceFilesService([]),
+      transformGeneral: { execute: async () => transformCounts() },
+    })
+
+    await service.execute({ activeDataset: await datasetVersions.getActiveDataset(), reason: 'manual', remote: remoteMetadata() })
+
+    expect(datasetVersions.records).toMatchObject([{ id: 'dataset-2', isActive: true, status: 'active' }])
+    expect(importRuns.records[0]?.log).toMatchObject({
+      postPublishCleanup: { inactiveDatasets: { deletedDatasetIds: ['dataset-1'] } },
+    })
+  })
+
+  it('keeps the new dataset published when retention cleanup fails', async () => {
+    const clock = { now: () => new Date('2026-06-30T12:00:00Z') }
+    const datasetVersions = new InMemoryDatasetVersionRepository(() => 'dataset-1')
+    const importRuns = new InMemoryImportRunRepository(() => 'run-1')
+    const service = createLocalWcaSyncCycleService({
+      cleanupInactiveDatasets: {
+        execute: async () => {
+          throw new Error('retention cleanup failed')
+        },
+      },
+      clock,
+      datasetVersions,
+      importRuns,
+      loadStaging: { execute: async () => ({ files: [], totalRows: 0 }) },
+      publishDataset: createPublishDatasetService({ clock, publisher: datasetVersions }),
+      sourceFiles: createStaticWcaSourceFilesService([]),
+      transformGeneral: { execute: async () => transformCounts() },
+    })
+
+    await expect(service.execute({ activeDataset: null, reason: 'manual', remote: remoteMetadata() }))
+      .resolves.toMatchObject({ status: 'published' })
+    expect(datasetVersions.records).toMatchObject([{ id: 'dataset-1', isActive: true, status: 'active' }])
+    expect(importRuns.records[0]?.status).toBe('published')
+    expect(importRuns.records[0]?.log).toMatchObject({
+      postPublishCleanup: {
+        inactiveDatasets: { error: 'retention cleanup failed', status: 'failed' },
+      },
     })
   })
 
@@ -136,5 +202,24 @@ function remoteMetadata(): WcaExportMetadata {
     sqlUrl: null,
     tsvFilesizeBytes: 100,
     tsvUrl: 'https://www.worldcubeassociation.org/export/results/v2/tsv',
+  }
+}
+
+function transformCounts() {
+  return {
+    championships: 0,
+    championshipEligibleCountries: 2,
+    competitions: 1,
+    continents: 2,
+    countries: 2,
+    events: 2,
+    formats: 1,
+    persons: 1,
+    ranksAverage: 1,
+    ranksSingle: 1,
+    resultAttempts: 3,
+    results: 1,
+    roundTypes: 1,
+    scrambles: 1,
   }
 }

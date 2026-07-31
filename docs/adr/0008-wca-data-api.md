@@ -35,4 +35,4 @@ Provide self-hosted API documentation at `http://speedcube.com.br/api/wca-data/v
 - Add WCA routes to `crates/api`: rejected because WCA data serving is a data platform concern, not a solver boundary.
 - Import WCA SQL directly: rejected because TSV import avoids executing downloaded SQL and keeps ingestion explicit.
 - Use crontab as the primary scheduler: rejected because it lacks structured retries, locks, history, and multi-instance coordination.
-- Serve data without dataset versioning: rejected because clients and operators need active dataset identity, freshness metadata, and safe rollback.
+- Serve data without dataset versioning: rejected because clients and operators need active dataset identity and freshness metadata. Production retains only the active dataset after a successful import, so rollback uses a database backup or fresh verified import.
