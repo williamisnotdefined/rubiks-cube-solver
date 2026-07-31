@@ -11,6 +11,7 @@ x-runtime-hardening: &runtime-hardening
 services:
   edge:
     <<: *runtime-hardening
+    restart: always
     image: nginxinc/nginx-unprivileged:1.29-alpine
     depends_on:
       app:
@@ -28,6 +29,7 @@ services:
 
   vision:
     <<: *runtime-hardening
+    restart: always
     build:
       context: .
       dockerfile: Dockerfile.vision
@@ -45,6 +47,7 @@ services:
 
   app:
     <<: *runtime-hardening
+    restart: always
     build:
       context: .
       dockerfile: Dockerfile.app
@@ -63,6 +66,7 @@ services:
       - "8787"
 
   wca-data-postgres:
+    restart: always
     image: postgres:17-bookworm
     environment:
       POSTGRES_DB: wca_data
@@ -91,6 +95,7 @@ services:
 
   wca-data-api:
     <<: *runtime-hardening
+    restart: always
     build:
       context: .
       dockerfile: Dockerfile.wca-data
@@ -114,6 +119,7 @@ services:
       retries: 12
 
   wca-data-worker:
+    restart: always
     build:
       context: .
       dockerfile: Dockerfile.wca-data
