@@ -8,6 +8,7 @@ import { createWcaDataModule, createWcaDataModuleFromRepositories, schedulerFrom
 import { PostgresDatasetRepository } from '../modules/wca-data/persistence/postgres/postgres-dataset.repository.js'
 import { PostgresGeneralDataRepository } from '../modules/wca-data/persistence/postgres/postgres-general-data.repository.js'
 import { PostgresImportRunRepository } from '../modules/wca-data/persistence/postgres/postgres-import-run.repository.js'
+import { PostgresWorkerHeartbeatRepository } from '../modules/wca-data/persistence/postgres/postgres-worker-heartbeat.repository.js'
 import type { Queryable } from '../modules/wca-data/persistence/postgres/queryable.js'
 import { WcaDataExceptionFilter } from './filters/wca-data-exception.filter.js'
 import { WcaDataApiModule } from './wca-data-api.module.js'
@@ -82,6 +83,7 @@ async function createDefaultWcaDataModule({
       datasets,
       importRuns: new PostgresImportRunRepository(database),
       scheduler: schedulerFromEnv(env),
+      workerHeartbeats: new PostgresWorkerHeartbeatRepository(database),
     }),
   }
 }

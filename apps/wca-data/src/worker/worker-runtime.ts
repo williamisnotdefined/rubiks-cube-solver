@@ -1,6 +1,8 @@
 import type { WcaDataDatabaseEnv } from '../config/env.schema.js'
 import { createPgPool } from '../db/postgres.js'
 import { createWcaExportClient, type WcaExportClient } from '../infra/http/wca-export-client.js'
+import type { Clock } from '../shared/time/clock.js'
+import { systemClock } from '../shared/time/system-clock.js'
 import {
   createPostgresSyncWcaExportService,
   type CreatePostgresSyncWcaExportServiceInput,
@@ -11,14 +13,22 @@ import { createWcaDataPgBoss } from './pg-boss.js'
 import { startWcaDataWorker, type WcaDataBoss, type WcaDataWorker, type WorkerLogger } from './sync-worker.js'
 import { PostgresWcaImportExecutionLock } from '../modules/wca-data/persistence/postgres/postgres-import-execution-lock.js'
 import type { TransactionalQueryPool } from '../modules/wca-data/persistence/postgres/postgres-dataset-publisher.js'
+import { PostgresWorkerHeartbeatRepository } from '../modules/wca-data/persistence/postgres/postgres-worker-heartbeat.repository.js'
+import {
+  startWcaDataWorkerHeartbeat,
+  type StartWcaDataWorkerHeartbeatInput,
+  type WcaDataWorkerHeartbeat,
+} from './worker-heartbeat.js'
 
 export type WcaDataWorkerDatabase = Queryable & CopyQueryPool & {
   end: () => Promise<void>
 }
 
 export type StartWcaDataWorkerRuntimeDeps = {
+  clock?: Clock
   env: WcaDataDatabaseEnv
   exportClientFactory?: (metadataUrl: string) => WcaExportClient
+  heartbeatFactory?: (input: StartWcaDataWorkerHeartbeatInput) => Promise<WcaDataWorkerHeartbeat>
   logger?: WorkerLogger
   pgBossFactory?: (env: WcaDataDatabaseEnv) => WcaDataBoss
   pgPoolFactory?: (env: WcaDataDatabaseEnv) => WcaDataWorkerDatabase
@@ -26,8 +36,10 @@ export type StartWcaDataWorkerRuntimeDeps = {
 }
 
 export async function startWcaDataWorkerRuntime({
+  clock = systemClock,
   env,
   exportClientFactory = (metadataUrl) => createWcaExportClient({ metadataUrl }),
+  heartbeatFactory = startWcaDataWorkerHeartbeat,
   logger,
   pgBossFactory = defaultPgBossFactory,
   pgPoolFactory = defaultPgPoolFactory,
@@ -45,8 +57,11 @@ export async function startWcaDataWorkerRuntime({
     transactionPool: database as unknown as TransactionalQueryPool,
   })
 
+  let heartbeat: WcaDataWorkerHeartbeat | undefined
+  let worker: WcaDataWorker | undefined
+
   try {
-    const worker = await startWcaDataWorker({
+    worker = await startWcaDataWorker({
       boss,
       ...(logger === undefined ? {} : { logger }),
       syncCron: env.WCA_DATA_SYNC_CRON,
@@ -55,11 +70,17 @@ export async function startWcaDataWorkerRuntime({
       syncTimezone: env.WCA_DATA_SYNC_TIMEZONE,
       syncWcaExport,
     })
+    heartbeat = await heartbeatFactory({
+      clock,
+      heartbeats: new PostgresWorkerHeartbeatRepository(database),
+      ...(logger === undefined ? {} : { logger }),
+    })
 
     return {
       stop: async () => {
+        heartbeat?.stop()
         try {
-          await worker.stop()
+          await worker?.stop()
         } finally {
           await database.end()
         }
@@ -67,7 +88,12 @@ export async function startWcaDataWorkerRuntime({
       workId: worker.workId,
     }
   } catch (error) {
-    await database.end()
+    heartbeat?.stop()
+    try {
+      await worker?.stop()
+    } finally {
+      await database.end()
+    }
     throw error
   }
 }

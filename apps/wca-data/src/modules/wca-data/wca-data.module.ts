@@ -10,6 +10,7 @@ import type {
   DatasetRecordCounts,
   DatasetRepository,
   ImportRunHistoryRepository,
+  WorkerHeartbeatRepository,
 } from './repositories/wca-data.repositories.js'
 
 export type WcaDataModule = {
@@ -32,6 +33,7 @@ export type CreateWcaDataModuleFromRepositoriesDeps = {
     enabled: boolean
     timezone: string
   }
+  workerHeartbeats?: WorkerHeartbeatRepository
 }
 
 export async function createWcaDataModule({ env, fixtureRootDir }: CreateWcaDataModuleDeps): Promise<WcaDataModule> {
@@ -52,6 +54,7 @@ export function createWcaDataModuleFromRepositories({
   datasets,
   importRuns,
   scheduler,
+  workerHeartbeats,
 }: CreateWcaDataModuleFromRepositoriesDeps): WcaDataModule {
   return {
     getApiStatus: createGetApiStatusService({
@@ -59,6 +62,7 @@ export function createWcaDataModuleFromRepositories({
       datasets,
       ...(importRuns === undefined ? {} : { importRuns }),
       scheduler,
+      ...(workerHeartbeats === undefined ? {} : { workerHeartbeats }),
     }),
     publicApi: createWcaDataPublicService({ data, datasets }),
   }

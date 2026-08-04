@@ -28,6 +28,7 @@ type BossJob<T> = {
 
 export type WcaDataBoss = {
   createQueue: (name: string, options: Record<string, unknown>) => Promise<void>
+  on?: (event: 'error', handler: (error: unknown) => void) => void
   schedule: (name: string, cron: string, data: SyncWcaExportJobData, options: Record<string, unknown>) => Promise<void>
   start: () => Promise<unknown>
   stop: (options?: { graceful?: boolean; timeout?: number }) => Promise<void>
@@ -69,6 +70,11 @@ export async function startWcaDataWorker({
   syncWcaExport,
   syncTimezone,
 }: StartWcaDataWorkerDeps): Promise<WcaDataWorker> {
+  boss.on?.('error', (error) => {
+    logger.error('WCA Data worker infrastructure error.', {
+      error: error instanceof Error ? error.message : String(error),
+    })
+  })
   await boss.start()
   const queueOptions = {
     expireInSeconds: syncJobExpireSeconds,

@@ -91,3 +91,8 @@ export type ImportRunRepository = {
 export type ImportRunHistoryRepository = {
   getLastImportRun: () => Promise<ImportRunRecord | null>
 }
+
+export type WorkerHeartbeatRepository = {
+  getLastHeartbeat: () => Promise<string | null>
+  recordHeartbeat: (now: Date) => Promise<void>
+}

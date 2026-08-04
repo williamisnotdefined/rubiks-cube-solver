@@ -385,7 +385,7 @@ function worldRecordType(value: string | null): WcaWorldRecordType | null {
 }
 
 function formatDatasetDate(value: string, locale?: string): string {
-  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(value))
+  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(value))
 }
 
 function worldRecordsPageNumbers(

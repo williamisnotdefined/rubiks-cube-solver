@@ -2,11 +2,13 @@ import type { Clock } from '../../../shared/time/clock.js'
 import { systemClock } from '../../../shared/time/system-clock.js'
 import type { DatasetMetadata } from '../domain/dataset-metadata.js'
 import type { ImportRunRecord } from '../domain/import-run.js'
+import { wcaDataWorkerHeartbeatStaleAfterSeconds } from '../domain/worker-heartbeat.js'
 import type {
   DatasetMetricsRepository,
   DatasetRecordCounts,
   DatasetRepository,
   ImportRunHistoryRepository,
+  WorkerHeartbeatRepository,
 } from '../repositories/wca-data.repositories.js'
 
 export type WcaDataSchedulerStatus = {
@@ -25,6 +27,13 @@ export type WcaDataApiStatus = {
     provider: 'World Cube Association Results Export'
   }
   status: 'dataset_unavailable' | 'ok'
+  worker: WcaDataWorkerHealth
+}
+
+export type WcaDataWorkerHealth = {
+  lastHeartbeatAt: string | null
+  staleAfterSeconds: number
+  status: 'healthy' | 'stale' | 'unknown'
 }
 
 export type WcaDataApiStatusMetrics = {
@@ -45,15 +54,24 @@ type GetApiStatusServiceDeps = {
   datasets: DatasetRepository
   importRuns?: ImportRunHistoryRepository
   scheduler: WcaDataSchedulerStatus
+  workerHeartbeats?: WorkerHeartbeatRepository
 }
 
-export function createGetApiStatusService({ clock = systemClock, datasetMetrics, datasets, importRuns, scheduler }: GetApiStatusServiceDeps) {
+export function createGetApiStatusService({
+  clock = systemClock,
+  datasetMetrics,
+  datasets,
+  importRuns,
+  scheduler,
+  workerHeartbeats,
+}: GetApiStatusServiceDeps) {
   return {
     async execute(): Promise<WcaDataApiStatus> {
       const now = clock.now()
-      const [activeDataset, lastImportRun] = await Promise.all([
+      const [activeDataset, lastImportRun, lastWorkerHeartbeat] = await Promise.all([
         datasets.getActiveDataset(),
         importRuns?.getLastImportRun() ?? Promise.resolve(null),
+        workerHeartbeats?.getLastHeartbeat() ?? Promise.resolve(null),
       ])
       const activeDatasetMetrics = activeDataset === null
         ? null
@@ -77,8 +95,39 @@ export function createGetApiStatusService({ clock = systemClock, datasetMetrics,
           provider: 'World Cube Association Results Export',
         },
         status: activeDataset === null ? 'dataset_unavailable' : 'ok',
+        worker: workerHealth({
+          heartbeatAt: lastWorkerHeartbeat,
+          now,
+          trackingEnabled: workerHeartbeats !== undefined,
+        }),
       }
     },
+  }
+}
+
+function workerHealth({
+  heartbeatAt,
+  now,
+  trackingEnabled,
+}: {
+  heartbeatAt: string | null
+  now: Date
+  trackingEnabled: boolean
+}): WcaDataWorkerHealth {
+  if (!trackingEnabled) {
+    return {
+      lastHeartbeatAt: null,
+      staleAfterSeconds: wcaDataWorkerHeartbeatStaleAfterSeconds,
+      status: 'unknown',
+    }
+  }
+
+  return {
+    lastHeartbeatAt: heartbeatAt,
+    staleAfterSeconds: wcaDataWorkerHeartbeatStaleAfterSeconds,
+    status: heartbeatAt !== null && secondsSince(heartbeatAt, now) <= wcaDataWorkerHeartbeatStaleAfterSeconds
+      ? 'healthy'
+      : 'stale',
   }
 }
 

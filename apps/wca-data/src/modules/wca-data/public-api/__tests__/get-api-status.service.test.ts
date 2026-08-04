@@ -38,6 +38,7 @@ describe('GetApiStatusService', () => {
       scheduler: scheduler(),
       source: { official: false, provider: 'World Cube Association Results Export' },
       status: 'ok',
+      worker: { lastHeartbeatAt: null, staleAfterSeconds: 180, status: 'unknown' },
     })
   })
 
@@ -83,6 +84,35 @@ describe('GetApiStatusService', () => {
     await expect(service.execute()).resolves.toMatchObject({
       lastImportRun: { id: 'run-1', status: 'published' },
       status: 'ok',
+    })
+  })
+
+  it('reports whether the worker heartbeat is healthy or stale', async () => {
+    const baseInput = {
+      clock: { now: () => new Date('2026-07-01T04:58:10Z') },
+      datasets: new InMemoryDatasetRepository(null),
+      scheduler: scheduler(),
+    }
+    const healthy = createGetApiStatusService({
+      ...baseInput,
+      workerHeartbeats: {
+        getLastHeartbeat: async () => '2026-07-01T04:57:00.000Z',
+        recordHeartbeat: async () => undefined,
+      },
+    })
+    const stale = createGetApiStatusService({
+      ...baseInput,
+      workerHeartbeats: {
+        getLastHeartbeat: async () => '2026-07-01T04:54:00.000Z',
+        recordHeartbeat: async () => undefined,
+      },
+    })
+
+    await expect(healthy.execute()).resolves.toMatchObject({
+      worker: { lastHeartbeatAt: '2026-07-01T04:57:00.000Z', staleAfterSeconds: 180, status: 'healthy' },
+    })
+    await expect(stale.execute()).resolves.toMatchObject({
+      worker: { lastHeartbeatAt: '2026-07-01T04:54:00.000Z', staleAfterSeconds: 180, status: 'stale' },
     })
   })
 })

@@ -154,7 +154,7 @@ paths:
       summary: Dataset status
       operationId: getWcaDataStatus
       description: |
-        Reports the active dataset, most recent import run, scheduler settings, and source attribution.
+        Reports the active dataset, most recent import run, scheduler settings, worker heartbeat, and source attribution.
 
         Use this endpoint before relying on data endpoints. When `status` is `dataset_unavailable`, the API is healthy but no active dataset has been published yet.
       responses:
@@ -201,6 +201,10 @@ paths:
                       enabled: true
                       cron: 30 4 * * *
                       timezone: UTC
+                    worker:
+                      status: healthy
+                      lastHeartbeatAt: '2026-07-01T04:58:00.000Z'
+                      staleAfterSeconds: 180
                     source:
                       provider: World Cube Association Results Export
                       official: false
@@ -228,6 +232,10 @@ paths:
                       enabled: true
                       cron: 30 4 * * *
                       timezone: UTC
+                    worker:
+                      status: stale
+                      lastHeartbeatAt: null
+                      staleAfterSeconds: 180
                     source:
                       provider: World Cube Association Results Export
                       official: false
@@ -1193,7 +1201,7 @@ components:
   schemas:
     WcaDataStatus:
       type: object
-      required: [status, activeDataset, lastImportRun, metrics, scheduler, source]
+      required: [status, activeDataset, lastImportRun, metrics, scheduler, worker, source]
       properties:
         status:
           type: string
@@ -1210,6 +1218,8 @@ components:
           $ref: '#/components/schemas/StatusMetrics'
         scheduler:
           $ref: '#/components/schemas/SchedulerStatus'
+        worker:
+          $ref: '#/components/schemas/WorkerStatus'
         source:
           $ref: '#/components/schemas/SourceAttribution'
     DatasetMetadata:
@@ -1282,6 +1292,23 @@ components:
         timezone:
           type: string
           example: UTC
+    WorkerStatus:
+      type: object
+      required: [status, lastHeartbeatAt, staleAfterSeconds]
+      properties:
+        status:
+          type: string
+          enum: [healthy, stale, unknown]
+          description: Unknown when the runtime does not persist worker heartbeats, such as fixture mode.
+        lastHeartbeatAt:
+          type: string
+          format: date-time
+          nullable: true
+        staleAfterSeconds:
+          type: integer
+          minimum: 1
+          description: A worker is stale when its last heartbeat is older than this threshold.
+          example: 180
     SourceAttribution:
       type: object
       required: [provider, official]
