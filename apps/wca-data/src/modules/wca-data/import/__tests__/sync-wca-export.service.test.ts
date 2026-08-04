@@ -28,6 +28,22 @@ describe('SyncWcaExportService', () => {
     expect(importRuns.records).toHaveLength(1)
   })
 
+  it('records a skipped import run when equivalent export timestamps use different ISO formatting', async () => {
+    const importRuns = new InMemoryImportRunRepository(() => 'run-1')
+    const service = createSyncWcaExportService({
+      clock: { now: () => new Date('2026-06-30T12:00:00Z') },
+      datasets: new InMemoryDatasetRepository({ ...activeDataset(), exportDate: '2026-06-30T00:00:16.000Z' }),
+      exportClient: { getPublicExportMetadata: async () => remoteMetadata() },
+      importRuns,
+    })
+
+    await expect(service.execute({ force: false, reason: 'schedule' })).resolves.toMatchObject({
+      importRun: { status: 'skipped' },
+      status: 'skipped',
+    })
+    expect(importRuns.records).toHaveLength(1)
+  })
+
   it('does not skip when force is enabled', async () => {
     const importRuns = new InMemoryImportRunRepository(() => 'run-1')
     const service = createSyncWcaExportService({

@@ -57,6 +57,8 @@ describe('WorldRecordsPage', () => {
   })
 
   afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
     vi.useRealTimers()
   })
 
@@ -133,6 +135,24 @@ describe('WorldRecordsPage', () => {
     expect(within(dialog).getByText('Selected leaderboard result')).toBeVisible()
     await user.click(within(dialog).getByRole('button', { name: 'Close' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  })
+
+  it('formats the dataset timestamp in UTC', () => {
+    const dateTimeFormat = vi.fn()
+    class CapturingDateTimeFormat extends Intl.DateTimeFormat {
+      constructor(...args: ConstructorParameters<typeof Intl.DateTimeFormat>) {
+        super(...args)
+        dateTimeFormat(...args)
+      }
+    }
+    vi.stubGlobal('Intl', { ...Intl, DateTimeFormat: CapturingDateTimeFormat })
+
+    renderPage('/world-records')
+
+    expect(dateTimeFormat).toHaveBeenCalledWith(
+      expect.anything(),
+      { dateStyle: 'medium', timeZone: 'UTC' },
+    )
   })
 
   it('clears the selected record when the records query changes', async () => {

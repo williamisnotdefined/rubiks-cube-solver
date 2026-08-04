@@ -48,6 +48,7 @@ describe('WCA Data API', () => {
       scheduler: { cron: '30 4 * * *', enabled: true, timezone: 'UTC' },
       source: { official: false, provider: 'World Cube Association Results Export' },
       status: 'ok',
+      worker: { lastHeartbeatAt: null, staleAfterSeconds: 180, status: 'unknown' },
     })
     expect(response.json()).not.toHaveProperty('documents')
   })

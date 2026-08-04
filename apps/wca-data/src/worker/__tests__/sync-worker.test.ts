@@ -44,6 +44,18 @@ describe('startWcaDataWorker', () => {
     expect(boss.calls).toEqual(['start', 'createQueue:wca-data.sync-export', 'updateQueue:wca-data.sync-export', 'work:wca-data.sync-export'])
   })
 
+  it('logs pg-boss infrastructure errors without leaving an unhandled error event', async () => {
+    const boss = new FakeBoss()
+    const logger = { error: vi.fn(), info: vi.fn() }
+
+    await startWcaDataWorker({ boss, logger, syncCron: '30 4 * * *', syncEnabled: false, syncTimezone: 'UTC' })
+    boss.emitError(new Error('database connection closed'))
+
+    expect(logger.error).toHaveBeenCalledWith('WCA Data worker infrastructure error.', {
+      error: 'database connection closed',
+    })
+  })
+
   it('runs an injected sync service for received jobs', async () => {
     const boss = new FakeBoss()
     const logger = { error: vi.fn(), info: vi.fn() }
@@ -109,11 +121,20 @@ class FakeBoss implements WcaDataBoss {
   scheduleOptions: unknown
   stopOptions: unknown
   updateQueueOptions: unknown
+  private errorHandler: ((error: unknown) => void) | undefined
   private handler: ((jobs: Array<{ data: unknown; id: string }>) => Promise<unknown>) | undefined
 
   async createQueue(name: string, options: unknown): Promise<void> {
     this.calls.push(`createQueue:${name}`)
     this.createQueueOptions = options
+  }
+
+  on(_event: 'error', handler: (error: unknown) => void): void {
+    this.errorHandler = handler
+  }
+
+  emitError(error: unknown): void {
+    this.errorHandler?.(error)
   }
 
   async updateQueue(name: string, options: unknown): Promise<void> {

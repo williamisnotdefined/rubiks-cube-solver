@@ -14,6 +14,8 @@ describe('startWcaDataWorkerRuntime', () => {
     const syncWcaExport = {
       execute: vi.fn(async () => ({ activeDataset: null, remote: remoteMetadata(), status: 'new_export_detected' as const })),
     }
+    const heartbeat = { stop: vi.fn() }
+    const heartbeatFactory = vi.fn(async () => heartbeat)
     const syncWcaExportFactory = vi.fn((_input: CreatePostgresSyncWcaExportServiceInput) => syncWcaExport)
 
     const worker = await startWcaDataWorkerRuntime({
@@ -22,6 +24,7 @@ describe('startWcaDataWorkerRuntime', () => {
         expect(metadataUrl).toBe('https://example.test/wca-export')
         return exportClient
       },
+      heartbeatFactory,
       logger: silentLogger(),
       pgBossFactory: () => boss,
       pgPoolFactory: () => database,
@@ -37,6 +40,10 @@ describe('startWcaDataWorkerRuntime', () => {
       storageRootDir: '/tmp/wca-data-test-storage',
       transactionPool: database,
     }))
+    expect(heartbeatFactory).toHaveBeenCalledWith(expect.objectContaining({
+      heartbeats: expect.any(Object),
+      logger: expect.any(Object),
+    }))
     await expect(boss.runRegisteredHandler([{ data: { force: true, reason: 'manual' }, id: 'job-1' }])).resolves.toMatchObject({
       jobCount: 1,
       status: 'completed',
@@ -44,6 +51,7 @@ describe('startWcaDataWorkerRuntime', () => {
     expect(syncWcaExport.execute).toHaveBeenCalledWith({ force: true, reason: 'manual' })
 
     await worker.stop()
+    expect(heartbeat.stop).toHaveBeenCalledOnce()
     expect(database.endCalls).toBe(1)
   })
 

@@ -50,7 +50,7 @@ export function createSyncWcaExportService({ clock, datasets, exportClient, impo
         const remote = await exportClient.getPublicExportMetadata()
         const activeDataset = await datasets.getActiveDataset()
 
-        if (!input.force && activeDataset?.exportDate === remote.exportDate) {
+        if (!input.force && activeDataset !== null && sameExportDate(activeDataset.exportDate, remote.exportDate)) {
           const importRun = await importRuns.recordSkipped({
             log: { activeDatasetId: activeDataset.id },
             now: clock.now(),
@@ -76,4 +76,8 @@ export function createSyncWcaExportService({ clock, datasets, exportClient, impo
       return await importLock.executeExclusive(executeSync) ?? { status: 'already_running' }
     },
   }
+}
+
+function sameExportDate(activeExportDate: string, remoteExportDate: string): boolean {
+  return Date.parse(activeExportDate) === Date.parse(remoteExportDate)
 }

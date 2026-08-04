@@ -143,6 +143,14 @@ describe('WCA control schema migrations', () => {
     expect(sql).toContain("region in ('continent', 'country', 'world')")
     expect(sql).toContain('primary key (dataset_id, rank_type, event_id, region, region_id)')
   })
+
+  it('defines a heartbeat for the WCA worker', async () => {
+    const sql = await migrationSql('0018_create_wca_worker_heartbeats.sql')
+
+    expect(sql).toContain('create table wca_worker_heartbeats')
+    expect(sql).toContain('worker_name text primary key')
+    expect(sql).toContain('heartbeat_at timestamptz not null')
+  })
 })
 
 function migrationSql(fileName: string): Promise<string> {
