@@ -77,7 +77,7 @@
     "@biomejs/biome": "^2.5.6",
     "@types/three": "^0.185.3",
     "@vitest/coverage-v8": "^4.1.9",
-    "jsdom": "^29.1.1",
+    "jsdom": "^30.0.1",
     "typescript": "^7.0.2",
     "vite": "^8.1.0",
     "vitest": "^4.1.10"
