@@ -1,6 +1,6 @@
 fastapi>=0.141.1
 uvicorn>=0.52.1
 opencv-python-headless>=5.0.0.93
-numpy>=2.5.1
+numpy>=2.5.3
 pydantic>=2.13.4
 onnxruntime>=1.28.0
