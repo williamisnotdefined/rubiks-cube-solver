@@ -19,6 +19,49 @@ test.describe('timer flow', () => {
     await seedTimerSettings(page)
   })
 
+  test('keeps timer digits inside the timer card at mobile and tablet widths', async ({ page }) => {
+    for (const viewport of [
+      { width: 390, height: 844 },
+      { width: 880, height: 1200 },
+      { width: 1440, height: 900 },
+    ]) {
+      await page.setViewportSize(viewport)
+      await gotoHydratedApp(page, timerPath)
+
+      const timer = page.getByRole('timer', { name: 'Speedsolve timer' })
+      await expect(timer).toBeVisible()
+
+      const fits = await timer.evaluate((card) => {
+        const digits = card.querySelector('span')
+        if (digits === null) {
+          return false
+        }
+
+        const original = digits.textContent
+
+        for (const value of [original ?? '', '0.000', '59:59.99']) {
+          digits.textContent = value
+          const cardBox = card.getBoundingClientRect()
+          const digitsBox = digits.getBoundingClientRect()
+
+          if (
+            digitsBox.left < cardBox.left ||
+            digitsBox.right > cardBox.right ||
+            card.scrollWidth > card.clientWidth
+          ) {
+            digits.textContent = original
+            return false
+          }
+        }
+
+        digits.textContent = original
+        return true
+      })
+
+      expect(fits).toBe(true)
+    }
+  })
+
   test('records a solve with keyboard start and stop', async ({ page }) => {
     await gotoHydratedApp(page, timerPath)
 

@@ -9,8 +9,11 @@ export function PageHeader({ children, className, surface = false, ...props }: P
   return (
     <header
       className={cls(
-        'grid gap-3',
-        { 'rounded-xl border bg-card p-6 text-card-foreground shadow-sm': surface },
+        'grid gap-4',
+        {
+          'border-2 border-foreground bg-card p-6 text-card-foreground shadow-[5px_5px_0_var(--foreground)]':
+            surface,
+        },
         className,
       )}
       {...props}

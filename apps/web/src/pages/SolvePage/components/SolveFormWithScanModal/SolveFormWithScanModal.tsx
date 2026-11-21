@@ -48,7 +48,7 @@ export function SolveFormWithScanModal({
         scanAction={
           <Button
             aria-label={t('solve.form.scanCube')}
-            className='aspect-square h-9 w-9 px-0 py-0'
+            className='aspect-square h-10 w-10 px-0 py-0'
             disabled={!scanAvailable}
             title={scanAvailable ? undefined : t('solve.form.scanUnavailableForPuzzle')}
             type='button'

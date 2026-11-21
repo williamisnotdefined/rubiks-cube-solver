@@ -19,8 +19,8 @@ test.describe('product solve flow', () => {
 
     const cubeBox = await page.locator('.cube-stage').boundingBox()
     expect(cubeBox).not.toBeNull()
-    expect(cubeBox!.width).toBeLessThanOrEqual(300)
-    expect(cubeBox!.height).toBeLessThanOrEqual(300)
+    expect(cubeBox!.width).toBeLessThanOrEqual(560)
+    expect(cubeBox!.height).toBeLessThanOrEqual(560)
     await expect
       .poll(() => page.locator('.cube-stage').evaluate((element) => getComputedStyle(element).borderRadius))
       .toBe('0px')

@@ -26,7 +26,7 @@ test.describe('responsive UI smoke', () => {
 
     const box = await cube.boundingBox()
     expect(box).not.toBeNull()
-    expect(box!.width).toBeLessThanOrEqual(350)
-    expect(box!.height).toBeLessThanOrEqual(350)
+    expect(box!.width).toBeLessThanOrEqual(360)
+    expect(box!.height).toBeLessThanOrEqual(360)
   })
 })

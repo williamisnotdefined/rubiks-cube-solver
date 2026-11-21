@@ -701,7 +701,11 @@
       "type": "Тип",
       "reset": "Сбросить"
     },
-    "types": { "all": "Все типы", "single": "Одиночный", "average": "Среднее" },
+    "types": {
+      "all": "Все типы",
+      "single": "Одиночный",
+      "average": "Среднее"
+    },
     "table": {
       "caption": "Мировые рекорды WCA по выбранным фильтрам",
       "rank": "Место",
@@ -780,7 +784,12 @@
     "themeLight": "Светлая",
     "themeSystem": "Системная",
     "timer": "Таймер",
-    "worldRecords": "Мировые рекорды"
+    "worldRecords": "Мировые рекорды",
+    "command": "Команды",
+    "commandPlaceholder": "Перейти на страницу…",
+    "commandEmpty": "Ничего не найдено.",
+    "commandRoutes": "Страницы",
+    "commandActions": "Действия"
   },
   "notations": {
     "groups": {
@@ -1213,12 +1222,15 @@
       "required": "{{label}} обязательно",
       "wholeNumber": "{{label}} должно быть целым числом",
       "withinLimit": "{{label}} должно быть не больше {{limit}}"
-    }
+    },
+    "heroTitle": "Соберите кубик",
+    "heroSubtitle": "Вставьте скрамбл. Получите проверенное решение."
   },
   "timer": {
     "displayLabel": "Таймер speedsolve",
     "instructions": {
-      "space": "Пробел или касание: удерживайте, отпустите для старта, нажмите для остановки."
+      "space": "Пробел или касание: удерживайте, отпустите для старта, нажмите для остановки.",
+      "short": "Пробел / касание"
     },
     "inspection": {
       "title": "Инспекция WCA"

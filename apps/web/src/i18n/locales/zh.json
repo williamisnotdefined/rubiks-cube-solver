@@ -701,7 +701,11 @@
       "type": "类型",
       "reset": "重置"
     },
-    "types": { "all": "所有类型", "single": "单次", "average": "平均" },
+    "types": {
+      "all": "所有类型",
+      "single": "单次",
+      "average": "平均"
+    },
     "table": {
       "caption": "符合所选筛选条件的 WCA 世界纪录",
       "rank": "排名",
@@ -780,7 +784,12 @@
     "themeLight": "浅色",
     "themeSystem": "系统",
     "timer": "计时器",
-    "worldRecords": "世界纪录"
+    "worldRecords": "世界纪录",
+    "command": "命令菜单",
+    "commandPlaceholder": "跳转到页面…",
+    "commandEmpty": "未找到结果。",
+    "commandRoutes": "页面",
+    "commandActions": "操作"
   },
   "notations": {
     "groups": {
@@ -1213,12 +1222,15 @@
       "required": "{{label}} 为必填项",
       "wholeNumber": "{{label}} 必须是整数",
       "withinLimit": "{{label}} 必须小于或等于 {{limit}}"
-    }
+    },
+    "heroTitle": "还原魔方",
+    "heroSubtitle": "粘贴打乱公式，获得可回放验证的解法。"
   },
   "timer": {
     "displayLabel": "速拧计时器",
     "instructions": {
-      "space": "空格或触摸：按住，松开开始，按下停止。"
+      "space": "空格或触摸：按住，松开开始，按下停止。",
+      "short": "空格 / 触摸"
     },
     "inspection": {
       "title": "WCA 观察"

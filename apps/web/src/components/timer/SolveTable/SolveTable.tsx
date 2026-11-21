@@ -56,7 +56,7 @@ function EmptySolveTable({ className }: Pick<SolveTableProps, 'className'>) {
   return (
     <section
       className={cls(
-        'flex h-full min-h-0 items-center justify-center p-4 text-center text-foreground',
+        'flex h-full min-h-0 items-center justify-center border-2 border-dashed border-foreground/30 bg-card p-4 text-center text-foreground',
         className,
       )}
       aria-label={t('timer.solves.label')}
@@ -76,11 +76,14 @@ function PlainSolveTable({
 
   return (
     <section
-      className={cls('h-full min-h-0 w-full overflow-auto text-foreground', className)}
+      className={cls(
+        'h-full min-h-0 w-full overflow-auto border-2 border-foreground bg-card text-foreground shadow-[4px_4px_0_var(--foreground)]',
+        className,
+      )}
       aria-label={t('timer.solves.label')}
     >
       <Table className='min-w-[32rem]'>
-        <TableHeader className='sticky top-0 bg-card'>
+        <TableHeader className='sticky top-0 bg-muted [&_th]:label-mono'>
           <TableRow>
             <TableHead className='w-10 px-2 py-3'>
               <span className='sr-only'>{t('timer.solves.actions')}</span>
@@ -104,7 +107,7 @@ function PlainSolveTable({
               <TableCell className='px-4 py-3 font-mono text-muted-foreground'>
                 {row.index}
               </TableCell>
-              <TableCell className='px-4 py-3 font-mono text-lg font-bold'>
+              <TableCell className='px-4 py-3 font-mono text-lg font-black tabular-nums'>
                 {formatTimerTime(row.finalTimeMs, { showMilliseconds })}
               </TableCell>
               <TableCell className='px-4 py-3 text-sm text-muted-foreground'>
@@ -154,7 +157,7 @@ function VirtualizedSolveTable({
     {
       accessorKey: 'finalTimeMs',
       cell: ({ row }) => (
-        <span className='font-mono text-lg font-bold text-foreground'>
+        <span className='font-mono text-lg font-black tabular-nums text-foreground'>
           {formatTimerTime(row.original.finalTimeMs, { showMilliseconds })}
         </span>
       ),
@@ -207,11 +210,14 @@ function VirtualizedSolveTable({
   return (
     <section
       ref={setScrollParentElement}
-      className={cls('h-full min-h-0 w-full overflow-auto text-foreground', className)}
+      className={cls(
+        'h-full min-h-0 w-full overflow-auto border-2 border-foreground bg-card text-foreground shadow-[4px_4px_0_var(--foreground)]',
+        className,
+      )}
       aria-label={t('timer.solves.label')}
     >
       <table className='w-full min-w-[32rem] caption-bottom text-left text-sm'>
-        <thead className='sticky top-0 border-b bg-card text-sm font-medium text-muted-foreground'>
+        <thead className='label-mono sticky top-0 border-b-2 border-foreground bg-muted text-muted-foreground'>
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
@@ -236,7 +242,7 @@ function VirtualizedSolveTable({
             return (
               <tr
                 key={row.id}
-                className='border-b transition-colors hover:bg-muted/50 last:border-b-0'
+                className='border-b border-foreground/20 transition-colors hover:bg-cube-yellow/20 last:border-b-0'
               >
                 {row.getVisibleCells().map((cell) => (
                   <td className={cellClassName(cell.column.id)} key={cell.id}>

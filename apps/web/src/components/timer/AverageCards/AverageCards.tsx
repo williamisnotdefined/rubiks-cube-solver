@@ -17,19 +17,22 @@ export function AverageCards({ cards, className, showMilliseconds = false }: Ave
   const { t } = useTranslation()
 
   return (
-    <section className={cls('grid w-full p-2 text-foreground', className)}>
+    <section
+      className={cls(
+        'grid w-full border-2 border-foreground bg-card text-card-foreground shadow-[4px_4px_0_var(--foreground)]',
+        className,
+      )}
+    >
       <div className='grid grid-cols-4'>
         {cards.map((card, index) => (
           <article
             key={card.label}
             className={cls('min-h-20 p-3', {
-              'border-r': index < cards.length - 1,
+              'border-r-2 border-foreground': index < cards.length - 1,
             })}
           >
-            <p className='text-xs font-medium text-muted-foreground'>
-              {t(`timer.stats.${card.label}`)}
-            </p>
-            <p className='mt-1 font-mono text-xl font-bold'>
+            <p className='label-mono text-muted-foreground'>{t(`timer.stats.${card.label}`)}</p>
+            <p className='mt-1 font-mono text-xl font-black tabular-nums'>
               {formatTimerTime(card.timeMs, { showMilliseconds })}
             </p>
           </article>

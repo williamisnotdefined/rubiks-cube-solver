@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Link, Navigate, useLocation, useParams } from 'react-router'
+import { ChapterBar } from '@components/layout/ChapterBar'
 import { PageHeader } from '@components/layout/PageHeader'
 import { PageScaffold } from '@components/layout/PageScaffold'
 import { PageTitle } from '@components/layout/PageTitle'
@@ -21,13 +22,14 @@ export function AlgorithmsPuzzlePage() {
   const sets = setsForPuzzle(puzzle.id)
 
   return (
-    <PageScaffold contentClassName='max-w-5xl gap-5'>
+    <PageScaffold contentClassName='max-w-6xl gap-6'>
       <PageHeader>
+        <ChapterBar />
         <Link
-          className='text-sm font-medium text-muted-foreground hover:text-foreground'
+          className='label-mono text-muted-foreground hover:text-foreground'
           to={localizedPath('/algorithms', locale)}
         >
-          {t('algorithms.page.backToIndex')}
+          ← {t('algorithms.page.backToIndex')}
         </Link>
         <PageTitle>{puzzle.title}</PageTitle>
         <p className='max-w-3xl text-sm leading-6 text-muted-foreground'>

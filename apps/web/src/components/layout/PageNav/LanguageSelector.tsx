@@ -110,16 +110,16 @@ export function LanguageSelector({ locale, pagePath, onNavigate }: LanguageSelec
       <DropdownMenuTrigger asChild>
         <Button
           aria-label={t('navigation.language')}
-          className='w-full justify-start gap-2'
+          className='h-9 w-full justify-start gap-2 rounded-none border-2 border-transparent px-2 font-mono text-[0.65rem] uppercase tracking-widest text-sidebar-foreground/70 hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
           type='button'
           variant='ghost'
         >
           <Languages aria-hidden='true' className='size-4' />
           <span className='flex-1 text-start'>{t('navigation.language')}</span>
-          <CurrentFlag aria-hidden='true' className='size-auto h-4 w-6 shrink-0 shadow-xs' />
+          <CurrentFlag aria-hidden='true' className='size-auto h-4 w-6 shrink-0 border border-sidebar-border/40' />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align='start' className='w-64' side='top'>
+      <DropdownMenuContent align='start' className='w-64 rounded-none border-2 border-foreground' side='top'>
         <DropdownMenuRadioGroup value={selectedPreference} onValueChange={selectLanguage}>
           <DropdownMenuRadioItem value={automaticLanguageValue}>
             <Languages aria-hidden='true' className='size-4 shrink-0' />

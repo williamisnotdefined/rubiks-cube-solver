@@ -1,6 +1,7 @@
-import type { ChangeEvent, FormEvent, ReactNode } from 'react'
+import { useRef, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@components/Button'
+import { useMagnetic } from '@src/motion/useMagnetic'
 import { Field } from '@components/Field'
 import { TextInput } from '@components/FormControls'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/Select'
@@ -48,6 +49,8 @@ export function SolveForm({
   onSubmit,
 }: SolveFormProps) {
   const { t } = useTranslation()
+  const submitRef = useRef<HTMLDivElement>(null)
+  useMagnetic(submitRef)
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -64,8 +67,16 @@ export function SolveForm({
   }
 
   return (
-    <section className='solve-form w-full max-w-4xl px-6 py-6' data-testid='solve-form'>
-      <form aria-label={t('solve.form.formLabel')} className='grid gap-4' onSubmit={handleSubmit}>
+    <section
+      className='solve-form w-full border-2 border-foreground bg-card p-5 text-card-foreground shadow-[6px_6px_0_var(--foreground)]'
+      data-route-reveal='true'
+      data-testid='solve-form'
+    >
+      <div className='mb-4 flex items-center justify-between border-b-2 border-foreground pb-2'>
+        <span className='label-mono'>01 / INPUT</span>
+        <span className='label-mono opacity-50'>{selectedPuzzleSlug.toUpperCase()}</span>
+      </div>
+      <form aria-label={t('solve.form.formLabel')} className='grid gap-5' onSubmit={handleSubmit}>
         <div className='grid gap-3 sm:grid-cols-[minmax(0,14rem)]' data-testid='puzzle-row'>
           <Field className='field-puzzle' controlId='solve-puzzle' label={t('solve.form.puzzle')}>
             <Select value={selectedPuzzleSlug} onValueChange={onPuzzleChange}>
@@ -109,7 +120,7 @@ export function SolveForm({
           </Field>
         </div>
         <div
-          className='grid gap-3 sm:grid-cols-[minmax(0,10rem)_minmax(0,12rem)_auto] sm:items-end'
+          className='grid gap-3 sm:grid-cols-2 sm:items-end'
           data-testid='limits-row'
         >
           <Field
@@ -154,14 +165,17 @@ export function SolveForm({
               </SelectContent>
             </Select>
           </Field>
-          <Button
-            aria-label={buttonLoading ? t('common.loading') : undefined}
-            className='w-full sm:w-auto'
-            disabled={disabled}
-            type='submit'
-          >
-            {buttonLoading ? t('common.loading') : t('solve.form.solve')}
-          </Button>
+          <div className='sm:col-span-2' ref={submitRef}>
+            <Button
+              aria-label={buttonLoading ? t('common.loading') : undefined}
+              className='h-12 w-full font-mono text-xs uppercase tracking-[0.22em]'
+              disabled={disabled}
+              type='submit'
+            >
+              {buttonLoading ? t('common.loading') : t('solve.form.solve')}
+              <span aria-hidden='true'>→</span>
+            </Button>
+          </div>
         </div>
       </form>
     </section>

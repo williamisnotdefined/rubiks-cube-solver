@@ -7,9 +7,9 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@components/DropdownMenu'
-import { Separator } from '@components/Separator'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@components/Sheet'
 import { applyThemePreference, type ThemePreference, useThemeStore } from '@core/theme/themeStore'
+import { chapterFromNavPath } from '@core/navigation/chapters'
 import { cn } from '@src/lib/utils'
 import {
   localeFromPathname,
@@ -21,6 +21,7 @@ import {
   BookOpen,
   ChevronsUpDown,
   Clock3,
+  Command as CommandIcon,
   Cookie,
   Database,
   ExternalLink,
@@ -104,10 +105,11 @@ export function PageNav({ activeRoute, onOpenCookiePreferences }: PageNavProps) 
 
   return (
     <>
-      <header className='flex h-14 shrink-0 items-center gap-3 border-b bg-background px-3 md:hidden'>
+      <header className='flex h-16 shrink-0 items-center gap-3 border-b-2 border-foreground bg-background px-3 md:hidden'>
         <Button
           aria-expanded={mobileOpen}
           aria-label={t('navigation.openMenu')}
+          className='rounded-none border-2 border-foreground bg-background shadow-[3px_3px_0_var(--foreground)]'
           size='icon'
           type='button'
           variant='outline'
@@ -116,13 +118,15 @@ export function PageNav({ activeRoute, onOpenCookiePreferences }: PageNavProps) 
           <PanelLeft aria-hidden='true' className='size-5' />
         </Button>
         <div className='min-w-0'>
-          <p className='truncate text-sm font-semibold leading-none'>Speedcube.com.br</p>
-          <p className='truncate text-xs text-muted-foreground'>{title}</p>
+          <p className='truncate font-display text-base font-extrabold uppercase leading-none tracking-tighter'>
+            Speedcube
+          </p>
+          <p className='label-mono truncate text-[0.55rem] text-muted-foreground'>{title}</p>
         </div>
       </header>
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent
-          className='w-[18rem] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden'
+          className='w-[20rem] border-e-2 border-sidebar-border bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden'
           closeLabel={t('navigation.closeMenu')}
           onCloseAutoFocus={completePendingNavigation}
           side='left'
@@ -141,7 +145,7 @@ export function PageNav({ activeRoute, onOpenCookiePreferences }: PageNavProps) 
           />
         </SheetContent>
       </Sheet>
-      <aside className='hidden h-dvh w-64 shrink-0 border-e bg-sidebar text-sidebar-foreground md:flex'>
+      <aside className='hidden h-dvh w-[17rem] shrink-0 border-e-2 border-sidebar-border bg-sidebar text-sidebar-foreground md:flex'>
         <NavContent
           activeRoute={activeRoute}
           locale={locale}
@@ -192,18 +196,22 @@ function NavContent({
   }
 
   return (
-    <div className={cn('flex min-h-0 w-full flex-col gap-2 p-2', mobile && 'h-full')}>
-      <div className='flex h-14 items-center gap-2 rounded-lg px-2'>
-        <div className='flex aspect-square size-9 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground'>
-          <img alt='' aria-hidden='true' className='size-7' src='/favicon.svg' />
+    <div className={cn('flex min-h-0 w-full flex-col', mobile && 'h-full')}>
+      <div className='flex h-24 items-center gap-3 border-b-2 border-sidebar-border px-4'>
+        <div className='flex size-11 shrink-0 items-center justify-center border-2 border-sidebar-border bg-sidebar-primary shadow-[3px_3px_0_var(--sidebar-foreground)]'>
+          <img alt='' aria-hidden='true' className='size-8' src='/favicon.svg' />
         </div>
-        <div className='grid min-w-0 flex-1 text-start text-sm leading-tight'>
-          <span className='truncate font-semibold'>Speedcube.com.br</span>
+        <div className='grid min-w-0 flex-1 text-start leading-none'>
+          <span className='truncate font-display text-xl font-extrabold uppercase tracking-tighter'>
+            Speedcube
+          </span>
+          <span className='label-mono truncate text-[0.55rem] text-sidebar-foreground/55'>
+            .com.br / cube os
+          </span>
         </div>
       </div>
-      <Separator />
-      <nav aria-label={t('navigation.primary')} className='min-h-0 flex-1 overflow-y-auto py-2'>
-        <div className='grid gap-4'>
+      <nav aria-label={t('navigation.primary')} className='min-h-0 flex-1 overflow-y-auto px-3 py-4'>
+        <div className='grid gap-6'>
           <SidebarGroup label={t('navigation.groups.main')}>
             <SidebarLink
               active={activeRoute === 'solve'}
@@ -268,10 +276,20 @@ function NavContent({
           </SidebarGroup>
         </div>
       </nav>
-      <Separator />
-      <div className='grid gap-1'>
+      <div className='border-t-2 border-sidebar-border' />
+      <div className='grid gap-1 p-3'>
+        <Button
+          className='h-9 w-full justify-start gap-2 rounded-none border-2 border-transparent px-2 font-mono text-[0.65rem] uppercase tracking-widest text-sidebar-foreground/70 hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+          type='button'
+          variant='ghost'
+          onClick={() => window.dispatchEvent(new Event('speedcube:command-palette'))}
+        >
+          <CommandIcon aria-hidden='true' className='size-4' />
+          <span className='flex-1 text-start'>{t('navigation.command')}</span>
+          <kbd className='border border-sidebar-border/40 px-1 py-0.5 text-[0.55rem]'>⌘K</kbd>
+        </Button>
         {locale === 'pt-BR' ? (
-          <Button asChild className='w-full justify-start h-auto' variant='ghost'>
+          <Button asChild className='h-auto w-full justify-start rounded-none border-2 border-transparent px-2 hover:border-sidebar-border hover:bg-sidebar-accent' variant='ghost'>
             <a
               href={cuberBrasilUrl}
               rel='noreferrer'
@@ -280,7 +298,7 @@ function NavContent({
               <img
                 alt='Cuber Brasil'
                 aria-hidden='true'
-                className='max-w-full w-auto object-contain dark:invert'
+                className='w-auto max-w-full object-contain dark:invert'
                 src='/sites/cuber-brasil.png'
               />
               <span className='sr-only'>{t('navigation.openCuberBrasil')}</span>
@@ -290,7 +308,11 @@ function NavContent({
         <LanguageSelector locale={locale} pagePath={pagePath} onNavigate={onNavigate} />
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
-            <Button className='w-full justify-start gap-2' type='button' variant='ghost'>
+            <Button
+              className='h-9 w-full justify-start gap-2 rounded-none border-2 border-transparent px-2 font-mono text-[0.65rem] uppercase tracking-widest text-sidebar-foreground/70 hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+              type='button'
+              variant='ghost'
+            >
               <Palette aria-hidden='true' className='size-4' />
               <span className='flex-1 text-start'>{t('navigation.theme')}</span>
               {theme === 'dark' ? (
@@ -300,7 +322,7 @@ function NavContent({
               )}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align='start' className='w-48'>
+          <DropdownMenuContent align='start' className='w-48 rounded-none border-2 border-foreground'>
             <DropdownMenuRadioGroup
               value={theme}
               onValueChange={(value) => setTheme(value as ThemePreference)}
@@ -317,13 +339,18 @@ function NavContent({
             </DropdownMenuRadioGroup>
           </DropdownMenuContent>
         </DropdownMenu>
-        <Button asChild className='w-full justify-start gap-2' variant='ghost'>
+        <Button asChild className='h-9 w-full justify-start gap-2 rounded-none border-2 border-transparent px-2 font-mono text-[0.65rem] uppercase tracking-widest text-sidebar-foreground/70 hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground' variant='ghost'>
           <a aria-label={t('navigation.github')} href={githubUrl} rel='noreferrer' target='_blank'>
             <GitFork aria-hidden='true' className='size-4' />
             <span>{t('navigation.github')}</span>
           </a>
         </Button>
-        <Button className='w-full justify-start gap-2' type='button' variant='ghost' onClick={openCookiePreferences}>
+        <Button
+          className='h-9 w-full justify-start gap-2 rounded-none border-2 border-transparent px-2 font-mono text-[0.65rem] uppercase tracking-widest text-sidebar-foreground/70 hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+          type='button'
+          variant='ghost'
+          onClick={openCookiePreferences}
+        >
           <Cookie aria-hidden='true' className='size-4' />
           <span>{t('analytics.consent.manage')}</span>
         </Button>
@@ -334,8 +361,8 @@ function NavContent({
 
 function SidebarGroup({ children, label }: { children: ReactNode; label: string }) {
   return (
-    <section className='grid gap-1'>
-      <h2 className='px-2 text-xs font-medium text-sidebar-foreground/70'>{label}</h2>
+    <section className='grid gap-2'>
+      <h2 className='label-mono px-2 text-sidebar-foreground/45'>{label}</h2>
       <div className='grid gap-1'>{children}</div>
     </section>
   )
@@ -343,6 +370,7 @@ function SidebarGroup({ children, label }: { children: ReactNode; label: string 
 
 function SidebarLink({
   active,
+  compact = false,
   end,
   icon: Icon,
   label,
@@ -350,19 +378,27 @@ function SidebarLink({
   opensInNewTab,
   reloadDocument,
   to,
-}: NavItem & { onNavigate?: MobileNavigationHandler }) {
+}: NavItem & { compact?: boolean; onNavigate?: MobileNavigationHandler }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const chapter = chapterFromNavPath(to)
   const className = cn(
-    'flex min-h-8 items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-sidebar-ring/50',
+    'group/link flex min-h-9 items-center gap-2 border-2 px-2 py-1.5 text-[0.8rem] font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-sidebar-ring/50',
     {
-      'bg-sidebar-accent font-medium text-sidebar-accent-foreground': active,
-      'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground':
+      'border-sidebar-primary bg-sidebar-primary font-semibold text-sidebar-primary-foreground':
+        active,
+      'border-transparent text-sidebar-foreground/75 hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground':
         !active,
     },
+    compact && 'min-h-7 border-0 py-1 text-xs',
   )
   const content = (
     <>
+      {compact ? null : (
+        <span aria-hidden='true' className='label-mono w-5 shrink-0 text-[0.6rem] opacity-45'>
+          {opensInNewTab ? '↗' : chapter.number}
+        </span>
+      )}
       {Icon === undefined ? null : <Icon aria-hidden='true' className='size-4 shrink-0' />}
       <span className='flex-1 truncate'>{label}</span>
       {opensInNewTab ? (
@@ -428,6 +464,7 @@ function SidebarCollapsibleGroup({
   onNavigate?: MobileNavigationHandler
 }) {
   const Icon = group.icon
+  const chapter = chapterFromNavPath(`/${group.route}`)
 
   return (
     <Collapsible className='group/collapsible' defaultOpen={group.defaultOpen}>
@@ -435,22 +472,26 @@ function SidebarCollapsibleGroup({
         <button
           aria-current={group.defaultOpen ? 'page' : undefined}
           className={cn(
-            'flex min-h-8 w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring/50',
+            'flex min-h-9 w-full items-center gap-2 border-2 px-2 py-1.5 text-[0.8rem] font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-sidebar-ring/50',
             {
-              'bg-sidebar-accent font-medium text-sidebar-accent-foreground': group.defaultOpen,
+              'border-sidebar-primary bg-sidebar-primary font-semibold text-sidebar-primary-foreground':
+                group.defaultOpen,
+              'border-transparent text-sidebar-foreground/75 hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground':
+                !group.defaultOpen,
             },
           )}
           type='button'
         >
+          <span aria-hidden='true' className='label-mono w-5 shrink-0 text-[0.6rem] opacity-45'>{chapter.number}</span>
           <Icon aria-hidden='true' className='size-4 shrink-0' />
           <span className='truncate'>{group.label}</span>
-          <ChevronsUpDown aria-hidden='true' className='ms-auto size-4 text-muted-foreground' />
+          <ChevronsUpDown aria-hidden='true' className='ms-auto size-4 opacity-50' />
         </button>
       </CollapsibleTrigger>
       <CollapsibleContent className='CollapsibleContent'>
-        <div className='ms-4 grid gap-1 border-s px-2 py-1'>
+        <div className='ms-3 grid gap-1 border-s-2 border-sidebar-border/40 px-2 py-1'>
           {group.subItems.map((item) => (
-            <SidebarLink key={item.to} {...item} onNavigate={onNavigate} />
+            <SidebarLink compact key={item.to} {...item} onNavigate={onNavigate} />
           ))}
         </div>
       </CollapsibleContent>
@@ -470,17 +511,6 @@ function navGroups(
 ): NavGroup[] {
   return [
     {
-      defaultOpen: activeRoute === 'notations',
-      icon: BookOpen,
-      label: t('navigation.notations'),
-      route: 'notations',
-      subItems: notationNavigationItems.map((item) => ({
-        active: pagePath === item.path,
-        label: item.label,
-        to: localizedPath(item.path, locale),
-      })),
-    },
-    {
       defaultOpen: activeRoute === 'algorithms',
       icon: ListTree,
       label: t('navigation.algorithms'),
@@ -498,6 +528,17 @@ function navGroups(
           to: localizedPath(puzzle.path, locale),
         })),
       ],
+    },
+    {
+      defaultOpen: activeRoute === 'notations',
+      icon: BookOpen,
+      label: t('navigation.notations'),
+      route: 'notations',
+      subItems: notationNavigationItems.map((item) => ({
+        active: pagePath === item.path,
+        label: item.label,
+        to: localizedPath(item.path, locale),
+      })),
     },
   ]
 }

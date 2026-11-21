@@ -33,7 +33,8 @@ export function CubeStage({
 
   return (
     <section
-      className='cube-stage aspect-square w-[min(280px,calc(100vw-24px))] overflow-hidden border bg-card shadow-sm'
+      className='cube-stage scanlines relative aspect-square w-full max-w-[34rem] overflow-hidden border-2 border-foreground bg-card shadow-[8px_8px_0_var(--foreground)]'
+      data-route-reveal='true'
       aria-label={t('cube.visualization')}
     >
       {!loadRequested ? (

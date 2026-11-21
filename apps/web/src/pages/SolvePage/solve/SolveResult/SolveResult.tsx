@@ -31,18 +31,25 @@ export function SolveResult({ result, error, solving, localValidationMessage }: 
 
   return (
     <>
-      <section className='w-full max-w-4xl px-6 py-6'>
+      <section
+        className='w-full border-2 border-foreground bg-background p-5 shadow-[6px_6px_0_var(--foreground)]'
+        data-route-reveal='true'
+      >
+        <div className='mb-3 flex items-center justify-between border-b-2 border-foreground pb-2'>
+          <span className='label-mono'>02 / RESULT</span>
+          <span className='label-mono opacity-50'>{successResult === undefined ? 'IDLE' : 'OK'}</span>
+        </div>
         <output
           aria-label={t('solve.result.regionLabel')}
           aria-live='polite'
-          className='result flex min-h-11 w-full flex-col items-center justify-center gap-2 text-center text-lg font-semibold text-foreground sm:text-xl'
+          className='result flex min-h-11 w-full flex-col items-start justify-center gap-2 text-left text-lg font-semibold text-foreground sm:text-xl'
         >
           {solving ? <Loader3x3 label={t('common.loading')} /> : null}
           {successResult !== undefined ? (
             <>
               <code
                 aria-label={t('solve.result.movesLabel')}
-                className='max-w-full text-inherit [font:inherit] [overflow-wrap:anywhere]'
+                className='max-w-full text-cube-blue [font:inherit] [overflow-wrap:anywhere]'
               >
                 {successResult.moves.length === 0
                   ? t('solve.result.solved')

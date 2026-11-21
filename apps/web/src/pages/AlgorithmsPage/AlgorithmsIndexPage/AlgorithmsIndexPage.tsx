@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { ChapterBar } from '@components/layout/ChapterBar'
 import { PageHeader } from '@components/layout/PageHeader'
 import { PageDescription } from '@components/layout/PageDescription'
 import { PageScaffold } from '@components/layout/PageScaffold'
@@ -10,8 +11,9 @@ export function AlgorithmsIndexPage() {
   const { t } = useTranslation()
 
   return (
-    <PageScaffold contentClassName='max-w-5xl gap-5'>
+    <PageScaffold contentClassName='max-w-6xl gap-6'>
       <PageHeader>
+        <ChapterBar />
         <PageTitle>{t('algorithms.index.title')}</PageTitle>
         <PageDescription>{t('algorithms.index.description')}</PageDescription>
       </PageHeader>

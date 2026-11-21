@@ -12,6 +12,7 @@ import { Field } from '@components/Field'
 import { Input } from '@components/Input'
 import { PageDescription } from '@components/layout/PageDescription'
 import { PageHeader } from '@components/layout/PageHeader'
+import { ChapterBar } from '@components/layout/ChapterBar'
 import { PageScaffold } from '@components/layout/PageScaffold'
 import { PageTitle } from '@components/layout/PageTitle'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/Select'
@@ -133,11 +134,12 @@ export function WorldRecordsPage() {
   }
 
   return (
-    <PageScaffold contentClassName='max-w-7xl gap-5'>
+    <PageScaffold contentClassName='max-w-7xl gap-6'>
       <PageHeader>
+        <ChapterBar />
         <div className='flex flex-col gap-3 md:flex-row md:items-end md:justify-between'>
           <div className='grid gap-2'>
-            <p className='flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground'>
+            <p className='label-mono flex items-center gap-2 text-muted-foreground'>
               <Database aria-hidden='true' className='size-4' />
               {t('worldRecords.kicker')}
             </p>

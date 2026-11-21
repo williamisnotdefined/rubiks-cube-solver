@@ -35,17 +35,21 @@ export function SolvePlaybackStage({
   })
 
   return (
-    <>
-      <SolveVisualizationStage {...visualization} />
-      {children}
+    <div className='grid w-full gap-6 lg:grid-cols-12 lg:items-start'>
+      <div className='order-1 grid gap-6 lg:col-span-5'>{children}</div>
+      <div className='order-2 flex w-full justify-center lg:col-span-7 lg:justify-end'>
+        <SolveVisualizationStage {...visualization} />
+      </div>
       {successResult !== undefined && visualizationSupported ? (
-        <SolutionPlayback
-          moves={successResult.moves}
-          step={playback.visibleSolutionStep}
-          onStepChange={playback.onSolutionStepChange}
-          onVisualizationRequest={visualization.onLoadRequest}
-        />
+        <div className='order-3 lg:col-span-12'>
+          <SolutionPlayback
+            moves={successResult.moves}
+            step={playback.visibleSolutionStep}
+            onStepChange={playback.onSolutionStepChange}
+            onVisualizationRequest={visualization.onLoadRequest}
+          />
+        </div>
       ) : null}
-    </>
+    </div>
   )
 }

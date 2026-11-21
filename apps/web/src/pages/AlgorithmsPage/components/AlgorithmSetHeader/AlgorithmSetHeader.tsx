@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
+import { ChapterBar } from '@components/layout/ChapterBar'
 import { PageHeader } from '@components/layout/PageHeader'
 import { PageTitle } from '@components/layout/PageTitle'
 
@@ -20,11 +21,12 @@ export function AlgorithmSetHeader({
 
   return (
     <PageHeader surface={false}>
+      <ChapterBar />
       <Link
-        className='text-sm font-medium text-muted-foreground hover:text-foreground'
+        className='label-mono text-muted-foreground hover:text-foreground'
         to={puzzlePath}
       >
-        {t('algorithms.page.backToIndex')}
+        ← {t('algorithms.page.backToIndex')}
       </Link>
       <PageTitle>{title}</PageTitle>
       <p className='text-sm text-muted-foreground'>
