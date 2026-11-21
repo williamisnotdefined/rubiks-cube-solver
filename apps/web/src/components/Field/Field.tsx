@@ -28,7 +28,7 @@ export function Field({
     return (
       <label className={cls('grid min-w-0 gap-2', className)} {...props}>
         <span
-          className={cls('text-sm font-medium leading-none text-muted-foreground', labelClassName)}
+          className={cls('label-mono text-muted-foreground', labelClassName)}
         >
           {label}
         </span>
@@ -40,7 +40,7 @@ export function Field({
   return (
     <div className={cls('grid min-w-0 gap-2', className)}>
       <label
-        className={cls('text-sm font-medium leading-none text-muted-foreground', labelClassName)}
+        className={cls('label-mono text-muted-foreground', labelClassName)}
         htmlFor={controlId}
         {...props}
       >

@@ -12,12 +12,12 @@ export function ChannelCard({ channel }: ChannelCardProps) {
   return (
     <a
       aria-label={t('channels.openChannel', { channel: channel.name })}
-      className='group overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm outline-none transition-all hover:bg-accent hover:text-accent-foreground hover:shadow-md focus-visible:ring-[3px] focus-visible:ring-ring/50'
+      className='group overflow-hidden border-2 border-foreground bg-card text-card-foreground shadow-[4px_4px_0_var(--foreground)] outline-none transition-[transform,box-shadow,background-color] hover:-translate-y-0.5 hover:bg-cube-yellow hover:shadow-[6px_6px_0_var(--foreground)] focus-visible:ring-[3px] focus-visible:ring-ring/50'
       href={channel.url}
       rel='noreferrer'
       target='_blank'
     >
-      <div className='relative aspect-video overflow-hidden border-b bg-muted'>
+      <div className='relative aspect-video overflow-hidden border-b-2 border-foreground bg-muted'>
         <div
           className='absolute inset-0 grid place-items-center px-4 text-center text-lg font-semibold text-muted-foreground'
           aria-hidden='true'
@@ -49,7 +49,7 @@ export function ChannelCard({ channel }: ChannelCardProps) {
         ) : null}
       </div>
       <div className='grid gap-1 p-4'>
-        <h2 className='text-base font-semibold'>{channel.name}</h2>
+        <h2 className='font-display text-lg font-extrabold uppercase tracking-tight'>{channel.name}</h2>
         <p className='text-sm text-muted-foreground group-hover:text-accent-foreground'>
           {t('channels.openInYouTube')}
         </p>

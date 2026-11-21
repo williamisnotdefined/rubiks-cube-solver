@@ -60,21 +60,33 @@ export function AnalyticsConsent({
     return (
       <section
         aria-labelledby='analytics-consent-title'
-        className='fixed inset-x-4 bottom-4 z-50 mx-auto grid max-w-2xl gap-4 rounded-xl border bg-card p-5 text-card-foreground shadow-lg sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end'
+        className='fixed inset-x-0 bottom-0 z-[70] border-t-2 border-foreground bg-card px-4 py-3 text-card-foreground'
       >
-        <div className='grid gap-1.5'>
-          <h2 className='text-base font-semibold' id='analytics-consent-title'>
-            {t('analytics.consent.title')}
-          </h2>
-          <p className='text-sm leading-6 text-muted-foreground'>{t('analytics.consent.body')}</p>
-        </div>
-        <div className='flex flex-wrap gap-2 sm:justify-end'>
-          <Button type='button' variant='outline' onClick={() => updateConsent('denied')}>
-            {t('analytics.consent.reject')}
-          </Button>
-          <Button type='button' onClick={() => updateConsent('granted')}>
-            {t('analytics.consent.accept')}
-          </Button>
+        <div className='mx-auto flex max-w-7xl flex-col gap-3 md:flex-row md:items-center md:justify-between'>
+          <div className='grid gap-1 md:flex md:items-baseline md:gap-3'>
+            <h2
+              className='font-display text-sm font-extrabold uppercase tracking-tight'
+              id='analytics-consent-title'
+            >
+              {t('analytics.consent.title')}
+            </h2>
+            <p className='max-w-2xl text-xs leading-5 text-muted-foreground'>
+              {t('analytics.consent.body')}
+            </p>
+          </div>
+          <div className='flex shrink-0 flex-wrap gap-2'>
+            <Button
+              size='sm'
+              type='button'
+              variant='outline'
+              onClick={() => updateConsent('denied')}
+            >
+              {t('analytics.consent.reject')}
+            </Button>
+            <Button size='sm' type='button' onClick={() => updateConsent('granted')}>
+              {t('analytics.consent.accept')}
+            </Button>
+          </div>
         </div>
       </section>
     )

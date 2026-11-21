@@ -21,7 +21,7 @@ export function TimerSidebar() {
   const stats = timerStats(solves)
 
   return (
-    <aside className='grid min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-2 overflow-hidden'>
+    <aside className='grid min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-3 overflow-hidden'>
       <AverageCards
         cards={[
           { label: 'best', timeMs: stats.bestMs },

@@ -701,7 +701,11 @@
       "type": "Tipo",
       "reset": "Reimposta"
     },
-    "types": { "all": "Tutti i tipi", "single": "Singolo", "average": "Media" },
+    "types": {
+      "all": "Tutti i tipi",
+      "single": "Singolo",
+      "average": "Media"
+    },
     "table": {
       "caption": "Record mondiali WCA corrispondenti ai filtri",
       "rank": "Posizione",
@@ -780,7 +784,12 @@
     "themeLight": "Chiaro",
     "themeSystem": "Sistema",
     "timer": "Timer",
-    "worldRecords": "Record mondiali"
+    "worldRecords": "Record mondiali",
+    "command": "Menu comandi",
+    "commandPlaceholder": "Vai a una pagina…",
+    "commandEmpty": "Nessun risultato.",
+    "commandRoutes": "Pagine",
+    "commandActions": "Azioni"
   },
   "notations": {
     "groups": {
@@ -1213,12 +1222,15 @@
       "required": "{{label}} è obbligatorio",
       "wholeNumber": "{{label}} deve essere un numero intero",
       "withinLimit": "{{label}} deve essere {{limit}} o meno"
-    }
+    },
+    "heroTitle": "Risolvi il cubo",
+    "heroSubtitle": "Incolla uno scramble. Ricevi una soluzione verificata."
   },
   "timer": {
     "displayLabel": "Timer speedsolve",
     "instructions": {
-      "space": "Spazio o tocco: tieni premuto, rilascia per iniziare, premi per fermare."
+      "space": "Spazio o tocco: tieni premuto, rilascia per iniziare, premi per fermare.",
+      "short": "Spazio / tocco"
     },
     "inspection": {
       "title": "Ispezione WCA"

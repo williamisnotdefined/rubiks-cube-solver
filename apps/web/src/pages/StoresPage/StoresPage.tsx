@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@components/Button'
+import { ChapterBar } from '@components/layout/ChapterBar'
 import { PageDescription } from '@components/layout/PageDescription'
 import { PageHeader } from '@components/layout/PageHeader'
 import { PageScaffold } from '@components/layout/PageScaffold'
@@ -23,8 +24,9 @@ export function StoresPage() {
   }
 
   return (
-    <PageScaffold contentClassName='max-w-7xl gap-5'>
+    <PageScaffold contentClassName='max-w-7xl gap-6' smoothScroll>
       <PageHeader>
+        <ChapterBar />
         <PageTitle>{t('stores.title')}</PageTitle>
         <PageDescription>{t('stores.description', { count: cubingStores.length })}</PageDescription>
       </PageHeader>

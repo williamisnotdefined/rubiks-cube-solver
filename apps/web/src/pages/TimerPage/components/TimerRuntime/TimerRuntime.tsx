@@ -79,7 +79,7 @@ export function TimerRuntime({
   }
 
   return (
-    <section className='grid min-h-0 grid-rows-[minmax(0,1fr)_auto_auto] gap-2 overflow-hidden'>
+    <section className='grid min-h-0 grid-rows-[minmax(0,1fr)_auto_auto] gap-3 overflow-hidden'>
       <TimerDisplay
         aria-label={t('timer.displayLabel')}
         aria-disabled={disabled}

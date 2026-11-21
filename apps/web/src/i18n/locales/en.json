@@ -701,7 +701,11 @@
       "type": "Type",
       "reset": "Reset"
     },
-    "types": { "all": "All types", "single": "Single", "average": "Average" },
+    "types": {
+      "all": "All types",
+      "single": "Single",
+      "average": "Average"
+    },
     "table": {
       "caption": "WCA world records matching the selected filters",
       "rank": "Rank",
@@ -780,7 +784,12 @@
     "themeLight": "Light",
     "themeSystem": "System",
     "timer": "Timer",
-    "worldRecords": "World Records"
+    "worldRecords": "World Records",
+    "command": "Command menu",
+    "commandPlaceholder": "Jump to a page…",
+    "commandEmpty": "Nothing found.",
+    "commandRoutes": "Pages",
+    "commandActions": "Actions"
   },
   "notations": {
     "groups": {
@@ -1213,12 +1222,15 @@
       "required": "{{label}} is required",
       "wholeNumber": "{{label}} must be a whole number",
       "withinLimit": "{{label}} must be {{limit}} or less"
-    }
+    },
+    "heroTitle": "Solve the cube",
+    "heroSubtitle": "Paste a scramble. Get a replay-verified solution."
   },
   "timer": {
     "displayLabel": "Speedsolve timer",
     "instructions": {
-      "space": "Space or touch: hold, release to start, press to stop."
+      "space": "Space or touch: hold, release to start, press to stop.",
+      "short": "Space / touch"
     },
     "inspection": {
       "title": "WCA inspection"

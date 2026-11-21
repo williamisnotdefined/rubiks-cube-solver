@@ -4,7 +4,7 @@ import type { ComponentPropsWithoutRef } from 'react'
 import { cn } from '@src/lib/utils'
 
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40",
+  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-none text-sm font-semibold transition-[transform,box-shadow,background-color,color,border-color] outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-none [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none",
   {
     defaultVariants: {
       size: 'default',
@@ -12,22 +12,25 @@ const buttonVariants = cva(
     },
     variants: {
       size: {
-        default: 'h-9 px-4 py-2 has-[>svg]:px-3',
-        icon: 'size-9',
-        lg: 'h-10 px-6 has-[>svg]:px-4',
-        md: 'h-9 px-4 py-2 has-[>svg]:px-3',
-        sm: 'h-8 gap-1.5 px-3 has-[>svg]:px-2.5',
+        default: 'h-10 px-4 py-2 has-[>svg]:px-3',
+        icon: 'size-10',
+        lg: 'h-12 px-6 text-base has-[>svg]:px-4',
+        md: 'h-10 px-4 py-2 has-[>svg]:px-3',
+        sm: 'h-8 gap-1.5 px-3 text-xs has-[>svg]:px-2.5',
       },
       variant: {
-        default: 'bg-primary text-primary-foreground shadow-xs hover:bg-primary/90',
+        default:
+          'border-2 border-foreground bg-primary text-primary-foreground shadow-[3px_3px_0_var(--foreground)] hover:bg-primary/90 disabled:border-dashed disabled:border-foreground/40 disabled:bg-muted disabled:text-muted-foreground',
         destructive:
-          'bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40',
-        ghost: 'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
+          'border-2 border-foreground bg-destructive text-cube-white shadow-[3px_3px_0_var(--foreground)] hover:bg-destructive/90 disabled:border-dashed disabled:border-foreground/40 disabled:bg-muted disabled:text-muted-foreground',
+        ghost: 'border-2 border-transparent hover:bg-accent hover:text-accent-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
         outline:
-          'border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50',
-        primary: 'bg-primary text-primary-foreground shadow-xs hover:bg-primary/90',
-        secondary: 'bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80',
+          'border-2 border-foreground bg-background shadow-[3px_3px_0_var(--foreground)] hover:bg-accent hover:text-accent-foreground disabled:border-dashed disabled:border-foreground/40 disabled:bg-muted disabled:text-muted-foreground',
+        primary:
+          'border-2 border-foreground bg-primary text-primary-foreground shadow-[3px_3px_0_var(--foreground)] hover:bg-primary/90 disabled:border-dashed disabled:border-foreground/40 disabled:bg-muted disabled:text-muted-foreground',
+        secondary:
+          'border-2 border-foreground bg-secondary text-secondary-foreground shadow-[3px_3px_0_var(--foreground)] hover:bg-secondary/80 disabled:border-dashed disabled:border-foreground/40 disabled:bg-muted disabled:text-muted-foreground',
       },
     },
   },

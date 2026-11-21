@@ -701,7 +701,11 @@
       "type": "種類",
       "reset": "リセット"
     },
-    "types": { "all": "すべての種類", "single": "単発", "average": "平均" },
+    "types": {
+      "all": "すべての種類",
+      "single": "単発",
+      "average": "平均"
+    },
     "table": {
       "caption": "選択した条件に一致する WCA 世界記録",
       "rank": "順位",
@@ -780,7 +784,12 @@
     "themeLight": "ライト",
     "themeSystem": "システム",
     "timer": "タイマー",
-    "worldRecords": "世界記録"
+    "worldRecords": "世界記録",
+    "command": "コマンドメニュー",
+    "commandPlaceholder": "ページへ移動…",
+    "commandEmpty": "見つかりません。",
+    "commandRoutes": "ページ",
+    "commandActions": "アクション"
   },
   "notations": {
     "groups": {
@@ -1213,12 +1222,15 @@
       "required": "{{label}} is required",
       "wholeNumber": "{{label}} は整数でなければなりません",
       "withinLimit": "{{label}} は {{limit}} 以下でなければなりません"
-    }
+    },
+    "heroTitle": "キューブを解く",
+    "heroSubtitle": "スクランブルを貼り付けて、検証済みの解法を取得。"
   },
   "timer": {
     "displayLabel": "スピードソルブタイマー",
     "instructions": {
-      "space": "スペースまたはタッチ: 押し続けると開始し、押すと停止します。"
+      "space": "スペースまたはタッチ: 押し続けると開始し、押すと停止します。",
+      "short": "スペース / タッチ"
     },
     "inspection": {
       "title": "WCA検査"

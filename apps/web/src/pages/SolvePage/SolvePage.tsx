@@ -1,6 +1,8 @@
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { SolveResult as ApiSolveResult } from '@api/solver/types'
+import { titleRevealDelay, useRouteTitleReveal } from '@src/motion/routeReveal'
+import { useSplitReveal } from '@src/motion/useSplitReveal'
 import { SolveFormWithScanModal } from './components/SolveFormWithScanModal'
 import { SolvePlaybackStage } from './components/SolvePlaybackStage'
 import { useSolveFormState } from './hooks/useSolveFormState'
@@ -23,6 +25,12 @@ export function SolvePage() {
   const metadata = useSolvePuzzleMetadata(formState.selectedPuzzleSlug)
   const solveFlow = useSolveResultFlow()
   const [scanSessionSolving, setScanSessionSolving] = useState(false)
+  const heroRef = useRef<HTMLElement>(null)
+  const titleReveal = useRouteTitleReveal()
+  useSplitReveal(heroRef, {
+    delay: titleRevealDelay,
+    enabled: titleReveal,
+  })
   const solving = solveFlow.notationSolving || scanSessionSolving
   const buttonLoading = !metadata.apiReady || solving
   const disabled =
@@ -119,9 +127,30 @@ export function SolvePage() {
   }
 
   return (
-    <main className='app-shell min-h-0 flex-1 overflow-auto bg-background px-4 py-6 text-foreground'>
-      <section className='mx-auto grid w-full max-w-4xl content-start justify-items-center gap-4'>
-        <h1 className='sr-only'>{t('navigation.solve')}</h1>
+    <main
+      className='h-full min-h-0 flex-1 overflow-y-auto bg-background px-4 py-8 text-foreground md:px-8 md:py-10'
+      data-route-scroll='true'
+    >
+      <section className='mx-auto grid w-full max-w-7xl content-start gap-8'>
+        <header ref={heroRef} className='border-b-2 border-foreground pb-6'>
+          <div className='mb-5 flex items-center gap-3'>
+            <span className='label-mono bg-cube-blue px-2 py-1 text-cube-white'>01 / SOLVER</span>
+            <span className='h-0.5 flex-1 bg-foreground' />
+            <span className='label-mono opacity-55'>
+              {metadata.apiReady ? 'API ONLINE' : 'API OFFLINE'}
+            </span>
+          </div>
+          <h1
+            className='font-display text-[clamp(3rem,7vw,6.5rem)] font-extrabold uppercase leading-[0.82] tracking-[-0.055em]'
+            data-split='true'
+          >
+            {t('solve.heroTitle')}
+            <span className='text-cube-blue'>.</span>
+          </h1>
+          <p className='mt-5 max-w-xl text-sm leading-6 text-muted-foreground md:text-base'>
+            {t('solve.heroSubtitle')}
+          </p>
+        </header>
         <SolvePlaybackStage
           activeSolveSource={solveFlow.activeSolveSource}
           notation={formState.notation}

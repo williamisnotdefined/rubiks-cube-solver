@@ -15,13 +15,13 @@ export function StoreCard({ store }: StoreCardProps) {
   return (
     <a
       aria-label={t('stores.openStore', { store: store.name })}
-      className='group grid overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm outline-none transition-all hover:bg-accent hover:text-accent-foreground hover:shadow-md focus-visible:ring-[3px] focus-visible:ring-ring/50'
+      className='group grid overflow-hidden border-2 border-foreground bg-card text-card-foreground shadow-[4px_4px_0_var(--foreground)] outline-none transition-[transform,box-shadow,background-color] hover:-translate-y-0.5 hover:bg-cube-yellow hover:shadow-[6px_6px_0_var(--foreground)] focus-visible:ring-[3px] focus-visible:ring-ring/50'
       href={store.url}
       rel='noreferrer'
       target='_blank'
     >
-      <div className='flex items-start gap-3 border-b p-4'>
-        <div className='grid size-14 shrink-0 place-items-center rounded-lg border bg-background shadow-xs'>
+      <div className='flex items-start gap-3 border-b-2 border-foreground p-4'>
+        <div className='grid size-14 shrink-0 place-items-center border-2 border-foreground bg-background'>
           {store.imagePath === undefined ? (
             <CountryFlag countryCode={store.countryCode} className='h-7 w-10 shadow-xs' />
           ) : (
@@ -39,7 +39,7 @@ export function StoreCard({ store }: StoreCardProps) {
             <CountryFlag countryCode={store.countryCode} className='h-3 w-5 shadow-xs' />
             <span>{country}</span>
           </div>
-          <h2 className='truncate text-base font-semibold'>{store.name}</h2>
+          <h2 className='truncate font-display text-lg font-extrabold uppercase tracking-tight'>{store.name}</h2>
         </div>
       </div>
       <div className='grid gap-2 p-4'>

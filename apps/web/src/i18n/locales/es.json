@@ -99,7 +99,9 @@
             "note": "Una PLL solo de aristas. Muchos solvers aprenden las permutaciones U temprano porque terminan muchos casos de PLL principiante."
           }
         },
-        "images": { "hero": "Diagrama del método CFOP con información de F2L" },
+        "images": {
+          "hero": "Diagrama del método CFOP con información de F2L"
+        },
         "level": "Principiante a avanzado",
         "recommendedFor": "Speedsolving de 3x3 y etapa 3x3 de cubos grandes",
         "steps": {
@@ -143,7 +145,9 @@
             "note": "Este grupo recompensa reconocimiento limpio de barras. Evita mezclarlo con casos parecidos de Pi y U."
           }
         },
-        "images": { "hero": "Diagrama del método CLL" },
+        "images": {
+          "hero": "Diagrama del método CLL"
+        },
         "level": "2x2 avanzado",
         "recommendedFor": "Solvers de 2x2 que ya resuelven una capa rápido",
         "steps": {
@@ -286,7 +290,9 @@
             "note": "Las inserciones de segunda capa y capas posteriores son más fáciles si piensas en pares, no en piezas aisladas."
           }
         },
-        "images": { "hero": "Foto de un puzzle Megaminx" },
+        "images": {
+          "hero": "Foto de un puzzle Megaminx"
+        },
         "level": "Principiante a intermedio",
         "recommendedFor": "Solvers de 3x3 aprendiendo Megaminx",
         "steps": {
@@ -330,7 +336,9 @@
             "note": "Un caso central de orientación de la cara opuesta."
           }
         },
-        "images": { "hero": "Animación del método Ortega" },
+        "images": {
+          "hero": "Animación del método Ortega"
+        },
         "level": "2x2 intermedio",
         "recommendedFor": "Salir del 2x2 principiante sin aprender CLL completo",
         "steps": {
@@ -362,7 +370,9 @@
             "note": "Después del bloque 2x2x3, orientar aristas permite resolver el resto de F2L con un conjunto reducido de movimientos."
           }
         },
-        "images": { "hero": "Animación del método Petrus" },
+        "images": {
+          "hero": "Animación del método Petrus"
+        },
         "level": "Blockbuilding intermedio",
         "recommendedFor": "Razonamiento de pocos movimientos y práctica de blockbuilding",
         "steps": {
@@ -445,7 +455,9 @@
             "note": "Giros M y U limpios son esenciales. Roux solo es rápido cuando los giros de slice son confiables."
           }
         },
-        "images": { "hero": "Representación del método Roux" },
+        "images": {
+          "hero": "Representación del método Roux"
+        },
         "level": "Intermedio a avanzado",
         "recommendedFor": "3x3 de baja cantidad de movimientos y práctica de una mano",
         "steps": {
@@ -525,7 +537,9 @@
             "note": "(x,y) gira las capas superior e inferior en unidades de 30 grados, y / cambia la mitad derecha en la notación clásica."
           }
         },
-        "images": { "hero": "Square-1 en forma resuelta" },
+        "images": {
+          "hero": "Square-1 en forma resuelta"
+        },
         "level": "Intermedio",
         "recommendedFor": "Aprender notación de Square-1 y cubeshape",
         "steps": {
@@ -561,7 +575,9 @@
             "note": "Cuando las aristas están orientadas, muchos finales usan giros rápidos de R, U y L con menos casos incómodos."
           }
         },
-        "images": { "hero": "Animación de EOLine para ZZ" },
+        "images": {
+          "hero": "Animación de EOLine para ZZ"
+        },
         "level": "Intermedio a avanzado",
         "recommendedFor": "3x3 sin rotaciones y ergonomía de una mano",
         "steps": {
@@ -685,7 +701,11 @@
       "type": "Tipo",
       "reset": "Restablecer"
     },
-    "types": { "all": "Todos los tipos", "single": "Individual", "average": "Promedio" },
+    "types": {
+      "all": "Todos los tipos",
+      "single": "Individual",
+      "average": "Promedio"
+    },
     "table": {
       "caption": "Récords mundiales de la WCA que coinciden con los filtros",
       "rank": "Posición",
@@ -764,7 +784,12 @@
     "themeLight": "Claro",
     "themeSystem": "Sistema",
     "timer": "Timer",
-    "worldRecords": "Récords mundiales"
+    "worldRecords": "Récords mundiales",
+    "command": "Menú de comandos",
+    "commandPlaceholder": "Ir a una página…",
+    "commandEmpty": "Nada encontrado.",
+    "commandRoutes": "Páginas",
+    "commandActions": "Acciones"
   },
   "notations": {
     "groups": {
@@ -1197,12 +1222,15 @@
       "required": "{{label}} es obligatorio",
       "wholeNumber": "{{label}} debe ser un número entero",
       "withinLimit": "{{label}} debe ser {{limit}} o menos"
-    }
+    },
+    "heroTitle": "Resuelve el cubo",
+    "heroSubtitle": "Pega un scramble. Recibe una solución verificada."
   },
   "timer": {
     "displayLabel": "Timer de speedsolve",
     "instructions": {
-      "space": "Espacio o toque: mantén, suelta para iniciar, presiona para parar."
+      "space": "Espacio o toque: mantén, suelta para iniciar, presiona para parar.",
+      "short": "Espacio / toque"
     },
     "inspection": {
       "title": "Inspección WCA"

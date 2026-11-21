@@ -701,7 +701,11 @@
       "type": "Type",
       "reset": "Réinitialiser"
     },
-    "types": { "all": "Tous les types", "single": "Simple", "average": "Moyenne" },
+    "types": {
+      "all": "Tous les types",
+      "single": "Simple",
+      "average": "Moyenne"
+    },
     "table": {
       "caption": "Records du monde WCA correspondant aux filtres",
       "rank": "Rang",
@@ -780,7 +784,12 @@
     "themeLight": "Clair",
     "themeSystem": "Système",
     "timer": "Timer",
-    "worldRecords": "Records du monde"
+    "worldRecords": "Records du monde",
+    "command": "Menu des commandes",
+    "commandPlaceholder": "Aller à une page…",
+    "commandEmpty": "Aucun résultat.",
+    "commandRoutes": "Pages",
+    "commandActions": "Actions"
   },
   "notations": {
     "groups": {
@@ -1213,12 +1222,15 @@
       "required": "{{label}} est requis",
       "wholeNumber": "{{label}} doit être un nombre entier",
       "withinLimit": "{{label}} doit être inférieur ou égal à {{limit}}"
-    }
+    },
+    "heroTitle": "Résolvez le cube",
+    "heroSubtitle": "Collez un mélange. Recevez une solution vérifiée."
   },
   "timer": {
     "displayLabel": "Timer de speedsolve",
     "instructions": {
-      "space": "Espace ou toucher : maintenir, relâcher pour démarrer, appuyer pour arrêter."
+      "space": "Espace ou toucher : maintenir, relâcher pour démarrer, appuyer pour arrêter.",
+      "short": "Espace / toucher"
     },
     "inspection": {
       "title": "Inspection WCA"

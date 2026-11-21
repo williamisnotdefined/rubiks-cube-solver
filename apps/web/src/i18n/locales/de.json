@@ -701,7 +701,11 @@
       "type": "Typ",
       "reset": "Zurücksetzen"
     },
-    "types": { "all": "Alle Typen", "single": "Einzel", "average": "Durchschnitt" },
+    "types": {
+      "all": "Alle Typen",
+      "single": "Einzel",
+      "average": "Durchschnitt"
+    },
     "table": {
       "caption": "WCA-Weltrekorde für die gewählten Filter",
       "rank": "Rang",
@@ -780,7 +784,12 @@
     "themeLight": "Hell",
     "themeSystem": "System",
     "timer": "Timer",
-    "worldRecords": "Weltrekorde"
+    "worldRecords": "Weltrekorde",
+    "command": "Befehlspalette",
+    "commandPlaceholder": "Zu einer Seite springen…",
+    "commandEmpty": "Nichts gefunden.",
+    "commandRoutes": "Seiten",
+    "commandActions": "Aktionen"
   },
   "notations": {
     "groups": {
@@ -1213,12 +1222,15 @@
       "required": "{{label}} ist erforderlich",
       "wholeNumber": "{{label}} muss eine ganze Zahl sein",
       "withinLimit": "{{label}} muss {{limit}} oder weniger sein"
-    }
+    },
+    "heroTitle": "Löse den Würfel",
+    "heroSubtitle": "Scramble einfügen. Replay-verifizierte Lösung erhalten."
   },
   "timer": {
     "displayLabel": "Speedsolve-Timer",
     "instructions": {
-      "space": "Leertaste oder Berührung: halten, loslassen zum Starten, drücken zum Stoppen."
+      "space": "Leertaste oder Berührung: halten, loslassen zum Starten, drücken zum Stoppen.",
+      "short": "Leertaste / Touch"
     },
     "inspection": {
       "title": "WCA Inspection"

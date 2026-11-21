@@ -36,14 +36,18 @@ export function ScrambleViewer({
     actionSlot !== undefined
 
   return (
-    <section className={cls('grid min-h-0 gap-3 px-3 py-3 text-center text-foreground', className)}>
-      <div className='grid min-h-8 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2'>
-        <span aria-hidden='true' />
-        <div className='min-w-0 justify-self-center text-sm font-medium text-muted-foreground'>
+    <section
+      className={cls(
+        'grid min-h-0 gap-3 border-2 border-foreground bg-card px-3 py-3 text-center text-card-foreground shadow-[4px_4px_0_var(--foreground)]',
+        className,
+      )}
+    >
+      <div className='flex min-h-8 flex-wrap items-center justify-between gap-2'>
+        <div className='label-mono min-w-0 text-muted-foreground'>
           {eventControl ?? <span>{eventLabel}</span>}
         </div>
         {hasActions ? (
-          <div className='flex justify-self-end overflow-hidden rounded-md border bg-background shadow-xs'>
+          <div className='flex overflow-hidden border-2 border-foreground bg-background'>
             <button
               aria-label={t('timer.scramble.previous')}
               className={scrambleActionButtonClassName}
@@ -75,9 +79,7 @@ export function ScrambleViewer({
             </button>
             {actionSlot}
           </div>
-        ) : (
-          <span aria-hidden='true' />
-        )}
+        ) : null}
       </div>
       <p className='mx-auto max-w-5xl whitespace-pre-wrap font-mono text-base font-semibold leading-relaxed tracking-[0.04em] sm:text-lg'>
         {scramble}

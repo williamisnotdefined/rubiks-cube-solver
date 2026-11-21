@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { useEffect } from 'react'
 import { MemoryRouter, useNavigate } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -62,6 +62,18 @@ describe('RouteTransitionStage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Mark route ready' }))
 
     expect(screen.getByTestId('route-transition-curtain')).toHaveAttribute('data-ready', 'true')
+  })
+
+  it('renders five sliding color panels with the destination chapter while covering', () => {
+    renderStage()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open timer' }))
+
+    const curtain = screen.getByTestId('route-transition-curtain')
+
+    expect(curtain.querySelectorAll('.route-panel')).toHaveLength(5)
+    expect(within(curtain).getByText('02')).toBeInTheDocument()
+    expect(within(curtain).getByText('TIME')).toBeInTheDocument()
   })
 
   it('switches to the latest destination while the curtain is closed', async () => {

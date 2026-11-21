@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router'
 import { AppErrorBoundary } from '@components/AppErrorBoundary'
 import { AppShell } from '@components/layout/AppShell'
+import { useRoutePrefetch } from '@src/motion/useRoutePrefetch'
+import { useMotionPreload } from '@src/motion/useMotionPreload'
 import { AnalyticsConsent } from '@src/analytics/AnalyticsConsent'
 import { Seo } from '@src/seo/Seo'
 import {
@@ -15,55 +17,19 @@ import {
   type AppRouteKind,
 } from '@src/seo/routes'
 import { activeRouteFromPath } from './activeRouteFromPath'
+import { routeLoaders } from './routeLoaders'
 import { RouteTransitionStage } from './RouteTransitionStage'
 
-const loadSolvePage = () =>
-  import('../pages/SolvePage/SolvePageRoute').then((module) => ({
-    default: module.SolvePageRoute,
-  }))
-const loadTimerPage = () =>
-  import('../pages/TimerPage/TimerPage').then((module) => ({ default: module.TimerPage }))
-const loadWorldRecordsPage = () =>
-  import('../pages/WorldRecordsPage/WorldRecordsPageRoute').then((module) => ({
-    default: module.WorldRecordsPageRoute,
-  }))
-const loadAlgorithmsIndexPage = () =>
-  import('../pages/AlgorithmsPage/AlgorithmsIndexPage').then((module) => ({
-    default: module.AlgorithmsIndexPage,
-  }))
-const loadAlgorithmsPuzzlePage = () =>
-  import('../pages/AlgorithmsPage/AlgorithmsPuzzlePage').then((module) => ({
-    default: module.AlgorithmsPuzzlePage,
-  }))
-const loadAlgorithmSetPage = () =>
-  import('../pages/AlgorithmsPage/AlgorithmSetPage').then((module) => ({
-    default: module.AlgorithmSetPage,
-  }))
-const loadCubingSitesPage = () =>
-  import('../pages/CubingSitesPage/CubingSitesPage').then((module) => ({
-    default: module.CubingSitesPage,
-  }))
-const loadStoresPage = () =>
-  import('../pages/StoresPage/StoresPage').then((module) => ({ default: module.StoresPage }))
-const loadNotationGuidePage = () =>
-  import('../pages/NotationsPage/NotationGuidePage').then((module) => ({
-    default: module.NotationGuidePage,
-  }))
-const loadYouTubeChannelsPage = () =>
-  import('../pages/YouTubeChannelsPage/YouTubeChannelsPage').then((module) => ({
-    default: module.YouTubeChannelsPage,
-  }))
-
-const SolvePage = lazy(loadSolvePage)
-const TimerPage = lazy(loadTimerPage)
-const WorldRecordsPage = lazy(loadWorldRecordsPage)
-const AlgorithmsIndexPage = lazy(loadAlgorithmsIndexPage)
-const AlgorithmsPuzzlePage = lazy(loadAlgorithmsPuzzlePage)
-const AlgorithmSetPage = lazy(loadAlgorithmSetPage)
-const CubingSitesPage = lazy(loadCubingSitesPage)
-const StoresPage = lazy(loadStoresPage)
-const NotationGuidePage = lazy(loadNotationGuidePage)
-const YouTubeChannelsPage = lazy(loadYouTubeChannelsPage)
+const SolvePage = lazy(routeLoaders.solve)
+const TimerPage = lazy(routeLoaders.timer)
+const WorldRecordsPage = lazy(routeLoaders.records)
+const AlgorithmsIndexPage = lazy(routeLoaders['algorithms-index'])
+const AlgorithmsPuzzlePage = lazy(routeLoaders['algorithms-puzzle'])
+const AlgorithmSetPage = lazy(routeLoaders['algorithms-set'])
+const CubingSitesPage = lazy(routeLoaders.channels)
+const StoresPage = lazy(routeLoaders.stores)
+const NotationGuidePage = lazy(routeLoaders.notation)
+const YouTubeChannelsPage = lazy(routeLoaders.sites)
 
 type AppProps = {
   initialSsg?: boolean
@@ -75,6 +41,8 @@ function App({ initialSsg = false, routeComponents }: AppProps) {
   const [initialRouteReady, setInitialRouteReady] = useState(initialSsg)
   const [interactive, setInteractive] = useState(!initialSsg)
   const [cookiePreferencesOpen, setCookiePreferencesOpen] = useState(false)
+  useRoutePrefetch(interactive)
+  useMotionPreload(interactive)
   const pagePath = stripLocalePrefix(location.pathname)
   const route = activeRouteFromPath(pagePath)
 
