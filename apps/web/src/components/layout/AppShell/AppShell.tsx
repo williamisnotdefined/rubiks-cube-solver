@@ -11,6 +11,7 @@ type AppShellProps = {
   initialRouteReady?: boolean
   interactive?: boolean
   onOpenCookiePreferences?: () => void
+  variant?: 'app' | 'landing'
 }
 
 export function AppShell({
@@ -19,14 +20,17 @@ export function AppShell({
   initialRouteReady = true,
   interactive = true,
   onOpenCookiePreferences,
+  variant = 'app',
 }: AppShellProps) {
   useThemePreferenceSync()
+  const landing = variant === 'landing'
 
   return (
     <div
       className='flex h-dvh min-h-0 flex-col overflow-hidden bg-background text-foreground md:flex-row'
       data-app-interactive={interactive}
       data-app-shell='true'
+      data-app-variant={variant}
       data-initial-route-ready={initialRouteReady}
       inert={interactive ? undefined : true}
     >
@@ -36,7 +40,12 @@ export function AppShell({
       >
         Skip to content
       </a>
-      <PageNav activeRoute={activeRoute} onOpenCookiePreferences={onOpenCookiePreferences} />
+      {landing ? null : (
+        <PageNav
+          activeRoute={activeRoute}
+          onOpenCookiePreferences={onOpenCookiePreferences}
+        />
+      )}
       <div
         className='relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden'
         data-app-content='true'

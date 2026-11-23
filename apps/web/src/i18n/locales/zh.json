@@ -1285,5 +1285,32 @@
       "running": "还原中",
       "stopped": "已停止"
     }
+  },
+  "landing": {
+    "heroKicker": "00 / ENTER",
+    "home": "首页",
+    "manifestoApi": "API",
+    "menu": "菜单",
+    "heroTitle": "还原魔方",
+    "heroSubtitle": "为每个魔方带来乐观的解法。求解、计时、学习并探索魔方。",
+    "enter": "开始求解",
+    "timer": "打开计时器",
+    "scroll": "向下滚动探索",
+    "chaptersNav": "章节",
+    "chaptersTitle": "八种入口。",
+    "chaptersBody": "每个工具都是一个章节。选择一扇门。",
+    "chaptersPrevious": "上一章节",
+    "chaptersNext": "下一章节",
+    "solveBody": "粘贴打乱，获得经过回放验证的解法。",
+    "timerBody": "为键盘速度与专注而生的计时器。",
+    "learnBody": "干净利落的算法与记号。",
+    "openChapter": "打开章节",
+    "manifestoTitle": "为每个魔方带来乐观的解法。",
+    "manifestoBody": "基于 Rust 引擎、回放验证与快速静态网页。",
+    "manifestoGithub": "开源",
+    "footerTag": ".com.br / optimistic solve",
+    "footerBody": "还原、计时、学习、探索魔方。",
+    "footerCopyright": "© 2026 Speedcube",
+    "rustEngine": "RUST 引擎"
   }
 }

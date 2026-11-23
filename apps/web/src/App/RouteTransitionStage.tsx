@@ -194,7 +194,7 @@ export function RouteTransitionStage({ children }: RouteTransitionStageProps) {
     }
 
     const main = contentRef.current?.querySelector('main')
-    if (main instanceof HTMLElement) {
+    if (main instanceof HTMLElement && main.dataset.routeFocus !== 'false') {
       main.tabIndex = -1
       main.focus({ preventScroll: true })
     }
@@ -206,7 +206,7 @@ export function RouteTransitionStage({ children }: RouteTransitionStageProps) {
   const chapterLabel = t(chapter.labelKey)
 
   return (
-    <div className='relative flex min-h-0 flex-1 flex-col overflow-hidden'>
+    <div className='relative flex h-dvh min-h-0 w-full flex-col overflow-hidden'>
       <div
         ref={contentRef}
         className='route-transition-page flex min-h-0 flex-1 flex-col overflow-hidden'

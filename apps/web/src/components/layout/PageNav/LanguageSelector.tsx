@@ -4,6 +4,7 @@ import { startTransition } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router'
 import { Button } from '@components/Button'
+import { cn } from '@src/lib/utils'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +26,8 @@ type LanguageSelectorProps = {
   locale: SeoLocale
   pagePath: string
   onNavigate?: (navigation: () => void) => void
+  side?: 'bottom' | 'top'
+  tone?: 'landing' | 'sidebar'
 }
 
 type LanguageOption = {
@@ -59,7 +62,13 @@ const orderedLanguages: readonly SupportedLanguage[] = [
   'ja',
 ]
 
-export function LanguageSelector({ locale, pagePath, onNavigate }: LanguageSelectorProps) {
+export function LanguageSelector({
+  locale,
+  pagePath,
+  onNavigate,
+  side = 'top',
+  tone = 'sidebar',
+}: LanguageSelectorProps) {
   const { t } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
@@ -110,7 +119,12 @@ export function LanguageSelector({ locale, pagePath, onNavigate }: LanguageSelec
       <DropdownMenuTrigger asChild>
         <Button
           aria-label={t('navigation.language')}
-          className='h-9 w-full justify-start gap-2 rounded-none border-2 border-transparent px-2 font-mono text-[0.65rem] uppercase tracking-widest text-sidebar-foreground/70 hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+          className={cn(
+            'h-9 w-full justify-start gap-2 rounded-none border-2 px-2 font-mono text-[0.65rem] uppercase tracking-widest',
+            tone === 'landing'
+              ? 'border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground'
+              : 'border-transparent text-sidebar-foreground/70 hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+          )}
           type='button'
           variant='ghost'
         >
@@ -119,7 +133,7 @@ export function LanguageSelector({ locale, pagePath, onNavigate }: LanguageSelec
           <CurrentFlag aria-hidden='true' className='size-auto h-4 w-6 shrink-0 border border-sidebar-border/40' />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align='start' className='w-64 rounded-none border-2 border-foreground' side='top'>
+      <DropdownMenuContent align='start' className='w-64 rounded-none border-2 border-foreground' side={side}>
         <DropdownMenuRadioGroup value={selectedPreference} onValueChange={selectLanguage}>
           <DropdownMenuRadioItem value={automaticLanguageValue}>
             <Languages aria-hidden='true' className='size-4 shrink-0' />

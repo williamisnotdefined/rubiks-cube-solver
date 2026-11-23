@@ -26,7 +26,19 @@ describe('SEO route metadata', () => {
     }
   })
 
-  it('builds canonical metadata for English algorithm pages without translating slugs', () => {
+  it('builds canonical metadata for the landing page in every locale', () => {
+    const english = getSeoMetadata('/')
+    const portuguese = getSeoMetadata('/pt-BR/')
+
+    expect(english.title).toBe('Optimistic Solve | Speedcube')
+    expect(english.canonicalUrl).toBe('https://speedcube.com.br/')
+    expect(english.noindex).toBe(false)
+    expect(portuguese.locale).toBe('pt-BR')
+    expect(portuguese.canonicalUrl).toBe('https://speedcube.com.br/pt-BR/')
+    expect(seoIndexablePaths).toContain('/')
+  })
+
+  it('builds canonical metadata for the English algorithm pages without translating slugs', () => {
     const metadata = getSeoMetadata('/algorithms/3x3/oll')
 
     expect(metadata.locale).toBe('en-US')

@@ -17,6 +17,7 @@ type CommandEntry = {
 }
 
 const commandEntries: CommandEntry[] = [
+  { label: 'landing.home', path: '/' },
   { label: 'navigation.solve', path: '/solve' },
   { label: 'navigation.timer', path: '/timer' },
   { label: 'navigation.algorithms', path: '/algorithms' },
@@ -110,7 +111,7 @@ export function CommandPalette() {
               </Command.Group>
             </Command.List>
             <div className='flex items-center justify-between border-t-2 border-foreground px-4 py-2'>
-              <span className='label-mono text-[0.55rem] opacity-50'>Speedcube / Cube OS</span>
+              <span className='label-mono text-[0.55rem] opacity-50'>Speedcube / Optimistic Solve</span>
               <span className='label-mono border border-foreground px-1.5 py-0.5 text-[0.55rem]'>
                 ESC
               </span>

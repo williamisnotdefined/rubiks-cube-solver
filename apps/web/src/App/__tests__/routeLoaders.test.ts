@@ -8,6 +8,8 @@ describe('routeLoaders', () => {
 
   it('maps page paths to lazy route kinds', () => {
     expect(routeKindsFromPathname('/solve/')).toEqual(['solve'])
+    expect(routeKindsFromPathname('/')).toEqual(['home'])
+    expect(routeKindsFromPathname('/pt-BR/')).toEqual(['home'])
     expect(routeKindsFromPathname('/pt-BR/timer/')).toEqual(['timer'])
     expect(routeKindsFromPathname('/records/world/')).toEqual(['records'])
     expect(routeKindsFromPathname('/channels/')).toEqual(['channels'])

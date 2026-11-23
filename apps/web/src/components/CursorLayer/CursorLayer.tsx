@@ -35,7 +35,11 @@ export function CursorLayer() {
       const ringY = gsap.quickTo(ring, 'y', { duration: 0.32, ease: 'power3.out' })
 
       const handleMove = (event: PointerEvent) => {
-        layer.style.opacity = '1'
+        if (layer.dataset.visible !== 'true') {
+          gsap.set([dot, ring], { x: event.clientX, y: event.clientY })
+          layer.dataset.visible = 'true'
+        }
+
         dotX(event.clientX)
         dotY(event.clientY)
         ringX(event.clientX)
@@ -72,7 +76,8 @@ export function CursorLayer() {
       }
 
       const handleLeave = () => {
-        layer.style.opacity = '0'
+        layer.dataset.visible = 'false'
+        layer.dataset.down = 'false'
       }
 
       window.addEventListener('pointermove', handleMove)
@@ -105,6 +110,7 @@ export function CursorLayer() {
       className='cursor-layer'
       data-down='false'
       data-state='default'
+      data-visible='false'
     >
       <div className='cursor-square' />
       <div className='cursor-ring' />

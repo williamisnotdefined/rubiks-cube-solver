@@ -40,7 +40,7 @@ const renderEventName = 'rubiks-cube-render';
 export class RubiksCubeElement extends HTMLElement {
   canvas: HTMLCanvasElement;
   settings: Settings;
-  private fallback: HTMLDivElement;
+  private fallback: HTMLDivElement | null;
   private _rubiksCube3D: RubiksCube3D | null;
   private _rubiksCube: RubiksCubeController | null;
   private _renderOnce: (() => void) | null;
@@ -55,17 +55,9 @@ export class RubiksCubeElement extends HTMLElement {
     const root = this.shadowRoot as ShadowRoot;
     root.innerHTML = `
       <canvas id="cube-canvas" style="display:block;"></canvas>
-      <div
-        id="webgl-fallback"
-        role="status"
-        hidden
-        style="box-sizing:border-box;display:grid;width:100%;height:100%;min-height:8rem;place-items:center;padding:1rem;text-align:center;font:600 0.875rem/1.4 system-ui,sans-serif;color:currentColor;opacity:0.72;"
-      >
-        3D visualization unavailable. Enable browser hardware acceleration or WebGL to view the cube.
-      </div>
     `;
     this.canvas = root.getElementById('cube-canvas') as HTMLCanvasElement;
-    this.fallback = root.getElementById('webgl-fallback') as HTMLDivElement;
+    this.fallback = null;
     this.settings = new Settings();
     this._rubiksCube3D = null;
     this._rubiksCube = null;
@@ -602,14 +594,30 @@ export class RubiksCubeElement extends HTMLElement {
     this._rubiksCube3D = null;
     this._webGLUnavailable = true;
     this.canvas.hidden = true;
-    this.fallback.hidden = false;
+    const fallback = this.fallback ?? this.createWebGLFallback();
+    fallback.hidden = false;
     this.dataset.webglUnavailable = 'true';
   }
 
   private hideWebGLFallback(): void {
     this._webGLUnavailable = false;
     this.canvas.hidden = false;
-    this.fallback.hidden = true;
+    this.fallback?.remove();
+    this.fallback = null;
     delete this.dataset.webglUnavailable;
+  }
+
+  private createWebGLFallback(): HTMLDivElement {
+    const root = this.shadowRoot as ShadowRoot;
+    const fallback = document.createElement('div');
+    fallback.id = 'webgl-fallback';
+    fallback.setAttribute('role', 'status');
+    fallback.style.cssText =
+      'box-sizing:border-box;display:grid;width:100%;height:100%;min-height:8rem;place-items:center;padding:1rem;text-align:center;font:600 0.875rem/1.4 system-ui,sans-serif;color:currentColor;opacity:0.72;';
+    fallback.textContent =
+      '3D visualization unavailable. Enable browser hardware acceleration or WebGL to view the cube.';
+    root.append(fallback);
+    this.fallback = fallback;
+    return fallback;
   }
 }

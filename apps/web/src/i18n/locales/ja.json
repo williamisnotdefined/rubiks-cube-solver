@@ -1285,5 +1285,32 @@
       "running": "解決中",
       "stopped": "停止しました"
     }
+  },
+  "landing": {
+    "heroKicker": "00 / ENTER",
+    "home": "ホーム",
+    "manifestoApi": "API",
+    "menu": "メニュー",
+    "heroTitle": "キューブを解く",
+    "heroSubtitle": "すべてのキューブに、前向きな解法を。解く、計る、学ぶ、探求する。",
+    "enter": "解きはじめる",
+    "timer": "タイマーを開く",
+    "scroll": "スクロールして探索",
+    "chaptersNav": "チャプター",
+    "chaptersTitle": "8つの入口。",
+    "chaptersBody": "すべてのツールが章。扉を選ぼう。",
+    "chaptersPrevious": "前のチャプター",
+    "chaptersNext": "次のチャプター",
+    "solveBody": "スクランブルを貼り付けて、リプレイ検証済みの解答を取得。",
+    "timerBody": "キーボードの速さと集中のためのタイマー。",
+    "learnBody": "ノイズのないアルゴリズムと記法。",
+    "openChapter": "チャプターを開く",
+    "manifestoTitle": "すべてのキューブに、前向きな解法を。",
+    "manifestoBody": "Rustエンジン、リプレイ検証、高速な静的Webサーフェスで構築。",
+    "manifestoGithub": "オープンソース",
+    "footerTag": ".com.br / optimistic solve",
+    "footerBody": "揃える、計る、学ぶ、探索する。",
+    "footerCopyright": "© 2026 Speedcube",
+    "rustEngine": "RUSTエンジン"
   }
 }

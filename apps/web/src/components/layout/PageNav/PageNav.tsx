@@ -39,7 +39,7 @@ import {
 } from 'lucide-react'
 import { type MouseEvent, type ReactNode, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { NavLink as RouterNavLink, useLocation, useNavigate } from 'react-router'
+import { Link, NavLink as RouterNavLink, useLocation, useNavigate } from 'react-router'
 import { LanguageSelector } from './LanguageSelector'
 import { algorithmNavigationItems, notationNavigationItems } from './navigationManifest'
 
@@ -117,12 +117,16 @@ export function PageNav({ activeRoute, onOpenCookiePreferences }: PageNavProps) 
         >
           <PanelLeft aria-hidden='true' className='size-5' />
         </Button>
-        <div className='min-w-0'>
+        <Link
+          aria-label={t('landing.home')}
+          className='min-w-0'
+          to={localizedPath('/', locale)}
+        >
           <p className='truncate font-display text-base font-extrabold uppercase leading-none tracking-tighter'>
             Speedcube
           </p>
           <p className='label-mono truncate text-[0.55rem] text-muted-foreground'>{title}</p>
-        </div>
+        </Link>
       </header>
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent
@@ -197,19 +201,23 @@ function NavContent({
 
   return (
     <div className={cn('flex min-h-0 w-full flex-col', mobile && 'h-full')}>
-      <div className='flex h-24 items-center gap-3 border-b-2 border-sidebar-border px-4'>
+      <Link
+        aria-label={t('landing.home')}
+        className='group flex h-24 items-center gap-3 border-b-2 border-sidebar-border px-4 transition-colors'
+        to={localizedPath('/', locale)}
+      >
         <div className='flex size-11 shrink-0 items-center justify-center border-2 border-sidebar-border bg-sidebar-primary shadow-[3px_3px_0_var(--sidebar-foreground)]'>
           <img alt='' aria-hidden='true' className='size-8' src='/favicon.svg' />
         </div>
         <div className='grid min-w-0 flex-1 text-start leading-none'>
-          <span className='truncate font-display text-xl font-extrabold uppercase tracking-tighter'>
+          <span className='truncate font-display text-xl font-extrabold uppercase tracking-tighter transition-colors group-hover:text-cube-yellow'>
             Speedcube
           </span>
           <span className='label-mono truncate text-[0.55rem] text-sidebar-foreground/55'>
-            .com.br / cube os
+            .com.br / optimistic solve
           </span>
         </div>
-      </div>
+      </Link>
       <nav aria-label={t('navigation.primary')} className='min-h-0 flex-1 overflow-y-auto px-3 py-4'>
         <div className='grid gap-6'>
           <SidebarGroup label={t('navigation.groups.main')}>

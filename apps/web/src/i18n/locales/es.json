@@ -1285,5 +1285,32 @@
       "running": "Resolviendo",
       "stopped": "Parado"
     }
+  },
+  "landing": {
+    "heroKicker": "00 / ENTER",
+    "home": "Inicio",
+    "manifestoApi": "API",
+    "menu": "Menú",
+    "heroTitle": "RESUELVE EL CUBO",
+    "heroSubtitle": "Una solución optimista para cada cubo. Resuelve, cronometra, aprende y explora el cubo.",
+    "enter": "Empezar a resolver",
+    "timer": "Abrir cronómetro",
+    "scroll": "Desplázate para explorar",
+    "chaptersNav": "Capítulos",
+    "chaptersTitle": "Ocho formas de entrar.",
+    "chaptersBody": "Cada herramienta es un capítulo. Elige una puerta.",
+    "chaptersPrevious": "Capítulos anteriores",
+    "chaptersNext": "Capítulos siguientes",
+    "solveBody": "Pega un scramble; obtén una solución verificada por replay.",
+    "timerBody": "Un cronómetro hecho para velocidad y concentración con teclado.",
+    "learnBody": "Algoritmos y notación sin ruido.",
+    "openChapter": "Abrir capítulo",
+    "manifestoTitle": "Una solución optimista para cada cubo.",
+    "manifestoBody": "Construido sobre un motor Rust, verificación por replay y una superficie web estática y rápida.",
+    "manifestoGithub": "Código abierto",
+    "footerTag": ".com.br / optimistic solve",
+    "footerBody": "Resuelve, cronometra, aprende y explora el cubo.",
+    "footerCopyright": "© 2026 Speedcube",
+    "rustEngine": "MOTOR RUST"
   }
 }
