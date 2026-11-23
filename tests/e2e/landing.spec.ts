@@ -51,6 +51,26 @@ test.describe('landing page', () => {
   })
 
 
+  test('animates hero floaters and lets the pointer move them', async ({ page }) => {
+    await gotoHydratedApp(page, '/')
+
+    const root = page.locator('[data-hero-floaters]')
+    await expect
+      .poll(() => root.getAttribute('data-hero-floaters-ready'), { timeout: 10_000 })
+      .toBe('true')
+    await expect(root.locator('.hero-floater')).toHaveCount(12)
+
+    const clockInner = root.locator('.hero-floater--clock .hero-floater-inner')
+    const before = await clockInner.evaluate((element) => getComputedStyle(element).transform)
+
+    await page.mouse.move(1180, 360)
+    await page.mouse.move(180, 640)
+
+    await expect
+      .poll(() => clockInner.evaluate((element) => getComputedStyle(element).transform))
+      .not.toBe(before)
+  })
+
   test('pins the chapter rail with compact cards', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await gotoHydratedApp(page, '/')
