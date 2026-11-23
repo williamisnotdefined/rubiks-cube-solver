@@ -1439,7 +1439,7 @@ async fn router_with_web_dist_applies_security_headers_to_static_and_spa_fallbac
     let app = api_router_with_web_dist(ApiState::without_generated_solver(), web_dist_dir.clone());
 
     for (path, expected_status) in [
-        ("/", StatusCode::PERMANENT_REDIRECT),
+        ("/", StatusCode::OK),
         ("/index.html", StatusCode::OK),
         ("/solve/real-scramble", StatusCode::NOT_FOUND),
     ] {
@@ -2097,7 +2097,6 @@ async fn router_with_web_dist_serves_spa_fallback() {
     assert!(String::from_utf8_lossy(&body).contains("not found"));
 
     for (path, location) in [
-        ("/", "/solve/"),
         ("/api/wca-data", "/api/wca-data/v1/docs"),
         ("/api/wca-data/", "/api/wca-data/v1/docs"),
         ("/notations", "/notations/3x3/"),
@@ -2109,8 +2108,6 @@ async fn router_with_web_dist_serves_spa_fallback() {
         ("/pt-BR/algoritmos/3x3/oll", "/pt-BR/algorithms/3x3/oll"),
         ("/en/sites", "/sites/"),
         ("/en/sites/", "/sites/"),
-        ("/pt-BR", "/pt-BR/solve/"),
-        ("/pt-BR/", "/pt-BR/solve/"),
     ] {
         let response = app
             .clone()
@@ -2128,28 +2125,25 @@ async fn router_with_web_dist_serves_spa_fallback() {
         assert_eq!(response.headers().get("location").unwrap(), location);
     }
 
+    for suffix in ["", "/"] {
+        let path = format!("/en{suffix}");
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method(Method::GET)
+                    .uri(path)
+                    .body(Body::empty())
+                    .expect("request should build"),
+            )
+            .await
+            .expect("legacy English root redirect should complete");
+
+        assert_eq!(response.status(), StatusCode::PERMANENT_REDIRECT);
+        assert_eq!(response.headers().get("location").unwrap(), "/");
+    }
+
     for locale in ["en", "de", "es", "fr", "it", "ja", "pt-BR", "ru", "zh"] {
-        for suffix in ["", "/"] {
-            let path = format!("/{locale}{suffix}");
-            let response = app
-                .clone()
-                .oneshot(
-                    Request::builder()
-                        .method(Method::GET)
-                        .uri(path)
-                        .body(Body::empty())
-                        .expect("request should build"),
-                )
-                .await
-                .expect("locale root redirect should complete");
-
-            assert_eq!(response.status(), StatusCode::PERMANENT_REDIRECT);
-            assert_eq!(
-                response.headers().get("location").unwrap(),
-                &format!("/{locale}/solve/")
-            );
-        }
-
         for suffix in ["", "/"] {
             let path = format!("/{locale}/notations{suffix}");
             let location = if locale == "en" {
@@ -2175,7 +2169,6 @@ async fn router_with_web_dist_serves_spa_fallback() {
     }
 
     for (path, location) in [
-        ("/?source=home", "/solve/?source=home"),
         ("/en/sites/?from=legacy", "/sites/?from=legacy"),
         (
             "/pt-BR/notations?tab=moves",
