@@ -27,6 +27,10 @@ export const routeLoaders: Record<AppRouteKind, () => Promise<RouteModule>> = {
     import('../pages/AlgorithmsPage/AlgorithmSetPage').then((module) => ({
       default: module.AlgorithmSetPage,
     })),
+  home: () =>
+    import('../pages/LandingPage/LandingPage').then((module) => ({
+      default: module.LandingPage,
+    })),
   channels: () =>
     import('../pages/CubingSitesPage/CubingSitesPage').then((module) => ({
       default: module.CubingSitesPage,
@@ -64,6 +68,10 @@ export function preloadAllRoutes(): void {
 
 export function routeKindsFromPathname(pathname: string): AppRouteKind[] {
   const pagePath = stripLocalePath(pathname)
+
+  if (pagePath === '/') {
+    return ['home']
+  }
 
   if (pagePath.startsWith('/timer')) {
     return ['timer']

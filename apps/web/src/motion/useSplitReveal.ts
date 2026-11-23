@@ -69,6 +69,16 @@ export function useSplitReveal<T extends HTMLElement>(
         yPercent: 110,
       })
 
+      tween.eventCallback('onComplete', () => {
+        for (const target of targets) {
+          for (const mask of target.querySelectorAll<HTMLElement>(
+            '.split-line-mask, [style*="overflow: clip"], [style*="overflow: hidden"]',
+          )) {
+            mask.style.overflow = 'visible'
+          }
+        }
+      })
+
       revert = () => {
         tween.kill()
 

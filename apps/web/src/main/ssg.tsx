@@ -6,6 +6,7 @@ import { AlgorithmSetPage } from '../pages/AlgorithmsPage/AlgorithmSetPage'
 import { AlgorithmsIndexPage } from '../pages/AlgorithmsPage/AlgorithmsIndexPage'
 import { AlgorithmsPuzzlePage } from '../pages/AlgorithmsPage/AlgorithmsPuzzlePage'
 import { CubingSitesPage } from '../pages/CubingSitesPage/CubingSitesPage'
+import { LandingPage } from '../pages/LandingPage/LandingPage'
 import { NotationGuidePage } from '../pages/NotationsPage/NotationGuidePage'
 import { SolvePageRoute } from '../pages/SolvePage/SolvePageRoute'
 import { StoresPage } from '../pages/StoresPage/StoresPage'
@@ -44,6 +45,7 @@ const routeComponents = {
   'algorithms-puzzle': AlgorithmsPuzzlePage,
   'algorithms-set': AlgorithmSetPage,
   channels: YouTubeChannelsPage,
+  home: LandingPage,
   notation: NotationGuidePage,
   records: WorldRecordsPageRoute,
   sites: CubingSitesPage,

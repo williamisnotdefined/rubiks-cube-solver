@@ -73,10 +73,10 @@ pub fn api_router_with_web_dist(state: ApiState, web_dist_dir: PathBuf) -> Route
     }
 
     for &locale in LOCALE_PREFIXES {
-        let root = format!("/{locale}");
-        let solve = format!("/{locale}/solve/");
-        router = add_permanent_redirect(router, &root, solve.clone());
-        router = add_permanent_redirect(router, &format!("{root}/"), solve);
+        if locale == "en" {
+            router = add_permanent_redirect(router, "/en", "/".to_owned());
+            router = add_permanent_redirect(router, "/en/", "/".to_owned());
+        }
 
         let notations = format!("/{locale}/notations");
         let notation_guide = if locale == "en" {
@@ -103,7 +103,6 @@ pub fn api_router_with_web_dist(state: ApiState, web_dist_dir: PathBuf) -> Route
 }
 
 const FIXED_WEB_REDIRECTS: &[(&str, &str)] = &[
-    ("/", "/solve/"),
     ("/api/wca-data", "/api/wca-data/v1/docs"),
     ("/api/wca-data/", "/api/wca-data/v1/docs"),
     ("/notations", "/notations/3x3/"),

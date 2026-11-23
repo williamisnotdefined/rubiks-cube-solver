@@ -22,6 +22,7 @@ export const chapterAccents: Record<
 }
 
 export const routeChapters: Record<AppRouteKind, RouteChapter> = {
+  home: { accent: 'yellow', code: 'ENTER', labelKey: 'landing.home', number: '00' },
   solve: { accent: 'blue', code: 'SOLVE', labelKey: 'navigation.solve', number: '01' },
   timer: { accent: 'yellow', code: 'TIME', labelKey: 'navigation.timer', number: '02' },
   'algorithms-index': {
@@ -62,6 +63,10 @@ const chapterCodes: Record<string, RouteChapter> = {
 
 export function chapterFromPathname(pathname: string): RouteChapter {
   const pagePath = stripLocalePath(pathname)
+
+  if (pagePath === '/') {
+    return routeChapters.home
+  }
 
   if (pagePath.startsWith('/algorithms/')) {
     return routeChapters['algorithms-puzzle']

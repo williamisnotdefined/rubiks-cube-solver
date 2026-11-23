@@ -50,6 +50,7 @@ export type AppRouteKind =
   | 'algorithms-puzzle'
   | 'algorithms-set'
   | 'channels'
+  | 'home'
   | 'notation'
   | 'records'
   | 'sites'
@@ -100,10 +101,11 @@ type SeoCopy = {
 export const siteOrigin = 'https://speedcube.com.br'
 export const siteName = 'Speedcube'
 export const defaultLocale: SeoLocale = 'en-US'
-export const defaultSeoPath = '/solve'
+export const defaultSeoPath = '/'
 export const defaultOgImageUrl = `${siteOrigin}/og-default.svg`
 
 export const appRouteManifest: readonly AppRoute[] = [
+  { indexable: true, kind: 'home', path: '/' },
   { indexable: true, kind: 'solve', path: '/solve' },
   { indexable: true, kind: 'timer', path: '/timer' },
   { indexable: false, kind: 'records', path: '/records/world' },
@@ -831,7 +833,16 @@ function metadataForPath(
 ): Omit<SeoMetadata, 'canonicalUrl' | 'htmlLang' | 'locale' | 'noindex' | 'path'> | undefined {
   const localeCopy = copy[locale]
 
-  if (path === '/' || path === '/solve') {
+  if (path === '/') {
+    return {
+      breadcrumbs: [breadcrumb(locale, 'home', '/')],
+      description: localeCopy.solverDescription,
+      jsonLdKind: 'web-application',
+      title: 'Optimistic Solve',
+    }
+  }
+
+  if (path === '/solve') {
     return {
       breadcrumbs: [breadcrumb(locale, 'solver', '/solve')],
       description: localeCopy.solverDescription,

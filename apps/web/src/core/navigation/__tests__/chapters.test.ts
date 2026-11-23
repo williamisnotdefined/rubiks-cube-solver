@@ -21,6 +21,11 @@ describe('chapters', () => {
     expect(chapterFromPathname('/algorithms/3x3/oll/')).toEqual(routeChapters['algorithms-set'])
   })
 
+  it('maps the landing root to the enter chapter', () => {
+    expect(chapterFromPathname('/')).toEqual(routeChapters.home)
+    expect(chapterFromPathname('/pt-BR/')).toEqual(routeChapters.home)
+  })
+
   it('falls back to the solver chapter for unknown paths', () => {
     expect(chapterFromPathname('/unknown')).toEqual(routeChapters.solve)
   })

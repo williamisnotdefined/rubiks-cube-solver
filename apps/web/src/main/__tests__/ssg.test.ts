@@ -7,10 +7,24 @@ describe('React static generation', () => {
     expect(staticPaths).toHaveLength(routableStaticPaths.length * seoLocales.length)
     expect(staticRouteGroups.map((route) => route.path)).toEqual(seoIndexablePaths)
     expect(staticPaths).not.toContain('/api/wca-data/')
+    expect(staticPaths).toContain('/')
+    expect(staticPaths).toContain('/pt-BR/')
     expect(staticPaths).toContain('/records/world/')
     expect(staticPaths).toContain('/notations/skewb/')
     expect(staticPaths).toContain('/notations/clock/')
     expect(staticPaths).toContain('/stores/')
+  })
+
+  it('renders the English landing page with home metadata', async () => {
+    const result = await render('/')
+
+    expect(result.appHtml).toContain('<h1')
+    expect(result.appHtml).toContain('SPEED')
+    expect(result.appHtml).toContain('CUBE')
+    expect(result.appHtml).toContain('.COM.BR')
+    expect(result.metadata.canonicalUrl).toBe('https://speedcube.com.br/')
+    expect(result.metadata.title).toBe('Optimistic Solve | Speedcube')
+    expect(result.jsonLd.some((value) => value['@type'] === 'WebApplication')).toBe(true)
   })
 
   it('renders the localized product route without a temporary SEO snapshot', async () => {

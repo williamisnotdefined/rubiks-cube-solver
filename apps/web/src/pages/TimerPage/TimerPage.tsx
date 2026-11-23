@@ -34,6 +34,7 @@ export function TimerPage() {
     <ToastProvider>
       <main
         className='flex h-full min-h-0 flex-1 overflow-hidden bg-background px-3 py-3 text-foreground md:px-6 md:py-4'
+        data-route-focus='false'
         onClickCapture={clearTimerPageFocus}
       >
         <section className='mx-auto grid h-full min-h-0 w-full max-w-[110rem] grid-rows-[auto_auto_minmax(0,1fr)] gap-3'>

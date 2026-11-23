@@ -267,6 +267,16 @@ describe('RubiksCubeElement', () => {
     expect(() => element.getState()).toThrow('not initialised');
   });
 
+  test('does not keep a WebGL fallback in the DOM when WebGL is available', () => {
+    rendererMocks.throwOnCreate = false;
+    const element = createElement();
+
+    document.body.append(element);
+
+    expect(element.dataset.webglUnavailable).toBeUndefined();
+    expect(element.shadowRoot?.getElementById('webgl-fallback')).toBeNull();
+  });
+
   test('performs cube actions and camera peek after connection', async () => {
     const element = createElement();
     element.setAttribute(AttributeNames.animationSpeed, '0');

@@ -1285,5 +1285,32 @@
       "running": "Solving",
       "stopped": "Stopped"
     }
+  },
+  "landing": {
+    "heroKicker": "00 / ENTER",
+    "home": "Home",
+    "manifestoApi": "API",
+    "menu": "Menu",
+    "heroTitle": "SOLVE THE CUBE",
+    "heroSubtitle": "An optimistic solve for every cube. Solve, time, learn and explore the cube.",
+    "enter": "Start Solving",
+    "timer": "Open timer",
+    "scroll": "Scroll to explore",
+    "chaptersNav": "Chapters",
+    "chaptersTitle": "Eight ways in.",
+    "chaptersBody": "Every tool is a chapter. Pick a door.",
+    "chaptersPrevious": "Previous chapters",
+    "chaptersNext": "Next chapters",
+    "solveBody": "Paste a scramble; get a replay-verified solution.",
+    "timerBody": "A timer built for keyboard speed and focus.",
+    "learnBody": "Algorithms and notation without noise.",
+    "openChapter": "Open chapter",
+    "manifestoTitle": "An optimistic solve for every cube.",
+    "manifestoBody": "Built on a Rust engine, replay verification and a fast static web surface.",
+    "manifestoGithub": "Open source",
+    "footerTag": ".com.br / optimistic solve",
+    "footerBody": "Solve, time, learn and explore the cube.",
+    "footerCopyright": "© 2026 Speedcube",
+    "rustEngine": "RUST ENGINE"
   }
 }

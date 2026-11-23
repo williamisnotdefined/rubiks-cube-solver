@@ -1285,5 +1285,32 @@
       "running": "Läuft",
       "stopped": "Gestoppt"
     }
+  },
+  "landing": {
+    "heroKicker": "00 / ENTER",
+    "home": "Start",
+    "manifestoApi": "API",
+    "menu": "Menü",
+    "heroTitle": "LÖSE DEN WÜRFEL",
+    "heroSubtitle": "Ein optimistischer Solve für jeden Cube. Löse, stoppe die Zeit, lerne und erkunde den Cube.",
+    "enter": "Jetzt lösen",
+    "timer": "Timer öffnen",
+    "scroll": "Scrollen zum Entdecken",
+    "chaptersNav": "Kapitel",
+    "chaptersTitle": "Acht Wege hinein.",
+    "chaptersBody": "Jedes Werkzeug ist ein Kapitel. Wähle eine Tür.",
+    "chaptersPrevious": "Vorherige Kapitel",
+    "chaptersNext": "Nächste Kapitel",
+    "solveBody": "Füge einen Scramble ein; erhalte eine replay-verifizierte Lösung.",
+    "timerBody": "Ein Timer für Tastaturgeschwindigkeit und Fokus.",
+    "learnBody": "Algorithmen und Notation ohne Lärm.",
+    "openChapter": "Kapitel öffnen",
+    "manifestoTitle": "Ein optimistischer Solve für jeden Cube.",
+    "manifestoBody": "Auf einer Rust-Engine, Replay-Verifikation und einer schnellen statischen Web-Oberfläche.",
+    "manifestoGithub": "Open Source",
+    "footerTag": ".com.br / optimistic solve",
+    "footerBody": "Lösen, stoppen, lernen und den Würfel erkunden.",
+    "footerCopyright": "© 2026 Speedcube",
+    "rustEngine": "RUST-ENGINE"
   }
 }
