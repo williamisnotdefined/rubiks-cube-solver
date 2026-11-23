@@ -884,9 +884,14 @@ html.has-custom-cursor * {
 
 .hero-floater {
   position: absolute;
-  transform: rotate(var(--float-rotate, 0deg));
-  animation: hero-float var(--float-duration, 10s) ease-in-out infinite;
-  animation-delay: var(--float-delay, 0s);
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.hero-floater-inner {
+  display: block;
+  width: 100%;
+  height: 100%;
   will-change: transform;
 }
 
@@ -903,29 +908,34 @@ html.has-custom-cursor * {
 }
 
 .hero-floater--cubie-a {
-  top: 13%;
+  top: 8%;
   right: 4%;
   width: 5.6rem;
   height: 5.6rem;
   --cubie-size: 5.6rem;
-  --float-delay: -4s;
-  --float-duration: 12s;
-  --float-rotate: -8deg;
-  --float-x: 8px;
-  --float-y: -14px;
 }
 
 .hero-floater--cubie-b {
-  bottom: 15%;
+  bottom: 3%;
   left: 2%;
   width: 3.8rem;
   height: 3.8rem;
   --cubie-size: 3.8rem;
-  --float-delay: -8s;
-  --float-duration: 14s;
-  --float-rotate: 10deg;
-  --float-x: -6px;
-  --float-y: -10px;
+}
+
+.hero-floater--cubie-two {
+  right: 44%;
+  bottom: 4%;
+  width: 4.4rem;
+  height: 4.4rem;
+  --cubie-size: 4.4rem;
+}
+
+.hero-floater--clock {
+  right: 4%;
+  bottom: 18%;
+  width: 3.4rem;
+  height: 3.4rem;
 }
 
 .hero-cubie {
@@ -995,10 +1005,138 @@ html.has-custom-cursor * {
   background-color: var(--cube-orange);
 }
 
-.hero-chip {
+.hero-cubie-face--grid {
   display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  padding: 2px;
+  background-image: none;
+}
+
+.hero-cubie-sticker {
+  display: block;
+  border: 1px solid color-mix(in oklab, var(--foreground) 70%, transparent);
+}
+
+.hero-cubie--two .hero-cubie-face--front .hero-cubie-sticker:nth-child(1) {
+  background: var(--cube-blue);
+}
+
+.hero-cubie--two .hero-cubie-face--front .hero-cubie-sticker:nth-child(2) {
+  background: var(--cube-yellow);
+}
+
+.hero-cubie--two .hero-cubie-face--front .hero-cubie-sticker:nth-child(3) {
+  background: var(--cube-red);
+}
+
+.hero-cubie--two .hero-cubie-face--front .hero-cubie-sticker:nth-child(4) {
+  background: var(--cube-green);
+}
+
+.hero-cubie--two .hero-cubie-face--right .hero-cubie-sticker:nth-child(1) {
+  background: var(--cube-yellow);
+}
+
+.hero-cubie--two .hero-cubie-face--right .hero-cubie-sticker:nth-child(2) {
+  background: var(--cube-orange);
+}
+
+.hero-cubie--two .hero-cubie-face--right .hero-cubie-sticker:nth-child(3) {
+  background: var(--cube-white);
+}
+
+.hero-cubie--two .hero-cubie-face--right .hero-cubie-sticker:nth-child(4) {
+  background: var(--cube-blue);
+}
+
+.hero-cubie--two .hero-cubie-face--top .hero-cubie-sticker:nth-child(1) {
+  background: var(--cube-red);
+}
+
+.hero-cubie--two .hero-cubie-face--top .hero-cubie-sticker:nth-child(2) {
+  background: var(--cube-green);
+}
+
+.hero-cubie--two .hero-cubie-face--top .hero-cubie-sticker:nth-child(3) {
+  background: var(--cube-white);
+}
+
+.hero-cubie--two .hero-cubie-face--top .hero-cubie-sticker:nth-child(4) {
+  background: var(--cube-yellow);
+}
+
+.hero-clock {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border: 2px solid var(--foreground);
+  border-radius: 50%;
+  background-color: var(--card);
+  box-shadow: 4px 4px 0 var(--foreground);
+}
+
+.hero-clock::before {
+  position: absolute;
+  inset: 7px;
+  border: 1px dashed color-mix(in oklab, var(--foreground) 25%, transparent);
+  border-radius: 50%;
+  content: "";
+}
+
+.hero-clock::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  border: 1px solid var(--foreground);
+  border-radius: 50%;
+  background: var(--cube-yellow);
+  content: "";
+  transform: translate(-50%, -50%);
+}
+
+.hero-clock-crown {
+  position: absolute;
+  top: -0.58rem;
+  left: 50%;
+  width: 0.8rem;
+  height: 0.36rem;
+  border: 2px solid var(--foreground);
+  background: var(--cube-yellow);
+  transform: translateX(-50%);
+}
+
+.hero-clock-hand {
+  position: absolute;
+  bottom: 50%;
+  left: 50%;
+  background: var(--foreground);
+  transform-origin: 50% 100%;
+}
+
+.hero-clock-hand--hour {
+  width: 3px;
+  height: 25%;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.hero-clock-hand--minute {
+  width: 2px;
+  height: 36%;
+  transform: translateX(-50%) rotate(140deg);
+}
+
+.hero-chip {
   min-width: 2.6rem;
   height: 2.6rem;
+}
+
+.hero-chip > .hero-floater-inner {
+  display: grid;
+  width: 100%;
+  height: 100%;
   place-items: center;
   padding-inline: 0.4rem;
   border: 2px solid var(--foreground);
@@ -1010,73 +1148,65 @@ html.has-custom-cursor * {
 }
 
 .hero-chip--r {
-  top: 22%;
-  left: 3%;
-  --float-delay: -2s;
-  --float-duration: 9s;
-  --float-rotate: -7deg;
-  --float-y: -9px;
+  top: 8%;
+  left: 2%;
 }
 
 .hero-chip--u {
-  top: 16%;
-  right: 30%;
-  --float-delay: -6s;
-  --float-duration: 11s;
-  --float-rotate: 6deg;
-  --float-x: -7px;
-  --float-y: -12px;
+  top: 20%;
+  right: 28%;
 }
 
 .hero-chip--f {
-  right: 16%;
-  bottom: 20%;
-  --float-delay: -10s;
-  --float-duration: 13s;
-  --float-rotate: -4deg;
-  --float-x: 8px;
-  --float-y: -10px;
+  top: 10%;
+  left: 30%;
+}
+
+.hero-chip--b2 {
+  top: 38%;
+  right: 15%;
+}
+
+.hero-chip--wr {
+  right: 25%;
+  bottom: 8%;
+  min-width: 4.8rem;
+}
+
+.hero-chip--wr > .hero-floater-inner {
+  padding-inline: 0.45rem;
+  font-size: 0.62rem;
 }
 
 .hero-sticker {
   width: 2.2rem;
   height: 2.2rem;
+}
+
+.hero-sticker > .hero-floater-inner {
+  width: 100%;
+  height: 100%;
   border: 2px solid var(--foreground);
+  background: var(--sticker-color, var(--cube-white));
   box-shadow: 4px 4px 0 var(--foreground);
 }
 
 .hero-sticker--yellow {
-  bottom: 28%;
-  left: 28%;
-  background: var(--cube-yellow);
-  --float-delay: -5s;
-  --float-duration: 10s;
-  --float-rotate: 12deg;
-  --float-x: -8px;
-  --float-y: -14px;
+  bottom: 34%;
+  left: 31%;
+  --sticker-color: var(--cube-yellow);
 }
 
 .hero-sticker--blue {
-  top: 9%;
-  left: 30%;
-  background: var(--cube-blue);
-  --float-delay: -11s;
-  --float-duration: 15s;
-  --float-rotate: -10deg;
-  --float-x: 6px;
-  --float-y: -8px;
+  top: 5%;
+  left: 47%;
+  --sticker-color: var(--cube-blue);
 }
 
-@keyframes hero-float {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) rotate(var(--float-rotate, 0deg));
-  }
-
-  50% {
-    transform: translate3d(var(--float-x, 0px), var(--float-y, -12px), 0)
-      rotate(calc(var(--float-rotate, 0deg) + 3deg));
-  }
+.hero-sticker--white {
+  top: 40%;
+  left: 48%;
+  --sticker-color: var(--cube-white);
 }
 
 @keyframes hero-orbit-spin {
@@ -1104,7 +1234,10 @@ html.has-custom-cursor * {
 
   .hero-chip--u,
   .hero-sticker--blue,
-  .hero-orbit {
+  .hero-orbit,
+  .hero-floater--cubie-two,
+  .hero-chip--wr,
+  .hero-sticker--white {
     display: none;
   }
 
@@ -1114,8 +1247,10 @@ html.has-custom-cursor * {
   }
 
   .hero-chip--f {
-    right: 3%;
-    bottom: 16%;
+    top: auto;
+    left: 4%;
+    right: auto;
+    bottom: 24%;
   }
 
   .hero-sticker--yellow {
