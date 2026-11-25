@@ -64,7 +64,8 @@ function apiDocsHtml(publicBaseUrl: string): string {
   </head>
   <body>
     <redoc></redoc>
-    <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+    <!-- Pinned: Redoc 3.x ships an ESM-only bundle and no longer defines the global \`Redoc\`. -->
+    <script src="https://cdn.redoc.ly/redoc/v2.5.0/bundles/redoc.standalone.js"></script>
     <script>
       Redoc.init('./openapi.yaml', {
         expandResponses: '200,400,404,503',
