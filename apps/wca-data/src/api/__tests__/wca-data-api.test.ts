@@ -70,7 +70,7 @@ describe('WCA Data API', () => {
     expect(docsResponse.statusCode).toBe(200)
     expect(docsResponse.headers['content-type']).toContain('text/html')
     expect(docsResponse.body).toContain('WCA Data API Reference')
-    expect(docsResponse.body).toContain('cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js')
+    expect(docsResponse.body).toContain('cdn.redoc.ly/redoc/v2.5.0/bundles/redoc.standalone.js')
     expect(docsResponse.body).toContain("Redoc.init('./openapi.yaml'")
   })
 
